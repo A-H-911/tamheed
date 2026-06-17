@@ -1,0 +1,77 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://keystone.dev/schemas/package-manifest.schema.json",
+  "title": "Package manifest",
+  "description": "Inventory of a generated package: artifacts present with versions, generation metadata, and the artifacts deliberately omitted with reasons. Rendered as manifest.json. Derived/reproducible from state.",
+  "type": "object",
+  "properties": {
+    "project": {
+      "type": "string",
+      "description": "Project name/title."
+    },
+    "package_version": {
+      "type": "string",
+      "description": "Overall package version (semver).",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "generation": {
+      "type": "object",
+      "description": "Metadata about how/when this package was generated.",
+      "additionalProperties": false,
+      "properties": {
+        "generated_at": { "type": "string", "format": "date-time" },
+        "skill_version": {
+          "type": "string",
+          "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+        },
+        "schema_version": {
+          "type": "string",
+          "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+        },
+        "profile": { "type": "string", "description": "Project profile used." },
+        "mode": {
+          "type": "string",
+          "enum": ["quick", "standard", "deep", "research", "update", "resume"]
+        }
+      }
+    },
+    "artifacts": {
+      "type": "array",
+      "description": "Artifacts present in the package.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "path": { "type": "string", "description": "Relative path within the package." },
+          "title": { "type": "string" },
+          "version": { "type": "string", "description": "Artifact version (semver or vN)." },
+          "status": {
+            "type": "string",
+            "enum": ["Draft", "Proposed", "Approved", "Implemented", "Superseded", "Obsolete"]
+          },
+          "kind": {
+            "type": "string",
+            "description": "Artifact category.",
+            "enum": ["narrative", "register", "adr", "diagram", "schema-instance", "prompt", "script", "derived", "other"]
+          }
+        },
+        "required": ["path"]
+      }
+    },
+    "omitted_artifacts": {
+      "type": "array",
+      "description": "Artifacts that could exist in the maximal structure but were deliberately not generated, each with a reason (so omissions are explicit, not silent).",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "path": { "type": "string", "description": "The artifact path that was omitted." },
+          "reason": { "type": "string", "description": "Why it was omitted (e.g. 'no research needed for this profile')." }
+        },
+        "required": ["path", "reason"]
+      }
+    }
+  },
+  "required": ["project", "package_version", "artifacts"],
+  "additionalProperties": false
+}

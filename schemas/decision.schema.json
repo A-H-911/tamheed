@@ -1,0 +1,99 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://keystone.dev/schemas/decision.schema.json",
+  "title": "Decision",
+  "description": "A lightweight decision in the open-decision register. Promote to an ADR when architecturally significant (see governance.md). IDs follow the DEC- scheme. Decision statuses are exactly Proposed/Approved/Rejected/Superseded/Deferred.",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^DEC-[0-9]{3}$"
+    },
+    "title": {
+      "type": "string",
+      "description": "Short imperative title of the decision."
+    },
+    "context": {
+      "type": "string",
+      "description": "The situation/problem that forces a decision."
+    },
+    "options": {
+      "type": "array",
+      "description": "Candidate options considered.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "name": { "type": "string" },
+          "description": { "type": "string" },
+          "pros": { "type": "array", "items": { "type": "string" } },
+          "cons": { "type": "array", "items": { "type": "string" } }
+        },
+        "required": ["name"]
+      }
+    },
+    "recommendation": {
+      "type": "string",
+      "description": "The recommended option and the gist of why."
+    },
+    "rationale": {
+      "type": "string",
+      "description": "Reasoning behind the recommendation; the evidence and trade-offs."
+    },
+    "status": {
+      "type": "string",
+      "description": "Decision lifecycle status. EXACTLY these five values (governance.md core safeguard: never render Proposed as Approved).",
+      "enum": ["Proposed", "Approved", "Rejected", "Superseded", "Deferred"],
+      "default": "Proposed"
+    },
+    "decided_by": {
+      "type": "string",
+      "description": "Who approved/rejected (human or authorized gate). Set when status leaves Proposed."
+    },
+    "decided_on": {
+      "type": "string",
+      "format": "date",
+      "description": "ISO date the decision reached its current terminal status."
+    },
+    "supersedes": {
+      "type": "string",
+      "description": "DEC- this decision replaces.",
+      "pattern": "^DEC-[0-9]{3}$"
+    },
+    "superseded_by": {
+      "type": "string",
+      "description": "DEC- that replaces this one. Set on the old item when superseded.",
+      "pattern": "^DEC-[0-9]{3}$"
+    },
+    "promoted_to_adr": {
+      "type": "string",
+      "description": "If promoted, the ADR id this decision became (record the promotion so the link is never lost).",
+      "pattern": "^ADR-[0-9]{4}$"
+    },
+    "source": {
+      "type": "string",
+      "description": "Provenance: input section (a known decision) or the derived stage that raised it."
+    },
+    "links": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "addresses": {
+          "type": "array",
+          "description": "Requirements/constraints/open-questions this decision addresses.",
+          "items": { "type": "string" }
+        },
+        "assumptions": {
+          "type": "array",
+          "items": { "type": "string", "pattern": "^ASM-[0-9]{3}$" }
+        },
+        "risks": {
+          "type": "array",
+          "items": { "type": "string", "pattern": "^RISK-[0-9]{3}$" }
+        }
+      }
+    }
+  },
+  "required": ["id", "title", "status"],
+  "additionalProperties": false
+}

@@ -1,0 +1,267 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://keystone.dev/schemas/project-input.schema.json",
+  "title": "Project input",
+  "description": "Comprehensive structured intake for a Keystone project. Every field is optional except that at least one of `title` or `description` (under meta or top-level) must be present: Keystone must tolerate incomplete input and fill gaps as OQ-/ASM- rather than blocking (see intake.md). Structured fields are authoritative; absent fields are normal.",
+  "type": "object",
+  "properties": {
+    "meta": {
+      "type": "object",
+      "description": "Top-level metadata about the intake itself.",
+      "properties": {
+        "title": {
+          "type": "string",
+          "description": "Project title / name."
+        },
+        "mode": {
+          "type": "string",
+          "description": "Optional run mode hint for the skill (controls depth/output set).",
+          "enum": ["quick", "standard", "deep", "research", "update", "resume"]
+        },
+        "profile": {
+          "type": "string",
+          "description": "Optional project-profile hint (e.g. 'greenfield-library', 'integration', 'research-heavy'). Keystone may override after analysis."
+        },
+        "version": {
+          "type": "string",
+          "description": "Version of this input document."
+        },
+        "author": {
+          "type": "string",
+          "description": "Who supplied the input."
+        },
+        "date": {
+          "type": "string",
+          "format": "date"
+        }
+      },
+      "additionalProperties": true
+    },
+    "title": {
+      "type": "string",
+      "description": "Project title (convenience top-level alias for meta.title)."
+    },
+    "description": {
+      "type": "string",
+      "description": "Free-form project description / pasted brief. Often the only field present; Keystone mines it for everything else."
+    },
+    "business_objectives": {
+      "type": "array",
+      "description": "Business goals the project serves.",
+      "items": { "type": "string" }
+    },
+    "problem_statement": {
+      "type": "string",
+      "description": "The core problem being solved."
+    },
+    "functional_requirements": {
+      "type": "array",
+      "description": "Functional requirements. May be plain strings (prose) or partial requirement objects; normalized to requirement.schema.json items during intake.",
+      "items": {
+        "oneOf": [
+          { "type": "string" },
+          {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string", "pattern": "^FR-[0-9]{3}$" },
+              "statement": { "type": "string" },
+              "priority": { "type": "string", "enum": ["MVP", "Full"] },
+              "source": { "type": "string" }
+            },
+            "required": ["statement"],
+            "additionalProperties": true
+          }
+        ]
+      }
+    },
+    "non_functional_requirements": {
+      "type": "array",
+      "description": "Non-functional requirements (performance, security, usability, etc.). Strings or partial objects.",
+      "items": {
+        "oneOf": [
+          { "type": "string" },
+          {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string", "pattern": "^NFR-[0-9]{3}$" },
+              "statement": { "type": "string" },
+              "priority": { "type": "string", "enum": ["MVP", "Full"] },
+              "source": { "type": "string" }
+            },
+            "required": ["statement"],
+            "additionalProperties": true
+          }
+        ]
+      }
+    },
+    "technical_constraints": {
+      "type": "array",
+      "description": "Technical bounding conditions (platforms, languages, performance ceilings).",
+      "items": { "type": "string" }
+    },
+    "organizational_constraints": {
+      "type": "array",
+      "description": "Organizational/process constraints (team, budget approvals, ways of working).",
+      "items": { "type": "string" }
+    },
+    "regulatory_constraints": {
+      "type": "array",
+      "description": "Regulatory/compliance constraints (GDPR, HIPAA, accessibility law, etc.).",
+      "items": { "type": "string" }
+    },
+    "existing_systems": {
+      "type": "array",
+      "description": "Existing systems/environments the solution must integrate with or replace.",
+      "items": {
+        "oneOf": [
+          { "type": "string" },
+          {
+            "type": "object",
+            "properties": {
+              "name": { "type": "string" },
+              "description": { "type": "string" },
+              "role": { "type": "string", "description": "How it relates (integrate, replace, depend on)." }
+            },
+            "required": ["name"],
+            "additionalProperties": true
+          }
+        ]
+      }
+    },
+    "preferred_technologies": {
+      "type": "array",
+      "description": "Technologies the stakeholder prefers (preferences, not hard requirements; separated from must-haves during intake).",
+      "items": { "type": "string" }
+    },
+    "prohibited_technologies": {
+      "type": "array",
+      "description": "Technologies that must NOT be used.",
+      "items": { "type": "string" }
+    },
+    "known_risks": {
+      "type": "array",
+      "description": "Risks already known to the stakeholder. Strings or partial risk objects.",
+      "items": {
+        "oneOf": [
+          { "type": "string" },
+          {
+            "type": "object",
+            "properties": {
+              "description": { "type": "string" },
+              "impact": { "type": "string" },
+              "likelihood": { "type": "string" }
+            },
+            "required": ["description"],
+            "additionalProperties": true
+          }
+        ]
+      }
+    },
+    "known_decisions": {
+      "type": "array",
+      "description": "Decisions already made (treated as Approved inputs unless flagged otherwise). Strings or partial decision objects.",
+      "items": {
+        "oneOf": [
+          { "type": "string" },
+          {
+            "type": "object",
+            "properties": {
+              "title": { "type": "string" },
+              "decision": { "type": "string" },
+              "rationale": { "type": "string" },
+              "status": { "type": "string", "enum": ["Proposed", "Approved", "Rejected", "Superseded", "Deferred"] }
+            },
+            "required": ["decision"],
+            "additionalProperties": true
+          }
+        ]
+      }
+    },
+    "unknowns": {
+      "type": "array",
+      "description": "Ambiguities/unknowns the stakeholder is aware of (seed for OQ-).",
+      "items": { "type": "string" }
+    },
+    "expected_deliverables": {
+      "type": "array",
+      "description": "Outputs the project is expected to produce.",
+      "items": { "type": "string" }
+    },
+    "target_users": {
+      "type": "array",
+      "description": "Intended users / personas of the solution.",
+      "items": {
+        "oneOf": [
+          { "type": "string" },
+          {
+            "type": "object",
+            "properties": {
+              "name": { "type": "string" },
+              "description": { "type": "string" },
+              "needs": { "type": "array", "items": { "type": "string" } }
+            },
+            "required": ["name"],
+            "additionalProperties": true
+          }
+        ]
+      }
+    },
+    "stakeholders": {
+      "type": "array",
+      "description": "People/roles with a stake. Strings or partial stakeholder objects (STK-).",
+      "items": {
+        "oneOf": [
+          { "type": "string" },
+          {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string", "pattern": "^STK-[0-9]{3}$" },
+              "name": { "type": "string" },
+              "role": { "type": "string" },
+              "interest": { "type": "string" },
+              "influence": { "type": "string", "enum": ["low", "medium", "high"] }
+            },
+            "required": ["name"],
+            "additionalProperties": true
+          }
+        ]
+      }
+    },
+    "available_infrastructure": {
+      "type": ["object", "string"],
+      "description": "Infrastructure available for build/run (cloud accounts, CI, hosting, hardware). Free-form string or structured object.",
+      "additionalProperties": true
+    },
+    "execution_agent_constraints": {
+      "type": ["object", "string"],
+      "description": "Constraints on the implementing agent (allowed tools, autonomy level, review gates, sandboxing).",
+      "additionalProperties": true
+    },
+    "repository_constraints": {
+      "type": ["object", "string"],
+      "description": "Constraints on the target repository (mono/poly-repo, branching, license, existing structure to respect).",
+      "additionalProperties": true
+    },
+    "time_budget_resource_constraints": {
+      "type": ["object", "string"],
+      "description": "Time, budget, and resource limits (deadlines, headcount, spend ceilings).",
+      "additionalProperties": true
+    },
+    "out_of_scope": {
+      "type": "array",
+      "description": "Explicitly out-of-scope items, to prevent scope creep.",
+      "items": { "type": "string" }
+    },
+    "additional_context": {
+      "type": "string",
+      "description": "Any other relevant context not covered above."
+    }
+  },
+  "anyOf": [
+    { "required": ["title"] },
+    { "required": ["description"] },
+    { "required": ["meta"] }
+  ],
+  "$comment": "anyOf enforces the minimal floor: a title, a description, or a meta block (which itself should carry a title). Everything else is optional so partial intake validates.",
+  "additionalProperties": true
+}

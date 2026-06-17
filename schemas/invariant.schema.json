@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://keystone.dev/schemas/invariant.schema.json",
+  "title": "Invariant",
+  "description": "A non-negotiable property that must hold at all times across the system's lifetime. IDs follow the INV- scheme.",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^INV-[0-9]{3}$"
+    },
+    "statement": {
+      "type": "string",
+      "description": "The invariant, phrased as a property that is always true (e.g. 'no PII is written to logs')."
+    },
+    "normalized": {
+      "type": "string",
+      "description": "Crisp restatement of the invariant."
+    },
+    "rationale": {
+      "type": "string",
+      "description": "Why this must never be violated."
+    },
+    "source": {
+      "type": "string",
+      "description": "Provenance: quoted span or input section."
+    },
+    "enforcement": {
+      "type": "string",
+      "description": "How the invariant is enforced or checked (mechanism, test, gate)."
+    },
+    "scope": {
+      "type": "string",
+      "description": "Whether the invariant applies to the MVP or the full target.",
+      "enum": ["MVP", "Full"]
+    },
+    "status": {
+      "type": "string",
+      "enum": ["Draft", "Proposed", "Approved", "Rejected", "Deferred", "Superseded", "Implemented", "Obsolete"],
+      "default": "Draft"
+    },
+    "links": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "derives_from": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "verified_by": {
+          "type": "array",
+          "items": { "type": "string", "pattern": "^TEST-[0-9]{3}$" }
+        }
+      }
+    }
+  },
+  "required": ["id", "statement", "status"],
+  "additionalProperties": false
+}

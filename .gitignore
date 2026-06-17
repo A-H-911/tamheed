@@ -1,0 +1,20 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+*.swp
+.idea/
+.vscode/
+
+# Scratch (created during development on a read-only-delete mount; safe to remove)
+tests/_vp_probe.py
+
+# Generated packages produced by running Keystone (keep examples/ and generated-samples/ which are curated)
+/packages/
+*.local.json

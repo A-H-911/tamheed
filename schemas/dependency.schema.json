@@ -1,0 +1,66 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://keystone.dev/schemas/dependency.schema.json",
+  "title": "Dependency",
+  "description": "An external or internal dependency the project relies on (service, library, team, upstream deliverable). IDs follow the DEP- scheme.",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^DEP-[0-9]{3}$"
+    },
+    "name": {
+      "type": "string",
+      "description": "Name of the depended-upon thing."
+    },
+    "description": {
+      "type": "string",
+      "description": "What the dependency is and what it provides."
+    },
+    "type": {
+      "type": "string",
+      "description": "Nature of the dependency.",
+      "enum": ["external_service", "library", "platform", "data_source", "team", "upstream_deliverable", "infrastructure", "other"]
+    },
+    "direction": {
+      "type": "string",
+      "description": "Whether the project consumes from or provides to this dependency.",
+      "enum": ["inbound", "outbound", "bidirectional"]
+    },
+    "criticality": {
+      "type": "string",
+      "description": "How critical the dependency is to delivery.",
+      "enum": ["blocking", "high", "medium", "low"]
+    },
+    "availability": {
+      "type": "string",
+      "description": "Current readiness/availability of the dependency."
+    },
+    "source": {
+      "type": "string",
+      "description": "Provenance: input section or derived stage."
+    },
+    "status": {
+      "type": "string",
+      "enum": ["Draft", "Proposed", "Approved", "Rejected", "Deferred", "Superseded", "Implemented", "Obsolete"],
+      "default": "Draft"
+    },
+    "links": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "required_by": {
+          "type": "array",
+          "description": "Requirements/work items that need this dependency.",
+          "items": { "type": "string" }
+        },
+        "risks": {
+          "type": "array",
+          "items": { "type": "string", "pattern": "^RISK-[0-9]{3}$" }
+        }
+      }
+    }
+  },
+  "required": ["id", "name", "status"],
+  "additionalProperties": false
+}

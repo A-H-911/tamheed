@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://keystone.dev/schemas/constraint.schema.json",
+  "title": "Constraint",
+  "description": "A bounding condition the solution must respect (technical, organizational, or regulatory). IDs follow the CON- scheme.",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^CON-[0-9]{3}$"
+    },
+    "category": {
+      "type": "string",
+      "description": "What kind of constraint this is.",
+      "enum": ["technical", "organizational", "regulatory", "resource", "schedule", "other"]
+    },
+    "statement": {
+      "type": "string",
+      "description": "The constraint as understood from the input."
+    },
+    "normalized": {
+      "type": "string",
+      "description": "Crisp restatement of the constraint."
+    },
+    "source": {
+      "type": "string",
+      "description": "Provenance: quoted span or input section this constraint came from."
+    },
+    "impact": {
+      "type": "string",
+      "description": "What this constraint forecloses or forces in the design."
+    },
+    "status": {
+      "type": "string",
+      "enum": ["Draft", "Proposed", "Approved", "Rejected", "Deferred", "Superseded", "Implemented", "Obsolete"],
+      "default": "Draft"
+    },
+    "links": {
+      "type": "object",
+      "description": "Typed cross-references.",
+      "additionalProperties": false,
+      "properties": {
+        "constrains": {
+          "type": "array",
+          "description": "Requirements or decisions this constraint bounds.",
+          "items": { "type": "string" }
+        },
+        "derives_from": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    }
+  },
+  "required": ["id", "statement", "status"],
+  "additionalProperties": false
+}

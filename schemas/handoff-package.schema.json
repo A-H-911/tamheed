@@ -1,0 +1,120 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://keystone.dev/schemas/handoff-package.schema.json",
+  "title": "Handoff package",
+  "description": "The execution handoff contract: what an implementing agent needs to start safely. Rendered as handoff/handoff-manifest.{yaml,json}.",
+  "type": "object",
+  "properties": {
+    "project": {
+      "type": "string",
+      "description": "Project name/title this handoff is for."
+    },
+    "version": {
+      "type": "string",
+      "description": "Package version (semver) at handoff time.",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "generated": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the handoff package was generated."
+    },
+    "artifacts": {
+      "type": "array",
+      "description": "The artifacts included in the package, each with its relative path and version.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "path": { "type": "string", "description": "Relative path within the package." },
+          "version": { "type": "string", "description": "Artifact version (semver or vN)." },
+          "title": { "type": "string" },
+          "status": {
+            "type": "string",
+            "enum": ["Draft", "Proposed", "Approved", "Implemented", "Superseded", "Obsolete"]
+          }
+        },
+        "required": ["path", "version"]
+      }
+    },
+    "entry_points": {
+      "type": "array",
+      "description": "Where the implementing agent should start reading/acting (e.g. handoff/initial-prompt.md, 00-charter.md).",
+      "items": {
+        "oneOf": [
+          { "type": "string" },
+          {
+            "type": "object",
+            "properties": {
+              "path": { "type": "string" },
+              "purpose": { "type": "string" }
+            },
+            "required": ["path"],
+            "additionalProperties": false
+          }
+        ]
+      }
+    },
+    "invariants": {
+      "type": "array",
+      "description": "Non-negotiables the implementing agent must never violate (INV- ids, optionally with restated text).",
+      "items": {
+        "oneOf": [
+          { "type": "string", "pattern": "^INV-[0-9]{3}$" },
+          {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string", "pattern": "^INV-[0-9]{3}$" },
+              "statement": { "type": "string" }
+            },
+            "required": ["id"],
+            "additionalProperties": false
+          }
+        ]
+      }
+    },
+    "mvp_definition": {
+      "type": "string",
+      "description": "What constitutes the MVP: the minimum that must be true to call the first delivery done."
+    },
+    "prerequisites": {
+      "type": "array",
+      "description": "What must be in place before execution starts (access, accounts, approvals, resolved blocking OQ-).",
+      "items": { "type": "string" }
+    },
+    "readiness": {
+      "type": "object",
+      "description": "Result of the execution-readiness gate.",
+      "additionalProperties": false,
+      "properties": {
+        "status": {
+          "type": "string",
+          "description": "Overall readiness verdict.",
+          "enum": ["ready", "ready-with-conditions", "not-ready"]
+        },
+        "gate_results": {
+          "type": "array",
+          "description": "Per-gate outcomes (e.g. G-TRACE, G-IDS, G-DEC-STATUS, G-REQ-SRC).",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "gate": { "type": "string", "description": "Gate identifier (e.g. 'G-TRACE')." },
+              "result": { "type": "string", "enum": ["pass", "fail", "warn", "n/a"] },
+              "detail": { "type": "string" }
+            },
+            "required": ["gate", "result"]
+          }
+        },
+        "conditions": {
+          "type": "array",
+          "description": "Conditions that must be met for 'ready-with-conditions'.",
+          "items": { "type": "string" }
+        }
+      },
+      "required": ["status"]
+    }
+  },
+  "required": ["project", "version", "artifacts", "readiness"],
+  "additionalProperties": false
+}

@@ -1,0 +1,196 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://keystone.dev/schemas/keystone-state.schema.json",
+  "title": "Keystone state",
+  "description": "The master, machine-owned state object persisted as keystone-state.json. Holds normalized input, profile, all registers (referencing the item schemas), scope, selected artifacts, per-stage status, traceability rows, and a change log. Humans edit rendered artifacts; Keystone reconciles into this (see state.md).",
+  "type": "object",
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "description": "Version of the keystone-state schema this instance conforms to (semver).",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "skill_version": {
+      "type": "string",
+      "description": "Version of the Keystone skill that produced/updated this state (semver).",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "project_profile": {
+      "type": "object",
+      "description": "The inferred project profile that drives artifact selection and depth.",
+      "properties": {
+        "name": { "type": "string", "description": "Profile label (e.g. 'greenfield-library')." },
+        "summary": { "type": "string" },
+        "characteristics": { "type": "array", "items": { "type": "string" } },
+        "mode": {
+          "type": "string",
+          "enum": ["quick", "standard", "deep", "research", "update", "resume"]
+        }
+      },
+      "additionalProperties": true
+    },
+    "raw_input": {
+      "description": "The original project input, ideally conforming to project-input.schema.json. Kept verbatim for provenance and re-derivation.",
+      "$ref": "project-input.schema.json"
+    },
+    "provenance": {
+      "type": "array",
+      "description": "Provenance records linking extracted item IDs back to spans/sections of the raw input. Mandatory per intake.md.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "item_id": { "type": "string", "description": "Entity ID this provenance is for." },
+          "quote": { "type": "string", "description": "Verbatim span from the input." },
+          "location": { "type": "string", "description": "Section/line reference within the input." }
+        },
+        "required": ["item_id"]
+      }
+    },
+    "registers": {
+      "type": "object",
+      "description": "All entity registers. Each array holds items conforming to the corresponding sibling item schema.",
+      "additionalProperties": false,
+      "properties": {
+        "requirements": {
+          "type": "array",
+          "items": { "$ref": "requirement.schema.json" },
+          "default": []
+        },
+        "constraints": {
+          "type": "array",
+          "items": { "$ref": "constraint.schema.json" },
+          "default": []
+        },
+        "invariants": {
+          "type": "array",
+          "items": { "$ref": "invariant.schema.json" },
+          "default": []
+        },
+        "assumptions": {
+          "type": "array",
+          "items": { "$ref": "assumption.schema.json" },
+          "default": []
+        },
+        "dependencies": {
+          "type": "array",
+          "items": { "$ref": "dependency.schema.json" },
+          "default": []
+        },
+        "open_questions": {
+          "type": "array",
+          "items": { "$ref": "open-question.schema.json" },
+          "default": []
+        },
+        "decisions": {
+          "type": "array",
+          "items": { "$ref": "decision.schema.json" },
+          "default": []
+        },
+        "adrs": {
+          "type": "array",
+          "items": { "$ref": "adr-metadata.schema.json" },
+          "default": []
+        },
+        "risks": {
+          "type": "array",
+          "items": { "$ref": "risk.schema.json" },
+          "default": []
+        },
+        "hypotheses": {
+          "type": "array",
+          "items": { "$ref": "hypothesis.schema.json" },
+          "default": []
+        },
+        "experiments": {
+          "type": "array",
+          "items": { "$ref": "experiment.schema.json" },
+          "default": []
+        },
+        "comparisons": {
+          "type": "array",
+          "items": { "$ref": "comparison-criteria.schema.json" },
+          "default": []
+        },
+        "acceptance_criteria": {
+          "type": "array",
+          "items": { "$ref": "acceptance-criterion.schema.json" },
+          "default": []
+        },
+        "phases": {
+          "type": "array",
+          "items": { "$ref": "execution-phase.schema.json" },
+          "default": []
+        }
+      }
+    },
+    "scope": {
+      "type": "object",
+      "description": "Scope definition separating MVP from the full target.",
+      "additionalProperties": false,
+      "properties": {
+        "mvp": { "type": "string", "description": "What the MVP includes." },
+        "full_target": { "type": "string", "description": "What the full target includes." },
+        "in_scope": { "type": "array", "items": { "type": "string" } },
+        "out_of_scope": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "selected_artifacts": {
+      "type": "array",
+      "description": "The artifact set chosen for this project by the selection rules (relative paths in the generated package).",
+      "items": { "type": "string" }
+    },
+    "stages": {
+      "type": "array",
+      "description": "Per-stage status of the Keystone pipeline.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": { "type": "string", "description": "Stage identifier (e.g. 'stage-03-intake' or a number)." },
+          "name": { "type": "string" },
+          "status": {
+            "type": "string",
+            "enum": ["not-started", "in-progress", "blocked", "done"]
+          },
+          "updated": { "type": "string", "format": "date-time" }
+        },
+        "required": ["id", "status"]
+      }
+    },
+    "last_completed_stage": {
+      "type": ["string", "null"],
+      "description": "Identifier of the last stage marked done; resume continues after this."
+    },
+    "traceability": {
+      "type": "array",
+      "description": "Derived traceability rows (re-generated each update cycle).",
+      "items": { "$ref": "traceability-row.schema.json" },
+      "default": []
+    },
+    "progress": {
+      "type": "array",
+      "description": "Progress updates recorded during update cycles.",
+      "items": { "$ref": "progress-update.schema.json" },
+      "default": []
+    },
+    "change_log": {
+      "type": "array",
+      "description": "Append-only audit of every state mutation (who/what/when).",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "timestamp": { "type": "string", "format": "date-time" },
+          "actor": { "type": "string", "description": "Who/what made the change (human, skill, gate)." },
+          "action": { "type": "string", "description": "What changed." },
+          "target": { "type": "string", "description": "Entity/artifact affected." },
+          "detail": { "type": "string" }
+        },
+        "required": ["timestamp", "action"]
+      }
+    }
+  },
+  "required": ["schema_version", "skill_version", "registers", "stages"],
+  "additionalProperties": false
+}

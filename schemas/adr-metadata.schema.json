@@ -1,0 +1,89 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://keystone.dev/schemas/adr-metadata.schema.json",
+  "title": "ADR metadata",
+  "description": "Structured front-matter / metadata for an Architecture Decision Record. The narrative body lives in adr-NNNN-*.md; this mirrors its structured fields. ADRs are immutable after approval (supersede, never edit meaning). IDs follow the ADR-NNNN scheme.",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^ADR-[0-9]{4}$"
+    },
+    "title": {
+      "type": "string",
+      "description": "Short title of the architectural decision."
+    },
+    "status": {
+      "type": "string",
+      "description": "ADR lifecycle status (decision statuses plus Implemented/Obsolete for realized/retired records).",
+      "enum": ["Proposed", "Approved", "Rejected", "Superseded", "Deferred", "Implemented", "Obsolete"],
+      "default": "Proposed"
+    },
+    "date": {
+      "type": "string",
+      "format": "date",
+      "description": "ISO date the ADR reached its current status."
+    },
+    "context": {
+      "type": "string",
+      "description": "The forces and situation that make this decision necessary."
+    },
+    "decision": {
+      "type": "string",
+      "description": "The decision that was made, stated plainly."
+    },
+    "consequences": {
+      "type": "string",
+      "description": "Resulting context: what becomes easier, harder, or constrained."
+    },
+    "alternatives": {
+      "type": "array",
+      "description": "Alternatives considered and why they were not chosen (rejected alternatives are evidence).",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "name": { "type": "string" },
+          "summary": { "type": "string" },
+          "why_not": { "type": "string" }
+        },
+        "required": ["name"]
+      }
+    },
+    "promoted_from": {
+      "type": "string",
+      "description": "The DEC- this ADR was promoted from, if any.",
+      "pattern": "^DEC-[0-9]{3}$"
+    },
+    "supersedes": {
+      "type": "string",
+      "pattern": "^ADR-[0-9]{4}$"
+    },
+    "superseded_by": {
+      "type": "string",
+      "pattern": "^ADR-[0-9]{4}$"
+    },
+    "version": {
+      "type": "string",
+      "description": "Document version (semver or vN).",
+      "pattern": "^(v[0-9]+|[0-9]+\\.[0-9]+\\.[0-9]+)$"
+    },
+    "links": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "addresses": {
+          "type": "array",
+          "description": "Requirements/constraints this ADR addresses.",
+          "items": { "type": "string" }
+        },
+        "related_adrs": {
+          "type": "array",
+          "items": { "type": "string", "pattern": "^ADR-[0-9]{4}$" }
+        }
+      }
+    }
+  },
+  "required": ["id", "title", "status", "context", "decision", "consequences"],
+  "additionalProperties": false
+}

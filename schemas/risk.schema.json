@@ -1,0 +1,80 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://keystone.dev/schemas/risk.schema.json",
+  "title": "Risk",
+  "description": "A risk to delivery or operation, with impact, likelihood, derived exposure, and a mitigation. IDs follow the RISK- scheme.",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^RISK-[0-9]{3}$"
+    },
+    "description": {
+      "type": "string",
+      "description": "What could go wrong."
+    },
+    "impact": {
+      "type": "string",
+      "description": "Severity of consequence if the risk materializes.",
+      "enum": ["low", "medium", "high", "critical"]
+    },
+    "likelihood": {
+      "type": "string",
+      "description": "Probability the risk materializes.",
+      "enum": ["low", "medium", "high"]
+    },
+    "exposure": {
+      "type": "string",
+      "description": "Derived overall exposure (impact x likelihood). Reproducible from impact and likelihood.",
+      "enum": ["low", "medium", "high", "critical"]
+    },
+    "mitigation": {
+      "type": "string",
+      "description": "Plan to reduce probability or impact."
+    },
+    "contingency": {
+      "type": "string",
+      "description": "Fallback if the risk materializes despite mitigation."
+    },
+    "owner": {
+      "type": "string",
+      "description": "Who owns managing this risk (role, stakeholder ID, or name)."
+    },
+    "scope": {
+      "type": "string",
+      "description": "Whether the risk applies to the MVP or the full target.",
+      "enum": ["MVP", "Full"]
+    },
+    "trigger": {
+      "type": "string",
+      "description": "Observable signal that the risk is materializing (when to activate contingency)."
+    },
+    "source": {
+      "type": "string",
+      "description": "Provenance: input section (a known risk) or derived stage."
+    },
+    "status": {
+      "type": "string",
+      "enum": ["Draft", "Proposed", "Approved", "Rejected", "Deferred", "Superseded", "Implemented", "Obsolete"],
+      "default": "Draft"
+    },
+    "links": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "threatens": {
+          "type": "array",
+          "description": "Requirements/decisions/dependencies this risk threatens.",
+          "items": { "type": "string" }
+        },
+        "mitigated_by": {
+          "type": "array",
+          "description": "Decisions or work items that mitigate this risk.",
+          "items": { "type": "string" }
+        }
+      }
+    }
+  },
+  "required": ["id", "description", "impact", "likelihood"],
+  "additionalProperties": false
+}

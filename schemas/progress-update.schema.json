@@ -1,0 +1,65 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://keystone.dev/schemas/progress-update.schema.json",
+  "title": "Progress update",
+  "description": "A single progress entry recorded during an update cycle (Stage 21). Appended to the progress log; feeds re-derivation of status reports.",
+  "type": "object",
+  "properties": {
+    "date": {
+      "type": "string",
+      "format": "date",
+      "description": "ISO date of the update."
+    },
+    "summary": {
+      "type": "string",
+      "description": "Narrative of what changed / progress since the last update."
+    },
+    "decisions_changed": {
+      "type": "array",
+      "description": "Decisions whose status changed in this cycle.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": { "type": "string", "pattern": "^(DEC-[0-9]{3}|ADR-[0-9]{4})$" },
+          "from": {
+            "type": "string",
+            "enum": ["Proposed", "Approved", "Rejected", "Superseded", "Deferred", "Implemented", "Obsolete"]
+          },
+          "to": {
+            "type": "string",
+            "enum": ["Proposed", "Approved", "Rejected", "Superseded", "Deferred", "Implemented", "Obsolete"]
+          },
+          "note": { "type": "string" }
+        },
+        "required": ["id", "to"]
+      }
+    },
+    "items_completed": {
+      "type": "array",
+      "description": "IDs of work items / requirements / experiments completed in this cycle.",
+      "items": { "type": "string" }
+    },
+    "blockers": {
+      "type": "array",
+      "description": "Active blockers as of this update.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "description": { "type": "string" },
+          "blocked_item": { "type": "string", "description": "Entity ID that is blocked." },
+          "open_question": { "type": "string", "pattern": "^OQ-[0-9]{3}$" },
+          "owner": { "type": "string" }
+        },
+        "required": ["description"]
+      }
+    },
+    "author": {
+      "type": "string",
+      "description": "Who recorded this update (for change-log auditability)."
+    }
+  },
+  "required": ["date", "summary"],
+  "additionalProperties": false
+}

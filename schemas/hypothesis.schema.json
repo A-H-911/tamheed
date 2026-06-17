@@ -1,0 +1,58 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://keystone.dev/schemas/hypothesis.schema.json",
+  "title": "Hypothesis",
+  "description": "A testable belief to be validated by an experiment or POC before committing to a path. IDs follow the HYP- scheme.",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^HYP-[0-9]{3}$"
+    },
+    "statement": {
+      "type": "string",
+      "description": "The hypothesis, phrased so it can be confirmed or refuted (e.g. 'X will sustain N req/s at < M ms')."
+    },
+    "rationale": {
+      "type": "string",
+      "description": "Why this is worth testing / what decision it informs."
+    },
+    "validation_method": {
+      "type": "string",
+      "description": "How the hypothesis will be tested (high level; the detailed plan is an EXP-/POC-)."
+    },
+    "confidence": {
+      "type": "string",
+      "description": "Current confidence before testing.",
+      "enum": ["low", "medium", "high"]
+    },
+    "source": {
+      "type": "string",
+      "description": "Provenance: input section or derived stage."
+    },
+    "status": {
+      "type": "string",
+      "description": "Hypothesis lifecycle. Confirmed/Refuted are terminal outcomes after experimentation.",
+      "enum": ["Draft", "Proposed", "Approved", "Testing", "Confirmed", "Refuted", "Deferred", "Superseded", "Obsolete"],
+      "default": "Draft"
+    },
+    "links": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "tested_by": {
+          "type": "array",
+          "description": "Experiments/POCs that test this hypothesis.",
+          "items": { "type": "string", "pattern": "^(EXP|POC)-[0-9]{3}$" }
+        },
+        "informs": {
+          "type": "array",
+          "description": "Decisions this hypothesis informs.",
+          "items": { "type": "string", "pattern": "^(DEC-[0-9]{3}|ADR-[0-9]{4})$" }
+        }
+      }
+    }
+  },
+  "required": ["id", "statement", "status"],
+  "additionalProperties": false
+}

@@ -1,0 +1,61 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://keystone.dev/schemas/execution-phase.schema.json",
+  "title": "Execution phase",
+  "description": "A phase of the execution roadmap with goal, scope, deliverables, validation, risks, and exit criteria. IDs follow the PH-N scheme.",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^PH-[0-9]+$"
+    },
+    "name": {
+      "type": "string",
+      "description": "Short name of the phase."
+    },
+    "goal": {
+      "type": "string",
+      "description": "The outcome this phase exists to achieve."
+    },
+    "scope": {
+      "type": "string",
+      "description": "What is in (and explicitly out of) scope for this phase."
+    },
+    "deliverables": {
+      "type": "array",
+      "description": "Concrete outputs produced by the phase.",
+      "items": { "type": "string" }
+    },
+    "validation": {
+      "type": "string",
+      "description": "How the phase's work is validated before exit."
+    },
+    "risks": {
+      "type": "array",
+      "description": "Risks most relevant to this phase.",
+      "items": { "type": "string", "pattern": "^RISK-[0-9]{3}$" }
+    },
+    "exit_criteria": {
+      "type": "array",
+      "description": "Conditions that must all be true to consider the phase complete (the gate to the next phase).",
+      "items": { "type": "string" }
+    },
+    "depends_on": {
+      "type": "array",
+      "description": "Phases that must complete before this one starts.",
+      "items": { "type": "string", "pattern": "^PH-[0-9]+$" }
+    },
+    "work_items": {
+      "type": "array",
+      "description": "WBS work items realized in this phase.",
+      "items": { "type": "string", "pattern": "^WBS-[0-9]+(\\.[0-9]+){1,2}$" }
+    },
+    "status": {
+      "type": "string",
+      "enum": ["not-started", "in-progress", "blocked", "done"],
+      "default": "not-started"
+    }
+  },
+  "required": ["id", "goal"],
+  "additionalProperties": false
+}

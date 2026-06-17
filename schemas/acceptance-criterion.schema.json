@@ -1,0 +1,65 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://keystone.dev/schemas/acceptance-criterion.schema.json",
+  "title": "Acceptance criterion",
+  "description": "A testable condition that defines when a requirement is satisfied/accepted. Approved acceptance criteria are immutable (supersede, never edit meaning). IDs follow the AC- scheme.",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^AC-[0-9]{3}$"
+    },
+    "statement": {
+      "type": "string",
+      "description": "The acceptance criterion, phrased testably (Given/When/Then or a clear pass condition)."
+    },
+    "verification": {
+      "type": "string",
+      "description": "How the criterion is verified.",
+      "enum": ["test", "demo", "inspection", "analysis", "measurement"]
+    },
+    "verification_detail": {
+      "type": "string",
+      "description": "Specifics of how verification is performed (procedure, metric, threshold)."
+    },
+    "scope": {
+      "type": "string",
+      "description": "Whether the criterion belongs to the MVP or the full target.",
+      "enum": ["MVP", "Full"]
+    },
+    "status": {
+      "type": "string",
+      "enum": ["Draft", "Proposed", "Approved", "Rejected", "Deferred", "Superseded", "Implemented", "Obsolete"],
+      "default": "Draft"
+    },
+    "supersedes": {
+      "type": "string",
+      "pattern": "^AC-[0-9]{3}$"
+    },
+    "superseded_by": {
+      "type": "string",
+      "pattern": "^AC-[0-9]{3}$"
+    },
+    "source": {
+      "type": "string",
+      "description": "Provenance: the requirement or input that motivated it."
+    },
+    "links": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "verifies": {
+          "type": "array",
+          "description": "Requirements this criterion verifies.",
+          "items": { "type": "string", "pattern": "^(FR|NFR)-[0-9]{3}$" }
+        },
+        "tests": {
+          "type": "array",
+          "items": { "type": "string", "pattern": "^TEST-[0-9]{3}$" }
+        }
+      }
+    }
+  },
+  "required": ["id", "statement", "status"],
+  "additionalProperties": false
+}

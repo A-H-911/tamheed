@@ -1,0 +1,88 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://keystone.dev/schemas/comparison-criteria.schema.json",
+  "title": "Comparison criteria matrix",
+  "description": "A weighted technology/approach comparison: criteria with weights, options scored per criterion with a fit rating, and a derived verdict. Mirrors architecture/technology-comparison.md.",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Optional identifier for the comparison (e.g. CMP-001 or a free label).",
+      "pattern": "^[A-Z]+-[0-9]{3}$"
+    },
+    "subject": {
+      "type": "string",
+      "description": "What is being compared (e.g. 'rendering backend')."
+    },
+    "decision_ref": {
+      "type": "string",
+      "description": "The decision this comparison feeds.",
+      "pattern": "^(DEC-[0-9]{3}|ADR-[0-9]{4})$"
+    },
+    "criteria": {
+      "type": "array",
+      "description": "The evaluation criteria and their relative weights.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": { "type": "string", "description": "Short key for the criterion (e.g. 'performance')." },
+          "name": { "type": "string" },
+          "description": { "type": "string" },
+          "weight": {
+            "type": "number",
+            "description": "Relative importance. Convention: weights across criteria sum to 1.0 (or use a consistent 1-5 scale).",
+            "minimum": 0
+          }
+        },
+        "required": ["name", "weight"]
+      }
+    },
+    "options": {
+      "type": "array",
+      "description": "The candidate options, each scored against every criterion.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "name": { "type": "string" },
+          "description": { "type": "string" },
+          "scores": {
+            "type": "array",
+            "description": "Per-criterion score and qualitative fit.",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "criterion": { "type": "string", "description": "Criterion id or name this score applies to." },
+                "score": { "type": "number", "description": "Raw score on the chosen scale." },
+                "fit": {
+                  "type": "string",
+                  "description": "Qualitative fit of the option against this criterion.",
+                  "enum": ["strong", "partial", "weak", "unknown", "unsuitable"]
+                },
+                "note": { "type": "string" }
+              },
+              "required": ["criterion", "fit"]
+            }
+          },
+          "weighted_total": {
+            "type": "number",
+            "description": "Derived weighted sum across criteria. Reproducible from scores x weights."
+          }
+        },
+        "required": ["name", "scores"]
+      }
+    },
+    "verdict": {
+      "type": "string",
+      "description": "The recommended option and the gist of why."
+    },
+    "source": {
+      "type": "string",
+      "description": "Provenance / evidence basis for the scores."
+    }
+  },
+  "required": ["subject", "criteria", "options"],
+  "additionalProperties": false
+}

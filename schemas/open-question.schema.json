@@ -1,0 +1,61 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://keystone.dev/schemas/open-question.schema.json",
+  "title": "Open question",
+  "description": "A gap or ambiguity recorded for clarification rather than blocking. IDs follow the OQ- scheme.",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^OQ-[0-9]{3}$"
+    },
+    "question": {
+      "type": "string",
+      "description": "The open question, phrased so it can be answered by a stakeholder."
+    },
+    "context": {
+      "type": "string",
+      "description": "Why this matters / what is blocked or uncertain without it."
+    },
+    "blocking": {
+      "type": "boolean",
+      "description": "True if downstream work cannot safely proceed until this is resolved.",
+      "default": false
+    },
+    "source": {
+      "type": "string",
+      "description": "Provenance: where the gap was detected (input section or derived stage)."
+    },
+    "owner": {
+      "type": "string",
+      "description": "Who is expected to answer (role, stakeholder ID, or name)."
+    },
+    "status": {
+      "type": "string",
+      "description": "Open questions move Open -> Answered (or Deferred). The shared lifecycle enum is reused; Resolved/Answered map to Implemented for derived views.",
+      "enum": ["Open", "Answered", "Deferred", "Obsolete"],
+      "default": "Open"
+    },
+    "resolution": {
+      "type": "string",
+      "description": "The answer once resolved. Set when status becomes Answered."
+    },
+    "resolved_by": {
+      "type": "string",
+      "description": "Reference to the decision/assumption/requirement that resolved this question."
+    },
+    "links": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "blocks": {
+          "type": "array",
+          "description": "Entities blocked by this question.",
+          "items": { "type": "string" }
+        }
+      }
+    }
+  },
+  "required": ["id", "question", "status"],
+  "additionalProperties": false
+}

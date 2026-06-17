@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Keystone icon: a keystone block at the apex of an arch">
+  <title>Keystone icon</title>
+  <desc>An amber wedge-shaped keystone block locked at the crown of a slate arch built from two springing stones.</desc>
+  <!-- Springing stones (left/right of the arch crown) -->
+  <g fill="#2B3A67">
+    <!-- Left springer -->
+    <path d="M9 30 L24 22 L24 33 L9 44 Z"/>
+    <!-- Right springer -->
+    <path d="M55 30 L40 22 L40 33 L55 44 Z"/>
+  </g>
+  <!-- Keystone block: trapezoid wedge at the apex (warm accent = the locking piece) -->
+  <path d="M24 22 L40 22 L43 35 L21 35 Z" fill="#E0A458"/>
+  <!-- Subtle block-joint lines on the keystone -->
+  <g stroke="#1E2A4A" stroke-width="1.4" stroke-linecap="round" opacity="0.55">
+    <line x1="29.7" y1="22" x2="28.6" y2="35"/>
+    <line x1="34.3" y1="22" x2="35.4" y2="35"/>
+  </g>
+  <!-- Arch opening underneath: a simple arc that reads as the structure being held -->
+  <path d="M16 52 L16 41 A16 16 0 0 1 48 41 L48 52" fill="none" stroke="#2B3A67" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

@@ -1,0 +1,74 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://keystone.dev/schemas/experiment.schema.json",
+  "title": "Experiment / POC",
+  "description": "A planned experiment or proof-of-concept with explicit method, pass/fail criteria, timebox, and recorded result. IDs follow the EXP-/POC- scheme.",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "EXP- for experiments, POC- for proof-of-concept plans.",
+      "pattern": "^(EXP|POC)-[0-9]{3}$"
+    },
+    "title": {
+      "type": "string",
+      "description": "Short title of the experiment/POC."
+    },
+    "objective": {
+      "type": "string",
+      "description": "What question this experiment answers / what it is trying to learn."
+    },
+    "method": {
+      "type": "string",
+      "description": "How the experiment is run: setup, procedure, what is measured."
+    },
+    "pass_criteria": {
+      "type": "string",
+      "description": "Explicit, measurable condition under which the experiment is considered a success."
+    },
+    "fail_criteria": {
+      "type": "string",
+      "description": "Explicit condition under which it is considered a failure (or inconclusive boundary)."
+    },
+    "timebox": {
+      "type": "string",
+      "description": "Maximum effort/duration allotted (e.g. '2 days', '8 hours')."
+    },
+    "result": {
+      "type": "string",
+      "description": "Observed outcome and measurements. Set when complete."
+    },
+    "outcome": {
+      "type": "string",
+      "description": "Verdict against the criteria.",
+      "enum": ["pass", "fail", "inconclusive"]
+    },
+    "status": {
+      "type": "string",
+      "description": "Experiment lifecycle.",
+      "enum": ["Draft", "Proposed", "Approved", "Planned", "Running", "Complete", "Abandoned", "Deferred", "Superseded", "Obsolete"],
+      "default": "Draft"
+    },
+    "source": {
+      "type": "string",
+      "description": "Provenance: derived stage or input."
+    },
+    "links": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "tests_hypothesis": {
+          "type": "array",
+          "items": { "type": "string", "pattern": "^HYP-[0-9]{3}$" }
+        },
+        "informs": {
+          "type": "array",
+          "description": "Decisions informed by the result.",
+          "items": { "type": "string", "pattern": "^(DEC-[0-9]{3}|ADR-[0-9]{4})$" }
+        }
+      }
+    }
+  },
+  "required": ["id", "title", "method", "pass_criteria", "status"],
+  "additionalProperties": false
+}

@@ -1,0 +1,95 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://keystone.dev/schemas/requirement.schema.json",
+  "title": "Requirement",
+  "description": "A single normalized requirement (functional or non-functional) extracted from project input. IDs follow the FR-/NFR- scheme from governance.md.",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Stable identifier. FR- for functional, NFR- for non-functional.",
+      "pattern": "^(FR|NFR)-[0-9]{3}$"
+    },
+    "kind": {
+      "type": "string",
+      "description": "Requirement family. Must agree with the id prefix (functional => FR-, non_functional => NFR-).",
+      "enum": ["functional", "non_functional"]
+    },
+    "statement": {
+      "type": "string",
+      "description": "Verbatim or near-verbatim requirement as understood from the input."
+    },
+    "normalized": {
+      "type": "string",
+      "description": "Crisp restatement of the requirement in a single testable sentence, keeping the original in `statement`."
+    },
+    "source": {
+      "type": "string",
+      "description": "Provenance: a quoted span or the named input section this requirement was extracted from. Mandatory for G-REQ-SRC.",
+      "$comment": "Never drop provenance to tidy the output (see intake.md)."
+    },
+    "priority": {
+      "type": "string",
+      "description": "Scope priority. MVP = required for the minimum viable product; Full = part of the full target only.",
+      "enum": ["MVP", "Full"]
+    },
+    "status": {
+      "type": "string",
+      "description": "Lifecycle status per governance.md.",
+      "enum": ["Draft", "Proposed", "Approved", "Rejected", "Deferred", "Superseded", "Implemented", "Obsolete"],
+      "default": "Draft"
+    },
+    "rationale": {
+      "type": "string",
+      "description": "Why this requirement exists / the underlying need."
+    },
+    "acceptance_hint": {
+      "type": "string",
+      "description": "Optional pointer to how this would be verified, before full acceptance criteria exist."
+    },
+    "merged_from": {
+      "type": "array",
+      "description": "IDs of duplicate requirements merged into this one during de-duplication.",
+      "items": { "type": "string", "pattern": "^(FR|NFR)-[0-9]{3}$" }
+    },
+    "links": {
+      "type": "object",
+      "description": "Typed cross-references to other entities. Targets are entity IDs.",
+      "additionalProperties": false,
+      "properties": {
+        "derives_from": {
+          "type": "array",
+          "description": "Higher-level objectives/requirements this derives from.",
+          "items": { "type": "string" }
+        },
+        "decisions": {
+          "type": "array",
+          "description": "Decisions (DEC-/ADR-) that shape how this requirement is met.",
+          "items": { "type": "string", "pattern": "^(DEC-[0-9]{3}|ADR-[0-9]{4})$" }
+        },
+        "constraints": {
+          "type": "array",
+          "items": { "type": "string", "pattern": "^CON-[0-9]{3}$" }
+        },
+        "risks": {
+          "type": "array",
+          "items": { "type": "string", "pattern": "^RISK-[0-9]{3}$" }
+        },
+        "acceptance_criteria": {
+          "type": "array",
+          "items": { "type": "string", "pattern": "^AC-[0-9]{3}$" }
+        },
+        "work_items": {
+          "type": "array",
+          "items": { "type": "string", "pattern": "^WBS-[0-9]+(\\.[0-9]+){1,2}$" }
+        },
+        "tests": {
+          "type": "array",
+          "items": { "type": "string", "pattern": "^TEST-[0-9]{3}$" }
+        }
+      }
+    }
+  },
+  "required": ["id", "kind", "statement", "status"],
+  "additionalProperties": false
+}

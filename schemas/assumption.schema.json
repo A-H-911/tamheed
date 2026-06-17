@@ -1,0 +1,61 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://keystone.dev/schemas/assumption.schema.json",
+  "title": "Assumption",
+  "description": "An inference made to proceed in the absence of confirmed fact. Recorded with risk-if-wrong and a revisit trigger, never as a requirement (see intake.md). IDs follow the ASM- scheme.",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^ASM-[0-9]{3}$"
+    },
+    "statement": {
+      "type": "string",
+      "description": "What is being assumed."
+    },
+    "rationale": {
+      "type": "string",
+      "description": "Why this assumption is reasonable / what it is based on."
+    },
+    "risk_if_wrong": {
+      "type": "string",
+      "description": "Consequence if the assumption proves false. Mandatory in practice (assumptions without this are unmanaged risk)."
+    },
+    "revisit_if": {
+      "type": "string",
+      "description": "The trigger/condition under which this assumption should be re-examined."
+    },
+    "source": {
+      "type": "string",
+      "description": "Provenance: quoted span or input section, or 'inferred' with basis."
+    },
+    "confidence": {
+      "type": "string",
+      "description": "Subjective confidence in the assumption.",
+      "enum": ["low", "medium", "high"]
+    },
+    "status": {
+      "type": "string",
+      "enum": ["Draft", "Proposed", "Approved", "Rejected", "Deferred", "Superseded", "Implemented", "Obsolete"],
+      "default": "Draft"
+    },
+    "links": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "affects": {
+          "type": "array",
+          "description": "Requirements/decisions that depend on this assumption.",
+          "items": { "type": "string" }
+        },
+        "open_questions": {
+          "type": "array",
+          "description": "Open questions whose resolution would confirm or refute this assumption.",
+          "items": { "type": "string", "pattern": "^OQ-[0-9]{3}$" }
+        }
+      }
+    }
+  },
+  "required": ["id", "statement", "risk_if_wrong", "status"],
+  "additionalProperties": false
+}
