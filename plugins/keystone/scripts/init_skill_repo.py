@@ -80,6 +80,20 @@ SPDX_FULL_TEXT = {"MIT"}
 # Small result/colour helpers
 # --------------------------------------------------------------------------- #
 
+def _configure_stdio() -> None:
+    """Best-effort: make stdout/stderr able to encode the glyphs we print
+    (arrows, bullets, box-drawing) even on legacy code pages such as Windows
+    cp1252, where the default would raise UnicodeEncodeError."""
+    for stream in (sys.stdout, sys.stderr):
+        reconfigure = getattr(stream, "reconfigure", None)
+        if reconfigure is None:
+            continue
+        try:
+            reconfigure(encoding="utf-8", errors="replace")
+        except (ValueError, OSError):
+            pass
+
+
 def _supports_color() -> bool:
     if os.environ.get("NO_COLOR"):
         return False
@@ -1023,6 +1037,7 @@ def resolve_target(args: argparse.Namespace) -> Path:
 
 
 def main(argv: Optional[List[str]] = None) -> int:
+    _configure_stdio()
     args = build_parser().parse_args(argv)
 
     target = resolve_target(args)

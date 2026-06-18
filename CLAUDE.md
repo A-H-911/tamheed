@@ -53,9 +53,9 @@ python plugins/keystone/scripts/init_skill_repo.py --repo-name <name> --owner <o
 `validate_package.py` exits `0` (all critical gates pass), `1` (a critical gate failed → NOT READY), `2`
 (usage/IO error). The init script uses exit codes `2`/`3`/`4`/`130` (see its `scripts/README.md`).
 
-> Windows note: `init_skill_repo.py` prints Unicode glyphs (`→`, `•`, box-drawing) in its banner/summary; on
-> a `cp1252` console it can raise `UnicodeEncodeError`. Run with `PYTHONIOENCODING=utf-8` (a pre-existing
-> rough edge, not specific to a given change).
+> Windows note: `init_skill_repo.py` reconfigures stdout/stderr to UTF-8 at startup (`_configure_stdio`), so
+> its banner/summary glyphs (`→`, `•`, box-drawing) don't raise `UnicodeEncodeError` on legacy code pages
+> such as cp1252.
 
 ## Architecture — the governing principle
 

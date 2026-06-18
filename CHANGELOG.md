@@ -21,6 +21,8 @@ All notable changes to Keystone are documented here. The format is based on
 ### Fixed
 - Self-containment: removed dangling runtime references to repo-root docs and the obsolete "vendor step";
   corrected a stale traceability-schema filename reference.
+- `init_skill_repo.py` no longer crashes with `UnicodeEncodeError` on Windows consoles using a legacy code
+  page — stdout/stderr are reconfigured to UTF-8 at startup.
 
 ### Removed
 - Build-history documents from the initial side-task context (`adrs/`, `IMPLEMENTATION-PLAN.md`,
