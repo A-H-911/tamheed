@@ -7,10 +7,10 @@ Everything below is additive: register a new entry, drop in a file; don't fork t
 
 | Extension | How | Where |
 |---|---|---|
-| New artifact type | Add a template + a catalog row + (if structured) a schema; add a selection trigger. | `../templates/`, `../ARTIFACT-CATALOG.md`, `../schemas/`, `artifact-rules.md` |
+| New artifact type | Add a template + a catalog row + (if structured) a schema; add a selection trigger. | `../templates/`, `artifact-catalog.md`, `../schemas/`, `artifact-rules.md` |
 | New template | Add a `.template.md`; reference it from the catalog. | `../templates/` |
 | New schema | Add a `*.schema.json`; reference from the artifact/state. | `../schemas/` |
-| New quality gate | Add a gate row + (if mechanical) a check in the validator. | `quality-gates.md`, `../tests/` |
+| New quality gate | Add a gate row + (if mechanical) a check in the validator. | `quality-gates.md`, `../scripts/` |
 | New project-type profile | Add a profile that biases selection + research depth. | `artifact-rules.md`, `research-depth.md` |
 | New diagram kind | Add to the diagram set + a generation note. | `generated-structure.md` |
 | New entry point | Build a thin wrapper that normalizes input and routes output to THIS skill. | `commands/`, future CLI/API/MCP |

@@ -2,7 +2,7 @@
 
 Gates verify the package is complete, consistent, traceable, and executable before handoff. **Critical**
 gates block readiness; **Warn** gates surface issues but don't block. Many are checked mechanically by
-`../tests/validate_package.py`; the rest are judgment checks you perform.
+`../scripts/validate_package.py`; the rest are judgment checks you perform.
 
 | Gate | Severity | Checks | Mechanical? |
 |---|---|---|---|
@@ -25,7 +25,7 @@ gates block readiness; **Warn** gates surface issues but don't block. Many are c
 ## Running gates
 
 - Stage 19 runs the full set; Stage 22 re-confirms criticals for the readiness report.
-- Mechanical gates: `python ../tests/validate_package.py <package-dir>` → JSON + human report with per-gate
+- Mechanical gates: `python ../scripts/validate_package.py <package-dir>` → JSON + human report with per-gate
   pass/fail and the offending IDs/paths.
 - Judgment gates: perform the check and record the verdict in the validation report with evidence.
 

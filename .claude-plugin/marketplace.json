@@ -1,0 +1,14 @@
+{
+  "name": "keystone",
+  "owner": {
+    "name": "Anas Hammo",
+    "url": "https://github.com/A-H-911"
+  },
+  "plugins": [
+    {
+      "name": "keystone",
+      "source": "./plugins/keystone",
+      "description": "Turn a project description into a validated, traceable, execution-ready planning & handoff package for another agent to implement."
+    }
+  ]
+}

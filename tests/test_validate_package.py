@@ -24,12 +24,14 @@ import unittest
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
-VALIDATOR = HERE / "validate_package.py"
+# The validator now lives inside the self-contained plugin bundle.
+SCRIPTS = HERE.parent / "plugins" / "keystone" / "scripts"
+VALIDATOR = SCRIPTS / "validate_package.py"
 VALID_PKG = HERE / "fixtures" / "valid-package"
 INVALID_PKG = HERE / "fixtures" / "invalid-package"
 
 # Make the validator importable regardless of cwd.
-sys.path.insert(0, str(HERE))
+sys.path.insert(0, str(SCRIPTS))
 import validate_package as vp  # noqa: E402
 
 

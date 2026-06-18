@@ -5,12 +5,12 @@ front-matter (`status`, `version`, `updated`, `owner`), section headings, `<plac
 identifier rows, and `<!-- guidance -->` comments telling the filler what goes where.
 
 **Use:** the skill copies the relevant `.template.md` into a generated package per
-`../skill/references/artifact-rules.md` and the catalog in `../ARTIFACT-CATALOG.md`, fills the placeholders
+`../references/artifact-rules.md` and the catalog in `../references/artifact-catalog.md`, fills the placeholders
 from project state, and removes the guidance comments. These are blank forms — never filled artifacts; filled
-artifacts live in a generated `<project-package>/` (see `../skill/references/generated-structure.md`).
+artifacts live in a generated `<project-package>/` (see `../references/generated-structure.md`).
 
 **Conventions:** identifiers, statuses, versioning, and cross-references follow
-`../skill/references/governance.md`. All templates are vendor/agent/provider-neutral.
+`../references/governance.md`. All templates are vendor/agent/provider-neutral.
 
 **Generation classes** (see `artifact-rules.md`): **Always** (every package) · **Conditional** (trigger
 holds) · **On-request** · **Continuous** (created early, updated each cycle) · **Derived** (generated from
@@ -63,7 +63,7 @@ other artifacts; never hand-authored).
 
 ## Notes
 
-- **One entity family per register**, one ADR per file. Filenames are kebab-case (`../skill/references/governance.md`).
+- **One entity family per register**, one ADR per file. Filenames are kebab-case (`../references/governance.md`).
 - **Derived** templates (`traceability-matrix`) and regenerated snapshots (`status-report`) are produced from
   state/sources — fill once as a starting shape, then regenerate; do not hand-maintain.
 - Templates whose structured form mirrors a schema (`handoff-manifest`, `package-manifest`) keep the

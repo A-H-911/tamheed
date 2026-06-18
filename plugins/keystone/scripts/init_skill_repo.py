@@ -692,12 +692,12 @@ def plan_actions(target: Path, args: argparse.Namespace) -> List[Action]:
 
 
 def discover_logo_sources() -> List[Path]:
-    """Find logo files in a sibling docs/assets dir, if any (best-effort)."""
-    # This script lives at <repo>/scripts/init_skill_repo.py, so the sibling
-    # assets directory is <repo>/docs/assets.
+    """Find logo files in the bundle's assets dir, if any (best-effort)."""
+    # This script lives at <bundle>/scripts/init_skill_repo.py, so the bundle's
+    # logo assets are at <bundle>/assets.
     here = Path(__file__).resolve()
     candidates: List[Path] = []
-    assets_dir = here.parent.parent / "docs" / "assets"
+    assets_dir = here.parent.parent / "assets"
     if assets_dir.is_dir():
         for f in sorted(assets_dir.iterdir()):
             if f.is_file() and f.suffix.lower() in {".svg", ".png", ".jpg", ".jpeg", ".ico"}:

@@ -2,7 +2,7 @@
 """Keystone package validator -- mechanical quality gates.
 
 Runs the *mechanical* subset of the Keystone quality gates (see
-``../skill/references/quality-gates.md``) against a generated package
+``../references/quality-gates.md``) against a generated package
 directory. Judgment gates (G-CONFLICT, G-EXEC, G-HANDOFF, G-OQ, G-CLAIM, ...)
 are performed by a human/agent and are out of scope here.
 
@@ -51,7 +51,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Dict, Iterable, List, Optional, Tuple
 
-# --- Governance constants (mirror skill/references/governance.md) ----------- #
+# --- Governance constants (mirror references/governance.md) ----------- #
 
 ID_PATTERNS: Dict[str, "re.Pattern[str]"] = {
     "FR": re.compile(r"FR-\d{3,}"),
@@ -866,7 +866,7 @@ def main(argv: Optional[List[str]] = None) -> int:
         description=("Run Keystone's mechanical quality gates (G-IDS, G-DEC-STATUS, "
                      "G-REQ-SRC, G-COMPLETE, G-TRACE) against a generated package "
                      "directory. Exits non-zero if any CRITICAL gate fails."),
-        epilog="See ../skill/references/quality-gates.md for gate definitions.")
+        epilog="See ../references/quality-gates.md for gate definitions.")
     parser.add_argument("package_dir", help="path to the generated package directory")
     parser.add_argument("--json", action="store_true", dest="as_json",
                         help="emit a machine-readable JSON summary instead of the human report")
@@ -899,7 +899,7 @@ if __name__ == "__main__":
 #
 # G-IDS (Critical) - Identifier integrity.
 #   Every identifier in the package must match its governance format (see the
-#   ID_PATTERNS table above, mirrored from skill/references/governance.md):
+#   ID_PATTERNS table above, mirrored from references/governance.md):
 #   FR-NNN, NFR-NNN, CON-NNN, INV-NNN, ASM-NNN, DEP-NNN, OQ-NNN, DEC-NNN,
 #   ADR-NNNN, RISK-NNN, HYP-NNN, EXP-NNN, POC-NNN, KPI-NNN, STK-NNN, MS-NNN,
 #   AC-NNN, TEST-NNN, PH-N, WBS-N[.N[.N]] (the group form WBS-N is valid, as are

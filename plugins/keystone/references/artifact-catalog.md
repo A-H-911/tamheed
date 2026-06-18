@@ -3,9 +3,9 @@
 The authoritative, human-facing list of every artifact Keystone can produce, with its identifier prefix,
 location in a generated package, generation class, lifecycle note, template, and schema. The **decision
 logic** for which optional artifacts get generated is in
-[`skill/references/artifact-rules.md`](skill/references/artifact-rules.md); the **package layout** is in
-[`skill/references/generated-structure.md`](skill/references/generated-structure.md); the **identifiers,
-statuses, and versioning** are in [`skill/references/governance.md`](skill/references/governance.md). This
+[`artifact-rules.md`](artifact-rules.md); the **package layout** is in
+[`generated-structure.md`](generated-structure.md); the **identifiers,
+statuses, and versioning** are in [`governance.md`](governance.md). This
 catalog is the per-artifact reference those documents point back to.
 
 ## How to read this catalog
@@ -30,10 +30,10 @@ the Schema column means the artifact is narrative Markdown with no separate stru
 register kinds that share one register file (e.g. open questions / open decisions / assumptions under
 `decisions/`) are listed on their own rows for clarity.
 
-> Templates and schemas are repo-root single sources of truth; a build/vendor step copies them into a
-> standalone skill bundle (see [`ARCHITECTURE.md`](ARCHITECTURE.md)). The exact template/schema filenames
-> below follow the naming convention `<name>.template.md` / `<name>.schema.json`; if a packaged repo renames
-> one, the catalog row is the place that records it.
+> Templates and schemas are bundled alongside this catalog in `../templates/` and `../schemas/` — the skill
+> is self-contained. The exact template/schema filenames below follow the naming convention
+> `<name>.template.md` / `<name>.schema.json`; if a packaged repo renames one, the catalog row is the place
+> that records it.
 
 ---
 
@@ -162,7 +162,7 @@ requirements, constraint register, assumption register, open-question register, 
 register (with mitigations), phased roadmap, acceptance criteria, traceability matrix (derived), handoff
 overview + initial prompt + handoff manifest, execution-readiness report, package README, package manifest,
 and normalized state. Everything else is Conditional, On-request, Continuous, or Derived per the rows above
-and the triggers in [`skill/references/artifact-rules.md`](skill/references/artifact-rules.md).
+and the triggers in [`artifact-rules.md`](artifact-rules.md).
 
 ## Lifecycle quick reference
 
@@ -173,7 +173,7 @@ and the triggers in [`skill/references/artifact-rules.md`](skill/references/arti
 - **Machine-owned:** `keystone-state.json`, `manifest.json`, the handoff manifest.
 - **Continuous:** progress log (append-only), status report (regenerated each cycle).
 - **Everything else:** versioned-on-change — carries front-matter `status` / `version` / `updated`, bumped on
-  material change, following [`skill/references/governance.md`](skill/references/governance.md).
+  material change, following [`governance.md`](governance.md).
 
 ## Anti-bloat reminder
 

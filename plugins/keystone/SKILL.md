@@ -96,7 +96,7 @@ Do not skip a gate to look finished. If an exit criterion fails, stay in the sta
 ## How to run each phase
 
 **Intake & normalization (stages 1–4).** Accept long-form prose or a structured file. Parse against the
-input schema (`../schemas/project-input.schema.json`); see `references/intake.md`. Extract explicit
+input schema (`schemas/project-input.schema.json`); see `references/intake.md`. Extract explicit
 requirements verbatim with source spans, classify functional vs non-functional vs constraint vs
 preference, and normalize into the requirements schema. Support incomplete input — capture what is present,
 record gaps as open questions, and progressively fill them through interaction.
@@ -114,17 +114,17 @@ settle them, then capture decisions with status and rationale. Run risk analysis
 dependency, platform, and delivery dimensions.
 
 **Plan & generate (stages 16–17).** Produce the phased roadmap and work breakdown, then generate the
-selected artifacts from `../templates/` per the selection rules in `references/artifact-rules.md` and the
-catalog in `../ARTIFACT-CATALOG.md`. Maintain traceability as you generate (`references/traceability.md`).
+selected artifacts from `templates/` per the selection rules in `references/artifact-rules.md` and the
+catalog in `references/artifact-catalog.md`. Maintain traceability as you generate (`references/traceability.md`).
 
-**Repository initialization (stage 18).** Use `../scripts/init_skill_repo.py` (or the language wrapper) to
+**Repository initialization (stage 18).** Use `scripts/init_skill_repo.py` (or the language wrapper) to
 create a usable initial repository — folders, baseline files, README+logo, license, ADR/doc dirs,
 changelog, version, initial commit, and optional remote. It is dry-run-capable, idempotent, and never
 overwrites without `--force`. Operational detail: `references/repo-init.md`.
 
 **Handoff (stage 20).** Assemble the handoff package and write the initial prompt, follow-up prompts (one
 per phase gate), and review prompts from the prompt templates in `references/prompt-templates.md` /
-`../templates/`. The handoff manifest conforms to `../schemas/handoff-package.schema.json`.
+`templates/`. The handoff manifest conforms to `schemas/handoff-package.schema.json`.
 
 **Readiness (stage 22).** Run the quality gates (`references/quality-gates.md`) and emit the
 execution-readiness report. Do not declare ready while any critical gate fails.
@@ -140,7 +140,7 @@ proposal as a proposal until the user approves it.
 
 ## State, resumption, and updates
 
-Persist normalized state to `keystone-state.json` (schema: `../schemas/keystone-state.schema.json`) so work
+Persist normalized state to `keystone-state.json` (schema: `schemas/keystone-state.schema.json`) so work
 can resume without re-asking. On `resume`/`update`, reload state, reconcile with any human edits to
 artifacts, and continue. Updating a decision re-derives the artifacts that depend on it and bumps versions
 per `references/governance.md`. Details: `references/state.md`.
@@ -174,7 +174,10 @@ Read the reference file when you reach the matching part of the work; do not loa
 | `references/state.md` | Persisting, resuming, and updating state |
 | `references/extension.md` | Adding capabilities without touching core logic |
 
-Repo-root companions (specification & rationale, human-facing): `../METHODOLOGY.md`, `../WORKFLOW.md`,
-`../ARTIFACT-CATALOG.md`, `../ARCHITECTURE.md`. Single sources of truth for forms and data shapes:
-`../templates/` and `../schemas/`. When this skill is packaged to run standalone, vendor those two
-directories in via the build step described in `../ARCHITECTURE.md`.
+Human-facing companions (specification & rationale) live in the repository docs:
+[methodology](https://github.com/A-H-911/keystone/blob/main/docs/methodology.md),
+[workflow](https://github.com/A-H-911/keystone/blob/main/docs/workflow.md), and
+[architecture](https://github.com/A-H-911/keystone/blob/main/docs/architecture.md). The full artifact
+catalog ships in-bundle at `references/artifact-catalog.md`, and the single sources of truth for forms and
+data shapes are bundled alongside this file in `templates/` and `schemas/`. This skill is **self-contained**:
+everything it reads or invokes at runtime lives in this directory.

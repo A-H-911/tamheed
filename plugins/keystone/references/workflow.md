@@ -145,7 +145,7 @@ human-intervention point.
   missing git/dirty tree → report and stop. **Human:** ✅ approve actual creation/push. **Artifacts:** repo, scripts/.
 
 ### 19. Quality validation
-- **In:** package (+ repo). **Do:** run all quality gates (`quality-gates.md`) via `../tests/` validators.
+- **In:** package (+ repo). **Do:** run all quality gates (`quality-gates.md`) via `../scripts/` validators.
 - **Out:** validation report. **Enter:** Stage 17 (repo optional). **Exit:** all **critical** gates pass.
 - **Validate:** gate engine returns no critical failures. **Fail:** critical gate fails → loop to the owning
   stage. **Human:** review non-critical warnings. **Artifacts:** validation/.

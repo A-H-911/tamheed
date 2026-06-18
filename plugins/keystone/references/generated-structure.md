@@ -65,7 +65,7 @@ the directories the selected artifact set needs (see `artifact-rules.md`); this 
 
 ## Distinctions to preserve
 
-- **Keystone source** (`skill/`, `commands/`, repo-root specs) vs **generated output** (a
+- **Keystone source** (the `plugins/keystone/` skill bundle) vs **generated output** (a
   `<project-package>/` like the above). Never write generated output into the Keystone source tree except
   under `generated-samples/` for demonstration.
 - **Templates** (`../templates/`, blank forms) vs **filled artifacts** (in a generated package).

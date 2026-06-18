@@ -21,7 +21,7 @@ acceptance criterion.
 
 ## Representation
 
-Markdown table for humans, mirrored by structured rows conforming to `../schemas/traceability.schema.json`
+Markdown table for humans, mirrored by structured rows conforming to `../schemas/traceability-row.schema.json`
 for tooling. One row per requirement, with comma-separated linked IDs per column, plus a `coverage` flag
 (`full` / `partial` / `gap`).
 

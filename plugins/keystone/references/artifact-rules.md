@@ -2,7 +2,7 @@
 
 Generate artifacts by **need, not ceremony** (safeguard 11). Each artifact has a generation class; the
 project profile (Stage 2) and the answered questions decide which optional ones apply. The authoritative
-catalog with one row per artifact is `../ARTIFACT-CATALOG.md`; this file is the decision logic.
+catalog with one row per artifact is `artifact-catalog.md`; this file is the decision logic.
 
 ## Generation classes
 

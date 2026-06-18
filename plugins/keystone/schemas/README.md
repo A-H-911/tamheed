@@ -3,7 +3,7 @@
 Machine-readable **JSON Schema (draft 2020-12)** definitions for every structured artifact Keystone
 produces or consumes. They are the contract between the skill's stages, the persisted state, and the
 generated handoff package. Identifiers, statuses, and lifecycle rules here mirror
-[`../skill/references/governance.md`](../skill/references/governance.md) — when in doubt, governance.md wins.
+[`../references/governance.md`](../references/governance.md) — when in doubt, governance.md wins.
 
 All schemas declare:
 - `$schema`: `https://json-schema.org/draft/2020-12/schema`
