@@ -101,6 +101,12 @@ Worked, end-to-end examples live in [`examples/`](examples) (input briefs + expe
 
 ## How it works
 
+<p align="center">
+  <img src="docs/assets/keystone-flow.svg" alt="Keystone flow: you give a project brief and invoke /keystone:keystone; it runs three gated movements — Understand (intake → scope, looping back for clarifications), Explore (research → decisions → risk), and Plan &amp; hand off (plan → artifacts → repo init → validate, with an approval gate) — producing an execution-ready handoff package (requirements, constraints, ADRs, risk register, roadmap, acceptance criteria, traceability matrix, bootstrapped repo, kickoff prompts) that another agent uses to build the project." width="900">
+</p>
+
+<p align="center"><em>From a project brief to an execution-ready handoff — two gates keep you in control: clarifications during intake, and plan approval before anything is written.</em></p>
+
 Keystone runs an **interactive** process across 22 stages grouped into three movements — **Understand**
 (intake → scope), **Explore** (research → decisions → risk), and **Plan & hand off** (execution plan →
 artifacts → repo init → validation → handoff). One principle governs the design:
