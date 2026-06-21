@@ -5,14 +5,12 @@ description: >-
   planning and handoff package for ANOTHER agent to implement — requirements, constraints, invariants,
   assumptions, open decisions, risk register, architecture + ADRs, technology comparisons, R&D/experiment
   plans, a phased roadmap, acceptance criteria, a requirements→decisions→tasks→tests→risks traceability
-  matrix, a repository bootstrap, and the initial + follow-up handoff prompts. Use this skill whenever the
-  user wants to plan, scope, spec, or "inception" a new project or initiative; run an R&D, architecture, or
-  design mission; produce a project charter or execution plan; de-risk a large build before coding; or
-  prepare a repo and kickoff prompts to hand work to a coding agent (e.g. Claude Code). Trigger on phrases
-  like "plan this project", "turn this idea/spec into a plan", "scope this out", "design before we build",
-  "prepare a handoff", "kickoff prompt for another agent", "project charter", "execution-ready package",
-  "R&D plan", or a long pasted project brief — even if the word "Keystone" is never said. The slash command
-  /keystone is only a thin entry point; this skill is the authoritative implementation.
+  matrix, a repository bootstrap, and initial + follow-up handoff prompts. Use whenever the user wants to
+  plan, scope, spec, or "inception" a new project; run an R&D, architecture, or design mission; produce a
+  project charter or execution plan; de-risk a large build before coding; or prepare a repo and kickoff
+  prompts to hand work to a coding agent (e.g. Claude Code). Trigger on phrases like "plan this project",
+  "turn this idea into a plan", "scope this out", "design before we build", "prepare a handoff", "project
+  charter", or a long pasted project brief — even if the word "Keystone" is never said.
 compatibility: >-
   Works in any agent with file read/write. Repository bootstrap (scripts/init_skill_repo.py) needs Python
   3.9+; optional remote creation needs git and the GitHub CLT (gh). No specific model, vendor, or repo
