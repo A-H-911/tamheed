@@ -38,7 +38,9 @@ from __future__ import annotations
 
 import argparse
 import datetime
+import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -53,9 +55,32 @@ from typing import Callable, List, Optional, Tuple
 DEFAULT_VERSION = "0.1.0"
 COMMIT_MESSAGE = "chore: bootstrap keystone skill repo"
 
+# A repository name must be a single, safe path segment. This blocks path
+# traversal (CWE-22): a value like "../../etc" or an absolute path would
+# otherwise escape --target-dir when building <target-dir>/<repo-name>.
+REPO_NAME_RE = re.compile(r"^[A-Za-z0-9._-]+$")
+
+
+def validate_repo_name(repo_name: str) -> Optional[str]:
+    """Return a human-readable problem string if repo_name is unsafe, else None."""
+    if not repo_name or not REPO_NAME_RE.match(repo_name):
+        return ("invalid --repo-name " + repr(repo_name) + ": must be a single path "
+                "segment matching [A-Za-z0-9._-]+ (no '/', '\\', or other separators).")
+    if repo_name in {".", ".."}:
+        return "invalid --repo-name: '.' and '..' are not allowed."
+    return None
+
 # Directories created in the generated repo. Each gets a `.gitkeep` if it would
 # otherwise be empty (i.e. no baseline file is written into it below).
-REPO_DIRECTORIES: List[str] = [
+#
+# Two layouts (see --layout):
+#   plugin  (default) — a self-contained Claude Code plugin bundle under
+#                       plugins/<name>/, plus a repo-root marketplace. This is how
+#                       Keystone itself ships and the only layout that installs as
+#                       a plugin without restructuring.
+#   classic           — the older skill/ + commands/ top-level layout, kept for
+#                       projects that are not Claude Code plugins.
+CLASSIC_DIRECTORIES: List[str] = [
     "skill",
     "skill/references",
     "commands",
@@ -71,6 +96,34 @@ REPO_DIRECTORIES: List[str] = [
     ".github/ISSUE_TEMPLATE",
     ".github/PULL_REQUEST_TEMPLATE",
 ]
+
+
+def plugin_directories(repo_name: str) -> List[str]:
+    """Self-contained plugin bundle layout: everything the skill reads at runtime
+    lives under plugins/<name>/ with zero outward references."""
+    base = "plugins/" + repo_name
+    return [
+        ".claude-plugin",
+        base,
+        base + "/.claude-plugin",
+        base + "/references",
+        base + "/templates",
+        base + "/schemas",
+        base + "/scripts",
+        base + "/assets",
+        "docs",
+        "docs/assets",
+        "examples",
+        "tests",
+        "adrs",
+        ".github",
+        ".github/ISSUE_TEMPLATE",
+        ".github/PULL_REQUEST_TEMPLATE",
+    ]
+
+
+def repo_directories(layout: str, repo_name: str) -> List[str]:
+    return plugin_directories(repo_name) if layout == "plugin" else CLASSIC_DIRECTORIES
 
 # SPDX license ids we ship full text for. Anything else gets a clear placeholder.
 SPDX_FULL_TEXT = {"MIT"}
@@ -284,42 +337,121 @@ def license_content(spdx: str, holder: str, year: int) -> str:
     return LICENSE_PLACEHOLDER_TEMPLATE.format(spdx=spdx, year=year, holder=holder)
 
 
-def readme_content(repo_name: str, owner: str) -> str:
+def plugin_description(repo_name: str) -> str:
+    return repo_name + ": a reusable Claude Code skill, packaged as a self-contained plugin."
+
+
+def marketplace_json_content(repo_name: str, owner: str) -> str:
+    data = {
+        "name": repo_name,
+        "owner": {"name": owner or "the repository owner"},
+        "plugins": [
+            {
+                "name": repo_name,
+                "source": "./plugins/" + repo_name,
+                "description": plugin_description(repo_name),
+            }
+        ],
+    }
+    return json.dumps(data, indent=2) + "\n"
+
+
+def plugin_json_content(repo_name: str, owner: str, license_id: str) -> str:
+    data = {
+        "name": repo_name,
+        "description": plugin_description(repo_name),
+        "version": DEFAULT_VERSION,
+        "author": {"name": owner or "the project authors"},
+        "license": license_id,
+    }
+    return json.dumps(data, indent=2) + "\n"
+
+
+def starter_skill_md_content(repo_name: str) -> str:
+    return textwrap.dedent(
+        f"""\
+        ---
+        name: {repo_name}
+        description: >-
+          One to three sentences on WHAT this skill does and WHEN to use it, written so
+          the model can decide to invoke it. Keep under 1024 characters. Replace this.
+        ---
+
+        # {repo_name}
+
+        Replace this body with your skill's methodology. `SKILL.md` is the always-loaded
+        front door — keep it lean (under ~500 lines) and push on-demand depth into
+        `references/`. Everything the skill reads at runtime must live inside this
+        bundle (`plugins/{repo_name}/`) with no references pointing outside this
+        directory, because Claude Code copies the plugin directory to a cache on install.
+
+        ## How to use
+
+        1. Edit this file and add reference files under `references/`.
+        2. Put blank artifact forms in `templates/` and data shapes in `schemas/`.
+        3. Put any tooling in `scripts/` (executed, not loaded into context).
+        """
+    )
+
+
+def readme_content(repo_name: str, owner: str, layout: str) -> str:
     owner_line = f"`{owner}`" if owner else "the repository owner"
+    if layout == "plugin":
+        skill_path = f"plugins/{repo_name}/SKILL.md"
+        refs_path = f"plugins/{repo_name}/references/"
+        logo_src = f"plugins/{repo_name}/assets/logo.svg"
+        kind = "a self-contained **Claude Code plugin** (the repo doubles as its own marketplace)"
+        layout_block = textwrap.dedent(
+            f"""\
+            .claude-plugin/marketplace.json     # repo = marketplace; lists the one plugin
+            plugins/{repo_name}/                 # THE BUNDLE — self-contained, copied intact on install
+            ├─ .claude-plugin/plugin.json
+            ├─ SKILL.md                          # always-loaded front door (the methodology)
+            ├─ references/  templates/  schemas/  scripts/  assets/
+            docs/                                # human-facing docs (not part of the bundle)
+            examples/  tests/  adrs/  .github/
+            """
+        )
+    else:
+        skill_path = "skill/SKILL.md"
+        refs_path = "skill/references/"
+        logo_src = "docs/assets/logo.svg"
+        kind = "a reusable **skill + thin entry-point wrapper**"
+        layout_block = textwrap.dedent(
+            """\
+            skill/                 # SKILL.md + references/  (the methodology)
+            commands/              # thin entry-point wrapper(s)
+            templates/             # blank artifact templates
+            schemas/               # machine-readable data shapes (JSON Schema)
+            scripts/               # tooling (incl. this bootstrap script)
+            docs/                  # documentation; docs/assets/ holds the logo
+            examples/  tests/  adrs/  .github/
+            """
+        )
     return textwrap.dedent(
         f"""\
         <p align="center">
-          <img src="docs/assets/logo.svg" alt="{repo_name} logo" width="160" />
+          <img src="{logo_src}" alt="{repo_name} logo" width="160" />
         </p>
 
         # {repo_name}
 
-        A reusable **skill + thin slash-command wrapper**, bootstrapped with the
-        Keystone repository initializer. The skill carries the methodology and
-        references; the slash command is a thin entry point that invokes it.
+        {kind}, bootstrapped with the Keystone repository initializer. The skill carries
+        the methodology and references; any external entry point is a thin wrapper that
+        only invokes it.
 
-        > Logo: see [`docs/assets/logo.svg`](docs/assets/logo.svg). Drop your own
-        > artwork there (same filename) to rebrand.
+        > Logo: see [`{logo_src}`]({logo_src}). Drop your own artwork there (same
+        > filename) to rebrand.
 
         ## Layout
 
         ```
-        skill/                 # SKILL.md + references/  (the methodology)
-        commands/              # thin slash-command wrapper(s)
-        templates/             # blank artifact templates
-        schemas/               # machine-readable data shapes (JSON Schema)
-        scripts/               # tooling (incl. this bootstrap script)
-        docs/                  # documentation; docs/assets/ holds the logo
-        examples/              # worked examples
-        tests/                 # tests for the skill/tooling
-        adrs/                  # Architecture Decision Records
-        .github/               # issue + PR templates
-        ```
+        {layout_block}```
 
         ## Getting started
 
-        1. Read [`skill/SKILL.md`](skill/SKILL.md).
-        2. Browse the references under [`skill/references/`](skill/references/).
+        1. Read [`{skill_path}`]({skill_path}).
+        2. Browse the references under [`{refs_path}`]({refs_path}).
         3. See [`CONTRIBUTING.md`](CONTRIBUTING.md) before opening a PR.
 
         ## Maintainers
@@ -415,8 +547,8 @@ def contributing_content(repo_name: str) -> str:
 
         - Be respectful — see [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md).
         - Discuss substantial changes in an issue before opening a large PR.
-        - Keep the skill (`skill/`) and the slash-command wrapper (`commands/`)
-          in sync: the command stays *thin* and delegates to the skill.
+        - Keep the methodology in the skill (`SKILL.md` + `references/`); any external
+          entry point stays a *thin* wrapper that only invokes the skill.
 
         ## Development workflow
 
@@ -659,9 +791,11 @@ def plan_actions(target: Path, args: argparse.Namespace) -> List[Action]:
     """Build the ordered list of filesystem actions (no side effects)."""
     actions: List[Action] = []
 
+    directories = repo_directories(args.layout, args.repo_name)
+
     # 1) Directories.
     actions.append(Action(Action.DIR, target))
-    for rel in REPO_DIRECTORIES:
+    for rel in directories:
         actions.append(Action(Action.DIR, target / rel))
 
     # 2) Baseline files (path -> content).
@@ -669,7 +803,7 @@ def plan_actions(target: Path, args: argparse.Namespace) -> List[Action]:
     holder = args.owner or "the project authors"
 
     file_specs: List[Tuple[str, str]] = [
-        ("README.md", readme_content(args.repo_name, args.owner)),
+        ("README.md", readme_content(args.repo_name, args.owner, args.layout)),
         (".gitignore", GITIGNORE_CONTENT),
         (".gitattributes", GITATTRIBUTES_CONTENT),
         ("LICENSE", license_content(args.license, holder, year)),
@@ -685,21 +819,38 @@ def plan_actions(target: Path, args: argparse.Namespace) -> List[Action]:
         ),
         ("adrs/adr-0000-record-architecture-decisions.md", seed_adr_content()),
     ]
+
+    # Plugin layout adds the marketplace + plugin manifests and a starter SKILL.md
+    # so the bootstrapped repo installs as a Claude Code plugin with no restructuring.
+    if args.layout == "plugin":
+        base = "plugins/" + args.repo_name
+        file_specs.extend([
+            (".claude-plugin/marketplace.json",
+             marketplace_json_content(args.repo_name, args.owner)),
+            (base + "/.claude-plugin/plugin.json",
+             plugin_json_content(args.repo_name, args.owner, args.license)),
+            (base + "/SKILL.md", starter_skill_md_content(args.repo_name)),
+        ])
+
     for rel, content in file_specs:
         actions.append(Action(Action.FILE, target / rel, content=content))
 
     # 3) .gitkeep for directories that received no baseline file.
     dirs_with_files = {(target / rel).parent for rel, _ in file_specs}
-    for rel in REPO_DIRECTORIES:
+    for rel in directories:
         d = target / rel
         if d in dirs_with_files:
             continue
         actions.append(Action(Action.FILE, d / ".gitkeep", content=gitkeep_content()))
 
-    # 4) Best-effort logo copy from a sibling docs/assets next to this script's
-    #    repo. We look at the script's grandparent (…/keystone/docs/assets).
+    # 4) Best-effort logo copy. In the plugin layout the logo belongs to the bundle
+    #    (plugins/<name>/assets) so the bundle stays self-contained; classic keeps it
+    #    in docs/assets. Either way the generated README points at the right path.
+    assets_rel = (
+        "plugins/" + args.repo_name + "/assets" if args.layout == "plugin" else "docs/assets"
+    )
     for src in discover_logo_sources():
-        dest = target / "docs" / "assets" / src.name
+        dest = target / assets_rel / src.name
         actions.append(Action(Action.COPY, dest, source=src))
 
     return actions
@@ -918,6 +1069,7 @@ def print_summary(args: argparse.Namespace, stats: Stats, target: Path) -> None:
     print(f"  Repo name:      {args.repo_name}")
     print(f"  Default branch: {args.default_branch}")
     print(f"  License:        {args.license}")
+    print(f"  Layout:         {args.layout}")
     print(f"  Remote:         {'create + push' if args.create_remote else 'none (local only)'}")
     print()
 
@@ -929,9 +1081,12 @@ def print_summary(args: argparse.Namespace, stats: Stats, target: Path) -> None:
             print("  3. (Optional) add --create-remote to also create/push to GitHub")
             print("     (requires `gh` and explicit intent).")
     else:
+        skill_md = (
+            f"plugins/{args.repo_name}/SKILL.md" if args.layout == "plugin" else "skill/SKILL.md"
+        )
         print(f"  1. cd {target}")
         print("  2. Inspect the tree and the initial commit: `git log --stat`")
-        print("  3. Edit skill/SKILL.md and commands/ to define your skill.")
+        print(f"  3. Edit {skill_md} to define your skill.")
         if not args.create_remote:
             print("  4. Create a remote when ready, e.g.:")
             print(
@@ -996,6 +1151,16 @@ def build_parser() -> argparse.ArgumentParser:
         "others get a labelled placeholder.",
     )
     parser.add_argument(
+        "--layout",
+        choices=["plugin", "classic"],
+        default="plugin",
+        help="Repository layout. 'plugin' (default) scaffolds a self-contained "
+        "Claude Code plugin bundle under plugins/<name>/ plus a repo-root "
+        "marketplace.json + plugin.json (installs as a plugin with no "
+        "restructuring). 'classic' scaffolds the older skill/ + commands/ "
+        "top-level layout for non-plugin projects.",
+    )
+    parser.add_argument(
         "--target-dir",
         default=None,
         help="Parent directory for the repo (default: ~/source/repos if its "
@@ -1032,13 +1197,27 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def resolve_target(args: argparse.Namespace) -> Path:
-    parent = Path(args.target_dir).expanduser() if args.target_dir else default_target_dir()
-    return (parent / args.repo_name).resolve()
+    parent = (Path(args.target_dir).expanduser() if args.target_dir else default_target_dir()).resolve()
+    target = (parent / args.repo_name).resolve()
+    # Defense in depth (validate_repo_name is the primary guard): the repo must be
+    # created directly inside the chosen parent, never above or beside it.
+    if target.parent != parent:
+        raise ValueError(
+            "resolved target " + str(target) + " escapes parent " + str(parent)
+            + " (check --repo-name)"
+        )
+    return target
 
 
 def main(argv: Optional[List[str]] = None) -> int:
     _configure_stdio()
     args = build_parser().parse_args(argv)
+
+    # Validate the repo name before building any filesystem path (CWE-22).
+    name_problem = validate_repo_name(args.repo_name)
+    if name_problem:
+        err(name_problem)
+        return 2
 
     target = resolve_target(args)
     args._target = target  # used by apply helpers for relative display

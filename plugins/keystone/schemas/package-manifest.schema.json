@@ -31,7 +31,8 @@
         "profile": { "type": "string", "description": "Project profile used." },
         "mode": {
           "type": "string",
-          "enum": ["quick", "standard", "deep", "research", "update", "resume"]
+          "description": "Invocation mode used (must match SKILL.md / references/modes.md): full | intake | plan | resume | update | stage:<id>.",
+          "pattern": "^(full|intake|plan|resume|update|stage:[a-z0-9-]+)$"
         }
       }
     },

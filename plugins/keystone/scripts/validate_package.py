@@ -15,6 +15,10 @@ Gates implemented (all Critical):
                 artifacts.
   G-TRACE       every MVP requirement in the traceability matrix reaches >=1
                 decision, >=1 task, and >=1 test.
+  G-SET         every "Always" artifact (references/required-artifacts.json) is
+                present on disk or explicitly recorded in manifest.json
+                omitted_artifacts[] with a reason; and anything the manifest
+                declares present actually exists.
 
 Assumptions (the input is semi-structured Markdown + JSON, stdlib only):
   - An identifier is a *definition* when it is the first ("ID") column of a
@@ -120,7 +124,12 @@ DECISION_LINK_HEADERS = {"decision", "decisions", "dec", "adr", "adrs", "dec/adr
 TASK_LINK_HEADERS = {"work item", "work items", "wbs", "task", "tasks", "workitem", "workitems"}
 TEST_LINK_HEADERS = {"test", "tests"}
 
-CRITICAL_GATES = {"G-IDS", "G-DEC-STATUS", "G-REQ-SRC", "G-COMPLETE", "G-TRACE"}
+CRITICAL_GATES = {"G-IDS", "G-DEC-STATUS", "G-REQ-SRC", "G-COMPLETE", "G-TRACE", "G-SET"}
+
+# G-SET reads the canonical "Always" artifact set from the bundle (a sibling of
+# scripts/, inside references/). It is the machine-readable mirror of the Always
+# class in references/artifact-rules.md.
+REQUIRED_ARTIFACTS_PATH = Path(__file__).resolve().parent.parent / "references" / "required-artifacts.json"
 
 
 # --- Result model ----------------------------------------------------------- #
@@ -810,12 +819,92 @@ def gate_trace(files: List[PackageFile]) -> GateResult:
     return result
 
 
+# --- Gate: G-SET ------------------------------------------------------------- #
+
+def _load_required_always() -> Tuple[List[dict], Optional[str]]:
+    """Load the 'Always' artifact registry bundled with the skill."""
+    try:
+        data = json.loads(REQUIRED_ARTIFACTS_PATH.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        return [], "could not load " + REQUIRED_ARTIFACTS_PATH.name + ": " + str(exc)
+    always = data.get("always") if isinstance(data, dict) else None
+    if not isinstance(always, list):
+        return [], REQUIRED_ARTIFACTS_PATH.name + " has no 'always' list"
+    return always, None
+
+
+def gate_set(package_dir: Path) -> GateResult:
+    """G-SET: every 'Always' artifact is present, or explicitly omitted-with-reason
+    in manifest.json; and anything the manifest declares present actually exists."""
+    result = GateResult("G-SET", "Critical", checked=True)
+
+    always, load_err = _load_required_always()
+    if load_err:
+        # Without the registry the gate cannot run; report unchecked (SKIP) rather
+        # than punish the package for a tooling problem.
+        result.checked = False
+        sys.stderr.write("warning: G-SET skipped: " + load_err + "\n")
+        return result
+
+    manifest_file = package_dir / "manifest.json"
+    if not manifest_file.is_file():
+        result.findings.append(Finding("G-SET", "Critical",
+            "package manifest (manifest.json) is a required artifact and is missing; "
+            "without it the intended artifact set cannot be determined", "manifest.json"))
+        return result
+
+    try:
+        manifest = json.loads(manifest_file.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        result.findings.append(Finding("G-SET", "Critical",
+            "manifest.json is unreadable / invalid JSON: " + str(exc), "manifest.json"))
+        return result
+
+    omitted_paths: Dict[str, str] = {}
+    declared_present: List[str] = []
+    if isinstance(manifest, dict):
+        for entry in manifest.get("omitted_artifacts") or []:
+            if isinstance(entry, dict):
+                path = str(entry.get("path") or "").strip()
+                reason = str(entry.get("reason") or "").strip()
+                if path and reason and reason.lower() not in EMPTY_CELL_VALUES:
+                    omitted_paths[path] = reason
+        for entry in manifest.get("artifacts") or []:
+            if isinstance(entry, dict):
+                path = str(entry.get("path") or "").strip()
+                if path:
+                    declared_present.append(path)
+
+    # Rule A: every Always artifact is present on disk OR declared omitted (with a
+    # non-empty reason). This is what closes the "absence == not-applicable" hole.
+    for spec in always:
+        match = spec.get("match") or []
+        label = spec.get("label") or spec.get("id") or "(artifact)"
+        canonical = match[0] if match else str(spec.get("id") or "")
+        if any((package_dir / m).is_file() for m in match):
+            continue
+        if any(m in omitted_paths for m in match):
+            continue
+        result.findings.append(Finding("G-SET", "Critical",
+            "required artifact '" + label + "' is neither present nor recorded in "
+            "manifest.json omitted_artifacts[] with a reason", canonical))
+
+    # Rule B (SKIP->FAIL hardening): anything the manifest declares present must
+    # actually exist, so a manifest can't paper over a missing artifact.
+    for path in sorted(set(declared_present)):
+        if not (package_dir / path).is_file():
+            result.findings.append(Finding("G-SET", "Critical",
+                "manifest.json declares this artifact present, but it is missing on disk", path))
+
+    return result
+
+
 # --- Orchestration & reporting ----------------------------------------------- #
 
 def run_gates(package_dir: Path) -> List[GateResult]:
     files = load_package(package_dir)
     return [gate_ids(files), gate_dec_status(files), gate_req_src(files),
-            gate_complete(files), gate_trace(files)]
+            gate_complete(files), gate_trace(files), gate_set(package_dir)]
 
 
 def build_summary(package_dir: Path, results: List[GateResult]) -> dict:
@@ -864,8 +953,8 @@ def main(argv: Optional[List[str]] = None) -> int:
     parser = argparse.ArgumentParser(
         prog="validate_package.py",
         description=("Run Keystone's mechanical quality gates (G-IDS, G-DEC-STATUS, "
-                     "G-REQ-SRC, G-COMPLETE, G-TRACE) against a generated package "
-                     "directory. Exits non-zero if any CRITICAL gate fails."),
+                     "G-REQ-SRC, G-COMPLETE, G-TRACE, G-SET) against a generated "
+                     "package directory. Exits non-zero if any CRITICAL gate fails."),
         epilog="See ../references/quality-gates.md for gate definitions.")
     parser.add_argument("package_dir", help="path to the generated package directory")
     parser.add_argument("--json", action="store_true", dest="as_json",
@@ -971,8 +1060,28 @@ if __name__ == "__main__":
 #   adding the missing link or by explicitly de-scoping the requirement) rather
 #   than shipped as a silent omission.
 #
+# G-SET (Critical) - Required-artifact-set completeness.
+#   The "Always" generation class in references/artifact-rules.md (mirrored
+#   machine-readably in references/required-artifacts.json) names the artifacts
+#   every package must contain: charter, executive summary, functional and
+#   non-functional requirements, the constraint / assumption / open-question /
+#   open-decision registers, the risk register, the phased roadmap, acceptance
+#   criteria, the traceability matrix, the handoff initial prompt, the
+#   execution-readiness report, the package manifest, and the README. G-SET
+#   requires each of these to be present on disk OR explicitly recorded in
+#   manifest.json's omitted_artifacts[] with a non-empty reason; it also fails if
+#   the manifest itself is missing (intended scope is then undeterminable) or if
+#   the manifest declares an artifact present that does not exist on disk.
+#   Rationale: the other five gates verify the *internal consistency of what is
+#   present*; G-SET verifies *that what must be present actually is*. Without it,
+#   a package reduced to a charter and a README passes every other gate by SKIP
+#   and is wrongly reported READY - the absence of an artifact is silently
+#   indistinguishable from "not applicable". G-SET makes omission a conscious,
+#   recorded act (an omitted_artifacts[] entry) rather than a silent gap, which is
+#   exactly what lets an execution agent trust the readiness verdict.
+#
 # Severity and exit behaviour.
-#   All five gates above are Critical: any failure makes the package NOT READY
+#   All six gates above are Critical: any failure makes the package NOT READY
 #   and the process exits 1. The Warn-severity gates from quality-gates.md
 #   (G-ASM-VISIBLE, G-CLAIM, G-RISK, G-COUPLING, G-BLOAT, G-CMD-THIN) and the
 #   partly-mechanical Criticals (G-CONFLICT, G-EXEC, G-HANDOFF, G-OQ) are

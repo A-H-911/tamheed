@@ -1,0 +1,26 @@
+{
+  "project": "Valid Package Fixture",
+  "package_version": "1.0.0",
+  "artifacts": [
+    { "path": "README.md", "title": "Package README", "version": "1.0.0", "status": "Approved", "kind": "narrative" },
+    { "path": "00-charter.md", "title": "Project charter", "version": "1.0.0", "status": "Approved", "kind": "narrative" },
+    { "path": "requirements/functional.md", "title": "Functional requirements", "version": "1.0.0", "status": "Approved", "kind": "register" },
+    { "path": "requirements/non-functional.md", "title": "Non-functional requirements", "version": "1.0.0", "status": "Approved", "kind": "register" },
+    { "path": "decisions/open-decision-register.md", "title": "Open-decision register", "version": "1.0.0", "status": "Approved", "kind": "register" },
+    { "path": "decisions/open-question-register.md", "title": "Open-question register", "version": "1.0.0", "status": "Approved", "kind": "register" },
+    { "path": "planning/roadmap.md", "title": "Phased roadmap", "version": "1.0.0", "status": "Approved", "kind": "narrative" },
+    { "path": "planning/work-breakdown.md", "title": "Work breakdown", "version": "1.0.0", "status": "Approved", "kind": "narrative" },
+    { "path": "validation/acceptance-criteria.md", "title": "Acceptance criteria", "version": "1.0.0", "status": "Approved", "kind": "register" },
+    { "path": "validation/test-strategy.md", "title": "Test strategy", "version": "1.0.0", "status": "Approved", "kind": "narrative" },
+    { "path": "validation/traceability-matrix.md", "title": "Traceability matrix", "version": "1.0.0", "status": "Approved", "kind": "derived" },
+    { "path": "adrs/adr-0001-single-table-storage.md", "title": "Single-table storage", "version": "1.0.0", "status": "Approved", "kind": "adr" }
+  ],
+  "omitted_artifacts": [
+    { "path": "01-executive-summary.md", "reason": "Minimal validator fixture; a one-page summary adds nothing over the charter for a stub package." },
+    { "path": "requirements/constraint-register.md", "reason": "No hard constraints in this fixture's input; nothing to register." },
+    { "path": "decisions/assumption-register.md", "reason": "Fixture input is fully specified; no proceeding-under-assumption was needed." },
+    { "path": "risks/risk-register.md", "reason": "Trivial fixture scope carries no material delivery or technical risk worth registering." },
+    { "path": "handoff/initial-prompt.md", "reason": "This fixture exercises the validator, not the handoff stage; no execution agent is being briefed." },
+    { "path": "handoff/execution-readiness-report.md", "reason": "Readiness reporting is out of scope for a validator-only fixture." }
+  ]
+}

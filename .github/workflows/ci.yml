@@ -1,0 +1,64 @@
+name: CI
+
+# Deterministic, fail-closed gate for every push to main and every PR.
+# Runs the validator's own unit/CLI test suite and validates the golden packages.
+# This is finding F-02 from AUDIT.md: the validator is built to "gate a commit
+# without a model in the loop", but nothing was running it.
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  validator:
+    name: validator (py${{ matrix.python }} · ${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        python: ['3.9', '3.10', '3.11', '3.12']
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+
+      - name: Validator unit + CLI tests
+        shell: bash
+        run: python tests/test_validate_package.py
+
+      - name: Golden — valid fixture passes (exit 0)
+        shell: bash
+        run: python plugins/keystone/scripts/validate_package.py tests/fixtures/valid-package
+
+      - name: Golden — demo package passes (exit 0)
+        shell: bash
+        run: python plugins/keystone/scripts/validate_package.py generated-samples/support-triage-agent
+
+      - name: Negative — invalid fixture fails (exit 1)
+        shell: bash
+        run: |
+          set +e
+          python plugins/keystone/scripts/validate_package.py tests/fixtures/invalid-package
+          code=$?
+          set -e
+          if [ "$code" -ne 1 ]; then
+            echo "::error::invalid-package expected exit 1, got $code"; exit 1
+          fi
+
+      - name: Negative — incomplete fixture fails on G-SET (exit 1)
+        shell: bash
+        run: |
+          set +e
+          python plugins/keystone/scripts/validate_package.py tests/fixtures/incomplete-package
+          code=$?
+          set -e
+          if [ "$code" -ne 1 ]; then
+            echo "::error::incomplete-package expected exit 1, got $code"; exit 1
+          fi

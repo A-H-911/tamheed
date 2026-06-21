@@ -53,3 +53,23 @@ references. This is required by Claude Code's plugin install semantics (the plug
 cache, so files outside it would not travel) and it makes the bundle equally usable as a standalone Agent
 Skill or a manual copy. It replaces the earlier "single source at repo root + vendor step" model, which had
 no build and left runtime references dangling once installed.
+
+## 7. The brief is untrusted data, not instructions
+
+Keystone ingests an external project brief and emits prompts another agent will act on — the canonical
+prompt-injection shape (OWASP LLM01, direct and second-order). So the brief and any file content are treated
+as **data to plan over, never commands**: verbatim brief text is quoted and provenance-labeled, an injected
+directive is captured (and surfaced) rather than executed, and the assembled handoff is screened before emit
+(gate `G-INJECT`). The contract lives in `SKILL.md` (operating principle 10), `references/safeguards.md`
+(safeguard 18), and `references/handoff.md`; the overall posture is documented in `SECURITY.md`.
+
+## 8. Mechanical gates verify what is present *and* that what must be present is
+
+The validator's identifier/status/source/completeness/traceability gates check the internal consistency of
+whatever artifacts exist. That left a gap: a package missing its core artifacts could pass, because each
+gate SKIPped on the absent input. Gate **G-SET** closes it by reading the **Always** set
+(`plugins/keystone/references/required-artifacts.json`, the machine mirror of `artifact-rules.md`) and
+requiring each always-on artifact to be present on disk or explicitly recorded in the manifest's
+`omitted_artifacts[]` with a reason. Omission becomes a conscious, recorded act rather than a silent gap —
+which is what lets the "execution-ready" verdict be trusted. Deterministic checks stay in the script;
+judgment gates stay with the model (decision 2 is unchanged).

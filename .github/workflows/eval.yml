@@ -1,0 +1,43 @@
+name: Behavioral evals (scheduled)
+
+# Non-blocking. The behavioral grading (with-skill vs without-skill) needs a model
+# in the loop and is run by an operator/agent per evals/README.md. What CI *can* do
+# deterministically — keep the eval spec well-formed so the suite can't silently rot —
+# runs here weekly and on demand. Audit finding F-03.
+
+on:
+  schedule:
+    - cron: '17 6 * * 1'   # Mondays 06:17 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  eval-spec-lint:
+    name: eval spec well-formed
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: evals.json structure check
+        run: |
+          python - <<'PY'
+          import json
+          d = json.load(open('evals/evals.json', encoding='utf-8'))
+          assert d.get('skill') == 'keystone', 'skill must be keystone'
+          cases = d.get('cases') or []
+          assert len(cases) >= 5, f'expected >=5 cases, got {len(cases)}'
+          ids = set()
+          for c in cases:
+              for k in ('id', 'intent', 'input', 'deterministic_assertions', 'rubric'):
+                  assert c.get(k), f"case {c.get('id')!r} missing {k}"
+              assert c['id'] not in ids, f"duplicate case id {c['id']}"
+              ids.add(c['id'])
+          assert 'injection-brief' in ids, 'the injection (safeguard-18) case must be present'
+          print(f"OK: {len(cases)} eval cases well-formed: {', '.join(sorted(ids))}")
+          PY
+      - name: Reminder
+        run: echo "Behavioral grading is model-in-the-loop — run evals/README.md steps and record pass-rate/token deltas."

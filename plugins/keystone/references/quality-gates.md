@@ -9,8 +9,9 @@ gates block readiness; **Warn** gates surface issues but don't block. Many are c
 | G-REQ-SRC | Critical | Every `FR-/NFR-` has a `source`. | Yes |
 | G-IDS | Critical | Identifiers match `governance.md` format; unique; no dangling cross-refs. | Yes |
 | G-DEC-STATUS | Critical | Every decision/ADR has an explicit status from the allowed set. | Yes |
-| G-TRACE | Critical | Every MVP `FR-/NFR-` reaches ≥1 decision, ≥1 task, ≥1 test; behavior-bearing ones reach an `AC-`. | Yes |
-| G-COMPLETE | Critical | Every artifact in the selected set exists and is non-stub (no "TODO"/empty sections). | Yes |
+| G-SET | Critical | Every **Always** artifact (`required-artifacts.json`, the machine mirror of `artifact-rules.md`) is present, or recorded in `manifest.json` `omitted_artifacts[]` with a reason; the manifest itself exists; nothing the manifest declares present is missing. | Yes |
+| G-TRACE | Critical | Every MVP `FR-/NFR-` reaches ≥1 decision, ≥1 task, ≥1 test (mechanical); behavior-bearing ones reach an `AC-` (judgment — not yet mechanized). | Partly |
+| G-COMPLETE | Critical | Every artifact is non-stub: no "TODO"/placeholder markers, no empty sections. (Whether the *required set* exists is gate **G-SET**, not this gate.) | Yes |
 | G-CONFLICT | Critical | No unresolved hard contradiction remains past scope lock. | Partly |
 | G-EXEC | Critical | Each phase has deliverables + exit criteria; leaf WBS items are actionable + testable. | Partly |
 | G-HANDOFF | Critical | Handoff prompts reference only existing artifacts; agent-neutral; no dangling instructions. | Partly |
@@ -21,6 +22,7 @@ gates block readiness; **Warn** gates surface issues but don't block. Many are c
 | G-COUPLING | Warn | No needless coupling to one agent/provider/stack (see safeguards 13–15). | No |
 | G-BLOAT | Warn | No artifact merely restates another; no empty placeholders. | Partly |
 | G-CMD-THIN | Warn | The slash command contains no methodology/business logic. | Partly |
+| G-INJECT | Warn | Brief-derived text in handoff prompts is quoted + provenance-labeled, not a bare imperative; no injected instruction is rendered as a directive (safeguard 18, OWASP LLM01). | No |
 
 ## Running gates
 

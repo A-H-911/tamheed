@@ -1,0 +1,22 @@
+{
+  "$comment": "Machine-readable mirror of the 'Always' generation class in artifact-rules.md. Consumed by gate G-SET in scripts/validate_package.py to verify a generated package contains every always-on artifact (or explicitly records it under manifest.json omitted_artifacts[] with a reason). Adding/removing an always-on artifact: edit BOTH this file and artifact-rules.md (single source of truth for selection logic). Each entry's `match` is a list of package-root-relative paths; the artifact counts as present if ANY of them exists on disk.",
+  "schema_version": "1.0.0",
+  "always": [
+    { "id": "readme",                 "label": "Package README",            "match": ["README.md"] },
+    { "id": "charter",                "label": "Project charter",           "match": ["00-charter.md"] },
+    { "id": "executive-summary",      "label": "Executive summary",         "match": ["01-executive-summary.md"] },
+    { "id": "functional",             "label": "Functional requirements",   "match": ["requirements/functional.md"] },
+    { "id": "non-functional",         "label": "Non-functional requirements","match": ["requirements/non-functional.md"] },
+    { "id": "constraint-register",    "label": "Constraint register",       "match": ["requirements/constraint-register.md"] },
+    { "id": "assumption-register",    "label": "Assumption register",       "match": ["decisions/assumption-register.md"] },
+    { "id": "open-question-register", "label": "Open-question register",    "match": ["decisions/open-question-register.md"] },
+    { "id": "open-decision-register", "label": "Open-decision register",    "match": ["decisions/open-decision-register.md"] },
+    { "id": "risk-register",          "label": "Risk register",             "match": ["risks/risk-register.md"] },
+    { "id": "roadmap",                "label": "Phased roadmap",            "match": ["planning/roadmap.md"] },
+    { "id": "acceptance-criteria",    "label": "Acceptance criteria",       "match": ["validation/acceptance-criteria.md"] },
+    { "id": "traceability-matrix",    "label": "Traceability matrix",       "match": ["validation/traceability-matrix.md", "validation/traceability-matrix.json"] },
+    { "id": "initial-prompt",         "label": "Handoff initial prompt",    "match": ["handoff/initial-prompt.md"] },
+    { "id": "execution-readiness",    "label": "Execution-readiness report","match": ["handoff/execution-readiness-report.md"] },
+    { "id": "manifest",               "label": "Package manifest",          "match": ["manifest.json"] }
+  ]
+}

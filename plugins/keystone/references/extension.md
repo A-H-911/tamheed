@@ -13,7 +13,7 @@ Everything below is additive: register a new entry, drop in a file; don't fork t
 | New quality gate | Add a gate row + (if mechanical) a check in the validator. | `quality-gates.md`, `../scripts/` |
 | New project-type profile | Add a profile that biases selection + research depth. | `artifact-rules.md`, `research-depth.md` |
 | New diagram kind | Add to the diagram set + a generation note. | `generated-structure.md` |
-| New entry point | Build a thin wrapper that normalizes input and routes output to THIS skill. | `commands/`, future CLI/API/MCP |
+| New entry point | Build a thin wrapper that normalizes input and routes output to THIS skill. | a future CLI / API / MCP / UI wrapper (in Claude Code the skill itself is the entry point) |
 
 ## Entry-point contract
 
