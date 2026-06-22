@@ -11,6 +11,7 @@
     { "path": "planning/roadmap.md", "title": "Phased roadmap", "version": "1.0.0", "status": "Approved", "kind": "narrative" },
     { "path": "planning/work-breakdown.md", "title": "Work breakdown", "version": "1.0.0", "status": "Approved", "kind": "narrative" },
     { "path": "validation/acceptance-criteria.md", "title": "Acceptance criteria", "version": "1.0.0", "status": "Approved", "kind": "register" },
+    { "path": "validation/acceptance-audit.md", "title": "Acceptance audit", "version": "1.0.0", "status": "Implemented", "kind": "derived" },
     { "path": "validation/test-strategy.md", "title": "Test strategy", "version": "1.0.0", "status": "Approved", "kind": "narrative" },
     { "path": "validation/traceability-matrix.md", "title": "Traceability matrix", "version": "1.0.0", "status": "Approved", "kind": "derived" },
     { "path": "adrs/adr-0001-single-table-storage.md", "title": "Single-table storage", "version": "1.0.0", "status": "Approved", "kind": "adr" }

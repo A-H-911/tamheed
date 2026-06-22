@@ -41,5 +41,7 @@ Determine <question>. Tests `HYP-00x`; informs `DEC-00x`.
 <!-- Fill after running. -->
 - **Outcome:** <PASS | FAIL | Inconclusive>
 - **Evidence:** <numbers, logs, artifact links>
+- **Surprises / caveats:** <what was unexpected; the limits of what this experiment proves>
 - **Decision impact:** <how this changes DEC-/ADR-/RISK->
+- **Implications carried forward:** <what later phases must do because of this result>
 - **Date run:** <YYYY-MM-DD>

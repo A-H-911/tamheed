@@ -29,6 +29,19 @@ owner: <name-or-role>
 | RISK-002 | <dependency X unavailable / changes> | 5 | 2 | 10 | <alternative DEP-00x; abstraction layer> | <vendor deprecation notice> | Both | <role> | Proposed |
 | RISK-003 | <delivery: scope larger than estimated> | 3 | 4 | 12 | <phase gating; cut Full items first> | <PH-1 slips by > N> | Full | <role> | Draft |
 
+## Acknowledged trade-offs
+
+<!-- Conflicts with no clean win — state the trade and the chosen side, so it is a decision, not a drift. -->
+- <competing goals, e.g. determinism vs upgrade cadence> — chose <side> because <reason>; accepted cost:
+  <what we give up>.
+
+## Ambiguities & resolution paths
+
+<!-- Under-specified inputs and how each gets closed; each becomes an OQ-, an ASM-, or a spike. -->
+| Ambiguity | Resolution path |
+|---|---|
+| <vague term / missing quantity> | <becomes OQ-00x / ASM-00x / EXP-00x> |
+
 ## Notes
 
 <!-- Reference what each risk threatens (FR-/NFR-/DEC-/DEP-/PH-) so the traceability matrix can link

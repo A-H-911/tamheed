@@ -102,6 +102,7 @@ register kinds that share one register file (e.g. open questions / open decision
 | Work breakdown | `WBS-N.N` | `planning/work-breakdown.md` | Conditional — non-trivial / multi-actor delivery | versioned-on-change; leaf items actionable + testable | `templates/work-breakdown.template.md` | — |
 | Milestones | `MS-` | `planning/milestones.md` | Conditional — multi-phase delivery | versioned-on-change | `templates/milestones.template.md` | — |
 | Execution backlog | — | `execution/backlog.md` | Conditional — handoff to a coding agent | versioned-on-change | — (derived from work-breakdown) | — |
+| Deferred-work / tech-debt register | — | `execution/deferred-work-register.md` | Conditional — long execution horizon / handoff | versioned-on-change; durable index of known-not-done + accepted debt (distinct from the forward backlog) | `templates/deferred-work-register.template.md` | — |
 | Definition of Ready | — | `execution/definition-of-ready.md` | Conditional — repo requested / handoff | versioned-on-change | `templates/definition-of-ready.template.md` | — |
 | Definition of Done | — | `execution/definition-of-done.md` | Conditional — repo requested / handoff | versioned-on-change | `templates/definition-of-done.template.md` | — |
 | Checkpoints (review/approval gates) | — | `execution/checkpoints.md` | Conditional — long execution horizon | versioned-on-change | — (no dedicated template) | — |
@@ -110,10 +111,11 @@ register kinds that share one register file (e.g. open questions / open decision
 
 | Artifact | ID prefix | Location | Generation class | Lifecycle note | Template | Schema |
 |---|---|---|---|---|---|---|
-| Acceptance criteria | `AC-` | `validation/acceptance-criteria.md` | Always | **immutable-after-approval** once accepted; testable, MVP + full target | `templates/acceptance-criteria.template.md` | — |
+| Acceptance criteria | `AC-` | `validation/acceptance-criteria.md` | Always | **immutable-after-approval** once accepted; testable, MVP + full target; optional Evidence column | `templates/acceptance-criteria.template.md` | `schemas/acceptance-criterion.schema.json` |
+| Acceptance audit | `AC-` (refs) | `validation/acceptance-audit.md` | **Derived** — Conditional (handoff / long execution horizon) | **derived-regenerate** each gate; criterion → verdict (Met/Partial/Not-met/Pending) × evidence; the downstream agent's during/after-execution close-out — distinct from the planner's pre-handoff readiness report; gate **G-PROGRESS** checks AC coverage | `templates/acceptance-audit.template.md` | — |
 | Test strategy | `TEST-` | `validation/test-strategy.md` | Conditional — non-trivial NFRs / handoff | versioned-on-change | `templates/test-strategy.template.md` | — |
 | Validation strategy | — | `validation/test-strategy.md` (validation-approach section) | Conditional — non-trivial NFRs / regulatory | versioned-on-change | (within test-strategy template) | — |
-| Traceability matrix | — | `validation/traceability-matrix.md` | **Derived** (Always) | **derived-regenerate**; FR/NFR → DEC/ADR → WBS → TEST → RISK → AC | `templates/traceability-matrix.template.md` | — |
+| Traceability matrix | — | `validation/traceability-matrix.md` | **Derived** (Always) | **derived-regenerate**; FR/NFR → DEC/ADR → WBS → TEST → RISK → AC | `templates/traceability-matrix.template.md` | `schemas/traceability-row.schema.json` |
 
 ## Progress
 
@@ -149,6 +151,7 @@ register kinds that share one register file (e.g. open questions / open decision
 | Artifact | ID prefix | Location | Generation class | Lifecycle note | Template | Schema |
 |---|---|---|---|---|---|---|
 | Package README | — | `README.md` | Always | versioned-on-change; consumption + reading order for the agent | `templates/package-readme.template.md` | — |
+| Agent-control surface | — | `AGENTS.md` (+ optional `CLAUDE.md` shim) | **Derived** — Conditional (handoff / repo requested) | **derived-regenerate**; agent-neutral ambient control surface at the package/repo root: invariants (violation⇒ADR) + hard constraints + conventions + current-phase pointer + tracking protocol; renders/links the registers (not a second copy); also emitted into a bootstrapped repo by `scripts/init_repo.*` | `templates/agent-control.template.md` | — |
 | Package manifest | — | `manifest.json` | Always | machine-owned; lists artifacts present, versions, generation metadata, omission reasons | `templates/package-manifest.template.md` | `schemas/package-manifest.schema.json` |
 | Normalized state | — | `keystone-state.json` | Always | **machine-owned**; powers resume/update; never hand-edited | — | `schemas/keystone-state.schema.json` |
 

@@ -24,10 +24,15 @@ generation: regenerated      # snapshot regenerated each update cycle from state
 
 ## Phase progress
 
-| Phase | Status | Exit criteria met? | Notes |
-|---|---|---|---|
-| PH-1 | <Done/In-progress/Not-started> | <Yes/No/Partial> | <one line> |
-| PH-2 | <…> | <…> | <…> |
+| Phase | Status | Exit criteria met? | Evidence | Notes |
+|---|---|---|---|---|
+| PH-1 | <Done/In-progress/Not-started> | <Yes/No/Partial> | <TEST-/CI/golden> | <one line> |
+| PH-2 | <…> | <…> | <…> | <…> |
+
+## Acceptance snapshot
+
+- **MVP:** <m>/<n> acceptance criteria met · **Full:** <a>/<b> met.
+- Full criterion-by-criterion verdict + evidence: [acceptance audit](../validation/acceptance-audit.md).
 
 ## Completed since last report
 
@@ -35,7 +40,7 @@ generation: regenerated      # snapshot regenerated each update cycle from state
 
 ## In progress
 
-- <WBS-x.y — % or state>
+- <WBS-x.y — state (done/total leaves) + evidence (TEST-/commit/CI)>
 
 ## Blockers and risks
 

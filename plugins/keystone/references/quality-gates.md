@@ -10,6 +10,7 @@ gates block readiness; **Warn** gates surface issues but don't block. Many are c
 | G-IDS | Critical | Identifiers match `governance.md` format; unique; no dangling cross-refs. | Yes |
 | G-DEC-STATUS | Critical | Every decision/ADR has an explicit status from the allowed set. | Yes |
 | G-SET | Critical | Every **Always** artifact (`required-artifacts.json`, the machine mirror of `artifact-rules.md`) is present, or recorded in `manifest.json` `omitted_artifacts[]` with a reason; the manifest itself exists; nothing the manifest declares present is missing. | Yes |
+| G-PROGRESS | Critical | If an acceptance audit (`validation/acceptance-audit.md`) is present, every `AC-` in the acceptance criteria appears in it with a verdict from {Met, Partial, Not-met, Pending}; SKIP when no audit exists (Conditional — handoff / long execution horizon). | Yes |
 | G-TRACE | Critical | Every MVP `FR-/NFR-` reaches ≥1 decision, ≥1 task, ≥1 test (mechanical); behavior-bearing ones reach an `AC-` (judgment — not yet mechanized). | Partly |
 | G-COMPLETE | Critical | Every artifact is non-stub: no "TODO"/placeholder markers, no empty sections. (Whether the *required set* exists is gate **G-SET**, not this gate.) | Yes |
 | G-CONFLICT | Critical | No unresolved hard contradiction remains past scope lock. | Partly |

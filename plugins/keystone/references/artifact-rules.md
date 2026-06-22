@@ -31,8 +31,8 @@ manifest, README for the package.
 | Regulatory/compliance input | compliance constraints, validation evidence plan |
 | Invariants present | invariant register |
 | External dependencies | dependency register |
-| Long execution horizon | progress log, status report cadence, checkpoints |
-| Repo requested / handoff to coding agent | repository bootstrap, follow-up + review prompts, DoR/DoD |
+| Long execution horizon | progress log, status report cadence, checkpoints, acceptance audit, deferred-work / tech-debt register |
+| Repo requested / handoff to coding agent | repository bootstrap, follow-up + review prompts, DoR/DoD, agent-control surface (`AGENTS.md` + `CLAUDE.md` shim), acceptance audit |
 
 ## On-request
 

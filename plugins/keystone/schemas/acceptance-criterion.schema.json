@@ -22,6 +22,11 @@
       "type": "string",
       "description": "Specifics of how verification is performed (procedure, metric, threshold)."
     },
+    "evidence": {
+      "type": "array",
+      "description": "Optional. Evidence backing the criterion at execution time: TEST- ids, commit/PR refs, CI run or golden-sample links. The authoritative live verdict-plus-evidence record is the derived acceptance audit (validation/acceptance-audit.md); this field is a convenience mirror on the criterion itself.",
+      "items": { "type": "string" }
+    },
     "scope": {
       "type": "string",
       "description": "Whether the criterion belongs to the MVP or the full target.",

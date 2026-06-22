@@ -19,6 +19,9 @@ Gates implemented (all Critical):
                 present on disk or explicitly recorded in manifest.json
                 omitted_artifacts[] with a reason; and anything the manifest
                 declares present actually exists.
+  G-PROGRESS    if an acceptance audit (validation/acceptance-audit.md) exists,
+                every AC- in the acceptance criteria appears in it with a verdict
+                from {Met, Partial, Not-met, Pending}; SKIP when no audit exists.
 
 Assumptions (the input is semi-structured Markdown + JSON, stdlib only):
   - An identifier is a *definition* when it is the first ("ID") column of a
@@ -123,8 +126,10 @@ SCOPE_HEADERS = {"scope", "mvp", "milestone", "release"}
 DECISION_LINK_HEADERS = {"decision", "decisions", "dec", "adr", "adrs", "dec/adr", "decisions/adrs"}
 TASK_LINK_HEADERS = {"work item", "work items", "wbs", "task", "tasks", "workitem", "workitems"}
 TEST_LINK_HEADERS = {"test", "tests"}
+VERDICT_HEADERS = {"verdict"}
+ALLOWED_VERDICTS = {"met", "partial", "not-met", "not met", "pending"}
 
-CRITICAL_GATES = {"G-IDS", "G-DEC-STATUS", "G-REQ-SRC", "G-COMPLETE", "G-TRACE", "G-SET"}
+CRITICAL_GATES = {"G-IDS", "G-DEC-STATUS", "G-REQ-SRC", "G-COMPLETE", "G-TRACE", "G-SET", "G-PROGRESS"}
 
 # G-SET reads the canonical "Always" artifact set from the bundle (a sibling of
 # scripts/, inside references/). It is the machine-readable mirror of the Always
@@ -420,7 +425,15 @@ def collect_identifiers(files: List[PackageFile]) -> Tuple[List[IdOccurrence], L
                     if err:
                         findings.append(Finding("G-IDS", "Critical", err, pf.rel + ":front-matter"))
 
+        # The acceptance audit is a DERIVED view that REPORTS verdicts on AC- which
+        # are DEFINED in the acceptance criteria. Skip its tables here so its AC-
+        # cells are captured as references (by the body scan below), not as a second
+        # definition that would trip G-IDS duplicate-detection within validation/.
+        audit_view = "acceptance-audit" in pf.rel.lower()
+
         for table in pf.tables:
+            if audit_view:
+                continue
             id_col = table.col_index(ID_HEADERS)
             if id_col is None:
                 id_col = _guess_id_column(table)
@@ -899,12 +912,110 @@ def gate_set(package_dir: Path) -> GateResult:
     return result
 
 
+# --- Gate: G-PROGRESS -------------------------------------------------------- #
+
+def _is_acceptance_audit_file(rel: str) -> bool:
+    return "acceptance-audit" in rel.lower()
+
+
+def _is_acceptance_criteria_file(rel: str) -> bool:
+    low = rel.lower()
+    return ("acceptance-criteria" in low or "acceptance-criterion" in low) and "acceptance-audit" not in low
+
+
+def _ac_ids_in_id_column(pf: PackageFile) -> List[Tuple[str, int]]:
+    """Rows whose id column holds an AC- identifier: (AC-id, 1-based line)."""
+    found: List[Tuple[str, int]] = []
+    for table in pf.tables:
+        id_col = table.col_index(ID_HEADERS)
+        if id_col is None:
+            id_col = _guess_id_column(table)
+        if id_col is None:
+            continue
+        for r_idx, row in enumerate(table.rows):
+            if id_col >= len(row):
+                continue
+            cell = row[id_col].strip().strip("`")
+            m = ID_TOKEN_RE.fullmatch(cell)
+            if m and m.group(1) == "AC":
+                found.append((cell, table.start_line + 1 + r_idx))
+    return found
+
+
+def gate_progress(files: List[PackageFile]) -> GateResult:
+    """G-PROGRESS: if an acceptance audit exists, every AC- defined in the
+    acceptance criteria must appear in it with a verdict from the allowed set.
+    SKIP when no audit is present (execution tracking is conditional on handoff /
+    a long execution horizon)."""
+    result = GateResult("G-PROGRESS", "Critical", checked=False)
+
+    audit_files = [pf for pf in files
+                   if _is_acceptance_audit_file(pf.rel) and not pf.is_template and not pf.is_json]
+    if not audit_files:
+        return result  # SKIP: no acceptance audit in this package
+
+    result.checked = True
+
+    criteria_ids: Dict[str, str] = {}
+    for pf in files:
+        if pf.is_template or pf.is_json or not _is_acceptance_criteria_file(pf.rel):
+            continue
+        for ac, line in _ac_ids_in_id_column(pf):
+            criteria_ids.setdefault(ac, pf.rel + ":" + str(line))
+
+    audit_verdicts: Dict[str, Tuple[str, str]] = {}
+    saw_verdict_col = False
+    for pf in audit_files:
+        for table in pf.tables:
+            id_col = table.col_index(ID_HEADERS)
+            if id_col is None:
+                id_col = _guess_id_column(table)
+            if id_col is None:
+                continue
+            v_col = table.col_index(VERDICT_HEADERS)
+            if v_col is not None:
+                saw_verdict_col = True
+            for r_idx, row in enumerate(table.rows):
+                if id_col >= len(row):
+                    continue
+                cell = row[id_col].strip().strip("`")
+                m = ID_TOKEN_RE.fullmatch(cell)
+                if not (m and m.group(1) == "AC"):
+                    continue
+                verdict = ""
+                if v_col is not None and v_col < len(row):
+                    verdict = row[v_col].strip().strip("`").lower()
+                audit_verdicts[cell] = (verdict, pf.rel + ":" + str(table.start_line + 1 + r_idx))
+
+    if not saw_verdict_col:
+        result.findings.append(Finding("G-PROGRESS", "Critical",
+            "acceptance audit has no Verdict column", audit_files[0].rel))
+
+    for ac in sorted(criteria_ids):
+        if ac not in audit_verdicts:
+            result.findings.append(Finding("G-PROGRESS", "Critical",
+                "acceptance criterion " + ac + " is not represented in the acceptance audit "
+                "(coverage gap)", criteria_ids[ac]))
+            continue
+        verdict, loc = audit_verdicts[ac]
+        if not verdict or verdict in EMPTY_CELL_VALUES:
+            result.findings.append(Finding("G-PROGRESS", "Critical",
+                "acceptance criterion " + ac + " has no verdict in the acceptance audit", loc))
+        elif verdict not in ALLOWED_VERDICTS:
+            result.findings.append(Finding("G-PROGRESS", "Critical",
+                "acceptance criterion " + ac + " has invalid verdict '" + verdict
+                + "' (allowed: Met / Partial / Not-met / Pending)", loc))
+
+    return result
+
+
 # --- Orchestration & reporting ----------------------------------------------- #
 
 def run_gates(package_dir: Path) -> List[GateResult]:
     files = load_package(package_dir)
     return [gate_ids(files), gate_dec_status(files), gate_req_src(files),
-            gate_complete(files), gate_trace(files), gate_set(package_dir)]
+            gate_complete(files), gate_trace(files), gate_set(package_dir),
+            gate_progress(files)]
 
 
 def build_summary(package_dir: Path, results: List[GateResult]) -> dict:
@@ -953,7 +1064,7 @@ def main(argv: Optional[List[str]] = None) -> int:
     parser = argparse.ArgumentParser(
         prog="validate_package.py",
         description=("Run Keystone's mechanical quality gates (G-IDS, G-DEC-STATUS, "
-                     "G-REQ-SRC, G-COMPLETE, G-TRACE, G-SET) against a generated "
+                     "G-REQ-SRC, G-COMPLETE, G-TRACE, G-SET, G-PROGRESS) against a generated "
                      "package directory. Exits non-zero if any CRITICAL gate fails."),
         epilog="See ../references/quality-gates.md for gate definitions.")
     parser.add_argument("package_dir", help="path to the generated package directory")
@@ -1080,8 +1191,21 @@ if __name__ == "__main__":
 #   recorded act (an omitted_artifacts[] entry) rather than a silent gap, which is
 #   exactly what lets an execution agent trust the readiness verdict.
 #
+# G-PROGRESS (Critical) - Acceptance-audit coverage (execution tracking).
+#   When a package carries an acceptance audit (validation/acceptance-audit.md),
+#   every acceptance criterion (AC-) defined in validation/acceptance-criteria.md
+#   must appear in the audit with a verdict from the allowed set (Met, Partial,
+#   Not-met, Pending). A criterion missing from the audit, a blank verdict, an
+#   out-of-set verdict, or an audit with no Verdict column at all is a finding.
+#   The gate SKIPs entirely when no audit is present, because the audit is a
+#   Conditional artifact (handoff / long execution horizon) - so this gate never
+#   penalises a planning-only package, only one that ships a tracking surface and
+#   leaves it incoherent. Rationale: the acceptance audit is the closing loop that
+#   proves the built thing met the plan; G-PROGRESS keeps it honest (every AC
+#   accounted for) the same way G-TRACE keeps the matrix honest.
+#
 # Severity and exit behaviour.
-#   All six gates above are Critical: any failure makes the package NOT READY
+#   All seven gates above are Critical: any failure makes the package NOT READY
 #   and the process exits 1. The Warn-severity gates from quality-gates.md
 #   (G-ASM-VISIBLE, G-CLAIM, G-RISK, G-COUPLING, G-BLOAT, G-CMD-THIN) and the
 #   partly-mechanical Criticals (G-CONFLICT, G-EXEC, G-HANDOFF, G-OQ) are

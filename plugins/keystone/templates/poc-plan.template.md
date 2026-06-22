@@ -46,5 +46,7 @@ Show that <approach> can <achieve outcome> end-to-end. Informs `DEC-00x`; tests 
 - **Outcome:** <GO | NO-GO | Inconclusive>
 - **Evidence / demo:** <links, screenshots, artifact>
 - **Learnings:** <what we now know; new risks RISK-00x>
+- **Surprises / caveats:** <what was unexpected; the limits of what this POC actually proves>
+- **Implications carried forward:** <what later phases must do because of this result>
 - **Disposition of POC code:** <discard | extract learnings | seed for PH-1>
 - **Date run:** <YYYY-MM-DD>

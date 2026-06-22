@@ -18,6 +18,18 @@ Keystone. It contains the approved problem framing, requirements, decisions, arc
 criteria, and the handoff prompts an execution agent uses to start building. The decisions recorded in the
 ADRs and Approved registers are **final** unless superseded through a recorded decision.
 
+## Status (snapshot)
+
+Regenerated from the live [status report](progress/status-report.md). Phase status: ✅ done · ◑ in
+progress · ⬜ not started.
+
+| Phase | Scope | Status |
+|---|---|---|
+| PH-1 | <headline / MVP slice> | ⬜ not started |
+| PH-2 | <headline> | ⬜ not started |
+
+Deferred / out of current scope: <list, or "none">.
+
 ## How to read it (suggested order)
 
 1. [Executive summary](01-executive-summary.md) — the one-page overview and recommendation.

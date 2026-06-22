@@ -23,6 +23,8 @@ owner: <name-or-role>
 - **Rationale** — why the recommendation beats the alternatives.
 - **Links** — requirements it serves (`FR-/NFR-`), constraints respected (`CON-`), promoted ADR.
 - **Status** — Proposed | Approved | Rejected | Superseded | Deferred (no other values).
+- **Deviation (⚠)** — when the Approved outcome differs from the Recommendation, mark the row ⚠ and state
+  the consequence in Rationale, so a reversal from the recommended path is never silent.
 
 ## Decisions
 

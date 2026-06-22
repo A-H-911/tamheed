@@ -47,7 +47,7 @@ Python 3.9+ is the only hard dependency (stdlib only — no pytest, no third-par
 # Validator self-test (this is the test suite)
 python tests/test_validate_package.py
 
-# Validate a generated package against the 6 mechanical quality gates
+# Validate a generated package against the 7 mechanical quality gates
 python plugins/keystone/scripts/validate_package.py <package-dir>          # human report
 python plugins/keystone/scripts/validate_package.py <package-dir> --json   # machine-readable
 
@@ -100,10 +100,10 @@ Note: paths inside `*.template.md` and the strings `init_skill_repo.py` writes d
 package/repo structure (e.g. `skill/`, `docs/assets/`) — those are intentional output content, not stale
 references to this repo's layout.
 
-## The 6 mechanical quality gates (validator)
+## The 7 mechanical quality gates (validator)
 
 `plugins/keystone/scripts/validate_package.py` implements the mechanical subset of
-`plugins/keystone/references/quality-gates.md`; all six are Critical:
+`plugins/keystone/references/quality-gates.md`; all seven are Critical:
 
 - **G-IDS** — identifiers well-formed, defined once, every referenced id resolves (no dangling refs).
 - **G-DEC-STATUS** — every decision/ADR row carries an explicit status from the allowed set.
@@ -114,6 +114,11 @@ references to this repo's layout.
   `artifact-rules.md` Always class) is present on disk or recorded in `manifest.json` `omitted_artifacts[]`
   with a reason; the manifest exists; nothing it declares present is missing. Closes the gap where a hollow
   package (charter + README only) passed because every other gate SKIPped on the absent input.
+- **G-PROGRESS** — when an acceptance audit (`validation/acceptance-audit.md`) is present, every `AC-` in
+  the acceptance criteria appears in it with a verdict from {Met, Partial, Not-met, Pending}; **SKIPs** when
+  no audit exists (the audit is Conditional — handoff / long execution horizon), so a planning-only package
+  is never penalised. Closes the execution-tracking loop (the downstream agent's during/after-exec close-out
+  of the acceptance criteria).
 
 When changing the validator, exercise `tests/fixtures/valid-package/` (must pass, exit 0),
 `tests/fixtures/invalid-package/` (must fail, exit 1, each seeded defect caught by the right gate), and

@@ -23,9 +23,13 @@ Phase `PH-1` is complete and approved; its exit criteria were: <restate PH-1 exi
 
 **Goal of `PH-2`:** <phase goal> (see [roadmap](../planning/roadmap.md)).
 
-**Tasks (bounded; PASS/FAIL each):**
+**Tasks (bounded; PASS/FAIL each) — work acceptance-criteria-first (failing test → implement → repeat):**
 1. <task> — PASS = <observable>; FAIL = <observable>. Traces to `WBS-2.x`, `AC-0xx`.
 2. <task> — PASS = <…>; FAIL = <…>.
+
+**Before the exit gate — update tracking:** `../validation/acceptance-criteria.md` (status + evidence),
+`../validation/acceptance-audit.md` (verdict + evidence per `AC-`), `../progress/progress-log.md`
+(append), and regenerate `../progress/status-report.md`.
 
 **Exit gate:** <the PH-2 exit criteria>. When met, **STOP** and request review before `PH-3`.
 Record any deviation as an ADR.
@@ -74,3 +78,28 @@ the decision, consequences, and rejected alternatives. STOP for approval before 
 ### Status report
 Regenerate `../progress/status-report.md` from current state: phase, milestones, completed/in-progress
 work, blockers, active risks, and decisions since the last report.
+
+### Acceptance audit (at each phase gate)
+Update `../validation/acceptance-audit.md`: for every `AC-` this phase covers, set the verdict (Met /
+Partial / Not-met / Pending) with evidence (`TEST-`/commit/CI/golden). Call out Partial/Not-met honestly
+with a reason — never rubber-stamp. Every `AC-` in `../validation/acceptance-criteria.md` must appear
+(gate G-PROGRESS checks this coverage).
+
+### Phase-exit summary
+Write a short phase-exit summary: per-item verdicts vs the phase's exit/acceptance criteria, decisions
+taken, any plan deviations (→ ADR), engineering notes to carry into the next phase, and a go/no-go
+recommendation. STOP for approval before starting the next phase.
+
+### Spike / experiment report
+Run a planned `EXP-`/`POC-` (one at a time, timeboxed). On finish, write its result: PASS/FAIL vs the
+pre-committed criteria, measurements, surprises/caveats, and implications carried forward. Update the
+deciding `DEC-`/`HYP-`. Pause for review before acting on the result.
+
+### Defect log
+For a reported bug: reproduce it as a minimal failing test, record it (id · symptom · status · fix layer
+· commit), fix to green, and note whether any baseline legitimately changed. Keep the log so a later
+session can pick it up cold.
+
+### Phase 1 — baseline (seed ADRs from the architecture)
+Begin Phase 1: seed the ADRs from `../architecture/architecture.md` into `../adrs/` (status Proposed),
+propose the package scaffolding + CI skeleton, and STOP before writing implementation code.

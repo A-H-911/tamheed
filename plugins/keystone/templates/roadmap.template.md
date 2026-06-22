@@ -47,5 +47,12 @@ owner: <name-or-role>
 - **Exit criteria:** <gate>
 - **Dependencies:** <PH-1 complete; DEP-00x>
 
+## Cross-phase rules
+
+- Phase gates are demos + checklists, **not dates** — a phase ends when its exit criteria are met.
+- **No phase starts with red CI**; keep every change small and reviewable.
+- Any mid-phase scope or backend change ⇒ a new **ADR** + a **risk-register** update (never silent).
+- The golden/example corpus only grows; nothing ships without its sample and tests green.
+
 <!-- Add PH-3.. as needed. Keep phases few and coherent; do not pad. Every leaf of work belongs to a
      phase and maps to a WBS- item in work-breakdown.md. -->

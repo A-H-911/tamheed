@@ -159,7 +159,10 @@ human-intervention point.
 
 ### 21. Progress & decision update cycles
 - **In:** execution feedback, new decisions, status. **Do:** record progress; update decision statuses
-  (Proposed→Approved/…); re-derive dependent artifacts; bump versions. **Out:** progress/, updated registers.
+  (Proposed→Approved/…); update acceptance-criteria status + evidence and regenerate the **acceptance
+  audit** (verdict × evidence per `AC-`; gate **G-PROGRESS** checks coverage) and the status report;
+  re-derive dependent artifacts; bump versions. **Out:** progress/, validation/acceptance-audit.md,
+  updated registers.
 - **Enter:** package handed off; an update arrives. **Exit:** state and derived artifacts consistent.
 - **Validate:** G-TRACE re-passes; superseded items linked. **Fail:** orphaned reference → repair.
 - **Human:** approve material changes. **Artifacts:** progress/, affected registers (versioned).

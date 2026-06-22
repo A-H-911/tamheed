@@ -756,6 +756,54 @@ def seed_adr_content() -> str:
     )
 
 
+def agents_md_content(repo_name: str) -> str:
+    return textwrap.dedent(
+        f"""\
+        # AGENTS.md — standing operating context for {repo_name}
+
+        Most coding agents auto-load an `AGENTS.md` (or `CLAUDE.md`) at the repo root every session, so
+        this is where the plan's non-negotiables keep governing the work after the one-time kickoff. This
+        is the canonical, **agent-neutral** control surface; `CLAUDE.md` (and any other tool pointer) just
+        points here.
+
+        ## The contract
+        - The approved plan/spec is the contract — read it first (e.g. `docs/plan/` or the handoff
+          package: charter, architecture, roadmap, acceptance criteria). Decisions in the ADRs are final;
+          do not re-litigate settled decisions.
+
+        ## Invariants — a violation requires a new ADR
+        - Treat the project's invariants (see the invariant register in the plan) as non-negotiable.
+          Breaking one is **not** a silent option: record a new ADR under `adrs/` (status Proposed) and
+          stop for approval.
+
+        ## Hard constraints
+        - Respect the constraint register and the NFR thresholds in the plan (licenses, dependencies,
+          performance, security). Refuse work that crosses them.
+
+        ## Operating conventions
+        - Work **acceptance-criteria-first**: pick an `AC-`, write the failing test, implement, repeat.
+        - **Track as you go (every phase gate):** keep the acceptance criteria current (status +
+          evidence), update the acceptance audit (verdict + evidence per `AC-`), append the progress log,
+          regenerate the status report — then stop at the gate for review.
+        - No phase starts with red CI; keep changes small and reviewable; record deviations as ADRs.
+        """
+    )
+
+
+def claude_md_content() -> str:
+    return textwrap.dedent(
+        """\
+        # CLAUDE.md
+
+        This project's standing operating context is in **AGENTS.md** (agent-neutral). Claude Code loads
+        this file; keep AGENTS.md in context too — it holds the invariants (a violation requires a new
+        ADR), the hard constraints, and the track-as-you-go conventions:
+
+        @AGENTS.md
+        """
+    )
+
+
 def gitkeep_content() -> str:
     return (
         "# This file keeps an otherwise-empty directory under version control.\n"
@@ -818,6 +866,8 @@ def plan_actions(target: Path, args: argparse.Namespace) -> List[Action]:
             pull_request_template(),
         ),
         ("adrs/adr-0000-record-architecture-decisions.md", seed_adr_content()),
+        ("AGENTS.md", agents_md_content(args.repo_name)),
+        ("CLAUDE.md", claude_md_content()),
     ]
 
     # Plugin layout adds the marketplace + plugin manifests and a starter SKILL.md

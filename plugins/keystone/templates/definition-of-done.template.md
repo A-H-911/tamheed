@@ -21,6 +21,8 @@ owner: <name-or-role>
 - [ ] Documentation updated (README/usage/contracts as applicable).
 - [ ] Any deviation from the plan recorded as an ADR (not silently absorbed).
 - [ ] Dependency versions pinned; no unvetted new dependencies introduced.
+- [ ] Any golden/regression baseline change is intentional and reviewed — no silent baseline churn
+  (determinism/provenance: record pinned tool/engine versions where output depends on them).
 - [ ] Traceability updated (the item's links are current).
 - [ ] Merged to the integration branch; build green.
 

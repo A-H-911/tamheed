@@ -14,7 +14,9 @@
     { "id": "gate2", "shape": "diamond", "label": { "text": "Approve\nthe plan?" } },
     { "id": "package", "shape": "stadium", "label": { "text": "Execution-ready\nhandoff package" } },
     { "id": "artifacts", "shape": "roundrect", "label": { "text": "requirements · constraints · ADRs · risk register · phased roadmap · acceptance criteria · traceability matrix · bootstrapped repo · kickoff prompts" } },
-    { "id": "agent", "shape": "stadium", "label": { "text": "Another agent\nbuilds the project" } }
+    { "id": "agent", "shape": "stadium", "label": { "text": "Another agent\nbuilds the project" } },
+    { "id": "control", "shape": "roundrect", "label": { "text": "AGENTS.md — standing context\n(invariants · constraints · tracking protocol)" } },
+    { "id": "track", "shape": "roundrect", "label": { "text": "Track at each phase gate\n(acceptance audit · progress log · status report)" } }
   ],
   "edges": [
     { "id": "e1", "source": "brief", "target": "invoke" },
@@ -28,6 +30,10 @@
     { "id": "e9", "source": "gate2", "target": "plan", "label": { "text": "revise" } },
     { "id": "e10", "source": "gate2", "target": "package", "label": { "text": "approved" } },
     { "id": "e11", "source": "package", "target": "artifacts", "label": { "text": "contains" } },
-    { "id": "e12", "source": "package", "target": "agent", "label": { "text": "hand off" } }
+    { "id": "e12", "source": "package", "target": "agent", "label": { "text": "hand off" } },
+    { "id": "e13", "source": "package", "target": "control", "label": { "text": "includes" } },
+    { "id": "e14", "source": "control", "target": "agent", "label": { "text": "governs" } },
+    { "id": "e15", "source": "agent", "target": "track", "label": { "text": "each gate" } },
+    { "id": "e16", "source": "track", "target": "agent", "label": { "text": "report, continue" } }
   ]
 }

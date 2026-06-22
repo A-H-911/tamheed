@@ -34,6 +34,28 @@ Exit codes for `validate_package.py`: `0` = all critical gates pass; `1` = at
 least one **Critical** gate failed (package is NOT READY); `2` = usage / IO
 error (e.g. the package directory does not exist).
 
+## Coverage
+
+The suite is **stdlib-only** — there is no `coverage.py` dependency. Measure line coverage with the
+standard-library `trace` module:
+
+```
+python -m trace --count --summary --coverdir=.cov tests/test_validate_package.py
+```
+
+Current state: **57 tests**, **100% line coverage** of both executable modules
+(`plugins/keystone/scripts/validate_package.py` and `init_skill_repo.py`). Every Critical gate has both a
+pass and a finding (negative) test; `G-PROGRESS` is covered in all three modes — PASS (audit covers every
+`AC-`), FAIL (coverage gap, blank verdict, out-of-set verdict, or missing Verdict column), and SKIP (no
+audit present). `trace` measures **line**, not **branch**, coverage; for branch metrics run
+`coverage.py --branch` separately (it is intentionally not a project dependency).
+
+> Heads-up: the gate table and run paths **below this point are stale** — they predate `G-SET`,
+> `G-PROGRESS`, and the plugin restructure. The validator now lives at
+> `plugins/keystone/scripts/validate_package.py`, there are **seven** Critical gates, and there are three
+> fixtures (incl. `incomplete-package/`). See `CLAUDE.md` and
+> `plugins/keystone/references/quality-gates.md` for the current set.
+
 ## What each gate checks
 
 The validator implements the *mechanical* subset of the gates defined in

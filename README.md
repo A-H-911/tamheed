@@ -11,7 +11,7 @@
 <p align="center"><strong>Turn a project description into a validated, traceable, execution-ready planning &amp; handoff package for another agent to implement.</strong></p>
 
 <p align="center">
-  <em>Claude Code plugin + portable agent skill &middot; v0.1</em> &middot;
+  <em>Claude Code plugin + portable agent skill &middot; v0.2</em> &middot;
   <a href="#license">MIT</a> &middot;
   <a href="docs/install.md">Install</a> &middot;
   <a href="CONTRIBUTING.md">Contribute</a> &middot;
@@ -102,7 +102,7 @@ Worked, end-to-end examples live in [`examples/`](examples) (input briefs + expe
 ## How it works
 
 <p align="center">
-  <img src="docs/assets/keystone-flow.svg" alt="Keystone flow: you give a project brief and invoke /keystone:keystone; it runs three gated movements — Understand (intake → scope, looping back for clarifications), Explore (research → decisions → risk), and Plan &amp; hand off (plan → artifacts → repo init → validate, with an approval gate) — producing an execution-ready handoff package (requirements, constraints, ADRs, risk register, roadmap, acceptance criteria, traceability matrix, bootstrapped repo, kickoff prompts) that another agent uses to build the project." width="900">
+  <img src="docs/assets/keystone-flow.svg" alt="Keystone flow: you give a project brief and invoke /keystone:keystone; it runs three gated movements — Understand (intake → scope, looping back for clarifications), Explore (research → decisions → risk), and Plan &amp; hand off (plan → artifacts → repo init → validate, with an approval gate) — producing an execution-ready handoff package (requirements, constraints, ADRs, risk register, roadmap, acceptance criteria, traceability matrix, bootstrapped repo, kickoff prompts) that another agent uses to build the project — governed by an agent-control surface (AGENTS.md) and a per-phase-gate tracking loop (acceptance audit, progress log, status report)." width="900">
 </p>
 
 <p align="center"><em>From a project brief to an execution-ready handoff — two gates keep you in control: clarifications during intake, and plan approval before anything is written.</em></p>
@@ -160,7 +160,7 @@ for setup, the design invariants to preserve, and how to extend Keystone without
 
 ## Maturity
 
-**v0.1.** The methodology, skill specification, governance model, templates, schemas, scripts, validator, and
+**v0.2.** The methodology, skill specification, governance model, templates, schemas, scripts, validator, and
 generated-package structure are defined and usable. Schemas, identifiers, and the handoff contract may still
 change before v1.0; such changes ship with a migration note per the versioning rules in
 [`plugins/keystone/references/governance.md`](plugins/keystone/references/governance.md). Changes are tracked

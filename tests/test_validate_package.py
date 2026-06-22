@@ -82,11 +82,17 @@ class ValidPackage(unittest.TestCase):
                 )
 
     def test_gates_actually_ran(self):
-        # The five mechanical gates should all have found inputs to check, so a
-        # silently-empty fixture can't masquerade as 'passing'.
-        for gate in ("G-IDS", "G-DEC-STATUS", "G-REQ-SRC", "G-COMPLETE", "G-TRACE", "G-SET"):
+        # The seven mechanical gates should all have found inputs to check (the
+        # valid fixture now ships an acceptance audit, so G-PROGRESS runs too), so
+        # a silently-empty fixture can't masquerade as 'passing'.
+        for gate in ("G-IDS", "G-DEC-STATUS", "G-REQ-SRC", "G-COMPLETE", "G-TRACE", "G-SET", "G-PROGRESS"):
             g = next(x for x in self.summary["gates"] if x["gate"] == gate)
             self.assertTrue(g["checked"], msg=f"{gate} had no inputs in the valid fixture")
+
+    def test_progress_passes(self):
+        g = next(x for x in self.summary["gates"] if x["gate"] == "G-PROGRESS")
+        self.assertTrue(g["checked"], msg="G-PROGRESS should run (valid fixture has an acceptance audit)")
+        self.assertTrue(g["passed"], msg=f"G-PROGRESS should pass on the valid fixture; findings: {g['findings']}")
 
     def test_cli_exit_zero(self):
         proc = subprocess.run(
@@ -153,11 +159,16 @@ class InvalidPackage(unittest.TestCase):
         self.assertIn("test", msgs.lower())
 
     def test_all_gates_failed(self):
-        # invalid-package seeds a defect for every critical gate, and carries no
-        # manifest, so G-SET fails too.
+        # invalid-package seeds a defect for every critical gate, carries no
+        # manifest (so G-SET fails), and ships an acceptance audit missing AC-003
+        # (so G-PROGRESS fails on the coverage gap).
         failed = set(self.summary["critical_failed"])
-        for gate in ("G-IDS", "G-DEC-STATUS", "G-REQ-SRC", "G-COMPLETE", "G-TRACE", "G-SET"):
+        for gate in ("G-IDS", "G-DEC-STATUS", "G-REQ-SRC", "G-COMPLETE", "G-TRACE", "G-SET", "G-PROGRESS"):
             self.assertIn(gate, failed, msg=f"{gate} should have failed; failed={failed}")
+
+    def test_progress_defect_detected(self):
+        msgs = all_messages(self.summary, "G-PROGRESS")
+        self.assertIn("AC-003", msgs, msg=f"G-PROGRESS findings:\n{msgs}")
 
     def test_cli_exit_one(self):
         proc = subprocess.run(
@@ -193,6 +204,14 @@ class IncompletePackage(unittest.TestCase):
             {"G-SET"},
             msg=f"expected only G-SET to fail; got {self.summary['critical_failed']}",
         )
+
+    def test_progress_skipped(self):
+        # incomplete-package has acceptance criteria but no acceptance audit, so
+        # the SKIP-safe G-PROGRESS must not run (checked == False) and must not
+        # appear among the critical failures.
+        g = next(x for x in self.summary["gates"] if x["gate"] == "G-PROGRESS")
+        self.assertFalse(g["checked"], msg="G-PROGRESS should SKIP when no audit is present")
+        self.assertNotIn("G-PROGRESS", self.summary["critical_failed"])
 
     def test_set_finding_names_the_missing_matrix(self):
         msgs = all_messages(self.summary, "G-SET")
@@ -273,6 +292,22 @@ class ScaffoldLayout(unittest.TestCase):
         self.assertIn("skill", tops)
         self.assertIn("commands", tops)
         self.assertNotIn(".claude-plugin/marketplace.json", paths)
+
+    def test_emits_agent_control_surface(self):
+        # The ambient control surface (AGENTS.md) + its CLAUDE.md shim are emitted
+        # at the repo root in BOTH layouts.
+        for layout in ("plugin", "classic"):
+            paths = self._plan_paths(layout)
+            self.assertIn("AGENTS.md", paths, msg=f"{layout}: AGENTS.md (control surface) missing")
+            self.assertIn("CLAUDE.md", paths, msg=f"{layout}: CLAUDE.md shim missing")
+
+    def test_agent_control_surface_content(self):
+        agents = isr.agents_md_content("demo")
+        self.assertIn("AGENTS.md", agents)
+        self.assertIn("ADR", agents)                       # invariants -> ADR rule present
+        self.assertIn("acceptance-criteria-first", agents)  # track-as-you-go convention
+        claude = isr.claude_md_content()
+        self.assertIn("AGENTS.md", claude)                  # the shim points to AGENTS.md
 
 
 class CliEdges(unittest.TestCase):
@@ -370,6 +405,40 @@ class ValidatePackageBranches(unittest.TestCase):
         res = vp.gate_set(pkg)
         low = _msgs(res).lower()
         self.assertTrue("invalid json" in low or "unreadable" in low, msg=_msgs(res))
+
+    def test_progress_invalid_verdict(self):
+        # An out-of-set verdict in the acceptance audit is flagged by G-PROGRESS.
+        pkg = _make_pkg(self, {
+            "validation/acceptance-criteria.md":
+            "| ID | Criterion | Status |\n|---|---|---|\n| AC-001 | x | Approved |\n",
+            "validation/acceptance-audit.md":
+            "| AC | Criterion | Verdict | Evidence |\n|---|---|---|---|\n| AC-001 | x | Maybe | - |\n",
+        })
+        res = vp.gate_progress(vp.load_package(pkg))
+        self.assertIn("invalid verdict", _msgs(res).lower())
+        self.assertIn("AC-001", _msgs(res))
+
+    def test_progress_blank_verdict(self):
+        # An empty verdict cell is flagged ("has no verdict").
+        pkg = _make_pkg(self, {
+            "validation/acceptance-criteria.md":
+            "| ID | Criterion | Status |\n|---|---|---|\n| AC-001 | x | Approved |\n",
+            "validation/acceptance-audit.md":
+            "| AC | Criterion | Verdict | Evidence |\n|---|---|---|---|\n| AC-001 | x |  | - |\n",
+        })
+        res = vp.gate_progress(vp.load_package(pkg))
+        self.assertIn("no verdict", _msgs(res).lower())
+
+    def test_progress_missing_verdict_column(self):
+        # An audit table with no Verdict column at all is flagged.
+        pkg = _make_pkg(self, {
+            "validation/acceptance-criteria.md":
+            "| ID | Criterion | Status |\n|---|---|---|\n| AC-001 | x | Approved |\n",
+            "validation/acceptance-audit.md":
+            "| AC | Criterion | Evidence |\n|---|---|---|\n| AC-001 | x | - |\n",
+        })
+        res = vp.gate_progress(vp.load_package(pkg))
+        self.assertIn("no Verdict column", _msgs(res))
 
 
 class InitSkillRepoUnits(unittest.TestCase):

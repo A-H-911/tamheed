@@ -20,17 +20,20 @@ owner: <name-or-role>
   missing requirement — investigate (see traceability.md, backward links).
 - **Verification** — how done is confirmed (the testable part of the leaf).
 - **Depends on** — predecessor `WBS-`/`DEP-`. **Status** — Draft | Proposed | Approved | Implemented.
+- **Evidence** — what proves completion once done: `TEST-` ids, commit/PR refs, CI run, or golden
+  sample. Stays `—` until the item is done; the execution agent fills it as work lands (see the
+  tracking protocol in `../handoff/initial-prompt.md`).
 
 ## Work items
 
-| ID | Item | Traces to | Verification | Depends on | Status |
-|---|---|---|---|---|---|
-| WBS-1.1 | <work group for PH-1> | — | (group; see leaves) | — | Proposed |
-| WBS-1.1.1 | <imperative leaf task> | FR-001, AC-001 | <test / check that confirms done> | — | Proposed |
-| WBS-1.1.2 | <imperative leaf task> | FR-002 | <verification> | WBS-1.1.1 | Proposed |
-| WBS-1.2 | <work group> | — | (group) | — | Proposed |
-| WBS-1.2.1 | <imperative leaf task> | NFR-001 | <benchmark TEST-00x> | WBS-1.1.2 | Draft |
-| WBS-2.1 | <work group for PH-2> | — | (group) | PH-1 exit | Proposed |
+| ID | Item | Traces to | Verification | Depends on | Status | Evidence |
+|---|---|---|---|---|---|---|
+| WBS-1.1 | <work group for PH-1> | — | (group; see leaves) | — | Proposed | — |
+| WBS-1.1.1 | <imperative leaf task> | FR-001, AC-001 | <test / check that confirms done> | — | Proposed | <TEST-001 / commit / CI> |
+| WBS-1.1.2 | <imperative leaf task> | FR-002 | <verification> | WBS-1.1.1 | Proposed | — |
+| WBS-1.2 | <work group> | — | (group) | — | Proposed | — |
+| WBS-1.2.1 | <imperative leaf task> | NFR-001 | <benchmark TEST-00x> | WBS-1.1.2 | Draft | — |
+| WBS-2.1 | <work group for PH-2> | — | (group) | PH-1 exit | Proposed | — |
 
 <!-- Keep the tree shallow where possible. Each leaf should be small enough to complete and verify in
      one focused unit of work. Group nodes carry no verification of their own. -->

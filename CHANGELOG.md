@@ -6,7 +6,23 @@ All notable changes to Keystone are documented here. The format is based on
 
 ## [Unreleased]
 
+_Nothing yet._
+
+## [0.2.0] - 2026-06-22
+
 ### Added
+- **Execution-tracking layer (Tarseem-inspired).** New mechanical gate **`G-PROGRESS`** in
+  `validate_package.py` (acceptance-audit coverage: when an audit is present, every `AC-` carries a verdict
+  from {Met, Partial, Not-met, Pending}; SKIPs when no audit exists). New **acceptance audit**
+  (`templates/acceptance-audit.template.md` — a derived close-out: criterion → verdict × evidence) and a new
+  **agent-control surface** (`templates/agent-control.template.md` → package-root `AGENTS.md` + a `CLAUDE.md`
+  shim, also emitted by `init_skill_repo.py`): the agent-neutral, ambient standing context (invariants +
+  violation⇒ADR, hard constraints, conventions, and the tracking protocol). Evidence columns added to
+  work-breakdown / status-report / acceptance-criteria; optional `evidence` on
+  `acceptance-criterion.schema.json` and `acceptance_refs` on `execution-phase.schema.json`. Initial +
+  follow-up handoff prompts gained the AC-first/test-first loop, the track-as-you-go cadence, and new
+  situational prompts (phase-exit summary, acceptance audit, spike/experiment report, defect log). README
+  flow diagram + `CLAUDE.md` + `quality-gates.md` updated (6 → 7 gates). (additive / MINOR)
 - **Gate `G-SET`** in `validate_package.py`: every "Always" artifact must be present on disk or recorded in
   `manifest.json` `omitted_artifacts[]` with a reason; the manifest must exist; nothing it declares present
   may be missing. This closes the gap where a hollow package (charter + README only) passed validation

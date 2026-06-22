@@ -128,7 +128,11 @@ overwrites without `--force`. Operational detail: `references/repo-init.md`.
 
 **Handoff (stage 20).** Assemble the handoff package and write the initial prompt, follow-up prompts (one
 per phase gate), and review prompts from the prompt templates in `references/prompt-templates.md` /
-`templates/`. The handoff manifest conforms to `schemas/handoff-package.schema.json`.
+`templates/`. The handoff manifest conforms to `schemas/handoff-package.schema.json`. Also emit the
+**agent-control surface** (`AGENTS.md` + a `CLAUDE.md` shim) — the agent-neutral, ambient standing
+context (invariants with the violation⇒ADR rule, hard constraints, conventions, and the **tracking
+protocol**: keep the acceptance criteria, **acceptance audit**, progress log, and status report current
+at every phase gate).
 
 **Readiness (stage 22).** Run the quality gates (`references/quality-gates.md`) and emit the
 execution-readiness report. Do not declare ready while any critical gate fails.
