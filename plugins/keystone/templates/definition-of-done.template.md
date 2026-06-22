@@ -8,7 +8,7 @@ owner: <name-or-role>
 # Definition of Done — <project-name>
 
 <!-- The checklist a work item must satisfy to be considered COMPLETE. Adapt to the project; keep items
-     binary and verifiable. Generation class: Conditional (handoff to a coding agent / repo requested).
+     binary and verifiable. Generation class: Conditional (handoff to Claude Code / repo requested).
      Lives at: execution/definition-of-done.md. Pairs with definition-of-ready.md. -->
 
 ## A work item is DONE when…
@@ -17,7 +17,7 @@ owner: <name-or-role>
 - [ ] Tests (`TEST-`) covering it pass in CI; coverage target met.
 - [ ] Applicable invariants (`INV-`) verified to still hold (no regressions).
 - [ ] Non-functional thresholds (`NFR-`) it touches are met and measured.
-- [ ] Code/artifacts reviewed; no open critical review comments.
+- [ ] Code/artifacts reviewed (e.g. a `/code-review` pass); no open critical review comments.
 - [ ] Documentation updated (README/usage/contracts as applicable).
 - [ ] Any deviation from the plan recorded as an ADR (not silently absorbed).
 - [ ] Dependency versions pinned; no unvetted new dependencies introduced.

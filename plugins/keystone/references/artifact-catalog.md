@@ -151,7 +151,7 @@ register kinds that share one register file (e.g. open questions / open decision
 | Artifact | ID prefix | Location | Generation class | Lifecycle note | Template | Schema |
 |---|---|---|---|---|---|---|
 | Package README | — | `README.md` | Always | versioned-on-change; consumption + reading order for the agent | `templates/package-readme.template.md` | — |
-| Agent-control surface | — | `AGENTS.md` (+ optional `CLAUDE.md` shim) | **Derived** — Conditional (handoff / repo requested) | **derived-regenerate**; agent-neutral ambient control surface at the package/repo root: invariants (violation⇒ADR) + hard constraints + conventions + current-phase pointer + tracking protocol; renders/links the registers (not a second copy); also emitted into a bootstrapped repo by `scripts/init_repo.*` | `templates/agent-control.template.md` | — |
+| Agent-control surface | — | `CLAUDE.md` (imports `AGENTS.md`) | **Derived** — Conditional (handoff / repo requested) | **derived-regenerate**; the ambient control surface Claude Code auto-loads — `CLAUDE.md` at the package/repo root importing `AGENTS.md`: invariants (violation⇒ADR) + hard constraints + conventions + current-phase pointer + tracking protocol; renders/links the registers (not a second copy); also emitted into a bootstrapped repo by `scripts/init_repo.*` | `templates/agent-control.template.md` | — |
 | Package manifest | — | `manifest.json` | Always | machine-owned; lists artifacts present, versions, generation metadata, omission reasons | `templates/package-manifest.template.md` | `schemas/package-manifest.schema.json` |
 | Normalized state | — | `keystone-state.json` | Always | **machine-owned**; powers resume/update; never hand-edited | — | `schemas/keystone-state.schema.json` |
 

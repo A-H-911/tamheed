@@ -8,7 +8,7 @@ generation: derived
 
 # AGENTS.md — standing operating context for support-triage-agent
 
-Canonical, agent-neutral ambient control surface (a one-line `CLAUDE.md` may point here). Keep it loaded
+The ambient control surface Claude Code auto-loads via `CLAUDE.md`, which imports this file. Keep it loaded
 for the whole engagement.
 
 ## Project state

@@ -8,7 +8,7 @@
     {
       "name": "keystone",
       "source": "./plugins/keystone",
-      "description": "Turn a project description into a validated, traceable, execution-ready planning & handoff package for another agent to implement."
+      "description": "Turn a project description into a validated, traceable, execution-ready planning & handoff package for Claude Code to implement."
     }
   ]
 }

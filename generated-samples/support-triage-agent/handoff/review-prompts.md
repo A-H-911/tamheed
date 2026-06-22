@@ -1,6 +1,6 @@
 # Review prompts — support-triage-agent
 
-Prompts that make an agent (or a human) check work against the plan. Agent-neutral; reference artifacts by
+Prompts that make Claude Code (or a human) check work against the plan; reference artifacts by
 path; name invariant IDs explicitly.
 
 ## Invariant audit
@@ -19,7 +19,7 @@ last result. Check every Critical gate: **G-REQ-SRC** (every `FR-`/`NFR-` has a 
 (every decision/ADR has an explicit status), **G-TRACE** (every MVP `FR-`/`NFR-` reaches ≥1 decision, ≥1
 work item, ≥1 test), **G-COMPLETE** (no `TODO`/`<placeholder>`/empty-section markers), **G-EXEC** (each
 phase has deliverables and an explicit exit gate; leaf `WBS-` items are actionable), **G-HANDOFF** (prompts
-reference only existing artifacts, are agent-neutral, and stop at an approval gate), and **G-OQ** (no
+reference only existing artifacts, are Claude-Code-appropriate, and stop at an approval gate), and **G-OQ** (no
 blocking open question is silently unanswered). Report each as pass/fail with the offending IDs/paths, and
 update [`execution-readiness-report.md`](execution-readiness-report.md)."
 

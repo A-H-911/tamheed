@@ -56,7 +56,7 @@ dimensions. Findings, proposals, and approved decisions stay in separate registe
 **Phase C — Plan & hand off (stages 16–22).** Turn understanding and decisions into something an agent can
 execute. Produce a gated phased roadmap and an actionable, testable work breakdown; generate the selected
 artifact set and build the traceability matrix; optionally bootstrap a repository (dry-run by default);
-validate against the quality gates; assemble the agent-neutral handoff package; run progress and decision
+validate against the quality gates; assemble the Claude-Code-targeted handoff package; run progress and decision
 update cycles; and emit the final execution-readiness go/no-go.
 
 ## Document and decision lifecycle
@@ -146,7 +146,7 @@ does not replace it. Gate IDs reference [`../plugins/keystone/references/quality
 | 17 | Artifact generation | Generate the selected artifact set from templates; build the traceability matrix | The populated package | G-COMPLETE, G-TRACE, G-IDS (no stubs) |
 | 18 | Repository initialization | Bootstrap the target repo (dry-run default; never overwrite without `--force`) | Initialized repo or dry-run report | Approve actual creation/push ✅; clean target or `--force` |
 | 19 | Quality validation | Run all quality gates via the validators | Validation report | All **Critical** gates pass; review warnings ✅ |
-| 20 | Execution-agent handoff | Assemble handoff; write initial + follow-up + review prompts; produce manifest | `handoff/` | G-HANDOFF (prompts reference real artifacts; agent-neutral); approve handoff ✅ |
+| 20 | Execution-agent handoff | Assemble handoff; write initial + follow-up + review prompts; produce manifest | `handoff/` | G-HANDOFF (prompts reference real artifacts; Claude-Code-appropriate); approve handoff ✅ |
 | 21 | Progress & decision update cycles | Record progress; update decision statuses; re-derive dependent artifacts; bump versions | `progress/`, updated registers | G-TRACE re-passes; approve material changes ✅ |
 | 22 | Final readiness assessment | Run the readiness checklist; summarize gates, open items, residual risk; state go/no-go | `execution-readiness-report.md` | No Critical gate failing; final go/no-go ✅ |
 

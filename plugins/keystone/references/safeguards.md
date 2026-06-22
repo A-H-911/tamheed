@@ -17,7 +17,7 @@ Each safeguard names an anti-pattern and the concrete control that prevents it. 
 | 10 | **Plans too abstract to execute** | Every phase has concrete deliverables + exit criteria; leaf WBS items are independently actionable and testable. Gate G-EXEC checks this. |
 | 11 | **Ceremonial over-documentation** | Artifact-selection rules gate generation on value; optional artifacts are skipped unless they earn their place or are requested. Empty stubs are forbidden. |
 | 12 | **Core logic in the slash command** | The command only normalizes input, selects a mode, invokes the skill, and routes output. Architecture review checks the command contains no methodology. |
-| 13 | **Coupling to one agent** | Handoff prompts are written for a generic capable coding agent; agent-specific notes are isolated in an optional appendix. |
+| 13 | **Coupling at the wrong layer** | The executor is Claude Code by design (a deliberate harness choice); handoff prompts use its native affordances (plan mode, TodoWrite, subagents, a code-review pass), named as capabilities not hard dependencies. Keep that coupling at the harness layer — the *plan's* technology decisions stay vendor/stack-neutral (safeguard 15) and never reach into requirements, architecture, or ADRs. |
 | 14 | **Coupling to one repo provider** | Repo logic is provider-neutral (local git always; remote is an optional, swappable step — GitHub via `gh` by default). |
 | 15 | **Coupling to one tech stack** | The methodology is stack-agnostic; stack choices are decisions inside a package, never baked into the skill. |
 | 16 | **Overwriting existing content** | The bootstrap never overwrites without `--force`; supports dry-run; refuses a dirty target unless told otherwise. |

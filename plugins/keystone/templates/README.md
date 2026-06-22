@@ -10,7 +10,7 @@ from project state, and removes the guidance comments. These are blank forms —
 artifacts live in a generated `<project-package>/` (see `../references/generated-structure.md`).
 
 **Conventions:** identifiers, statuses, versioning, and cross-references follow
-`../references/governance.md`. All templates are vendor/agent/provider-neutral.
+`../references/governance.md`. All templates are vendor/provider-neutral.
 
 **Generation classes** (see `artifact-rules.md`): **Always** (every package) · **Conditional** (trigger
 holds) · **On-request** · **Continuous** (created early, updated each cycle) · **Derived** (generated from
@@ -46,20 +46,20 @@ other artifacts; never hand-authored).
 | `test-strategy.template.md` | Test strategy (`TEST-`) → `validation/test-strategy.md` | Conditional (non-trivial NFRs) |
 | `traceability-matrix.template.md` | Traceability `FR/NFR → DEC/ADR → WBS → TEST → RISK → AC` → `validation/traceability-matrix.md` | Derived |
 | `stakeholder-register.template.md` | Stakeholders (`STK-`) → `governance/` (or charter context) | Conditional (multi-actor delivery) |
-| `definition-of-ready.template.md` | Definition of Ready checklist → `execution/definition-of-ready.md` | Conditional (handoff to coding agent) |
-| `definition-of-done.template.md` | Definition of Done checklist → `execution/definition-of-done.md` | Conditional (handoff to coding agent) |
+| `definition-of-ready.template.md` | Definition of Ready checklist → `execution/definition-of-ready.md` | Conditional (handoff to Claude Code) |
+| `definition-of-done.template.md` | Definition of Done checklist → `execution/definition-of-done.md` | Conditional (handoff to Claude Code) |
 | `progress-log.template.md` | Append-only progress history → `progress/progress-log.md` | Continuous (long horizon) |
 | `status-report.template.md` | Regenerated status snapshot → `progress/status-report.md` | Continuous (long horizon) |
 | `initial-prompt.template.md` | First execution-agent prompt (orient → 1 task → stop) → `handoff/initial-prompt.md` | Always |
-| `follow-up-prompts.template.md` | Per-phase + situational prompts → `handoff/follow-up-prompts.md` | Conditional (handoff to coding agent) |
-| `review-prompts.template.md` | Audit / readiness / PR-review prompts → `handoff/review-prompts.md` | Conditional (handoff to coding agent) |
+| `follow-up-prompts.template.md` | Per-phase + situational prompts → `handoff/follow-up-prompts.md` | Conditional (handoff to Claude Code) |
+| `review-prompts.template.md` | Audit / readiness / PR-review prompts → `handoff/review-prompts.md` | Conditional (handoff to Claude Code) |
 | `handoff-manifest.template.md` | Handoff contract (mirrors `handoff-package.schema.json`) → `handoff/handoff-manifest.(yaml\|json)` | Always |
 | `execution-readiness-report.template.md` | Per-gate go/no-go + residual risks → `handoff/execution-readiness-report.md` | Always |
 | `package-readme.template.md` | README for the generated package (reading order, how to consume) → `README.md` | Always |
 | `package-manifest.template.md` | Package inventory + metadata (mirrors `manifest.json`) → `manifest.json` | Always |
-| `naming-conventions.template.md` | Package naming/identifier conventions → `governance/naming-conventions.md` | Conditional (handoff to coding agent) |
-| `contributing.template.md` | How to change the package without breaking governance → `governance/contributing.md` | Conditional (handoff to coding agent) |
-| `governance.template.md` | Package rules of record (ids, statuses, versioning) → `governance/governance.md` | Conditional (handoff to coding agent) |
+| `naming-conventions.template.md` | Package naming/identifier conventions → `governance/naming-conventions.md` | Conditional (handoff to Claude Code) |
+| `contributing.template.md` | How to change the package without breaking governance → `governance/contributing.md` | Conditional (handoff to Claude Code) |
+| `governance.template.md` | Package rules of record (ids, statuses, versioning) → `governance/governance.md` | Conditional (handoff to Claude Code) |
 
 ## Notes
 

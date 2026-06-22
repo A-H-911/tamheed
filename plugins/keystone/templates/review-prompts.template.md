@@ -7,9 +7,9 @@ owner: <name-or-role>
 
 # Review Prompts — <project-name>
 
-<!-- Prompts that make an agent (or human) CHECK work against the approved plan. Agent-neutral; reference
+<!-- Prompts that make Claude Code (or a human) CHECK work against the approved plan; reference
      real artifact paths; replace every <placeholder> (G-HANDOFF). Generation class: Conditional (handoff
-     to a coding agent). Lives at: handoff/review-prompts.md. Shape: references/prompt-templates.md. -->
+     to Claude Code). Lives at: handoff/review-prompts.md. Shape: references/prompt-templates.md. -->
 
 ## Invariant audit
 
@@ -28,7 +28,8 @@ and the gate list). Report each **Critical** gate (`G-TRACE`, `G-COMPLETE`, `G-I
 ## PR review against acceptance criteria
 
 Review the changes in <PR / branch> against the acceptance criteria in
-[acceptance-criteria.md](../validation/acceptance-criteria.md). For each `AC-` the PR claims to satisfy:
+[acceptance-criteria.md](../validation/acceptance-criteria.md) — running a code review (e.g. `/code-review`)
+where available is a good way to do this. For each `AC-` the PR claims to satisfy:
 confirm it is met (cite the evidence/test), or flag it as not met. Also check:
 - Invariants (`INV-`) not regressed.
 - NFR thresholds (`NFR-`) it touches still met.

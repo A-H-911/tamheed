@@ -14,8 +14,8 @@
     { "id": "gate2", "shape": "diamond", "label": { "text": "Approve\nthe plan?" } },
     { "id": "package", "shape": "stadium", "label": { "text": "Execution-ready\nhandoff package" } },
     { "id": "artifacts", "shape": "roundrect", "label": { "text": "requirements · constraints · ADRs · risk register · phased roadmap · acceptance criteria · traceability matrix · bootstrapped repo · kickoff prompts" } },
-    { "id": "agent", "shape": "stadium", "label": { "text": "Another agent\nbuilds the project" } },
-    { "id": "control", "shape": "roundrect", "label": { "text": "AGENTS.md — standing context\n(invariants · constraints · tracking protocol)" } },
+    { "id": "agent", "shape": "stadium", "label": { "text": "Claude Code\nbuilds the project" } },
+    { "id": "control", "shape": "roundrect", "label": { "text": "CLAUDE.md — standing context\n(invariants · constraints · tracking protocol)" } },
     { "id": "track", "shape": "roundrect", "label": { "text": "Track at each phase gate\n(acceptance audit · progress log · status report)" } }
   ],
   "edges": [

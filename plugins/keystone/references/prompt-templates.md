@@ -2,7 +2,9 @@
 
 Operational guidance for writing the three prompt kinds. Blank fill-in forms live in
 `../templates/initial-prompt.template.md`, `follow-up-prompts.template.md`, and
-`review-prompts.template.md`. Keep prompts agent-neutral and reference real artifacts by path.
+`review-prompts.template.md`. Write prompts for Claude Code (CLI/IDE) and reference real artifacts by
+path; keep the plan's technology choices vendor-neutral. Use Claude Code affordances — plan mode,
+TodoWrite, subagents, a code-review pass — where they help, named as capabilities, not hard dependencies.
 
 ## Initial prompt — shape
 
@@ -10,12 +12,12 @@ Operational guidance for writing the three prompt kinds. Blank fill-in forms liv
 This repo contains the APPROVED plan for <project>. You are starting implementation.
 <one-paragraph orientation: what the project is, where the plan lives, that decisions are final>.
 
-Step 1 — Orientation (no code): read <list the few key plan docs>. Then give me:
+Step 1 — Orientation (use plan mode; no code): read <list the few key plan docs>. Then give me:
 (a) a ≤1-page summary of what you'll build and the invariants you must respect [list INV- ids];
 (b) your execution plan for Phase <PH-1> with file layout and PASS/FAIL per task.
 STOP and wait for my approval.
 
-Step 2 — <first bounded task> (after approval): <one concrete deliverable with PASS/FAIL>. Pause for review.
+Step 2 — <first bounded task> (after approval): <one concrete deliverable with PASS/FAIL>; track the backlog with TodoWrite. Pause for review.
 
 Rules: respect the invariants; pin versions; record deviations as ADRs; don't expand scope beyond Phase 1.
 Prerequisites: <runtimes/accounts/versions>.
@@ -33,7 +35,8 @@ upgrade + baseline regen, bug triage, release prep, deviation ADR, status report
 
 ## Review prompts — shape
 
-Prompts that make an agent (or a human) check work against the plan: invariant audit ("verify the
+Prompts that make Claude Code (or a human) check work against the plan — a code-review pass (e.g.
+`/code-review`) where available: invariant audit ("verify the
 implementation honors `INV-001..INV-00n`; report violations with file:line"), readiness recheck ("re-run
 the quality gates against the current repo"), and PR review against acceptance criteria.
 

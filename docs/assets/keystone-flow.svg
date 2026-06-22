@@ -79,10 +79,10 @@ handoff package</text>
 <rect x="277" y="386.8" width="754.58" height="44" rx="10" fill="#FFFFFF" stroke="#333333" stroke-width="1"/>
 <text x="654.29" y="408.8" font-size="12" fill="#14281D" text-anchor="middle" dominant-baseline="central">requirements · constraints · ADRs · risk register · phased roadmap · acceptance criteria · traceability matrix · bootstrapped repo · kickoff prompts</text>
 <rect x="976" y="490.8" width="198.01" height="44" rx="22" fill="#FFFFFF" stroke="#333333" stroke-width="1"/>
-<text x="1075.01" y="512.8" font-size="12" fill="#14281D" text-anchor="middle" dominant-baseline="central">Another agent
+<text x="1075.01" y="512.8" font-size="12" fill="#14281D" text-anchor="middle" dominant-baseline="central">Claude Code
 builds the project</text>
 <rect x="1053" y="386.8" width="416.77" height="44" rx="10" fill="#FFFFFF" stroke="#333333" stroke-width="1"/>
-<text x="1261.38" y="408.8" font-size="12" fill="#14281D" text-anchor="middle" dominant-baseline="central">AGENTS.md — standing context
+<text x="1261.38" y="408.8" font-size="12" fill="#14281D" text-anchor="middle" dominant-baseline="central">CLAUDE.md — standing context
 (invariants · constraints · tracking protocol)</text>
 <rect x="843" y="594.8" width="397.48" height="44" rx="10" fill="#FFFFFF" stroke="#333333" stroke-width="1"/>
 <text x="1041.74" y="616.8" font-size="12" fill="#14281D" text-anchor="middle" dominant-baseline="central">Track at each phase gate

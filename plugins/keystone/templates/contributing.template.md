@@ -8,8 +8,8 @@ owner: <name-or-role>
 # Contributing — <project-name>
 
 <!-- How contributors (human or agent) change this package and the project it plans, without breaking
-     governance. Generation class: Conditional (handoff to a coding agent / repo requested).
-     Lives at: governance/contributing.md. Keep tech-/agent-neutral. -->
+     governance. Generation class: Conditional (handoff to Claude Code / repo requested).
+     Lives at: governance/contributing.md. Keep tech-neutral. -->
 
 ## Principles
 

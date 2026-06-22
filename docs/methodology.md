@@ -32,7 +32,7 @@ control).
 
 This methodology captures patterns that recur across disciplined research-and-design and execution-handoff
 work, deliberately stripped of everything project-, vendor-, and stack-specific. **Keystone is
-project-neutral.** It is not tied to any particular project, agent, repository provider, or technology stack.
+project-neutral.** It is not tied to any particular project, repository provider, or technology stack.
 Where this document needs an example, the example is anonymized and generic (e.g. "a CLI that syncs notes to
 Markdown," "an enterprise data platform").
 
@@ -48,7 +48,7 @@ separations matter most.
 | The actual requirements, constraints, invariants, risks of one project | The registers and identifier scheme those facts are recorded in |
 | The chosen architecture and technology decisions | The decision-capture process and ADR format |
 | The phased roadmap and work breakdown for this build | The planning technique that produces gated, testable phases |
-| The handoff prompts for this specific executor | The agent-neutral prompt templates they are written from |
+| The handoff prompts for this specific executor | The Claude-Code-targeted prompt templates they are written from |
 | The repository that gets bootstrapped | The dry-run-capable, idempotent bootstrap mechanism |
 
 The rule of thumb: **a decision belongs in a package; the way decisions are made belongs in the skill.** A
@@ -72,12 +72,12 @@ These three audiences are routinely confused, so Keystone keeps them in separate
 
 | Concern | Audience | Where it lives | Must NOT contain |
 |---|---|---|---|
-| **Execution-agent instructions** | the downstream coding agent that implements the project | the generated package's `handoff/` prompts + the artifacts they reference | Keystone's internal process; planner-only context |
+| **Execution-agent instructions** | Claude Code (the downstream executor) | the generated package's `handoff/` prompts + the artifacts they reference | Keystone's internal process; planner-only context |
 | **Skill-implementation concerns** | Keystone itself (the methodology author/runtime) | `../plugins/keystone/SKILL.md` + `../plugins/keystone/references/` | a specific project's content; entry-point parsing |
 | **Slash-command / entry-point concerns** | the wrapper that launches Keystone (`/keystone`, a CLI, an API, an MCP tool, a UI) | external entry points (CLI/API/MCP/UI) | any methodology or planning logic (safeguard 12) |
 
-The handoff prompts are written for a *generically capable* coding agent; any agent-specific tip is isolated
-in a clearly labeled optional appendix (safeguard 13). The entry point only normalizes input, picks a mode,
+The handoff prompts are written for **Claude Code** as the executor, using its native affordances where they
+help (safeguard 13); the *plan's* technology choices stay vendor-neutral (safeguard 15). The entry point only normalizes input, picks a mode,
 invokes the skill, and routes output — it makes no planning decisions. See
 [`../plugins/keystone/references/handoff.md`](../plugins/keystone/references/handoff.md) and
 [`../plugins/keystone/references/extension.md`](../plugins/keystone/references/extension.md).
@@ -169,7 +169,7 @@ handoff. **Critical** gates block readiness; **Warn** gates surface issues witho
 *execution-ready* only when every Critical gate passes and every Warn gate is passing or carries a recorded,
 accepted exception. The gate set (e.g. requirement-has-source, identifier integrity, decision-has-status,
 full traceability, completeness/no-stubs, no unresolved hard contradiction, executable plan, clean
-agent-neutral handoff, no silently-unanswered blocking question) is defined in
+Claude-Code-targeted handoff, no silently-unanswered blocking question) is defined in
 [`../plugins/keystone/references/quality-gates.md`](../plugins/keystone/references/quality-gates.md). Mechanical gates are checked by a
 validator; judgment gates are performed and recorded with evidence. The gate philosophy — critical vs warn,
 and loops as discipline rather than failure — is explained in [`workflow.md`](workflow.md). Keystone never
@@ -215,11 +215,11 @@ The handoff package is the contract between planner and executor. It contains an
 **follow-up prompts** (one per phase gate, plus situational prompts such as fresh-session refresher,
 invariant audit, and deviation-ADR), **review prompts** (audit against invariants, re-run readiness, review a
 PR), a **handoff manifest** (artifacts, versions, entry points, invariants, MVP definition, prerequisites),
-and the **execution-readiness report**. The principles — agent-neutral, reference don't restate, bounded
+and the **execution-readiness report**. The principles — Claude-Code-targeted, reference don't restate, bounded
 steps with gates, invariants and prerequisites explicit — are in
 [`../plugins/keystone/references/handoff.md`](../plugins/keystone/references/handoff.md), with prompt forms in
-[`../plugins/keystone/references/prompt-templates.md`](../plugins/keystone/references/prompt-templates.md). The handoff is what lets a
-*different* agent, with no access to the planning conversation, start implementing with no missing context.
+[`../plugins/keystone/references/prompt-templates.md`](../plugins/keystone/references/prompt-templates.md). The handoff is what lets
+**Claude Code**, with no access to the planning conversation, start implementing with no missing context.
 
 ## 11. Repository-initialization practices
 
@@ -247,7 +247,7 @@ is what ships; the left column is the recurring practice it generalizes.
 | A phased plan where each phase had to "finish" before the next | **Phased roadmap** (`PH-`) with per-phase exit criteria + gated **work breakdown** (`WBS-`) |
 | A risk list with impact, likelihood, and what we'd do about it | **Risk register** (`RISK-`) with impact·likelihood scoring, mitigations, triggers, and MVP/Full tagging |
 | A spreadsheet linking requirements to where they were satisfied and tested | **Traceability matrix** (derived): requirement → decision → task → test → risk → acceptance criterion |
-| A handoff folder with kickoff prompts for the implementing agent | **Handoff package** with initial / follow-up / review prompts, agent-neutral, referencing real artifacts |
+| A handoff folder with kickoff prompts for the implementing agent | **Handoff package** with initial / follow-up / review prompts, Claude-Code-targeted, referencing real artifacts |
 | A script that set up the repo skeleton, license, and first commit | **Repository bootstrap** (`init_skill_repo.py`): dry-run-capable, idempotent, never-overwrite, provider-neutral remote |
 | "Definition of done" agreed up front so quality wasn't argued later | **Definition of Ready / Definition of Done** + checkpoints in `execution/` |
 | A final "are we actually ready to build?" review | **Execution-readiness report** gated on all Critical quality gates (stage 22) |

@@ -9,7 +9,7 @@ owner: <name-or-role>
 
 <!-- The rules of record for THIS package: identifiers, statuses, versioning, and cross-references.
      Derived from Keystone's governance reference; ships inside the package so it is self-documenting.
-     Generation class: Conditional (handoff to a coding agent / repo requested).
+     Generation class: Conditional (handoff to Claude Code / repo requested).
      Lives at: governance/governance.md. Pairs with naming-conventions.md. -->
 
 ## Identifiers

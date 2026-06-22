@@ -761,10 +761,9 @@ def agents_md_content(repo_name: str) -> str:
         f"""\
         # AGENTS.md — standing operating context for {repo_name}
 
-        Most coding agents auto-load an `AGENTS.md` (or `CLAUDE.md`) at the repo root every session, so
-        this is where the plan's non-negotiables keep governing the work after the one-time kickoff. This
-        is the canonical, **agent-neutral** control surface; `CLAUDE.md` (and any other tool pointer) just
-        points here.
+        Claude Code auto-loads `CLAUDE.md` at the repo root every session, and `CLAUDE.md` imports this
+        file — so this is where the plan's non-negotiables keep governing the work after the one-time
+        kickoff. The content lives here; `CLAUDE.md` is the loaded entry that pulls it in.
 
         ## The contract
         - The approved plan/spec is the contract — read it first (e.g. `docs/plan/` or the handoff
@@ -795,9 +794,9 @@ def claude_md_content() -> str:
         """\
         # CLAUDE.md
 
-        This project's standing operating context is in **AGENTS.md** (agent-neutral). Claude Code loads
-        this file; keep AGENTS.md in context too — it holds the invariants (a violation requires a new
-        ADR), the hard constraints, and the track-as-you-go conventions:
+        Claude Code auto-loads this file every session. It **imports** `AGENTS.md` below — the standing
+        operating context: the invariants (a violation requires a new ADR), the hard constraints, and the
+        track-as-you-go conventions. Keep that context in force for the whole engagement.
 
         @AGENTS.md
         """

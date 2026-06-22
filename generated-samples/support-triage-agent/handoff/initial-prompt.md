@@ -6,7 +6,7 @@ paramount and the plan's decisions are final. The plan lives in this package; tr
 source of truth and reference it by path. **No reply is ever auto-sent in Phase 1** — a human approves
 every send.
 
-## Step 1 — Orientation (no code)
+## Step 1 — Orientation (use plan mode; no code)
 
 Read these, then report back:
 - [`00-charter.md`](../00-charter.md)

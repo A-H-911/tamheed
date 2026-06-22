@@ -8,13 +8,12 @@ generation: derived      # regenerated from the registers each update cycle
 
 # AGENTS.md — standing operating context for <project-name>
 
-<!-- The AMBIENT control surface for the execution agent. Most coding agents auto-load an AGENTS.md (or a
-     CLAUDE.md) at the repo root every session, so this file is where the plan's non-negotiables KEEP
-     governing the work after the one-time kickoff prompt. Agent-neutral: AGENTS.md is the canonical file;
-     a one-line CLAUDE.md (or other tool-specific pointer) just includes/points here (safeguard 13 — the
-     tool-specific shim is isolated, the content stays neutral). Whether a given harness truly auto-loads
-     it is the harness's property, not Keystone's; the handoff initial prompt also names this file as
-     standing context so it is honoured either way.
+<!-- The AMBIENT control surface for Claude Code (the executor). Claude Code auto-loads CLAUDE.md at the repo
+     root every session; CLAUDE.md imports this AGENTS.md (Anthropic's documented idiom — "Claude Code reads
+     CLAUDE.md, not AGENTS.md; create a CLAUDE.md that imports it"), so this file is where the plan's
+     non-negotiables KEEP governing the work after the one-time kickoff prompt. The content lives here in
+     AGENTS.md; CLAUDE.md is the loaded entry that pulls it in (@AGENTS.md) and may add Claude-specific notes
+     below the import. The handoff initial prompt also names this standing context.
 
      Generation class: Derived / Conditional (handoff / repo requested). Lives at the PACKAGE ROOT
      (AGENTS.md), co-located with the registers it links — so the relative links below resolve.

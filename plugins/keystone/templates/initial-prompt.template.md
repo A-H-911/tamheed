@@ -7,7 +7,7 @@ owner: <name-or-role>
 
 # Initial Handoff Prompt — <project-name>
 
-<!-- The FIRST message to paste into a (generically capable, agent-neutral) execution agent. It must
+<!-- The FIRST message for Claude Code (CLI/IDE) to start implementation. It must
      (1) ORIENT, (2) give ONE bounded task, (3) STOP at an approval gate. It NEVER authorizes building
      the whole system at once. Replace EVERY <placeholder> — a shipped prompt with an unfilled <…> is a
      G-HANDOFF failure. Reference artifacts by real relative paths in this package. List INV- up front.
@@ -28,11 +28,11 @@ expand scope beyond what each step authorizes>.
 - `INV-002` — <invariant statement>
 <!-- List every INV- explicitly; do not paraphrase loosely. -->
 
-**Standing context:** keep `AGENTS.md` (repo root) loaded for the whole engagement — it is the ambient
+**Standing context:** Claude Code auto-loads `CLAUDE.md` (repo root), which imports `AGENTS.md` — the ambient
 control surface (the invariants + the "violation ⇒ new ADR" rule, the hard constraints, and the tracking
-protocol below). These steps bootstrap and gate; `AGENTS.md` governs every action in between.
+protocol below). These steps bootstrap and gate; that standing context governs every action in between.
 
-### Step 1 — Orientation (NO code)
+### Step 1 — Orientation (use plan mode; NO code)
 
 Read these plan documents:
 - [Charter](../00-charter.md)
@@ -54,7 +54,7 @@ Work **acceptance-criteria-first**, one bounded task at a time: pick an `AC-`, w
 implement until it passes, then repeat — e.g. "Implement <thin slice> so that `AC-001` passes. PASS =
 <observable>; FAIL = <observable>." Do one task, then **pause for review** — do not batch ahead.
 
-**Track as you go (before each pause / phase gate):** update `../validation/acceptance-criteria.md`
+**Track as you go (before each pause / phase gate):** keep a live task list with TodoWrite; update `../validation/acceptance-criteria.md`
 (status + evidence), update `../validation/acceptance-audit.md` (verdict + evidence per `AC-`), append
 `../progress/progress-log.md`, and regenerate `../progress/status-report.md`. Keep the acceptance
 criteria as the live checklist and report progress against it.
@@ -76,4 +76,6 @@ criteria as the live checklist and report progress against it.
   system-installed assets/fonts; pin every version you install>.
 - MVP definition: see [executive summary](../01-executive-summary.md) / manifest.
 
-<!-- Optional, clearly-labeled agent-specific tips go in an appendix ONLY, never in the body (safeguard 13). -->
+<!-- Executor is Claude Code (CLI/IDE). On the autonomous cloud coworker — which runs to a PR rather than
+     pausing between tasks — read each "STOP and wait for my approval" as "finish the bounded task, open a
+     PR, and pause for review there." -->

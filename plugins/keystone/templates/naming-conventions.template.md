@@ -9,7 +9,7 @@ owner: <name-or-role>
 
 <!-- The naming rules for THIS package's artifacts and identifiers, derived from Keystone governance.
      Ships inside a generated package so its conventions are self-documenting.
-     Generation class: Conditional (handoff to a coding agent / repo requested).
+     Generation class: Conditional (handoff to Claude Code / repo requested).
      Lives at: governance/naming-conventions.md. Keep aligned with governance.template.md. -->
 
 ## Identifiers

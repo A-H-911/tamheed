@@ -1,7 +1,7 @@
 {
   "name": "keystone",
-  "description": "Turn a project description into a validated, traceable, execution-ready planning & handoff package for another agent to implement.",
-  "version": "0.2.0",
+  "description": "Turn a project description into a validated, traceable, execution-ready planning & handoff package for Claude Code to implement.",
+  "version": "1.0.0",
   "author": { "name": "Anas Hammo" },
   "homepage": "https://github.com/A-H-911/keystone",
   "repository": "https://github.com/A-H-911/keystone",

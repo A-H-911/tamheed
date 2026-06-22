@@ -9,7 +9,7 @@ owner: <name-or-role>
 
 <!-- The checklist a work item must satisfy BEFORE it is started, so execution does not begin on
      under-specified work. Adapt the items to the project; keep them binary (yes/no).
-     Generation class: Conditional (handoff to a coding agent / repo requested). Lives at:
+     Generation class: Conditional (handoff to Claude Code / repo requested). Lives at:
      execution/definition-of-ready.md. Pairs with definition-of-done.md. -->
 
 ## A work item is READY when…

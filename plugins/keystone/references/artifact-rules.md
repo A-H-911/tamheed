@@ -32,7 +32,7 @@ manifest, README for the package.
 | Invariants present | invariant register |
 | External dependencies | dependency register |
 | Long execution horizon | progress log, status report cadence, checkpoints, acceptance audit, deferred-work / tech-debt register |
-| Repo requested / handoff to coding agent | repository bootstrap, follow-up + review prompts, DoR/DoD, agent-control surface (`AGENTS.md` + `CLAUDE.md` shim), acceptance audit |
+| Repo requested / handoff to Claude Code | repository bootstrap, follow-up + review prompts, DoR/DoD, agent-control surface (`CLAUDE.md` importing `AGENTS.md`), acceptance audit |
 
 ## On-request
 

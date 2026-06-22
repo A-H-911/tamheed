@@ -153,8 +153,8 @@ human-intervention point.
 ### 20. Execution-agent handoff
 - **In:** validated package. **Do:** assemble the handoff (`handoff.md`); write initial + follow-up + review
   prompts (`prompt-templates.md`); produce the handoff manifest. **Out:** handoff/. **Enter:** Stage 19 green.
-- **Exit:** an external agent could start from the initial prompt with no missing context. **Validate:**
-  G-HANDOFF (prompts reference real artifacts; no dangling instructions; agent-neutral). **Fail:** prompt
+- **Exit:** Claude Code could start from the initial prompt with no missing context. **Validate:**
+  G-HANDOFF (prompts reference real artifacts; no dangling instructions; Claude-Code-appropriate). **Fail:** prompt
   references a missing artifact → fix. **Human:** approve handoff. **Artifacts:** handoff/.
 
 ### 21. Progress & decision update cycles

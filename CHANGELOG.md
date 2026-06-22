@@ -8,6 +8,34 @@ All notable changes to Keystone are documented here. The format is based on
 
 _Nothing yet._
 
+## [1.0.0] - 2026-06-22
+
+First stable release. The methodology, schemas, identifiers, and handoff contract are now stable; future
+changes ship with a migration note per the versioning rules in `references/governance.md`.
+
+### Changed
+- **Downstream executor is now Claude Code (no longer agent-neutral).** Keystone targets **Claude Code**
+  (CLI/IDE; cloud coworker acknowledged) as the agent that implements the plans it produces, because
+  Keystone is itself a Claude Code plugin. The handoff layer leans into Claude Code: the **agent-control
+  surface** is now `CLAUDE.md` **importing** `AGENTS.md` (the file Claude Code auto-loads — Anthropic's
+  documented idiom) instead of the prior "AGENTS.md-canonical + CLAUDE.md-shim" pair; the initial /
+  follow-up / review prompt templates reference plan mode, TodoWrite, subagents, and a code-review pass
+  where useful (named as capabilities, never hard-depended on). Safeguard 13 ("coupling to one agent")
+  and the Warn gate `G-COUPLING` are reframed: coupling to Claude Code is now an intentional *harness*
+  choice. Updated `SKILL.md`, `README.md`, `plugin.json`/`marketplace.json`,
+  `references/{safeguards,quality-gates,handoff,prompt-templates,workflow,artifact-catalog,artifact-rules}.md`,
+  `docs/{methodology,workflow}.md`, the handoff templates, and `init_skill_repo.py`.
+- **The produced plan stays portable.** Requirements, architecture, and ADRs remain vendor-, provider-,
+  and stack-neutral (safeguard 15); the bootstrap stays repo-provider-neutral (safeguard 14). The
+  coupling is at the harness layer only, never the architecture.
+
+### Migration
+- Packages generated under ≤0.2.0 (AGENTS.md-canonical, agent-neutral handoff) remain valid — no schema,
+  identifier, required-artifact, or handoff-manifest-shape change, so the validator accepts them
+  unchanged. New packages emit a root `CLAUDE.md` containing `@AGENTS.md` as the loaded standing-context
+  entry, plus Claude-Code-targeted handoff prompts. To bring an existing package forward, add a root
+  `CLAUDE.md` whose body is `@AGENTS.md`.
+
 ## [0.2.0] - 2026-06-22
 
 ### Added

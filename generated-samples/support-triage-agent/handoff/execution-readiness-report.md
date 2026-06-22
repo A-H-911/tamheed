@@ -23,7 +23,7 @@ PH-2 is intentionally gated (see below) — that is correct discipline, not a ga
 | G-COMPLETE | Pass | All selected artifacts exist and are populated (no stubs/TODOs). |
 | G-CONFLICT | Pass | The one tension (auto-send vs safety) is resolved: auto-send deferred to PH-2 behind `INV-001` + `EXP-001`. |
 | G-EXEC | Pass | Each phase has deliverables + an explicit exit gate; PH-1 leaf `WBS-` items are actionable and testable; PH-2 entry gate stated. |
-| G-HANDOFF | Pass | Initial/follow-up/review prompts reference only existing artifacts, are agent-neutral, list `INV-001`–`INV-005`, and stop at an approval gate. |
+| G-HANDOFF | Pass | Initial/follow-up/review prompts reference only existing artifacts, are Claude-Code-appropriate, list `INV-001`–`INV-005`, and stop at an approval gate. |
 | G-OQ | Pass | No blocking open question is silently unanswered: `OQ-003` resolved; `OQ-001`/`OQ-002` (PH-2 thresholds) deferred to the calibration gate with `ASM-`/risk; `OQ-004` policy-owned. |
 
 ## Warn gates

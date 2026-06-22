@@ -12,14 +12,14 @@ clean project; every critical gate passes. One Warn gate (G-RISK) is shown as Pa
 | G-COMPLETE | Pass | Every artifact in the selected set (see `selected-artifacts.md`) exists and is non-stub; no "TODO"/empty sections. Omitted artifacts are recorded in `manifest.json` with reasons, not left as stubs. |
 | G-CONFLICT | Pass | No unresolved hard contradiction. The only soft tension (MVP export scope) was resolved by ASM-001 before scope lock; `clarifications.md` records "no hard contradictions found." |
 | G-EXEC | Pass | Both phases (PH-1, PH-2) have deliverables and exit criteria; leaf WBS items are actionable and testable; each phase ends at an approval gate (`execution/checkpoints.md`). |
-| G-HANDOFF | Pass | `initial-prompt.md` and `follow-up-prompt.md` reference only artifacts that exist (00-charter.md, requirements/functional.md, requirements/invariant-register.md, planning/roadmap.md), are agent-neutral, list INV-001/INV-002 explicitly, and each change-bearing step states a stop/approval gate. No unfilled placeholders. |
+| G-HANDOFF | Pass | `initial-prompt.md` and `follow-up-prompt.md` reference only artifacts that exist (00-charter.md, requirements/functional.md, requirements/invariant-register.md, planning/roadmap.md), are Claude-Code-appropriate, list INV-001/INV-002 explicitly, and each change-bearing step states a stop/approval gate. No unfilled placeholders. |
 | G-OQ | Pass | No **blocking** open question is silently unanswered. The remaining OQ (timezone normalization for activity buckets) is non-blocking for PH-1 and listed as accepted-open below. |
 | G-RISK | Pass (with note) | Warn gate. The two high/medium risks (RISK-001 huge repos, RISK-002 author identity) each have a mitigation and a phase. Note: RISK-002's full mitigation is deferred to PH-2 with the identity-merge decision; accepted because the MVP documents the limitation. |
 
 ## Go / No-Go: GO
 
 All Critical gates pass; the one Warn gate (G-RISK) is passing with a recorded note. The package is
-**execution-ready** and may be handed to the coding agent via `handoff/initial-prompt.md`.
+**execution-ready** and may be handed to Claude Code via `handoff/initial-prompt.md`.
 
 ## Open items
 

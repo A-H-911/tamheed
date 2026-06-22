@@ -15,12 +15,12 @@ gates block readiness; **Warn** gates surface issues but don't block. Many are c
 | G-COMPLETE | Critical | Every artifact is non-stub: no "TODO"/placeholder markers, no empty sections. (Whether the *required set* exists is gate **G-SET**, not this gate.) | Yes |
 | G-CONFLICT | Critical | No unresolved hard contradiction remains past scope lock. | Partly |
 | G-EXEC | Critical | Each phase has deliverables + exit criteria; leaf WBS items are actionable + testable. | Partly |
-| G-HANDOFF | Critical | Handoff prompts reference only existing artifacts; agent-neutral; no dangling instructions. | Partly |
+| G-HANDOFF | Critical | Handoff prompts reference only existing artifacts; Claude-Code-appropriate (name `CLAUDE.md` as standing context; use only tools the executor has; no foreign-harness or simulated instructions); no dangling instructions. | Partly |
 | G-OQ | Critical | No **blocking** open question is silently unanswered; open ones are listed as accepted-open. | Partly |
 | G-ASM-VISIBLE | Warn | Assumptions consumed by stages are recorded with `risk_if_wrong`. | Partly |
 | G-CLAIM | Warn | Capability claims in Approved artifacts are cited or tagged `unverified`. | No |
 | G-RISK | Warn | High-impact requirements/decisions have a risk view. | Partly |
-| G-COUPLING | Warn | No needless coupling to one agent/provider/stack (see safeguards 13–15). | No |
+| G-COUPLING | Warn | The *plan* needlessly couples to no provider/stack (safeguards 14–15); executor coupling to Claude Code is intentional (safeguard 13). | No |
 | G-BLOAT | Warn | No artifact merely restates another; no empty placeholders. | Partly |
 | G-CMD-THIN | Warn | The slash command contains no methodology/business logic. | Partly |
 | G-INJECT | Warn | Brief-derived text in handoff prompts is quoted + provenance-labeled, not a bare imperative; no injected instruction is rendered as a directive (safeguard 18, OWASP LLM01). | No |

@@ -10,7 +10,7 @@ owner: <name-or-role>
 <!-- ONE phase-gate prompt per phase (PH-) plus situational prompts. Each phase prompt RESUMES from the
      prior phase's exit criteria, states the phase goal, gives bounded tasks with PASS/FAIL, restates the
      invariants still in force, and ends at the exit gate. Replace every <placeholder> (G-HANDOFF).
-     Reference real artifact paths. Generation class: Conditional (handoff to a coding agent).
+     Reference real artifact paths. Generation class: Conditional (handoff to Claude Code).
      Lives at: handoff/follow-up-prompts.md. Shape: references/prompt-templates.md. -->
 
 ## Phase-gate prompts
@@ -91,7 +91,8 @@ taken, any plan deviations (→ ADR), engineering notes to carry into the next p
 recommendation. STOP for approval before starting the next phase.
 
 ### Spike / experiment report
-Run a planned `EXP-`/`POC-` (one at a time, timeboxed). On finish, write its result: PASS/FAIL vs the
+Run a planned `EXP-`/`POC-` (one at a time, timeboxed; a subagent is a good fit for an isolated experiment).
+On finish, write its result: PASS/FAIL vs the
 pre-committed criteria, measurements, surprises/caveats, and implications carried forward. Update the
 deciding `DEC-`/`HYP-`. Pause for review before acting on the result.
 

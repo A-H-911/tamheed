@@ -294,8 +294,8 @@ class ScaffoldLayout(unittest.TestCase):
         self.assertNotIn(".claude-plugin/marketplace.json", paths)
 
     def test_emits_agent_control_surface(self):
-        # The ambient control surface (AGENTS.md) + its CLAUDE.md shim are emitted
-        # at the repo root in BOTH layouts.
+        # The ambient control surface — CLAUDE.md (the loaded entry) importing AGENTS.md —
+        # is emitted at the repo root in BOTH layouts.
         for layout in ("plugin", "classic"):
             paths = self._plan_paths(layout)
             self.assertIn("AGENTS.md", paths, msg=f"{layout}: AGENTS.md (control surface) missing")
@@ -306,8 +306,14 @@ class ScaffoldLayout(unittest.TestCase):
         self.assertIn("AGENTS.md", agents)
         self.assertIn("ADR", agents)                       # invariants -> ADR rule present
         self.assertIn("acceptance-criteria-first", agents)  # track-as-you-go convention
+        # Executor is Claude Code: CLAUDE.md is the loaded entry that IMPORTS AGENTS.md
+        # (Anthropic's documented idiom), not an "agent-neutral" canonical/shim pair.
+        self.assertIn("Claude Code", agents)
         claude = isr.claude_md_content()
-        self.assertIn("AGENTS.md", claude)                  # the shim points to AGENTS.md
+        self.assertIn("@AGENTS.md", claude)                 # CLAUDE.md imports AGENTS.md
+        self.assertIn("Claude Code auto-loads", claude)     # CLAUDE.md is the loaded entry
+        for content in (agents, claude):
+            self.assertNotIn("agent-neutral", content)      # no regression to the neutral framing
 
 
 class CliEdges(unittest.TestCase):

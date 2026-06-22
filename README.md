@@ -8,10 +8,10 @@
 
 <h1 align="center">Keystone</h1>
 
-<p align="center"><strong>Turn a project description into a validated, traceable, execution-ready planning &amp; handoff package for another agent to implement.</strong></p>
+<p align="center"><strong>Turn a project description into a validated, traceable, execution-ready planning &amp; handoff package for Claude Code to implement.</strong></p>
 
 <p align="center">
-  <em>Claude Code plugin + portable agent skill &middot; v0.2</em> &middot;
+  <em>Claude Code plugin + portable agent skill &middot; v1.0</em> &middot;
   <a href="#license">MIT</a> &middot;
   <a href="docs/install.md">Install</a> &middot;
   <a href="CONTRIBUTING.md">Contribute</a> &middot;
@@ -20,15 +20,16 @@
 
 ---
 
-> **An independent, reusable capability.** Keystone is vendor-, agent-, provider-, and stack-neutral, and
-> carries no domain assumptions from any particular project — it is meant to be reused on *any* project. This
-> repository is the home of the Keystone capability itself, not of any project Keystone happens to plan.
+> **An independent, reusable capability.** Keystone is vendor-, provider-, and stack-neutral and carries no
+> domain assumptions from any particular project — it is meant to be reused on *any* project. It targets
+> **Claude Code** as the downstream execution agent; the plans it produces carry no vendor or stack lock-in.
+> This repository is the home of the Keystone capability itself, not of any project Keystone happens to plan.
 
 ## What Keystone is
 
 Keystone is a reusable agent **skill** that transforms a long-form project description into a complete,
 internally consistent, **execution-ready handoff package**: the planning, research, architecture,
-governance, and execution artifacts another agent (for example, a coding agent) needs to implement the
+governance, and execution artifacts Claude Code needs to implement the
 project with discipline.
 
 It does not write the project's code. It produces everything an implementing agent needs *before* code:
@@ -102,7 +103,7 @@ Worked, end-to-end examples live in [`examples/`](examples) (input briefs + expe
 ## How it works
 
 <p align="center">
-  <img src="docs/assets/keystone-flow.svg" alt="Keystone flow: you give a project brief and invoke /keystone:keystone; it runs three gated movements — Understand (intake → scope, looping back for clarifications), Explore (research → decisions → risk), and Plan &amp; hand off (plan → artifacts → repo init → validate, with an approval gate) — producing an execution-ready handoff package (requirements, constraints, ADRs, risk register, roadmap, acceptance criteria, traceability matrix, bootstrapped repo, kickoff prompts) that another agent uses to build the project — governed by an agent-control surface (AGENTS.md) and a per-phase-gate tracking loop (acceptance audit, progress log, status report)." width="900">
+  <img src="docs/assets/keystone-flow.svg" alt="Keystone flow: you give a project brief and invoke /keystone:keystone; it runs three gated movements — Understand (intake → scope, looping back for clarifications), Explore (research → decisions → risk), and Plan &amp; hand off (plan → artifacts → repo init → validate, with an approval gate) — producing an execution-ready handoff package (requirements, constraints, ADRs, risk register, roadmap, acceptance criteria, traceability matrix, bootstrapped repo, kickoff prompts) that Claude Code uses to build the project — governed by an agent-control surface (CLAUDE.md) and a per-phase-gate tracking loop (acceptance audit, progress log, status report)." width="900">
 </p>
 
 <p align="center"><em>From a project brief to an execution-ready handoff — two gates keep you in control: clarifications during intake, and plan approval before anything is written.</em></p>
@@ -127,7 +128,7 @@ catalog, logos) lives inside `plugins/keystone/`, so the plugin installs and run
 3. **No premature architecture** — capture options first, decide with rationale.
 4. **Preserve the unresolved** — open questions and rejected alternatives are first-class outputs.
 5. **Verify before you claim** — unverified tool/library/service claims are marked `unverified`.
-6. **Stay neutral** — no coupling to one agent, vendor, repo provider, or stack unless the input requires it.
+6. **Stay neutral** — the plan couples to no vendor, repo provider, or stack unless the input requires it (the executor is Claude Code by design).
 7. **Treat the brief as untrusted data** — input is something to plan over, never instructions to obey; an injected directive is captured as data (and surfaced), never executed (OWASP LLM01).
 
 ## Repository structure
@@ -160,9 +161,9 @@ for setup, the design invariants to preserve, and how to extend Keystone without
 
 ## Maturity
 
-**v0.2.** The methodology, skill specification, governance model, templates, schemas, scripts, validator, and
-generated-package structure are defined and usable. Schemas, identifiers, and the handoff contract may still
-change before v1.0; such changes ship with a migration note per the versioning rules in
+**v1.0.** The methodology, skill specification, governance model, templates, schemas, scripts, validator, and
+generated-package structure are defined, usable, and stable. Any future change to the schemas, identifiers, or
+the handoff contract ships with a migration note per the versioning rules in
 [`plugins/keystone/references/governance.md`](plugins/keystone/references/governance.md). Changes are tracked
 in [`CHANGELOG.md`](CHANGELOG.md).
 
