@@ -482,6 +482,38 @@ class FalsyOrIdColumnRegression(unittest.TestCase):
         self.assertIn("no Status column", msgs, msg=f"G-DEC-STATUS findings: {msgs}")
 
 
+class DecRowStatusSetRegression(unittest.TestCase):
+    """Regression for D-U1 (plan 002): DEC- register rows are checked against the
+    strict six-value decision set (Proposed, Approved, Rejected, Superseded,
+    Deferred, Implemented); ADR- rows keep the looser document set."""
+
+    def test_dec_row_with_draft_status_is_invalid(self):
+        # Draft is a document status, not a decision status — before the fix
+        # DEC- rows were checked against DOCUMENT_STATUSES and Draft passed.
+        pkg = _make_pkg(self, {
+            "decisions/open-decision-register.md":
+            "| ID | Decision | Status |\n"
+            "|---|---|---|\n"
+            "| DEC-001 | Use a single storage table. | Draft |\n"
+        })
+        res = vp.gate_dec_status(vp.load_package(pkg))
+        msgs = _msgs(res)
+        self.assertIn("invalid status", msgs, msg=f"G-DEC-STATUS findings: {msgs}")
+
+    def test_dec_implemented_and_adr_draft_are_legal(self):
+        # Both legal under D-U1: Implemented for DEC- rows, Draft for ADR- rows
+        # (ADR index rows keep the document set) — no finding expected.
+        pkg = _make_pkg(self, {
+            "decisions/open-decision-register.md":
+            "| ID | Decision | Status |\n"
+            "|---|---|---|\n"
+            "| DEC-002 | Ship the migration tool. | Implemented |\n"
+            "| ADR-0001 | Storage engine choice. | Draft |\n"
+        })
+        res = vp.gate_dec_status(vp.load_package(pkg))
+        self.assertEqual(res.findings, [], msg=f"unexpected findings: {_msgs(res)}")
+
+
 class InitSkillRepoUnits(unittest.TestCase):
     """Pure-function and filesystem-guard coverage for the bootstrapper."""
 

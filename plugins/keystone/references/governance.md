@@ -56,7 +56,8 @@ Draft → Proposed → Approved → Implemented
 - **Implemented** — realized in the execution repo (set during update cycles).
 - **Obsolete** — no longer relevant; retained for history, excluded from active views.
 
-**Decision statuses** are exactly: Proposed, Approved, Rejected, Superseded, Deferred. Never render a
+**Decision statuses** are exactly: Proposed, Approved, Rejected, Superseded, Deferred — plus
+Implemented once a decision is realized during execution/update cycles. Never render a
 Proposed decision as if Approved — this is a core safeguard.
 
 ## Versioning

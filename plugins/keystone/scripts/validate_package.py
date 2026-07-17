@@ -102,8 +102,8 @@ BOLD_LEADER_DEF_RE = re.compile(r"^\s*[-*]\s*\*\*`?([A-Z]{2,5})-(\d+(?:\.\d+)*[A
 
 GOVERNED_PREFIXES = set(ID_PATTERNS.keys())
 
-DECISION_STATUSES = {"Proposed", "Approved", "Rejected", "Superseded", "Deferred"}
-DOCUMENT_STATUSES = DECISION_STATUSES | {"Accepted", "Implemented", "Obsolete", "Draft"}
+DECISION_STATUSES = {"Proposed", "Approved", "Rejected", "Superseded", "Deferred", "Implemented"}
+DOCUMENT_STATUSES = DECISION_STATUSES | {"Accepted", "Obsolete", "Draft"}
 
 PLACEHOLDER_PATTERNS = [
     re.compile(r"\bTODO\b"),
@@ -551,6 +551,7 @@ def _looks_like_decision_file(rel: str) -> bool:
 def gate_dec_status(files: List[PackageFile]) -> GateResult:
     result = GateResult("G-DEC-STATUS", "Critical", checked=False)
     allowed = {s.lower() for s in DOCUMENT_STATUSES}
+    dec_allowed = {s.lower() for s in DECISION_STATUSES}
 
     for pf in files:
         if pf.is_template or pf.is_json or not _looks_like_decision_file(pf.rel):
@@ -599,13 +600,19 @@ def gate_dec_status(files: List[PackageFile]) -> GateResult:
                 if id_col is not None and row_id and not (row_id.startswith("DEC-") or row_id.startswith("ADR-")):
                     continue
                 cell = row[status_col].strip().strip("`") if status_col < len(row) else ""
+                # D-U1: DEC- rows take the strict decision set; ADR- rows and
+                # id-less rows keep the looser document set.
+                is_dec_row = row_id.startswith("DEC-")
+                row_allowed = dec_allowed if is_dec_row else allowed
                 if cell.lower() in EMPTY_CELL_VALUES:
                     result.findings.append(Finding("G-DEC-STATUS", "Critical",
                         "decision " + (row_id or "(row)") + " has no status",
                         pf.rel + ":" + str(line)))
-                elif _norm_status(cell) not in allowed:
+                elif _norm_status(cell) not in row_allowed:
                     result.findings.append(Finding("G-DEC-STATUS", "Critical",
-                        "decision " + (row_id or "(row)") + " has invalid status '" + cell + "'",
+                        "decision " + (row_id or "(row)") + " has invalid status '" + cell
+                        + "' (allowed: " + str(sorted(DECISION_STATUSES if is_dec_row
+                                                      else DOCUMENT_STATUSES)) + ")",
                         pf.rel + ":" + str(line)))
 
     return result
@@ -1128,9 +1135,10 @@ if __name__ == "__main__":
 # G-DEC-STATUS (Critical) - Decision status presence and validity.
 #   Every decision (DEC-) row, every ADR row in an index, and every standalone
 #   ADR document must carry an explicit status drawn from the allowed set.
-#   For decisions the allowed set is exactly Proposed, Approved, Rejected,
-#   Superseded, Deferred; ADR documents additionally accept the conventional
-#   Accepted alias and the lifecycle terminals Implemented, Obsolete, Draft.
+#   For DEC- rows the allowed set is exactly the six decision statuses:
+#   Proposed, Approved, Rejected, Superseded, Deferred, Implemented (D-U1);
+#   ADR documents and ADR index rows additionally accept Accepted, Obsolete,
+#   and Draft.
 #   The gate fails on a missing status, an empty status cell, or a status value
 #   outside the allowed set. Rationale: safeguard 9 - a Proposed decision must
 #   never be rendered as if it were Approved, because only Approved decisions
