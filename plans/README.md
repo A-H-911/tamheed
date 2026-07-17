@@ -22,7 +22,7 @@ plan's "locked decisions" — do not relitigate them in execution.
 | 001 | Fix falsy-`or` ID-column bug (3 gates) | A1 | P1 | S | — | DONE |
 | 002 | Enforce decision statuses (D-U1) | A2 | P1 | S | 001 | DONE |
 | 003 | Validator gate tests (G-SET rules) | A3 | P1 | S | 001, 002 | DONE |
-| 004 | Docs truth fixes + archive AUDIT.md | A4 | P2 | S | — | TODO |
+| 004 | Docs truth fixes + archive AUDIT.md | A4 | P2 | S | — | DONE |
 | 005 | Bootstrap Tamheed repo (new repo, full history) | B1 | P1 | M | 001–004 committed | TODO |
 | 006 | Deliverables review — **USER APPROVAL GATE** | B7 | P1 | M | 005 | TODO |
 | 007 | Data model: ADR + DDL + canonical text | B2 | P1 | L | 006 | TODO |

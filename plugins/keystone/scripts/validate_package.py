@@ -40,9 +40,9 @@ The validator never crashes on a missing optional file, explains each finding
 with file + locator, and exits non-zero only when a Critical gate fails.
 
 Usage:
-    python tests/validate_package.py <package-dir>
-    python tests/validate_package.py <package-dir> --json
-    python tests/validate_package.py --help
+    python plugins/keystone/scripts/validate_package.py <package-dir>
+    python plugins/keystone/scripts/validate_package.py <package-dir> --json
+    python plugins/keystone/scripts/validate_package.py --help
 
 Exit codes: 0 = all critical gates pass; 1 = a critical gate failed;
 2 = usage / IO error.

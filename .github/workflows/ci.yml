@@ -2,7 +2,7 @@ name: CI
 
 # Deterministic, fail-closed gate for every push to main and every PR.
 # Runs the validator's own unit/CLI test suite and validates the golden packages.
-# This is finding F-02 from AUDIT.md: the validator is built to "gate a commit
+# This is finding F-02 from docs/history/AUDIT-2026-06-21.md: the validator is built to "gate a commit
 # without a model in the loop", but nothing was running it.
 
 on:

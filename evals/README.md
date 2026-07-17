@@ -41,7 +41,7 @@ review or an LLM judge.
 
 Behavioral evals are probabilistic and need a model in the loop, so they run on a **scheduled, non-blocking**
 workflow (`.github/workflows/eval.yml`), not on every PR. The deterministic PR gate stays in
-`.github/workflows/ci.yml`. See `AUDIT.md` §11.8 for the split rationale (residual risk R1).
+`.github/workflows/ci.yml`. See `docs/history/AUDIT-2026-06-21.md` §11.8 for the split rationale (residual risk R1).
 
 ## Extending
 

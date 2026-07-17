@@ -25,7 +25,8 @@ superseded instead), *derived-regenerate* (reproduced from sources), or *machine
 Keystone's runtime, not hand-edited).
 
 **Location** is relative to the generated `<project-package>/` root. **Template** paths are relative to the
-Keystone repo-root `templates/` directory; **Schema** paths to the repo-root `schemas/` directory. A `—` in
+bundle's `templates/` directory (`../templates/` relative to this file); **Schema** paths to the bundle's
+`schemas/` directory (`../schemas/`). A `—` in
 the Schema column means the artifact is narrative Markdown with no separate structured schema. Multiple
 register kinds that share one register file (e.g. open questions / open decisions / assumptions under
 `decisions/`) are listed on their own rows for clarity.
@@ -83,7 +84,7 @@ register kinds that share one register file (e.g. open questions / open decision
 | Deployment diagram | — | `architecture/diagrams/` | On-request (beyond MVP) | versioned-on-change | — (diagram-as-code in the architecture doc) | — |
 | Data-flow diagram | — | `architecture/diagrams/` | On-request (beyond MVP) | versioned-on-change | — (diagram-as-code in the architecture doc) | — |
 | Integration diagram | — | `architecture/diagrams/` | Conditional — multiple integrated systems | versioned-on-change | — (diagram-as-code in the architecture doc) | — |
-| Architecture Decision Record | `ADR-NNNN` | `adrs/adr-NNNN-*.md` | Conditional — a significant decision is promoted | **immutable-after-approval**; supersede, never rewrite | `templates/adr.template.md` | — |
+| Architecture Decision Record | `ADR-NNNN` | `adrs/adr-NNNN-*.md` | Conditional — a significant decision is promoted | **immutable-after-approval**; supersede, never rewrite | `templates/adr.template.md` | `schemas/adr-metadata.schema.json` (state-owned) |
 | Technology comparison matrices | — | `architecture/technology-comparison.md` | Conditional — ≥2 viable technology options | versioned-on-change; losers retained, claims cited/`unverified` | `templates/technology-comparison.template.md` | — |
 | Technology assessments | — | `architecture/technology-comparison.md` (section) | Conditional — a candidate needs a deeper standalone evaluation | versioned-on-change | `templates/technology-comparison.template.md` | — |
 
@@ -98,7 +99,7 @@ register kinds that share one register file (e.g. open questions / open decision
 
 | Artifact | ID prefix | Location | Generation class | Lifecycle note | Template | Schema |
 |---|---|---|---|---|---|---|
-| Phased roadmap | `PH-` | `planning/roadmap.md` | Always | versioned-on-change; each phase has goal/scope/deliverables/validation/risks/exit | `templates/roadmap.template.md` | — |
+| Phased roadmap | `PH-` | `planning/roadmap.md` | Always | versioned-on-change; each phase has goal/scope/deliverables/validation/risks/exit | `templates/roadmap.template.md` | `schemas/execution-phase.schema.json` (state-owned) |
 | Work breakdown | `WBS-N.N` | `planning/work-breakdown.md` | Conditional — non-trivial / multi-actor delivery | versioned-on-change; leaf items actionable + testable | `templates/work-breakdown.template.md` | — |
 | Milestones | `MS-` | `planning/milestones.md` | Conditional — multi-phase delivery | versioned-on-change | `templates/milestones.template.md` | — |
 | Execution backlog | — | `execution/backlog.md` | Conditional — handoff to a coding agent | versioned-on-change | — (derived from work-breakdown) | — |
@@ -121,8 +122,8 @@ register kinds that share one register file (e.g. open questions / open decision
 
 | Artifact | ID prefix | Location | Generation class | Lifecycle note | Template | Schema |
 |---|---|---|---|---|---|---|
-| Progress log | — | `progress/progress-log.md` | Continuous — long execution horizon | append-only; updated each cycle (stage 21) | `templates/progress-log.template.md` | — |
-| Status report | — | `progress/status-report.md` | **Derived** / Continuous | **derived-regenerate** each update cycle | `templates/status-report.template.md` | — |
+| Progress log | — | `progress/progress-log.md` | Continuous — long execution horizon | append-only; updated each cycle (stage 21) | `templates/progress-log.template.md` | `schemas/progress-update.schema.json` (state-owned) |
+| Status report | — | `progress/status-report.md` | **Derived** / Continuous | **derived-regenerate** each update cycle | `templates/status-report.template.md` | `schemas/progress-update.schema.json` (state-owned) |
 
 ## Handoff
 
