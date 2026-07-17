@@ -207,9 +207,21 @@ class McpContractTest(unittest.TestCase):
     # ---------------------------------------------------------------- stubs & plumbing
 
     def test_stubs_report_not_implemented(self):
-        for result in (srv.package_adopt("x"), srv.export_html()):
-            self.assertFalse(result["ok"])
-            self.assertIn("not implemented", result["error"])
+        result = srv.export_html()
+        self.assertFalse(result["ok"])
+        self.assertIn("not implemented", result["error"])
+
+    def test_package_adopt_is_staged(self):
+        # Plan 011: adopt scans + previews by default; nothing recorded without confirm.
+        with tempfile.TemporaryDirectory() as src:
+            (Path(src) / "README.md").write_text(
+                "# Widget\n\n- Users can frobnicate widgets\n", encoding="utf-8")
+            out = srv.package_adopt(src)
+            self.assertTrue(out["ok"], out)
+            self.assertEqual(out["stage"], "preview")
+            self.assertIn("operator gate", out["next"])
+            self.assertTrue(out["gaps"])                      # gap report first-class
+        self.assertFalse(srv.package_adopt("does-not-exist")["ok"])
 
     def test_package_migrate_is_staged(self):
         # Plan 010: the migrate stub became the staged flow — preview by default,

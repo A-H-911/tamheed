@@ -28,7 +28,7 @@ Keystone 1.0.1.
 | 008 | MCP server (official Python SDK) | B3 | P1 | L | 007 — SDK floor `>=3.10` verified 2026-07-17 (ASM-D: repo floor rises to 3.10) | DONE |
 | 009 | Skill v2 rewrite + params + bootstrap removal | B4 | P1 | L | 008 | DONE |
 | 010 | Migration v1 → v2 | B5 | P1 | L | 001–004, 009 | DONE |
-| 011 | Adopt mode (brownfield onboarding) | B11 | P2 | L | 010 | TODO |
+| 011 | Adopt mode (brownfield onboarding) | B11 | P2 | L | 010 | DONE |
 | 012 | HTML viewer (operator review surface) | B6 | P2 | M | 008 (010 preferred) | TODO |
 | 013 | Eval runner + v2 CI + check.py | B10 | P2 | M | 010–012 | TODO |
 | 014 | Docs + Mermaid diagrams + CHANGELOG 2.0.0 | B8 | P2 | M | 005–013 | TODO |

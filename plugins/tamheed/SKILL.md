@@ -87,8 +87,10 @@ Default to **interactive**. Modes are defined in `references/modes.md`:
 - `stage:<id>` — run or re-run a single stage.
 - `update` — the agile heart of v2: diff-aware re-derivation, execution-progress sync, and typed
   scope changes (D-UPDATE; see `references/modes.md`).
-- `adopt` / `migrate` — brownfield onboarding (plan 011) and v1-package migration (plan 010); the
-  server tools are stubs until those plans land.
+- `migrate` — walk a conformant v1 Keystone package into the store (`package_migrate`, staged and
+  operator-gated; mapping contract in `references/migration-v1.md`).
+- `adopt` — onboard a project that never used Tamheed (`package_adopt`, staged): nothing inferred
+  is Approved, provenance is code-shaped, the gap report is first-class (`references/adopt.md`).
 
 Parameters: `--profile <type>` (registry-backed: enterprise | rnd | legacy | ai-agentic | unknown);
 `--package-dir <dir>` (explicit, validated, created if absent — never inside the plugin);
@@ -206,6 +208,8 @@ Read the reference file when you reach the matching part of the work; do not loa
 | `references/quality-gates.md` | The three-tier gate model; running `gate_run` |
 | `references/safeguards.md` | The anti-patterns to actively prevent |
 | `references/handoff.md` | Assembling the execution-agent handoff |
+| `references/migration-v1.md` | Migrating a v1 Keystone package (`migrate` mode) |
+| `references/adopt.md` | Brownfield onboarding (`adopt` mode) |
 | `references/prompt-templates.md` | Writing initial / follow-up / review prompts |
 | `references/generated-structure.md` | The layout of a generated v2 package |
 | `references/state.md` | State, resumption, and update cycles |

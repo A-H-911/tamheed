@@ -507,9 +507,12 @@ def package_migrate(source_dir: str, name: str | None = None, confirm: bool = Fa
     return migrate.run_migration(source_dir, PACKAGE_ROOT, name=name, confirm=confirm)
 
 
-def package_adopt(source_dir: str) -> dict:
-    """Adopt a brownfield repository. Implemented in plan 011."""
-    return _err("not implemented until plan 011 (adopt mode)")
+def package_adopt(source_dir: str, name: str | None = None, confirm: bool = False) -> dict:
+    """Adopt a brownfield repository (staged: scan + dry report by default; confirm=True
+    records — Proposed-only, code-provenanced, gap report first-class). See
+    references/adopt.md; the four rules are enforced mechanically."""
+    import adopt
+    return adopt.run_adoption(source_dir, PACKAGE_ROOT, name=name, confirm=confirm)
 
 
 def export_html() -> dict:
@@ -532,7 +535,7 @@ TOOLS = {
     "work_bind": (work_bind, "Bind a commit/PR to the entities it satisfies (stamps last_referenced)"),
     "handoff_emit": (handoff_emit, "Emit handoff prompts + executor MCP config (injection-screened)"),
     "package_migrate": (package_migrate, "Migrate a conformant v1 package (staged: preview, then confirm)"),
-    "package_adopt": (package_adopt, "Adopt a brownfield repo (stub until plan 011)"),
+    "package_adopt": (package_adopt, "Adopt a brownfield repo (staged: scan/preview, then confirm)"),
     "export_html": (export_html, "Export the HTML review surface (stub until plan 012)"),
 }
 

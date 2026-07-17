@@ -479,8 +479,8 @@ def parse_v1(source: Path) -> Plan:
 INSERT_ORDER = ["requirements", "constraints", "invariants", "assumptions", "dependencies",
                 "open_questions", "adrs", "decisions", "risks", "hypotheses", "experiments",
                 "pocs", "kpis", "stakeholders", "phases", "milestones", "wbs_items",
-                "acceptance_criteria", "tests", "narrative_documents", "document_sections",
-                "diagrams", "prompts"]
+                "acceptance_criteria", "tests", "deferred_work", "narrative_documents",
+                "document_sections", "diagrams", "prompts"]
 
 try:
     from tamheed_server import BASELINE_ENTITY_TYPES  # when imported alongside the server
