@@ -23,8 +23,8 @@ Keystone 1.0.1.
 | Plan | Title | Track | Priority | Effort | Depends on | Status |
 |------|-------|-------|----------|--------|------------|--------|
 | 005 | Bootstrap Tamheed repo (new repo, full history) | B1 | P1 | M | 001–004 committed | DONE |
-| 006 | Deliverables review — **USER APPROVAL GATE** | B7 | P1 | M | 005 | TODO |
-| 007 | Data model: ADR + DDL + canonical text | B2 | P1 | L | 006 | TODO |
+| 006 | Deliverables review — **USER APPROVAL GATE** | B7 | P1 | M | 005 | DONE |
+| 007 | Data model: ADR + DDL + canonical text | B2 | P1 | L | 006 — **unblocked**: `plans/deliverables-review.md` APPROVED 2026-07-17 | TODO |
 | 008 | MCP server (official Python SDK) | B3 | P1 | L | 007 | TODO |
 | 009 | Skill v2 rewrite + params + bootstrap removal | B4 | P1 | L | 008 | TODO |
 | 010 | Migration v1 → v2 | B5 | P1 | L | 001–004, 009 | TODO |
