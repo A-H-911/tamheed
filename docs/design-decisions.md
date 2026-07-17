@@ -3,8 +3,8 @@
 The durable architectural decisions behind Keystone, distilled for contributors. These are the choices a
 maintainer needs to understand and preserve; the *process* history of how Keystone was first built is not
 retained. The enforceable contracts these decisions imply live in
-[`../plugins/keystone/references/extension.md`](../plugins/keystone/references/extension.md) and
-[`governance.md`](../plugins/keystone/references/governance.md); the layering is in
+[`../plugins/tamheed/references/extension.md`](../plugins/tamheed/references/extension.md) and
+[`governance.md`](../plugins/tamheed/references/governance.md); the layering is in
 [`architecture.md`](architecture.md).
 
 ## 1. The skill owns the capability; entry points are thin wrappers
@@ -47,7 +47,7 @@ extension pattern: add depth as a new reference file and register it, rather tha
 
 ## 6. Self-contained, single-unit packaging
 
-Keystone ships as one self-contained bundle (`plugins/keystone/`) containing everything it reads or invokes
+Keystone ships as one self-contained bundle (`plugins/tamheed/`) containing everything it reads or invokes
 at runtime — references, templates, schemas, scripts, the artifact catalog, and logos — with no outward
 references. This is required by Claude Code's plugin install semantics (the plugin directory is copied to a
 cache, so files outside it would not travel) and it makes the bundle equally usable as a standalone Agent
@@ -68,7 +68,7 @@ directive is captured (and surfaced) rather than executed, and the assembled han
 The validator's identifier/status/source/completeness/traceability gates check the internal consistency of
 whatever artifacts exist. That left a gap: a package missing its core artifacts could pass, because each
 gate SKIPped on the absent input. Gate **G-SET** closes it by reading the **Always** set
-(`plugins/keystone/references/required-artifacts.json`, the machine mirror of `artifact-rules.md`) and
+(`plugins/tamheed/references/required-artifacts.json`, the machine mirror of `artifact-rules.md`) and
 requiring each always-on artifact to be present on disk or explicitly recorded in the manifest's
 `omitted_artifacts[]` with a reason. Omission becomes a conscious, recorded act rather than a silent gap —
 which is what lets the "execution-ready" verdict be trusted. Deterministic checks stay in the script;

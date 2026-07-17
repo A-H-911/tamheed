@@ -1,21 +1,28 @@
 <p align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="plugins/keystone/assets/logo-dark.svg">
-    <source media="(prefers-color-scheme: light)" srcset="plugins/keystone/assets/logo-light.svg">
-    <img src="plugins/keystone/assets/logo.svg" alt="Keystone — the planning keystone that locks execution together" width="360">
+    <source media="(prefers-color-scheme: dark)" srcset="plugins/tamheed/assets/logo-dark.svg">
+    <source media="(prefers-color-scheme: light)" srcset="plugins/tamheed/assets/logo-light.svg">
+    <img src="plugins/tamheed/assets/logo.svg" alt="Keystone — the planning keystone that locks execution together" width="360">
   </picture>
 </p>
 
-<h1 align="center">Keystone</h1>
+<h1 align="center">Tamheed</h1>
 
 <p align="center"><strong>Turn a project description into a validated, traceable, execution-ready planning &amp; handoff package for Claude Code to implement.</strong></p>
+
+> **Tamheed** — successor of [Keystone](https://github.com/A-H-911/keystone) (formerly this
+> codebase, ≤ v1.0.x). Keystone remains available for existing v1 packages; migration guide
+> coming with v2.0.0.
+>
+> ⚠ **v2 under construction** — the docs below describe the system being built; see `plans/`
+> for the program.
 
 <p align="center">
   <em>Claude Code plugin + portable agent skill &middot; v1.0</em> &middot;
   <a href="#license">MIT</a> &middot;
   <a href="docs/install.md">Install</a> &middot;
   <a href="CONTRIBUTING.md">Contribute</a> &middot;
-  <a href="plugins/keystone/SKILL.md">Skill spec</a>
+  <a href="plugins/tamheed/SKILL.md">Skill spec</a>
 </p>
 
 ---
@@ -39,7 +46,7 @@ kickoff prompts that hand the work over.
 
 ## Install
 
-Keystone ships as a self-contained bundle at [`plugins/keystone/`](plugins/keystone). See
+Keystone ships as a self-contained bundle at [`plugins/tamheed/`](plugins/tamheed). See
 [`docs/install.md`](docs/install.md) for every path and the per-agent capability tiers; the essentials:
 
 **Claude Code (plugin — recommended).** This repo is its own plugin marketplace:
@@ -58,10 +65,10 @@ the skill triggers on planning/scoping/handoff intent on its own.
 ```text
 # user scope (all projects)        # or project scope
 ~/.claude/skills/keystone/         <repo>/.claude/skills/keystone/
-   ← contents of plugins/keystone/
+   ← contents of plugins/tamheed/
 ```
 
-**Claude.ai / Agent Skills.** Upload the `plugins/keystone/` folder as an Agent Skill (it has `SKILL.md` at
+**Claude.ai / Agent Skills.** Upload the `plugins/tamheed/` folder as an Agent Skill (it has `SKILL.md` at
 its root and follows the [Agent Skills](https://agentskills.io) standard).
 
 > The repository bootstrap and validator scripts need **Python 3.9+**; optional remote repo creation needs
@@ -115,10 +122,10 @@ artifacts → repo init → validation → handoff). One principle governs the d
 > **The skill owns the capability; every entry point is a thin wrapper.**
 
 All judgment — the 22 stages, artifact selection, quality gates, handoff logic — lives in the
-[`keystone` skill](plugins/keystone/SKILL.md). The skill is a **progressive-disclosure** bundle: a short
+[`keystone` skill](plugins/tamheed/SKILL.md). The skill is a **progressive-disclosure** bundle: a short
 `SKILL.md` front door plus a `references/` directory loaded on demand. It is **self-contained** — everything
 it reads or invokes at runtime (templates, schemas, the bootstrap and validator scripts, the artifact
-catalog, logos) lives inside `plugins/keystone/`, so the plugin installs and runs as one intact unit. See
+catalog, logos) lives inside `plugins/tamheed/`, so the plugin installs and runs as one intact unit. See
 [`docs/architecture.md`](docs/architecture.md) and [`docs/design-decisions.md`](docs/design-decisions.md).
 
 ### Operating principles (what makes the output trustworthy)
@@ -136,7 +143,7 @@ catalog, logos) lives inside `plugins/keystone/`, so the plugin installs and run
 ```text
 keystone/
 ├── .claude-plugin/marketplace.json   # this repo is its own plugin marketplace
-├── plugins/keystone/                 # the self-contained skill bundle (the installable unit)
+├── plugins/tamheed/                 # the self-contained skill bundle (the installable unit)
 │   ├── .claude-plugin/plugin.json
 │   ├── SKILL.md                      # always-loaded entry point (owns the capability)
 │   ├── references/                   # per-stage / per-concern depth (incl. artifact-catalog.md)
@@ -164,7 +171,7 @@ for setup, the design invariants to preserve, and how to extend Keystone without
 **v1.0.** The methodology, skill specification, governance model, templates, schemas, scripts, validator, and
 generated-package structure are defined, usable, and stable. Any future change to the schemas, identifiers, or
 the handoff contract ships with a migration note per the versioning rules in
-[`plugins/keystone/references/governance.md`](plugins/keystone/references/governance.md). Changes are tracked
+[`plugins/tamheed/references/governance.md`](plugins/tamheed/references/governance.md). Changes are tracked
 in [`CHANGELOG.md`](CHANGELOG.md).
 
 ## License

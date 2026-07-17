@@ -18,9 +18,9 @@ report a problem.
 
 ## Controls in place
 
-- **Untrusted-content handling** — operating principle 10 in `plugins/keystone/SKILL.md`, safeguard 18 in
-  `plugins/keystone/references/safeguards.md`, and the handoff screening step in
-  `plugins/keystone/references/handoff.md`. Brief text is fenced + provenance-labeled, never an imperative.
+- **Untrusted-content handling** — operating principle 10 in `plugins/tamheed/SKILL.md`, safeguard 18 in
+  `plugins/tamheed/references/safeguards.md`, and the handoff screening step in
+  `plugins/tamheed/references/handoff.md`. Brief text is fenced + provenance-labeled, never an imperative.
 - **No shell injection** — both Python tools invoke `git`/`gh` with **argument lists** (`subprocess.run([...])`),
   never `shell=True` and never string-interpolated commands (CWE-78).
 - **No path traversal** — `init_skill_repo.py` validates `--repo-name` as a single safe path segment

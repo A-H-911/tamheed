@@ -4,12 +4,12 @@ This is the human-facing explanation of Keystone's **22-stage interactive model*
 staged, how the three phase groups fit together, how documents and decisions move through their lifecycle,
 and the philosophy behind the gates. It is the orientation; the **authoritative, operational per-stage spec**
 (inputs, activities, outputs, entry/exit criteria, validation, failure handling, human-intervention points,
-and artifacts) lives in [`../plugins/keystone/references/workflow.md`](../plugins/keystone/references/workflow.md). This document
+and artifacts) lives in [`../plugins/tamheed/references/workflow.md`](../plugins/tamheed/references/workflow.md). This document
 summarizes and links — it does not re-paste the operational spec.
 
-> See also: [`methodology.md`](methodology.md) (rationale), [`../plugins/keystone/references/artifact-catalog.md`](../plugins/keystone/references/artifact-catalog.md)
-> (what each stage produces), [`../plugins/keystone/references/quality-gates.md`](../plugins/keystone/references/quality-gates.md) (gate
-> definitions), and [`../plugins/keystone/references/governance.md`](../plugins/keystone/references/governance.md) (statuses and IDs).
+> See also: [`methodology.md`](methodology.md) (rationale), [`../plugins/tamheed/references/artifact-catalog.md`](../plugins/tamheed/references/artifact-catalog.md)
+> (what each stage produces), [`../plugins/tamheed/references/quality-gates.md`](../plugins/tamheed/references/quality-gates.md) (gate
+> definitions), and [`../plugins/tamheed/references/governance.md`](../plugins/tamheed/references/governance.md) (statuses and IDs).
 
 ## Why interactive, not a single prompt
 
@@ -36,7 +36,7 @@ criteria**, so the process advances only when the prerequisites genuinely hold. 
 process *resumable* and *partial*: because state is persisted, work can stop after intake, resume from the
 last completed stage, or re-run a single stage without redoing everything. The invocation modes (`full`,
 `intake`, `plan`, `resume`, `stage:<id>`, `update`) are exactly these stop/start points; they change *where*
-the workflow runs, never the methodology. See [`../plugins/keystone/references/modes.md`](../plugins/keystone/references/modes.md).
+the workflow runs, never the methodology. See [`../plugins/tamheed/references/modes.md`](../plugins/tamheed/references/modes.md).
 
 ## The three phase groups
 
@@ -76,7 +76,7 @@ Deferred**. A Proposed decision is never rendered as if Approved; that is a core
 mechanically. **Immutable-after-approval** artifacts (ADRs, approved acceptance criteria) are never edited in
 meaning — they are superseded by a new item. **Derived** artifacts (the traceability matrix, the readiness
 report, roadmap rollups) are regenerated from their sources, never hand-edited. Full status semantics,
-identifiers, versioning, and supersession rules: [`../plugins/keystone/references/governance.md`](../plugins/keystone/references/governance.md).
+identifiers, versioning, and supersession rules: [`../plugins/tamheed/references/governance.md`](../plugins/tamheed/references/governance.md).
 
 ## Gate philosophy: critical vs warn, loops as discipline
 
@@ -86,7 +86,7 @@ critical gate is *not ready*, full stop, and the report says so rather than pape
 surface issues that should be seen but do not block; a Warn gate may be passed by recording an accepted,
 attributed exception. A package is execution-ready only when every Critical gate passes and every Warn gate
 is passing or carries a recorded exception. The full gate list and severities are in
-[`../plugins/keystone/references/quality-gates.md`](../plugins/keystone/references/quality-gates.md).
+[`../plugins/tamheed/references/quality-gates.md`](../plugins/tamheed/references/quality-gates.md).
 
 **Loops are discipline, not failure.** Clarification (stage 7), decision capture (stage 14), and validation
 (stage 19) routinely send the process back upstream — a contradiction surfaces late, an experiment refutes a
@@ -109,8 +109,8 @@ passes an approval gate on the user's behalf.
 ## Stage summary
 
 A compact index of all 22 stages. **Per-stage operational detail (In · Do · Out · Enter · Exit · Validate ·
-Fail · Human · Artifacts) is in [`../plugins/keystone/references/workflow.md`](../plugins/keystone/references/workflow.md)** — this table
-does not replace it. Gate IDs reference [`../plugins/keystone/references/quality-gates.md`](../plugins/keystone/references/quality-gates.md);
+Fail · Human · Artifacts) is in [`../plugins/tamheed/references/workflow.md`](../plugins/tamheed/references/workflow.md)** — this table
+does not replace it. Gate IDs reference [`../plugins/tamheed/references/quality-gates.md`](../plugins/tamheed/references/quality-gates.md);
 ✅ in the Gate column marks a human approval point.
 
 ### Phase A — Understand
@@ -153,6 +153,6 @@ does not replace it. Gate IDs reference [`../plugins/keystone/references/quality
 ## Where this document stops
 
 This is orientation and philosophy. For exactly what each stage consumes and produces and how it validates,
-read [`../plugins/keystone/references/workflow.md`](../plugins/keystone/references/workflow.md). For which artifacts a stage may emit and
-their generation classes, read [`../plugins/keystone/references/artifact-catalog.md`](../plugins/keystone/references/artifact-catalog.md). For the gate definitions and
-severities, read [`../plugins/keystone/references/quality-gates.md`](../plugins/keystone/references/quality-gates.md).
+read [`../plugins/tamheed/references/workflow.md`](../plugins/tamheed/references/workflow.md). For which artifacts a stage may emit and
+their generation classes, read [`../plugins/tamheed/references/artifact-catalog.md`](../plugins/tamheed/references/artifact-catalog.md). For the gate definitions and
+severities, read [`../plugins/tamheed/references/quality-gates.md`](../plugins/tamheed/references/quality-gates.md).

@@ -35,17 +35,17 @@ jobs:
 
       - name: Golden — valid fixture passes (exit 0)
         shell: bash
-        run: python plugins/keystone/scripts/validate_package.py tests/fixtures/valid-package
+        run: python plugins/tamheed/scripts/validate_package.py tests/fixtures/valid-package
 
       - name: Golden — demo package passes (exit 0)
         shell: bash
-        run: python plugins/keystone/scripts/validate_package.py generated-samples/support-triage-agent
+        run: python plugins/tamheed/scripts/validate_package.py generated-samples/support-triage-agent
 
       - name: Negative — invalid fixture fails (exit 1)
         shell: bash
         run: |
           set +e
-          python plugins/keystone/scripts/validate_package.py tests/fixtures/invalid-package
+          python plugins/tamheed/scripts/validate_package.py tests/fixtures/invalid-package
           code=$?
           set -e
           if [ "$code" -ne 1 ]; then
@@ -56,7 +56,7 @@ jobs:
         shell: bash
         run: |
           set +e
-          python plugins/keystone/scripts/validate_package.py tests/fixtures/incomplete-package
+          python plugins/tamheed/scripts/validate_package.py tests/fixtures/incomplete-package
           code=$?
           set -e
           if [ "$code" -ne 1 ]; then

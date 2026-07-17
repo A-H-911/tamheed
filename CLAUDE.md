@@ -19,7 +19,7 @@ The repository is its own **plugin marketplace**, and the skill is one **self-co
 
 ```
 .claude-plugin/marketplace.json      # repo = marketplace (one plugin: keystone)
-plugins/keystone/                     # THE installable bundle — self-contained, copied intact on install
+plugins/tamheed/                     # THE installable bundle — self-contained, copied intact on install
 ├── .claude-plugin/plugin.json
 ├── SKILL.md                          # always-loaded front door (owns the capability)
 ├── references/                       # on-demand depth, incl. artifact-catalog.md (the artifact catalog)
@@ -36,7 +36,7 @@ SECURITY.md                           # trust model, untrusted-content posture, 
 
 The bundle also carries `references/required-artifacts.json` — the machine-readable mirror of the **Always**
 class in `artifact-rules.md`, read by gate **G-SET**. There is **no** top-level `skill/`, `templates/`,
-`schemas/`, `scripts/`, `commands/`, or `adrs/` anymore — everything runtime moved into `plugins/keystone/`;
+`schemas/`, `scripts/`, `commands/`, or `adrs/` anymore — everything runtime moved into `plugins/tamheed/`;
 build-history docs were removed.
 
 ## Commands
@@ -48,12 +48,12 @@ Python 3.9+ is the only hard dependency (stdlib only — no pytest, no third-par
 python tests/test_validate_package.py
 
 # Validate a generated package against the 7 mechanical quality gates
-python plugins/keystone/scripts/validate_package.py <package-dir>          # human report
-python plugins/keystone/scripts/validate_package.py <package-dir> --json   # machine-readable
+python plugins/tamheed/scripts/validate_package.py <package-dir>          # human report
+python plugins/tamheed/scripts/validate_package.py <package-dir> --json   # machine-readable
 
 # Preview a repo bootstrap (writes nothing); drop --dry-run to apply.
 # --layout defaults to `plugin` (self-contained bundle); use `classic` for the old skill/+commands/ layout.
-python plugins/keystone/scripts/init_skill_repo.py --repo-name <name> --owner <org> --dry-run
+python plugins/tamheed/scripts/init_skill_repo.py --repo-name <name> --owner <org> --dry-run
 ```
 
 `validate_package.py` exits `0` (all critical gates pass), `1` (a critical gate failed → NOT READY), `2`
@@ -68,31 +68,31 @@ python plugins/keystone/scripts/init_skill_repo.py --repo-name <name> --owner <o
 > **The skill owns the capability; every entry point is a thin wrapper.**
 
 All methodology — the 22 stages, artifact selection, quality gates, handoff logic — lives in
-`plugins/keystone/SKILL.md` + its `references/`. External entry points (CLI/API/MCP/UI) only normalize input,
+`plugins/tamheed/SKILL.md` + its `references/`. External entry points (CLI/API/MCP/UI) only normalize input,
 invoke the skill, and route output, carrying no methodology (gate **G-CMD-THIN**). In Claude Code the skill
 *is* the entry point (invoked as `/keystone:keystone` when installed as a plugin, or `/keystone` when copied
 standalone into a skills dir) — there is no separate command file.
 
 The 22 stages: **Understand** (1–8 intake→scope) → **Explore** (9–15 research→decisions→risk) → **Plan &
 hand off** (16–22 execution plan→artifacts→repo init→validation→handoff). Authoritative per-stage spec:
-`plugins/keystone/references/workflow.md`.
+`plugins/tamheed/references/workflow.md`.
 
 ## Invariants that must stay true
 
 - **Self-contained bundle (mechanically required).** Claude Code copies only the plugin directory on install,
-  so everything the skill reads/invokes at runtime must live inside `plugins/keystone/` with **zero** outward
+  so everything the skill reads/invokes at runtime must live inside `plugins/tamheed/` with **zero** outward
   (`../..`, repo-root) references. `docs/` may link into the bundle; the bundle never links out.
-- **Single source of truth** = the bundle: forms in `plugins/keystone/templates/`, data shapes in
-  `plugins/keystone/schemas/`, the artifact catalog in `plugins/keystone/references/artifact-catalog.md`.
+- **Single source of truth** = the bundle: forms in `plugins/tamheed/templates/`, data shapes in
+  `plugins/tamheed/schemas/`, the artifact catalog in `plugins/tamheed/references/artifact-catalog.md`.
   Never make a second copy.
-- **Identifier scheme** (`plugins/keystone/references/governance.md`): `FR-`/`NFR-`, `CON-`, `INV-`, `ASM-`,
+- **Identifier scheme** (`plugins/tamheed/references/governance.md`): `FR-`/`NFR-`, `CON-`, `INV-`, `ASM-`,
   `DEP-`, `OQ-`, `DEC-`, `ADR-`, `RISK-`, `HYP-`, `EXP-`, `AC-`, `PH-`, `WBS-`, `MS-`. Statuses:
   `Draft → Proposed → Approved / Rejected / Superseded / Deferred → Implemented`. A *proposed* decision is
   never rendered as *approved*.
-- **New identifier prefixes** must be added to `ID_PATTERNS` in `plugins/keystone/scripts/validate_package.py`
+- **New identifier prefixes** must be added to `ID_PATTERNS` in `plugins/tamheed/scripts/validate_package.py`
   or gate **G-IDS** won't recognize them.
 - **Immutable-after-approval** artifacts (ADRs, approved acceptance criteria) are *superseded*, never edited.
-- **Extend additively** via the registries in `plugins/keystone/references/extension.md` (templates, schemas,
+- **Extend additively** via the registries in `plugins/tamheed/references/extension.md` (templates, schemas,
   gates, profiles, diagram kinds, entry points). Additive = MINOR; changing a schema's required fields, the
   identifier scheme, or the handoff contract = MAJOR + migration note.
 
@@ -102,8 +102,8 @@ references to this repo's layout.
 
 ## The 7 mechanical quality gates (validator)
 
-`plugins/keystone/scripts/validate_package.py` implements the mechanical subset of
-`plugins/keystone/references/quality-gates.md`; all seven are Critical:
+`plugins/tamheed/scripts/validate_package.py` implements the mechanical subset of
+`plugins/tamheed/references/quality-gates.md`; all seven are Critical:
 
 - **G-IDS** — identifiers well-formed, defined once, every referenced id resolves (no dangling refs).
 - **G-DEC-STATUS** — every decision/ADR row carries an explicit status from the allowed set.

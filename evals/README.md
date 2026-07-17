@@ -31,7 +31,7 @@ review or an LLM judge.
 3. Run the same `input` in another fresh session **without** the skill; save the output.
 4. Grade:
    - **deterministic_assertions** mechanically — for package-level ones, run
-     `python plugins/keystone/scripts/validate_package.py <produced-package>` and inspect the artifacts;
+     `python plugins/tamheed/scripts/validate_package.py <produced-package>` and inspect the artifacts;
    - **rubric** items by review or an LLM judge against the stated `pass_if`.
 5. A case **passes** when every deterministic assertion holds and the rubric mean ≥ 0.7.
 6. Repeat each case **≥ 3 times** and record invoke-rate, pass-rate, and token deltas (with vs without) to

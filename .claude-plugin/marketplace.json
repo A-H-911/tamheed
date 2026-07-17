@@ -1,13 +1,13 @@
 {
-  "name": "keystone",
+  "name": "tamheed",
   "owner": {
     "name": "Anas Hammo",
     "url": "https://github.com/A-H-911"
   },
   "plugins": [
     {
-      "name": "keystone",
-      "source": "./plugins/keystone",
+      "name": "tamheed",
+      "source": "./plugins/tamheed",
       "description": "Turn a project description into a validated, traceable, execution-ready planning & handoff package for Claude Code to implement."
     }
   ]

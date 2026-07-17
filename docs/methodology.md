@@ -6,10 +6,10 @@ methodology. The operational "how" lives in the skill's references; this file su
 the two never drift apart or duplicate each other.
 
 > **Reading map.** For the staged process see [`workflow.md`](workflow.md) and the authoritative per-stage
-> spec [`../plugins/keystone/references/workflow.md`](../plugins/keystone/references/workflow.md). For every artifact's class, location,
-> and lifecycle see [`../plugins/keystone/references/artifact-catalog.md`](../plugins/keystone/references/artifact-catalog.md). For the skill/command layering see
+> spec [`../plugins/tamheed/references/workflow.md`](../plugins/tamheed/references/workflow.md). For every artifact's class, location,
+> and lifecycle see [`../plugins/tamheed/references/artifact-catalog.md`](../plugins/tamheed/references/artifact-catalog.md). For the skill/command layering see
 > [`architecture.md`](architecture.md). For identifiers, statuses, and versioning see
-> [`../plugins/keystone/references/governance.md`](../plugins/keystone/references/governance.md).
+> [`../plugins/tamheed/references/governance.md`](../plugins/tamheed/references/governance.md).
 
 ## 1. What the methodology is
 
@@ -24,8 +24,8 @@ trustworthy. The governing principle is architectural: **the skill owns the capa
 wrappers.** The operating principles are epistemic: never invent requirements; separate facts from decisions
 from proposals; surface assumptions instead of burying them; no premature architecture; preserve the
 unresolved; verify before you claim; and prefer operationally useful artifacts over ceremonial ones. The
-full, enforced list is in [`../plugins/keystone/SKILL.md`](../plugins/keystone/SKILL.md) (operating principles) and
-[`../plugins/keystone/references/safeguards.md`](../plugins/keystone/references/safeguards.md) (each anti-pattern paired with its
+full, enforced list is in [`../plugins/tamheed/SKILL.md`](../plugins/tamheed/SKILL.md) (operating principles) and
+[`../plugins/tamheed/references/safeguards.md`](../plugins/tamheed/references/safeguards.md) (each anti-pattern paired with its
 control).
 
 ### Neutrality
@@ -61,8 +61,8 @@ Keystone generates **by need, not ceremony**. Every artifact carries a *generati
 is produced. The classes are: **Always** (every package), **Conditional** (a trigger such as project
 profile, size, risk, or regulatory context holds), **On-request** (only when asked), **Continuous** (created
 early, refreshed each update cycle), and **Derived** (computed from other artifacts, never hand-authored).
-The selection logic is in [`../plugins/keystone/references/artifact-rules.md`](../plugins/keystone/references/artifact-rules.md); the
-full per-artifact mapping is in [`../plugins/keystone/references/artifact-catalog.md`](../plugins/keystone/references/artifact-catalog.md). The anti-bloat rule is
+The selection logic is in [`../plugins/tamheed/references/artifact-rules.md`](../plugins/tamheed/references/artifact-rules.md); the
+full per-artifact mapping is in [`../plugins/tamheed/references/artifact-catalog.md`](../plugins/tamheed/references/artifact-catalog.md). The anti-bloat rule is
 explicit: if an artifact would only restate another, derive or link instead; if a section has no
 project-specific content, omit it rather than emit a placeholder (safeguard 11).
 
@@ -73,14 +73,14 @@ These three audiences are routinely confused, so Keystone keeps them in separate
 | Concern | Audience | Where it lives | Must NOT contain |
 |---|---|---|---|
 | **Execution-agent instructions** | Claude Code (the downstream executor) | the generated package's `handoff/` prompts + the artifacts they reference | Keystone's internal process; planner-only context |
-| **Skill-implementation concerns** | Keystone itself (the methodology author/runtime) | `../plugins/keystone/SKILL.md` + `../plugins/keystone/references/` | a specific project's content; entry-point parsing |
+| **Skill-implementation concerns** | Keystone itself (the methodology author/runtime) | `../plugins/tamheed/SKILL.md` + `../plugins/tamheed/references/` | a specific project's content; entry-point parsing |
 | **Slash-command / entry-point concerns** | the wrapper that launches Keystone (`/keystone`, a CLI, an API, an MCP tool, a UI) | external entry points (CLI/API/MCP/UI) | any methodology or planning logic (safeguard 12) |
 
 The handoff prompts are written for **Claude Code** as the executor, using its native affordances where they
 help (safeguard 13); the *plan's* technology choices stay vendor-neutral (safeguard 15). The entry point only normalizes input, picks a mode,
 invokes the skill, and routes output — it makes no planning decisions. See
-[`../plugins/keystone/references/handoff.md`](../plugins/keystone/references/handoff.md) and
-[`../plugins/keystone/references/extension.md`](../plugins/keystone/references/extension.md).
+[`../plugins/tamheed/references/handoff.md`](../plugins/tamheed/references/handoff.md) and
+[`../plugins/tamheed/references/extension.md`](../plugins/tamheed/references/extension.md).
 
 ## 3. The extracted patterns
 
@@ -115,7 +115,7 @@ are independently actionable and testable. Abstract phases are decomposed, not s
 
 **End-to-end traceability.** A single matrix links requirement → decision → task → test → risk → acceptance
 criterion, so an implementer can navigate from any need to its evidence and back. Unlinked MVP requirements
-are a gate failure, not a silent omission. See [`../plugins/keystone/references/traceability.md`](../plugins/keystone/references/traceability.md).
+are a gate failure, not a silent omission. See [`../plugins/tamheed/references/traceability.md`](../plugins/tamheed/references/traceability.md).
 
 **Clean handoff with bounded first step.** The executor receives a self-contained orientation, the
 invariants up front, and *one* bounded first task that ends at an approval gate — never "build the whole
@@ -140,11 +140,11 @@ is recorded so the trail stays intact.
 The methodology supports several **invocation modes** that change only where the workflow starts and stops,
 never the methodology itself: `full` (end to end), `intake` (understand + surface gaps), `plan` (full plan,
 no repository), `resume`, `stage:<id>`, and `update`. See
-[`../plugins/keystone/references/modes.md`](../plugins/keystone/references/modes.md). State is persisted to `keystone-state.json` so work
-can resume and update without re-asking; see [`../plugins/keystone/references/state.md`](../plugins/keystone/references/state.md).
+[`../plugins/tamheed/references/modes.md`](../plugins/tamheed/references/modes.md). State is persisted to `keystone-state.json` so work
+can resume and update without re-asking; see [`../plugins/tamheed/references/state.md`](../plugins/tamheed/references/state.md).
 
 The why-it-is-interactive argument and the compact stage table are in [`workflow.md`](workflow.md); the
-authoritative per-stage spec is [`../plugins/keystone/references/workflow.md`](../plugins/keystone/references/workflow.md). This document
+authoritative per-stage spec is [`../plugins/tamheed/references/workflow.md`](../plugins/tamheed/references/workflow.md). This document
 does not repeat either.
 
 ## 5. Decision processes
@@ -160,7 +160,7 @@ Architecture Decision Record (`ADR-NNNN`), and the promotion link (`DEC-007 → 
 never lost. ADRs are immutable after approval: to change one, supersede it with a new ADR rather than editing
 its meaning. The decision-capture activity (stage 14) records status, rationale, alternatives, and
 consequences, and refuses to record a decision with no rationale. Full identifier, status, and supersession
-rules: [`../plugins/keystone/references/governance.md`](../plugins/keystone/references/governance.md).
+rules: [`../plugins/tamheed/references/governance.md`](../plugins/tamheed/references/governance.md).
 
 ## 6. Validation steps
 
@@ -170,7 +170,7 @@ handoff. **Critical** gates block readiness; **Warn** gates surface issues witho
 accepted exception. The gate set (e.g. requirement-has-source, identifier integrity, decision-has-status,
 full traceability, completeness/no-stubs, no unresolved hard contradiction, executable plan, clean
 Claude-Code-targeted handoff, no silently-unanswered blocking question) is defined in
-[`../plugins/keystone/references/quality-gates.md`](../plugins/keystone/references/quality-gates.md). Mechanical gates are checked by a
+[`../plugins/tamheed/references/quality-gates.md`](../plugins/tamheed/references/quality-gates.md). Mechanical gates are checked by a
 validator; judgment gates are performed and recorded with evidence. The gate philosophy — critical vs warn,
 and loops as discipline rather than failure — is explained in [`workflow.md`](workflow.md). Keystone never
 reports "ready" while a Critical gate fails.
@@ -199,7 +199,7 @@ else.
 
 ## 9. R&D practices
 
-Research is planned in proportion to risk ([`../plugins/keystone/references/research-depth.md`](../plugins/keystone/references/research-depth.md)),
+Research is planned in proportion to risk ([`../plugins/tamheed/references/research-depth.md`](../plugins/tamheed/references/research-depth.md)),
 targeting the riskiest unknowns first and timeboxing to avoid unbounded investigation. The chain is
 deliberate: an unknown that blocks a decision becomes a **falsifiable hypothesis** (`HYP-`) with the signal
 that would confirm or refute it; that hypothesis gets a **minimal experiment or POC** (`EXP-`/`POC-`) with
@@ -217,8 +217,8 @@ invariant audit, and deviation-ADR), **review prompts** (audit against invariant
 PR), a **handoff manifest** (artifacts, versions, entry points, invariants, MVP definition, prerequisites),
 and the **execution-readiness report**. The principles — Claude-Code-targeted, reference don't restate, bounded
 steps with gates, invariants and prerequisites explicit — are in
-[`../plugins/keystone/references/handoff.md`](../plugins/keystone/references/handoff.md), with prompt forms in
-[`../plugins/keystone/references/prompt-templates.md`](../plugins/keystone/references/prompt-templates.md). The handoff is what lets
+[`../plugins/tamheed/references/handoff.md`](../plugins/tamheed/references/handoff.md), with prompt forms in
+[`../plugins/tamheed/references/prompt-templates.md`](../plugins/tamheed/references/prompt-templates.md). The handoff is what lets
 **Claude Code**, with no access to the planning conversation, start implementing with no missing context.
 
 ## 11. Repository-initialization practices
@@ -228,7 +228,7 @@ files, README and logo, license, ADR and documentation directories, changelog, v
 and an optional remote with push. The bootstrap is **dry-run by default**, **idempotent**, and **never
 overwrites without `--force`**; it refuses a dirty target unless explicitly told otherwise (safeguard 16).
 Repository logic is provider-neutral — local git always, remote creation an optional and swappable step
-(safeguard 14). Operational detail: [`../plugins/keystone/references/repo-init.md`](../plugins/keystone/references/repo-init.md).
+(safeguard 14). Operational detail: [`../plugins/tamheed/references/repo-init.md`](../plugins/tamheed/references/repo-init.md).
 
 ## 12. Extraction traceability
 
@@ -258,5 +258,5 @@ is what ships; the left column is the recurring practice it generalizes.
 This file is rationale and generalization. It intentionally does **not** restate the per-stage operational
 spec, the full identifier tables, the gate definitions, or the artifact catalog rows — those are single
 sources of truth elsewhere, linked above. When the methodology evolves, the additive extension contract in
-[`../plugins/keystone/references/extension.md`](../plugins/keystone/references/extension.md) governs how new artifact types, templates,
+[`../plugins/tamheed/references/extension.md`](../plugins/tamheed/references/extension.md) governs how new artifact types, templates,
 schemas, gates, profiles, diagram kinds, and entry points are added without editing core logic.

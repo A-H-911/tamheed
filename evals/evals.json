@@ -1,5 +1,5 @@
 {
-  "skill": "keystone",
+  "skill": "tamheed",
   "standard": "Agent Skills open standard — evaluation-driven development (agentskills.io/skill-creation/evaluating-skills)",
   "method": "For each case, run the brief in a FRESH session WITH the keystone skill and WITHOUT it; compare. Grade the deterministic_assertions mechanically (they are objectively checkable) and the rubric items by review or an LLM judge. A case PASSES when every deterministic assertion holds and the rubric mean clears 0.7. Track invoke-rate, pass-rate, and token deltas across >=3 repetitions per case to damp variance. See README.md.",
   "cases": [
@@ -8,7 +8,7 @@
       "intent": "A small but complete brief should yield a full, valid package that passes the validator.",
       "input": "Build `todo`, a single-user command-line to-do list in Python. Commands: add <text>, list, done <id>, rm <id>. Tasks persist to a local JSON file in the user's home directory. No network, no accounts. Ship with unit tests and a README. Target: works on Python 3.9+.",
       "deterministic_assertions": [
-        "The produced package validates clean: `python plugins/keystone/scripts/validate_package.py <pkg>` exits 0.",
+        "The produced package validates clean: `python plugins/tamheed/scripts/validate_package.py <pkg>` exits 0.",
         "Every FR-/NFR- row in requirements/ has a non-empty source column (G-REQ-SRC).",
         "A manifest.json exists and lists the produced artifacts (G-SET passes).",
         "handoff/initial-prompt.md references only files that exist in the package (no dangling paths)."

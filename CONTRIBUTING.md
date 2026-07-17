@@ -8,18 +8,18 @@ covers setup, the invariants to preserve, and how to extend the skill without fo
 
 - **Python 3.9+** is the only hard dependency (standard library only — no pytest, no third-party packages).
 - Optional, for the repo-bootstrap script's remote feature: `git` and the GitHub CLI (`gh`).
-- The skill itself has no build step. The bundle at `plugins/keystone/` *is* the product.
+- The skill itself has no build step. The bundle at `plugins/tamheed/` *is* the product.
 
 ```bash
 # run the validator self-test (the test suite)
 python tests/test_validate_package.py
 
 # validate a generated package against the mechanical quality gates
-python plugins/keystone/scripts/validate_package.py <package-dir>          # human report
-python plugins/keystone/scripts/validate_package.py <package-dir> --json   # machine-readable
+python plugins/tamheed/scripts/validate_package.py <package-dir>          # human report
+python plugins/tamheed/scripts/validate_package.py <package-dir> --json   # machine-readable
 
 # preview a repository bootstrap without writing anything
-python plugins/keystone/scripts/init_skill_repo.py --repo-name demo --owner you --dry-run
+python plugins/tamheed/scripts/init_skill_repo.py --repo-name demo --owner you --dry-run
 ```
 
 ## Invariants you must preserve
@@ -27,24 +27,24 @@ python plugins/keystone/scripts/init_skill_repo.py --repo-name demo --owner you 
 These are load-bearing. A change that breaks one is a regression even if tests pass.
 
 1. **The skill owns the capability; entry points are thin wrappers.** All methodology — the 22 stages,
-   artifact selection, quality gates, handoff logic — lives in `plugins/keystone/SKILL.md` and its
+   artifact selection, quality gates, handoff logic — lives in `plugins/tamheed/SKILL.md` and its
    `references/`. External entry points (a CLI, an HTTP API, an MCP server, a UI) must only normalize input
    to the skill's contract, invoke the skill, and route output — carrying **no** methodology of their own
-   (gate **G-CMD-THIN**; see `plugins/keystone/references/extension.md`). Inside Claude Code, the skill *is*
+   (gate **G-CMD-THIN**; see `plugins/tamheed/references/extension.md`). Inside Claude Code, the skill *is*
    the entry point — there is no separate command file to keep thin.
 2. **The bundle is self-contained.** Claude Code copies the plugin directory to a cache on install, so
-   anything the skill reads or invokes at runtime must live inside `plugins/keystone/` with **zero** outward
+   anything the skill reads or invokes at runtime must live inside `plugins/tamheed/` with **zero** outward
    (`../..`, repo-root) references. `docs/` may link into the bundle, but the bundle never reaches out.
-3. **Single source of truth.** Forms live in `plugins/keystone/templates/`; data shapes in
-   `plugins/keystone/schemas/`; the artifact catalog in `plugins/keystone/references/artifact-catalog.md`.
+3. **Single source of truth.** Forms live in `plugins/tamheed/templates/`; data shapes in
+   `plugins/tamheed/schemas/`; the artifact catalog in `plugins/tamheed/references/artifact-catalog.md`.
    Don't create a second copy of any of these.
 4. **Separation of facts / decisions / proposals, and the identifier + status scheme** are part of the
-   contract — see `plugins/keystone/references/governance.md`.
+   contract — see `plugins/tamheed/references/governance.md`.
 
 ## How to extend (additively)
 
 Register an entry and drop in a file — don't fork the workflow. See
-`plugins/keystone/references/extension.md` for the full registry.
+`plugins/tamheed/references/extension.md` for the full registry.
 
 | Want to add… | Do this |
 |---|---|
@@ -59,13 +59,13 @@ Register an entry and drop in a file — don't fork the workflow. See
 
 Additive changes (new template/schema/gate/profile/entry point) are **MINOR**. Changing an existing schema's
 required fields, the identifier scheme, or the handoff contract is **MAJOR** and must ship a migration note
-(see `plugins/keystone/references/governance.md`). The validator should degrade gracefully on packages
+(see `plugins/tamheed/references/governance.md`). The validator should degrade gracefully on packages
 authored under a prior MINOR version. Record notable changes in [`CHANGELOG.md`](CHANGELOG.md).
 
 ## Before opening a PR
 
 - The validator self-test passes: `python tests/test_validate_package.py`.
-- New runtime-read files live inside `plugins/keystone/` and add no outward references.
+- New runtime-read files live inside `plugins/tamheed/` and add no outward references.
 - Conventional commit messages (`feat:`, `fix:`, `docs:`, `refactor:`, `chore:`…).
 
 ## Design background

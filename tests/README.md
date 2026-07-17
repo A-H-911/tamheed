@@ -1,7 +1,7 @@
 # Keystone tests — package validator
 
 This directory holds the self-test and fixtures for the **mechanical
-quality-gate validator** (`plugins/keystone/scripts/validate_package.py`) for
+quality-gate validator** (`plugins/tamheed/scripts/validate_package.py`) for
 Keystone-generated packages, all stdlib-only (Python 3.9+, no pytest, no
 third-party deps).
 
@@ -10,19 +10,19 @@ third-party deps).
 Validate a generated package (human-readable report):
 
 ```
-python plugins/keystone/scripts/validate_package.py <package-dir>
+python plugins/tamheed/scripts/validate_package.py <package-dir>
 ```
 
 Machine-readable summary (for CI / wrappers):
 
 ```
-python plugins/keystone/scripts/validate_package.py <package-dir> --json
+python plugins/tamheed/scripts/validate_package.py <package-dir> --json
 ```
 
 Help:
 
 ```
-python plugins/keystone/scripts/validate_package.py --help
+python plugins/tamheed/scripts/validate_package.py --help
 ```
 
 Run the self-test (validates both fixtures and asserts behaviour):
@@ -54,7 +54,7 @@ audit present). `trace` measures **line**, not **branch**, coverage; for branch 
 ## What each gate checks
 
 The validator implements the *mechanical* subset of the gates defined in
-`../plugins/keystone/references/quality-gates.md`. All seven are **Critical** — any failure
+`../plugins/tamheed/references/quality-gates.md`. All seven are **Critical** — any failure
 makes the package NOT READY.
 
 | Gate | Checks |
@@ -136,7 +136,7 @@ defect reported by the right gate.
 
 ## Files
 
-- `../plugins/keystone/scripts/validate_package.py` — the validator (CLI +
+- `../plugins/tamheed/scripts/validate_package.py` — the validator (CLI +
   importable `run_gates` / `build_summary` API); it lives in the plugin bundle,
   not in this directory.
 - `test_validate_package.py` — stdlib `unittest` runner; exercises the API and

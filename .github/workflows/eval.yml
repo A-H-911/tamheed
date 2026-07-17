@@ -27,7 +27,7 @@ jobs:
           python - <<'PY'
           import json
           d = json.load(open('evals/evals.json', encoding='utf-8'))
-          assert d.get('skill') == 'keystone', 'skill must be keystone'
+          assert d.get('skill') == 'tamheed', 'skill must be tamheed'
           cases = d.get('cases') or []
           assert len(cases) >= 5, f'expected >=5 cases, got {len(cases)}'
           ids = set()

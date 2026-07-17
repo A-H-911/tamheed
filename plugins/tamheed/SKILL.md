@@ -1,5 +1,5 @@
 ---
-name: keystone
+name: tamheed
 description: >-
   Transform a detailed project description into a complete, validated, traceable, execution-ready
   planning and handoff package for Claude Code to implement — requirements, constraints, invariants,
@@ -25,7 +25,7 @@ execution-handoff methodology.
 (`gh`). No specific model, vendor, or repo provider is required.
 
 **One principle governs the whole design: the skill owns the capability.** Every entry point
-(`/keystone`, a CLI, an API, an MCP server, a UI) is a thin wrapper that normalizes input and routes
+(`/tamheed`, a CLI, an API, an MCP server, a UI) is a thin wrapper that normalizes input and routes
 output. None of them re-implement the methodology below.
 
 ## What Keystone produces

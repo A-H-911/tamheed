@@ -6,7 +6,13 @@ All notable changes to Keystone are documented here. The format is based on
 
 ## [Unreleased]
 
-_Nothing yet._
+### Changed
+- **Repository split (D-REPO-1..4):** this repository is now **Tamheed** (`A-H-911/tamheed`), the
+  successor of Keystone, carrying Keystone's full git history. The plugin bundle moved to
+  `plugins/tamheed/` and the plugin/marketplace/skill identifiers renamed to `tamheed`. Install:
+  `/plugin marketplace add A-H-911/tamheed` then `/plugin install tamheed@tamheed`. The
+  [keystone repo](https://github.com/A-H-911/keystone) remains available for existing v1 packages
+  (≤ v1.0.x); the v2 re-architecture lands here (see `plans/`).
 
 ## [1.0.0] - 2026-06-22
 

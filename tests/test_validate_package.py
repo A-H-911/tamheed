@@ -25,7 +25,7 @@ from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 # The validator now lives inside the self-contained plugin bundle.
-SCRIPTS = HERE.parent / "plugins" / "keystone" / "scripts"
+SCRIPTS = HERE.parent / "plugins" / "tamheed" / "scripts"
 VALIDATOR = SCRIPTS / "validate_package.py"
 VALID_PKG = HERE / "fixtures" / "valid-package"
 INVALID_PKG = HERE / "fixtures" / "invalid-package"

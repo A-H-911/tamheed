@@ -7,10 +7,10 @@ governs everything:
 
 A slash invocation, a CLI, an HTTP API, an MCP server, a UI — each only normalizes input and routes output;
 none re-implements the methodology. This is enforceable (gate **G-CMD-THIN**); the contract lives in
-[`../plugins/keystone/references/extension.md`](../plugins/keystone/references/extension.md). See also
+[`../plugins/tamheed/references/extension.md`](../plugins/tamheed/references/extension.md). See also
 [`design-decisions.md`](design-decisions.md), [`methodology.md`](methodology.md) (what the capability is),
 [`workflow.md`](workflow.md) (the staged process), and the in-bundle artifact catalog at
-[`../plugins/keystone/references/artifact-catalog.md`](../plugins/keystone/references/artifact-catalog.md).
+[`../plugins/tamheed/references/artifact-catalog.md`](../plugins/tamheed/references/artifact-catalog.md).
 
 ## 1. Layering
 
@@ -39,7 +39,7 @@ Keystone is packaged as a **Claude Code plugin**, and the repository doubles as 
 ```
 keystone/
 ├── .claude-plugin/marketplace.json        # repo = marketplace; lists the one plugin
-└── plugins/keystone/                       # THE PLUGIN — the self-contained skill bundle
+└── plugins/tamheed/                       # THE PLUGIN — the self-contained skill bundle
     ├── .claude-plugin/plugin.json
     ├── SKILL.md                            # always-loaded front door (owns the capability)
     ├── references/                         # on-demand depth + artifact-catalog.md
@@ -49,7 +49,7 @@ keystone/
 ```
 
 **Self-containment is a hard requirement, not a preference.** Claude Code copies the plugin directory to a
-cache on install, so anything the skill reads or invokes at runtime must live inside `plugins/keystone/` with
+cache on install, so anything the skill reads or invokes at runtime must live inside `plugins/tamheed/` with
 zero outward references. This replaces the earlier "single source at repo root + vendor step" model (which
 had no build and left references dangling once installed). The same bundle is therefore also usable as a
 standalone Agent Skill or a manual copy into a skills directory. Human-facing docs (`docs/`, this file) are
@@ -101,9 +101,9 @@ Semver `MAJOR.MINOR.PATCH`, with the boundary defined by contract compatibility:
   diagram kinds, entry points. Existing packages keep working; the validator degrades gracefully.
 - **MAJOR (breaking):** a change to an existing schema's required fields, the identifier scheme, or the
   handoff contract — ships with a migration note (see
-  [`../plugins/keystone/references/governance.md`](../plugins/keystone/references/governance.md)).
+  [`../plugins/tamheed/references/governance.md`](../plugins/tamheed/references/governance.md)).
 - **PATCH:** fixes that change neither contracts nor user-visible behavior.
 
 Immutable-after-approval artifacts (ADRs, approved acceptance criteria) are superseded, never rewritten.
-The plugin's own version lives in `plugins/keystone/.claude-plugin/plugin.json` and the marketplace entry;
+The plugin's own version lives in `plugins/tamheed/.claude-plugin/plugin.json` and the marketplace entry;
 notable changes are recorded in [`../CHANGELOG.md`](../CHANGELOG.md).
