@@ -207,9 +207,20 @@ class McpContractTest(unittest.TestCase):
     # ---------------------------------------------------------------- stubs & plumbing
 
     def test_stubs_report_not_implemented(self):
-        for result in (srv.package_migrate("x"), srv.package_adopt("x"), srv.export_html()):
+        for result in (srv.package_adopt("x"), srv.export_html()):
             self.assertFalse(result["ok"])
             self.assertIn("not implemented", result["error"])
+
+    def test_package_migrate_is_staged(self):
+        # Plan 010: the migrate stub became the staged flow — preview by default,
+        # and a non-package input is refused with a pointer at pre-flight.
+        preview = srv.package_migrate(str(REPO_ROOT / "tests" / "fixtures" / "valid-package"))
+        self.assertTrue(preview["ok"], preview)
+        self.assertEqual(preview["stage"], "preview")
+        self.assertIn("confirm", preview["next"])
+        refused = srv.package_migrate(str(REPO_ROOT / "tests"))
+        self.assertFalse(refused["ok"])
+        self.assertIn("package_adopt", refused["error"])
 
     def test_missing_sdk_error_path(self):
         blocked = {name: sys.modules.pop(name) for name in list(sys.modules)

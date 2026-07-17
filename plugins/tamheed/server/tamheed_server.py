@@ -497,9 +497,14 @@ def handoff_emit(target_dir: str) -> dict:
 
 # --------------------------------------------------------------------------- stubs
 
-def package_migrate(source_dir: str) -> dict:
-    """Migrate a v1 Keystone package. Implemented in plan 010."""
-    return _err("not implemented until plan 010 (migration v1 -> v2)")
+def package_migrate(source_dir: str, name: str | None = None, confirm: bool = False) -> dict:
+    """Migrate a conformant v1 Keystone package into a v2 store (staged, operator-gated).
+
+    Default = stages 1-2 (pre-flight + dry parse report). confirm=True = stages 4-5
+    (populate in one transaction + post-flight fidelity). See references/migration-v1.md.
+    Migration is operator-initiated, always (D-REPO-5)."""
+    import migrate
+    return migrate.run_migration(source_dir, PACKAGE_ROOT, name=name, confirm=confirm)
 
 
 def package_adopt(source_dir: str) -> dict:
@@ -526,7 +531,7 @@ TOOLS = {
     "audit_record": (audit_record, "Record AC verdicts, optionally evidence-bound"),
     "work_bind": (work_bind, "Bind a commit/PR to the entities it satisfies (stamps last_referenced)"),
     "handoff_emit": (handoff_emit, "Emit handoff prompts + executor MCP config (injection-screened)"),
-    "package_migrate": (package_migrate, "Migrate a v1 package (stub until plan 010)"),
+    "package_migrate": (package_migrate, "Migrate a conformant v1 package (staged: preview, then confirm)"),
     "package_adopt": (package_adopt, "Adopt a brownfield repo (stub until plan 011)"),
     "export_html": (export_html, "Export the HTML review surface (stub until plan 012)"),
 }

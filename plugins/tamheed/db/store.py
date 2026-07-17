@@ -47,8 +47,14 @@ def _pk_columns(conn: sqlite3.Connection, table: str) -> list[str]:
 
 
 def load(data_dir: str | os.PathLike) -> sqlite3.Connection:
-    """Read data/<table>.jsonl into a fresh integrity-enforcing SQLite connection."""
+    """Read data/<table>.jsonl into a fresh integrity-enforcing SQLite connection.
+
+    FK enforcement is deferred during the bulk load (canonical row order is PK order,
+    not dependency order — forward references like decisions.promoted_to -> adrs are
+    legal) and verified wholesale afterwards: violations still fail loud.
+    """
     conn = connect()
+    conn.execute("PRAGMA foreign_keys = OFF")
     data_dir = Path(data_dir)
     for table in _tables(conn):
         path = data_dir / f"{table}.jsonl"
@@ -69,6 +75,14 @@ def load(data_dir: str | os.PathLike) -> sqlite3.Connection:
                     )
                 conn.execute(sql, [row.get(col) for col in cols])
     conn.commit()
+    conn.execute("PRAGMA foreign_keys = ON")
+    violations = conn.execute("PRAGMA foreign_key_check").fetchall()
+    if violations:
+        table, rowid, parent, _ = violations[0]
+        raise sqlite3.IntegrityError(
+            f"foreign key violation loading {table!r} (row {rowid} -> {parent!r});"
+            f" {len(violations)} violation(s) total"
+        )
     return conn
 
 

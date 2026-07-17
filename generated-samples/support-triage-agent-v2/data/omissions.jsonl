@@ -1,0 +1,3 @@
+{"entity_type":"milestone","reason":"Milestones (MS-001..MS-004) are captured inline in planning/roadmap.md; a separate file would duplicate."}
+{"entity_type":"progress-entry","reason":"Continuous artifacts created at execution time (Stage 21); empty at handoff, so omitted to avoid stubs."}
+{"entity_type":"stakeholder","reason":"Stakeholders STK-001..STK-005 are captured in the charter; a deep stakeholder analysis is on-request only."}
