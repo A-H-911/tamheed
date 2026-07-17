@@ -514,6 +514,53 @@ class DecRowStatusSetRegression(unittest.TestCase):
         self.assertEqual(res.findings, [], msg=f"unexpected findings: {_msgs(res)}")
 
 
+class GateSetRules(unittest.TestCase):
+    """Coverage for G-SET's two sharpest uncovered rules (plan 003): Rule B
+    (an artifact the manifest declares present must exist on disk) and the
+    empty-reason rejection (a placeholder omission reason like '-' does not
+    count as a recorded omission)."""
+
+    def _copy_valid_pkg(self):
+        d = Path(_tempfile.mkdtemp()) / "pkg"
+        _shutil.copytree(VALID_PKG, d)
+        self.addCleanup(_shutil.rmtree, d.parent, ignore_errors=True)
+        return d
+
+    def test_rule_b_declared_present_but_missing_fails(self):
+        pkg = self._copy_valid_pkg()
+        manifest_file = pkg / "manifest.json"
+        manifest = json.loads(manifest_file.read_text(encoding="utf-8"))
+        manifest["artifacts"].append({"path": "requirements/phantom.md"})
+        manifest_file.write_text(json.dumps(manifest), encoding="utf-8")
+        res = vp.gate_set(pkg)
+        msgs = _msgs(res)
+        self.assertIn("declares this artifact present", msgs,
+                      msg=f"G-SET findings: {msgs}")
+
+    def test_placeholder_omission_reason_is_rejected(self):
+        # The fixture omits risks/risk-register.md with a real reason; degrade
+        # that reason to the placeholder '-' — the EMPTY_CELL_VALUES filter must
+        # reject it, leaving the artifact neither present nor recorded.
+        pkg = self._copy_valid_pkg()
+        manifest_file = pkg / "manifest.json"
+        manifest = json.loads(manifest_file.read_text(encoding="utf-8"))
+        entry = next(e for e in manifest["omitted_artifacts"]
+                     if e["path"] == "risks/risk-register.md")
+        entry["reason"] = "-"
+        manifest_file.write_text(json.dumps(manifest), encoding="utf-8")
+        res = vp.gate_set(pkg)
+        msgs = _msgs(res)
+        self.assertIn("neither present nor recorded", msgs,
+                      msg=f"G-SET findings: {msgs}")
+
+        # Positive half: a real sentence makes the finding disappear.
+        entry["reason"] = "Trivial fixture scope carries no material risk."
+        manifest_file.write_text(json.dumps(manifest), encoding="utf-8")
+        res = vp.gate_set(pkg)
+        self.assertEqual(res.findings, [],
+                         msg=f"unexpected G-SET findings: {_msgs(res)}")
+
+
 class InitSkillRepoUnits(unittest.TestCase):
     """Pure-function and filesystem-guard coverage for the bootstrapper."""
 
