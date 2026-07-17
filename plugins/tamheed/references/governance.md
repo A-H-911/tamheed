@@ -30,6 +30,18 @@ don't recycle). Use them in registers, in artifact front-matter, and as link tar
 | Work item (WBS) | `WBS-N[.N[.N]]` (group `WBS-N`, leaf `WBS-N.N`, sub-leaf `WBS-N.N.N`) | planning/work-breakdown |
 | Acceptance criterion | `AC-NNN` | validation/acceptance-criteria |
 | Test / validation item | `TEST-NNN` | validation/test-strategy |
+| Slice (v2) | `SL-NNN` | slices table (phase → slice) |
+| Audit verdict (v2) | `AV-NNN` | audit_verdicts table |
+| Progress entry (v2) | `PE-NNN` | progress_entries table |
+| Defect (v2) | `DEF-NNN` | defects table |
+| Deferred work (v2) | `DW-NNN` | deferred_work table |
+| Execution gate (v2) | `GATE-NNN` | execution_gates table |
+| Execution plan (v2) | `EP-NNN` | execution_plans table (per slice) |
+| Convention (v2) | `CONV-NNN` | conventions table |
+| Scope change (v2) | `SC-NNN` | scope_changes table |
+| Narrative document / section (v2) | `DOC-NNN` / `SEC-NNN` | narrative_documents / document_sections |
+| Diagram (v2) | `DIA-NNN` | diagrams table |
+| Handoff prompt (v2) | `PRM-NNN` | prompts table |
 
 `DEC` vs `ADR`: use `DEC-` for any decision in the open-decision register; **promote** a decision to an
 `ADR-NNNN` when it is architecturally significant (hard to reverse, broad blast radius). Record the
@@ -58,7 +70,15 @@ Draft → Proposed → Approved → Implemented
 
 **Decision statuses** are exactly: Proposed, Approved, Rejected, Superseded, Deferred — plus
 Implemented once a decision is realized during execution/update cycles. Never render a
-Proposed decision as if Approved — this is a core safeguard.
+Proposed decision as if Approved — this is a core safeguard. (In v2 this is a CHECK constraint:
+`Draft` is unrepresentable on a decision row.)
+
+**Three-axis status (v2, ADR-0001).** Lifecycle, verdict, and disposition are independent columns:
+`lifecycle_status` (the set above), `verdict` (Met/Partial/Not-met/Pending for audits, PASS/FAIL/Pending
+for experiments, Pass/Fail/Pending for tests), and `disposition` ∈ {superseded, accepted-with-deviation,
+void} — always with a `disposition_reason_ref` to the deciding decision/ADR. A cancelled criterion is
+*void*, not *Not-met*; risks additionally carry `risk_state` ∈ {open, mitigated, materialized, retired,
+accepted}.
 
 ## Versioning
 

@@ -1,81 +1,56 @@
-# Generated package structure
+# Generated package structure (v2)
 
-The layout Keystone produces **for a target project** (distinct from the Keystone repo itself). Create only
-the directories the selected artifact set needs (see `artifact-rules.md`); this is the maximal shape.
+The layout Tamheed produces **for a target project** (distinct from the Tamheed repo itself). A v2
+package is a data directory plus emitted handoff surfaces — not a tree of Markdown registers.
 
 ```
 <project-package>/
-├── README.md                      # what this package is, how an agent should consume it, reading order
-├── 00-charter.md                  # charter: problem, objectives, goals/non-goals, success metrics (KPI-)
-├── 01-executive-summary.md        # one-page summary + final recommendation
-├── requirements/
-│   ├── functional.md              # FR-
-│   ├── non-functional.md          # NFR-
-│   ├── constraint-register.md     # CON-
-│   ├── invariant-register.md      # INV-
-│   └── dependency-register.md     # DEP-
-├── decisions/
-│   ├── open-question-register.md  # OQ-
-│   ├── open-decision-register.md  # DEC- (status: Proposed/Approved/Rejected/Superseded/Deferred)
-│   └── assumption-register.md     # ASM- (+ risk-if-wrong)
-├── research/
-│   ├── research-plan.md
-│   ├── rnd-backlog.md
-│   └── hypothesis-register.md     # HYP-
-├── experiments/                   # EXP- experiment plans
-├── pocs/                          # POC- proof-of-concept plans + results
-├── architecture/
-│   ├── architecture.md            # recommended architecture, component model, contracts
-│   ├── technology-comparison.md   # weighted comparison matrices + verdicts
-│   └── diagrams/                  # context / component / deployment / data-flow / integration
-├── adrs/                          # adr-NNNN-*.md (immutable after approval)
-├── risks/
-│   └── risk-register.md           # RISK- (impact·likelihood·mitigation·MVP-or-full)
-├── planning/
-│   ├── roadmap.md                 # PH- phases (goal/scope/deliverables/validation/risks/exit)
-│   ├── work-breakdown.md          # WBS-
-│   └── milestones.md              # MS-
-├── execution/
-│   ├── backlog.md
-│   ├── definition-of-ready.md
-│   ├── definition-of-done.md
-│   └── checkpoints.md             # review/approval gates during execution
-├── validation/
-│   ├── acceptance-criteria.md     # AC- (MVP + full target, testable)
-│   ├── test-strategy.md           # TEST-
-│   └── traceability-matrix.md     # FR/NFR → DEC/ADR → WBS → TEST → RISK → AC (derived)
-├── progress/
-│   ├── progress-log.md
-│   └── status-report.md           # regenerated each update cycle
-├── handoff/
-│   ├── initial-prompt.md          # first message for the execution agent
-│   ├── follow-up-prompts.md       # one per phase gate + situational prompts
-│   ├── review-prompts.md          # audit / readiness-recheck prompts
-│   ├── handoff-manifest.<yaml|json>   # conforms to handoff-package schema
-│   └── execution-readiness-report.md  # final gate result
-├── scripts/
-│   └── init_repo.*                # bootstrap for the TARGET project's own repo (optional)
-├── governance/
-│   ├── naming-conventions.md
-│   ├── contributing.md
-│   └── governance.md
-├── keystone-state.json            # normalized state for resume/update (machine-owned)
-└── manifest.json                  # package manifest: artifacts present, versions, generation metadata
+├── data/                          # THE package: canonical JSONL, one file per non-empty table
+│   ├── packages.jsonl             # the package row (name, profile, mode, iteration, versions)
+│   ├── entity_types.jsonl         # the artifact-family registry (G-SET reads classes from here)
+│   ├── requirements.jsonl         # FR-/NFR- …and one file per populated family:
+│   ├── decisions.jsonl            # constraints, invariants, assumptions, dependencies,
+│   ├── adrs.jsonl                 # open_questions, risks, hypotheses, experiments, pocs, tests,
+│   ├── phases.jsonl               # kpis, stakeholders, milestones, slices, wbs_items,
+│   ├── acceptance_criteria.jsonl  # audit_verdicts, progress_entries, defects, deferred_work,
+│   ├── trace_edges.jsonl          # execution_gates, execution_plans, conventions, scope_changes,
+│   ├── narrative_documents.jsonl  # document_sections, diagrams, prompts, omissions
+│   ├── …
+│   └── .lock                      # single-writer lock (transient; never committed)
+├── handoff/                       # emitted by handoff_emit into the TARGET project
+│   └── prm-*.md                   # rendered prompt files (initial / follow-up / review)
+└── (target project root)          # handoff_emit also writes there:
+    ├── .mcp.json                  #   executor-side MCP config → the tamheed server
+    └── CLAUDE.md                  #   progress-tracking note appended
 ```
+
+The operator commits `<project-package>/data/` to whichever repository they choose — the package
+travels as data. Human review happens through rendered surfaces (the HTML viewer, plan 012), never by
+reading raw JSONL.
+
+## What replaced the v1 tree
+
+| v1 (Markdown tree) | v2 |
+|---|---|
+| `requirements/*.md`, `decisions/*.md`, `risks/`, `planning/`, `validation/*.md` registers | Rows in the corresponding tables |
+| `00-charter.md`, `01-executive-summary.md`, `architecture/`, `research/` narratives | `narrative_documents` + `document_sections` rows |
+| `architecture/diagrams/*` | `diagrams` rows (kind + source in `body`) |
+| `validation/traceability-matrix.md`, `progress/status-report.md`, `execution/backlog.md`, readiness report | **Views** — queries, rendered on demand, never stored |
+| `handoff/handoff-manifest.*`, `manifest.json` | The `packages` row + `omissions` + `v_artifact_membership` |
+| `keystone-state.json` | The store itself (see `state.md`) |
+| `scripts/init_repo.*` | Removed (ASM-B) — no repository scaffolding in v2 |
 
 ## Distinctions to preserve
 
-- **Keystone source** (the `plugins/tamheed/` skill bundle) vs **generated output** (a
-  `<project-package>/` like the above). Never write generated output into the Keystone source tree except
-  under `generated-samples/` for demonstration.
-- **Templates** (`../templates/`, blank forms) vs **filled artifacts** (in a generated package).
-- **Schemas** (`../schemas/`, data shapes) vs **instances** (`keystone-state.json`, `handoff-manifest`).
-- **Machine-readable** data (YAML/JSON: state, manifests, registers' structured fields) vs
-  **human-readable** narrative (Markdown). When a register needs both, keep Markdown as the readable
-  surface and mirror structured fields the schema defines.
+- **Tamheed source** (the `plugins/tamheed/` bundle) vs **generated output** (a package's `data/`).
+  Never write generated output into the source tree except under `generated-samples/`.
+- **Section templates** (`../templates/`, blank narrative forms) vs **filled sections**
+  (`document_sections` rows).
+- **Entities** (rows, written via tools) vs **renders** (HTML/exported files, always regenerable).
 
 ## Minimal vs maximal
 
-A tiny project may collapse to `README.md`, `00-charter.md`, `requirements/`, `decisions/`,
-`planning/roadmap.md`, `validation/acceptance-criteria.md`, and `handoff/`. The artifact-selection rules
-decide; do not emit empty directories or stub files that add no operational value.
+A tiny project may populate only: the package row, requirements, decisions, open questions,
+assumptions, risks, one phase + one slice, acceptance criteria, a charter narrative, and the initial
+prompt — with `omission` rows for the rest of the Always set. The selection rules decide
+(`artifact-rules.md`); never emit empty ceremonial rows.

@@ -1,6 +1,20 @@
-# Keystone Artifact Catalog
+# Artifact Catalog
 
-The authoritative, human-facing list of every artifact Keystone can produce, with its identifier prefix,
+> **v2 note (plan 009).** This is the **v1 catalog**, kept as the per-artifact reference and migration
+> map. The **decided v2 artifact set** is `plans/deliverables-review.md` in the program repo (approved
+> 2026-07-17); the machine mirror of v2 generation classes is the `entity_types` registry
+> (`../db/schema.sql`, seeded at `package_create`). v2 dispositions in brief: register-class artifacts
+> became **relational entities** (their templates retired — see `../templates/README.md`); charter
+> sections, mitigation plan, validation strategy, tech assessments, and the evaluation framework folded
+> into their parent rows; the five diagram rows collapsed into one `diagrams` family; milestones merged
+> into the roadmap data; the execution backlog, traceability matrix, status report, and readiness report
+> are **derived views**; DoR/DoD/checkpoints/gate-definitions merged into `execution_gates`; the
+> standalone stakeholder register and handoff manifest were dropped (their data lives in tables);
+> `keystone-state.json` was replaced by the store itself; new first-class families: `deferred_work`,
+> `defects`, `slices`, `execution_plans`, `conventions`, `scope_changes`, phase-exit view. Template and
+> schema paths below describe v1 packages — the frozen migration source contract (plan 010).
+
+The authoritative, human-facing list of every artifact v1 could produce, with its identifier prefix,
 location in a generated package, generation class, lifecycle note, template, and schema. The **decision
 logic** for which optional artifacts get generated is in
 [`artifact-rules.md`](artifact-rules.md); the **package layout** is in

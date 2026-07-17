@@ -1,0 +1,330 @@
+package root: C:\Users\ahammo\AppData\Local\Temp\tmp_nlrpfha
+
+== package_create (stage 1)
+{
+  "ok": true,
+  "package": "md2pdf",
+  "dir": "C:\\Users\\ahammo\\AppData\\Local\\Temp\\tmp_nlrpfha\\md2pdf"
+}
+
+== entity_upsert requirements/constraints/assumptions/OQs (stages 3-6)
+{
+  "ok": true,
+  "applied": 6,
+  "items": [
+    {
+      "index": 0,
+      "ok": true,
+      "id": "FR-001"
+    },
+    {
+      "index": 1,
+      "ok": true,
+      "id": "FR-002"
+    },
+    {
+      "index": 2,
+      "ok": true,
+      "id": "NFR-001"
+    },
+    {
+      "index": 3,
+      "ok": true,
+      "id": "CON-001"
+    },
+    {
+      "index": 4,
+      "ok": true,
+      "id": "ASM-001"
+    },
+    {
+      "index": 5,
+      "ok": true,
+      "id": "OQ-001"
+    }
+  ]
+}
+
+== clarify OQ-001 + charter (stages 7-8)
+{
+  "ok": true,
+  "applied": 6,
+  "items": [
+    {
+      "index": 0,
+      "ok": true,
+      "id": "OQ-001"
+    },
+    {
+      "index": 1,
+      "ok": true,
+      "id": "DOC-001"
+    },
+    {
+      "index": 2,
+      "ok": true,
+      "id": "SEC-001"
+    },
+    {
+      "index": 3,
+      "ok": true,
+      "id": "SEC-002"
+    },
+    {
+      "index": 4,
+      "ok": true,
+      "id": "KPI-001"
+    },
+    {
+      "index": 5,
+      "ok": true,
+      "id": "STK-001"
+    }
+  ]
+}
+
+== decisions/ADR/risks (stages 14-15)
+{
+  "ok": true,
+  "applied": 2,
+  "items": [
+    {
+      "index": 0,
+      "ok": true,
+      "id": "DEC-001"
+    },
+    {
+      "index": 1,
+      "ok": true,
+      "id": "RISK-001"
+    }
+  ]
+}
+
+== phases/slices/wbs/ACs/gates (stage 16)
+{
+  "ok": true,
+  "applied": 6,
+  "items": [
+    {
+      "index": 0,
+      "ok": true,
+      "id": "PH-1"
+    },
+    {
+      "index": 1,
+      "ok": true,
+      "id": "SL-001"
+    },
+    {
+      "index": 2,
+      "ok": true,
+      "id": "WBS-1"
+    },
+    {
+      "index": 3,
+      "ok": true,
+      "id": "AC-001"
+    },
+    {
+      "index": 4,
+      "ok": true,
+      "id": "GATE-001"
+    },
+    {
+      "index": 5,
+      "ok": true,
+      "id": "DW-001"
+    }
+  ]
+}
+
+== tests/trace/omissions (stage 17)
+{
+  "ok": true,
+  "applied": 9,
+  "items": [
+    {
+      "index": 0,
+      "ok": true,
+      "id": "TEST-001"
+    },
+    {
+      "index": 1,
+      "ok": true,
+      "id": null
+    },
+    {
+      "index": 2,
+      "ok": true,
+      "id": null
+    },
+    {
+      "index": 3,
+      "ok": true,
+      "id": null
+    },
+    {
+      "index": 4,
+      "ok": true,
+      "id": null
+    },
+    {
+      "index": 5,
+      "ok": true,
+      "id": null
+    },
+    {
+      "index": 6,
+      "ok": true,
+      "id": null
+    },
+    {
+      "index": 7,
+      "ok": true,
+      "id": null
+    },
+    {
+      "index": 8,
+      "ok": true,
+      "id": null
+    }
+  ]
+}
+
+== gate_run (stage 19)
+{
+  "ok": true,
+  "ready": true,
+  "gates": {
+    "G-IDS": {
+      "status": "pass",
+      "note": "enforced at write time (FKs + entity_index)"
+    },
+    "G-DEC-STATUS": {
+      "status": "pass",
+      "note": "enforced at write time (CHECK)"
+    },
+    "G-REQ-SRC": {
+      "status": "pass",
+      "note": "enforced at write time (NOT NULL provenance)"
+    },
+    "G-TRACE": {
+      "status": "pass",
+      "failures": []
+    },
+    "G-SET": {
+      "status": "pass",
+      "failures": []
+    },
+    "G-PROGRESS": {
+      "status": "pass",
+      "failures": []
+    },
+    "G-COMPLETE": {
+      "status": "pass",
+      "failures": []
+    },
+    "audit_evidence": {
+      "evidenced": 0,
+      "narrated": 0,
+      "note": "narrated verdicts are the graded party grading itself (C7)"
+    }
+  }
+}
+>>> READY: all critical gates pass
+
+== prompt rows (stage 20)
+{
+  "ok": true,
+  "applied": 1,
+  "items": [
+    {
+      "index": 0,
+      "ok": true,
+      "id": "PRM-001"
+    }
+  ]
+}
+
+== handoff_emit (stage 20)
+{
+  "ok": true,
+  "written": [
+    "handoff\\prm-001-initial.md",
+    ".mcp.json",
+    "CLAUDE.md"
+  ]
+}
+emitted: ['prm-001-initial.md']
+
+== audit_record Met + evidence (stage 21)
+{
+  "ok": true,
+  "ids": [
+    "AV-001"
+  ]
+}
+FR-001 after cascade: Implemented
+
+== work_bind (stage 21)
+{
+  "ok": true,
+  "bound": [
+    "FR-001",
+    "AC-001",
+    "SL-001"
+  ],
+  "progress_entry": "PE-001"
+}
+
+== final gate_run (stage 22)
+{
+  "ok": true,
+  "ready": true,
+  "gates": {
+    "G-IDS": {
+      "status": "pass",
+      "note": "enforced at write time (FKs + entity_index)"
+    },
+    "G-DEC-STATUS": {
+      "status": "pass",
+      "note": "enforced at write time (CHECK)"
+    },
+    "G-REQ-SRC": {
+      "status": "pass",
+      "note": "enforced at write time (NOT NULL provenance)"
+    },
+    "G-TRACE": {
+      "status": "pass",
+      "failures": []
+    },
+    "G-SET": {
+      "status": "pass",
+      "failures": []
+    },
+    "G-PROGRESS": {
+      "status": "pass",
+      "failures": []
+    },
+    "G-COMPLETE": {
+      "status": "pass",
+      "failures": []
+    },
+    "audit_evidence": {
+      "evidenced": 1,
+      "narrated": 0,
+      "note": "narrated verdicts are the graded party grading itself (C7)"
+    }
+  }
+}
+
+== package_close (stage 18 write-back)
+{
+  "ok": true,
+  "package": "md2pdf"
+}
+
+canonical files: ['acceptance_criteria.jsonl', 'assumptions.jsonl', 'audit_verdicts.jsonl', 'constraints.jsonl', 'decisions.jsonl', 'deferred_work.jsonl', 'document_sections.jsonl', 'entity_types.jsonl', 'execution_gates.jsonl', 'kpis.jsonl', 'narrative_documents.jsonl', 'open_questions.jsonl', 'packages.jsonl', 'phases.jsonl', 'progress_entries.jsonl', 'prompts.jsonl', 'requirements.jsonl', 'risks.jsonl', 'slices.jsonl', 'stakeholders.jsonl', 'tests.jsonl', 'trace_edges.jsonl', 'wbs_items.jsonl']
+
+E2E WALK-THROUGH PASSED: gate-passing DB package produced.

@@ -221,14 +221,14 @@ steps with gates, invariants and prerequisites explicit — are in
 [`../plugins/tamheed/references/prompt-templates.md`](../plugins/tamheed/references/prompt-templates.md). The handoff is what lets
 **Claude Code**, with no access to the planning conversation, start implementing with no missing context.
 
-## 11. Repository-initialization practices
+## 11. Package storage practices *(v2 — replaces v1 repository initialization)*
 
-When a target repository is wanted, Keystone bootstraps a usable initial repo: folder skeleton, baseline
-files, README and logo, license, ADR and documentation directories, changelog, version, an initial commit,
-and an optional remote with push. The bootstrap is **dry-run by default**, **idempotent**, and **never
-overwrites without `--force`**; it refuses a dirty target unless explicitly told otherwise (safeguard 16).
-Repository logic is provider-neutral — local git always, remote creation an optional and swappable step
-(safeguard 14). Operational detail: [`../plugins/tamheed/references/repo-init.md`](../plugins/tamheed/references/repo-init.md).
+v1 bootstrapped a target repository; v2 removed that capability (ASM-B). Stage 18 is now **package
+storage initialization**: the package materializes as canonical JSONL under `data/` (written back on
+every mutation, single-writer locked), and the **operator** commits it to whichever repository they
+choose. Nothing is ever destroyed: approval-bearing rows are superseded rather than edited, retired
+rows carry `retired_in`, and `--dry-run` previews mutations in a rolled-back transaction
+(safeguard 16). Operational detail: `../plugins/tamheed/db/CANONICAL.md`.
 
 ## 12. Extraction traceability
 
@@ -248,7 +248,7 @@ is what ships; the left column is the recurring practice it generalizes.
 | A risk list with impact, likelihood, and what we'd do about it | **Risk register** (`RISK-`) with impact·likelihood scoring, mitigations, triggers, and MVP/Full tagging |
 | A spreadsheet linking requirements to where they were satisfied and tested | **Traceability matrix** (derived): requirement → decision → task → test → risk → acceptance criterion |
 | A handoff folder with kickoff prompts for the implementing agent | **Handoff package** with initial / follow-up / review prompts, Claude-Code-targeted, referencing real artifacts |
-| A script that set up the repo skeleton, license, and first commit | **Repository bootstrap** (`init_skill_repo.py`): dry-run-capable, idempotent, never-overwrite, provider-neutral remote |
+| A script that set up the repo skeleton, license, and first commit | *(removed in v2 — ASM-B)* The package is data the operator commits to any repository; storage initialization is `package_create` on the MCP server |
 | "Definition of done" agreed up front so quality wasn't argued later | **Definition of Ready / Definition of Done** + checkpoints in `execution/` |
 | A final "are we actually ready to build?" review | **Execution-readiness report** gated on all Critical quality gates (stage 22) |
 | The capability invoked the same way regardless of who triggered it | **Skill-owns-capability** principle: thin entry points normalize input and invoke the one skill (safeguard 12) |

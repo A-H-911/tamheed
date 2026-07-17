@@ -14,7 +14,9 @@ report a problem.
 3. **Generated handoff prompts → downstream agent.** The highest-stakes boundary (OWASP LLM01 — indirect /
    second-order injection): the next agent may execute the handoff. The handoff is screened before emit
    (gate `G-INJECT`) and tells the downstream agent to treat the package as untrusted too.
-4. **Operator CLI args → `init_skill_repo.py` → git/gh/filesystem.** Operator-controlled, but still validated.
+4. **Agent tool calls → MCP server → package store.** The only write path into a package: structured,
+   validated arguments (no raw SQL, package names validated, single-writer lock); a constraint violation
+   fails the call. (The v1 repository bootstrapper was removed in v2 — ASM-B.)
 
 ## Controls in place
 
@@ -23,12 +25,12 @@ report a problem.
   `plugins/tamheed/references/handoff.md`. Brief text is fenced + provenance-labeled, never an imperative.
 - **No shell injection** — both Python tools invoke `git`/`gh` with **argument lists** (`subprocess.run([...])`),
   never `shell=True` and never string-interpolated commands (CWE-78).
-- **No path traversal** — `init_skill_repo.py` validates `--repo-name` as a single safe path segment
-  (`^[A-Za-z0-9._-]+$`, `.`/`..` rejected) and asserts the resolved target stays inside `--target-dir`
-  (CWE-22). A malicious name exits non-zero and writes nothing.
-- **Safe-by-default scaffolding** — the bootstrapper is dry-run-capable, idempotent, never overwrites without
-  `--force`, refuses a dirty/non-empty target, and writes a `.gitignore` that excludes `.env` and caches so
-  generated repos do not commit secrets. Remote creation/push is opt-in (`--create-remote`).
+- **No path traversal** — the MCP server validates package names as a single kebab-case segment
+  (`^[a-z0-9][a-z0-9-]*$`, `.`/`..` unrepresentable) under the declared `--package-dir` (CWE-22);
+  a malicious name is rejected and writes nothing.
+- **Safe-by-default store** — no raw-SQL tool; batch mutations are transactional (all-or-nothing);
+  approval-bearing rows are immutable (supersede, never edit); one writer per package via a fail-loud
+  lockfile; `handoff_emit` refuses emission when the injection screen finds instruction-shaped text.
 - **Minimal supply chain** — standard library only: no third-party dependencies, no network access in the
   tools, no code executed from package content (the validator parses, it never `eval`/`exec`s input).
 

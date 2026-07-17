@@ -34,7 +34,6 @@ INCOMPLETE_PKG = HERE / "fixtures" / "incomplete-package"
 # Make the validator importable regardless of cwd.
 sys.path.insert(0, str(SCRIPTS))
 import validate_package as vp  # noqa: E402
-import init_skill_repo as isr  # noqa: E402
 
 
 def findings_for(summary: dict, gate: str) -> list:
@@ -231,89 +230,10 @@ class ScriptSafety(unittest.TestCase):
     """Audit P2 (F-04 / F-09): the bundled scripts must not be exploitable."""
 
     def test_no_shell_true_in_scripts(self):
-        for script in (VALIDATOR, SCRIPTS / "init_skill_repo.py"):
-            src = script.read_text(encoding="utf-8")
-            self.assertNotIn(
-                "shell=True", src, msg=f"{script.name} must not use shell=True (CWE-78)"
-            )
-
-    def test_repo_name_rejects_traversal(self):
-        for bad in ("../../evil", "..", ".", "a/b", "a\\b", "", "with space"):
-            self.assertIsNotNone(
-                isr.validate_repo_name(bad), msg=f"{bad!r} should be rejected"
-            )
-
-    def test_repo_name_accepts_simple(self):
-        for good in ("keystone", "my-skill", "my_skill", "Repo.2", "a"):
-            self.assertIsNone(
-                isr.validate_repo_name(good), msg=f"{good!r} should be accepted"
-            )
-
-    def test_resolve_target_stays_inside_parent(self):
-        import argparse
-        import tempfile
-
-        parent = tempfile.mkdtemp()
-        ns = argparse.Namespace(target_dir=parent, repo_name="safe-name")
-        target = isr.resolve_target(ns)
-        self.assertEqual(Path(target).parent, Path(parent).resolve())
-
-
-class ScaffoldLayout(unittest.TestCase):
-    """Audit P5 (F-08): the bootstrapper emits an installable plugin bundle by default,
-    and the classic layout still works."""
-
-    def _plan_paths(self, layout):
-        import argparse
-
-        target = Path("/__plan__")  # plan_actions is pure; nothing is written
-        ns = argparse.Namespace(repo_name="demo", owner="acme", license="MIT", layout=layout)
-        actions = isr.plan_actions(target, ns)
-        return {
-            str(a.path.relative_to(target)).replace("\\", "/")
-            for a in actions
-            if a.path != target
-        }
-
-    def test_plugin_layout_is_installable(self):
-        paths = self._plan_paths("plugin")
-        for needed in (
-            ".claude-plugin/marketplace.json",
-            "plugins/demo/.claude-plugin/plugin.json",
-            "plugins/demo/SKILL.md",
-        ):
-            self.assertIn(needed, paths, msg=f"plugin layout missing {needed}")
-        tops = {p.split("/")[0] for p in paths}
-        self.assertNotIn("commands", tops, msg="plugin layout should not scaffold commands/")
-
-    def test_classic_layout_has_skill_and_commands(self):
-        paths = self._plan_paths("classic")
-        tops = {p.split("/")[0] for p in paths}
-        self.assertIn("skill", tops)
-        self.assertIn("commands", tops)
-        self.assertNotIn(".claude-plugin/marketplace.json", paths)
-
-    def test_emits_agent_control_surface(self):
-        # The ambient control surface — CLAUDE.md (the loaded entry) importing AGENTS.md —
-        # is emitted at the repo root in BOTH layouts.
-        for layout in ("plugin", "classic"):
-            paths = self._plan_paths(layout)
-            self.assertIn("AGENTS.md", paths, msg=f"{layout}: AGENTS.md (control surface) missing")
-            self.assertIn("CLAUDE.md", paths, msg=f"{layout}: CLAUDE.md shim missing")
-
-    def test_agent_control_surface_content(self):
-        agents = isr.agents_md_content("demo")
-        self.assertIn("AGENTS.md", agents)
-        self.assertIn("ADR", agents)                       # invariants -> ADR rule present
-        self.assertIn("acceptance-criteria-first", agents)  # track-as-you-go convention
-        # Executor is Claude Code: CLAUDE.md is the loaded entry that IMPORTS AGENTS.md
-        # (Anthropic's documented idiom), not an "agent-neutral" canonical/shim pair.
-        self.assertIn("Claude Code", agents)
-        claude = isr.claude_md_content()
-        self.assertIn("@AGENTS.md", claude)                 # CLAUDE.md imports AGENTS.md
-        self.assertIn("Claude Code auto-loads", claude)     # CLAUDE.md is the loaded entry
-        for content in (agents, claude):
-            self.assertNotIn("agent-neutral", content)      # no regression to the neutral framing
+        src = VALIDATOR.read_text(encoding="utf-8")
+        self.assertNotIn(
+            "shell=True", src, msg=f"{VALIDATOR.name} must not use shell=True (CWE-78)"
+        )
 
 
 class CliEdges(unittest.TestCase):
@@ -335,10 +255,8 @@ class CliEdges(unittest.TestCase):
         self.assertIn("G-IDS", proc.stdout)
 
 
-import os as _os  # noqa: E402
 import shutil as _shutil  # noqa: E402
 import tempfile as _tempfile  # noqa: E402
-from unittest import mock as _mock  # noqa: E402
 
 
 def _make_pkg(test, files):
@@ -561,125 +479,8 @@ class GateSetRules(unittest.TestCase):
                          msg=f"unexpected G-SET findings: {_msgs(res)}")
 
 
-class InitSkillRepoUnits(unittest.TestCase):
-    """Pure-function and filesystem-guard coverage for the bootstrapper."""
-
-    def test_license_mit_vs_placeholder(self):
-        self.assertIn("MIT License", isr.license_content("MIT", "Acme", 2026))
-        placeholder = isr.license_content("Apache-2.0", "Acme", 2026)
-        self.assertIn("Apache-2.0", placeholder)
-        self.assertIn("SPDX", placeholder)
-
-    def test_plugin_manifest_generators_are_valid_json(self):
-        m = json.loads(isr.marketplace_json_content("demo", "acme"))
-        p = json.loads(isr.plugin_json_content("demo", "acme", "MIT"))
-        self.assertEqual(m["plugins"][0]["source"], "./plugins/demo")
-        self.assertEqual(p["name"], "demo")
-        self.assertEqual(p["license"], "MIT")
-
-    def test_readme_is_layout_aware(self):
-        plug = isr.readme_content("demo", "acme", "plugin")
-        classic = isr.readme_content("demo", "acme", "classic")
-        self.assertIn("marketplace", plug.lower())
-        self.assertIn("plugins/demo/SKILL.md", plug)
-        self.assertIn("skill/", classic)
-
-    def test_starter_skill_md_has_name_and_no_outward_refs(self):
-        s = isr.starter_skill_md_content("demo")
-        self.assertIn("name: demo", s)
-        self.assertNotIn("../..", s)
-
-    def test_misc_content_generators_nonempty(self):
-        for text in (
-            isr.contributing_content("demo"),
-            isr.code_of_conduct_content(),
-            isr.changelog_content("0.1.0"),
-            isr.seed_adr_content(),
-            isr.bug_report_template(),
-            isr.feature_request_template(),
-            isr.pull_request_template(),
-        ):
-            self.assertTrue(text.strip())
-
-    def test_check_prereqs_reports_missing_git(self):
-        with _mock.patch("init_skill_repo.shutil.which", return_value=None):
-            problems = isr.check_prereqs(create_remote=False)
-        self.assertTrue(any("git" in p for p in problems))
-
-    def test_check_prereqs_reports_missing_gh_when_remote(self):
-        def fake_which(name):
-            return "/usr/bin/git" if name == "git" else None
-        with _mock.patch("init_skill_repo.shutil.which", side_effect=fake_which):
-            problems = isr.check_prereqs(create_remote=True)
-        self.assertTrue(any("gh" in p for p in problems))
-
-    def test_directory_is_nonempty(self):
-        d = Path(_tempfile.mkdtemp())
-        self.addCleanup(_shutil.rmtree, d, ignore_errors=True)
-        self.assertFalse(isr.directory_is_nonempty(d / "missing"))
-        self.assertFalse(isr.directory_is_nonempty(d))
-        (d / "f.txt").write_text("x", encoding="utf-8")
-        self.assertTrue(isr.directory_is_nonempty(d))
-
-    def test_validate_target_blocks_nonempty_non_repo(self):
-        d = Path(_tempfile.mkdtemp())
-        self.addCleanup(_shutil.rmtree, d, ignore_errors=True)
-        (d / "stuff.txt").write_text("x", encoding="utf-8")
-        problems = isr.validate_target(d, force=False)
-        self.assertTrue(problems)
-        self.assertEqual(isr.validate_target(d, force=True), [])
-
-    def test_validate_target_rejects_file_in_place_of_dir(self):
-        d = Path(_tempfile.mkdtemp())
-        self.addCleanup(_shutil.rmtree, d, ignore_errors=True)
-        f = d / "afile"
-        f.write_text("x", encoding="utf-8")
-        self.assertTrue(isr.validate_target(f, force=False))
-
-    def test_working_tree_is_dirty_false_on_non_repo(self):
-        d = Path(_tempfile.mkdtemp())
-        self.addCleanup(_shutil.rmtree, d, ignore_errors=True)
-        self.assertFalse(isr.working_tree_is_dirty(d))
-
-
-class InitSkillRepoBootstrap(unittest.TestCase):
-    """End-to-end coverage of main(): dry-run writes nothing; a real run scaffolds
-    the installable bundle (git identity not required — commit failures are handled).
-    main() narrates to stdout/stderr, so calls are wrapped to keep test output clean."""
-
-    @staticmethod
-    def _main(argv):
-        import contextlib
-        import io
-
-        buf = io.StringIO()
-        with contextlib.redirect_stdout(buf), contextlib.redirect_stderr(buf):
-            return isr.main(argv)
-
-    def test_dry_run_writes_nothing(self):
-        parent = Path(_tempfile.mkdtemp())
-        self.addCleanup(_shutil.rmtree, parent, ignore_errors=True)
-        rc = self._main(["--repo-name", "demo", "--owner", "acme",
-                         "--target-dir", str(parent), "--dry-run"])
-        self.assertEqual(rc, 0)
-        # Dry-run must not create the repo directory or any files.
-        self.assertFalse((parent / "demo").exists())
-
-    def test_real_bootstrap_creates_plugin_bundle(self):
-        parent = Path(_tempfile.mkdtemp())
-        self.addCleanup(_shutil.rmtree, parent, ignore_errors=True)
-        rc = self._main(["--repo-name", "demo", "--owner", "acme",
-                         "--target-dir", str(parent)])
-        self.assertEqual(rc, 0)
-        repo = parent / "demo"
-        for rel in (".claude-plugin/marketplace.json",
-                    "plugins/demo/.claude-plugin/plugin.json",
-                    "plugins/demo/SKILL.md", "README.md", "LICENSE"):
-            self.assertTrue((repo / rel).is_file(), msg=f"missing {rel}")
-
-    def test_bad_repo_name_exits_two(self):
-        rc = self._main(["--repo-name", "../escape", "--dry-run"])
-        self.assertEqual(rc, 2)
+# The v1 repository bootstrapper and its tests were removed by plan 009 (ASM-B):
+# v2 packages are created through the MCP server's package_create, not a repo scaffold.
 
 
 if __name__ == "__main__":

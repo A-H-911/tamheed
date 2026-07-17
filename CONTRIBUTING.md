@@ -18,8 +18,9 @@ python tests/test_validate_package.py
 python plugins/tamheed/scripts/validate_package.py <package-dir>          # human report
 python plugins/tamheed/scripts/validate_package.py <package-dir> --json   # machine-readable
 
-# preview a repository bootstrap without writing anything
-python plugins/tamheed/scripts/init_skill_repo.py --repo-name demo --owner you --dry-run
+# v2 store + MCP server test suites
+python tests/test_db_roundtrip.py
+python tests/test_mcp_contract.py
 ```
 
 ## Invariants you must preserve

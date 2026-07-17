@@ -25,12 +25,13 @@ This lets humans work in prose while tools mechanically check identifiers, statu
 templates (`templates/`) are the single source of truth for document shape; the schemas are the single
 source of truth for data shape.
 
-## 3. Provider-neutral repository bootstrap
+## 3. Provider-neutral repository bootstrap *(retired in v2 — ASM-B)*
 
-The repo-init step (`scripts/init_skill_repo.py`) always works locally — `git init`, scaffold, initial commit
-— with no network and no third-party tools. Remote creation/push (GitHub via `gh`) is an explicit, opt-in,
-swappable step (`--create-remote`). The bootstrap defaults to safe behavior: dry-run-capable, idempotent, and
-never overwriting without `--force`. Keystone is not tied to any one repo host.
+v1 shipped a repository bootstrapper: local `git init` + scaffold, opt-in remote
+creation. **Removed in v2**: a Tamheed package is data (`data/*.jsonl`) the operator commits to any
+repository they choose, and storage initialization is the MCP server's `package_create` (see ADR-0001).
+Provider neutrality survives where it matters — the plan couples to no repo host (safeguard 15,
+G-COUPLING) — without Tamheed owning repository creation.
 
 ## 4. Derived traceability and persisted state
 

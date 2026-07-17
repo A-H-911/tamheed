@@ -84,11 +84,10 @@ answer changes the plan, pauses at approval gates, and then generates the packag
 /keystone:keystone <project description | path/to/brief> [options]
 
 Options:
-  --mode <m>          full (default) | intake | plan | resume | update | stage:<id>
-  --profile <type>    hint the project type (e.g. enterprise, rnd, legacy, ai-agentic)
-  --package-dir <dir> where to write the generated package
-  --no-repo           plan only; do not initialize a repository
-  --dry-run           show what would be created without writing a repository
+  --mode <m>          full (default) | intake | plan | resume | update | stage:<id> | migrate | adopt
+  --profile <type>    hint the project type (enterprise, rnd, legacy, ai-agentic, unknown)
+  --package-dir <dir> where the package store lives (created if absent)
+  --dry-run           transactional preview: report entity/gate deltas, then roll back
 
 Examples:
   /keystone:keystone @briefs/new-platform.md --mode full --profile enterprise
@@ -149,7 +148,9 @@ keystone/
 │   ├── references/                   # per-stage / per-concern depth (incl. artifact-catalog.md)
 │   ├── templates/                    # blank artifact forms (single source of truth)
 │   ├── schemas/                      # machine-readable JSON schemas
-│   ├── scripts/                      # init_skill_repo.py (repo bootstrap) + validate_package.py (gates)
+│   ├── scripts/                      # validate_package.py (frozen v1 gate engine, migration contract)
+│   ├── db/                           # v2 relational store: schema.sql, store.py, CANONICAL.md
+│   ├── server/                       # the Tamheed MCP server (the only write path into a package)
 │   └── assets/                       # logos
 ├── docs/                             # architecture, methodology, workflow, design decisions, install
 ├── evals/                            # behavioral eval scenarios (skill-level, model-in-the-loop)

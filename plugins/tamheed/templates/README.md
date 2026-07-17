@@ -1,72 +1,45 @@
-# Keystone Templates
+# Tamheed section templates (v2)
 
-Blank, fillable forms Keystone uses to generate a project package. Each is a real template — YAML
-front-matter (`status`, `version`, `updated`, `owner`), section headings, `<placeholder>` markers, example
-identifier rows, and `<!-- guidance -->` comments telling the filler what goes where.
+Blank, fillable forms for the **narrative documents** of a v2 package. In v2 (ADR-0001) the
+register families — requirements, decisions, risks, phases, acceptance criteria, and the rest —
+are **relational entities** written through the MCP server (`entity_upsert`); their shape lives
+in the `entity_types` registry + `../db/schema.sql`, not in a template. What remains here are
+the **section templates** for `narrative_documents` prose and the handoff prompts.
 
-**Use:** the skill copies the relevant `.template.md` into a generated package per
-`../references/artifact-rules.md` and the catalog in `../references/artifact-catalog.md`, fills the placeholders
-from project state, and removes the guidance comments. These are blank forms — never filled artifacts; filled
-artifacts live in a generated `<project-package>/` (see `../references/generated-structure.md`).
+Each template keeps YAML front-matter (`status`, `version`, `updated`, `owner`), section
+headings, `<placeholder>` markers, and `<!-- guidance -->` comments. Fill from package state,
+remove the guidance comments; blank forms only — filled content lives in the package (as
+`document_sections` rows and emitted handoff files).
 
-**Conventions:** identifiers, statuses, versioning, and cross-references follow
-`../references/governance.md`. All templates are vendor/provider-neutral.
+**Conventions:** identifiers, statuses, versioning, cross-references: `../references/governance.md`.
 
-**Generation classes** (see `artifact-rules.md`): **Always** (every package) · **Conditional** (trigger
-holds) · **On-request** · **Continuous** (created early, updated each cycle) · **Derived** (generated from
-other artifacts; never hand-authored).
+## Index (survivors of the plan-006 deliverables review)
 
-## Index
-
-| Template | Produces (artifact / package path) | Generation class |
+| Template | Produces | Class |
 |---|---|---|
-| `project-charter.template.md` | Charter — problem, objectives, scope, success metrics (`KPI-`), stakeholders (`STK-`) → `00-charter.md` | Always |
-| `executive-summary.template.md` | One-page summary + recommendation → `01-executive-summary.md` | Always |
-| `functional-requirements.template.md` | Functional requirements (`FR-`) → `requirements/functional.md` | Always |
-| `non-functional-requirements.template.md` | Non-functional requirements (`NFR-`, measurable) → `requirements/non-functional.md` | Always |
-| `constraint-register.template.md` | Constraints (`CON-`) → `requirements/constraint-register.md` | Always |
-| `invariant-register.template.md` | Invariants / non-negotiables (`INV-`) → `requirements/invariant-register.md` | Conditional (invariants present) |
-| `dependency-register.template.md` | Dependencies (`DEP-`) → `requirements/dependency-register.md` | Conditional (external dependencies) |
-| `assumption-register.template.md` | Assumptions (`ASM-`, + `risk_if_wrong`) → `decisions/assumption-register.md` | Always |
-| `open-question-register.template.md` | Open questions (`OQ-`) → `decisions/open-question-register.md` | Always |
-| `open-decision-register.template.md` | Lightweight decisions (`DEC-`, + ADR promotion) → `decisions/open-decision-register.md` | Always |
-| `adr.template.md` | One Architecture Decision Record (`ADR-NNNN`, immutable) → `adrs/adr-NNNN-*.md` | Conditional (significant decisions) |
-| `risk-register.template.md` | Risks (`RISK-`) → `risks/risk-register.md` | Always |
-| `research-plan.template.md` | Research plan → `research/research-plan.md` | Conditional (genuine uncertainty) |
-| `rnd-backlog.template.md` | R&D backlog → `research/rnd-backlog.md` | Conditional (genuine uncertainty) |
-| `hypothesis-register.template.md` | Hypotheses (`HYP-`) → `research/hypothesis-register.md` | Conditional (genuine uncertainty) |
-| `experiment-plan.template.md` | Experiment plan (`EXP-`, PASS/FAIL) → `experiments/` | Conditional (genuine uncertainty) |
-| `poc-plan.template.md` | Proof-of-concept plan (`POC-`, go/no-go) → `pocs/` | Conditional (genuine uncertainty) |
-| `architecture.template.md` | Architecture (context, components, contracts) → `architecture/architecture.md` | Conditional (significant decisions) |
-| `technology-comparison.template.md` | Weighted comparison matrix (keep losers) → `architecture/technology-comparison.md` | Conditional (>=2 viable options) |
-| `roadmap.template.md` | Phased roadmap (`PH-`) → `planning/roadmap.md` | Always |
-| `work-breakdown.template.md` | Work breakdown (`WBS-`) → `planning/work-breakdown.md` | Conditional (multi-actor delivery) |
-| `milestones.template.md` | Milestones (`MS-`) → `planning/milestones.md` | Conditional (multi-actor delivery) |
-| `acceptance-criteria.template.md` | Acceptance criteria (`AC-`, MVP + Full) → `validation/acceptance-criteria.md` | Always |
-| `test-strategy.template.md` | Test strategy (`TEST-`) → `validation/test-strategy.md` | Conditional (non-trivial NFRs) |
-| `traceability-matrix.template.md` | Traceability `FR/NFR → DEC/ADR → WBS → TEST → RISK → AC` → `validation/traceability-matrix.md` | Derived |
-| `stakeholder-register.template.md` | Stakeholders (`STK-`) → `governance/` (or charter context) | Conditional (multi-actor delivery) |
-| `definition-of-ready.template.md` | Definition of Ready checklist → `execution/definition-of-ready.md` | Conditional (handoff to Claude Code) |
-| `definition-of-done.template.md` | Definition of Done checklist → `execution/definition-of-done.md` | Conditional (handoff to Claude Code) |
-| `progress-log.template.md` | Append-only progress history → `progress/progress-log.md` | Continuous (long horizon) |
-| `status-report.template.md` | Regenerated status snapshot → `progress/status-report.md` | Continuous (long horizon) |
-| `initial-prompt.template.md` | First execution-agent prompt (orient → 1 task → stop) → `handoff/initial-prompt.md` | Always |
-| `follow-up-prompts.template.md` | Per-phase + situational prompts → `handoff/follow-up-prompts.md` | Conditional (handoff to Claude Code) |
-| `review-prompts.template.md` | Audit / readiness / PR-review prompts → `handoff/review-prompts.md` | Conditional (handoff to Claude Code) |
-| `handoff-manifest.template.md` | Handoff contract (mirrors `handoff-package.schema.json`) → `handoff/handoff-manifest.(yaml\|json)` | Always |
-| `execution-readiness-report.template.md` | Per-gate go/no-go + residual risks → `handoff/execution-readiness-report.md` | Always |
-| `package-readme.template.md` | README for the generated package (reading order, how to consume) → `README.md` | Always |
-| `package-manifest.template.md` | Package inventory + metadata (mirrors `manifest.json`) → `manifest.json` | Always |
-| `naming-conventions.template.md` | Package naming/identifier conventions → `governance/naming-conventions.md` | Conditional (handoff to Claude Code) |
-| `contributing.template.md` | How to change the package without breaking governance → `governance/contributing.md` | Conditional (handoff to Claude Code) |
-| `governance.template.md` | Package rules of record (ids, statuses, versioning) → `governance/governance.md` | Conditional (handoff to Claude Code) |
+| `project-charter.template.md` | Charter sections (problem, goals/non-goals, scope, KPIs, stakeholders) | Always |
+| `executive-summary.template.md` | One-page summary + recommendation | Always |
+| `architecture.template.md` | Architecture narrative (context, components, contracts) | Conditional |
+| `adr.template.md` | ADR prose shape (context/decision/consequences → `adrs` row columns) | Conditional |
+| `technology-comparison.template.md` | Weighted comparison matrix narrative (keep losers) | Conditional |
+| `research-plan.template.md` | Research plan narrative (absorbs the v1 R&D backlog) | Conditional |
+| `initial-prompt.template.md` | First execution-agent prompt (orient → 1 task → stop) → `prompts` row | Always |
+| `follow-up-prompts.template.md` | Per-phase + situational prompts → `prompts` rows | Conditional |
+| `review-prompts.template.md` | Audit / readiness / PR-review prompts → `prompts` rows | Conditional |
+| `package-readme.template.md` | README of the generated package (reading order) | Always |
+| `agent-control.template.md` | `CLAUDE.md` + `AGENTS.md` executor control surface | Derived |
+| `naming-conventions.template.md` | Package naming/identifier conventions | Conditional |
+| `contributing.template.md` | How to change the package without breaking governance | Conditional |
+| `governance.template.md` | Package rules of record (ids, statuses, versioning) | Conditional |
 
-## Notes
+## Where the v1 templates went (plan 009 dispositions)
 
-- **One entity family per register**, one ADR per file. Filenames are kebab-case (`../references/governance.md`).
-- **Derived** templates (`traceability-matrix`) and regenerated snapshots (`status-report`) are produced from
-  state/sources — fill once as a starting shape, then regenerate; do not hand-maintain.
-- Templates whose structured form mirrors a schema (`handoff-manifest`, `package-manifest`) keep the
-  YAML/JSON block authoritative and the Markdown as the readable surface.
-- Drop any template whose artifact would be empty for the project, and record the omission in the package
-  manifest (anti-bloat, `artifact-rules.md`).
+- **Retired to entity types** (shape now = `entity_types` registry + DDL): the register
+  templates — requirements (FR/NFR), constraint/invariant/assumption/dependency/open-question/
+  open-decision registers, risk register, hypothesis/experiment/POC plans, roadmap,
+  work-breakdown, test strategy, acceptance criteria/audit, progress log, deferred-work
+  register, package manifest.
+- **Dropped with their artifacts** (plan-006 review): milestones file, DoR/DoD (→ execution
+  gates), stakeholder register, R&D backlog (→ research plan), handoff manifest (→ package
+  manifest), traceability matrix + status report + execution-readiness report (derived views,
+  rendered not templated).

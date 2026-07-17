@@ -8,14 +8,15 @@ unit. Pick the path that matches your tool.
 
 What works depends on whether the agent can read files and run local processes:
 
-| Tier | Environment | Planning &amp; artifact generation | `init_skill_repo.py` (repo bootstrap) &amp; `validate_package.py` (gates) |
+| Tier | Environment | Planning &amp; package generation | Tamheed MCP server (the write path) |
 |---|---|---|---|
-| **Full** | Claude Code, or any agent with file read/write **and** a shell/Python | ✅ | ✅ runs locally |
-| **Generation-only** | File read/write, no shell | ✅ | ⚠️ delivered in the handoff for you to run |
-| **Chat-only** | e.g. ChatGPT default | ✅ (paste/attach) | ❌ run them yourself afterward |
+| **Full** | Claude Code, or any MCP-capable agent with a shell/Python | ✅ | ✅ auto-starts via the bundled `.mcp.json` |
+| **No MCP host** | File read/write only | ⚠️ planning conversation only | ❌ no package store — v2 packages need the server |
 
-Python **3.9+** is required for the scripts; optional remote repo creation needs `git` + the GitHub CLI
-(`gh`). No specific model, vendor, or repo provider is required.
+Python **≥3.10** is required for the MCP server (the `mcp` SDK's floor; ASM-D). `uv` launches it with
+zero setup (PEP 723), or `pip install mcp` as the fallback — see `plugins/tamheed/server/README.md`.
+No specific model, vendor, or repo provider is required. (The v1 repository bootstrapper was removed in
+v2 — ASM-B.)
 
 ## Claude Code — plugin (recommended)
 
@@ -75,5 +76,5 @@ python tests/test_validate_package.py
 python plugins/tamheed/scripts/validate_package.py <package-dir>
 
 # preview a repo bootstrap without writing anything
-python plugins/tamheed/scripts/init_skill_repo.py --repo-name demo --owner you --dry-run
+uv run plugins/tamheed/server/tamheed_server.py --selftest
 ```

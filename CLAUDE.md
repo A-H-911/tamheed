@@ -25,8 +25,10 @@ plugins/tamheed/                     # THE installable bundle — self-contained
 ├── references/                       # on-demand depth, incl. artifact-catalog.md (the artifact catalog)
 ├── templates/                        # blank artifact forms (single source of truth for document shape)
 ├── schemas/                          # JSON schemas (single source of truth for data shape)
-├── scripts/                          # init_skill_repo.py (repo bootstrap) + validate_package.py (gates)
-└── assets/                           # logos (used by repo-init branding)
+├── scripts/                          # validate_package.py (frozen v1 gate engine)
+├── db/                               # v2 relational store: schema.sql, migrations/, store.py, CANONICAL.md
+├── server/                           # Tamheed MCP server + .mcp.json launch config (plugin root)
+└── assets/                           # logos
 docs/                                 # architecture, methodology, workflow, design-decisions, install
 evals/                                # behavioral eval scenarios (skill-level, model-in-the-loop)
 examples/  generated-samples/  tests/ # teaching material, demo package, validator self-test
@@ -51,17 +53,20 @@ python tests/test_validate_package.py
 python plugins/tamheed/scripts/validate_package.py <package-dir>          # human report
 python plugins/tamheed/scripts/validate_package.py <package-dir> --json   # machine-readable
 
-# Preview a repo bootstrap (writes nothing); drop --dry-run to apply.
-# --layout defaults to `plugin` (self-contained bundle); use `classic` for the old skill/+commands/ layout.
-python plugins/tamheed/scripts/init_skill_repo.py --repo-name <name> --owner <org> --dry-run
+# v2 store + MCP server suites
+python tests/test_db_roundtrip.py
+python tests/test_mcp_contract.py
+
+# MCP server selftest (PEP 723: uv fetches the mcp SDK; Python >=3.10 per ASM-D)
+uv run plugins/tamheed/server/tamheed_server.py --selftest
 ```
 
 `validate_package.py` exits `0` (all critical gates pass), `1` (a critical gate failed → NOT READY), `2`
-(usage/IO error). The init script uses exit codes `2`/`3`/`4`/`130` (see its `scripts/README.md`).
+(usage/IO error). It is the **frozen v1 gate engine** — the migration source contract (plan 010); v2
+gates run through the MCP server's `gate_run`. The v1 repository bootstrapper was removed in v2 (ASM-B).
 
-> Windows note: `init_skill_repo.py` reconfigures stdout/stderr to UTF-8 at startup (`_configure_stdio`), so
-> its banner/summary glyphs (`→`, `•`, box-drawing) don't raise `UnicodeEncodeError` on legacy code pages
-> such as cp1252.
+> Windows note: `tamheed_server.py` reconfigures stdout/stderr to UTF-8 at startup, so its output doesn't
+> raise `UnicodeEncodeError` on legacy code pages such as cp1252.
 
 ## Architecture — the governing principle
 
@@ -96,9 +101,8 @@ hand off** (16–22 execution plan→artifacts→repo init→validation→handof
   gates, profiles, diagram kinds, entry points). Additive = MINOR; changing a schema's required fields, the
   identifier scheme, or the handoff contract = MAJOR + migration note.
 
-Note: paths inside `*.template.md` and the strings `init_skill_repo.py` writes describe the **generated**
-package/repo structure (e.g. `skill/`, `docs/assets/`) — those are intentional output content, not stale
-references to this repo's layout.
+Note: paths inside `*.template.md` describe the **generated** package structure — intentional output
+content, not stale references to this repo's layout.
 
 ## The 7 mechanical quality gates (validator)
 

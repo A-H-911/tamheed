@@ -41,5 +41,7 @@ profile, otherwise leave unset.
 
 ## Output of intake
 
-`keystone-state.json` populated with: raw input + provenance, `project_profile`, requirement registers
-(Draft), and seeded `OQ-`/`ASM-`. This is the substrate every later stage reads and updates.
+The package store populated with: the brief archived verbatim as a provenance-labeled narrative
+document, the profile on the `packages` row, requirement/constraint rows (Draft, with
+`source_kind`/`source_span`), and seeded `open-question`/`assumption` rows. This is the substrate
+every later stage reads and updates (all via the MCP tools — see `state.md`).

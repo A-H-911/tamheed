@@ -1,34 +1,45 @@
 # State, resumption, and updates
 
-Keystone persists normalized state so long, interrupted, or evolving work never loses context or re-asks
-settled questions.
+**The package is the state.** In v2 there is no state file: the relational store (ADR-0001) holds
+every register row, narrative section, trace edge, the `packages` row (profile, mode, iteration,
+versions), and the execution-tracking tables. Canonical form is JSONL per table under `data/`,
+committed to git; SQLite is the runtime the MCP server loads it into.
 
-## `keystone-state.json`
-
-Conforms to `../schemas/keystone-state.schema.json`. Holds: schema/skill version; `project_profile`; the
-raw input + provenance; all registers (requirements, constraints, invariants, assumptions, dependencies,
-open questions, decisions, risks, hypotheses, experiments); scope; the selected artifact set; per-stage
-status (`not-started`/`in-progress`/`blocked`/`done`) and the last completed stage; the traceability rows;
-and a change log. It is **machine-owned** — humans edit the rendered artifacts, and Keystone reconciles.
+(`keystone-state.json` is v1's state file. It is read exactly once more — by `package_migrate`
+in plan 010 — and never written again. Its schema stays frozen in `../schemas/` as the migration
+source contract.)
 
 ## Resume
 
-On `resume`: load state, list completed vs pending stages, detect any human edits to artifacts since last
-run (compare to what state expects), reconcile (human edits win; record the reconciliation), and continue
-from the last incomplete stage. Never silently overwrite a human edit.
+`resume` = `package_open(name)` + orient:
+
+1. `entity_query` the working families (requirements by status, open questions, decisions Proposed).
+2. `gate_run` — the gate report tells you which stage the package is effectively in (missing
+   families → Understand/Explore; trace gaps → Stage 17; no prompts → Stage 20).
+3. Continue from the last incomplete stage; never re-ask settled questions.
+
+Human edits between sessions are not a reconciliation problem by construction: humans review through
+the rendered surfaces and change things through the tools. A hand-edit to `data/*.jsonl` at rest is
+legal (text-canonical storage is the point) and is validated on next load — FK/CHECK violations fail
+loud, nothing is silently repaired.
 
 ## Update cycles (Stage 21)
 
-When new decisions/progress/feedback arrive:
-1. Apply the change to the owning register (e.g. flip `DEC-007` Proposed→Approved, or log progress).
-2. Re-derive dependent artifacts (traceability, roadmap rollups, readiness, status report).
-3. Bump versions per `governance.md`; if an item is replaced, create the successor and set
-   `supersedes`/`superseded_by` on both.
-4. Re-run affected gates (at least G-TRACE, G-IDS, G-DEC-STATUS).
+The three D-UPDATE capabilities and their tool sequences are specified in `modes.md`. The properties
+that make them safe live in the schema:
+
+- **Cascade-on-transition:** one recorded transition (an AC verdict, an ADR approval, a slice
+  completion) updates every dependent view in the same transaction — there is no "reconcile trackers"
+  step to forget.
+- **Supersession, not edits:** approval-bearing rows (`adrs`, approved `acceptance_criteria`) reject
+  content UPDATEs at the trigger level; INSERT the successor, then point `superseded_by` at it.
+- **Iteration refs:** `introduced_in`/`retired_in` on requirements/phases/slices/ACs make every scope
+  change reconstructible per iteration.
 
 ## Consistency invariants
 
-- State and rendered artifacts must agree after any operation; a mismatch is a bug to repair, not ignore.
-- Derived artifacts are always reproducible from state + sources; if you can't regenerate one, it wasn't
-  truly derived — fix its inputs.
-- Every state mutation appends to the change log with who/what/when so the package's history is auditable.
+- Derived data (traceability, status, backlog, readiness, identifier counts) is **views only** — it
+  cannot drift from the rows because it *is* the rows.
+- Every mutation ends with canonical write-back; `data/` in git is always loadable to an identical
+  store (round-trip byte identity, `../db/CANONICAL.md`).
+- One writer per package (`data/.lock`); a second opener fails loud, never waits, never steals.

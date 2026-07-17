@@ -557,7 +557,7 @@ def serve() -> int:
 
 def main(argv: list[str] | None = None) -> int:
     global PACKAGE_ROOT
-    for stream in (sys.stdout, sys.stderr):  # legacy Windows code pages (cf. init_skill_repo.py)
+    for stream in (sys.stdout, sys.stderr):  # UTF-8 output on legacy Windows code pages
         if hasattr(stream, "reconfigure"):
             stream.reconfigure(encoding="utf-8", errors="replace")
     parser = argparse.ArgumentParser(description="Tamheed MCP server")

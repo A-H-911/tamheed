@@ -20,7 +20,7 @@ none re-implements the methodology. This is enforceable (gate **G-CMD-THIN**); t
                         ▼
    SKILL          the keystone skill — THE CAPABILITY (single source of truth)
                   SKILL.md + references/ (workflow, governance, gates, intake, clarification,
-                  artifact-rules, traceability, handoff, prompt-templates, repo-init, state, extension…)
+                  artifact-rules, traceability, handoff, prompt-templates, state, extension…)
                         │  reads, in the same bundle:
                         ▼
    BUNDLED ASSETS templates/ (blank forms) · schemas/ (data shapes) · scripts/ (bootstrap + validator)
@@ -44,7 +44,9 @@ keystone/
     ├── SKILL.md                            # always-loaded front door (owns the capability)
     ├── references/                         # on-demand depth + artifact-catalog.md
     ├── templates/   schemas/               # single sources of truth for forms / data shapes
-    ├── scripts/                            # init_skill_repo.py (bootstrap) + validate_package.py (gates)
+    ├── scripts/                            # validate_package.py (frozen v1 gate engine)
+    ├── db/                                 # v2 store: schema.sql + store.py + CANONICAL.md
+    ├── server/                             # Tamheed MCP server (only write path into a package)
     └── assets/                             # logos
 ```
 
