@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "tamheed": {
+      "command": "uv",
+      "args": [
+        "run",
+        "${CLAUDE_PLUGIN_ROOT}/server/tamheed_server.py",
+        "--package-dir",
+        "."
+      ]
+    }
+  }
+}
