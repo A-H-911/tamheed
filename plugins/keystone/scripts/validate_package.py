@@ -575,7 +575,9 @@ def gate_dec_status(files: List[PackageFile]) -> GateResult:
 
         for table in pf.tables:
             status_col = table.col_index(STATUS_HEADERS)
-            id_col = table.col_index(ID_HEADERS) or _guess_id_column(table)
+            id_col = table.col_index(ID_HEADERS)
+            if id_col is None:
+                id_col = _guess_id_column(table)
             has_decision_ids = False
             if id_col is not None:
                 for row in table.rows:
@@ -623,7 +625,9 @@ def gate_req_src(files: List[PackageFile]) -> GateResult:
         if pf.is_template or pf.is_json or not _is_requirements_file(pf.rel):
             continue
         for table in pf.tables:
-            id_col = table.col_index(ID_HEADERS) or _guess_id_column(table)
+            id_col = table.col_index(ID_HEADERS)
+            if id_col is None:
+                id_col = _guess_id_column(table)
             if id_col is None:
                 continue
             src_col = table.col_index(SOURCE_HEADERS)
@@ -782,7 +786,9 @@ def gate_trace(files: List[PackageFile]) -> GateResult:
             result.findings.extend(findings)
             continue
         for table in pf.tables:
-            req_col = table.col_index(ID_HEADERS) or _guess_id_column(table)
+            req_col = table.col_index(ID_HEADERS)
+            if req_col is None:
+                req_col = _guess_id_column(table)
             if req_col is None:
                 continue
             has_reqs = any(req_col < len(row) and

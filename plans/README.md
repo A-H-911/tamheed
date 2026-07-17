@@ -19,7 +19,7 @@ plan's "locked decisions" — do not relitigate them in execution.
 
 | Plan | Title | Track | Priority | Effort | Depends on | Status |
 |------|-------|-------|----------|--------|------------|--------|
-| 001 | Fix falsy-`or` ID-column bug (3 gates) | A1 | P1 | S | — | TODO |
+| 001 | Fix falsy-`or` ID-column bug (3 gates) | A1 | P1 | S | — | DONE |
 | 002 | Enforce decision statuses (D-U1) | A2 | P1 | S | 001 | TODO |
 | 003 | Validator gate tests (G-SET rules) | A3 | P1 | S | 001, 002 | TODO |
 | 004 | Docs truth fixes + archive AUDIT.md | A4 | P2 | S | — | TODO |

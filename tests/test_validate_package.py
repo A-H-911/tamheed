@@ -447,6 +447,41 @@ class ValidatePackageBranches(unittest.TestCase):
         self.assertIn("no Verdict column", _msgs(res))
 
 
+class FalsyOrIdColumnRegression(unittest.TestCase):
+    """Regression for the falsy-`or` ID-column bug (plan 001): `col_index` returns
+    0 when the ID header is the first column, and `0 or _guess_id_column(...)`
+    discarded that correct answer and re-guessed. A messy ID cell then made the
+    guess return None and the table was silently skipped — a false pass."""
+
+    def test_req_src_flags_missing_source_in_first_column_id_table(self):
+        # Header `ID` is column 0; the messy cell `FR-001 (rev A)` fails
+        # _guess_id_column, so before the fix the table was skipped and the
+        # missing Source went unreported.
+        pkg = _make_pkg(self, {
+            "requirements/functional.md":
+            "| ID | Statement | Source | Priority | Status |\n"
+            "|---|---|---|---|---|\n"
+            "| FR-001 (rev A) | The tool exports CSV. | | Must | Approved |\n"
+        })
+        res = vp.gate_req_src(vp.load_package(pkg))
+        msgs = _msgs(res)
+        self.assertIn("no source/provenance", msgs, msg=f"G-REQ-SRC findings: {msgs}")
+
+    def test_dec_status_flags_missing_status_column_with_messy_first_column_id(self):
+        # Before the fix: id_col collapsed to None, has_decision_ids stayed
+        # False, status_col was None, and the gate continued — the missing
+        # Status column was never reported.
+        pkg = _make_pkg(self, {
+            "decisions/open-decision-register.md":
+            "| ID | Decision | Rationale |\n"
+            "|---|---|---|\n"
+            "| DEC-001 / DEC-002 | Use a single storage table. | Simplicity. |\n"
+        })
+        res = vp.gate_dec_status(vp.load_package(pkg))
+        msgs = _msgs(res)
+        self.assertIn("no Status column", msgs, msg=f"G-DEC-STATUS findings: {msgs}")
+
+
 class InitSkillRepoUnits(unittest.TestCase):
     """Pure-function and filesystem-guard coverage for the bootstrapper."""
 
