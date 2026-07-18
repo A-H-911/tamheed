@@ -495,7 +495,7 @@ def handoff_emit(target_dir: str) -> dict:
     return {"ok": True, "written": written}
 
 
-# --------------------------------------------------------------------------- stubs
+# --------------------------------------------------------------------------- staged flows & export
 
 def package_migrate(source_dir: str, name: str | None = None, confirm: bool = False) -> dict:
     """Migrate a conformant v1 Keystone package into a v2 store (staged, operator-gated).
@@ -515,9 +515,19 @@ def package_adopt(source_dir: str, name: str | None = None, confirm: bool = Fals
     return adopt.run_adoption(source_dir, PACKAGE_ROOT, name=name, confirm=confirm)
 
 
-def export_html() -> dict:
-    """Export the HTML review surface. Implemented in plan 012."""
-    return _err("not implemented until plan 012 (HTML viewer)")
+def export_html(output: str | None = None) -> dict:
+    """Export the self-contained static HTML review surface (plan 012/B6, D-REVIEW).
+
+    Deterministic (same DB state => byte-identical file), so it is COMMITTED to the
+    package's repo by default: writes <package>/review.html unless `output` overrides."""
+    if guard := _need_open():
+        return guard
+    import export_html as viewer
+    report = gate_run()
+    text = viewer.render(_CURRENT.conn, report["gates"], report["ready"])
+    path = Path(output) if output else PACKAGE_ROOT / _CURRENT_NAME / "review.html"
+    path.write_text(text, encoding="utf-8", newline="\n")
+    return {"ok": True, "path": str(path), "bytes": len(text.encode("utf-8"))}
 
 
 # --------------------------------------------------------------------------- server plumbing
@@ -536,7 +546,7 @@ TOOLS = {
     "handoff_emit": (handoff_emit, "Emit handoff prompts + executor MCP config (injection-screened)"),
     "package_migrate": (package_migrate, "Migrate a conformant v1 package (staged: preview, then confirm)"),
     "package_adopt": (package_adopt, "Adopt a brownfield repo (staged: scan/preview, then confirm)"),
-    "export_html": (export_html, "Export the HTML review surface (stub until plan 012)"),
+    "export_html": (export_html, "Export the HTML review surface to <package>/review.html"),
 }
 
 _SDK_ERROR = ("tamheed MCP server requires the 'mcp' SDK (Python >=3.10): launch with"

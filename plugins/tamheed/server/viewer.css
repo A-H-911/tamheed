@@ -1,0 +1,22 @@
+/* Tamheed review surface — static stylesheet, embedded at export time (plan 012/B6).
+   Static + trusted: this file is the only unescaped content in the export. */
+:root { color-scheme: light dark; }
+body { font: 14px/1.5 system-ui, sans-serif; margin: 2rem auto; max-width: 72rem; padding: 0 1rem; }
+h1 { font-size: 1.4rem; }
+h2 { font-size: 1.15rem; border-bottom: 1px solid #8884; padding-bottom: .25rem; margin-top: 2.5rem; }
+h3 { font-size: 1rem; margin-top: 1.5rem; }
+.freshness { color: #777; font-size: .85rem; margin: .2rem 0 1rem; }
+.ready { font-weight: 700; }
+.lead { font-weight: 600; }
+.empty { color: #777; font-style: italic; }
+.chip { display: inline-block; border-radius: 1rem; padding: .1rem .6rem; margin: 0 .3rem .3rem 0;
+        font-size: .8rem; border: 1px solid #8886; }
+.chip.pass { background: #1a7f3722; border-color: #1a7f37; }
+.chip.fail { background: #cf222e22; border-color: #cf222e; }
+.tablewrap { overflow-x: auto; margin: .5rem 0 1.5rem; }
+table { border-collapse: collapse; width: 100%; font-size: .85rem; }
+th, td { border: 1px solid #8884; padding: .3rem .5rem; text-align: left; vertical-align: top; }
+th { background: #8881; }
+.warn { border: 1px solid #cf222e; border-left-width: 4px; padding: .6rem .8rem; margin: .8rem 0;
+        border-radius: .25rem; }
+.warn pre { white-space: pre-wrap; background: #8881; padding: .5rem; overflow-x: auto; }

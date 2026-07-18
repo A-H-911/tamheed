@@ -54,13 +54,26 @@ silent dead server.
 | `audit_record(verdicts[])` | mutate | AC verdicts, optional `evidence` ref (C7); cascades auto-advance |
 | `work_bind(ref, entity_ids[], note?)` | mutate | "This commit/PR satisfies FR-x/AC-y/SL-z" — stamps `last_referenced` (C3) |
 | `handoff_emit(target_dir)` | mutate | Emit prompt files + executor-side `.mcp.json` + `CLAUDE.md` note (W-V2-7); injection-screened |
-| `package_migrate(source_dir)` | stub | Plan 010 |
-| `package_adopt(source_dir)` | stub | Plan 011 |
-| `export_html()` | stub | Plan 012 |
+| `package_migrate(source_dir)` | staged | Migrate a conformant v1 package (preview, then `confirm`) — plan 010 |
+| `package_adopt(source_dir)` | staged | Adopt a brownfield repo (scan/preview, then `confirm`) — plan 011 |
+| `export_html(output?)` | export | Render the HTML review surface to `<package>/review.html` — plan 012 |
 
 Entity `type` values mirror the `entity_types` registry (`requirement`, `decision`, `adr`,
 `risk`, `phase`, `slice`, `acceptance-criterion`, `deferred-work`, …) plus two write-only
 surfaces: `trace-edge` (relations) and `omission` (G-SET recorded-omitted, with reason).
+
+## HTML review surface (plan 012)
+
+`export_html()` renders the open package's **only human review surface** (D-REVIEW: HTML,
+never derived Markdown) to `<package>/review.html` — five sections: overview with per-gate
+chips, per-family registers (with `last_referenced` and the three-axis status columns),
+the traceability matrix, execution progress (AC × audit verdicts, progress log, scope
+changes), and gap/screening notes. The file is self-contained static HTML (embedded CSS,
+restrictive CSP, zero JavaScript, zero data-derived links — every data string is escaped
+at render time) and deterministic (same DB state ⇒ byte-identical output), so **commit it
+to the package's repo**: its diffs are meaningful and reviewers open it without running
+anything. Every section carries a freshness stamp derived from the package's own stored
+timestamps, never the wall clock.
 
 ## Contract
 

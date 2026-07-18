@@ -4,7 +4,7 @@ Drives the tool handlers IN-PROCESS — no live MCP transport, no SDK required.
 Covers: create -> batch upsert (with a CHECK-violating row -> per-item error naming the
 constraint) -> query -> trace -> gate_run (hollow vs complete) -> execution loop
 (progress/audit/work_bind) -> handoff emission + injection screen -> lockfile conflict ->
-stubs -> the missing-SDK error path (simulated ImportError) -> --selftest.
+export_html -> the missing-SDK error path (simulated ImportError) -> --selftest.
 """
 import contextlib
 import io
@@ -204,12 +204,17 @@ class McpContractTest(unittest.TestCase):
             self.assertEqual(result["gate"], "G-INJECT")
             self.assertFalse((Path(target) / ".mcp.json").exists())  # nothing written
 
-    # ---------------------------------------------------------------- stubs & plumbing
+    # ---------------------------------------------------------------- staged flows & plumbing
 
-    def test_stubs_report_not_implemented(self):
+    def test_export_html_writes_review_surface(self):
+        # Plan 012: the stub became the real exporter — guarded, CSP'd, script-free.
+        self.assertFalse(srv.export_html()["ok"])          # no package open
+        make_complete_package("demo")
         result = srv.export_html()
-        self.assertFalse(result["ok"])
-        self.assertIn("not implemented", result["error"])
+        self.assertTrue(result["ok"], result)
+        text = Path(result["path"]).read_text(encoding="utf-8")
+        self.assertIn("Content-Security-Policy", text)
+        self.assertNotIn("<script", text)
 
     def test_package_adopt_is_staged(self):
         # Plan 011: adopt scans + previews by default; nothing recorded without confirm.

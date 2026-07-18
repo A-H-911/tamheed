@@ -29,7 +29,7 @@ Keystone 1.0.1.
 | 009 | Skill v2 rewrite + params + bootstrap removal | B4 | P1 | L | 008 | DONE |
 | 010 | Migration v1 → v2 | B5 | P1 | L | 001–004, 009 | DONE |
 | 011 | Adopt mode (brownfield onboarding) | B11 | P2 | L | 010 | DONE |
-| 012 | HTML viewer (operator review surface) | B6 | P2 | M | 008 (010 preferred) | TODO |
+| 012 | HTML viewer (operator review surface) | B6 | P2 | M | 008 (010 preferred) | DONE |
 | 013 | Eval runner + v2 CI + check.py | B10 | P2 | M | 010–012 | TODO |
 | 014 | Docs + Mermaid diagrams + CHANGELOG 2.0.0 | B8 | P2 | M | 005–013 | TODO |
 | 015 | Community extensibility + CONTRIBUTING | B9 | P3 | M | 007, 013, 014 | TODO |
