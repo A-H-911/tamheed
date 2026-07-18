@@ -1,29 +1,97 @@
 # Changelog
 
-All notable changes to Keystone are documented here. The format is based on
+All notable changes to Tamheed are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+> **Lineage.** Entries ≤ 1.0.x record this project under its former name, **Keystone**, in its
+> original repository (<https://github.com/A-H-911/keystone>). Tamheed carries Keystone's full git
+> history; the Keystone repository stays frozen at 1.0.x for existing v1 packages.
+
 ## [Unreleased]
 
+## [2.0.0] - 2026-07-18
+
+The v2 re-architecture (MAJOR — the storage, interaction, and review contracts all changed; see
+**Migration** below). Program record: `plans/`.
+
 ### Changed
-- **Python floor raised to 3.10** (program decision ASM-D): the MCP server depends on the
-  official `mcp` SDK, whose `requires-python` is `>=3.10`; the CI matrix drops 3.9
-  accordingly (now 3.10–3.12 × ubuntu/windows). The frozen v1 validator itself still runs
-  on 3.9, but this repository gates on 3.10+.
-- **CI rebuilt around one command** (plan 013/B10): CI job 1 runs exactly `python check.py`
-  — suites, v1 goldens (0/0/1/1), structure lint (tracked JSON, registry↔DDL sync, v1
-  Always-mirror↔catalog sync), canonical-form round-trip of the committed v2 demo, and the
-  deterministic eval runner on its sample fixture. A second ubuntu-only job smokes the
-  uv/PEP 723 server launch (skips visibly if uv is unavailable). The behavioral eval spec
-  gained *executable* deterministic assertions run by `evals/run_evals.py`; assertions with
-  no v2 mechanical equivalent are recorded as `retired`, never silently dropped.
-- **Repository split (D-REPO-1..4):** this repository is now **Tamheed** (`A-H-911/tamheed`), the
+- **Repository split (D-REPO-1..4):** this repository is **Tamheed** (`A-H-911/tamheed`), the
   successor of Keystone, carrying Keystone's full git history. The plugin bundle moved to
   `plugins/tamheed/` and the plugin/marketplace/skill identifiers renamed to `tamheed`. Install:
-  `/plugin marketplace add A-H-911/tamheed` then `/plugin install tamheed@tamheed`. The
-  [keystone repo](https://github.com/A-H-911/keystone) remains available for existing v1 packages
-  (≤ v1.0.x); the v2 re-architecture lands here (see `plans/`).
+  `/plugin marketplace add A-H-911/tamheed` then `/plugin install tamheed@tamheed`; invoke as
+  `/tamheed:tamheed`. The old install commands (`marketplace add A-H-911/keystone`) remain valid
+  only for **Keystone 1.0.x** at the old repository, which is frozen for existing v1 packages.
+- **Storage contract (D-STORE, ADR-0001):** a package is no longer loose Markdown + a state file —
+  it is a **relational store**: one SQLite-enforced entity table per artifact family, serialized as
+  deterministic canonical JSONL (`data/*.jsonl`, spec in `plugins/tamheed/db/CANONICAL.md`) that the
+  operator commits to git. Statuses are three-axis (`lifecycle_status`/`verdict`/`disposition`);
+  approval-bearing rows are trigger-enforced immutable-after-approval; derived artifacts are SQL
+  views, never stored snapshots; a single-writer lockfile makes concurrent writers fail loud.
+- **Interaction contract (D-MCP):** every write goes through the **Tamheed MCP server**
+  (`plugins/tamheed/server/`, official Python SDK, launched via `uv`/PEP 723 or `pip install mcp`) —
+  the only write path into a package and the successor of the v1 validator: referential gates
+  (G-IDS, G-DEC-STATUS, G-REQ-SRC) are schema constraints enforced at write time, coverage gates
+  (G-TRACE, G-SET, G-PROGRESS) are SQL views run by `gate_run`, and `handoff_emit` injection-screens
+  every emission. Batch mutations are all-or-nothing with per-item verdicts; there is no raw-SQL tool.
+- **Review contract (D-REVIEW):** the human review surface is **HTML only** — `export_html` renders
+  the package (gate chips, registers, traceability, execution progress, gap/screening notes) as one
+  self-contained, escaped, script-free, deterministic `review.html`, committed alongside the data.
+  Derived-Markdown snapshots are gone (they are exactly what froze and misled in v1 field use).
+- **Update mode is the agile heart (D-UPDATE):** diff-aware re-derivation (`trace_query` the impact
+  set, regenerate only dependents), execution-progress sync (`progress_update`, `audit_record` with
+  evidence refs, `work_bind` stamping `last_referenced`), and **typed scope changes**
+  (defer/reschedule/reclassify/cancel/expand) — the `scope-change` row is written before any
+  mutation, and iteration bumps track `introduced_in`/`retired_in`.
+- **Python floor raised to 3.10** (ASM-D): the MCP server depends on the official `mcp` SDK
+  (`requires-python >= 3.10`); the CI matrix drops 3.9 (now 3.10–3.12 × ubuntu/windows). The frozen
+  v1 validator itself still runs on 3.9, but this repository gates on 3.10+.
+- **CI rebuilt around one command** (B10): CI job 1 runs exactly `python check.py` — the seven test
+  suites, the v1 goldens (0/0/1/1), structure lint (tracked JSON, registry↔DDL sync, v1
+  Always-mirror↔catalog sync), a canonical-form round-trip of the committed v2 demo, and the
+  deterministic eval runner on its sample fixture. A second ubuntu-only job smokes the uv/PEP 723
+  server launch (skips visibly if uv is unavailable). The behavioral eval spec gained *executable*
+  deterministic assertions run by `evals/run_evals.py`; assertions with no v2 mechanical equivalent
+  are recorded as `retired`, never silently dropped.
+
+### Added
+- **`migrate` mode** (`package_migrate`, B5): staged, operator-initiated import of a conformant v1
+  Keystone package — pre-flight against the frozen v1 validator, dry parse report, one-transaction
+  populate, post-flight fidelity check. Runbook: `docs/migrate-from-keystone.md`; mapping contract:
+  `plugins/tamheed/references/migration-v1.md`. A migrated golden ships at
+  `generated-samples/support-triage-agent-v2/`.
+- **`adopt` mode** (`package_adopt`, B11): staged brownfield onboarding for projects that never used
+  Tamheed — nothing inferred is ever Approved, provenance is code-shaped (`source_kind='code'` with
+  file:line spans), injection-shaped repo content is fenced as data, and the gap report (what code
+  cannot reveal) is a first-class output.
+- **Execution-tracking surface:** slices under phases, acceptance-criteria audit verdicts with an
+  evidenced-vs-narrated split, defect and deferred-work registers, execution gates, per-slice
+  execution plans, durable conventions, progress journal, work bindings (`work_bind`) stamping
+  per-entity `last_referenced`, and cascade-on-transition (all ACs of a requirement Met ⇒ the
+  requirement auto-advances, in the same transaction).
+
+### Removed
+- **The repository bootstrapper** (`init_skill_repo.*`, ASM-B) and with it the `--no-repo` flag:
+  a package is data the operator commits to whichever repository they choose; storage
+  initialization is the server's `package_create`. Provider neutrality survives in the plan itself
+  (safeguard 15).
+- **The v1 state file** (`keystone-state.json`): the package *is* the state — `resume`/`update` are
+  `package_open` + targeted queries.
+- **The chat-only generation path:** environments without an MCP host can hold the planning
+  conversation but cannot create or mutate a v2 package.
+- **Derived document snapshots** (traceability matrix, status report, readiness report, backlog,
+  handoff manifest as files): all are views/queries now, rendered in `review.html`.
+
+### Migration
+- v1 packages are **not** read by v2 tools directly. Migration is **operator-initiated, staged, and
+  gated** (D-REPO-5): Keystone hints once per session, never forces, and agents never auto-migrate.
+  Run `package_migrate(source_dir)` for the preview, then `confirm=True` to populate; the frozen v1
+  contract (validator, JSON schemas, templates) stays in this repository as read-only migration
+  inputs. Full runbook: `docs/migrate-from-keystone.md`.
+- Identifiers survive migration unchanged (`FR-001` stays `FR-001`); v1 document content lands as
+  narrative documents + sections; register rows land in their entity tables with provenance intact.
+- Anything a v1 package recorded that v2 models differently (e.g. handoff-manifest fields) is
+  absorbed into the package row or entity columns — the migration report itemizes every mapping.
 
 ## [1.0.0] - 2026-06-22
 
