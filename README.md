@@ -2,7 +2,7 @@
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="plugins/tamheed/assets/logo-dark.svg">
     <source media="(prefers-color-scheme: light)" srcset="plugins/tamheed/assets/logo-light.svg">
-    <img src="plugins/tamheed/assets/logo.svg" alt="Tamheed — the planning groundwork that locks execution together" width="360">
+    <img src="plugins/tamheed/assets/logo.svg" alt="Tamheed — تمهيد: ground work for execution" width="420">
   </picture>
 </p>
 
