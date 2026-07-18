@@ -68,6 +68,7 @@ ENTITY_TABLES = {
     "document-section": "document_sections",
     "diagram": "diagrams",
     "prompt": "prompts",
+    "glossary-term": "glossary_terms",  # community-extension worked example (migration 002)
     "trace-edge": "trace_edges",   # composite PK; write surface for relations
     "omission": "omissions",       # G-SET recorded-omitted rows (entity_type + reason)
 }
@@ -108,6 +109,7 @@ BASELINE_ENTITY_TYPES = [
     ("document-section", "Document section", "SEC-", "Always"),
     ("diagram", "Diagram", "DIA-", "Conditional"),
     ("prompt", "Handoff prompt", "PRM-", "Conditional"),
+    ("glossary-term", "Glossary term (extension example)", "GT-", "On-request"),
 ]
 
 # G-COMPLETE-style placeholder screen (content tier — stays outside the schema).

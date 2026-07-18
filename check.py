@@ -107,8 +107,13 @@ def gate_lint() -> None:
     conn.close()
     missing = set(srv.ENTITY_TABLES.values()) - ddl_tables
     if missing:
-        fail(f"ENTITY_TABLES names tables absent from schema.sql: {sorted(missing)}")
-    print(f"lint: v2 registry ({len(registry)} types) <-> table map <-> DDL in sync")
+        fail(f"ENTITY_TABLES names tables absent from the DDL: {sorted(missing)}")
+    db_dir = REPO / "plugins" / "tamheed" / "db"
+    if (db_dir / "schema.sql").read_bytes() != (db_dir / "migrations" / "001_init.sql").read_bytes():
+        fail("schema.sql is no longer byte-identical to migrations/001_init.sql — "
+             "new DDL goes in an append-only migrations/NNN >= 002, never in either twin")
+    print(f"lint: v2 registry ({len(registry)} types) <-> table map <-> DDL in sync;"
+          " schema.sql == 001_init.sql")
 
     # 3) v1 sync (while v1 artifacts remain): every Always mirror entry's match
     #    paths appear in the artifact catalog — the two files must move together.

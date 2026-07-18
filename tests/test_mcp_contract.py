@@ -204,6 +204,30 @@ class McpContractTest(unittest.TestCase):
             self.assertEqual(result["gate"], "G-INJECT")
             self.assertFalse((Path(target) / ".mcp.json").exists())  # nothing written
 
+    # ---------------------------------------------------------------- extension mechanism
+
+    def test_extension_type_glossary_end_to_end(self):
+        # Plan 015: migration 002 + the two registry entries are ALL a new artifact
+        # family needs — upsert/query route, canonical round-trip, viewer renders.
+        srv.package_create("demo", "Demo", "rnd")
+        result = srv.entity_upsert([
+            {"type": "glossary-term", "id": "GT-001", "term": "slice",
+             "definition": "The delivery-sized unit branches and ACs bind to.",
+             "source_kind": "brief", "source_span": "brief L3"}])
+        self.assertTrue(result["ok"], result)
+        # registry row was seeded at package_create; the CHECK holds for bad ids
+        bad = srv.entity_upsert([{"type": "glossary-term", "id": "XX-1", "term": "x"}])
+        self.assertFalse(bad["ok"])
+        srv.package_close()                                # canonical write-back
+        self.assertTrue((srv.PACKAGE_ROOT / "demo" / "data" / "glossary_terms.jsonl").exists())
+        srv.package_open("demo")                           # reload through migrations
+        rows = srv.entity_query("glossary-term", columns=["id", "term"])
+        self.assertEqual(rows["rows"], [{"id": "GT-001", "term": "slice"}])
+        export = srv.export_html()
+        self.assertTrue(export["ok"], export)
+        html = Path(export["path"]).read_text(encoding="utf-8")
+        self.assertIn("Glossary terms (1)", html)          # viewer section is automatic
+
     # ---------------------------------------------------------------- staged flows & plumbing
 
     def test_export_html_writes_review_surface(self):

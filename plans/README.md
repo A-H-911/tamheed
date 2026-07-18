@@ -32,7 +32,7 @@ Keystone 1.0.1.
 | 012 | HTML viewer (operator review surface) | B6 | P2 | M | 008 (010 preferred) | DONE |
 | 013 | Eval runner + v2 CI + check.py | B10 | P2 | M | 010–012 | DONE |
 | 014 | Docs + Mermaid diagrams + CHANGELOG 2.0.0 | B8 | P2 | M | 005–013 | DONE |
-| 015 | Community extensibility + CONTRIBUTING | B9 | P3 | M | 007, 013, 014 | TODO |
+| 015 | Community extensibility + CONTRIBUTING | B9 | P3 | M | 007, 013, 014 | DONE |
 | 016 | Keystone close-out: successor banner + freeze | B12 | P3 | S | 014 | TODO |
 
 Status values: TODO | IN PROGRESS | DONE | BLOCKED (with one-line reason) | REJECTED (with

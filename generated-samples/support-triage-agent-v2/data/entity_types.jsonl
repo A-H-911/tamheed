@@ -13,6 +13,7 @@
 {"type_id":"execution-gate","label":"Execution gate","id_prefix":"GATE-","generation_class":"Conditional","template_ref":null,"custom_attributes":null}
 {"type_id":"execution-plan","label":"Execution plan (per slice)","id_prefix":"EP-","generation_class":"Conditional","template_ref":null,"custom_attributes":null}
 {"type_id":"experiment","label":"Experiment","id_prefix":"EXP-","generation_class":"Conditional","template_ref":null,"custom_attributes":null}
+{"type_id":"glossary-term","label":"Glossary term (extension example)","id_prefix":"GT-","generation_class":"On-request","template_ref":null,"custom_attributes":null}
 {"type_id":"hypothesis","label":"Hypothesis","id_prefix":"HYP-","generation_class":"Conditional","template_ref":null,"custom_attributes":null}
 {"type_id":"invariant","label":"Invariant","id_prefix":"INV-","generation_class":"Conditional","template_ref":null,"custom_attributes":null}
 {"type_id":"kpi","label":"KPI","id_prefix":"KPI-","generation_class":"Conditional","template_ref":null,"custom_attributes":null}
