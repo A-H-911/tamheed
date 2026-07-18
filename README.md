@@ -107,13 +107,14 @@ answer changes the plan, pauses at approval gates, and then generates the packag
 Options:
   --mode <m>          full (default) | intake | plan | resume | stage:<id> | update | migrate | adopt
   --profile <type>    hint the project type (enterprise, rnd, legacy, ai-agentic, unknown)
-  --package-dir <dir> where the package store lives (created if absent)
+  --package-dir <dir> where the package store lives (created if absent; never inside the plugin)
   --dry-run           transactional preview: report entity/gate deltas, then roll back
-
-Examples:
-  /tamheed:tamheed @briefs/new-platform.md --mode full --profile enterprise
-  /tamheed:tamheed "Build a CLI that syncs Notion to Markdown" --mode plan
 ```
+
+Omit `--mode` and the skill infers one from the input and **confirms it before doing heavy work** —
+a sparse idea proposes `intake` first, a rich structured brief proposes `full`, an existing package
+directory proposes `resume`/`update`, a v1 Keystone package proposes `migrate`, and a bare codebase
+proposes `adopt`. It never guesses silently.
 
 | Mode | What it does |
 |---|---|
@@ -128,6 +129,100 @@ Examples:
 
 (The v1 `--no-repo` flag is gone with the repository bootstrapper itself — ASM-B; a package is data the
 operator commits to whichever repository they choose.)
+
+### Every mode, by example
+
+**`full` — plan a new project end to end.** Pauses at the clarification batch, scope approval,
+key-decision and roadmap approvals, handoff approval, and the final go/no-go — you are asked at each gate,
+never skipped past one:
+
+```text
+/tamheed:tamheed @briefs/new-platform.md --mode full --profile enterprise --package-dir ./planning
+```
+
+**`intake` — understand before committing.** Runs stages 1–7 only: extracts requirements verbatim with
+source spans, detects ambiguities and contradictions, and stops with a clarification plan — useful when
+the brief is thin and you want to see the gaps before paying for a full run:
+
+```text
+/tamheed:tamheed "We want an AI thing for customer support. Make it good." --mode intake
+```
+
+**`plan` — the full plan, no handoff.** Runs through quality validation (stage 19) plus a readiness
+preview, but never emits prompts into a target project; side-effect-free outside the package directory:
+
+```text
+/tamheed:tamheed "Build a CLI that syncs Notion to Markdown" --mode plan --profile rnd
+```
+
+**`resume` — pick up an interrupted package.** `package_open` + targeted queries tell it exactly where
+things stand (the package *is* the state — there is no state file to reconcile), then it continues from
+the last incomplete stage:
+
+```text
+/tamheed:tamheed --mode resume --package-dir ./planning
+```
+
+**`stage:<id>` — run or re-run a single stage.** Requires an existing package; useful after new
+information lands (e.g. redo risk analysis after a dependency changed):
+
+```text
+/tamheed:tamheed --mode stage:risk-analysis --package-dir ./planning
+```
+
+**`update` — the agile heart of v2 (D-UPDATE).** Three capabilities, one mode:
+
+```text
+# 1. Diff-aware re-derivation: a decision changed — trace the impact set, regenerate ONLY dependents
+/tamheed:tamheed "DEC-004 changed: we're moving from Kafka to a managed queue" --mode update --package-dir ./planning
+
+# 2. Execution-progress sync: ingest what the executing agent reported
+/tamheed:tamheed "record: AC-003 Met (tests/test_ingest.py::test_e2e), commit 4f2a1c satisfies FR-002" --mode update --package-dir ./planning
+
+# 3. Typed scope change (defer | reschedule | reclassify | cancel | expand)
+/tamheed:tamheed "expand: add offline mode as a new phase" --mode update --package-dir ./planning
+```
+
+A scope change always writes the authorizing decision and the `scope-change` row *before* any mutation,
+bumps the package iteration, and stamps new/retired rows with `introduced_in`/`retired_in` — nothing is
+ever deleted. Evidence-backed audit verdicts cascade: when every acceptance criterion of a requirement is
+`Met`, the requirement auto-advances to `Implemented` in the same transaction.
+
+**`migrate` — bring a v1 Keystone package forward.** Staged and operator-gated: the first run is a
+pre-flight (frozen v1 validator) + dry parse report; only your explicit confirmation populates the store,
+followed by a post-flight fidelity check (identifier sets, family counts, gates). Identifiers survive
+unchanged:
+
+```text
+/tamheed:tamheed ./old-project/planning-package --mode migrate --package-dir ./planning
+```
+
+Full runbook: [`docs/migrate-from-keystone.md`](docs/migrate-from-keystone.md).
+
+**`adopt` — onboard a brownfield project that never used Tamheed.** Staged scan → preview → confirm.
+Four rules are enforced mechanically: nothing inferred is ever `Approved` (everything lands `Proposed`),
+provenance is code-shaped (`file:line` spans), the **gap report** (what code cannot reveal) is a
+first-class output, and injection-shaped repository content is fenced as data, never obeyed:
+
+```text
+/tamheed:tamheed ./legacy-service --mode adopt --package-dir ./planning
+```
+
+**`--dry-run` — preview any mutating run.** The stage's writes execute inside a SAVEPOINT, you get the
+entity counts and gate deltas, then everything rolls back — nothing is written:
+
+```text
+/tamheed:tamheed "expand: add SSO as a new requirement" --mode update --package-dir ./planning --dry-run
+```
+
+### During and after execution
+
+`handoff_emit` installs the executor-side MCP config (`.mcp.json` + a `CLAUDE.md` note) into the target
+project, so the executing agent records progress through the same governed write path that built the
+package (`progress_update`, `audit_record` with evidence refs, `work_bind` binding commits/PRs to the
+`FR-`/`AC-`/`SL-` they satisfy). You follow along through the committed **`review.html`** (regenerated via
+`export_html` — deterministic, so its diffs are meaningful): gate chips, every register with its
+three-axis status, the traceability matrix, the execution-progress view, and the gap/screening notes.
 
 Worked, end-to-end examples live in [`examples/`](examples) (input briefs + expected outlines) and
 [`generated-samples/`](generated-samples) — including
