@@ -1,0 +1,4 @@
+# Canonical package text is byte-defined (db/CANONICAL.md): store.dump writes LF,
+# and check.py's canonical-form gate compares raw bytes — so *.jsonl must check out
+# LF on every platform, or a fresh Windows clone fails the gate on line endings.
+*.jsonl text eol=lf

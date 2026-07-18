@@ -1,0 +1,1 @@
+{"id":"CON-001","title":"No accounts, no sync service","statement":"The tool operates for a single local user; the only network use is the browser launched by `open`.","lifecycle_status":"Draft","disposition":null,"disposition_reason_ref":null,"source_kind":"brief","source_span":"brief: constraints","custom_attributes":null,"last_referenced":null}

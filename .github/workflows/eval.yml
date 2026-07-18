@@ -30,14 +30,32 @@ jobs:
           assert d.get('skill') == 'tamheed', 'skill must be tamheed'
           cases = d.get('cases') or []
           assert len(cases) >= 5, f'expected >=5 cases, got {len(cases)}'
-          ids = set()
+          ids, live = set(), 0
           for c in cases:
               for k in ('id', 'intent', 'input', 'deterministic_assertions', 'rubric'):
                   assert c.get(k), f"case {c.get('id')!r} missing {k}"
               assert c['id'] not in ids, f"duplicate case id {c['id']}"
               ids.add(c['id'])
+              for a in c['deterministic_assertions']:
+                  # executable-assertion contract (plan 013): check + either a
+                  # retired reason or cmd list + expect_exit/expect_substring
+                  assert isinstance(a, dict) and a.get('check'), \
+                      f"{c['id']}: assertion missing 'check': {a!r}"
+                  if 'retired' in a:
+                      assert isinstance(a['retired'], str) and a['retired'], \
+                          f"{c['id']}: empty retired reason"
+                      continue
+                  live += 1
+                  cmd = a.get('cmd')
+                  assert isinstance(cmd, list) and cmd and all(isinstance(p, str) for p in cmd), \
+                      f"{c['id']}: assertion cmd must be a non-empty list of strings"
+                  assert isinstance(a.get('expect_exit', 0), int), f"{c['id']}: expect_exit must be int"
+                  sub = a.get('expect_substring')
+                  assert sub is None or (isinstance(sub, str) and sub), \
+                      f"{c['id']}: expect_substring must be a non-empty string"
           assert 'injection-brief' in ids, 'the injection (safeguard-18) case must be present'
-          print(f"OK: {len(cases)} eval cases well-formed: {', '.join(sorted(ids))}")
+          assert live, 'no live (executable) assertions remain'
+          print(f"OK: {len(cases)} eval cases well-formed ({live} live assertions): {', '.join(sorted(ids))}")
           PY
       - name: Reminder
         run: echo "Behavioral grading is model-in-the-loop — run evals/README.md steps and record pass-rate/token deltas."

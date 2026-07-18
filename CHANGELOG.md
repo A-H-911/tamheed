@@ -7,6 +7,17 @@ All notable changes to Keystone are documented here. The format is based on
 ## [Unreleased]
 
 ### Changed
+- **Python floor raised to 3.10** (program decision ASM-D): the MCP server depends on the
+  official `mcp` SDK, whose `requires-python` is `>=3.10`; the CI matrix drops 3.9
+  accordingly (now 3.10–3.12 × ubuntu/windows). The frozen v1 validator itself still runs
+  on 3.9, but this repository gates on 3.10+.
+- **CI rebuilt around one command** (plan 013/B10): CI job 1 runs exactly `python check.py`
+  — suites, v1 goldens (0/0/1/1), structure lint (tracked JSON, registry↔DDL sync, v1
+  Always-mirror↔catalog sync), canonical-form round-trip of the committed v2 demo, and the
+  deterministic eval runner on its sample fixture. A second ubuntu-only job smokes the
+  uv/PEP 723 server launch (skips visibly if uv is unavailable). The behavioral eval spec
+  gained *executable* deterministic assertions run by `evals/run_evals.py`; assertions with
+  no v2 mechanical equivalent are recorded as `retired`, never silently dropped.
 - **Repository split (D-REPO-1..4):** this repository is now **Tamheed** (`A-H-911/tamheed`), the
   successor of Keystone, carrying Keystone's full git history. The plugin bundle moved to
   `plugins/tamheed/` and the plugin/marketplace/skill identifiers renamed to `tamheed`. Install:

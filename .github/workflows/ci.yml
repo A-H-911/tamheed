@@ -1,9 +1,12 @@
 name: CI
 
-# Deterministic, fail-closed gate for every push to main and every PR.
-# Runs the validator's own unit/CLI test suite and validates the golden packages.
-# This is finding F-02 from docs/history/AUDIT-2026-06-21.md: the validator is built to "gate a commit
-# without a model in the loop", but nothing was running it.
+# Deterministic, fail-closed gate for every push to main and every PR (plan 013/B10).
+# Job 1 runs EXACTLY `python check.py` — the same one command contributors run
+# locally, so "passes locally != passes CI" cannot happen. check.py owns the gate
+# list (suites, v1 goldens, structure lint, canonical form, eval-runner sample);
+# anything deterministic goes there, never here. All checks are stdlib (D-U3).
+# Python floor is 3.10 per ASM-D (the MCP SDK's requires-python; 3.9 dropped —
+# see CHANGELOG).
 
 on:
   push:
@@ -14,14 +17,14 @@ permissions:
   contents: read
 
 jobs:
-  validator:
-    name: validator (py${{ matrix.python }} · ${{ matrix.os }})
+  check:
+    name: check (py${{ matrix.python }} · ${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest]
-        python: ['3.9', '3.10', '3.11', '3.12']
+        python: ['3.10', '3.11', '3.12']
     steps:
       - uses: actions/checkout@v4
 
@@ -29,36 +32,28 @@ jobs:
         with:
           python-version: ${{ matrix.python }}
 
-      - name: Validator unit + CLI tests
+      - name: The one command
         shell: bash
-        run: python tests/test_validate_package.py
+        run: python check.py
 
-      - name: Golden — valid fixture passes (exit 0)
-        shell: bash
-        run: python plugins/tamheed/scripts/validate_package.py tests/fixtures/valid-package
+  server-smoke:
+    # The uv/PEP 723 launch path is the documented install story — smoke it.
+    # Infra-tolerant: if uv cannot be provisioned, SKIP with a visible notice;
+    # never fail the pipeline on runner infrastructure.
+    name: MCP server smoke (uv / PEP 723)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
 
-      - name: Golden — demo package passes (exit 0)
-        shell: bash
-        run: python plugins/tamheed/scripts/validate_package.py generated-samples/support-triage-agent
-
-      - name: Negative — invalid fixture fails (exit 1)
+      - name: Server selftest via uv
         shell: bash
         run: |
-          set +e
-          python plugins/tamheed/scripts/validate_package.py tests/fixtures/invalid-package
-          code=$?
-          set -e
-          if [ "$code" -ne 1 ]; then
-            echo "::error::invalid-package expected exit 1, got $code"; exit 1
+          if ! command -v uv >/dev/null 2>&1; then
+            curl -LsSf https://astral.sh/uv/install.sh | sh || true
+            export PATH="$HOME/.local/bin:$PATH"
           fi
-
-      - name: Negative — incomplete fixture fails on G-SET (exit 1)
-        shell: bash
-        run: |
-          set +e
-          python plugins/tamheed/scripts/validate_package.py tests/fixtures/incomplete-package
-          code=$?
-          set -e
-          if [ "$code" -ne 1 ]; then
-            echo "::error::incomplete-package expected exit 1, got $code"; exit 1
+          if command -v uv >/dev/null 2>&1; then
+            uv run plugins/tamheed/server/tamheed_server.py --selftest
+          else
+            echo "::notice::uv unavailable on this runner — server smoke SKIPPED (infra, not a failure)"
           fi
