@@ -27,6 +27,10 @@
 
 ## What Tamheed is
 
+<p align="center">
+  <img src="docs/assets/tamheed-overview.png" alt="Tamheed at a glance: a project brief flows through Understand, Explore, and Plan &amp; hand off (with human gates) into an execution-ready package that Claude Code executes, writing progress back — all on top of the MCP server, the only write path, backed by SQLite ⇄ JSONL" width="900">
+</p>
+
 Tamheed is a reusable agent **skill** that transforms a long-form project description into a complete,
 internally consistent, **execution-ready handoff package**: the planning, research, architecture,
 governance, and execution artifacts Claude Code needs to implement the project with discipline.
@@ -229,10 +233,6 @@ Worked, end-to-end examples live in [`examples/`](examples) (input briefs + expe
 [`support-triage-agent-v2/`](generated-samples/support-triage-agent-v2), a full v1→v2 migrated package.
 
 ## How it works
-
-<p align="center">
-  <img src="docs/assets/tamheed-overview.png" alt="Tamheed at a glance: a project brief flows through Understand, Explore, and Plan &amp; hand off (with human gates) into an execution-ready package that Claude Code executes, writing progress back — all on top of the MCP server, the only write path, backed by SQLite ⇄ JSONL" width="900">
-</p>
 
 ```mermaid
 flowchart LR
