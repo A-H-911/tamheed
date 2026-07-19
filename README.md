@@ -230,6 +230,10 @@ Worked, end-to-end examples live in [`examples/`](examples) (input briefs + expe
 
 ## How it works
 
+<p align="center">
+  <img src="docs/assets/tamheed-overview.png" alt="Tamheed at a glance: a project brief flows through Understand, Explore, and Plan &amp; hand off (with human gates) into an execution-ready package that Claude Code executes, writing progress back — all on top of the MCP server, the only write path, backed by SQLite ⇄ JSONL" width="900">
+</p>
+
 ```mermaid
 flowchart LR
     brief(["Project brief<br/>(untrusted data)"]) --> U
