@@ -259,6 +259,21 @@ flowchart LR
     DB --> OUT["execution-ready package<br/>data/*.jsonl + handoff prompts + review.html"]
     OUT --> EXEC["Claude Code executes"]
     EXEC -- "progress_update · audit_record · work_bind" --> T
+
+    classDef stage fill:#7c3aed,stroke:#5b21b6,color:#ffffff
+    classDef gate fill:#ede9fe,stroke:#7c3aed,color:#312e81
+    classDef card fill:#ffffff,stroke:#1e293b,color:#1e293b
+    classDef tools fill:#1e293b,stroke:#0f172a,color:#a5b4fc
+    classDef store fill:#a5b4fc,stroke:#312e81,color:#1e293b
+    classDef pkg fill:#e0e7ff,stroke:#312e81,color:#1e293b
+    class U,X,P stage
+    class G1,G2 gate
+    class brief,EXEC card
+    class T tools
+    class DB store
+    class OUT pkg
+    style SKILL fill:#f5f3ff,stroke:#7c3aed,color:#312e81
+    style SRV fill:#eef2ff,stroke:#312e81,color:#312e81
 ```
 
 <p align="center"><em>From a project brief to an execution-ready handoff — two gates keep you in control:
