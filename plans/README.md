@@ -34,6 +34,7 @@ Keystone 1.0.1.
 | 014 | Docs + Mermaid diagrams + CHANGELOG 2.0.0 | B8 | P2 | M | 005–013 | DONE |
 | 015 | Community extensibility + CONTRIBUTING | B9 | P3 | M | 007, 013, 014 | DONE |
 | 016 | Keystone close-out: successor banner + freeze | B12 | P3 | S | 014 | DONE |
+| 017 | Field-report hardening: core gates, shared pipeline, v1 dialect tolerance | B13 | P1 | L | 005–016 DONE, v2.0.0 tagged; evidence C11–C16 (ACMP run 2026-07-21) | TODO — plan approved 2026-07-21; execution awaits go-ahead |
 
 Status values: TODO | IN PROGRESS | DONE | BLOCKED (with one-line reason) | REJECTED (with
 one-line rationale).
@@ -51,6 +52,14 @@ export + freshness/lead renders (012); tamheed repo public from day one with WIP
 eval schedule disabled at close-out (016). **Execution driver: the maintainer runs the plans
 himself** — self-containment is the operative contract; this status table is the tracking
 surface.
+
+## Alignment record (2026-07-21)
+
+The first post-release field evidence for v2 itself: a production migration of the ACMP package
+(one of the three C10 corpus repos) surfaced two blockers, five silent-loss families, two
+false-green gates, and a live plugin-version skew. Findings verified against source and folded
+into plan 017 as evidence clusters **C11–C16**; the report is archived by that plan's Phase 5
+(`plans/evidence/acmp-field-report-2026-07-21.md`; original: ACMP repo `findings.md`, PR #151).
 
 ## Dependency notes
 
