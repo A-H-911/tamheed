@@ -10,6 +10,57 @@ All notable changes to Tamheed are documented here. The format is based on
 
 ## [Unreleased]
 
+## [2.1.0] - 2026-07-21
+
+Field-report hardening (plan 017; evidence **C11–C16** from the first production v1→v2
+migration — the ACMP run, archived at `plans/evidence/acmp-field-report-2026-07-21.md`).
+**No schema migration — existing 2.x packages are unaffected by upgrade**; every fix is
+code-level and applies the moment a package is opened.
+
+### Added
+- `server_info` tool: plugin version (single source: the bundled `plugin.json`), resolved
+  package root, open package, migrations head — makes startup diagnosable (C11/C16).
+- `package_migrate(allow_zero=[...], patch=<file>)`: the family-zero tripwire (a family
+  parsing to zero against a nonzero manifest count blocks populate until acknowledged) and
+  the blessed parse→patch→populate repair path (D1), both echoed in the preview.
+- Preview parity (C13): parsed-vs-manifest `count_deltas`, `zero_families`, and the
+  `partial_files`/`skipped_files` loss ledgers are computed **before** the operator confirm.
+- v1 dialect tolerance (C12): MADR ADRs without front matter (heading id + `- Status:`
+  bullet; "Decision Outcome" preferred over "Drivers"); `Given / When / Then`/`Criterion`
+  AC aliases with uncapped statements; `Test ref` audit-evidence alias + verdict
+  provenance; MoSCoW `M`/`Must` → `mvp=1`; `D-nn` deferred-work rows → governed `DW-`;
+  catch-all `doc_kind='other'` narrative for zero-row unmatched files; `generated`
+  manifest spelling; raw profile preserved; stale omissions dropped.
+- Adopt fidelity (C13): `Cargo.toml` dependencies parsed; every extraction cap reported in
+  the gap report; successful migrate/adopt results end with the cutover pointer (C15), and
+  `handoff_emit` flags stale Keystone references in the target's CLAUDE.md.
+- Tests: the v1-green **dialect-package** golden (the ACMP quirk profile) + a conservation
+  meta-test that catches the next unknown parser fall-through; 25 new tests; a 7th eval
+  scenario (`migrate-dialect-fixture`); a version-sync lint in `check.py`.
+
+### Changed
+- **Gate-behavior relaxations** (outcomes may change on existing packages, both toward
+  honesty): `G-COMPLETE` strips code spans before the placeholder scan (parity with the
+  frozen v1 gate) and exempts `custom_attributes` (provenance, not authored content —
+  G-INJECT still screens it at emission); `gate_run` attaches an explicit warning when
+  `G-TRACE` passes vacuously over zero MVP requirements (D-017-1).
+- Package-root resolution is layered — explicit `--package-dir` > `CLAUDE_PROJECT_DIR` >
+  cwd — the bundled `.mcp.json` passes `${CLAUDE_PROJECT_DIR}`, and every `package_*`
+  result echoes the resolved absolute root (C11: a stdio server's cwd is not guaranteed).
+
+### Fixed
+- Windows MCP deadlock (C11): pre-flight runs the frozen v1 validator **in-process**
+  (no subprocess from the stdio server) with crash isolation; adopt's git spawn gets
+  `stdin=DEVNULL`.
+- `promoted_to` FK crash (C12): only `ADR-*` tokens qualify; mixed-token cells store NULL
+  plus an unmapped note instead of killing the whole populate.
+- Populate failures name the exact table/row/constraint and remove the created `data/`
+  dir so retries are never blocked by a poison directory.
+- `entity_upsert` documents the full-row requirement and names the actual cause when a
+  partial update of an existing row fails NOT NULL.
+- The plugin manifest version skew (installs self-identified as 1.0.0 since the v2.0.0
+  release) — `plugin.json` now reads 2.1.0 and the sync is lint-enforced.
+
 ## [2.0.0] - 2026-07-18
 
 The v2 re-architecture (MAJOR — the storage, interaction, and review contracts all changed; see

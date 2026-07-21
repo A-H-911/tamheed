@@ -2,9 +2,13 @@
 
 ## Status
 
-TODO. Drafted 2026-07-21 from the ACMP post-release field report; maintainer approved the plan
-*document* at the 2026-07-21 review checkpoint — **execution awaits a separate go-ahead**.
-Decisions locked at that checkpoint (do not relitigate in execution):
+**DONE (2026-07-21)** — all six phases executed and committed with `check.py` green at every
+boundary; released as **v2.1.0**. One deviation, better than planned: the catch-all narrative
+uses the existing `doc_kind='other'` enum value (no DDL, no registry change needed). The
+golden-regeneration review found and repaired pre-existing B4-class loss in the committed
+golden itself (AC titles were literally "PH-1"). **Outstanding: the manual ACMP acceptance
+run** (maintainer, needs the ACMP repo — see Done criteria).
+Decisions locked at the 2026-07-21 approval checkpoint (were honored in execution):
 
 - **D-017-1** Vacuous G-TRACE is reported as a **warning only** — `ready` semantics unchanged
   (adopt-mode packages are all-`mvp=0` by design and must keep working).

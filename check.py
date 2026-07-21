@@ -20,6 +20,7 @@ SUITES here, nowhere else.
 from __future__ import annotations
 
 import json
+import re
 import subprocess
 import sys
 import tempfile
@@ -127,6 +128,21 @@ def gate_lint() -> None:
     if stale:
         fail(f"required-artifacts.json entries missing from artifact-catalog.md: {stale}")
     print(f"lint: v1 Always mirror ({len(mirror['always'])} entries) <-> artifact catalog in sync")
+
+    # 4) version sync (plan 017/C16): the version string that travels with the installed
+    #    bundle IS the version as far as every user and field report is concerned — it must
+    #    match the newest CHANGELOG release heading (the v2.0.0 release shipped with
+    #    plugin.json still saying 1.0.0; this makes that skew structurally impossible).
+    plugin_ver = json.loads(
+        (REPO / "plugins" / "tamheed" / ".claude-plugin" / "plugin.json")
+        .read_text(encoding="utf-8"))["version"]
+    heading = re.search(r"^## \[(\d+\.\d+\.\d+)\]",
+                        (REPO / "CHANGELOG.md").read_text(encoding="utf-8"), re.M)
+    newest = heading.group(1) if heading else None
+    if plugin_ver != newest:
+        fail(f"version skew: plugin.json={plugin_ver} vs newest CHANGELOG release={newest}"
+             " — bump both together (plan 017 W8)")
+    print(f"lint: plugin.json {plugin_ver} == newest CHANGELOG release")
 
 
 def gate_canonical() -> None:
