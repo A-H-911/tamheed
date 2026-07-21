@@ -21,6 +21,13 @@ sys.path.insert(0, str(_HERE.parent / "db"))
 import store  # noqa: E402
 import validate_package as vp  # noqa: E402  (frozen v1 contract)
 
+try:  # when imported alongside the server (the normal case; no import cycle —
+    # tamheed_server imports migrate lazily inside its handler)
+    from tamheed_server import BASELINE_ENTITY_TYPES, ENTITY_TABLES  # noqa: E402
+except ImportError:  # pragma: no cover
+    BASELINE_ENTITY_TYPES = []
+    ENTITY_TABLES = {}
+
 LIFECYCLE = {"Draft", "Proposed", "Approved", "Rejected", "Deferred",
              "Implemented", "Superseded", "Obsolete"}
 STATUS_MAP = {"Accepted": "Approved", "Planned": "Proposed"}
@@ -34,6 +41,7 @@ OMISSION_KEYWORDS = [
     ("open-question", "open-question"), ("open-decision", "decision"),
     ("acceptance-audit", "audit-verdict"), ("acceptance", "acceptance-criterion"),
     ("progress", "progress-entry"), ("deferred", "deferred-work"),
+    ("research", "narrative-document"),  # research-plan omissions (field-evidence C13)
 ]
 
 NARRATIVE_KINDS = [  # (rel-substring, doc_kind); first match wins
@@ -124,6 +132,10 @@ class Plan:
         self.defined: set[str] = set()
         self.manifest_counts: dict[str, int] = {}
         self.package: dict = {}
+        # File-level loss accounting (field-evidence C13): unmapped is id-granular, so
+        # whole-file outcomes get their own ledgers, surfaced in the preview.
+        self.partial_files: list[str] = []   # register rows migrated; surrounding prose not
+        self.skipped_files: list[str] = []   # skipped by design (derived views, unknown kinds)
 
     def add(self, table: str, row: dict):
         self.rows.setdefault(table, []).append(row)
@@ -171,18 +183,24 @@ def _map_register_row(plan: Plan, prefix: str, ident: str, t, row: list[str]):
 
     attrs = _row_attrs(t.headers, row)
     status = _status(col("status"))
-    title = col("statement", "requirement", "constraint", "assumption", "question",
-                "decision", "risk", "invariant", "dependency", "hypothesis", "milestone",
-                "metric", "test", "work item", "phase", "stakeholder / role",
+    title = col("statement", "given / when / then", "criterion", "requirement",
+                "constraint", "assumption", "question", "decision", "risk", "invariant",
+                "dependency", "hypothesis", "milestone", "metric", "test", "work item",
+                "phase", "stakeholder / role",
                 "stakeholder") or _clean_line(" ".join(row[1:2]))
     if prefix in ("FR", "NFR"):
         source = col("source") or ""
         kind = "clarification" if re.search(r"OQ-|clarif", source, re.I) else "brief"
         prio = (col("priority", "scope") or "")
+        # MoSCoW tolerance (field-evidence C14): v1 packages using M/S/C/W priorities
+        # must not migrate to an all-mvp=0 set that makes G-TRACE pass vacuously.
+        prio_bare = prio.strip().strip("*").strip()
+        is_mvp = ("mvp" in prio.lower() or prio_bare == "M"
+                  or prio_bare.lower().startswith("must"))
         plan.add("requirements", {
             "id": ident, "kind": "functional" if prefix == "FR" else "non-functional",
             "title": title[:200], "statement": title,
-            "priority": prio or None, "mvp": 1 if "mvp" in prio.lower() else 0,
+            "priority": prio or None, "mvp": 1 if is_mvp else 0,
             "lifecycle_status": status if status != "Draft" else "Approved",
             "source_kind": kind, "source_span": source or "v1:register-row",
             "custom_attributes": attrs})
@@ -258,8 +276,13 @@ def _map_register_row(plan: Plan, prefix: str, ident: str, t, row: list[str]):
     elif prefix == "AC":
         verifies = _cell(row, t.col_index(["verifies"])) or ""
         req = next((i for i in _ids_in(verifies) if i.split("-")[0] in ("FR", "NFR")), None)
+        # statement never inherits the title cap (field-evidence C12: every ACMP AC
+        # exceeded 120 chars) — prefer the raw long-form cell, whatever it was headed.
+        raw_stmt = _cell(row, t.col_index(
+            ["given / when / then", "criterion", "statement"]))
         plan.add("acceptance_criteria", {
-            "id": ident, "title": title[:120], "statement": title, "requirement_id": req,
+            "id": ident, "title": title[:120], "statement": raw_stmt or title,
+            "requirement_id": req,
             "lifecycle_status": status if status != "Draft" else "Approved",
             "custom_attributes": attrs})
         for ref in _ids_in(verifies):
@@ -298,18 +321,38 @@ def _map_matrix(plan: Plan, t) -> None:
 def _map_adr(plan: Plan, pf) -> None:
     fm = pf.front_matter
     ident = (fm.get("id") or "").strip()
+    status_src = fm.get("status")
     if not ident.startswith("ADR-"):
-        plan.unmapped.append(f"{pf.rel}: ADR file without front-matter id")
-        return
+        # MADR fallback (field-evidence C12): Keystone v1 itself emitted
+        # `# ADR-0031: title` + `- Status: Accepted` with no YAML front-matter —
+        # requiring front-matter migrated real packages as ZERO ADRs, undetected.
+        head = re.search(r"^#\s+(ADR-\d+)\b[:.]?\s*", pf.text, re.M)
+        if not head:
+            plan.unmapped.append(f"{pf.rel}: ADR file without front-matter or heading id")
+            return
+        ident = head.group(1)
+        bullet = re.search(r"^[-*]\s*\**Status\**\s*:\s*([A-Za-z-]+)", pf.text, re.M | re.I)
+        status_src = bullet.group(1) if bullet else status_src
     title_m = re.search(r"^#\s+(.+)$", pf.text, re.M)
     sections = dict(_sections(pf.text))
+
+    def section(*needles: str, exclude: str = "") -> str | None:
+        for needle in needles:  # first needle that matches any heading wins
+            hit = next((v for k, v in sections.items()
+                        if needle in k.lower() and (not exclude or exclude not in k.lower())),
+                       None)
+            if hit is not None:
+                return hit
+        return None
+
     plan.add("adrs", {
         "id": ident, "title": _clean_line(title_m.group(1)) if title_m else ident,
-        "context": next((v for k, v in sections.items() if "context" in k.lower()), None),
-        "decision": next((v for k, v in sections.items() if "decision" in k.lower()), None),
-        "consequences": next((v for k, v in sections.items()
-                              if "consequence" in k.lower()), None),
-        "lifecycle_status": _status(fm.get("status"), "Proposed"),
+        "context": section("context"),
+        # MADR files head both "Decision Drivers" and "Decision Outcome": prefer the
+        # outcome, never the drivers list (field-evidence C12/D4).
+        "decision": section("decision outcome", "decision", exclude="driver"),
+        "consequences": section("consequence"),
+        "lifecycle_status": _status(status_src, "Proposed"),
         "custom_attributes": json.dumps({"v1": {"front_matter": dict(fm)}},
                                         ensure_ascii=False)})
 
@@ -341,8 +384,10 @@ def parse_v1(source: Path) -> Plan:
     if "keystone-state.json" in by_rel:
         state = json.loads(by_rel["keystone-state.json"].text)
     depth = ((state.get("project_profile") or {}).get("mode") or "").strip()
+    # "profile" stays in extras deliberately (field-evidence C13): _norm_profile is lossy
+    # ("software-platform (on-prem)" -> unknown) and the raw string must survive somewhere.
     extras = {k: v for k, v in manifest.items()
-              if k not in ("package", "project", "profile", "mode", "mvp_definition",
+              if k not in ("package", "project", "mode", "mvp_definition",
                            "entry_point", "go_no_go", "generated_at", "package_version")}
     custom = {"v1_manifest": extras}
     if depth in ("quick", "standard", "deep", "research"):
@@ -354,7 +399,8 @@ def parse_v1(source: Path) -> Plan:
         "package_version": manifest.get("package_version") or "1.0.0",
         "mvp_definition": manifest.get("mvp_definition"),
         "entry_point": manifest.get("entry_point"), "go_no_go": manifest.get("go_no_go"),
-        "created_at": manifest.get("generated_at") or "v1-migration",
+        "created_at": manifest.get("generated_at") or manifest.get("generated")
+        or "v1-migration",  # both spellings occur in real Keystone manifests (C12)
         "custom_attributes": json.dumps(custom, ensure_ascii=False)}
 
     for entry in manifest.get("omitted_artifacts") or []:
@@ -374,6 +420,7 @@ def parse_v1(source: Path) -> Plan:
             if "traceability-matrix" in rel_l:
                 for t in vp.parse_markdown_tables(pf.text):
                     _map_matrix(plan, t)
+            plan.skipped_files.append(pf.rel)  # derived views: regenerated in v2 (C13)
             continue
         if "acceptance-audit" in rel_l:
             for t in vp.parse_markdown_tables(pf.text):
@@ -381,8 +428,36 @@ def parse_v1(source: Path) -> Plan:
                     ac = next((i for i in _ids_in(row[0]) if i.startswith("AC-")), None)
                     verdict = _cell(row, t.col_index(["verdict"]))
                     if ac and verdict in ("Met", "Partial", "Not-met", "Pending"):
-                        plan.audits.append({"ac_id": ac, "verdict": verdict,
-                                            "evidence": _cell(row, t.col_index(["evidence"]))})
+                        # "Test ref" is Keystone's own evidence column head (C12); the
+                        # remaining cells ride custom_attributes like every register row.
+                        plan.audits.append({
+                            "ac_id": ac, "verdict": verdict,
+                            "evidence": _cell(row, t.col_index(["evidence", "test ref"])),
+                            "custom_attributes": _row_attrs(t.headers, row)})
+            plan.partial_files.append(pf.rel)
+            continue
+        if "deferred-work" in rel_l:
+            # Ungoverned `D-nn` rows (Keystone's own convention) are invisible to the ID
+            # regex — 23 live items vanished from ACMP with no trace (field-evidence C13).
+            dw_seq = len(plan.rows.get("deferred_work", []))
+            for t in vp.parse_markdown_tables(pf.text):
+                for row in t.rows:
+                    if not re.fullmatch(r"D-\d+", row[0].strip().strip("*")):
+                        continue
+                    dw_seq += 1
+                    sev = (_cell(row, t.col_index(["severity"])) or "").lower()
+                    plan.add("deferred_work", {
+                        "id": f"DW-{dw_seq:03d}",
+                        "title": (_cell(row, t.col_index(
+                            ["deferred item", "item", "description", "title", "work"]))
+                            or _clean_line(" ".join(row[1:2]))),
+                        "severity": sev if sev in ("critical", "high", "medium", "low")
+                        else "medium",
+                        "activation_trigger": _cell(row, t.col_index(
+                            ["activation trigger", "trigger", "activate when"])),
+                        "source_kind": "brief", "source_span": f"v1:{pf.rel}",
+                        "custom_attributes": _row_attrs(t.headers, row)})
+            plan.partial_files.append(pf.rel)
             continue
         if rel_l.startswith("adrs/"):
             _map_adr(plan, pf)
@@ -397,6 +472,8 @@ def parse_v1(source: Path) -> Plan:
                 plan.add("diagrams", {"id": f"DIA-{dia_seq:03d}", "kind": stem,
                                       "title": f"{stem} diagram", "body": pf.text,
                                       "generation_class": DIAGRAM_CLASS[stem]})
+            else:
+                plan.skipped_files.append(pf.rel)  # unknown diagram kind (C13: listed)
             continue
 
         prompt = next((k for s, k in PROMPT_KINDS if s in rel_l), None)
@@ -408,6 +485,7 @@ def parse_v1(source: Path) -> Plan:
                                  "body": pf.text})
 
         # register tables anywhere (incl. KPI/STK tables inside the charter)
+        rows_before = sum(len(v) for v in plan.rows.values())
         for t in vp.parse_markdown_tables(pf.text):
             id_col = t.col_index(vp.ID_HEADERS)
             if id_col is None:
@@ -418,8 +496,17 @@ def parse_v1(source: Path) -> Plan:
                 token = next(iter(_ids_in(row[id_col] if id_col < len(row) else "")), None)
                 if token and not plan.has(token):
                     _map_register_row(plan, token.split("-")[0], token, t, row)
+        produced_rows = sum(len(v) for v in plan.rows.values()) > rows_before
 
         kind = next((k for s, k in NARRATIVE_KINDS if s in pf.rel), None)
+        if kind is None and not prompt and not produced_rows:
+            # Catch-all (field-evidence C13, RC1 class fix): a file that matched no
+            # allowlist and yielded no rows migrates as an 'other' narrative document —
+            # prose is never silently dropped. Row-bearing files keep rows-only and are
+            # listed as partial instead (no double representation).
+            kind = "other"
+        elif kind is None and produced_rows:
+            plan.partial_files.append(pf.rel)
         if kind and not prompt:
             doc_seq += 1
             doc_id = f"DOC-{doc_seq:03d}"
@@ -482,6 +569,12 @@ def parse_v1(source: Path) -> Plan:
                                        "lifecycle_status": "Approved"})
                 wbs.add(parent)
             r["parent_id"] = parent
+
+    # A family that both migrated rows AND carries a recorded omission is a stale
+    # manifest entry (field-evidence C13: ACMP's milestones were "omitted" beside 6 MS
+    # rows) — the rows win, the omission is dropped.
+    plan.omissions = [(etype, reason) for etype, reason in plan.omissions
+                      if not plan.rows.get(ENTITY_TABLES.get(etype, etype), [])]
     return plan
 
 
@@ -493,10 +586,6 @@ INSERT_ORDER = ["requirements", "constraints", "invariants", "assumptions", "dep
                 "acceptance_criteria", "tests", "deferred_work", "narrative_documents",
                 "document_sections", "diagrams", "prompts"]
 
-try:
-    from tamheed_server import BASELINE_ENTITY_TYPES  # when imported alongside the server
-except ImportError:  # pragma: no cover
-    BASELINE_ENTITY_TYPES = []
 
 
 def populate(plan: Plan, dest_root: Path, name: str) -> dict:
@@ -541,9 +630,10 @@ def populate(plan: Plan, dest_root: Path, name: str) -> dict:
                 for seq, audit in enumerate(plan.audits, 1):
                     step = f"audit_verdicts row AV-{seq:03d} (ac {audit['ac_id']})"
                     conn.execute(
-                        "INSERT INTO audit_verdicts (id, ac_id, verdict, evidence, iteration)"
-                        " VALUES (?, ?, ?, ?, 1)",
-                        (f"AV-{seq:03d}", audit["ac_id"], audit["verdict"], audit["evidence"]))
+                        "INSERT INTO audit_verdicts (id, ac_id, verdict, evidence,"
+                        " iteration, custom_attributes) VALUES (?, ?, ?, ?, 1, ?)",
+                        (f"AV-{seq:03d}", audit["ac_id"], audit["verdict"],
+                         audit["evidence"], audit.get("custom_attributes")))
                 known = {r[0] for r in conn.execute("SELECT id FROM entity_index")}
                 for frm, to, rel in sorted(plan.edges):
                     if frm in known and to in known:
@@ -607,8 +697,41 @@ def fidelity(plan: Plan, pkg_dir: Path) -> dict:
 
 # --------------------------------------------------------------------------- driver
 
+def _apply_patch(plan: Plan, patch_path: str) -> dict:
+    """Merge-by-id row overrides applied to the parsed plan BEFORE populate (D1): the
+    blessed repair path for migration gaps. Post-hoc mutation stays impossible —
+    immutability triggers are never bypassed. Echoed in the preview."""
+    data = json.loads(Path(patch_path).read_text(encoding="utf-8"))
+    updated = added = 0
+    for table, rows in data.items():
+        if table == "audits":
+            by_ac = {a["ac_id"]: a for a in plan.audits}
+            for override in rows:
+                if override.get("ac_id") in by_ac:
+                    by_ac[override["ac_id"]].update(override)
+                    updated += 1
+            continue
+        existing = {r.get("id"): r for r in plan.rows.get(table, [])}
+        for override in rows:
+            if override.get("id") in existing:
+                existing[override["id"]].update(override)
+                updated += 1
+            else:
+                plan.add(table, override)
+                added += 1
+    return {"path": patch_path, "updated": updated, "added": added}
+
+
+_CUTOVER_NEXT = (
+    "cutover (C15): open the package and run handoff_emit(<repo>) — it writes the "
+    "executor .mcp.json and the CLAUDE.md tracking note. Then update stale v1 pointers "
+    "in the repo's AGENTS.md/CLAUDE.md and freeze the v1 source tree; until then two "
+    "sources of truth coexist.")
+
+
 def run_migration(source_dir: str, dest_root: str | Path, name: str | None = None,
-                  confirm: bool = False) -> dict:
+                  confirm: bool = False, allow_zero: list[str] | None = None,
+                  patch: str | None = None) -> dict:
     source = Path(source_dir)
     if not source.is_dir():
         return {"ok": False, "stage": "preflight", "error": f"{source_dir} is not a directory"}
@@ -616,19 +739,44 @@ def run_migration(source_dir: str, dest_root: str | Path, name: str | None = Non
     if not pre["ok"]:
         return pre
     plan = parse_v1(source)
+    patch_report = _apply_patch(plan, patch) if patch else None
     name = _kebab(name or plan.package["name"])
+
+    # Stage-3 parity (field-evidence C13/RC3): the operator confirms on everything the
+    # tool knows — parsed-vs-manifest deltas and file-level outcomes, not just id noise.
+    parsed = {}
+    for ident in plan.defined:
+        prefix = ident.split("-")[0]
+        parsed[prefix] = parsed.get(prefix, 0) + 1
+    deltas = {p: {"manifest": n, "parsed": parsed.get(p, 0)}
+              for p, n in plan.manifest_counts.items() if parsed.get(p, 0) != n}
+    zero_families = sorted(p for p, n in plan.manifest_counts.items()
+                           if n and not parsed.get(p))
     preview = {"stage": "preview", "package": name, "counts": plan.counts(),
                "edges": len(plan.edges), "audit_verdicts": len(plan.audits),
                "omissions": len(plan.omissions),
-               "manifest_counts": plan.manifest_counts, "unmapped": plan.unmapped}
+               "manifest_counts": plan.manifest_counts, "count_deltas": deltas,
+               "zero_families": zero_families,
+               "partial_files": sorted(plan.partial_files),
+               "skipped_files": sorted(plan.skipped_files),
+               "patch": patch_report, "unmapped": plan.unmapped}
     if not confirm:
         return {"ok": True, **preview,
                 "next": "re-run with confirm=true to populate (operator gate, stage 3)"}
+    unacknowledged = sorted(set(zero_families) - set(allow_zero or []))
+    if unacknowledged:
+        # Family-zero tripwire (C13): a whole family parsing to zero against a nonzero
+        # manifest count is almost always silent loss, not reality (ACMP: 33 ADRs -> 0).
+        return {**preview, "ok": False, "stage": "populate-refused",
+                "error": "whole famil(y/ies) parsed to zero against a nonzero manifest "
+                         "count: %s — fix the source (or the parser) or acknowledge "
+                         "deliberately with allow_zero=[...]" % ", ".join(unacknowledged)}
     pop = populate(plan, Path(dest_root), name)
     if not pop["ok"]:
         return pop
     fid = fidelity(plan, Path(dest_root) / name)
     return {"ok": fid["ok"], "stage": "post-flight", "preview": preview,
             "package_dir": pop["package_dir"], "fidelity": fid,
+            "next": _CUTOVER_NEXT if fid["ok"] else None,
             "note": None if fid["ok"] else
             "fidelity gaps are reported, never auto-resolved — review before use"}

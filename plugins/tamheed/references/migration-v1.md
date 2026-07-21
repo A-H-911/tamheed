@@ -16,9 +16,9 @@ lives under the v2 flow (ASM-A: v1 is supported for migration only). The operato
 
 | Stage | What happens | Gate |
 |---|---|---|
-| 1. Pre-flight | The frozen v1 validator runs (`--json`, subprocess). Exit ≠ 0 → refuse with its report. | v1 gates |
-| 2. Parse + map | Dry mapping: per-family counts, unmapped-content list, manifest-count deltas. | — |
-| 3. Confirm | The dry report goes to the operator. Nothing written yet. | **operator** |
+| 1. Pre-flight | The frozen v1 validator runs **in-process** (imported as a library — no subprocess from the stdio server, C11). Critical failure → refuse with its report; a validator crash is isolated and reported distinctly. | v1 gates |
+| 2. Parse + map | Dry mapping: per-family counts, parsed-vs-manifest **count deltas**, **zero-families** list, **partial/skipped file ledgers** (C13), unmapped-content list, optional `patch` echo. | — |
+| 3. Confirm | The dry report goes to the operator. Nothing written yet. A family parsing to **zero** against a nonzero manifest count blocks populate unless acknowledged via `allow_zero=[...]`. | **operator** |
 | 4. Populate | One transaction into a fresh v2 package; canonical JSONL written back. A failure leaves no partial package. | schema |
 | 5. Post-flight | `gate_run` + the fidelity report (below). | v2 gates |
 | 6. Review | Operator reviews (HTML view once plan 012 lands; text report until then). | **operator** |
@@ -49,11 +49,32 @@ lives under the v2 flow (ASM-A: v1 is supported for migration only). The operato
    headings, `- **WBS-1.1**` bold leaders) are captured as *weak definitions* and synthesized as
    minimal rows (id + defining-line title).
 4. **Narrative docs** (charter, exec summary, architecture, README, agent-control) →
-   `narrative_documents` + one `document_sections` row per `##` heading. ADR files → `adrs` rows
-   (front-matter id/status; `## Context`/`## Decision`/`## Consequences` bodies → columns).
+   `narrative_documents` + one `document_sections` row per `##` heading. ADR files → `adrs` rows:
+   front-matter id/status when present, else the **MADR fallback** (C12) — id from the
+   `# ADR-NNNN:` heading, status from a `- Status:` bullet (the shape Keystone v1 itself
+   emitted). The decision column prefers the "Decision Outcome" section and never the
+   "Decision Drivers" list. Any other `.md` that matches no kind **and yields no register
+   rows** migrates as a `doc_kind='other'` narrative document (C13: prose is never silently
+   dropped); row-bearing files keep rows-only and are listed in the preview's
+   `partial_files` ledger instead.
 5. **Traceability matrix rows → `trace_edges`.** The matrix is derived in v1; edges are the truth
    in v2 (the G-TRACE view re-derives coverage). Register link columns (`Verifies`, `Realises`)
    contribute the same edges; duplicates collapse.
+6. **AC dialect (C12).** The statement column may be headed "Given / When / Then" or
+   "Criterion"; both are aliases, and `acceptance_criteria.statement` takes the **raw
+   cell** — it never inherits the 120-char title cap.
+7. **Audit dialect (C12).** "Test ref" is an evidence alias; the remaining audit columns
+   ride each verdict's `custom_attributes` like every register row.
+8. **MoSCoW (C14).** Priority `M`/`Must…` (and any cell containing "MVP") → `mvp=1`, so
+   G-TRACE never passes vacuously over an all-`mvp=0` migration.
+9. **Deferred-work register (C13).** `execution/deferred-work-register.md` rows keyed by
+   the ungoverned `D-nn` convention map to governed `DW-NNN` rows (severity normalized to
+   the schema enum, original row preserved in `custom_attributes`).
+10. **Decision `Promoted to` (C12).** Only `ADR-*` tokens qualify (the column is an FK
+    into `adrs`); a cell citing other governed ids stores NULL plus an `unmapped` note.
+11. **Manifest spellings (C12).** `generated` is accepted alongside `generated_at`; the
+    raw `profile` string is preserved in `custom_attributes.v1_manifest` (normalization is
+    lossy). An omission recorded for a family that also migrated rows is stale and dropped.
 
 ## Field mapping (v1 → v2)
 
@@ -81,6 +102,18 @@ lives under the v2 flow (ASM-A: v1 is supported for migration only). The operato
 | handoff prompt files | `prompts` (`initial`/`follow-up`/`review`) |
 | experiment/POC files | `experiments`/`pocs` (front-matter id/status; body preserved in `custom_attributes`) |
 | readiness report, status report, backlog | **not migrated** — derived views in v2 (regenerated from the rows) |
+
+## Repair path (D1) and cutover (C15)
+
+- **Repair** happens **before populate, never after**: `package_migrate(..., patch=<file>)`
+  applies merge-by-id row overrides (JSON: `{"<table>": [{"id": ..., <columns>}, ...],
+  "audits": [{"ac_id": ..., <fields>}, ...]}`) to the parsed plan, echoed in the preview.
+  Approved-entity immutability is never bypassed; parse → patch → populate is the blessed
+  sequence for fixing migration gaps without breaking governed ids.
+- **Cutover**: a successful migration ends with a pointer to `handoff_emit`, which writes
+  the executor `.mcp.json` and the `CLAUDE.md` tracking note. The operator then updates
+  stale v1 pointers (AGENTS.md/CLAUDE.md) and freezes the v1 source tree — until that is
+  done, two sources of truth coexist and agents may keep editing the dead one.
 
 ## What migration never does
 

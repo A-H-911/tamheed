@@ -5,6 +5,7 @@ Fidelity criterion (references/migration-v1.md): (a) identifier sets match,
 over a stale manifest, deltas reported; (c) a v1-passing package passes v2 gates.
 """
 import hashlib
+import json
 import sys
 import tempfile
 import unittest
@@ -161,6 +162,105 @@ class FieldReportHardeningTest(unittest.TestCase):
             good.add("decisions", {"id": "DEC-001", "title": "t", "decision": "t",
                                    "lifecycle_status": "Approved"})
             self.assertTrue(migrate.populate(good, Path(dest), "pkg")["ok"])
+
+
+class DialectToleranceTest(unittest.TestCase):
+    """Plan 017 Phase 2 (C12/C13/C14): the ACMP dialect quirks, unit-level. The
+    integration-level lock is the Phase-4 dialect fixture."""
+
+    def _mini_package(self, tmp: Path) -> None:
+        (tmp / "adrs").mkdir()
+        (tmp / "execution").mkdir()
+        (tmp / "manifest.json").write_text(json.dumps({
+            "package": "mini", "generated": "2026-01-01",
+            "profile": "software-platform (on-prem, <=20 users)",
+            "identifier_counts": {"FR": 1}}), encoding="utf-8")
+        (tmp / "functional.md").write_text(
+            "# Functional\n\n"
+            "| ID | Requirement | Priority | Status | Source |\n"
+            "|----|-------------|----------|--------|--------|\n"
+            "| FR-001 | Do the thing | M | Approved | brief L1 |\n", encoding="utf-8")
+        (tmp / "execution" / "deferred-work-register.md").write_text(
+            "# Deferred\n\n"
+            "| ID | Deferred item | Severity | Trigger |\n"
+            "|----|---------------|----------|---------|\n"
+            "| D-01 | Harden the retry loop | High | before GA |\n"
+            "| D-02 | Odd severity word | sometime | — |\n", encoding="utf-8")
+        (tmp / "notes.md").write_text("# Stray prose\n\n## Context\nWorth keeping.\n",
+                                      encoding="utf-8")
+        (tmp / "adrs" / "adr-0001.md").write_text(
+            "# ADR-0001: Use queues\n\n- Status: Accepted\n\n"
+            "## Context\nWhy.\n\n## Decision Drivers\n- speed\n\n"
+            "## Decision Outcome\nUse the queue.\n\n## Consequences\nFine.\n",
+            encoding="utf-8")
+
+    def test_parse_v1_absorbs_the_acmp_dialect(self):
+        with tempfile.TemporaryDirectory() as src:
+            tmp = Path(src)
+            self._mini_package(tmp)
+            plan = migrate.parse_v1(tmp)
+        req = plan.rows["requirements"][0]
+        self.assertEqual(req["mvp"], 1)                        # MoSCoW M -> mvp (C14)
+        self.assertEqual(plan.package["created_at"], "2026-01-01")   # `generated` spelling
+        self.assertIn("software-platform",
+                      plan.package["custom_attributes"])       # raw profile preserved
+        dw = {r["id"]: r for r in plan.rows["deferred_work"]}
+        self.assertEqual(dw["DW-001"]["severity"], "high")     # D-nn -> DW- (C13)
+        self.assertEqual(dw["DW-002"]["severity"], "medium")   # off-enum -> normalized
+        adr = plan.rows["adrs"][0]
+        self.assertEqual(adr["id"], "ADR-0001")                # MADR fallback (C12)
+        self.assertEqual(adr["lifecycle_status"], "Approved")  # Accepted -> Approved
+        self.assertEqual(adr["decision"], "Use the queue.")    # outcome, never drivers (D4)
+        others = [d for d in plan.rows["narrative_documents"] if d["doc_kind"] == "other"]
+        self.assertTrue(any("Stray prose" in d["title"] for d in others))  # catch-all
+
+    def test_ac_statement_never_inherits_title_cap(self):
+        long_stmt = ("**Given** a very long precondition " + "x" * 200
+                     + " **when** acted **then** verified")
+        md = ("| ID | Given / When / Then | Status | Verifies |\n"
+              "|----|--------------------|--------|----------|\n"
+              f"| AC-001 | {long_stmt} | Approved | FR-001 |\n")
+        [table] = migrate.vp.parse_markdown_tables(md)
+        plan = migrate.Plan()
+        migrate._map_register_row(plan, "AC", "AC-001", table, table.rows[0])
+        ac = plan.rows["acceptance_criteria"][0]
+        self.assertEqual(ac["statement"], long_stmt)           # raw cell, uncapped (C12)
+        self.assertLessEqual(len(ac["title"]), 120)
+
+    def test_zero_family_tripwire_blocks_until_acknowledged(self):
+        real_pre, real_parse = migrate.preflight, migrate.parse_v1
+        plan = migrate.Plan()
+        plan.package = _package_row("t")
+        plan.manifest_counts = {"ADR": 33}                     # ACMP shape: 33 ADRs -> 0
+        migrate.preflight = lambda s: {"ok": True, "stage": "preflight"}
+        migrate.parse_v1 = lambda s: plan
+        try:
+            with tempfile.TemporaryDirectory() as dest:
+                out = migrate.run_migration(".", dest, name="t", confirm=True)
+                self.assertFalse(out["ok"])
+                self.assertEqual(out["stage"], "populate-refused")
+                self.assertIn("ADR", out["error"])
+                acked = migrate.run_migration(".", dest, name="t", confirm=True,
+                                              allow_zero=["ADR"])
+                self.assertEqual(acked["stage"], "post-flight")  # populate proceeded
+        finally:
+            migrate.preflight, migrate.parse_v1 = real_pre, real_parse
+
+    def test_patch_applied_by_id_before_populate(self):
+        plan = migrate.Plan()
+        plan.add("acceptance_criteria", {"id": "AC-001", "title": "truncated",
+                                         "statement": "truncated"})
+        plan.audits.append({"ac_id": "AC-001", "verdict": "Met", "evidence": None})
+        with tempfile.TemporaryDirectory() as tmp:
+            patch = Path(tmp) / "patch.json"
+            patch.write_text(json.dumps({
+                "acceptance_criteria": [{"id": "AC-001", "statement": "full text"}],
+                "audits": [{"ac_id": "AC-001", "evidence": "tests/test_x.py"}]}),
+                encoding="utf-8")
+            report = migrate._apply_patch(plan, str(patch))
+        self.assertEqual(report["updated"], 2)
+        self.assertEqual(plan.rows["acceptance_criteria"][0]["statement"], "full text")
+        self.assertEqual(plan.audits[0]["evidence"], "tests/test_x.py")
 
 
 if __name__ == "__main__":
