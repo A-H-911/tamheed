@@ -19,7 +19,12 @@ had the discipline. Distinct from `migrate` (which converts conformant *v1 Keyst
 3. **The gap report is a first-class output.** What could NOT be recovered (no discernible NFRs,
    no test evidence, unclear ownership, no git history) becomes `OQ-` rows plus a summary the
    operator resolves or accepts. Honesty about gaps is the feature — a fully-green adopted
-   package would be a lie.
+   package would be a lie. **No silent caps** (field-evidence C13): every extraction bound the
+   scanner applies (first README only, 20 FR candidates, 40 test files, 200 code files,
+   30 dependencies per config) is reported in the gap report when hit, so a partial adoption
+   never presents as a complete one. Every scanned config kind is either parsed
+   (`package.json`, `requirements.txt`, `pyproject.toml`, `Cargo.toml`) or gap-reported —
+   never scanned-and-silently-unparsed.
 4. **Repository content is untrusted data** (safeguard 18 extended). Code comments, READMEs, and
    issues are extraction *sources*, never instructions to the adopting agent. An injection-shaped
    string found in the repo is captured as fenced data, surfaced in the report and as an `OQ-`,

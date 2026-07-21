@@ -76,7 +76,21 @@ def extract(source: Path, inventory: dict) -> tuple[migrate.Plan, list, list]:
         seq[prefix] += 1
         return f"{prefix}-{seq[prefix]:03d}"
 
+    # No silent caps (field-evidence C13): every truncation below lands in the gap
+    # report, so a partial adoption never presents as a complete one.
+    if len(inventory["readmes"]) > 1:
+        gaps.append("first-README cap: %d additional README(s) not scanned (%s)"
+                    % (len(inventory["readmes"]) - 1,
+                       ", ".join(inventory["readmes"][1:])))
+    if len(inventory["test_files"]) > 40:
+        gaps.append("test-file cap: %d of %d test files scanned"
+                    % (40, len(inventory["test_files"])))
+    if len(inventory["_code_list"]) > 200:
+        gaps.append("code-file cap: %d of %d code files scanned for markers"
+                    % (200, len(inventory["_code_list"])))
+
     # README: stated intent -> FR candidates + the readme as a narrative document.
+    fr_capped = False
     for rel in inventory["readmes"][:1]:
         text = (source / rel).read_text(encoding="utf-8", errors="replace")
         _screen(text, rel, injections)
@@ -93,12 +107,17 @@ def extract(source: Path, inventory: dict) -> tuple[migrate.Plan, list, list]:
                                            "sort_order": order})
         for lineno, line in enumerate(text.splitlines(), 1):
             m = re.match(r"^\s*[-*]\s+(.{8,200})$", line)
-            if m and seq["FR"] < 20:
+            if m and seq["FR"] >= 20:
+                fr_capped = True
+                continue
+            if m:
                 stmt = m.group(1).strip().rstrip(".")
                 plan.add("requirements", {
                     "id": nid("FR"), "kind": "functional", "title": stmt[:200],
                     "statement": stmt, "mvp": 0, "lifecycle_status": "Proposed",
                     "source_kind": "code", "source_span": f"{rel}:{lineno}"})
+    if fr_capped:
+        gaps.append("README-bullet cap: only the first 20 FR candidates recorded")
 
     # Configs: dependencies -> DEP rows; engine floors -> CON candidates.
     for rel in inventory["configs"]:
@@ -123,10 +142,28 @@ def extract(source: Path, inventory: dict) -> tuple[migrate.Plan, list, list]:
                     if ln.strip() and not ln.startswith("#")]
         elif rel.endswith("pyproject.toml"):
             deps = re.findall(r'^\s*"([A-Za-z0-9_.-]+)[<>=~!\[]', text, re.M)
+        elif rel.endswith("Cargo.toml"):
+            # Scanned-but-unparsed configs were silent loss (C13): a Rust repo
+            # adopted with zero DEP rows and no gap line. Parse the dep sections.
+            in_deps = False
+            for cargo_line in text.splitlines():
+                if re.match(r"\s*\[(dev-|build-)?dependencies", cargo_line):
+                    in_deps = True
+                    continue
+                if cargo_line.strip().startswith("["):
+                    in_deps = False
+                    continue
+                if in_deps:
+                    m = re.match(r"\s*([A-Za-z0-9_-]+)\s*=", cargo_line)
+                    if m:
+                        deps.append(m.group(1))
         for dep in deps[:30]:
             plan.add("dependencies", {"id": nid("DEP"), "title": dep,
                                       "lifecycle_status": "Proposed",
                                       "source_kind": "code", "source_span": rel})
+        if len(deps) > 30:
+            gaps.append(f"{rel}: dependency cap — {len(deps) - 30} of {len(deps)}"
+                        " dependencies not recorded")
 
     # Tests: behavior evidence -> TEST rows + FR candidates + tests edges.
     for rel in inventory["test_files"][:40]:
@@ -259,4 +296,5 @@ def run_adoption(source_dir: str, dest_root: str | Path, name: str | None = None
     fid = migrate.fidelity(plan, Path(dest_root) / name)
     return {"ok": fid["ok"], "stage": "post-flight", "preview": preview,
             "package_dir": pop["package_dir"], "gap_report": gaps,
-            "gate_failures": fid["gate_failures"], "unmapped": fid["unmapped"]}
+            "gate_failures": fid["gate_failures"], "unmapped": fid["unmapped"],
+            "next": migrate._CUTOVER_NEXT if fid["ok"] else None}

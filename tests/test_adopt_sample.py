@@ -126,5 +126,45 @@ class AdoptSampleTest(unittest.TestCase):
         conn.close()
 
 
+class AdoptFidelityTest(unittest.TestCase):
+    """Plan 017 Phase 3 (C13): Cargo.toml parsed, caps reported, cutover pointer."""
+
+    def setUp(self):
+        self._src = tempfile.TemporaryDirectory()
+        self._dest = tempfile.TemporaryDirectory()
+        self.src = Path(self._src.name)
+        make_tree(self.src)
+
+    def tearDown(self):
+        self._src.cleanup()
+        self._dest.cleanup()
+
+    def test_cargo_toml_dependencies_are_recorded(self):
+        (self.src / "Cargo.toml").write_text(
+            '[package]\nname = "w"\n\n[dependencies]\nserde = "1"\ntokio = '
+            '{ version = "1", features = ["full"] }\n\n[dev-dependencies]\n'
+            'criterion = "0.5"\n', encoding="utf-8")
+        out = adopt.run_adoption(str(self.src), self._dest.name, name="w", confirm=True)
+        conn = store.load(Path(out["package_dir"]) / "data")
+        deps = {t for (t,) in conn.execute("SELECT title FROM dependencies")}
+        conn.close()
+        self.assertLessEqual({"serde", "tokio", "criterion"}, deps)
+
+    def test_caps_are_reported_never_silent(self):
+        bullets = "\n".join(f"- feature number {i} does something useful"
+                            for i in range(25))
+        (self.src / "README.md").write_text(f"# Big\n\n{bullets}\n", encoding="utf-8")
+        (self.src / "README.rst").write_text("second readme\n", encoding="utf-8")
+        out = adopt.run_adoption(str(self.src), self._dest.name, name="w")
+        gaps = " | ".join(out["gaps"])
+        self.assertIn("README-bullet cap", gaps)
+        self.assertIn("first-README cap", gaps)
+
+    def test_successful_adoption_points_to_cutover(self):
+        out = adopt.run_adoption(str(self.src), self._dest.name, name="w", confirm=True)
+        self.assertTrue(out["ok"], out)
+        self.assertIn("handoff_emit", out["next"])
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)

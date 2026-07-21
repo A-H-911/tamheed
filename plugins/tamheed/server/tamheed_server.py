@@ -519,6 +519,12 @@ def handoff_emit(target_dir: str) -> dict:
             "they are the only write path into the package.\n")
     claude_md = target / "CLAUDE.md"
     existing = claude_md.read_text(encoding="utf-8") if claude_md.exists() else ""
+    if existing and re.search(r"validate_package\.py|keystone", existing, re.I):
+        # Cutover flag (field-evidence C15): stale v1 instructions silently steer every
+        # future agent session back to the dead source of truth.
+        note += ("\n> **Stale v1 reference detected in this file** (it mentions "
+                 "Keystone/validate_package.py): update those instructions to the "
+                 "Tamheed MCP flow and freeze the v1 planning tree.\n")
     if "## Tamheed progress tracking" not in existing:
         claude_md.write_text(existing + note, encoding="utf-8", newline="\n")
         written.append("CLAUDE.md")
