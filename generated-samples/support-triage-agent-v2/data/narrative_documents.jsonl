@@ -3,4 +3,5 @@
 {"id":"DOC-003","doc_kind":"agent-control","title":"AGENTS.md — standing operating context for support triage agent","lifecycle_status":"Draft","custom_attributes":"{\"v1\": {\"path\": \"AGENTS.md\"}}","last_referenced":null}
 {"id":"DOC-004","doc_kind":"architecture","title":"Architecture — support triage agent","lifecycle_status":"Approved","custom_attributes":"{\"v1\": {\"path\": \"architecture/architecture.md\"}}","last_referenced":null}
 {"id":"DOC-005","doc_kind":"agent-control","title":"CLAUDE.md","lifecycle_status":"Draft","custom_attributes":"{\"v1\": {\"path\": \"CLAUDE.md\"}}","last_referenced":null}
-{"id":"DOC-006","doc_kind":"readme","title":"support triage agent — execution ready package","lifecycle_status":"Draft","custom_attributes":"{\"v1\": {\"path\": \"README.md\"}}","last_referenced":null}
+{"id":"DOC-006","doc_kind":"other","title":"Work Breakdown — support triage agent","lifecycle_status":"Approved","custom_attributes":"{\"v1\": {\"path\": \"planning/work-breakdown.md\"}}","last_referenced":null}
+{"id":"DOC-007","doc_kind":"readme","title":"support triage agent — execution ready package","lifecycle_status":"Draft","custom_attributes":"{\"v1\": {\"path\": \"README.md\"}}","last_referenced":null}
