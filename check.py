@@ -32,6 +32,7 @@ SUITES = [
     "tests/test_db_roundtrip.py",
     "tests/test_mcp_contract.py",
     "tests/test_migration_golden.py",
+    "tests/test_migration_dialect.py",
     "tests/test_adopt_sample.py",
     "tests/test_export_html.py",
     "tests/test_eval_runner.py",
@@ -40,6 +41,7 @@ SUITES = [
 V1_VALIDATOR = "plugins/tamheed/scripts/validate_package.py"
 V1_GOLDENS = [  # (package, expected exit) — the frozen migration contract
     ("tests/fixtures/valid-package", 0),
+    ("tests/fixtures/dialect-package", 0),  # v1-green in the ACMP dialect (plan 017)
     ("generated-samples/support-triage-agent", 0),
     ("tests/fixtures/invalid-package", 1),
     ("tests/fixtures/incomplete-package", 1),
