@@ -8,6 +8,7 @@ export_html -> the missing-SDK error path (simulated ImportError) -> --selftest.
 """
 import contextlib
 import io
+import json
 import sys
 import tempfile
 import unittest
@@ -59,6 +60,86 @@ class McpContractTest(unittest.TestCase):
         if srv._CURRENT is not None:
             srv.package_close()
         self._tmp.cleanup()
+
+    # ------------------------------------------------- plan 017 phase 1 (C11/C14)
+
+    def test_gate_trace_vacuous_pass_warns(self):
+        srv.package_create("vac", "Vacuous", "rnd")
+        srv.entity_upsert([{"type": "requirement", "id": "FR-001", "kind": "functional",
+                            "title": "t", "mvp": 0, "lifecycle_status": "Approved",
+                            "source_kind": "brief", "source_span": "x"}])
+        gate = srv.gate_run()["gates"]["G-TRACE"]
+        self.assertEqual(gate["status"], "pass")          # empty mvp=1 set: still pass
+        self.assertIn("vacuously", gate["warning"])       # ...but never silently (C14)
+
+    def test_gate_trace_no_warning_when_mvp_defined(self):
+        make_complete_package("demo")
+        self.assertNotIn("warning", srv.gate_run()["gates"]["G-TRACE"])
+
+    def test_gate_complete_ignores_code_spans_and_custom_attributes(self):
+        srv.package_create("demo", "Demo", "rnd")
+        srv.entity_upsert([
+            {"type": "risk", "id": "RISK-001", "title": "JSX quirk with `style={{}}` token",
+             "custom_attributes": '{"v1": {"note": "TODO preserved verbatim"}}'},
+            {"type": "risk", "id": "RISK-002", "title": "genuine <placeholder> left behind"},
+        ])
+        flagged = {f["id"] for f in srv.gate_run()["gates"]["G-COMPLETE"]["failures"]}
+        self.assertNotIn("RISK-001", flagged)  # code span + provenance exempt (D-017-4)
+        self.assertIn("RISK-002", flagged)     # real placeholders still fail
+
+    def test_upsert_partial_row_error_names_cause(self):
+        srv.package_create("demo", "Demo", "rnd")
+        srv.entity_upsert([{"type": "risk", "id": "RISK-001", "title": "full row"}])
+        out = srv.entity_upsert([{"type": "risk", "id": "RISK-001", "description": "part"}])
+        self.assertFalse(out["ok"])
+        self.assertIn("FULL rows", out["items"][0]["error"])
+
+    def test_server_info_reports_version_and_resolved_root(self):
+        info = srv.server_info()
+        self.assertTrue(info["ok"])
+        manifest = json.loads(
+            (REPO_ROOT / "plugins" / "tamheed" / ".claude-plugin" / "plugin.json")
+            .read_text(encoding="utf-8"))
+        self.assertEqual(info["version"], manifest["version"])
+        self.assertTrue(Path(info["package_root"]).is_absolute())
+        self.assertRegex(info["migrations_head"], r"^\d{3}_")
+
+    def test_package_root_layered_resolution(self):
+        # explicit flag > CLAUDE_PROJECT_DIR > cwd; an unexpanded "${...}" counts as unset
+        import os
+        saved = os.environ.get("CLAUDE_PROJECT_DIR")
+        os.environ["CLAUDE_PROJECT_DIR"] = self._tmp.name
+        try:
+            with contextlib.redirect_stdout(io.StringIO()):
+                srv.main(["--package-dir", "${CLAUDE_PROJECT_DIR}", "--selftest"])
+            self.assertEqual(srv.PACKAGE_ROOT, Path(self._tmp.name).resolve())
+        finally:
+            if saved is None:
+                os.environ.pop("CLAUDE_PROJECT_DIR", None)
+            else:
+                os.environ["CLAUDE_PROJECT_DIR"] = saved
+            srv.PACKAGE_ROOT = Path(self._tmp.name)
+
+    def test_adopt_git_spawn_never_inherits_stdio(self):
+        import subprocess as sp
+        import adopt
+        captured = {}
+        real = sp.run
+
+        def fake(cmd, **kwargs):
+            captured.update(kwargs)
+            return type("R", (), {"stdout": "abc feat: one\n"})()
+
+        sp.run = fake
+        try:
+            with tempfile.TemporaryDirectory() as src:
+                (Path(src) / ".git").mkdir()
+                (Path(src) / "README.md").write_text("# X\n- does one useful thing\n",
+                                                     encoding="utf-8")
+                adopt.run_adoption(src, self._tmp.name)  # preview only
+        finally:
+            sp.run = real
+        self.assertEqual(captured.get("stdin"), sp.DEVNULL)  # C11: never the MCP pipe
 
     # ---------------------------------------------------------------- package lifecycle
 

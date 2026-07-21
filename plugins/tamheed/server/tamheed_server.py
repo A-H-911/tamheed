@@ -17,14 +17,17 @@ from __future__ import annotations
 import argparse
 import datetime as _dt
 import json
+import os
 import re
 import sys
 from pathlib import Path
 
 _SERVER_DIR = Path(__file__).resolve().parent
 sys.path.insert(0, str(_SERVER_DIR.parent / "db"))
+sys.path.insert(0, str(_SERVER_DIR.parent / "scripts"))
 
 import store  # plugins/tamheed/db/store.py  # noqa: E402
+import validate_package as _vp  # frozen v1 contract: strip_code reuse (D-017-4)  # noqa: E402
 
 # --------------------------------------------------------------------------- state
 
@@ -188,7 +191,8 @@ def package_create(name: str, title: str, profile: str, mode: str = "full") -> d
         s.__exit__(None, None, None)
         return _err(f"create failed: {exc}")
     _CURRENT, _CURRENT_NAME = s, name
-    return {"ok": True, "package": name, "dir": str(pkg_dir)}
+    return {"ok": True, "package": name, "dir": str(pkg_dir),
+            "package_root": str(Path(PACKAGE_ROOT).resolve())}
 
 
 def package_open(name: str) -> dict:
@@ -204,7 +208,8 @@ def package_open(name: str) -> dict:
     except store.StoreLockedError as exc:
         return _err(str(exc))
     _CURRENT, _CURRENT_NAME = s, name
-    return {"ok": True, "package": name}
+    return {"ok": True, "package": name,
+            "package_root": str(Path(PACKAGE_ROOT).resolve())}
 
 
 def package_close() -> dict:
@@ -223,6 +228,9 @@ def package_close() -> dict:
 def entity_upsert(entities: list[dict]) -> dict:
     """Batch upsert (one transaction, all-or-nothing). Each item: {'type': ..., <columns>}.
 
+    Send FULL rows, even when updating an existing entity: the upsert's INSERT half
+    evaluates NOT NULL on omitted columns BEFORE conflict resolution, so a partial
+    {'id', 'statement'} update of an existing row fails on e.g. title NOT NULL.
     Returns per-item verdicts; a violated constraint is named in the item's error.
     """
     if guard := _need_open():
@@ -262,7 +270,14 @@ def entity_upsert(entities: list[dict]) -> dict:
             results.append({"index": i, "ok": True, "id": cols.get("id")})
         except Exception as exc:  # IntegrityError carries the constraint name
             conn.execute(f"ROLLBACK TO item{i}")
-            results.append({"index": i, "ok": False, "id": cols.get("id"), "error": str(exc)})
+            msg = str(exc)
+            if "NOT NULL constraint failed" in msg and cols.get("id") is not None:
+                exists = conn.execute(f"SELECT 1 FROM {table} WHERE id = ?",
+                                      (cols["id"],)).fetchone()
+                if exists:  # field-evidence C11 (D2): name the actual cause
+                    msg += (" — the row exists; entity_upsert requires FULL rows even for"
+                            " updates (INSERT evaluates NOT NULL before conflict resolution)")
+            results.append({"index": i, "ok": False, "id": cols.get("id"), "error": msg})
             failed = True
     if failed:
         conn.execute("ROLLBACK TO batch")
@@ -340,16 +355,29 @@ def gate_run() -> dict:
                        ("G-PROGRESS", "g_progress_failures")):
         failures = [r[0] for r in conn.execute(f"SELECT * FROM {view}")]
         report[gate] = {"status": "fail" if failures else "pass", "failures": failures}
+    # Vacuous-pass tripwire (field-evidence C14, D-017-1): g_trace_failures filters on
+    # mvp=1, so zero MVP rows makes G-TRACE pass over an empty set. Warning only —
+    # adopt-mode packages are all-mvp=0 by design; `ready` semantics unchanged.
+    mvp_rows = conn.execute("SELECT COUNT(*) FROM requirements WHERE mvp = 1").fetchone()[0]
+    if mvp_rows == 0:
+        report["G-TRACE"]["warning"] = (
+            "0 MVP requirements — G-TRACE passed vacuously; set mvp=1 on the MVP set "
+            "(expected only for adopt-mode or pre-scoping packages)")
     findings = []
     for table in ENTITY_TABLES.values():
         text_cols = [r[1] for r in conn.execute(f"PRAGMA table_info({table})")
-                     if (r[2] or "").upper() == "TEXT"]
+                     if (r[2] or "").upper() == "TEXT" and r[1] != "custom_attributes"]
+        # custom_attributes is exempt (C14): it is provenance preserved verbatim, not
+        # authored content — grading it fails the package for being faithful. The
+        # G-INJECT screen still applies to it at handoff_emit.
         if not text_cols:
             continue
         pk = _NON_ID_TABLES.get(table, "id")
         for row in conn.execute(f"SELECT {pk}, {', '.join(text_cols)} FROM {table}"):
             for col, value in zip(text_cols, row[1:]):
-                if value and _PLACEHOLDER_RE.search(str(value)):
+                # strip_code first — parity with the frozen v1 gate (D-017-4, C14):
+                # `TODO`/{{...}} inside code spans is example text, not an unfinished marker.
+                if value and _PLACEHOLDER_RE.search(_vp.strip_code(str(value))):
                     findings.append({"id": row[0], "column": col})
     report["G-COMPLETE"] = {"status": "fail" if findings else "pass", "failures": findings}
     evidenced, narrated = conn.execute(
@@ -506,7 +534,9 @@ def package_migrate(source_dir: str, name: str | None = None, confirm: bool = Fa
     (populate in one transaction + post-flight fidelity). See references/migration-v1.md.
     Migration is operator-initiated, always (D-REPO-5)."""
     import migrate
-    return migrate.run_migration(source_dir, PACKAGE_ROOT, name=name, confirm=confirm)
+    out = migrate.run_migration(source_dir, PACKAGE_ROOT, name=name, confirm=confirm)
+    out.setdefault("package_root", str(Path(PACKAGE_ROOT).resolve()))
+    return out
 
 
 def package_adopt(source_dir: str, name: str | None = None, confirm: bool = False) -> dict:
@@ -514,7 +544,9 @@ def package_adopt(source_dir: str, name: str | None = None, confirm: bool = Fals
     records — Proposed-only, code-provenanced, gap report first-class). See
     references/adopt.md; the four rules are enforced mechanically."""
     import adopt
-    return adopt.run_adoption(source_dir, PACKAGE_ROOT, name=name, confirm=confirm)
+    out = adopt.run_adoption(source_dir, PACKAGE_ROOT, name=name, confirm=confirm)
+    out.setdefault("package_root", str(Path(PACKAGE_ROOT).resolve()))
+    return out
 
 
 def export_html(output: str | None = None) -> dict:
@@ -532,9 +564,28 @@ def export_html(output: str | None = None) -> dict:
     return {"ok": True, "path": str(path), "bytes": len(text.encode("utf-8"))}
 
 
+def server_info() -> dict:
+    """Report server version, resolved package root, and store state.
+
+    Makes startup diagnosable (field-evidence C11: a wedged call and a slow cold start
+    were indistinguishable) and gives field reports a citable version anchor (C16)."""
+    manifest = _SERVER_DIR.parent / ".claude-plugin" / "plugin.json"
+    try:  # single version source: the bundled plugin manifest (D-017-3)
+        version = json.loads(manifest.read_text(encoding="utf-8")).get("version", "unknown")
+    except (OSError, ValueError):
+        version = "unknown"  # standalone copy without the plugin manifest
+    migrations = sorted(p.name for p in
+                        (_SERVER_DIR.parent / "db" / "migrations").glob("[0-9]*.sql"))
+    return {"ok": True, "version": version,
+            "package_root": str(Path(PACKAGE_ROOT).resolve()),
+            "open_package": _CURRENT_NAME,
+            "migrations_head": migrations[-1] if migrations else None}
+
+
 # --------------------------------------------------------------------------- server plumbing
 
 TOOLS = {
+    "server_info": (server_info, "Report server version, resolved package root, store state"),
     "package_create": (package_create, "Create a package under the package root (takes the lock)"),
     "package_open": (package_open, "Open an existing package (takes the single-writer lock)"),
     "package_close": (package_close, "Write back canonical text and release the lock"),
@@ -581,10 +632,18 @@ def main(argv: list[str] | None = None) -> int:
         if hasattr(stream, "reconfigure"):
             stream.reconfigure(encoding="utf-8", errors="replace")
     parser = argparse.ArgumentParser(description="Tamheed MCP server")
-    parser.add_argument("--package-dir", default=".", help="root directory packages live under")
+    parser.add_argument("--package-dir", default=None,
+                        help="root directory packages live under (default:"
+                             " $CLAUDE_PROJECT_DIR, else cwd)")
     parser.add_argument("--selftest", action="store_true", help="list tools and exit")
     args = parser.parse_args(argv)
-    PACKAGE_ROOT = Path(args.package_dir)
+    # Layered resolution (field-evidence C11): explicit flag > CLAUDE_PROJECT_DIR (the
+    # documented stable project root — a stdio server's cwd is NOT guaranteed) > cwd.
+    # A literal "${...}" means the host didn't expand the variable: treat as unset.
+    package_dir = args.package_dir
+    if not package_dir or package_dir.startswith("${"):
+        package_dir = os.environ.get("CLAUDE_PROJECT_DIR") or "."
+    PACKAGE_ROOT = Path(package_dir).resolve()
     if args.selftest:
         return selftest()
     return serve()

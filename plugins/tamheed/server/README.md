@@ -23,7 +23,11 @@ If the SDK is missing the server exits with a one-line error naming both options
 silent dead server.
 
 `--selftest` prints the tool surface and exits 0 (no SDK needed).
-`--package-dir <root>` sets the directory packages live under (default: cwd).
+`--package-dir <root>` sets the directory packages live under. Resolution is layered
+(field-evidence C11 — a stdio server's cwd is not guaranteed): explicit flag >
+`CLAUDE_PROJECT_DIR` (exported by Claude Code to plugin server processes) > cwd; an
+unexpanded `${...}` literal counts as unset. Every `package_*` result echoes the resolved
+absolute root, and `server_info` reports it on demand.
 
 ## Rules
 
@@ -43,13 +47,14 @@ silent dead server.
 
 | Tool | Kind | Summary |
 |---|---|---|
+| `server_info()` | read | Server version (from the bundled `plugin.json`), resolved package root, open package, migrations head — makes startup diagnosable (C11/C16) |
 | `package_create(name, title, profile, mode)` | mutate | Create under the package root; seeds the `entity_types` registry; takes the lock |
 | `package_open(name)` | mutate | Open an existing package (takes the lock) |
 | `package_close()` | mutate | Write back canonical JSONL, release the lock |
 | `entity_upsert(entities[])` | mutate | Batch upsert; items are `{"type": ..., <columns>}`; per-item verdicts; all-or-nothing |
 | `entity_query(type, id?, status?, columns?, limit?)` | read | Targeted rows from one family — token-lean |
 | `trace_query(entity_id, direction?, relation?)` | read | Traverse typed `trace_edges` (in/out/both) |
-| `gate_run()` | read | Referential gates report as write-time-enforced; coverage gates run the SQL views; content tier scans placeholders; audit evidence split evidenced/narrated |
+| `gate_run()` | read | Referential gates report as write-time-enforced; coverage gates run the SQL views; content tier scans placeholders (code spans stripped per the frozen v1 contract; `custom_attributes` exempt as provenance); warns when G-TRACE passes vacuously (0 MVP rows); audit evidence split evidenced/narrated |
 | `progress_update(entries[])` | mutate | Append progress entries (`PE-` ids auto-assigned) |
 | `audit_record(verdicts[])` | mutate | AC verdicts, optional `evidence` ref (C7); cascades auto-advance |
 | `work_bind(ref, entity_ids[], note?)` | mutate | "This commit/PR satisfies FR-x/AC-y/SL-z" — stamps `last_referenced` (C3) |

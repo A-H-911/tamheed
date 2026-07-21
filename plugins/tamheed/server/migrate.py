@@ -9,8 +9,9 @@ from __future__ import annotations
 
 import json
 import re
-import subprocess
+import shutil
 import sys
+import traceback
 from pathlib import Path
 
 _HERE = Path(__file__).resolve().parent
@@ -19,8 +20,6 @@ sys.path.insert(0, str(_HERE.parent / "db"))
 
 import store  # noqa: E402
 import validate_package as vp  # noqa: E402  (frozen v1 contract)
-
-VALIDATOR = _HERE.parent / "scripts" / "validate_package.py"
 
 LIFECYCLE = {"Draft", "Proposed", "Approved", "Rejected", "Deferred",
              "Implemented", "Superseded", "Obsolete"}
@@ -145,16 +144,21 @@ def preflight(source: Path) -> dict:
                 "error": "no manifest.json — not a conformant v1 package. If this is a "
                          "Keystone-lineage project without the mechanical layer, use "
                          "package_adopt (plan 011), which reconstructs with provenance."}
-    proc = subprocess.run([sys.executable, str(VALIDATOR), str(source), "--json"],
-                          capture_output=True, text=True)
-    if proc.returncode != 0:
-        try:
-            report = json.loads(proc.stdout)
-        except json.JSONDecodeError:
-            report = {"raw": proc.stdout[-2000:], "stderr": proc.stderr[-500:]}
+    # In-process (field-evidence C11): a subprocess spawned from the stdio MCP server
+    # inherits the JSON-RPC transport and can wedge on Windows. The frozen validator is
+    # already imported as a library; calling it directly also removes the wedge-vs-slow
+    # ambiguity. The try/except replaces the crash isolation the subprocess used to give.
+    try:
+        report = vp.build_summary(source, vp.run_gates(source))
+    except Exception as exc:
+        return {"ok": False, "stage": "preflight",
+                "error": f"pre-flight crashed inside the frozen v1 validator: {exc!r}",
+                "traceback": traceback.format_exc()[-2000:]}
+    if not report["ok"]:
         return {"ok": False, "stage": "preflight", "error":
-                "v1 validator failed (exit %d) — fix the package under v1 or use "
-                "package_adopt if it is lineage-but-nonconformant" % proc.returncode,
+                "v1 validator failed (critical: %s) — fix the package under v1 or use "
+                "package_adopt if it is lineage-but-nonconformant"
+                % ", ".join(report["critical_failed"]),
                 "report": report}
     return {"ok": True, "stage": "preflight"}
 
@@ -201,10 +205,17 @@ def _map_register_row(plan: Plan, prefix: str, ident: str, t, row: list[str]):
                                     "resolution": col("resolution"),
                                     "lifecycle_status": status, "custom_attributes": attrs})
     elif prefix == "DEC":
+        # promoted_to is an FK into adrs (field-evidence C12): only ADR- tokens qualify;
+        # a cell citing other governed ids (amendments, cross-refs) must not crash populate.
+        promoted_cell = col("promoted to") or ""
+        promoted = next((i for i in _ids_in(promoted_cell) if i.startswith("ADR-")), None)
+        if promoted is None and _ids_in(promoted_cell):
+            plan.unmapped.append(f"{ident}: promoted-to cell has no ADR- token — "
+                                 f"stored NULL ({promoted_cell[:60]!r})")
         plan.add("decisions", {"id": ident, "title": title[:200], "decision": title,
                                "rationale": col("rationale", "rationale (short)"),
                                "lifecycle_status": _status(col("status"), "Proposed"),
-                               "promoted_to": next(iter(_ids_in(col("promoted to") or "")), None),
+                               "promoted_to": promoted,
                                "custom_attributes": attrs})
     elif prefix == "RISK":
         plan.add("risks", {"id": ident, "title": title[:200], "description": title,
@@ -493,49 +504,70 @@ def populate(plan: Plan, dest_root: Path, name: str) -> dict:
     if (pkg_dir / "data").exists():
         return {"ok": False, "stage": "populate",
                 "error": f"destination package '{name}' already exists"}
-    with store.PackageStore(pkg_dir) as s:
-        conn = s.conn
-        try:
-            conn.executemany(
-                "INSERT INTO entity_types (type_id, label, id_prefix, generation_class)"
-                " VALUES (?, ?, ?, ?)", BASELINE_ENTITY_TYPES)
-            pkg = dict(plan.package, name=name)
-            conn.execute(
-                "INSERT INTO packages (name, title, profile, mode, package_version,"
-                " mvp_definition, entry_point, go_no_go, created_at, custom_attributes)"
-                " VALUES (:name, :title, :profile, :mode, :package_version,"
-                " :mvp_definition, :entry_point, :go_no_go, :created_at,"
-                " :custom_attributes)", pkg)
-            for etype, reason in dict(plan.omissions).items():
-                conn.execute("INSERT OR IGNORE INTO omissions (entity_type, reason)"
-                             " VALUES (?, ?)", (etype, reason))
-            for table in INSERT_ORDER:
-                rows = plan.rows.get(table, [])
-                if table == "wbs_items":  # parents before children
-                    rows = sorted(rows, key=lambda r: r["id"].count("."))
-                for row in rows:
-                    cols = list(row)
-                    conn.execute(
-                        f"INSERT INTO {table} ({', '.join(cols)})"
-                        f" VALUES ({', '.join(':' + c for c in cols)})", row)
-            for seq, audit in enumerate(plan.audits, 1):
+    # `step` names the insert in flight so a constraint failure reports table/row context
+    # (field-evidence C11/C13: a ~2,000-row populate dying with a bare IntegrityError is
+    # very expensive to root-cause) — the batch stays one transaction, atomicity unchanged.
+    step = "open store"
+    try:
+        with store.PackageStore(pkg_dir) as s:
+            conn = s.conn
+            try:
+                step = "entity_types"
+                conn.executemany(
+                    "INSERT INTO entity_types (type_id, label, id_prefix, generation_class)"
+                    " VALUES (?, ?, ?, ?)", BASELINE_ENTITY_TYPES)
+                step = "packages"
+                pkg = dict(plan.package, name=name)
                 conn.execute(
-                    "INSERT INTO audit_verdicts (id, ac_id, verdict, evidence, iteration)"
-                    " VALUES (?, ?, ?, ?, 1)",
-                    (f"AV-{seq:03d}", audit["ac_id"], audit["verdict"], audit["evidence"]))
-            known = {r[0] for r in conn.execute("SELECT id FROM entity_index")}
-            for frm, to, rel in sorted(plan.edges):
-                if frm in known and to in known:
-                    conn.execute("INSERT OR IGNORE INTO trace_edges"
-                                 " (from_id, to_id, relation) VALUES (?, ?, ?)",
-                                 (frm, to, rel))
-                else:
-                    plan.unmapped.append(f"edge {frm} -> {to} ({rel}): endpoint not migrated")
-        except Exception:
-            conn.rollback()  # one transaction: no partial package
-            raise
-        s.commit()
-        return {"ok": True, "stage": "populate", "package_dir": str(pkg_dir)}
+                    "INSERT INTO packages (name, title, profile, mode, package_version,"
+                    " mvp_definition, entry_point, go_no_go, created_at, custom_attributes)"
+                    " VALUES (:name, :title, :profile, :mode, :package_version,"
+                    " :mvp_definition, :entry_point, :go_no_go, :created_at,"
+                    " :custom_attributes)", pkg)
+                for etype, reason in dict(plan.omissions).items():
+                    step = f"omissions ({etype})"
+                    conn.execute("INSERT OR IGNORE INTO omissions (entity_type, reason)"
+                                 " VALUES (?, ?)", (etype, reason))
+                for table in INSERT_ORDER:
+                    rows = plan.rows.get(table, [])
+                    if table == "wbs_items":  # parents before children
+                        rows = sorted(rows, key=lambda r: r["id"].count("."))
+                    for row in rows:
+                        step = f"{table} row {row.get('id', '?')}"
+                        cols = list(row)
+                        conn.execute(
+                            f"INSERT INTO {table} ({', '.join(cols)})"
+                            f" VALUES ({', '.join(':' + c for c in cols)})", row)
+                for seq, audit in enumerate(plan.audits, 1):
+                    step = f"audit_verdicts row AV-{seq:03d} (ac {audit['ac_id']})"
+                    conn.execute(
+                        "INSERT INTO audit_verdicts (id, ac_id, verdict, evidence, iteration)"
+                        " VALUES (?, ?, ?, ?, 1)",
+                        (f"AV-{seq:03d}", audit["ac_id"], audit["verdict"], audit["evidence"]))
+                known = {r[0] for r in conn.execute("SELECT id FROM entity_index")}
+                for frm, to, rel in sorted(plan.edges):
+                    if frm in known and to in known:
+                        step = f"trace edge {frm} -> {to}"
+                        conn.execute("INSERT OR IGNORE INTO trace_edges"
+                                     " (from_id, to_id, relation) VALUES (?, ?, ?)",
+                                     (frm, to, rel))
+                    else:
+                        plan.unmapped.append(
+                            f"edge {frm} -> {to} ({rel}): endpoint not migrated")
+                step = "commit"
+                s.commit()
+            except Exception:
+                conn.rollback()  # one transaction: no partial package
+                raise
+    except store.StoreLockedError as exc:
+        return {"ok": False, "stage": "populate", "error": str(exc)}
+    except Exception as exc:
+        # No poison directory (C11): the created data/ dir would make every retry refuse
+        # with "already exists". The store lock was released by __exit__ above.
+        shutil.rmtree(pkg_dir / "data", ignore_errors=True)
+        return {"ok": False, "stage": "populate",
+                "error": f"populate failed at {step}: {exc}"}
+    return {"ok": True, "stage": "populate", "package_dir": str(pkg_dir)}
 
 
 def fidelity(plan: Plan, pkg_dir: Path) -> dict:

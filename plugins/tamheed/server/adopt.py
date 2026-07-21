@@ -189,8 +189,11 @@ def extract(source: Path, inventory: dict) -> tuple[migrate.Plan, list, list]:
 
     if inventory["git_history"]:
         try:
+            # stdin=DEVNULL (field-evidence C11): children spawned from the stdio MCP
+            # server must never inherit the JSON-RPC transport pipe.
             log = subprocess.run(["git", "-C", str(source), "log", "--oneline", "-20"],
-                                 capture_output=True, text=True, timeout=30)
+                                 capture_output=True, text=True, timeout=30,
+                                 stdin=subprocess.DEVNULL)
             plan.package["_git_recent"] = log.stdout.splitlines()[:20]
         except Exception:
             gaps.append("git present but unreadable — history skipped")

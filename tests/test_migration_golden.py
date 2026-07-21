@@ -94,5 +94,74 @@ class MigrationGoldenTest(unittest.TestCase):
             self.assertIn("package_adopt", out["error"])
 
 
+def _package_row(name: str) -> dict:
+    return {"name": name, "title": "T", "profile": "unknown", "mode": "full",
+            "package_version": "1.0.0", "mvp_definition": None, "entry_point": None,
+            "go_no_go": None, "created_at": "v1-migration", "custom_attributes": "{}"}
+
+
+class FieldReportHardeningTest(unittest.TestCase):
+    """Plan 017 Phase 1 (field-evidence C11/C12): in-process preflight with crash
+    isolation, promoted_to ADR-filter, populate row context, no poison directory."""
+
+    def test_preflight_spawns_no_subprocess(self):
+        import subprocess as sp
+        real = sp.run
+        sp.run = lambda *a, **k: (_ for _ in ()).throw(
+            AssertionError("preflight spawned a subprocess (C11 regression)"))
+        try:
+            self.assertTrue(migrate.preflight(FIXTURES / "valid-package")["ok"])
+        finally:
+            sp.run = real
+
+    def test_preflight_crash_is_isolated_not_raised(self):
+        real = migrate.vp.run_gates
+        migrate.vp.run_gates = lambda p: (_ for _ in ()).throw(RuntimeError("kaboom"))
+        try:
+            out = migrate.preflight(FIXTURES / "valid-package")
+        finally:
+            migrate.vp.run_gates = real
+        self.assertFalse(out["ok"])
+        self.assertIn("crashed", out["error"])
+        self.assertIn("kaboom", out["traceback"])
+
+    def test_preflight_failure_names_critical_gates(self):
+        out = migrate.preflight(FIXTURES / "incomplete-package")
+        self.assertFalse(out["ok"])
+        self.assertIn("G-SET", out["error"])
+        self.assertIn("critical_failed", out["report"])
+
+    def test_promoted_to_accepts_only_adr_tokens(self):
+        md = ("| ID | Decision | Status | Promoted to |\n"
+              "|----|----------|--------|-------------|\n"
+              "| DEC-001 | Use X | Approved | amends **DEC-019**, see **ADR-0006** |\n"
+              "| DEC-002 | Use Y | Approved | n/a (amends **DEC-019**'s phase) |\n")
+        [table] = migrate.vp.parse_markdown_tables(md)
+        plan = migrate.Plan()
+        for row in table.rows:
+            migrate._map_register_row(plan, "DEC", row[0].strip(), table, row)
+        rows = {r["id"]: r for r in plan.rows["decisions"]}
+        self.assertEqual(rows["DEC-001"]["promoted_to"], "ADR-0006")
+        self.assertIsNone(rows["DEC-002"]["promoted_to"])  # ACMP DEC-028 shape: no FK crash
+        self.assertTrue(any("DEC-002" in note for note in plan.unmapped))
+
+    def test_populate_failure_names_row_and_leaves_no_poison_dir(self):
+        bad = migrate.Plan()
+        bad.package = _package_row("pkg")
+        bad.add("decisions", {"id": "DEC-001", "decision": "no title",
+                              "lifecycle_status": "Approved"})  # NOT NULL violation
+        with tempfile.TemporaryDirectory() as dest:
+            out = migrate.populate(bad, Path(dest), "pkg")
+            self.assertFalse(out["ok"])
+            self.assertIn("decisions row DEC-001", out["error"])
+            # no poison dir: the created data/ dir is removed, so a retry is not blocked
+            self.assertFalse((Path(dest) / "pkg" / "data").exists())
+            good = migrate.Plan()
+            good.package = _package_row("pkg")
+            good.add("decisions", {"id": "DEC-001", "title": "t", "decision": "t",
+                                   "lifecycle_status": "Approved"})
+            self.assertTrue(migrate.populate(good, Path(dest), "pkg")["ok"])
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)
