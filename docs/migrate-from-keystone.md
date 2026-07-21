@@ -52,17 +52,36 @@ Approve the `tamheed` MCP server when prompted (it launches via `uv run`; Python
 
 ## 4. Verify
 
-- `gate_run` on the migrated package: every critical gate passes.
-- Fidelity report: `identifier_gaps` empty; every count delta explained to the operator.
+- `gate_run` on the migrated package: every critical gate passes. A `G-TRACE` **warning**
+  ("0 MVP requirements — passed vacuously") means the MVP flags did not survive — do not
+  treat that green as traceability.
+- Fidelity report: `identifier_gaps` empty; every count delta explained to the operator. The
+  preview's `zero_families` must be empty (or each family deliberately acknowledged via
+  `allow_zero`); review `partial_files` (register rows migrated, surrounding prose not) and
+  `skipped_files` — that is the complete loss ledger (plan 017, field-evidence C13).
 - The v1 source directory is untouched (migration is read-only on it).
+- Gaps found after review are repaired by re-running with `patch=<file>` (merge-by-id
+  overrides applied before populate) — never by editing approved rows afterwards.
 
-## 5. Re-point the project
+## 5. Cutover — re-point the project (field-evidence C15)
 
-Update the project's `CLAUDE.md` / `AGENTS.md`: references to Keystone artifacts
-(`validation/traceability-matrix.md`, `keystone-state.json`, register files) become references to
-the Tamheed package — the MCP tools (`entity_query`, `trace_query`, `gate_run`,
-`progress_update`, `audit_record`, `work_bind`) and the HTML view. The executing agent records
-progress through the tools from now on.
+**This step is what makes the migration real.** Until it is done, two sources of truth
+coexist: agents keep reading the stale v1 instructions, editing dead registers, and running
+the v1 validator — silently undoing the migration.
+
+1. Open the migrated package and run `handoff_emit(<repo>)`: it writes the executor-side
+   `.mcp.json` and appends the "Tamheed progress tracking" note to the repo's `CLAUDE.md`
+   (flagging any stale Keystone references it finds there).
+2. Update the project's `CLAUDE.md` / `AGENTS.md` by hand: references to Keystone artifacts
+   (`validation/traceability-matrix.md`, `keystone-state.json`, register files) become
+   references to the Tamheed package — the MCP tools (`entity_query`, `trace_query`,
+   `gate_run`, `progress_update`, `audit_record`, `work_bind`) and the HTML view. The
+   executing agent records progress through the tools from now on.
+3. Mark the v1 package directory as a frozen archive (a top-line note in its README is
+   enough) so no future session mistakes it for the live record.
+4. **Slices need manual backfill**: v1 had no governed slice concept, so the roadmap ladder
+   migrates as phases + preserved prose only. Author `slice` rows (and bind ACs to them)
+   through the normal v2 flow when execution resumes.
 
 ## 6. Optional cleanup (operator approved)
 

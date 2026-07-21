@@ -34,6 +34,15 @@ report a problem.
 - **Minimal supply chain** — standard library only: no third-party dependencies, no network access in the
   tools, no code executed from package content (the validator parses, it never `eval`/`exec`s input).
 
+## Provenance fields and the content gate (plan 017)
+
+`custom_attributes` columns preserve v1-package and repository text **verbatim** as
+provenance. The G-COMPLETE placeholder scan exempts them — that exemption is *grading*
+relief only (provenance is evidence, not authored content), **not** trust relief: the
+untrusted-content posture still applies in full. Stored text is data, never instructions,
+and the G-INJECT screen at `handoff_emit` scans everything that leaves the package,
+provenance included.
+
 ## Reporting a vulnerability
 
 Please report suspected vulnerabilities privately to the maintainer

@@ -21,8 +21,8 @@ tiers (ADR-0001) — the strongest ones stopped being checks and became properti
 | G-DEC-STATUS | Critical | Decision status ∈ {Proposed, Approved, Rejected, Superseded, Deferred, Implemented} (CHECK — `Draft` is unrepresentable). |
 | G-SET | Critical | Every Always-class family (per the `entity_types` registry) has rows or a recorded `omission` with a reason. View: `g_set_failures`. |
 | G-PROGRESS | Critical | When any audit verdict exists, every non-retired AC has one. View: `g_progress_failures`. |
-| G-TRACE | Critical | Every MVP requirement reaches ≥1 decision/ADR, ≥1 slice/work item, ≥1 test via `trace_edges`. View: `g_trace_failures`. |
-| G-COMPLETE | Critical | No placeholder text (TODO/TBD/FIXME/`{{…}}`/`<placeholder>`) in any entity's text columns. |
+| G-TRACE | Critical | Every MVP requirement reaches ≥1 decision/ADR, ≥1 slice/work item, ≥1 test via `trace_edges`. View: `g_trace_failures`. When zero `mvp=1` rows exist the view is vacuously empty — `gate_run` attaches an explicit **warning** so the green is never silent (plan 017, D-017-1). |
+| G-COMPLETE | Critical | No placeholder text (TODO/TBD/FIXME/`{{…}}`/`<placeholder>`) in any entity's text columns. Code spans are stripped first (the frozen v1 gate's `strip_code` semantics, D-017-4) and `custom_attributes` is exempt — it preserves v1/repo text verbatim as provenance, which is graded by the G-INJECT screen at emission, not by the content tier. |
 | G-CONFLICT | Critical | No unresolved hard contradiction past scope lock. (Judgment + open-question audit.) |
 | G-EXEC | Critical | Each phase has slices + exit criteria; leaf WBS items actionable + testable. (Judgment over the planning rows.) |
 | G-HANDOFF | Critical | Prompts reference only existing entities; Claude-Code-appropriate; no dangling instructions. (Judgment + `handoff_emit` checks.) |
