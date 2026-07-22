@@ -106,6 +106,33 @@ lives under the v2 flow (ASM-A: v1 is supported for migration only). The operato
 15. **Validator provenance (C17).** The pre-flight result carries the frozen validator's
     sha256 + byte size — "which contract judged this" is auditable from the result alone.
     `partial_files` reports per-file migrated-row counts.
+16. **Text fidelity (C23/C24 — the retracted-verdict lessons).** Long-form columns
+    (statement/question/decision/description) always take the RAW cell — a fallback
+    title is cleaned for display but never becomes the statement. Title cleaning is
+    positional (hyphens and governed ids survive) with ONE cap (200; AC titles 120).
+    Weak-definition rows preserve their raw defining line in
+    `custom_attributes.v1.raw_line`. `title_fallbacks` is a **data-loss warning**, not
+    cosmetics: every named row's title was cleaned+capped — the full text lives in the
+    long-form column or the attribute bag.
+17. **Fidelity ledgers (C23).** The post-flight fidelity report carries column-level
+    checks row-level validation cannot see: `truncations` (length-histogram mass at
+    exactly a cap), `column_starvation` (typed columns ≥90% NULL whose
+    `custom_attributes.v1` holds a matching key), `field_mapping` (v1 columns riding the
+    attribute bag per family), and an `execution_state_note` (imported packages carry no
+    execution state — v_backlog shows all work items open until synced via update mode).
+18. **Identity & structure (C24).** `D-nn` deferred rows key on the PARSED number
+    (`D-15`→`DW-015`, never positional; duplicates get the next free number + a note;
+    the full crosswalk ships in the preview). Imported ACs land **Proposed**, never
+    Approved — the immutability trigger freezes `slice_id` at Approved and v1 has no
+    slices (bind, then approve). Row-bearing files ALSO migrate as narrative documents
+    (rows and prose are not alternatives). Sections split on the shallowest heading
+    level below the H1. A phase table without a Status column takes an explicit
+    `Status: <word>` line from the section whose heading carries that PH- id (ledgered);
+    risks map their v1 status into `risk_state` too (Open/Monitoring→open,
+    Mitigated→mitigated, Closed→retired, Accepted→accepted). `Living`/`Complete` join
+    the semantic status map. Migrate leaves the package OPEN after post-flight so
+    `handoff_emit` follows directly. Emitted prompt bodies are scanned for v1-protocol
+    instructions and dead relative links (reported, never rewritten).
 
 ## Field mapping (v1 → v2)
 

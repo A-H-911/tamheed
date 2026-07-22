@@ -492,7 +492,32 @@ _STALE_PATTERNS = [
      "use the emitted handoff/prm-*.md files and <package>/prompts/ instead"),
     (re.compile(r"Keystone (?:v1|package|register|validator|tree)", re.IGNORECASE),
      "the v1 tree is a frozen archive; the Tamheed package is the record"),
+    (re.compile(r"progress-log\.md|acceptance-audit\.md"),
+     "v1 hand-edited artifacts — record via progress_update/audit_record instead"),
 ]
+
+
+def _emitted_prompt_report(target: Path, subdir: str) -> list[dict]:
+    """C24/D-8: emitted prompt bodies (v1-migrated PRM rows) can carry v1-protocol
+    instructions and dead relative links written for the old tree depth — the kickoff
+    then actively misdirects. Scan them like the agent-control files; never rewrite."""
+    findings = []
+    base = target / subdir
+    for path in (sorted(base.glob("*.md")) if base.exists() else []):
+        rel = f"{subdir}/{path.name}".replace("\\", "/")
+        for lineno, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+            hit = next(((p, s) for p, s in _STALE_PATTERNS if p.search(line)), None)
+            if hit:
+                findings.append({"file": rel, "line": lineno,
+                                 "text": line.strip()[:160], "suggestion": hit[1]})
+                continue
+            for m in re.finditer(r"\]\(((?:\.\.?/)[^)#\s]+)\)", line):
+                if not (path.parent / m.group(1)).resolve().exists():
+                    findings.append({
+                        "file": rel, "line": lineno, "text": m.group(1),
+                        "suggestion": "dead relative link from the emit location — "
+                                      "refresh the PRM row to reference the package"})
+    return findings
 
 
 def _managed_emit(path: Path, content: str, force: bool = False) -> str:
@@ -658,7 +683,7 @@ def handoff_emit(target_dir: str, subdir: str = "handoff", force: bool = False) 
 
     library = _emit_prompt_library(PACKAGE_ROOT / _CURRENT_NAME, _CURRENT_NAME,
                                    force=force)
-    stale = _stale_reference_report(target)
+    stale = _stale_reference_report(target) + _emitted_prompt_report(target, subdir)
     restated = _restated_content_report(target)
 
     server_line = ("The `tamheed` MCP server is provided by the installed tamheed plugin "
@@ -732,6 +757,10 @@ def package_migrate(source_dir: str, name: str | None = None, confirm: bool = Fa
         # C19 (user decision): the package carries its own prompt library from birth.
         pkg = Path(out["package_dir"])
         out["prompt_library"] = _emit_prompt_library(pkg, pkg.name)
+        if _CURRENT is None:  # C24/B2: leave the package open so handoff_emit follows
+            opened = package_open(pkg.name)
+            if opened.get("ok"):
+                out["package_opened"] = pkg.name
     return out
 
 

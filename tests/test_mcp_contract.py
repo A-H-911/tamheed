@@ -225,6 +225,25 @@ class McpContractTest(unittest.TestCase):
             self.assertEqual(len(tallies), 1)
             self.assertIn("gate_run", tallies[0]["suggestion"])
 
+    def test_emitted_prompt_bodies_are_scanned(self):
+        """Plan 020 (C24/D-8): v1-protocol instructions and dead relative links inside
+        emitted prompts become stale_references — the kickoff must not misdirect."""
+        make_complete_package("demo")
+        srv.entity_upsert([{"type": "prompt", "id": "PRM-001", "prompt_kind": "review",
+                            "title": "Audit",
+                            "body": "Run validate_package.py docs before merging.\n"
+                                    "See [roadmap](../planning/roadmap.md) for phases."}])
+        with tempfile.TemporaryDirectory() as target:
+            out = srv.handoff_emit(target)
+            prm_hits = [f for f in out["stale_references"]
+                        if f["file"].startswith("handoff/")]
+            texts = " | ".join(f["text"] for f in prm_hits)
+            self.assertIn("validate_package.py", texts)      # v1-protocol instruction
+            self.assertIn("../planning/roadmap.md", texts)   # dead relative link
+            body = (Path(target) / "handoff" / "prm-001-review.md").read_text(
+                encoding="utf-8")
+            self.assertIn("validate_package.py", body)       # never silently rewritten
+
     def test_emitted_paths_use_forward_slashes(self):
         self._emit_ready()
         with tempfile.TemporaryDirectory() as target:

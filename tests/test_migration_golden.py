@@ -356,6 +356,126 @@ class DialectToleranceTest(unittest.TestCase):
         self.assertEqual(grouped[1],
                          {"family": "PH", "count": 2, "ids": ["PH-1", "PH-2"]})
 
+    def test_clean_line_preserves_hyphens_and_ids(self):
+        """Plan 020 (C24/D-2): positional stripping — governed ids survive."""
+        out = migrate._clean_line(
+            "- **WBS-1.1** Realizes FR-001, FR-003–FR-015. (BL-005 / EPIC-01)")
+        self.assertIn("WBS-1.1", out)
+        self.assertIn("FR-001", out)
+        self.assertIn("BL-005", out)
+        long = migrate._clean_line("x" * 300)
+        self.assertEqual(len(long), 200)                   # one cap, 200 — not 120
+
+    def test_fallback_statement_keeps_raw_cell(self):
+        """Plan 020 (C24/D-0): a fallback title never becomes the statement."""
+        raw = ("As a **committee-member**, I want FR-linked agenda-items "
+               + "x" * 150 + " so that decisions trace end-to-end.")
+        md = (f"| ID | User story | Priority |\n|----|-----------|----------|\n"
+              f"| FR-001 | {raw} | M |\n")
+        [table] = migrate.vp.parse_markdown_tables(md)
+        plan = migrate.Plan()
+        migrate._map_register_row(plan, "FR", "FR-001", table, table.rows[0],
+                                  src="domain/user-stories.md")
+        row = plan.rows["requirements"][0]
+        self.assertEqual(row["statement"], raw)            # raw, uncleaned, uncapped
+        self.assertNotIn("**", row["title"])               # title cleaned + capped
+        self.assertLessEqual(len(row["title"]), 200)
+        self.assertIn("committee-member", row["title"])    # hyphens intact
+        self.assertTrue(any(f["id"] == "FR-001" for f in plan.title_fallbacks))
+
+    def test_dw_keyed_on_parsed_number_never_position(self):
+        """Plan 020 (C24/D-4): unsorted registers must not renumber ids."""
+        md = ("| ID | Deferred item | Severity |\n|----|--------------|----------|\n"
+              "| D-15 | out-of-order first | High |\n"
+              "| D-03 | second | Low |\n| D-15 | duplicate number | Low |\n")
+        with tempfile.TemporaryDirectory() as src:
+            tmp = Path(src)
+            (tmp / "execution").mkdir()
+            (tmp / "manifest.json").write_text('{"package": "t"}', encoding="utf-8")
+            (tmp / "execution" / "deferred-work-register.md").write_text(
+                f"# Deferred\n\n{md}", encoding="utf-8")
+            plan = migrate.parse_v1(tmp)
+        self.assertEqual(plan.dw_crosswalk["D-15"], "DW-015")
+        self.assertEqual(plan.dw_crosswalk["D-03"], "DW-003")
+        self.assertTrue(any("duplicate number" in u for u in plan.unmapped))
+
+    def test_ac_lands_proposed_when_no_status_column(self):
+        """Plan 020 (C24/D-12, caught by the golden delta review): the Approved default
+        must never freeze slice_id before slices can exist."""
+        md = ("| ID | Given / When / Then | Verifies |\n|----|----|----|\n"
+              "| AC-001 | Given X when Y then Z happens for the committee. | FR-001 |\n")
+        [table] = migrate.vp.parse_markdown_tables(md)
+        plan = migrate.Plan()
+        migrate._map_register_row(plan, "AC", "AC-001", table, table.rows[0], src="a.md")
+        self.assertEqual(plan.rows["acceptance_criteria"][0]["lifecycle_status"],
+                         "Proposed")
+        self.assertEqual(plan.status_defaulted[("a.md", "AC")], 1)
+
+    def test_weak_def_rows_carry_raw_line(self):
+        with tempfile.TemporaryDirectory() as src:
+            tmp = Path(src)
+            (tmp / "planning").mkdir()
+            (tmp / "manifest.json").write_text('{"package": "t"}', encoding="utf-8")
+            (tmp / "planning" / "work-breakdown.md").write_text(
+                "# WBS\n\n- **WBS-1.1** Vendor-neutral model-ports + bounded-loop "
+                "skeleton. Realizes ADR-0003.\n", encoding="utf-8")
+            plan = migrate.parse_v1(tmp)
+        row = next(r for r in plan.rows["wbs_items"] if r["id"] == "WBS-1.1")
+        self.assertIn("model-ports", row["title"])         # hyphens survive
+        attrs = json.loads(row["custom_attributes"])
+        self.assertIn("model-ports", attrs["v1"]["raw_line"])  # raw line preserved
+
+    def test_phase_prose_status_resolves(self):
+        """Plan 020 (C24/D-9, narrow): heading-contains-PH-id + Status line only."""
+        with tempfile.TemporaryDirectory() as src:
+            tmp = Path(src)
+            (tmp / "planning").mkdir()
+            (tmp / "manifest.json").write_text('{"package": "t"}', encoding="utf-8")
+            (tmp / "planning" / "roadmap.md").write_text(
+                "# Roadmap\n\n| ID | Phase | Goal |\n|----|-------|------|\n"
+                "| PH-1 | Alpha | ship |\n| PH-2 | Beta | polish |\n\n"
+                "## PH-1 — Alpha\n\n**Status: complete.**\n\n"
+                "## Later work\n\nStatus: irrelevant here.\n", encoding="utf-8")
+            plan = migrate.parse_v1(tmp)
+        rows = {r["id"]: r["lifecycle_status"] for r in plan.rows["phases"]}
+        self.assertEqual(rows["PH-1"], "Implemented")      # Complete -> Implemented
+        self.assertEqual(rows["PH-2"], "Approved")         # untouched default
+        self.assertEqual(plan.status_defaulted.get(("planning/roadmap.md", "PH")), 1)
+
+    def test_sections_split_on_shallowest_level(self):
+        """Plan 020 (C24/D-7): a ###-only body must not collapse into one Preamble."""
+        parts = migrate._sections("# T\n\n### 2026-01-01 — a\nbody a\n\n"
+                                  "### 2026-01-02 — b\nbody b\n")
+        headings = [h for h, _ in parts]
+        self.assertIn("2026-01-01 — a", headings)
+        self.assertIn("2026-01-02 — b", headings)
+
+    def test_fidelity_ledgers_fire(self):
+        """Plan 020 (C23): truncation histogram + column starvation, end to end."""
+        with tempfile.TemporaryDirectory() as src, tempfile.TemporaryDirectory() as dest:
+            tmp = Path(src)
+            (tmp / "planning").mkdir()
+            (tmp / "manifest.json").write_text('{"package": "t"}', encoding="utf-8")
+            (tmp / "planning" / "work-breakdown.md").write_text(
+                "# WBS\n\n- **WBS-1.1** " + "y" * 300 + "\n", encoding="utf-8")
+            inv_rows = "\n".join(f"| INV-00{i} | inv {i} rule | note {i} |"
+                                 for i in range(1, 7))
+            (tmp / "invariants.md").write_text(
+                "# Invariants\n\n| ID | Invariant | Enforcement notes |\n"
+                f"|----|-----------|-------------------|\n{inv_rows}\n",
+                encoding="utf-8")
+            real_pre = migrate.preflight  # mini fixture is not G-SET-conformant
+            migrate.preflight = lambda s: {"ok": True, "stage": "preflight"}
+            try:
+                out = migrate.run_migration(str(tmp), dest, name="t", confirm=True)
+            finally:
+                migrate.preflight = real_pre
+            ledgers = out["fidelity"]["fidelity_ledgers"]
+        self.assertIn({"family": "wbs_items", "field": "title",
+                       "count_at_cap": 1, "cap": 200}, ledgers["truncations"])
+        starved = {(s["family"], s["column"]) for s in ledgers["column_starvation"]}
+        self.assertIn(("invariants", "enforcement"), starved)
+
     def test_patch_applied_by_id_before_populate(self):
         plan = migrate.Plan()
         plan.add("acceptance_criteria", {"id": "AC-001", "title": "truncated",

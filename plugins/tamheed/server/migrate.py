@@ -40,8 +40,16 @@ STATUS_COERCE = {
     "Open": "Approved",          # live in the register, not awaiting ratification
     "Monitoring": "Approved",    # an activity on an in-force item, not a lifecycle stage
     "Active": "Approved",        # in force and operative
+    "Living": "Approved",        # "living document" — same concept as active (C24/B3)
+    "Complete": "Implemented",   # phase prose statuses (C24/D-9)
     "Closed": "Obsolete",        # terminal-neutral: no claim about HOW it closed
 }
+
+# v1 risk Status -> the purpose-built risk_state enum (C24/D-10). lifecycle_status gets
+# the same cell through _status as before; this second mapping keeps the risk axis honest.
+RISK_STATE_MAP = {"Open": "open", "Monitoring": "open", "Mitigated": "mitigated",
+                  "Materialized": "materialized", "Closed": "retired",
+                  "Accepted": "accepted"}
 
 # v1 omitted_artifacts kind/path -> v2 entity type (G-SET's recorded-omitted half).
 OMISSION_KEYWORDS = [
@@ -129,14 +137,18 @@ def _row_attrs(headers: list[str], row: list[str]) -> str:
 
 
 def _sections(text: str) -> list[tuple[str, str]]:
-    """Split a narrative body into (heading, body) by ## headings."""
+    """Split a narrative body by its SHALLOWEST heading level below the H1 (C24/D-7:
+    a `###`-only progress log once collapsed 23 dated entries into one 82k-char
+    Preamble — the newest history became the least navigable)."""
+    levels = [len(h) for h in re.findall(r"^(#{2,6})\s", text, re.M)]
+    marker = "#" * (min(levels) if levels else 2) + " "
     parts: list[tuple[str, str]] = []
     heading, buf = "Preamble", []
     for line in text.splitlines():
-        if line.startswith("## "):
+        if line.startswith(marker):
             if "\n".join(buf).strip():
                 parts.append((heading, "\n".join(buf).strip()))
-            heading, buf = line[3:].strip(), []
+            heading, buf = line[len(marker):].strip(), []
         else:
             buf.append(line)
     if "\n".join(buf).strip():
@@ -145,8 +157,15 @@ def _sections(text: str) -> list[tuple[str, str]]:
 
 
 def _clean_line(line: str) -> str:
-    s = re.sub(r"[#*`>-]+", " ", line).strip()
-    return re.sub(r"\s+", " ", s)[:120] or "(untitled)"
+    """Markdown-strip a defining line into a title. POSITIONAL stripping only — the old
+    `[#*`>-]+` character class deleted every ASCII hyphen, mangling governed ids
+    (`FR-001` -> `FR 001`) and severing cross-references (field-evidence C24/D-2). One
+    consistent 200 cap (the old 120 was a second, hidden cap)."""
+    s = line.strip()
+    s = re.sub(r"^[#>\s]+", "", s)      # leading heading / blockquote markers
+    s = re.sub(r"^[-*+]\s+", "", s)     # a single leading list bullet
+    s = s.replace("**", "").replace("*", "").replace("`", "")
+    return re.sub(r"\s+", " ", s).strip()[:200] or "(untitled)"
 
 
 class Plan:
@@ -171,6 +190,7 @@ class Plan:
         self.status_map: dict[str, str] = {}   # operator overrides, normalized keys
         # C21 (B1): registers with NO status column, per (file, family) -> row count.
         self.status_defaulted: dict[tuple[str, str], int] = {}
+        self.dw_crosswalk: dict[str, str] = {}  # C24/D-4: legacy D-nn -> DW-NNN
 
     def add(self, table: str, row: dict):
         self.rows.setdefault(table, []).append(row)
@@ -236,22 +256,39 @@ def _map_register_row(plan: Plan, prefix: str, ident: str, t, row: list[str],
     if t.col_index(["status"]) is None:
         # C21 (B1): a register with NO status column defaults to Approved — parity with
         # weak-definition synthesis (the richer source must not produce the poorer row).
-        # DEC keeps Proposed: a proposed decision is never rendered as approved.
-        # Reported per (file, family) in the status_defaulted ledger, not per row.
-        status = "Proposed" if prefix == "DEC" else "Approved"
+        # DEC keeps Proposed (a proposed decision is never rendered approved) and — C24/
+        # D-12, caught by the golden delta review — AC keeps Proposed too: an Approved AC
+        # freezes slice_id via the immutability trigger, and v1 has no slices; the
+        # Approved default would permanently kill v_phase_exit on migrated packages.
+        status = "Proposed" if prefix in ("DEC", "AC") else "Approved"
         key = (src, prefix)
         plan.status_defaulted[key] = plan.status_defaulted.get(key, 0) + 1
     else:
         status = _status(col("status"), "Proposed" if prefix == "DEC" else "Draft",
                          plan=plan, ident=ident)
-    title = title_col("statement", "given / when / then", "criterion", "requirement",
-                      "constraint", "assumption", "question", "decision", "risk",
-                      "invariant", "dependency", "hypothesis", "milestone", "metric",
-                      "test", "work item", "phase", "name", "stakeholder / role",
-                      "stakeholder")
+    title = title_col("title", "statement", "given / when / then", "criterion",
+                      "requirement", "constraint", "assumption", "question", "decision",
+                      "risk", "invariant", "dependency", "hypothesis", "milestone",
+                      "metric", "test", "work item", "epic", "phase", "name",
+                      "stakeholder / role", "stakeholder")
+    raw_fallback = None
     if title is None:
-        title = _clean_line(" ".join(row[1:2]))
+        # C24/D-0: the fallback CLEANS for the title but must never damage the long-form
+        # text — the raw cell is carried separately and becomes the statement.
+        raw_fallback = (row[1].strip() if len(row) > 1 else "") or "(untitled)"
+        title = _clean_line(raw_fallback)
         plan.title_fallbacks.append({"id": ident, "family": prefix})
+    if len(title) <= 3:
+        # C24/D-5: a 1-3 char title is degenerate (a WBS epic once took the phase-number
+        # cell); prefer any Title-ish column the alias scan may have skipped.
+        better = col("title", "name", "epic")
+        if better and len(better) > 3:
+            plan.unmapped.append(f"{ident}: degenerate title {title!r} replaced from the "
+                                 "Title column")
+            title = better
+    # Long-form columns take the RAW text: the named-column path already returns the raw
+    # cell; on the fallback path it is the uncleaned raw cell, never the stripped title.
+    long_text = raw_fallback if raw_fallback is not None else title
     if prefix in ("FR", "NFR"):
         source = col("source") or ""
         kind = "clarification" if re.search(r"OQ-|clarif", source, re.I) else "brief"
@@ -263,27 +300,28 @@ def _map_register_row(plan: Plan, prefix: str, ident: str, t, row: list[str],
                   or prio_bare.lower().startswith("must"))
         plan.add("requirements", {
             "id": ident, "kind": "functional" if prefix == "FR" else "non-functional",
-            "title": title[:200], "statement": title,
+            "title": title[:200], "statement": long_text,
             "priority": prio or None, "mvp": 1 if is_mvp else 0,
             "lifecycle_status": status if status != "Draft" else "Approved",
             "source_kind": kind, "source_span": source or "v1:register-row",
             "custom_attributes": attrs})
     elif prefix == "CON":
-        plan.add("constraints", {"id": ident, "title": title[:200], "statement": title,
+        plan.add("constraints", {"id": ident, "title": title[:200], "statement": long_text,
                                  "lifecycle_status": status, "custom_attributes": attrs})
     elif prefix == "INV":
-        plan.add("invariants", {"id": ident, "title": title[:200], "statement": title,
+        plan.add("invariants", {"id": ident, "title": title[:200], "statement": long_text,
                                 "enforcement": col("enforced by", "enforcement"),
                                 "lifecycle_status": status, "custom_attributes": attrs})
     elif prefix == "ASM":
-        plan.add("assumptions", {"id": ident, "title": title[:200], "statement": title,
+        plan.add("assumptions", {"id": ident, "title": title[:200], "statement": long_text,
                                  "risk_if_wrong": col("risk if wrong"),
                                  "lifecycle_status": status, "custom_attributes": attrs})
     elif prefix == "DEP":
-        plan.add("dependencies", {"id": ident, "title": title[:200], "statement": title,
+        plan.add("dependencies", {"id": ident, "title": title[:200], "statement": long_text,
                                   "lifecycle_status": status, "custom_attributes": attrs})
     elif prefix == "OQ":
-        plan.add("open_questions", {"id": ident, "title": title[:200], "question": title,
+        plan.add("open_questions", {"id": ident, "title": title[:200],
+                                    "question": long_text,
                                     "resolution": col("resolution"),
                                     "lifecycle_status": status, "custom_attributes": attrs})
     elif prefix == "DEC":
@@ -294,26 +332,31 @@ def _map_register_row(plan: Plan, prefix: str, ident: str, t, row: list[str],
         if promoted is None and _ids_in(promoted_cell):
             plan.unmapped.append(f"{ident}: promoted-to cell has no ADR- token — "
                                  f"stored NULL ({promoted_cell[:60]!r})")
-        plan.add("decisions", {"id": ident, "title": title[:200], "decision": title,
+        plan.add("decisions", {"id": ident, "title": title[:200], "decision": long_text,
                                "rationale": col("rationale", "rationale (short)"),
                                "lifecycle_status": status,
                                "promoted_to": promoted,
                                "custom_attributes": attrs})
     elif prefix == "RISK":
-        plan.add("risks", {"id": ident, "title": title[:200], "description": title,
+        risk_state = RISK_STATE_MAP.get(_norm_status_key(col("status")))
+        plan.add("risks", {"id": ident, "title": title[:200], "description": long_text,
                            "probability": col("likelihood", "probability"),
                            "impact": col("impact"), "mitigation": col("mitigation"),
-                           "lifecycle_status": status, "custom_attributes": attrs})
+                           "lifecycle_status": status,
+                           **({"risk_state": risk_state} if risk_state else {}),
+                           "custom_attributes": attrs})
     elif prefix == "HYP":
-        plan.add("hypotheses", {"id": ident, "title": title[:200], "statement": title,
+        plan.add("hypotheses", {"id": ident, "title": title[:200], "statement": long_text,
                                 "lifecycle_status": status, "custom_attributes": attrs})
     elif prefix == "KPI":
         plan.add("kpis", {"id": ident, "title": title[:200],
-                          "measure": col("measurement method", "measure"),
+                          "measure": col("measurement method", "measure",
+                                         "measurement", "cadence"),  # C24/D-3
                           "target": col("target"), "lifecycle_status": status,
                           "custom_attributes": attrs})
     elif prefix == "STK":
         plan.add("stakeholders", {"id": ident, "name": title[:200],
+                                  "role": col("role"),  # C24/D-3
                                   "interest": col("interest in the project", "interest"),
                                   "lifecycle_status": status, "custom_attributes": attrs})
     elif prefix == "PH":
@@ -331,8 +374,12 @@ def _map_register_row(plan: Plan, prefix: str, ident: str, t, row: list[str],
         plan.add("milestones", {"id": ident, "title": title[:200], "phase_id": phase,
                                 "lifecycle_status": status, "custom_attributes": attrs})
     elif prefix == "WBS":
-        phase = next((i for i in _ids_in(_cell(row, t.col_index(["phase"])) or "")
-                      if i.startswith("PH-")), None)
+        phase_cell = _cell(row, t.col_index(["phase"])) or ""
+        phase = next((i for i in _ids_in(phase_cell) if i.startswith("PH-")), None)
+        if phase is None and re.fullmatch(r"\d+", phase_cell.strip()):
+            cand = f"PH-{phase_cell.strip()}"
+            if plan.has(cand):  # C24/D-3: bare phase numbers resolve when the phase exists
+                phase = cand
         plan.add("wbs_items", {"id": ident, "title": title[:200], "phase_id": phase,
                                "lifecycle_status": status, "custom_attributes": attrs})
         for ref in _ids_in(_cell(row, t.col_index(["realises", "realizes"])) or ""):
@@ -345,16 +392,21 @@ def _map_register_row(plan: Plan, prefix: str, ident: str, t, row: list[str],
         raw_stmt = _cell(row, t.col_index(
             ["given / when / then", "criterion", "statement"]))
         plan.add("acceptance_criteria", {
-            "id": ident, "title": title[:120], "statement": raw_stmt or title,
+            "id": ident, "title": title[:120], "statement": raw_stmt or long_text,
             "requirement_id": req,
-            "lifecycle_status": status if status != "Draft" else "Approved",
+            # C24/D-12: imported ACs land Proposed, never Approved — the immutability
+            # trigger freezes slice_id at Approved, and v1 has no slices; Proposed keeps
+            # the structure completable (bind, then approve). The FR bump stays: the
+            # Met-verdict cascade then advances finished requirements correctly.
+            "lifecycle_status": status if status != "Draft" else "Proposed",
             "custom_attributes": attrs})
         for ref in _ids_in(verifies):
             plan.edges.add((ident, ref, "verifies"))
     elif prefix == "TEST":
         for ref in _ids_in(_cell(row, t.col_index(["verifies"])) or ""):
             plan.edges.add((ident, ref, "tests"))
-        plan.add("tests", {"id": ident, "title": title[:200], "kind": col("kind"),
+        plan.add("tests", {"id": ident, "title": title[:200],
+                           "kind": col("kind", "type"),  # C24/D-3 starvation alias
                            "lifecycle_status": status, "custom_attributes": attrs})
     else:
         plan.unmapped.append(f"{ident}: no v2 mapping for prefix {prefix}")
@@ -512,25 +564,39 @@ def parse_v1(source: Path, status_map: dict[str, str] | None = None) -> Plan:
         if "deferred-work" in rel_l:
             # Ungoverned `D-nn` rows (Keystone's own convention) are invisible to the ID
             # regex — 23 live items vanished from ACMP with no trace (field-evidence C13).
-            dw_seq0 = dw_seq = len(plan.rows.get("deferred_work", []))
+            dw_before = len(plan.rows.get("deferred_work", []))
             for t in vp.parse_markdown_tables(pf.text):
                 for row in t.rows:
-                    if not re.fullmatch(r"D-\d+", row[0].strip().strip("*")):
+                    m = re.fullmatch(r"D-(\d+)", row[0].strip().strip("*"))
+                    if not m:
                         continue
-                    dw_seq += 1
+                    # C24/D-4: key on the PARSED number, never on row position — an
+                    # unsorted register once silently shifted five ids, breaking every
+                    # D-nn reference in logs, ADRs and commits.
+                    legacy, num = m.group(0), int(m.group(1))
+                    dw_id = f"DW-{num:03d}"
+                    if plan.has(dw_id):  # duplicate source number: next free, noted
+                        while plan.has(dw_id):
+                            num += 1
+                            dw_id = f"DW-{num:03d}"
+                        plan.unmapped.append(f"{legacy}: duplicate number — assigned "
+                                             f"{dw_id}")
+                    plan.dw_crosswalk.setdefault(legacy, dw_id)  # first mapping wins
                     sev = (_cell(row, t.col_index(["severity"])) or "").lower()
                     plan.add("deferred_work", {
-                        "id": f"DW-{dw_seq:03d}",
+                        "id": dw_id,
                         "title": (_cell(row, t.col_index(
                             ["deferred item", "item", "description", "title", "work"]))
                             or _clean_line(" ".join(row[1:2]))),
                         "severity": sev if sev in ("critical", "high", "medium", "low")
                         else "medium",
                         "activation_trigger": _cell(row, t.col_index(
-                            ["activation trigger", "trigger", "activate when"])),
+                            ["activation trigger", "trigger", "trigger to activate",
+                             "activate when"])),  # C24/D-3 starvation alias
                         "source_kind": "brief", "source_span": f"v1:{pf.rel}",
                         "custom_attributes": _row_attrs(t.headers, row)})
-            plan.partial_files[pf.rel] = len(plan.rows.get("deferred_work", [])) - dw_seq0
+            plan.partial_files[pf.rel] = (len(plan.rows.get("deferred_work", []))
+                                          - dw_before)
             continue
         if rel_l.startswith("adrs/"):
             if _map_adr(plan, pf):
@@ -574,13 +640,12 @@ def parse_v1(source: Path, status_map: dict[str, str] | None = None) -> Plan:
         produced_rows = rows_after > rows_before
 
         kind = next((k for s, k in NARRATIVE_KINDS if s in pf.rel), None)
-        if kind is None and not prompt and not produced_rows:
-            # Catch-all (field-evidence C13, RC1 class fix): a file that matched no
-            # allowlist and yielded no rows migrates as an 'other' narrative document —
-            # prose is never silently dropped. Row-bearing files keep rows-only and are
-            # listed as partial instead (no double representation).
+        if kind is None and not prompt:
+            # C24/D-6 (reverses the 018 rows-only choice — field evidence won): rows and
+            # prose are NOT alternatives. A register file's narrative (phase goals, exit
+            # gates, legacy token maps) migrates alongside its rows as an 'other' doc.
             kind = "other"
-        elif kind is None and produced_rows:
+        if produced_rows:
             plan.partial_files[pf.rel] = rows_after - rows_before
         if kind and not prompt:
             doc_seq += 1
@@ -607,22 +672,33 @@ def parse_v1(source: Path, status_map: dict[str, str] | None = None) -> Plan:
         if not occ.is_definition or plan.has(occ.ident):
             continue
         text = by_rel[occ.rel].text.splitlines()
-        title = _clean_line(text[occ.line - 1]) if 0 < occ.line <= len(text) else occ.ident
+        raw_line = text[occ.line - 1].strip() if 0 < occ.line <= len(text) else ""
+        title = _clean_line(raw_line) if raw_line else occ.ident
         prefix = occ.prefix
+        # C24/D-0 (review finding): weak-def rows were the ONLY rows with no
+        # custom_attributes — the cleaned title was the sole surviving text (ACMP's 133
+        # damaged WBS leaves). The raw defining line is now always preserved.
+        weak_attrs = json.dumps(
+            {"v1": {"raw_line": raw_line, "source": f"{occ.rel}:{occ.line}"}},
+            ensure_ascii=False)
         if prefix == "PH":
             num = re.search(r"(\d+)", occ.ident)
             plan.add("phases", {"id": occ.ident, "title": title,
                                 "sort_order": int(num.group(1)) if num else 0,
-                                "lifecycle_status": "Approved"})
+                                "lifecycle_status": "Approved",
+                                "custom_attributes": weak_attrs})
         elif prefix == "WBS":
             plan.add("wbs_items", {"id": occ.ident, "title": title,
-                                   "lifecycle_status": "Approved"})
+                                   "lifecycle_status": "Approved",
+                                   "custom_attributes": weak_attrs})
         elif prefix in ("FR", "NFR"):
             plan.add("requirements", {
                 "id": occ.ident, "kind": "functional" if prefix == "FR" else "non-functional",
-                "title": title, "mvp": 0, "lifecycle_status": "Approved",
+                "title": title, "statement": raw_line or None,
+                "mvp": 0, "lifecycle_status": "Approved",
                 "source_kind": "inferred",
-                "source_span": f"v1 weak definition {occ.rel}:{occ.line}"})
+                "source_span": f"v1 weak definition {occ.rel}:{occ.line}",
+                "custom_attributes": weak_attrs})
         elif prefix == "MS":
             plan.unmapped.append(f"{occ.ident}: weak milestone definition without a phase")
         elif prefix in ("KPI", "STK", "CON", "INV", "ASM", "DEP", "OQ", "DEC", "RISK",
@@ -631,10 +707,9 @@ def parse_v1(source: Path, status_map: dict[str, str] | None = None) -> Plan:
                      "INV": "invariants", "ASM": "assumptions", "DEP": "dependencies",
                      "OQ": "open_questions", "DEC": "decisions", "RISK": "risks",
                      "HYP": "hypotheses", "AC": "acceptance_criteria", "TEST": "tests"}[prefix]
-            row = {"id": occ.ident, "lifecycle_status": "Approved"}
+            row = {"id": occ.ident, "lifecycle_status": "Approved",
+                   "custom_attributes": weak_attrs}
             row["name" if table == "stakeholders" else "title"] = title
-            if table == "decisions":
-                row["lifecycle_status"] = "Approved"
             plan.add(table, row)
 
     # WBS parents implied by dotted ids (WBS-1.1 without an explicit WBS-1 row).
@@ -647,6 +722,33 @@ def parse_v1(source: Path, status_map: dict[str, str] | None = None) -> Plan:
                                        "lifecycle_status": "Approved"})
                 wbs.add(parent)
             r["parent_id"] = parent
+
+    # C24/D-9 (narrow): a phase table without a Status column often has the status in
+    # prose — ONLY a section whose HEADING contains the exact PH- id, with a
+    # `Status: <word>` line in its body, qualifies; everything else keeps the
+    # status_defaulted note.
+    for (src, fam) in [k for k in plan.status_defaulted if k[1] == "PH"]:
+        pf = by_rel.get(src)
+        if pf is None:
+            continue
+        resolved = 0
+        for heading, body in _sections(pf.text):
+            ph = next((r["id"] for r in plan.rows.get("phases", [])
+                       if r["id"] in heading), None)
+            m = re.search(r"^\**Status\**\s*:\s*\**([A-Za-z][A-Za-z -]*?)\**\s*[.\n]",
+                          body + "\n", re.M) if ph else None
+            if not m:
+                continue
+            for r in plan.rows["phases"]:
+                if r["id"] == ph:
+                    r["lifecycle_status"] = _status(m.group(1), "Approved",
+                                                    plan=plan, ident=ph)
+                    resolved += 1
+        remaining = plan.status_defaulted[(src, fam)] - resolved
+        if remaining > 0:
+            plan.status_defaulted[(src, fam)] = remaining
+        else:
+            plan.status_defaulted.pop((src, fam), None)
 
     # A family that both migrated rows AND carries a recorded omission is a stale
     # manifest entry (field-evidence C13: ACMP's milestones were "omitted" beside 6 MS
@@ -766,10 +868,74 @@ def fidelity(plan: Plan, pkg_dir: Path) -> dict:
     for gate, view in (("G-TRACE", "g_trace_failures"), ("G-SET", "g_set_failures"),
                        ("G-PROGRESS", "g_progress_failures")):
         gates[gate] = [r[0] for r in conn.execute(f"SELECT * FROM {view}")]
+
+    # ------------------------------------------------------------------ C23: FIDELITY
+    # Column-level checks that row-level validation is structurally blind to (C24: the
+    # report that found 12 degradation classes all row-level checks had certified).
+    _TITLE_CAP_TABLES = ("requirements", "constraints", "invariants", "assumptions",
+                         "dependencies", "open_questions", "decisions", "risks",
+                         "hypotheses", "kpis", "phases", "milestones", "wbs_items",
+                         "tests", "deferred_work")
+    caps = [("acceptance_criteria", "title", 120), ("stakeholders", "name", 200)]
+    caps += [(t, "title", 200) for t in _TITLE_CAP_TABLES]
+    truncations = []
+    for table, field, cap in caps:  # length histogram: mass at exactly the cap
+        (n,) = conn.execute(f"SELECT COUNT(*) FROM {table}"
+                            f" WHERE LENGTH({field}) = ?", (cap,)).fetchone()
+        if n:
+            truncations.append({"family": table, "field": field,
+                                "count_at_cap": n, "cap": cap})
+    _STARVE_SKIP = {"id", "lifecycle_status", "custom_attributes", "last_referenced",
+                    "source_kind", "source_span", "introduced_in", "retired_in",
+                    "disposition", "disposition_reason_ref", "superseded_by", "mvp",
+                    "sort_order", "iteration", "parent_id", "slice_id", "risk_state",
+                    "verdict", "status", "severity"}
+    starvation, field_mapping = [], {}
+    for table in sorted(set(ENTITY_TABLES.values())):
+        cols_all = [r[1] for r in conn.execute(f"PRAGMA table_info({table})")]
+        if "custom_attributes" not in cols_all:
+            continue  # write-only surfaces (trace_edges, omissions) carry no attrs
+        (total,) = conn.execute(f"SELECT COUNT(*) FROM {table}").fetchone()
+        if total < 5:
+            continue
+        attr_keys: set[str] = set()
+        for (attrs,) in conn.execute(f"SELECT custom_attributes FROM {table}"
+                                     " WHERE custom_attributes IS NOT NULL LIMIT 50"):
+            try:
+                attr_keys |= {k.lower() for k in (json.loads(attrs).get("v1") or {})
+                              if isinstance(k, str)}
+            except ValueError:
+                pass
+        cols = cols_all
+        extra = sorted(k for k in attr_keys
+                       if k not in {c.lower() for c in cols}
+                       and k not in ("raw_line", "source", "path", "front_matter"))
+        if extra:
+            field_mapping[table] = extra[:8]  # v1 columns riding the attribute bag
+        for col_name in cols:
+            if col_name in _STARVE_SKIP:
+                continue
+            (nulls,) = conn.execute(f"SELECT COUNT(*) FROM {table}"
+                                    f" WHERE {col_name} IS NULL").fetchone()
+            if total and nulls / total >= 0.9:
+                token = col_name.split("_")[0]
+                hit = next((k for k in sorted(attr_keys) if token in k), None)
+                if hit:  # the value exists in the bag while the typed column starves
+                    starvation.append({"family": table, "column": col_name,
+                                       "null_rate": round(nulls / total, 2),
+                                       "v1_key": hit})
+    (open_wbs,) = conn.execute("SELECT COUNT(*) FROM v_backlog").fetchone()
     conn.close()
     ok = not missing and all(not f for f in gates.values())
     return {"ok": ok, "identifier_gaps": missing, "count_deltas": deltas,
             "gate_failures": {g: f for g, f in gates.items() if f},
+            "fidelity_ledgers": {"truncations": truncations,
+                                 "column_starvation": starvation,
+                                 "field_mapping": field_mapping},
+            "execution_state_note": (
+                f"{open_wbs} work item(s) land open in v_backlog — imported packages "
+                "carry no execution state; sync verdicts/progress via update mode"
+                if open_wbs else None),
             "unmapped": plan.unmapped}
 
 
@@ -873,10 +1039,17 @@ def run_migration(source_dir: str, dest_root: str | Path, name: str | None = Non
                                          lambda e: (e["family"],), ("family",)),
                "status_defaulted": [
                    {"file": f, "family": fam, "count": n,
-                    "defaulted_to": "Proposed" if fam == "DEC" else "Approved"}
+                    "defaulted_to": "Proposed" if fam in ("DEC", "AC") else "Approved"}
                    for (f, fam), n in sorted(plan.status_defaulted.items())],
+               "dw_crosswalk": dict(sorted(plan.dw_crosswalk.items())),
                "validator": pre.get("validator"),
                "patch": patch_report, "unmapped": plan.unmapped}
+    # C24/D-0 standing correction: title_fallbacks is a DATA-LOSS signal, not noise —
+    # grouping it in 2.3.0 made the symptom quieter without anyone noticing. Say so.
+    for g in preview["title_fallbacks"]:
+        g["warning"] = ("data-loss signal: no recognizable title column — titles are "
+                        "markdown-stripped and capped at 200; the full raw text is in "
+                        "the long-form column or custom_attributes.v1")
     if not confirm:
         return {"ok": True, **preview,
                 "next": "re-run with confirm=true to populate (operator gate, stage 3)"}
