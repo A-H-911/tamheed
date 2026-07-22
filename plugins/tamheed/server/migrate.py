@@ -167,8 +167,10 @@ class Plan:
         self.skipped_files: list[str] = []   # skipped by design (derived views)
         # Preview-honesty ledgers (field-evidence C17): every judgment call reported.
         self.status_coerced: list[dict] = []   # [{id, original, coerced}]
-        self.title_fallbacks: list[dict] = []  # rows whose title fell back to row[1]
+        self.title_fallbacks: list[dict] = []  # [{id, family}] — title fell back to row[1]
         self.status_map: dict[str, str] = {}   # operator overrides, normalized keys
+        # C21 (B1): registers with NO status column, per (file, family) -> row count.
+        self.status_defaulted: dict[tuple[str, str], int] = {}
 
     def add(self, table: str, row: dict):
         self.rows.setdefault(table, []).append(row)
@@ -216,7 +218,7 @@ def preflight(source: Path) -> dict:
 # --------------------------------------------------------------------------- stage 2
 
 def _map_register_row(plan: Plan, prefix: str, ident: str, t, row: list[str],
-                      id_col: int = 0):
+                      id_col: int = 0, src: str = ""):
     def col(*aliases):
         return _cell(row, t.col_index(aliases))
 
@@ -231,8 +233,17 @@ def _map_register_row(plan: Plan, prefix: str, ident: str, t, row: list[str],
         return None
 
     attrs = _row_attrs(t.headers, row)
-    status = _status(col("status"), "Proposed" if prefix == "DEC" else "Draft",
-                     plan=plan, ident=ident)
+    if t.col_index(["status"]) is None:
+        # C21 (B1): a register with NO status column defaults to Approved — parity with
+        # weak-definition synthesis (the richer source must not produce the poorer row).
+        # DEC keeps Proposed: a proposed decision is never rendered as approved.
+        # Reported per (file, family) in the status_defaulted ledger, not per row.
+        status = "Proposed" if prefix == "DEC" else "Approved"
+        key = (src, prefix)
+        plan.status_defaulted[key] = plan.status_defaulted.get(key, 0) + 1
+    else:
+        status = _status(col("status"), "Proposed" if prefix == "DEC" else "Draft",
+                         plan=plan, ident=ident)
     title = title_col("statement", "given / when / then", "criterion", "requirement",
                       "constraint", "assumption", "question", "decision", "risk",
                       "invariant", "dependency", "hypothesis", "milestone", "metric",
@@ -240,7 +251,7 @@ def _map_register_row(plan: Plan, prefix: str, ident: str, t, row: list[str],
                       "stakeholder")
     if title is None:
         title = _clean_line(" ".join(row[1:2]))
-        plan.title_fallbacks.append({"id": ident, "title": title})
+        plan.title_fallbacks.append({"id": ident, "family": prefix})
     if prefix in ("FR", "NFR"):
         source = col("source") or ""
         kind = "clarification" if re.search(r"OQ-|clarif", source, re.I) else "brief"
@@ -558,7 +569,7 @@ def parse_v1(source: Path, status_map: dict[str, str] | None = None) -> Plan:
                 token = next(iter(_ids_in(row[id_col] if id_col < len(row) else "")), None)
                 if token and not plan.has(token):
                     _map_register_row(plan, token.split("-")[0], token, t, row,
-                                      id_col=id_col)
+                                      id_col=id_col, src=pf.rel)
         rows_after = sum(len(v) for v in plan.rows.values())
         produced_rows = rows_after > rows_before
 
@@ -764,6 +775,22 @@ def fidelity(plan: Plan, pkg_dir: Path) -> dict:
 
 # --------------------------------------------------------------------------- driver
 
+def _group(entries: list[dict], key, labels: tuple) -> list[dict]:
+    """C21 ledger ergonomics: group rows into operator decision units; ids expanded only
+    for small groups (<=10) so a 77-row mechanical group stays one line."""
+    groups: dict[tuple, list[str]] = {}
+    for e in entries:
+        groups.setdefault(key(e), []).append(e["id"])
+    out = []
+    for k, ids in sorted(groups.items(), key=lambda kv: (-len(kv[1]), kv[0])):
+        g = dict(zip(labels, k))
+        g["count"] = len(ids)
+        if len(ids) <= 10:
+            g["ids"] = ids
+        out.append(g)
+    return out
+
+
 def _apply_patch(plan: Plan, patch_path: str) -> dict:
     """Merge-by-id row overrides applied to the parsed plan BEFORE populate (D1): the
     blessed repair path for migration gaps. Post-hoc mutation stays impossible —
@@ -835,8 +862,19 @@ def run_migration(source_dir: str, dest_root: str | Path, name: str | None = Non
                "skipped_files": sorted(plan.skipped_files),
                # C17 honesty ledgers: with no status_map, status_coerced shows the DEFAULT
                # proposals — the operator confirms/overrides them on the confirm call.
+               # C21: the grouped views are the operator decision units (a 21-row ledger is
+               # ~6 decisions); the row-granular list stays for audit.
                "status_coerced": plan.status_coerced,
-               "title_fallbacks": plan.title_fallbacks,
+               "status_coerced_groups": _group(plan.status_coerced,
+                                               lambda e: (e["original"], e["coerced"]),
+                                               ("original", "proposed")),
+               "status_coerced_basis": "status_map" if status_map else "defaults",
+               "title_fallbacks": _group(plan.title_fallbacks,
+                                         lambda e: (e["family"],), ("family",)),
+               "status_defaulted": [
+                   {"file": f, "family": fam, "count": n,
+                    "defaulted_to": "Proposed" if fam == "DEC" else "Approved"}
+                   for (f, fam), n in sorted(plan.status_defaulted.items())],
                "validator": pre.get("validator"),
                "patch": patch_report, "unmapped": plan.unmapped}
     if not confirm:

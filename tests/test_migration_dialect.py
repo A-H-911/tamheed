@@ -112,6 +112,20 @@ class DialectMigrationTest(unittest.TestCase):
                          " '%link_count%'")
         self.assertIsNotNone(body)                         # template text survives verbatim
 
+    def test_preview_ledger_ergonomics(self):
+        """Plan 019 (C21): grouped ledgers + status_defaulted + basis annotation."""
+        preview = self.out["preview"]
+        self.assertEqual(preview["status_coerced_basis"], "defaults")
+        defaulted = {(e["file"], e["family"]): e for e in preview["status_defaulted"]}
+        entry = defaulted[("planning/roadmap.md", "PH")]   # roadmap table has no Status
+        self.assertEqual(entry["defaulted_to"], "Approved")
+        for group in preview["status_coerced_groups"]:
+            self.assertIn("original", group)
+            self.assertIn("proposed", group)
+            self.assertGreaterEqual(group["count"], 1)
+        for group in preview["title_fallbacks"]:
+            self.assertIn("family", group)
+
     def test_conservation_every_md_file_accounted(self):
         preview = self.out["preview"]
         covered = set(preview["partial_files"]) | set(preview["skipped_files"])

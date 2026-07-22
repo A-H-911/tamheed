@@ -83,9 +83,17 @@ lives under the v2 flow (ASM-A: v1 is supported for migration only). The operato
     overrides via `package_migrate(..., status_map={word: lifecycle-value})` on the
     confirm call (keys normalized like status cells; values validated). Compound cells
     ("Resolved (rule) / threshold pending EXP-001") never auto-map — exact match only,
-    default + ledger entry. Note: the FR/AC Draft→Approved post-bump is a separate
-    parser decision, not a ledger item. An empty status cell takes the default silently
-    (absence, not coercion).
+    default + ledger entry — **but a compound literal supplied as a `status_map` key DOES
+    match after normalization** (`"Instrumented (P12)": "Implemented"` applies; C21/B6).
+    Note: the FR/AC Draft→Approved post-bump is a separate parser decision, not a ledger
+    item. An empty status cell takes the default silently (absence, not coercion) — but a
+    register with **no status column at all** defaults its rows to `Approved` (parity with
+    weak-definition synthesis; `DEC` stays `Proposed` — a proposed decision is never
+    rendered approved) and is reported per (file, family, count) in the preview's
+    `status_defaulted` ledger (C21/B1). The preview also ships grouped views
+    (`status_coerced_groups`, grouped `title_fallbacks`) — the operator decision unit is
+    the group; and `status_coerced_basis` says whether the ledger reflects defaults or a
+    supplied `status_map`.
 13. **Titles never come from the id column (C17).** A title alias resolving to the same
     cell the id came from is never right (a `| Phase | ... |` roadmap once titled every
     phase "PH-0"); `name` is a title alias. Rows whose title fell back to the second cell
@@ -125,6 +133,7 @@ lives under the v2 flow (ASM-A: v1 is supported for migration only). The operato
 | handoff prompt files | `prompts` (`initial`/`follow-up`/`review`) |
 | experiment/POC files | `experiments`/`pocs` (front-matter id/status; body preserved in `custom_attributes`) |
 | readiness report, status report, backlog | **not migrated** — derived views in v2 (regenerated from the rows) |
+| v1 progress log / running narrative | narrative document only — **no `PE-` rows are synthesized** (v2 progress starts empty; timestamps would be fabricated). The dated history survives in the document body (C21/B7) |
 
 ## Repair path (D1) and cutover (C15)
 

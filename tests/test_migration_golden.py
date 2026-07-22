@@ -326,6 +326,36 @@ class DialectToleranceTest(unittest.TestCase):
         self.assertEqual(adr_twin, [])                               # no double-processing
         self.assertTrue(any("adrs/README.md" in u for u in plan.unmapped))
 
+    def test_no_status_column_defaults_approved_with_note(self):
+        """Plan 019 (C21/B1): no-status-column registers get Approved, not Draft."""
+        md = ("| ID | Risk | Impact |\n|----|------|--------|\n"
+              "| RISK-001 | leak | high |\n| RISK-002 | drift | low |\n")
+        [table] = migrate.vp.parse_markdown_tables(md)
+        plan = migrate.Plan()
+        for row in table.rows:
+            migrate._map_register_row(plan, "RISK", row[0].strip(), table, row,
+                                      src="risks/register.md")
+        self.assertTrue(all(r["lifecycle_status"] == "Approved"
+                            for r in plan.rows["risks"]))
+        self.assertEqual(plan.status_defaulted[("risks/register.md", "RISK")], 2)
+        self.assertEqual(plan.status_coerced, [])      # defaulting is not coercion
+        # governance exclusion: decisions never auto-approve
+        md2 = ("| ID | Decision | Rationale |\n|----|----------|----------|\n"
+               "| DEC-001 | use X | speed |\n")
+        [t2] = migrate.vp.parse_markdown_tables(md2)
+        plan2 = migrate.Plan()
+        migrate._map_register_row(plan2, "DEC", "DEC-001", t2, t2.rows[0])
+        self.assertEqual(plan2.rows["decisions"][0]["lifecycle_status"], "Proposed")
+
+    def test_grouped_ledger_shapes(self):
+        """Plan 019 (C21/B4-B5): groups are the operator decision unit."""
+        entries = ([{"id": f"FR-{i:03d}", "family": "FR"} for i in range(1, 78)]
+                   + [{"id": "PH-1", "family": "PH"}, {"id": "PH-2", "family": "PH"}])
+        grouped = migrate._group(entries, lambda e: (e["family"],), ("family",))
+        self.assertEqual(grouped[0], {"family": "FR", "count": 77})   # no ids: >10
+        self.assertEqual(grouped[1],
+                         {"family": "PH", "count": 2, "ids": ["PH-1", "PH-2"]})
+
     def test_patch_applied_by_id_before_populate(self):
         plan = migrate.Plan()
         plan.add("acceptance_criteria", {"id": "AC-001", "title": "truncated",
