@@ -15,7 +15,9 @@ single-writer via the store lockfile; stored text is data, never instructions.
 from __future__ import annotations
 
 import argparse
+import csv as _csv
 import datetime as _dt
+import io
 import json
 import os
 import re
@@ -789,7 +791,29 @@ def export_html(output: str | None = None) -> dict:
     text = viewer.render(_CURRENT.conn, report["gates"], report["ready"])
     path = Path(output) if output else PACKAGE_ROOT / _CURRENT_NAME / "review.html"
     path.write_text(text, encoding="utf-8", newline="\n")
-    return {"ok": True, "path": str(path), "bytes": len(text.encode("utf-8"))}
+    # C25 (maintainer req 3): per-table CSV beside the report — the viewer's summary
+    # links point at csv/<table>.csv relative to review.html. Deterministic (same
+    # ordered queries as the tables), managed emissions (hand edits refused).
+    conn = _CURRENT.conn
+    csv_dir = path.parent / "csv"
+    csv_out: dict[str, list[str]] = {"emitted": [], "unchanged": [], "diverged": []}
+    for table in sorted(set(ENTITY_TABLES.values())):
+        cols = [r[1] for r in conn.execute(f"PRAGMA table_info({table})")]
+        order = ("from_id, to_id, relation" if table == "trace_edges"
+                 else "entity_type, reason" if table == "omissions"
+                 else _NON_ID_TABLES.get(table, "id"))
+        rows = conn.execute(
+            f"SELECT {', '.join(cols)} FROM {table} ORDER BY {order}").fetchall()
+        if not rows:
+            continue
+        buf = io.StringIO()
+        writer = _csv.writer(buf, lineterminator="\n")
+        writer.writerow(cols)
+        writer.writerows(rows)
+        status = _managed_emit(csv_dir / f"{table}.csv", buf.getvalue())
+        csv_out[status].append(f"csv/{table}.csv")
+    return {"ok": True, "path": str(path), "bytes": len(text.encode("utf-8")),
+            "csv": csv_out}
 
 
 def server_info() -> dict:

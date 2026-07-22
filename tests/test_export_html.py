@@ -53,19 +53,45 @@ class ExportHtmlTest(unittest.TestCase):
             self.assertIn(f'href="#{anchor}"', out)
         self.assertIn("position: sticky", out)          # CSS is embedded in the page
 
-    def test_wide_table_css_scrolls(self):
+    def test_long_text_wraps_in_place(self):
+        """Plan 020 (C25 req 2, supersedes the 019 scroll fix): wrap, don't scroll."""
         self._open_demo_copy()
         out = self._export()
-        self.assertIn("width: max-content", out)        # tables overflow the wrap...
-        self.assertIn("min-width: 100%", out)           # ...instead of squeezing columns
-        self.assertIn("overflow-x: auto", out)
+        self.assertIn("overflow-wrap: anywhere", out)
+        self.assertNotIn("max-content", out)
+
+    def test_section_order_state_relations_data(self):
+        self._open_demo_copy()
+        out = self._export()
+        order = [out.index(f'<section id="{a}"')
+                 for a in ("overview", "traceability", "execution", "registers", "gaps")]
+        self.assertEqual(order, sorted(order))          # C25 req 1: maintainer order
+
+    def test_csv_links_and_files(self):
+        """Plan 020 (C25 req 3): every register fold links its sibling CSV file."""
+        self._open_demo_copy()
+        result = srv.export_html()
+        out = Path(result["path"]).read_text(encoding="utf-8")
+        self.assertIn('<a class="csv" href="csv/requirements.csv" download>CSV</a>', out)
+        csv_dir = Path(result["path"]).parent / "csv"
+        req_csv = (csv_dir / "requirements.csv").read_text(encoding="utf-8")
+        self.assertTrue(req_csv.startswith("id,"))       # header row
+        self.assertIn("FR-001", req_csv)
+        # every csv/ href in the page has a matching emitted file
+        import re as _re
+        for name in set(_re.findall(r'href="csv/([^"]+)"', out)):
+            self.assertTrue((csv_dir / name).exists(), name)
+        # deterministic + managed: re-export reports the csvs unchanged
+        again = srv.export_html()
+        self.assertEqual(again["csv"]["diverged"], [])
+        self.assertIn("csv/requirements.csv", again["csv"]["unchanged"])
 
     def test_all_edges_table_always_collapsed(self):
         self._open_demo_copy()
         out = self._export()
-        self.assertIn("<details><summary>All trace edges (", out)
-        self.assertIn("<details><summary>Acceptance criteria", out)  # demo has ACs
-        self.assertIn("<details><summary>Adrs (", out)               # every family folds
+        self.assertIn("<summary>All trace edges (", out)
+        self.assertIn("<summary>Acceptance criteria", out)           # demo has ACs
+        self.assertIn('<details id="reg-adrs"><summary>Adrs (', out)  # anchored folds
 
     def test_every_table_folds_closed_uniformly(self):
         """Plan 019 (C21, maintainer decision): ALL tables fold closed — no size
@@ -77,14 +103,14 @@ class ExportHtmlTest(unittest.TestCase):
                             "title": "t", "lifecycle_status": "Approved",
                             "source_kind": "brief", "source_span": "x"}])
         out_a = self._export(str(Path(self._tmp.name) / "a.html"))
-        self.assertIn("<details><summary>Risks (60 rows)</summary>", out_a)
-        self.assertIn("<details><summary>Requirements (1 row)</summary>", out_a)
+        self.assertIn("<summary>Risks (60 rows)", out_a)
+        self.assertIn("<summary>Requirements (1 row)", out_a)
         self.assertIn("<details><summary>Package identity (", out_a)
         self.assertIn("<details><summary>Requirement coverage matrix (", out_a)
         self.assertNotIn("<details open", out_a)               # everything closed
-        # every table lives inside a details fold
+        # every table lives inside a details fold (anchored or not)
         self.assertEqual(out_a.count('<div class="tablewrap">'),
-                         out_a.count("<details><summary>"))
+                         out_a.count("<details"))
         # determinism at scale: byte-identical re-export
         self.assertEqual(out_a, self._export(str(Path(self._tmp.name) / "b.html")))
 
@@ -164,12 +190,11 @@ class ExportHtmlTest(unittest.TestCase):
         self.assertIn("&lt;script&gt;alert(1)&lt;/script&gt;", out)
         self.assertIn("&quot;&gt;&lt;img src=x onerror=alert(1)&gt;", out)
         # the viewer ships zero JS and zero DATA-derived links (javascript: is inert
-        # text). The only anchors allowed are the TOC's code-derived fragment links —
-        # a stronger pin than the old blanket <a> ban: exactly one per section, every
-        # href a #fragment.
+        # text). Allowed link classes only (C25 doctrine): same-document #fragments and
+        # code-derived relative csv/<table>.csv downloads — nothing can carry a scheme.
         self.assertNotIn("<script", out)
-        self.assertEqual(out.count("<a "), len(viewer.SECTIONS))
-        self.assertEqual(out.count('href="'), out.count('href="#'))
+        self.assertEqual(out.count('href="'),
+                         out.count('href="#') + out.count('href="csv/'))
         self.assertNotIn('href="javascript:', out)
         self.assertIn('http-equiv="Content-Security-Policy"', out)
         self.assertIn("default-src 'none'", out)

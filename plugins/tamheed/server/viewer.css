@@ -13,10 +13,11 @@ h3 { font-size: 1rem; margin-top: 1.5rem; }
         font-size: .8rem; border: 1px solid #8886; }
 .chip.pass { background: #1a7f3722; border-color: #1a7f37; }
 .chip.fail { background: #cf222e22; border-color: #cf222e; }
-.tablewrap { overflow-x: auto; margin: .5rem 0 1.5rem; }
-/* max-content lets wide tables exceed the wrap (which scrolls) instead of squeezing
-   columns into unreadable wrapped slivers; min-width keeps narrow tables full-width. */
-table { border-collapse: collapse; width: max-content; min-width: 100%; font-size: .85rem; }
+.tablewrap { margin: .5rem 0 1.5rem; }
+/* C25 (maintainer decision, supersedes the 019 scroll fix): long text WRAPS in place —
+   no horizontal scrolling. overflow-wrap breaks even unbroken runs (ids, paths). */
+table { border-collapse: collapse; width: 100%; font-size: .85rem; }
+td { overflow-wrap: anywhere; }
 .toc { position: sticky; top: 0; background: Canvas; padding: .5rem 0;
        border-bottom: 1px solid #8884; z-index: 1; }
 .toc a { margin-right: 1rem; }

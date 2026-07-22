@@ -37,22 +37,32 @@ def _cols(conn: sqlite3.Connection, table: str) -> list[str]:
     return [row[1] for row in conn.execute(f"PRAGMA table_info({table})")]
 
 
-def _table(headers, rows) -> str:
-    head = "".join(f"<th>{esc(h)}</th>" for h in headers)
-    body = "".join(
-        "<tr>" + "".join(f"<td>{esc(cell)}</td>" for cell in row) + "</tr>" for row in rows
-    )
-    return (f'<div class="tablewrap"><table><thead><tr>{head}</tr></thead>'
-            f"<tbody>{body}</tbody></table></div>")
-
-
-def _fold(title: str, count: int, inner: str) -> str:
+def _fold(title: str, count: int, inner: str, anchor: str | None = None,
+          csv: str | None = None) -> str:
     """C21 (plan 019, maintainer decision): EVERY table folds closed — one consistent
     affordance instead of a size threshold. The summary keeps the count visible; browsers
     auto-expand closed <details> on find-in-page. Sole exception: the gap/screening warn
-    cards, which exist to be SEEN and are never folded."""
+    cards, which exist to be SEEN and are never folded.
+    C25: `anchor` gives the fold a jump target (graph aggregate nodes); `csv` renders a
+    download link to the sibling csv/<name>.csv the server emits beside review.html."""
     unit = "row" if count == 1 else "rows"
-    return (f"<details><summary>{esc(title)} ({count} {unit})</summary>{inner}</details>")
+    aid = f' id="{esc(anchor)}"' if anchor else ""
+    dl = (f' <a class="csv" href="csv/{esc(csv)}.csv" download>CSV</a>' if csv else "")
+    return (f"<details{aid}><summary>{esc(title)} ({count} {unit}){dl}</summary>"
+            f"{inner}</details>")
+
+
+def _table(headers, rows, row_ids: bool = False) -> str:
+    head = "".join(f"<th>{esc(h)}</th>" for h in headers)
+    body = "".join(
+        # row_ids: column 0 is a globally unique entity id (entity_index PK) — the <tr>
+        # anchor is the jump target for graph node links; same esc() as the hrefs, so
+        # link and target match byte-for-byte even for pathological ids (C25).
+        (f'<tr id="{esc(row[0])}">' if row_ids else "<tr>")
+        + "".join(f"<td>{esc(cell)}</td>" for cell in row) + "</tr>" for row in rows
+    )
+    return (f'<div class="tablewrap"><table><thead><tr>{head}</tr></thead>'
+            f"<tbody>{body}</tbody></table></div>")
 
 
 def _freshness(conn: sqlite3.Connection) -> str:
@@ -131,7 +141,8 @@ def _registers(conn, gates, ready):
         if not rows:
             empty.append(label)
             continue
-        parts.append(_fold(label, len(rows), _table(cols, rows)))
+        parts.append(_fold(label, len(rows), _table(cols, rows, row_ids=True),
+                           anchor=f"reg-{table}", csv=table))
     if empty:
         parts.append(f'<p class="empty">Empty families: {esc(", ".join(sorted(empty)))}</p>')
     return "".join(parts)
@@ -164,7 +175,8 @@ def _traceability(conn, gates, ready):
         return matrix + '<p class="empty">No trace edges recorded.</p>'
     return matrix + _fold("All trace edges", len(edges),
                           _table(["from", "relation", "to"],
-                                 [(f, r, t) for f, t, r in edges]))
+                                 [(f, r, t) for f, t, r in edges]),
+                          csv="trace_edges")
 
 
 def _execution(conn, gates, ready):
@@ -225,11 +237,13 @@ def _gaps(conn, gates, ready):
 
 
 # One entry per section — plan 015 additions register here.
+# Order (C25, maintainer decision): State → Relations → Data — related sections adjacent;
+# raw registers last, warnings at the end.
 SECTIONS = [
     ("overview", "Overview", _overview),
-    ("registers", "Registers", _registers),
     ("traceability", "Traceability", _traceability),
     ("execution", "Execution progress", _execution),
+    ("registers", "Registers", _registers),
     ("gaps", "Gap & screening notes", _gaps),
 ]
 
