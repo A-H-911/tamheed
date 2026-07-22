@@ -10,6 +10,45 @@ All notable changes to Tamheed are documented here. The format is based on
 
 ## [Unreleased]
 
+## [2.2.0] - 2026-07-22
+
+Second field-report hardening (plan 018; evidence **C17–C19** from the first *successful*
+production migration — the ACMP run under v2.1.0, verdict "production-quality"; archived at
+`plans/evidence/acmp-field-report-2-2026-07-22.md`). **No schema migration — existing 2.x
+packages are unaffected.**
+
+### Added
+- **Preview honesty ledgers (C17):** `status_coerced` — every v1 status word outside the
+  lifecycle vocabulary is reported with its proposed mapping (semantic defaults:
+  `Resolved→Implemented`, `Open`/`Monitoring`/`Active`→`Approved`, `Closed→Obsolete`); the
+  operator confirms or overrides via `package_migrate(..., status_map={...})`. Plus
+  `title_fallbacks`, per-file `partial_files` row counts, and the frozen validator's
+  sha256+size in the pre-flight result.
+- **Scenario prompt library (C19):** five ready-to-paste prompts (orient-resume with a
+  git-history cross-check, progress-sync, integrity-check, generate-report, slice-review)
+  ship in the bundle and are emitted into `<package>/prompts/` by migrate, adopt, and
+  `handoff_emit`.
+- **Cutover tooling (C19):** `handoff_emit(target_dir, subdir=…)`; a full operating-context
+  `CLAUDE.md` note with an MCP tool cheat-sheet; a `stale_references` report (v1-flow
+  pointers in `CLAUDE.md`/`AGENTS.md` as file:line + suggested replacement — the bare word
+  "Keystone" is never flagged).
+- **Viewer navigation & scale (C18):** sticky zero-JS section TOC; register families over 50
+  rows and the raw trace-edge dump fold behind `<details>`; wide tables now actually scroll
+  horizontally; migrated package metadata labeled `(v1-manifest-derived)`.
+- `entity_query` returns `total` beside the LIMIT'd rows.
+
+### Changed
+- Migration: ADR/experiment/POC parse failures and unknown diagram stems now fall through to
+  the narrative catch-all (preserved as documents, still listed in `unmapped`); narrative
+  documents keep their full v1 front matter in `custom_attributes`; title aliases never
+  resolve to the id column.
+- Viewer freshness: a package with no recorded v2 activity says so ("package record dated …;
+  no v2 activity recorded yet") instead of presenting the v1 manifest date as activity.
+- `handoff_emit` on plugin-hosted servers no longer writes a project `.mcp.json` entry (the
+  installed plugin already registers the server; the old emit hard-coded a machine- and
+  version-specific plugin-cache path).
+- Operator-facing tool descriptions de-jargoned.
+
 ## [2.1.0] - 2026-07-21
 
 Field-report hardening (plan 017; evidence **C11–C16** from the first production v1→v2
