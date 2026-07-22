@@ -23,6 +23,13 @@ td { overflow-wrap: anywhere; }
 .toc a { margin-right: 1rem; }
 section { scroll-margin-top: 3rem; }
 details > summary { font-size: 1rem; font-weight: 600; margin: 1.5rem 0 .5rem; cursor: pointer; }
+.graphwrap { overflow: auto; max-height: 80vh; margin: .5rem 0 1.5rem; border: 1px solid #8884; }
+.graph path { fill: none; stroke: #888; stroke-opacity: .22; }
+.graph path:hover { stroke-opacity: 1; stroke-width: 2; }
+.graph a:hover circle, .graph a:focus circle { stroke: currentColor; stroke-width: 2; }
+.graph text { font-size: 11px; fill: currentColor; }
+.g0 { fill: #4c78a8; } .g1 { fill: #f58518; } .g2 { fill: #54a24b; } .g3 { fill: #e45756; }
+.g4 { fill: #72b7b2; } .g5 { fill: #eeca3b; } .g6 { fill: #b279a2; } .g7 { fill: #9d755d; }
 /* ponytail: closed details hide in print; add [open]-forcing print CSS if a report asks */
 th, td { border: 1px solid #8884; padding: .3rem .5rem; text-align: left; vertical-align: top; }
 th { background: #8881; }

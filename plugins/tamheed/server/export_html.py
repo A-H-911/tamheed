@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import html as _html
 import json
+import math
 import sqlite3
 from pathlib import Path
 
@@ -115,6 +116,135 @@ def _overview(conn, gates, ready):
             f'<p>Audit evidence: {esc(evidence.get("evidenced", 0))} evidenced / '
             f'{esc(evidence.get("narrated", 0))} narrated'
             " (narrated = the graded party grading itself, C7)</p>" + identity)
+
+
+# ------------------------------------------------------------------ relations graph
+# C25 (maintainer req 4): every entity as a clickable node, every trace edge drawn —
+# deterministic pure-Python geometry, inline SVG, zero JS, fragment links only.
+_G_GAP = 3        # empty slots between adjacent families
+_G_SPACING = 8.0  # px of arc per slot (node diameter 6 + padding)
+_G_RMIN = 260.0
+_G_LABELS = 140   # radial band outside the circle for family labels
+_G_AGG_LIMIT = 4000  # ponytail: family-aggregate view above this; full graph proven ~2.3k
+
+
+def _grouped_nodes(nodes):
+    order = {t: i for i, t in enumerate(ENTITY_TABLES)}
+    nodes = sorted(nodes, key=lambda n: (order.get(n[1], 99), n[1], n[0]))
+    fams: list[tuple[str, list[str]]] = []
+    for nid, fam in nodes:
+        if not fams or fams[-1][0] != fam:
+            fams.append((fam, []))
+        fams[-1][1].append(nid)
+    return fams
+
+
+def _graph_full(nodes, edges) -> str:
+    fams = _grouped_nodes(nodes)
+    S = len(nodes) + _G_GAP * len(fams)
+    R = max(_G_RMIN, S * _G_SPACING / (2 * math.pi))
+    half = R + _G_LABELS + 10
+    pos: dict[str, tuple[float, float]] = {}
+    node_parts, label_parts = [], []
+    slot = 0
+    for fi, (fam, ids) in enumerate(fams):
+        start = slot
+        for nid in ids:
+            th = 2 * math.pi * slot / S - math.pi / 2
+            x, y = R * math.cos(th), R * math.sin(th)
+            pos[nid] = (x, y)  # 0.1px rounding absorbs cross-platform libm variation
+            node_parts.append(
+                f'<a href="#{esc(nid)}"><circle cx="{x:.1f}" cy="{y:.1f}" r="3" '
+                f'class="g{fi % 8}"/><title>{esc(nid)} ({esc(fam)})</title></a>')
+            slot += 1
+        mid = 2 * math.pi * ((start + slot - 1) / 2) / S - math.pi / 2
+        lx, ly = (R + 16) * math.cos(mid), (R + 16) * math.sin(mid)
+        anchor = "start" if math.cos(mid) >= 0 else "end"
+        label_parts.append(
+            f'<text x="{lx:.1f}" y="{ly:.1f}" text-anchor="{anchor}">'
+            f"{esc(fam)} ({len(ids)})</text>")
+        slot += _G_GAP
+    edge_parts = []
+    for f, t, rel in edges:
+        if f not in pos or t not in pos:
+            continue
+        (x1, y1), (x2, y2) = pos[f], pos[t]
+        # quadratic pull toward the center: short edges hug the rim, long ones sweep
+        # through the middle — the chord-diagram trick that keeps 1,000 edges legible
+        cx, cy = 0.35 * (x1 + x2) / 2, 0.35 * (y1 + y2) / 2
+        edge_parts.append(
+            f'<path d="M{x1:.1f} {y1:.1f} Q{cx:.1f} {cy:.1f} {x2:.1f} {y2:.1f}">'
+            f"<title>{esc(f)} —{esc(rel)}→ {esc(t)}</title></path>")
+    d = f"{2 * half:.0f}"
+    return (f'<svg class="graph" viewBox="{-half:.0f} {-half:.0f} {d} {d}" '
+            f'width="{d}" height="{d}" xmlns="http://www.w3.org/2000/svg">'
+            f'<g class="edges">{"".join(edge_parts)}</g>'
+            f'<g class="nodes">{"".join(node_parts)}</g>'
+            f'<g class="labels">{"".join(label_parts)}</g></svg>')
+
+
+def _graph_agg(nodes, edges) -> str:
+    """Above _G_AGG_LIMIT: one node per family, linked to its register fold."""
+    fams = _grouped_nodes(nodes)
+    fam_of = {nid: fam for nid, fam in nodes}
+    pair_counts: dict[tuple[str, str], int] = {}
+    for f, t, _rel in edges:
+        fa, fb = fam_of.get(f), fam_of.get(t)
+        if fa and fb:
+            pair_counts[tuple(sorted((fa, fb)))] = \
+                pair_counts.get(tuple(sorted((fa, fb))), 0) + 1
+    S = max(len(fams), 8)
+    R = max(200.0, S * 40.0 / (2 * math.pi))
+    half = R + _G_LABELS + 10
+    pos = {}
+    node_parts, label_parts = [], []
+    for i, (fam, ids) in enumerate(fams):
+        th = 2 * math.pi * i / S - math.pi / 2
+        x, y = R * math.cos(th), R * math.sin(th)
+        pos[fam] = (x, y)
+        r = 6 + round(2 * math.sqrt(len(ids)))
+        table = ENTITY_TABLES.get(fam, fam)
+        node_parts.append(
+            f'<a href="#reg-{esc(table)}"><circle cx="{x:.1f}" cy="{y:.1f}" r="{r}" '
+            f'class="g{i % 8}"/><title>{esc(fam)}: {len(ids)} entities</title></a>')
+        anchor = "start" if math.cos(th) >= 0 else "end"
+        lx, ly = (R + r + 10) * math.cos(th), (R + r + 10) * math.sin(th)
+        label_parts.append(f'<text x="{lx:.1f}" y="{ly:.1f}" text-anchor="{anchor}">'
+                           f"{esc(fam)} ({len(ids)})</text>")
+    edge_parts = []
+    for (fa, fb), n in sorted(pair_counts.items()):
+        if fa not in pos or fb not in pos or fa == fb:
+            continue
+        (x1, y1), (x2, y2) = pos[fa], pos[fb]
+        w = min(6, 1 + n // 10)
+        edge_parts.append(
+            f'<path d="M{x1:.1f} {y1:.1f} L{x2:.1f} {y2:.1f}" stroke-width="{w}">'
+            f"<title>{esc(fa)} ↔ {esc(fb)}: {n} edge(s)</title></path>")
+    d = f"{2 * half:.0f}"
+    return (f'<svg class="graph" viewBox="{-half:.0f} {-half:.0f} {d} {d}" '
+            f'width="{d}" height="{d}" xmlns="http://www.w3.org/2000/svg">'
+            f'<g class="edges">{"".join(edge_parts)}</g>'
+            f'<g class="nodes">{"".join(node_parts)}</g>'
+            f'<g class="labels">{"".join(label_parts)}</g></svg>')
+
+
+def _graph(conn, gates, ready):
+    nodes = conn.execute(
+        "SELECT id, entity_type FROM entity_index ORDER BY id").fetchall()
+    edges = conn.execute("SELECT from_id, to_id, relation FROM trace_edges"
+                         " ORDER BY from_id, to_id, relation").fetchall()
+    if not nodes:
+        return '<p class="empty">No entities recorded.</p>'
+    svg = _graph_agg(nodes, edges) if len(nodes) > _G_AGG_LIMIT \
+        else _graph_full(nodes, edges)
+    hint = ("Hover a family for its size; click to jump to its register."
+            if len(nodes) > _G_AGG_LIMIT else
+            "Hover a node for its id; click to jump to its register row. Zoomed out "
+            "this is a density silhouette — scroll at 1:1 to navigate.")
+    return (f"<details><summary>Relations graph ({len(nodes)} nodes, "
+            f"{len(edges)} edges)</summary>"
+            f'<p class="lead">{hint}</p>'
+            f'<div class="graphwrap">{svg}</div></details>')
 
 
 def _design_ahead(conn) -> str:
@@ -241,6 +371,7 @@ def _gaps(conn, gates, ready):
 # raw registers last, warnings at the end.
 SECTIONS = [
     ("overview", "Overview", _overview),
+    ("graph", "Relations graph", _graph),
     ("traceability", "Traceability", _traceability),
     ("execution", "Execution progress", _execution),
     ("registers", "Registers", _registers),

@@ -108,9 +108,11 @@ class ExportHtmlTest(unittest.TestCase):
         self.assertIn("<details><summary>Package identity (", out_a)
         self.assertIn("<details><summary>Requirement coverage matrix (", out_a)
         self.assertNotIn("<details open", out_a)               # everything closed
-        # every table lives inside a details fold (anchored or not)
-        self.assertEqual(out_a.count('<div class="tablewrap">'),
-                         out_a.count("<details"))
+        # every table lives inside a details fold (anchored or not); the graph fold
+        # wraps a graphwrap instead of a tablewrap
+        self.assertEqual(out_a.count("<details"),
+                         out_a.count('<div class="tablewrap">')
+                         + out_a.count('<div class="graphwrap">'))
         # determinism at scale: byte-identical re-export
         self.assertEqual(out_a, self._export(str(Path(self._tmp.name) / "b.html")))
 
@@ -143,6 +145,74 @@ class ExportHtmlTest(unittest.TestCase):
         srv.package_close()
         srv.package_create("fresh", "Fresh", "rnd")
         self.assertNotIn("(v1-manifest-derived)", self._export())
+
+    # -------------------------------------------- plan 020 phase 3 (C25): relations graph
+
+    def test_graph_section_renders_with_toc(self):
+        self._open_demo_copy()
+        out = self._export()
+        self.assertIn('<section id="graph">', out)
+        self.assertIn("Relations graph (", out)
+        self.assertIn('<div class="graphwrap">', out)
+        self.assertIn("<svg", out)
+        self.assertIn('href="#graph"', out)              # TOC entry
+
+    def test_graph_nodes_link_to_register_rows(self):
+        self._open_demo_copy()
+        out = self._export()
+        self.assertIn('<a href="#FR-001"><circle', out)  # node = fragment link
+        self.assertIn('<tr id="FR-001">', out)           # target = anchored row
+
+    def test_every_graph_href_resolves(self):
+        import re as _re
+        self._open_demo_copy()
+        out = self._export()
+        graph = out.split('<section id="graph">')[1].split("</section>")[0]
+        targets = set(_re.findall(r'<tr id="([^"]*)"', out))
+        targets |= {a for a, _t, _f in viewer.SECTIONS}
+        targets |= set(_re.findall(r'<details id="([^"]*)"', out))
+        refs = _re.findall(r'href="#([^"]*)"', graph)
+        self.assertTrue(refs)                            # the graph actually links
+        for ref in refs:
+            self.assertIn(ref, targets, f"dead graph link #{ref}")
+
+    def test_graph_deterministic_at_scale(self):
+        srv.package_create("big", "Big", "rnd")
+        srv.entity_upsert([{"type": "risk", "id": f"RISK-{i:03d}", "title": f"r{i}"}
+                           for i in range(1, 201)])
+        srv.entity_upsert([{"type": "test", "id": f"TEST-{i:03d}", "title": f"t{i}"}
+                           for i in range(1, 101)])
+        srv.entity_upsert([{"type": "trace-edge", "from_id": f"TEST-{i:03d}",
+                            "to_id": f"RISK-{(i * 7) % 200 + 1:03d}",
+                            "relation": "relates_to"} for i in range(1, 101)])
+        a = self._export(str(Path(self._tmp.name) / "a.html"))
+        b = self._export(str(Path(self._tmp.name) / "b.html"))
+        self.assertEqual(a, b)                           # byte-deterministic at scale
+        self.assertIn("Relations graph (300 nodes, 100 edges)", a)
+
+    def test_graph_aggregates_above_limit(self):
+        old = viewer._G_AGG_LIMIT
+        viewer._G_AGG_LIMIT = 5
+        try:
+            srv.package_create("agg", "Agg", "rnd")
+            srv.entity_upsert([{"type": "risk", "id": f"RISK-{i:03d}", "title": "r"}
+                               for i in range(1, 11)])
+            out = self._export()
+        finally:
+            viewer._G_AGG_LIMIT = old
+        self.assertIn('href="#reg-risks"', out)          # family node -> register fold
+        self.assertNotIn('<a href="#RISK-001"><circle', out)
+
+    def test_hostile_id_stays_inert_in_graph(self):
+        srv.package_create("host", "H", "rnd")
+        srv.entity_upsert([
+            {"type": "risk", "id": 'RISK-1"><script>', "title": "x"},
+            {"type": "risk", "id": "RISK-2", "title": "y"},
+            {"type": "trace-edge", "from_id": 'RISK-1"><script>', "to_id": "RISK-2",
+             "relation": "relates_to"}])
+        out = self._export()
+        self.assertNotIn("<script", out)                 # esc() chokepoint holds
+        self.assertIn("RISK-1&quot;&gt;&lt;script&gt;", out)
 
     # ------------------------------------------------------------ (a) sections
 
