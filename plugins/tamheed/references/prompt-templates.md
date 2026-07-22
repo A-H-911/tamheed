@@ -55,7 +55,10 @@ bundle (`../prompts/`) and are emitted verbatim (only `{package}` substituted) i
 | `slice-review.md` | Slice/phase completion: audit ACs with evidence, bind commits, close out, stop at the gate |
 
 They are package artifacts for the *operator and executing agent*, not PRM- rows — no
-G-INJECT screening needed (trusted bundle content, no package-derived text).
+G-INJECT screening needed (trusted bundle content, no package-derived text). All three
+prompt surfaces (PRM rows → `handoff/*.md` emissions → this static library) follow the
+managed-emission sync model in `handoff.md`: re-emit refreshes, hand edits are detected and
+refused, nothing is silently clobbered.
 
 ## Wiring rules
 

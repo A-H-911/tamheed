@@ -59,3 +59,27 @@ emitted by the `handoff_emit(target_dir)` tool from `prompt` rows — never hand
    - On a clean screen: prompt files + `.mcp.json` + the `CLAUDE.md` note are written to the target.
 4. Emit the readiness verdict; if any critical gate fails, mark **not ready** and list the gaps instead
    of shipping prompts that assume readiness.
+
+## Prompt surfaces & the sync model (plan 019, C20)
+
+Three prompt surfaces exist, with distinct lifecycles — the relationship is managed, not
+implicit:
+
+| Surface | Source of truth | Lifecycle |
+|---|---|---|
+| `prompts` rows (`PRM-`) | THE governed source | Written at Stage 20 from the templates; G-INJECT-screened; superseded, never edited, like any approved entity |
+| `<target>/handoff/*.md` | Emission of the PRM rows | Managed: re-emit reports `unchanged` when identical, **refuses hand-edited files** (`diverged`) unless `force=true` |
+| `<package>/prompts/*.md` | The plugin bundle (static scenario library) | Emitted by migrate/adopt/handoff; plugin-versioned, deliberately NOT DB-backed; same managed-emission rules |
+
+The CLAUDE.md operating note is append-once; its stale-v1 warning lives in a marker-managed
+block that retracts itself when a later emit's scan is clean. Re-running `handoff_emit` is
+therefore the standing cutover verifier: everything `unchanged`, no warnings, no
+`restated_content` findings = the cutover is done and undrifted.
+
+**Reference, don't restate.** Agent-control files (CLAUDE.md/AGENTS.md) should cite the
+package (`entity_query`, `gate_run`, `review.html`, the prompt library) rather than copying
+register content — copies drift silently. When quoting a load-bearing subset is genuinely
+useful (e.g. invariants an agent must see without a tool call), label it as a snapshot AND
+keep the reference beside it; `handoff_emit` reports such blocks as `labeled-snapshot`
+(verify currency) and unlabeled copies as `unlabeled` (with a suggested reference rewrite).
+State each fact once: CLAUDE.md imports AGENTS.md — keep Claude-specific notes only there.

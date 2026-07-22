@@ -90,6 +90,12 @@ the v1 validator — silently undoing the migration.
    executing agent records progress through the tools from now on.
 3. Mark the v1 package directory as a frozen archive (a top-line note in its README is
    enough) so no future session mistakes it for the live record.
+3b. **Reference, don't restate** (plan 019): when authoring `AGENTS.md`/`CLAUDE.md`, cite the
+   package (`entity_query`, `gate_run`, `review.html`, the prompt library) instead of copying
+   register content — copies drift silently. If you deliberately quote a load-bearing subset
+   (e.g. invariants), label it as a snapshot and keep the reference beside it. Re-running
+   `handoff_emit` audits this: `restated_content` findings, the self-retracting stale-warning
+   block, and `unchanged` statuses make it the standing "is the cutover done?" check.
 4. **Slices need manual backfill**: v1 had no governed slice concept, so the roadmap ladder
    migrates as phases + preserved prose only. Author `slice` rows (and bind ACs to them)
    through the normal v2 flow when execution resumes.

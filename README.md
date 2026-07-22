@@ -226,10 +226,17 @@ entity counts and gate deltas, then everything rolls back — nothing is written
 
 `handoff_emit` installs the executor-side wiring into the target project — a `CLAUDE.md` operating note
 with a full MCP tool cheat-sheet (plus `.mcp.json` on standalone installs; plugin installs already
-register the server) — and reports `stale_references`: any leftover v1-flow pointers in the project's
-`CLAUDE.md`/`AGENTS.md`, each with a suggested replacement. The executing agent records progress through
-the same governed write path that built the package (`progress_update`, `audit_record` with evidence
-refs, `work_bind` binding commits/PRs to the `FR-`/`AC-`/`SL-` they satisfy).
+register the server). **Every emitted file is managed**: re-running emit reports each file as
+`written`/`unchanged`/`diverged` — a file you hand-edited is never silently overwritten (pass
+`force=true` to replace it deliberately), and the stale-v1 warning block retracts itself once your
+agent-control files are clean, so *re-running `handoff_emit` is the standing "is the cutover done?"
+check*. It also reports `stale_references` (leftover v1-flow pointers, each with a suggested
+replacement) and `restated_content` (package register content copied into `CLAUDE.md`/`AGENTS.md` —
+copies drift silently; the report suggests the reference form, and blocks that already cite
+`entity_query`/`review.html` are gently asked to verify currency instead). The executing agent records
+progress through the same governed write path that built the package (`progress_update`,
+`audit_record` with evidence refs, `work_bind` binding commits/PRs to the `FR-`/`AC-`/`SL-` they
+satisfy).
 
 **Your package carries its own prompt library.** Migration, adoption, and handoff all emit
 `<package>/prompts/` — five ready-to-paste task prompts: `orient-resume` (re-orient an agent after a

@@ -35,7 +35,8 @@ Keystone 1.0.1.
 | 015 | Community extensibility + CONTRIBUTING | B9 | P3 | M | 007, 013, 014 | DONE |
 | 016 | Keystone close-out: successor banner + freeze | B12 | P3 | S | 014 | DONE |
 | 017 | Field-report hardening: core gates, shared pipeline, v1 dialect tolerance | B13 | P1 | L | 005–016 DONE, v2.0.0 tagged; evidence C11–C16 (ACMP run 2026-07-21) | DONE — v2.1.0; ACMP acceptance re-run SUCCEEDED 2026-07-21/22 (see plan 018 evidence) |
-| 018 | Second field report: preview honesty, viewer scale, prompt library, cutover tooling | B14 | P1 | L | 017 DONE + the successful ACMP migration; evidence C17–C19 | DONE — executed 2026-07-22, v2.2.0; maintainer ACMP re-migration pending |
+| 018 | Second field report: preview honesty, viewer scale, prompt library, cutover tooling | B14 | P1 | L | 017 DONE + the successful ACMP migration; evidence C17–C19 | DONE — v2.2.0; ACMP re-migration SUCCEEDED (zero repair loops — plan 019 evidence) |
+| 019 | Third field report: managed emissions, ledger ergonomics, viewer consistency | B15 | P1 | L | 018 DONE + the v2.2.0 ACMP re-migration; evidence C20–C22 | DONE — executed 2026-07-22, v2.3.0; acceptance = next ACMP handoff_emit (maintainer) |
 
 Status values: TODO | IN PROGRESS | DONE | BLOCKED (with one-line reason) | REJECTED (with
 one-line rationale).
@@ -53,6 +54,15 @@ export + freshness/lead renders (012); tamheed repo public from day one with WIP
 eval schedule disabled at close-out (016). **Execution driver: the maintainer runs the plans
 himself** — self-containment is the operative contract; this status table is the tracking
 surface.
+
+## Alignment record (2026-07-22, second entry — plan 019)
+
+The v2.2.0 ACMP re-migration was a clean regression pass: **zero repair loops**, every 2.1.0
+finding fixed-and-verified on real data, verdict "Ship it" (the preview is now sufficient
+grounds to migrate). The third field report's remaining asks — one structural leftover, two
+handoff_emit lifecycle nits, reporting ergonomics — plus the maintainer's system-wide sync
+questions (agent-control drift, the three prompt surfaces) became plan 019's evidence
+**C20–C22** (`plans/evidence/acmp-field-report-3-2026-07-22.md`).
 
 ## Alignment record (2026-07-22)
 

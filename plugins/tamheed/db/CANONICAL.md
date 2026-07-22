@@ -42,3 +42,11 @@ One loader/writer per package, guarded by a lockfile:
 - If `data/.lock` already exists, opening the store **fails loud** (`StoreLockedError`) — no
   waiting, no stealing. A crashed writer's stale lock is removed by the operator, deliberately.
 - The lock is released (file removed) when the store closes, including on error exit.
+
+## Byte-stability guarantee (field-proven, plan 019)
+
+An idle `package_open` → `package_close` round-trip on a committed store produces **zero
+git diff** — canonical text is byte-stable across open/close cycles (LF, no BOM, PK-ordered,
+minimal separators, load+dump idempotent; `check.py`'s canonical gate enforces it on the
+demo golden every run). Operators can and should lean on this: **"did anything change?" is a
+`git status` question.** Verified in production during the ACMP migration (evidence C20).
