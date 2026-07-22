@@ -14,7 +14,15 @@ h3 { font-size: 1rem; margin-top: 1.5rem; }
 .chip.pass { background: #1a7f3722; border-color: #1a7f37; }
 .chip.fail { background: #cf222e22; border-color: #cf222e; }
 .tablewrap { overflow-x: auto; margin: .5rem 0 1.5rem; }
-table { border-collapse: collapse; width: 100%; font-size: .85rem; }
+/* max-content lets wide tables exceed the wrap (which scrolls) instead of squeezing
+   columns into unreadable wrapped slivers; min-width keeps narrow tables full-width. */
+table { border-collapse: collapse; width: max-content; min-width: 100%; font-size: .85rem; }
+.toc { position: sticky; top: 0; background: Canvas; padding: .5rem 0;
+       border-bottom: 1px solid #8884; z-index: 1; }
+.toc a { margin-right: 1rem; }
+section { scroll-margin-top: 3rem; }
+details > summary { font-size: 1rem; font-weight: 600; margin: 1.5rem 0 .5rem; cursor: pointer; }
+/* ponytail: closed details hide in print; add [open]-forcing print CSS if a report asks */
 th, td { border: 1px solid #8884; padding: .3rem .5rem; text-align: left; vertical-align: top; }
 th { background: #8881; }
 .warn { border: 1px solid #cf222e; border-left-width: 4px; padding: .6rem .8rem; margin: .8rem 0;

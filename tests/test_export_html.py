@@ -14,6 +14,7 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO_ROOT / "plugins" / "tamheed" / "server"))
 
+import export_html as viewer  # noqa: E402
 import tamheed_server as srv  # noqa: E402
 
 DEMO_DATA = REPO_ROOT / "generated-samples" / "support-triage-agent-v2" / "data"
@@ -41,6 +42,59 @@ class ExportHtmlTest(unittest.TestCase):
         result = srv.export_html(output)
         self.assertTrue(result["ok"], result)
         return Path(result["path"]).read_text(encoding="utf-8")
+
+    # -------------------------------------------- plan 018 phase 2 (C18): navigation & scale
+
+    def test_toc_links_all_sections(self):
+        self._open_demo_copy()
+        out = self._export()
+        self.assertIn('<nav class="toc">', out)
+        for anchor, _title, _fn in viewer.SECTIONS:
+            self.assertIn(f'href="#{anchor}"', out)
+        self.assertIn("position: sticky", out)          # CSS is embedded in the page
+
+    def test_wide_table_css_scrolls(self):
+        self._open_demo_copy()
+        out = self._export()
+        self.assertIn("width: max-content", out)        # tables overflow the wrap...
+        self.assertIn("min-width: 100%", out)           # ...instead of squeezing columns
+        self.assertIn("overflow-x: auto", out)
+
+    def test_all_edges_table_always_collapsed(self):
+        self._open_demo_copy()
+        out = self._export()
+        self.assertIn("<details><summary>All trace edges (", out)
+
+    def test_large_register_collapses_small_stays_flat(self):
+        srv.package_create("big", "Big", "rnd")
+        srv.entity_upsert([{"type": "risk", "id": f"RISK-{i:03d}", "title": f"risk {i}"}
+                           for i in range(1, 61)])
+        srv.entity_upsert([{"type": "requirement", "id": "FR-001", "kind": "functional",
+                            "title": "t", "lifecycle_status": "Approved",
+                            "source_kind": "brief", "source_span": "x"}])
+        out_a = self._export("a.html")
+        self.assertIn("<details><summary>Risks (60 rows)</summary>", out_a)
+        self.assertIn("<h3>Requirements (1)</h3>", out_a)      # small family stays flat
+        self.assertNotIn("<summary>Requirements", out_a)
+        # determinism at scale: byte-identical re-export
+        self.assertEqual(out_a, self._export("b.html"))
+
+    def test_freshness_reports_no_v2_activity(self):
+        self._open_demo_copy()                     # migrated golden: no v2 timestamps
+        out = self._export()
+        self.assertIn("package record dated", out)
+        self.assertIn("no v2 activity recorded yet", out)
+        srv.progress_update([{"entry": "first real v2 work"}])
+        out2 = self._export()
+        self.assertNotIn("no v2 activity recorded yet", out2)
+        self.assertIn("latest recorded activity:", out2)
+
+    def test_migrated_package_metadata_labeled(self):
+        self._open_demo_copy()
+        self.assertIn("(v1-manifest-derived)", self._export())
+        srv.package_close()
+        srv.package_create("fresh", "Fresh", "rnd")
+        self.assertNotIn("(v1-manifest-derived)", self._export())
 
     # ------------------------------------------------------------ (a) sections
 
@@ -87,9 +141,13 @@ class ExportHtmlTest(unittest.TestCase):
         # ...only their escaped forms do
         self.assertIn("&lt;script&gt;alert(1)&lt;/script&gt;", out)
         self.assertIn("&quot;&gt;&lt;img src=x onerror=alert(1)&gt;", out)
-        # the viewer ships zero JS and zero data-derived links (javascript: is inert text)
+        # the viewer ships zero JS and zero DATA-derived links (javascript: is inert
+        # text). The only anchors allowed are the TOC's code-derived fragment links —
+        # a stronger pin than the old blanket <a> ban: exactly one per section, every
+        # href a #fragment.
         self.assertNotIn("<script", out)
-        self.assertNotIn("<a ", out)
+        self.assertEqual(out.count("<a "), len(viewer.SECTIONS))
+        self.assertEqual(out.count('href="'), out.count('href="#'))
         self.assertNotIn('href="javascript:', out)
         self.assertIn('http-equiv="Content-Security-Policy"', out)
         self.assertIn("default-src 'none'", out)

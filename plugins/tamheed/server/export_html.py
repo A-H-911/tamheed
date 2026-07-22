@@ -46,18 +46,27 @@ def _table(headers, rows) -> str:
             f"<tbody>{body}</tbody></table></div>")
 
 
+COLLAPSE_THRESHOLD = 50  # ~two screens of rows: past skimmable, fold behind a summary
+
+
 def _freshness(conn: sqlite3.Connection) -> str:
     """C1: freshness from stored timestamps, never the wall clock (determinism)."""
-    row = conn.execute("SELECT iteration FROM packages LIMIT 1").fetchone()
-    iteration = row[0] if row else "?"
+    row = conn.execute("SELECT iteration, created_at FROM packages LIMIT 1").fetchone()
+    iteration, created = (row[0], row[1]) if row else ("?", None)
     latest = None
-    for table in ["packages", *sorted(set(ENTITY_TABLES.values()))]:
+    for table in sorted(set(ENTITY_TABLES.values())):
         for col in _TS_COLUMNS:
             if col in _cols(conn, table):
                 (value,) = conn.execute(f"SELECT MAX({col}) FROM {table}").fetchone()
                 if value is not None and (latest is None or value > latest):
                     latest = value
-    return f"iteration {iteration} · latest recorded activity: {latest or 'none recorded'}"
+    if latest is None:
+        # Field-evidence C18: right after migration the only date around is the package
+        # record's own (often the v1 manifest's) — calling it "activity" reads as
+        # staleness. Say what it actually is.
+        return (f"iteration {iteration} · package record dated {created or 'unknown'}; "
+                "no v2 activity recorded yet")
+    return f"iteration {iteration} · latest recorded activity: {latest}"
 
 
 # ------------------------------------------------------------------ sections
@@ -74,7 +83,15 @@ def _overview(conn, gates, ready):
     evidence = gates.get("audit_evidence", {})
     cols = [c for c in _cols(conn, "packages") if c != "custom_attributes"]
     row = conn.execute(f"SELECT {', '.join(cols)} FROM packages LIMIT 1").fetchone()
-    identity = (_table(["field", "value"], list(zip(cols, row))) if row
+    attrs = conn.execute("SELECT custom_attributes FROM packages LIMIT 1").fetchone()
+    # C18: on migrated packages, mode/profile/created_at are v1-manifest passthrough
+    # (ACMP read "mode: resume" as the report's own state) — label them for what they are.
+    migrated = bool(attrs and attrs[0] and "v1_manifest" in attrs[0])
+    identity_rows = [(c, f"{v} (v1-manifest-derived)"
+                      if migrated and v is not None and c in ("mode", "profile", "created_at")
+                      else v)
+                     for c, v in zip(cols, row)] if row else []
+    identity = (_table(["field", "value"], identity_rows) if row
                 else '<p class="empty">No package row.</p>')
     return (f'<p class="ready">Gate verdict: {"READY" if ready else "NOT READY"}</p>'
             f'<p>{"".join(chips)}</p>'
@@ -107,7 +124,13 @@ def _registers(conn, gates, ready):
         if not rows:
             empty.append(label)
             continue
-        parts.append(f"<h3>{esc(label)} ({len(rows)})</h3>" + _table(cols, rows))
+        if len(rows) > COLLAPSE_THRESHOLD:
+            # C18: at field scale (ACMP: 2.1 MB, renderer freezes) big families fold
+            # behind a JS-free <details>; the summary keeps the count visible.
+            parts.append(f"<details><summary>{esc(label)} ({len(rows)} rows)</summary>"
+                         + _table(cols, rows) + "</details>")
+        else:
+            parts.append(f"<h3>{esc(label)} ({len(rows)})</h3>" + _table(cols, rows))
     if empty:
         parts.append(f'<p class="empty">Empty families: {esc(", ".join(sorted(empty)))}</p>')
     return "".join(parts)
@@ -135,10 +158,12 @@ def _traceability(conn, gates, ready):
              *(", ".join(sorted(links.get(rid, {}).get(b, ()))) for b in _MATRIX_COLUMNS)]
             for rid, title, mvp in reqs]
     matrix = _table(["requirement", "title", "mvp", *_MATRIX_COLUMNS], rows)
-    edge_table = (_table(["from", "relation", "to"],
-                         [(f, r, t) for f, t, r in edges])
-                  if edges else '<p class="empty">No trace edges recorded.</p>')
-    return matrix + f"<h3>All trace edges ({len(edges)})</h3>" + edge_table
+    if not edges:
+        return matrix + '<p class="empty">No trace edges recorded.</p>'
+    # The raw edge dump is redundant with the matrix above — always folded (C18).
+    return (matrix + f"<details><summary>All trace edges ({len(edges)} rows)</summary>"
+            + _table(["from", "relation", "to"], [(f, r, t) for f, t, r in edges])
+            + "</details>")
 
 
 def _execution(conn, gates, ready):
@@ -214,8 +239,14 @@ def render(conn: sqlite3.Connection, gates: dict, ready: bool) -> str:
         f'<p class="freshness">Freshness: {esc(freshness)}</p>{fn(conn, gates, ready)}</section>'
         for anchor, title, fn in SECTIONS)
     css = CSS_PATH.read_text(encoding="utf-8")
+    # C18: sticky in-page navigation. These are the ONLY anchors in the export — all
+    # code-derived fragment links (W-V2-6 bans data-derived links, and the hostile-content
+    # test pins "every href is a #fragment").
+    toc = '<nav class="toc">' + "".join(
+        f'<a href="#{anchor}">{esc(title)}</a>' for anchor, title, _fn in SECTIONS
+    ) + "</nav>"
     return ('<!doctype html>\n<html lang="en">\n<head>\n<meta charset="utf-8">\n'
             f'<meta http-equiv="Content-Security-Policy" content="{_CSP}">\n'
             f"<title>{esc(name)} — Tamheed review</title>\n<style>\n{css}</style>\n"
             f"</head>\n<body>\n<h1>{esc(name)} — Tamheed review surface</h1>\n"
-            f"{sections}\n</body>\n</html>\n")
+            f"{toc}\n{sections}\n</body>\n</html>\n")
