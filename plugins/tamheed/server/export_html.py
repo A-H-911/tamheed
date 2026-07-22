@@ -46,7 +46,13 @@ def _table(headers, rows) -> str:
             f"<tbody>{body}</tbody></table></div>")
 
 
-COLLAPSE_THRESHOLD = 50  # ~two screens of rows: past skimmable, fold behind a summary
+def _fold(title: str, count: int, inner: str) -> str:
+    """C21 (plan 019, maintainer decision): EVERY table folds closed — one consistent
+    affordance instead of a size threshold. The summary keeps the count visible; browsers
+    auto-expand closed <details> on find-in-page. Sole exception: the gap/screening warn
+    cards, which exist to be SEEN and are never folded."""
+    unit = "row" if count == 1 else "rows"
+    return (f"<details><summary>{esc(title)} ({count} {unit})</summary>{inner}</details>")
 
 
 def _freshness(conn: sqlite3.Connection) -> str:
@@ -91,7 +97,8 @@ def _overview(conn, gates, ready):
                       if migrated and v is not None and c in ("mode", "profile", "created_at")
                       else v)
                      for c, v in zip(cols, row)] if row else []
-    identity = (_table(["field", "value"], identity_rows) if row
+    identity = (_fold("Package identity", len(identity_rows),
+                      _table(["field", "value"], identity_rows)) if row
                 else '<p class="empty">No package row.</p>')
     return (f'<p class="ready">Gate verdict: {"READY" if ready else "NOT READY"}</p>'
             f'<p>{"".join(chips)}</p>'
@@ -124,13 +131,7 @@ def _registers(conn, gates, ready):
         if not rows:
             empty.append(label)
             continue
-        if len(rows) > COLLAPSE_THRESHOLD:
-            # C18: at field scale (ACMP: 2.1 MB, renderer freezes) big families fold
-            # behind a JS-free <details>; the summary keeps the count visible.
-            parts.append(f"<details><summary>{esc(label)} ({len(rows)} rows)</summary>"
-                         + _table(cols, rows) + "</details>")
-        else:
-            parts.append(f"<h3>{esc(label)} ({len(rows)})</h3>" + _table(cols, rows))
+        parts.append(_fold(label, len(rows), _table(cols, rows)))
     if empty:
         parts.append(f'<p class="empty">Empty families: {esc(", ".join(sorted(empty)))}</p>')
     return "".join(parts)
@@ -157,13 +158,13 @@ def _traceability(conn, gates, ready):
     rows = [[rid, title, "MVP" if mvp else "",
              *(", ".join(sorted(links.get(rid, {}).get(b, ()))) for b in _MATRIX_COLUMNS)]
             for rid, title, mvp in reqs]
-    matrix = _table(["requirement", "title", "mvp", *_MATRIX_COLUMNS], rows)
+    matrix = _fold("Requirement coverage matrix", len(rows),
+                   _table(["requirement", "title", "mvp", *_MATRIX_COLUMNS], rows))
     if not edges:
         return matrix + '<p class="empty">No trace edges recorded.</p>'
-    # The raw edge dump is redundant with the matrix above — always folded (C18).
-    return (matrix + f"<details><summary>All trace edges ({len(edges)} rows)</summary>"
-            + _table(["from", "relation", "to"], [(f, r, t) for f, t, r in edges])
-            + "</details>")
+    return matrix + _fold("All trace edges", len(edges),
+                          _table(["from", "relation", "to"],
+                                 [(f, r, t) for f, t, r in edges]))
 
 
 def _execution(conn, gates, ready):
@@ -177,22 +178,26 @@ def _execution(conn, gates, ready):
     ac_rows = [[ac_id, title, lifecycle, verdict or "Pending",
                 "evidenced" if evidence else ("narrated" if verdict else ""), evidence]
                for ac_id, title, lifecycle, verdict, evidence in acs]
-    parts = ["<h3>Acceptance criteria × audit verdicts</h3>",
-             _table(["ac", "title", "lifecycle", "verdict", "evidence class", "evidence"],
-                    ac_rows)
-             if ac_rows else '<p class="empty">No acceptance criteria recorded.</p>']
+    parts = [_fold("Acceptance criteria × audit verdicts", len(ac_rows),
+                   _table(["ac", "title", "lifecycle", "verdict", "evidence class",
+                           "evidence"], ac_rows))
+             if ac_rows else
+             '<h3>Acceptance criteria × audit verdicts</h3>'
+             '<p class="empty">No acceptance criteria recorded.</p>']
     entries = conn.execute(
         "SELECT id, occurred_at, entry, phase_id, slice_id FROM progress_entries"
         " ORDER BY id").fetchall()
-    parts.append("<h3>Progress log</h3>")
-    parts.append(_table(["id", "occurred at", "entry", "phase", "slice"], entries)
-                 if entries else '<p class="empty">No progress entries recorded.</p>')
+    parts.append(_fold("Progress log", len(entries),
+                       _table(["id", "occurred at", "entry", "phase", "slice"], entries))
+                 if entries else
+                 '<h3>Progress log</h3><p class="empty">No progress entries recorded.</p>')
     changes = conn.execute(
         "SELECT id, iteration, decision_ref, description FROM scope_changes"
         " ORDER BY id").fetchall()
-    parts.append("<h3>Scope changes</h3>")
-    parts.append(_table(["id", "iteration", "authorized by", "description"], changes)
-                 if changes else '<p class="empty">No scope changes recorded.</p>')
+    parts.append(_fold("Scope changes", len(changes),
+                       _table(["id", "iteration", "authorized by", "description"], changes))
+                 if changes else
+                 '<h3>Scope changes</h3><p class="empty">No scope changes recorded.</p>')
     return "".join(parts)
 
 

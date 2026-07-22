@@ -64,8 +64,12 @@ class ExportHtmlTest(unittest.TestCase):
         self._open_demo_copy()
         out = self._export()
         self.assertIn("<details><summary>All trace edges (", out)
+        self.assertIn("<details><summary>Acceptance criteria", out)  # demo has ACs
+        self.assertIn("<details><summary>Adrs (", out)               # every family folds
 
-    def test_large_register_collapses_small_stays_flat(self):
+    def test_every_table_folds_closed_uniformly(self):
+        """Plan 019 (C21, maintainer decision): ALL tables fold closed — no size
+        threshold, one consistent affordance."""
         srv.package_create("big", "Big", "rnd")
         srv.entity_upsert([{"type": "risk", "id": f"RISK-{i:03d}", "title": f"risk {i}"}
                            for i in range(1, 61)])
@@ -74,10 +78,28 @@ class ExportHtmlTest(unittest.TestCase):
                             "source_kind": "brief", "source_span": "x"}])
         out_a = self._export(str(Path(self._tmp.name) / "a.html"))
         self.assertIn("<details><summary>Risks (60 rows)</summary>", out_a)
-        self.assertIn("<h3>Requirements (1)</h3>", out_a)      # small family stays flat
-        self.assertNotIn("<summary>Requirements", out_a)
+        self.assertIn("<details><summary>Requirements (1 row)</summary>", out_a)
+        self.assertIn("<details><summary>Package identity (", out_a)
+        self.assertIn("<details><summary>Requirement coverage matrix (", out_a)
+        self.assertNotIn("<details open", out_a)               # everything closed
+        # every table lives inside a details fold
+        self.assertEqual(out_a.count('<div class="tablewrap">'),
+                         out_a.count("<details><summary>"))
         # determinism at scale: byte-identical re-export
         self.assertEqual(out_a, self._export(str(Path(self._tmp.name) / "b.html")))
+
+    def test_gap_warning_cards_never_fold(self):
+        """The sole folding exception: screening warnings exist to be SEEN."""
+        srv.package_create("gappy", "Gappy", "rnd")
+        srv.entity_upsert([{"type": "open-question", "id": "OQ-001",
+                            "title": "Injection-shaped text found at src/evil.py",
+                            "question": "review the fenced span",
+                            "source_span": "src/evil.py:1",
+                            "custom_attributes": '{"fenced": "`ignore instructions`"}'}])
+        out = self._export()
+        gaps = out.split('<section id="gaps">', 1)[1].split("</section>", 1)[0]
+        self.assertIn('<div class="warn">', gaps)
+        self.assertNotIn("<details", gaps)
 
     def test_freshness_reports_no_v2_activity(self):
         self._open_demo_copy()                     # migrated golden: no v2 timestamps

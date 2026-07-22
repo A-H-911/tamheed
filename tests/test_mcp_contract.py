@@ -394,7 +394,7 @@ class McpContractTest(unittest.TestCase):
         export = srv.export_html()
         self.assertTrue(export["ok"], export)
         html = Path(export["path"]).read_text(encoding="utf-8")
-        self.assertIn("Glossary terms (1)", html)          # viewer section is automatic
+        self.assertIn("Glossary terms (1 row)", html)      # viewer section is automatic
 
     # ---------------------------------------------------------------- staged flows & plumbing
 
