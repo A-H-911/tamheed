@@ -88,7 +88,12 @@ Default to **interactive**. Modes are defined in `references/modes.md`:
 - `update` — the agile heart of v2: diff-aware re-derivation, execution-progress sync, and typed
   scope changes (D-UPDATE; see `references/modes.md`).
 - `migrate` — walk a conformant v1 Keystone package into the store (`package_migrate`, staged and
-  operator-gated; mapping contract in `references/migration-v1.md`).
+  operator-gated; mapping contract in `references/migration-v1.md`). **Present the preview's
+  ledgers to the operator before confirming**: `status_coerced` as a multi-select confirmation
+  (each proposed mapping, options = the allowed lifecycle values) passed back as
+  `status_map={...}` on the confirm call; `zero_families`, `title_fallbacks`, `partial_files`
+  and `count_deltas` explained, never glossed. On success the package carries a ready-made
+  prompt library in `<package>/prompts/` — point the operator at it.
 - `adopt` — onboard a project that never used Tamheed (`package_adopt`, staged): nothing inferred
   is Approved, provenance is code-shaped, the gap report is first-class (`references/adopt.md`).
 

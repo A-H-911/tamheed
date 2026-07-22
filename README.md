@@ -201,7 +201,10 @@ unchanged:
 /tamheed:tamheed ./old-project/planning-package --mode migrate --package-dir ./planning
 ```
 
-Full runbook: [`docs/migrate-from-keystone.md`](docs/migrate-from-keystone.md).
+The preview reports every judgment call before anything is written — including `status_coerced`
+(v1 status words like `Open`/`Resolved` with their proposed lifecycle mappings, which you confirm
+or override before populate), zero-family tripwires, and per-file coverage ledgers. Full runbook:
+[`docs/migrate-from-keystone.md`](docs/migrate-from-keystone.md).
 
 **`adopt` — onboard a brownfield project that never used Tamheed.** Staged scan → preview → confirm.
 Four rules are enforced mechanically: nothing inferred is ever `Approved` (everything lands `Proposed`),
@@ -221,12 +224,40 @@ entity counts and gate deltas, then everything rolls back — nothing is written
 
 ### During and after execution
 
-`handoff_emit` installs the executor-side MCP config (`.mcp.json` + a `CLAUDE.md` note) into the target
-project, so the executing agent records progress through the same governed write path that built the
-package (`progress_update`, `audit_record` with evidence refs, `work_bind` binding commits/PRs to the
-`FR-`/`AC-`/`SL-` they satisfy). You follow along through the committed **`review.html`** (regenerated via
-`export_html` — deterministic, so its diffs are meaningful): gate chips, every register with its
-three-axis status, the traceability matrix, the execution-progress view, and the gap/screening notes.
+`handoff_emit` installs the executor-side wiring into the target project — a `CLAUDE.md` operating note
+with a full MCP tool cheat-sheet (plus `.mcp.json` on standalone installs; plugin installs already
+register the server) — and reports `stale_references`: any leftover v1-flow pointers in the project's
+`CLAUDE.md`/`AGENTS.md`, each with a suggested replacement. The executing agent records progress through
+the same governed write path that built the package (`progress_update`, `audit_record` with evidence
+refs, `work_bind` binding commits/PRs to the `FR-`/`AC-`/`SL-` they satisfy).
+
+**Your package carries its own prompt library.** Migration, adoption, and handoff all emit
+`<package>/prompts/` — five ready-to-paste task prompts: `orient-resume` (re-orient an agent after a
+session clear/compaction, including a git-history cross-check against recorded work), `progress-sync`,
+`integrity-check`, `generate-report`, and `slice-review` (phase/slice close-out with evidenced
+verdicts). Paste the relevant one instead of hand-writing tool calls.
+
+You follow along through the committed **`review.html`** (regenerated via `export_html` —
+deterministic, so its diffs are meaningful): a sticky section nav, gate chips, every register with its
+three-axis status (families over 50 rows folded behind a click-to-expand summary), the traceability
+matrix, the execution-progress view, and the gap/screening notes. The freshness line distinguishes
+real recorded activity from a just-migrated package ("no v2 activity recorded yet").
+
+#### MCP tools at a glance
+
+| Tool | Use |
+|---|---|
+| `server_info()` | Version + resolved package root (orientation) |
+| `package_create / package_open / package_close` | Lifecycle + single-writer lock |
+| `entity_upsert(entities[])` | Batch writes — full rows, per-item verdicts |
+| `entity_query(type, …)` | Targeted rows + `total` |
+| `trace_query(entity_id, …)` | Typed traceability links |
+| `gate_run()` | Mechanical quality-gate verdict |
+| `progress_update / audit_record / work_bind` | The execution-tracking loop |
+| `package_migrate / package_adopt` | Staged v1 migration / brownfield onboarding |
+| `handoff_emit / export_html` | Executor wiring + the HTML review surface |
+
+Full signatures and semantics: [`plugins/tamheed/server/README.md`](plugins/tamheed/server/README.md).
 
 Worked, end-to-end examples live in [`examples/`](examples) (input briefs + expected outlines) and
 [`generated-samples/`](generated-samples) — including

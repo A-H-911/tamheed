@@ -34,7 +34,8 @@ Keystone 1.0.1.
 | 014 | Docs + Mermaid diagrams + CHANGELOG 2.0.0 | B8 | P2 | M | 005–013 | DONE |
 | 015 | Community extensibility + CONTRIBUTING | B9 | P3 | M | 007, 013, 014 | DONE |
 | 016 | Keystone close-out: successor banner + freeze | B12 | P3 | S | 014 | DONE |
-| 017 | Field-report hardening: core gates, shared pipeline, v1 dialect tolerance | B13 | P1 | L | 005–016 DONE, v2.0.0 tagged; evidence C11–C16 (ACMP run 2026-07-21) | DONE — executed 2026-07-21, v2.1.0; manual ACMP acceptance re-run pending (maintainer) |
+| 017 | Field-report hardening: core gates, shared pipeline, v1 dialect tolerance | B13 | P1 | L | 005–016 DONE, v2.0.0 tagged; evidence C11–C16 (ACMP run 2026-07-21) | DONE — v2.1.0; ACMP acceptance re-run SUCCEEDED 2026-07-21/22 (see plan 018 evidence) |
+| 018 | Second field report: preview honesty, viewer scale, prompt library, cutover tooling | B14 | P1 | L | 017 DONE + the successful ACMP migration; evidence C17–C19 | DONE — executed 2026-07-22, v2.2.0; maintainer ACMP re-migration pending |
 
 Status values: TODO | IN PROGRESS | DONE | BLOCKED (with one-line reason) | REJECTED (with
 one-line rationale).
@@ -52,6 +53,16 @@ export + freshness/lead renders (012); tamheed repo public from day one with WIP
 eval schedule disabled at close-out (016). **Execution driver: the maintainer runs the plans
 himself** — self-containment is the operative contract; this status table is the tracking
 surface.
+
+## Alignment record (2026-07-22)
+
+The plan-017 acceptance run: the real ACMP migration **succeeded end-to-end on first populate**
+under v2.1.0 (verdict "production-quality"; every 017 guard fired on real data). The second
+field report ranks 8 findings — silent status coercion, id-as-title, viewer scale, cutover
+portability — folded into plan 018 as evidence **C17–C19**
+(`plans/evidence/acmp-field-report-2-2026-07-22.md`). Maintainer decisions: status mappings
+confirmed by the operator, prompt library emitted into the package dir, ACMP agent-control
+fixed via tooling + re-migration (not hand edits).
 
 ## Alignment record (2026-07-21)
 

@@ -50,10 +50,14 @@ Phase `PH-2` is complete and approved; its exit criteria were: <…>.
 the affected decision (`DEC-/ADR-`) and risk status, then continue Phase `PH-x`.
 
 ### Fresh-session refresher
-You are resuming **<project-name>** in a new session. Re-read [charter](../00-charter.md),
-[roadmap](../planning/roadmap.md), [invariant register](../requirements/invariant-register.md), and the
-latest [status report](../progress/status-report.md). Summarize current phase, last completed `WBS-`, and
-the invariants in force. Then await the next task.
+You are resuming **<project-name>** in a new session (or after a context clear/compaction).
+Orient through the package, not from memory: `package_open("<package>")`, `gate_run()`, then
+`entity_query("progress-entry", limit=10)` and `entity_query("audit-verdict", limit=10)` for
+the last recorded activity. **Cross-check git**: `git log --oneline -15` against the recorded
+`work_bind` refs — list any package-relevant commits with no recorded binding and flag them;
+do not invent verdicts for them. Summarize current phase/slice, last completed `WBS-`, the
+invariants in force (`entity_query("invariant")`), and any unrecorded work. Then await the
+next task. (The emitted `<package>/prompts/orient-resume.md` is the full version of this.)
 
 ### Invariant audit
 Verify the implementation honors `INV-001..INV-00n`. Report any violation with `file:line` and a proposed

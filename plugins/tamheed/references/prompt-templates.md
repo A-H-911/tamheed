@@ -40,6 +40,23 @@ Prompts that make Claude Code (or a human) check work against the plan — a cod
 implementation honors `INV-001..INV-00n`; report violations with file:line"), readiness recheck ("re-run
 the quality gates against the current repo"), and PR review against acceptance criteria.
 
+## The emitted scenario library (plan 018)
+
+Distinct from the three PRM- kinds above: five ready-to-paste operator prompts ship in the
+bundle (`../prompts/`) and are emitted verbatim (only `{package}` substituted) into
+`<package>/prompts/` by `package_migrate`, `package_adopt`, and `handoff_emit`:
+
+| File | Scenario |
+|---|---|
+| `orient-resume.md` | Re-orient after a session clear/compaction — tools + git-history cross-check against `work_bind` records |
+| `progress-sync.md` | Record completed work: progress entries, bindings, evidenced verdicts, typed scope changes |
+| `integrity-check.md` | Read-only audit: gates, count totals, trace spot-checks, narrated verdicts, staleness vs git |
+| `generate-report.md` | Export + how to read `review.html` (nav, folded tables, freshness) |
+| `slice-review.md` | Slice/phase completion: audit ACs with evidence, bind commits, close out, stop at the gate |
+
+They are package artifacts for the *operator and executing agent*, not PRM- rows — no
+G-INJECT screening needed (trusted bundle content, no package-derived text).
+
 ## Wiring rules
 
 - Replace every placeholder; a shipped prompt with an unfilled `<…>` is a G-HANDOFF failure.

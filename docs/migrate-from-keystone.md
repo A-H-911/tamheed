@@ -40,10 +40,17 @@ Approve the `tamheed` MCP server when prompted (it launches via `uv run`; Python
    - "no manifest.json / not a conformant v1 package" → this is a Keystone-*lineage* project;
      route to `package_adopt` (plan 011) instead. Do not force a migration.
 2. **Preview** — the same call returns the dry report: per-family counts, trace-edge count,
-   omissions, manifest-count deltas, unmapped-content list. Show it to the operator verbatim.
-3. **Operator confirms** — an explicit "yes, migrate" in the conversation. STOP until you have it.
-4. **Populate** — `package_migrate(source_dir, confirm=true)`: one transaction; a failure leaves
-   no partial package.
+   omissions, manifest-count deltas, unmapped-content list, and the honesty ledgers —
+   `status_coerced` (every v1 status word that maps outside the lifecycle vocabulary, with
+   the proposed mapping), `title_fallbacks`, per-file `partial_files` row counts, and the
+   frozen validator's sha256 (which contract judged this). Show it to the operator verbatim.
+3. **Operator confirms** — an explicit "yes, migrate" in the conversation. STOP until you have
+   it. **Present the `status_coerced` proposals as a multi-select confirmation** (per status
+   word: keep the proposal or pick another lifecycle value) and carry the answers as
+   `status_map={...}`.
+4. **Populate** — `package_migrate(source_dir, confirm=true, status_map={...})`: one
+   transaction; a failure leaves no partial package. On success the package directory gains
+   `prompts/` (the five-scenario library) alongside `data/`.
 5. **Post-flight** — the call returns the fidelity report: identifier gaps (must be empty),
    count deltas (stale-manifest divergences are *reported*, e.g. a manifest declaring fewer ADRs
    than disk holds — disk wins), and `gate_run` results.
@@ -69,9 +76,13 @@ Approve the `tamheed` MCP server when prompted (it launches via `uv run`; Python
 coexist: agents keep reading the stale v1 instructions, editing dead registers, and running
 the v1 validator — silently undoing the migration.
 
-1. Open the migrated package and run `handoff_emit(<repo>)`: it writes the executor-side
-   `.mcp.json` and appends the "Tamheed progress tracking" note to the repo's `CLAUDE.md`
-   (flagging any stale Keystone references it finds there).
+1. Open the migrated package and run `handoff_emit(<repo>)`: it appends the "Tamheed progress
+   tracking" operating note (with the MCP tool cheat-sheet) to the repo's `CLAUDE.md`, emits
+   the `<package>/prompts/` scenario library, and returns `stale_references` — every v1-flow
+   pointer found in `CLAUDE.md`/`AGENTS.md` as `file:line` + a suggested replacement. Apply
+   those replacements; product-domain uses of the word "Keystone" are never flagged. On
+   plugin-hosted servers no project `.mcp.json` entry is written (the installed plugin
+   already registers the server); standalone installs get the absolute-path entry.
 2. Update the project's `CLAUDE.md` / `AGENTS.md` by hand: references to Keystone artifacts
    (`validation/traceability-matrix.md`, `keystone-state.json`, register files) become
    references to the Tamheed package — the MCP tools (`entity_query`, `trace_query`,

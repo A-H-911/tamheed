@@ -11,7 +11,7 @@ before doing heavy work**. Modes change where the workflow starts/stops, not the
 | `resume` | Continue an interrupted package | last incomplete stage | as configured |
 | `stage:<id>` | Run/re-run one stage | that stage | that stage |
 | `update` | Apply new decisions/progress/scope (D-UPDATE) | Stage 21 | Stage 22 |
-| `migrate` | Import a conformant v1 Keystone package | `package_migrate` (staged: preview → confirm; see `migration-v1.md`) | post-flight fidelity report |
+| `migrate` | Import a conformant v1 Keystone package | `package_migrate` (staged: preview → operator confirms the `status_coerced` proposals via `status_map` → confirm; see `migration-v1.md`) | post-flight fidelity report + emitted `<package>/prompts/` library |
 | `adopt` | Onboard a brownfield repository | `package_adopt` (staged: scan/preview → confirm; see `adopt.md`) | gap report + gates |
 
 Parameters: `--profile enterprise|rnd|legacy|ai-agentic|unknown` (registry-backed; community profiles
