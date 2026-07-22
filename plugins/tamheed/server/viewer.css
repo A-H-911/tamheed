@@ -1,38 +1,97 @@
-/* Tamheed review surface — static stylesheet, embedded at export time (plan 012/B6).
-   Static + trusted: this file is the only unescaped content in the export. */
-:root { color-scheme: light dark; }
-body { font: 14px/1.5 system-ui, sans-serif; margin: 2rem auto; max-width: 72rem; padding: 0 1rem; }
-h1 { font-size: 1.4rem; }
-h2 { font-size: 1.15rem; border-bottom: 1px solid #8884; padding-bottom: .25rem; margin-top: 2.5rem; }
-h3 { font-size: 1rem; margin-top: 1.5rem; }
-.freshness { color: #777; font-size: .85rem; margin: .2rem 0 1rem; }
-.ready { font-weight: 700; }
-.lead { font-weight: 600; }
-.empty { color: #777; font-style: italic; }
-.chip { display: inline-block; border-radius: 1rem; padding: .1rem .6rem; margin: 0 .3rem .3rem 0;
-        font-size: .8rem; border: 1px solid #8886; }
-.chip.pass { background: #1a7f3722; border-color: #1a7f37; }
-.chip.fail { background: #cf222e22; border-color: #cf222e; }
-.tablewrap { margin: .5rem 0 1.5rem; }
+/* Tamheed review surface — static stylesheet, embedded at export time.
+   Static + trusted: this file is the only unescaped content in the export.
+   Plan 020 (C25, maintainer decision): dark MAXIMALIST identity. The 8-hue family
+   palette is validated by the dataviz six-checks against surface #1a1a19 (lightness
+   band, chroma floor, CVD ΔE, normal-vision floor, contrast — all PASS); status
+   colors (gate chips) are reserved and never reused for families; text wears text
+   tokens, never series color. */
+:root {
+  color-scheme: dark;
+  --bg: #1a1a19; --panel: #232322; --panel-2: #2c2c2a;
+  --ink: #ffffff; --ink-2: #c3c2b7; --line: #3a3a38;
+  --a1: #3987e5; --a2: #d95926; --a3: #199e70; --a4: #c98500;
+  --a5: #d55181; --a6: #008300; --a7: #9085e9; --a8: #e66767;
+  --good: #3fb950; --bad: #f85149;
+}
+body { font: 14px/1.55 system-ui, sans-serif; margin: 0 auto; max-width: 76rem;
+       padding: 0 1.25rem 4rem;
+       background:
+         radial-gradient(1200px 420px at 12% -5%, #3987e522, transparent 60%),
+         radial-gradient(900px 360px at 96% 0%, #9085e91e, transparent 55%),
+         var(--bg);
+       color: var(--ink); }
+h1 { font-size: 1.9rem; letter-spacing: .02em; margin: 2.2rem 0 1rem;
+     background: linear-gradient(90deg, var(--a1), var(--a7) 45%, var(--a5));
+     -webkit-background-clip: text; background-clip: text; color: transparent; }
+h2 { font-size: 1.25rem; margin-top: 3rem; padding: .4rem .8rem;
+     border-left: 6px solid var(--a1); border-bottom: 1px solid var(--line);
+     background: linear-gradient(90deg, var(--panel), transparent); }
+section:nth-of-type(2) h2 { border-left-color: var(--a7); }
+section:nth-of-type(3) h2 { border-left-color: var(--a3); }
+section:nth-of-type(4) h2 { border-left-color: var(--a4); }
+section:nth-of-type(5) h2 { border-left-color: var(--a5); }
+section:nth-of-type(6) h2 { border-left-color: var(--a8); }
+h3 { font-size: 1rem; margin-top: 1.5rem; color: var(--ink-2); }
+.freshness { color: var(--ink-2); font-size: .8rem; margin: .2rem 0 1rem; }
+.ready { font-weight: 800; font-size: 1.05rem; letter-spacing: .03em; }
+.lead { font-weight: 600; color: var(--ink-2); }
+.empty { color: #8b8a80; font-style: italic; }
+.chip { display: inline-block; border-radius: 1rem; padding: .15rem .7rem;
+        margin: 0 .35rem .35rem 0; font-size: .8rem; font-weight: 600;
+        border: 1px solid var(--line); background: var(--panel); }
+.chip.pass { border-color: var(--good); color: var(--good);
+             background: #3fb95014; box-shadow: 0 0 10px #3fb95022; }
+.chip.fail { border-color: var(--bad); color: var(--bad);
+             background: #f8514914; box-shadow: 0 0 12px #f8514933; }
+.toc { position: sticky; top: 0; z-index: 2; padding: .6rem 0;
+       background: linear-gradient(180deg, var(--bg) 78%, transparent);
+       border-bottom: 1px solid var(--line); }
+.toc a { margin-right: 1.1rem; color: var(--ink-2); text-decoration: none;
+         font-weight: 600; letter-spacing: .02em; }
+.toc a:hover, .toc a:focus { color: var(--ink); text-shadow: 0 0 12px var(--a1); }
+section { scroll-margin-top: 3.2rem; }
+details { border: 1px solid var(--line); border-radius: .5rem; margin: 1rem 0;
+          background: var(--panel); overflow: hidden; }
+details[open] { box-shadow: 0 0 0 1px var(--line), 0 8px 30px #00000066; }
+details > summary { font-size: 1rem; font-weight: 700; padding: .6rem .9rem;
+                    cursor: pointer; letter-spacing: .01em;
+                    background: linear-gradient(90deg, var(--panel-2), var(--panel)); }
+details > summary:hover { color: var(--ink); text-shadow: 0 0 10px var(--a1); }
+.csv { float: right; font-size: .75rem; font-weight: 700; color: var(--a1);
+       text-decoration: none; border: 1px solid var(--a1); border-radius: .3rem;
+       padding: 0 .45rem; }
+.csv:hover, .csv:focus { color: var(--bg); background: var(--a1);
+                         box-shadow: 0 0 10px var(--a1); }
+.tablewrap { margin: 0; }
 /* C25 (maintainer decision, supersedes the 019 scroll fix): long text WRAPS in place —
    no horizontal scrolling. overflow-wrap breaks even unbroken runs (ids, paths). */
 table { border-collapse: collapse; width: 100%; font-size: .85rem; }
 td { overflow-wrap: anywhere; }
-.toc { position: sticky; top: 0; background: Canvas; padding: .5rem 0;
-       border-bottom: 1px solid #8884; z-index: 1; }
-.toc a { margin-right: 1rem; }
-section { scroll-margin-top: 3rem; }
-details > summary { font-size: 1rem; font-weight: 600; margin: 1.5rem 0 .5rem; cursor: pointer; }
-.graphwrap { overflow: auto; max-height: 80vh; margin: .5rem 0 1.5rem; border: 1px solid #8884; }
-.graph path { fill: none; stroke: #888; stroke-opacity: .22; }
-.graph path:hover { stroke-opacity: 1; stroke-width: 2; }
-.graph a:hover circle, .graph a:focus circle { stroke: currentColor; stroke-width: 2; }
-.graph text { font-size: 11px; fill: currentColor; }
-.g0 { fill: #4c78a8; } .g1 { fill: #f58518; } .g2 { fill: #54a24b; } .g3 { fill: #e45756; }
-.g4 { fill: #72b7b2; } .g5 { fill: #eeca3b; } .g6 { fill: #b279a2; } .g7 { fill: #9d755d; }
-/* ponytail: closed details hide in print; add [open]-forcing print CSS if a report asks */
-th, td { border: 1px solid #8884; padding: .3rem .5rem; text-align: left; vertical-align: top; }
-th { background: #8881; }
-.warn { border: 1px solid #cf222e; border-left-width: 4px; padding: .6rem .8rem; margin: .8rem 0;
-        border-radius: .25rem; }
-.warn pre { white-space: pre-wrap; background: #8881; padding: .5rem; overflow-x: auto; }
+th, td { border: 1px solid var(--line); padding: .35rem .55rem; text-align: left;
+         vertical-align: top; }
+th { background: var(--panel-2); color: var(--ink-2); text-transform: uppercase;
+     font-size: .72rem; letter-spacing: .06em; }
+tbody tr:nth-child(even) td { background: #ffffff05; }
+tbody tr:hover td { background: #3987e511; }
+.warn { border: 1px solid var(--bad); border-left-width: 6px; padding: .7rem .9rem;
+        margin: .8rem 0; border-radius: .35rem; background: #f8514910;
+        box-shadow: 0 0 18px #f8514922; }
+.warn pre { white-space: pre-wrap; background: #00000055; padding: .5rem;
+            overflow-x: auto; border-radius: .25rem; }
+.graphwrap { overflow: auto; max-height: 80vh; margin: 0; background: var(--panel); }
+.graph path { fill: none; stroke: #8b8a80; stroke-opacity: .22; }
+.graph path:hover { stroke-opacity: 1; stroke-width: 2; stroke: var(--a1); }
+.graph a:hover circle, .graph a:focus circle { stroke: var(--ink); stroke-width: 2; }
+.graph text { font-size: 11px; fill: var(--ink-2); }
+.g0 { fill: var(--a1); } .g1 { fill: var(--a2); } .g2 { fill: var(--a3); }
+.g3 { fill: var(--a4); } .g4 { fill: var(--a5); } .g5 { fill: var(--a6); }
+.g6 { fill: var(--a7); } .g7 { fill: var(--a8); }
+@media print {
+  :root { color-scheme: light; }
+  body { background: #fff; color: #000; }
+  h1 { background: none; -webkit-background-clip: unset; background-clip: unset;
+       color: #000; }
+  .toc { display: none; }
+  /* ponytail: closed details still hide in print; add [open]-forcing here if a
+     printed report ever asks for it */
+}
