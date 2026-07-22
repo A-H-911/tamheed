@@ -10,6 +10,44 @@ All notable changes to Tamheed are documented here. The format is based on
 
 ## [Unreleased]
 
+## [2.3.0] - 2026-07-22
+
+Third field-report hardening (plan 019; evidence **C20–C22** from the v2.2.0 ACMP
+re-migration — a clean regression pass: zero repair loops, verdict "Ship it"; archived at
+`plans/evidence/acmp-field-report-3-2026-07-22.md`). **No schema migration — existing 2.x
+packages are unaffected.**
+
+### Added
+- **Managed emissions (C20):** every file `handoff_emit` writes (handoff prompts, the
+  scenario prompt library, `.mcp.json`) reports as `written`/`unchanged`/`diverged` — a
+  hand-edited file is refused, never silently clobbered; `force=true` replaces it
+  deliberately. The stale-v1 warning now lives in a `<!-- tamheed:stale-warning -->` marker
+  block that **retracts itself** once the scan is clean — re-running `handoff_emit` is the
+  standing "is the cutover done?" verifier. (Note: warnings emitted by pre-2.3.0 versions
+  lack markers — hand-remove those once.)
+- **Restated-content tripwire (C22):** register content copied into `CLAUDE.md`/`AGENTS.md`
+  (≥3 consecutive id-led bullets/table rows, or a hard-coded audit tally) is reported as
+  `restated_content` — `unlabeled` copies get a suggested reference rewrite; blocks that
+  already cite `entity_query`/`review.html`/`gate_run` are classified `labeled-snapshot`
+  and asked only to verify currency. Single ids in prose and product-domain words never
+  fire. Doctrine documented: reference, don't restate; state each fact once.
+- **Grouped migration ledgers (C21):** `status_coerced_groups` and grouped
+  `title_fallbacks` (the operator decision unit is the group — 21 coercions ≈ 6 decisions);
+  `status_defaulted` ledger for registers with no status column; `status_coerced_basis`
+  annotation (defaults vs supplied `status_map`).
+- The three-prompt-surface sync model documented (`references/handoff.md`); the canonical
+  byte-stability guarantee stated as contract (`db/CANONICAL.md`).
+
+### Changed
+- Migration: registers with **no status column** default their rows to `Approved` (parity
+  with weak-definition synthesis; decisions stay `Proposed`) — reported per (file, family)
+  in `status_defaulted`. Compound literals documented as valid `status_map` keys; v1
+  progress logs documented as narrative-only mapping.
+- Viewer: **every table folds closed** behind `<details>` with the count in the summary —
+  one consistent affordance replaces the 50-row threshold. Sole exception: gap/screening
+  warning cards stay visible (they exist to be seen).
+- All emitted/reported paths use forward slashes on every platform.
+
 ## [2.2.0] - 2026-07-22
 
 Second field-report hardening (plan 018; evidence **C17–C19** from the first *successful*
