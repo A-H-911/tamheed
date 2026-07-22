@@ -245,10 +245,15 @@ session clear/compaction, including a git-history cross-check against recorded w
 verdicts). Paste the relevant one instead of hand-writing tool calls.
 
 You follow along through the committed **`review.html`** (regenerated via `export_html` —
-deterministic, so its diffs are meaningful): a sticky section nav, gate chips, every register with its
-three-axis status (families over 50 rows folded behind a click-to-expand summary), the traceability
-matrix, the execution-progress view, and the gap/screening notes. The freshness line distinguishes
-real recorded activity from a just-migrated package ("no v2 activity recorded yet").
+deterministic, so its diffs are meaningful): a dark, maximalist single page ordered
+State→Relations→Data — verdict and identity first, then the **relations graph** (every entity a
+clickable node that jumps to its register row; trace edges drawn as a chord diagram), the
+traceability matrix, execution progress, and every register folded with its row count and a
+**per-table CSV download** (`csv/<table>.csv`, emitted deterministically beside the report). Long
+text wraps in place; the freshness line distinguishes real recorded activity from a just-migrated
+package ("no v2 activity recorded yet"). Migration results now also carry **fidelity ledgers**
+(truncation histograms, column-starvation, field-mapping coverage) — column-level honesty that
+row-level counts cannot see.
 
 #### MCP tools at a glance
 

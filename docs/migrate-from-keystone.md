@@ -105,3 +105,28 @@ the v1 validator — silently undoing the migration.
 - Keep the v1 package directory as an archival snapshot (recommended), or remove it once the
   operator confirms the v2 package is the source of truth.
 - Optionally `/plugin uninstall keystone`.
+
+## 7. Re-populating after a parser upgrade (the no-revert repair path)
+
+When a new Tamheed release fixes migration fidelity (as v2.4.0 does), an already-migrated
+package is repaired by **re-populating from the frozen v1 source** — not by hand-editing rows
+and not by reverting the repo:
+
+1. Update the plugin; `server_info` must report the new version.
+2. `package_migrate(<v1 source>, name="<package>-v2new", confirm=true, status_map=<your
+   previous map>)` — a FRESH package name beside the live one. Review the preview ledgers
+   AND the new **fidelity ledgers** in the post-flight result (`truncations`,
+   `column_starvation`, `field_mapping`, `execution_state_note`): they must be clean or
+   explained.
+3. Compare: the canonical JSONL of old vs new package diffs row-scoped — the differences
+   ARE the repair (restored statements, correct ids, etc.).
+4. Carry over post-migration v2 rows (progress entries, new audit verdicts, scope changes)
+   into the new package via the MCP tools, then swap the directories and delete the old one
+   (its damage is the reason for the exercise).
+5. Re-run `handoff_emit` — managed emissions make it the verifier: expect `unchanged`
+   everywhere except deliberate changes, no stale-warning block, and review the
+   `stale_references`/`restated_content` findings including the **emitted prompt bodies**.
+6. **Refresh the PRM rows**: v1-migrated prompts are governed content that aged — supersede
+   them and author current ones via `entity_upsert`, then re-emit; the emitted-prompt scan
+   stays green from then on.
+7. `export_html` and commit the regenerated `review.html` + `csv/`.
