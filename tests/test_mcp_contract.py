@@ -141,6 +141,99 @@ class McpContractTest(unittest.TestCase):
             sp.run = real
         self.assertEqual(captured.get("stdin"), sp.DEVNULL)  # C11: never the MCP pipe
 
+    # ------------------------------------------------- plan 019 phase 3 (C20/C22)
+
+    def _emit_ready(self, name: str = "demo"):
+        make_complete_package(name)
+        srv.entity_upsert([{"type": "prompt", "id": "PRM-001", "prompt_kind": "initial",
+                            "title": "Kickoff", "body": "Start with SL-001."}])
+
+    def test_managed_emission_lifecycle(self):
+        """C20: emitted -> unchanged -> diverged -> force. Never a silent clobber."""
+        self._emit_ready()
+        with tempfile.TemporaryDirectory() as target:
+            first = srv.handoff_emit(target)
+            self.assertIn("handoff/prm-001-initial.md", first["written"])
+            second = srv.handoff_emit(target)               # nothing changed anywhere
+            self.assertEqual(second["written"], [])
+            self.assertIn("handoff/prm-001-initial.md", second["unchanged"])
+            self.assertIn("CLAUDE.md", second["unchanged"])
+            prm = Path(target) / "handoff" / "prm-001-initial.md"
+            prm.write_text(prm.read_text(encoding="utf-8") + "\nOPERATOR NOTE\n",
+                           encoding="utf-8")
+            third = srv.handoff_emit(target)                # hand edit: refused, reported
+            self.assertIn("handoff/prm-001-initial.md", third["diverged"])
+            self.assertIn("OPERATOR NOTE", prm.read_text(encoding="utf-8"))
+            forced = srv.handoff_emit(target, force=True)   # explicit force overwrites
+            self.assertIn("handoff/prm-001-initial.md", forced["written"])
+            self.assertNotIn("OPERATOR NOTE", prm.read_text(encoding="utf-8"))
+
+    def test_stale_warning_block_retracts_when_clean(self):
+        """C20/B2: the warning's lifetime is coupled to the CURRENT scan, not the first."""
+        self._emit_ready()
+        with tempfile.TemporaryDirectory() as target:
+            agents = Path(target) / "AGENTS.md"
+            agents.write_text("Run validate_package.py before merging.\n",
+                              encoding="utf-8")
+            srv.handoff_emit(target)
+            claude = (Path(target) / "CLAUDE.md").read_text(encoding="utf-8")
+            self.assertIn("<!-- tamheed:stale-warning -->", claude)
+            agents.write_text("Use gate_run via the tamheed MCP tools.\n",
+                              encoding="utf-8")             # operator fixes the reference
+            out = srv.handoff_emit(target)
+            self.assertEqual(out["stale_references"], [])
+            claude = (Path(target) / "CLAUDE.md").read_text(encoding="utf-8")
+            self.assertNotIn("tamheed:stale-warning", claude)   # retracted
+            self.assertIn("## Tamheed progress tracking", claude)  # note survives
+
+    def test_restated_register_tripwire_kinds(self):
+        """C22: unlabeled restatement flagged with a rewrite; labeled snapshots get
+        'verify currency'; prose ids and product words never fire."""
+        self._emit_ready()
+        with tempfile.TemporaryDirectory() as target:
+            (Path(target) / "AGENTS.md").write_text(
+                "# Ops\n"
+                "## Invariants\n"                            # UNLABELED restated block
+                "- **INV-001** No secrets in source.\n"
+                "- **INV-002** Monolith only.\n"
+                "- **INV-003** Audit every change.\n"
+                "\n## State\n"
+                "The full set is the package's rows (`entity_query(\"risk\")`):\n"
+                "| RISK-001 | leak |\n"                      # LABELED snapshot table
+                "| RISK-002 | drift |\n"
+                "| RISK-003 | scope |\n"
+                "\nDesign fidelity (INV-014) applies.\n"      # prose id: no finding
+                "Keystone optional; Webex = Phase 2.\n",      # product word: no finding
+                encoding="utf-8")
+            out = srv.handoff_emit(target)
+            by_family = {f["family"]: f for f in out["restated_content"]}
+            self.assertEqual(by_family["invariant"]["kind"], "unlabeled")
+            self.assertIn('entity_query("invariant")', by_family["invariant"]["suggestion"])
+            self.assertEqual(by_family["risk"]["kind"], "labeled-snapshot")
+            self.assertIn("verify", by_family["risk"]["suggestion"])
+            self.assertEqual(len(out["restated_content"]), 2)  # nothing else fires
+
+    def test_audit_tally_restatement_flagged(self):
+        self._emit_ready()
+        with tempfile.TemporaryDirectory() as target:
+            (Path(target) / "AGENTS.md").write_text(
+                "Status: 62 Met / 11 Partial / 1 Pending at migration.\n",
+                encoding="utf-8")
+            out = srv.handoff_emit(target)
+            tallies = [f for f in out["restated_content"]
+                       if f["family"] == "audit-verdict"]
+            self.assertEqual(len(tallies), 1)
+            self.assertIn("gate_run", tallies[0]["suggestion"])
+
+    def test_emitted_paths_use_forward_slashes(self):
+        self._emit_ready()
+        with tempfile.TemporaryDirectory() as target:
+            out = srv.handoff_emit(target, subdir="docs/handoff")
+            for group in (out["written"], out["unchanged"], out["diverged"],
+                          *out["prompt_library"].values()):
+                for rel in group:
+                    self.assertNotIn("\\", rel)
+
     # ------------------------------------------------- plan 018 phase 3 (C17/C19)
 
     def test_entity_query_total_beyond_limit(self):
@@ -170,7 +263,7 @@ class McpContractTest(unittest.TestCase):
                             "title": "Kickoff", "body": "Start."}])
         with tempfile.TemporaryDirectory() as target:
             out = srv.handoff_emit(target)
-            self.assertEqual(len(out["prompt_library"]), 5)
+            self.assertEqual(len(out["prompt_library"]["emitted"]), 5)
         lib = srv.PACKAGE_ROOT / "demo" / "prompts"
         names = sorted(p.name for p in lib.glob("*.md"))
         self.assertEqual(names, ["generate-report.md", "integrity-check.md",

@@ -495,18 +495,32 @@ _STALE_PATTERNS = [
 ]
 
 
-def _emit_prompt_library(pkg_dir: Path, name: str) -> list[str]:
-    """Copy the bundled scenario prompts into <package>/prompts/ (C19; user decision:
-    the library lives with the package). Deterministic: static content, {package}
-    substitution only."""
+def _managed_emit(path: Path, content: str, force: bool = False) -> str:
+    """Managed emission (field-evidence C20): every file Tamheed emits goes through this.
+    Returns "emitted" | "unchanged" | "diverged". MEMORYLESS by design: "diverged" means
+    the on-disk file differs from what would be emitted NOW — that covers operator hand
+    edits AND legitimate source changes (superseded PRM row, plugin upgrade). Both refuse
+    without force: safe-by-default, never a silent clobber."""
+    if path.exists():
+        if path.read_text(encoding="utf-8") == content:
+            return "unchanged"
+        if not force:
+            return "diverged"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(content, encoding="utf-8", newline="\n")
+    return "emitted"
+
+
+def _emit_prompt_library(pkg_dir: Path, name: str, force: bool = False) -> dict:
+    """Copy the bundled scenario prompts into <package>/prompts/ (C19; the library lives
+    with the package). Deterministic: static content, {package} substitution only."""
     out_dir = pkg_dir / "prompts"
-    out_dir.mkdir(parents=True, exist_ok=True)
-    written = []
+    result: dict[str, list[str]] = {"emitted": [], "unchanged": [], "diverged": []}
     for src in sorted(_PROMPTS_DIR.glob("*.md")):
         text = src.read_text(encoding="utf-8").replace("{package}", name)
-        (out_dir / src.name).write_text(text, encoding="utf-8", newline="\n")
-        written.append(f"prompts/{src.name}")
-    return written
+        status = _managed_emit(out_dir / src.name, text, force=force)
+        result[status].append(f"prompts/{src.name}")
+    return result
 
 
 def _stale_reference_report(target: Path) -> list[dict]:
@@ -525,11 +539,72 @@ def _stale_reference_report(target: Path) -> list[dict]:
     return findings
 
 
-def handoff_emit(target_dir: str, subdir: str = "handoff") -> dict:
+# Restated-register signals (C22): the hazard is UNLABELED restatement of package content
+# in agent-control files — it drifts silently. Labeled snapshots (blocks that already
+# reference entity_query/review.html/gate_run) get "verify currency" guidance instead.
+_ID_LED_LINE_RE = re.compile(r"^\s*(?:-\s*\*\*|\|\s*)([A-Z]{2,5})-\d")
+_AUDIT_TALLY_RE = re.compile(r"\d+\s+Met\b.*\d+\s+(?:Partial|Not-met|Pending)")
+_PKG_REF_RE = re.compile(r"entity_query\(|review\.html|gate_run")
+_PREFIX_TYPE = {p.rstrip("-"): tid for tid, _label, p, _cls in BASELINE_ENTITY_TYPES}
+
+
+def _restated_content_report(target: Path) -> list[dict]:
+    findings = []
+    for fname in ("CLAUDE.md", "AGENTS.md"):
+        path = target / fname
+        if not path.exists():
+            continue
+        lines = path.read_text(encoding="utf-8").splitlines()
+
+        def labeled(start: int, end: int) -> bool:
+            lo = max(0, start - 3)
+            return any(_PKG_REF_RE.search(lines[i]) for i in range(lo, end))
+
+        run_start, run_prefixes = None, []
+        for i, line in enumerate(lines + [""]):  # sentinel flushes a trailing run
+            m = _ID_LED_LINE_RE.match(line)
+            if m and m.group(1) in _PREFIX_TYPE:
+                if run_start is None:
+                    run_start = i
+                run_prefixes.append(m.group(1))
+            else:
+                if run_start is not None and len(run_prefixes) >= 3:
+                    prefix = max(set(run_prefixes), key=run_prefixes.count)
+                    tid = _PREFIX_TYPE[prefix]
+                    kind = ("labeled-snapshot" if labeled(run_start, i) else "unlabeled")
+                    suggestion = (
+                        f'labeled snapshot of {tid} rows — verify it is still current '
+                        f'(quoted register content drifts silently); the live form is '
+                        f'`entity_query("{tid}")` / review.html#registers'
+                        if kind == "labeled-snapshot" else
+                        f'replace the restated {tid} rows with a reference: '
+                        f'`entity_query("{tid}")` — full text in review.html#registers')
+                    findings.append({"file": fname, "line": run_start + 1,
+                                     "family": tid, "count": len(run_prefixes),
+                                     "kind": kind, "suggestion": suggestion})
+                run_start, run_prefixes = None, []
+            if _AUDIT_TALLY_RE.search(line):
+                kind = ("labeled-snapshot" if labeled(i, i + 1) else "unlabeled")
+                findings.append({
+                    "file": fname, "line": i + 1, "family": "audit-verdict", "count": 1,
+                    "kind": kind,
+                    "suggestion": "a hard-coded audit tally goes stale on the first new "
+                                  "verdict — the live form is gate_run()'s audit_evidence "
+                                  "split / review.html#execution"})
+    return findings
+
+
+_STALE_BLOCK_RE = re.compile(
+    r"\n?<!-- tamheed:stale-warning -->.*?<!-- /tamheed:stale-warning -->\n?", re.S)
+
+
+def handoff_emit(target_dir: str, subdir: str = "handoff", force: bool = False) -> dict:
     """Assemble handoff prompts into the target project + write the executor-side MCP
     config (.mcp.json + CLAUDE.md operating note) so the executing agent can record
-    progress. Also emits the scenario prompt library into <package>/prompts/ and
-    reports stale v1 references found in the target's CLAUDE.md/AGENTS.md.
+    progress. Every file is a MANAGED emission: hand-edited files are reported as
+    `diverged` and never overwritten without force=true. Also emits the scenario prompt
+    library into <package>/prompts/, reports stale v1 references AND restated register
+    content found in the target's CLAUDE.md/AGENTS.md.
     Emission is blocked if the injection screen finds instruction-shaped text."""
     if guard := _need_open():
         return guard
@@ -552,12 +627,18 @@ def handoff_emit(target_dir: str, subdir: str = "handoff") -> dict:
         return _err("G-INJECT: instruction-shaped text found — emission blocked",
                     gate="G-INJECT", findings=findings)
     handoff = target / sub
-    handoff.mkdir(parents=True, exist_ok=True)
-    written = []
+    emitted: list[str] = []
+    unchanged: list[str] = []
+    diverged: list[str] = []
+
+    def emit(path: Path, content: str, rel: str) -> None:
+        status = _managed_emit(path, content, force=force)
+        {"emitted": emitted, "unchanged": unchanged, "diverged": diverged}[status].append(
+            rel.replace("\\", "/"))
+
     for pid, kind, title, body in prompts:
-        path = handoff / f"{pid.lower()}-{kind}.md"
-        path.write_text(f"# {title}\n\n{body}\n", encoding="utf-8", newline="\n")
-        written.append(str(path.relative_to(target)))
+        emit(handoff / f"{pid.lower()}-{kind}.md", f"# {title}\n\n{body}\n",
+             f"{subdir}/{pid.lower()}-{kind}.md")
 
     # Portable executor config (field-evidence C19): on a plugin install the server path
     # points into the VERSIONED plugin cache — machine- and version-specific, and the
@@ -573,12 +654,12 @@ def handoff_emit(target_dir: str, subdir: str = "handoff") -> dict:
             "command": "uv",
             "args": ["run", resolved, "--package-dir", str(PACKAGE_ROOT.resolve())],
         }
-        mcp_cfg_path.write_text(json.dumps(cfg, indent=2) + "\n",
-                                encoding="utf-8", newline="\n")
-        written.append(".mcp.json")
+        emit(mcp_cfg_path, json.dumps(cfg, indent=2) + "\n", ".mcp.json")
 
-    library = _emit_prompt_library(PACKAGE_ROOT / _CURRENT_NAME, _CURRENT_NAME)
+    library = _emit_prompt_library(PACKAGE_ROOT / _CURRENT_NAME, _CURRENT_NAME,
+                                   force=force)
     stale = _stale_reference_report(target)
+    restated = _restated_content_report(target)
 
     server_line = ("The `tamheed` MCP server is provided by the installed tamheed plugin "
                    "(no project-level .mcp.json entry needed)." if plugin_hosted else
@@ -604,17 +685,27 @@ def handoff_emit(target_dir: str, subdir: str = "handoff") -> dict:
         "- `server_info()` — version + resolved package root (orientation)\n")
     claude_md = target / "CLAUDE.md"
     existing = claude_md.read_text(encoding="utf-8") if claude_md.exists() else ""
+    # Marker-managed warning block (C20/B2): rebuilt on EVERY emit — added while the scan
+    # finds stale references, REMOVED once it is clean. The operating note itself stays
+    # append-once. "Re-run emit to verify the cutover" is thereby self-contained.
+    content = _STALE_BLOCK_RE.sub("\n", existing)
+    if "## Tamheed progress tracking" not in content:
+        content = content + note
     if stale:
-        # Cutover tripwire (C15/C19): stale v1 instructions silently steer every future
-        # session back to the dead source of truth. The result lists file:line + fix.
-        note += ("\n> **Stale v1 references detected** in this project's agent-control "
-                 "files — see `stale_references` in the handoff_emit result for "
-                 "file:line replacements. Apply them and freeze the v1 tree.\n")
-    if "## Tamheed progress tracking" not in existing:
-        claude_md.write_text(existing + note, encoding="utf-8", newline="\n")
-        written.append("CLAUDE.md")
-    return {"ok": True, "written": written, "prompt_library": library,
-            "stale_references": stale}
+        content += ("\n<!-- tamheed:stale-warning -->\n"
+                    "> **Stale v1 references detected** in this project's agent-control "
+                    "files — see `stale_references` in the handoff_emit result for "
+                    "file:line replacements. Apply them and freeze the v1 tree, then "
+                    "re-run handoff_emit: this warning removes itself once the scan is "
+                    "clean.\n<!-- /tamheed:stale-warning -->\n")
+    if content != existing:
+        claude_md.write_text(content, encoding="utf-8", newline="\n")
+        emitted.append("CLAUDE.md")
+    else:
+        unchanged.append("CLAUDE.md")
+    return {"ok": True, "written": emitted, "unchanged": unchanged, "diverged": diverged,
+            "prompt_library": library, "stale_references": stale,
+            "restated_content": restated}
 
 
 # --------------------------------------------------------------------------- staged flows & export
