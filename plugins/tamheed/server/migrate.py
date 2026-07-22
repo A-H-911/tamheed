@@ -7,6 +7,7 @@ operator-gated: preview by default; populate only on confirm. Deterministic outp
 """
 from __future__ import annotations
 
+import hashlib
 import json
 import re
 import shutil
@@ -31,6 +32,16 @@ except ImportError:  # pragma: no cover
 LIFECYCLE = {"Draft", "Proposed", "Approved", "Rejected", "Deferred",
              "Implemented", "Superseded", "Obsolete"}
 STATUS_MAP = {"Accepted": "Approved", "Planned": "Proposed"}
+# Semantic defaults for common v1 register vocabularies (field-evidence C17). Unlike
+# STATUS_MAP's canonical pairs these are judgment calls, so every application is recorded
+# in the preview's status_coerced ledger and the operator can override via status_map.
+STATUS_COERCE = {
+    "Resolved": "Implemented",   # answered/done — the terminal-positive lifecycle state
+    "Open": "Approved",          # live in the register, not awaiting ratification
+    "Monitoring": "Approved",    # an activity on an in-force item, not a lifecycle stage
+    "Active": "Approved",        # in force and operative
+    "Closed": "Obsolete",        # terminal-neutral: no claim about HOW it closed
+}
 
 # v1 omitted_artifacts kind/path -> v2 entity type (G-SET's recorded-omitted half).
 OMISSION_KEYWORDS = [
@@ -75,11 +86,29 @@ def _norm_profile(p: str | None) -> str:
     return "unknown"
 
 
-def _status(cell: str | None, default: str = "Draft") -> str:
+def _norm_status_key(cell: str | None) -> str:
     s = (cell or "").strip().strip("*").strip()
-    s = s[:1].upper() + s[1:].lower() if s else s
-    s = STATUS_MAP.get(s, s)
-    return s if s in LIFECYCLE else default
+    return s[:1].upper() + s[1:].lower() if s else s
+
+
+def _status(cell: str | None, default: str = "Draft",
+            plan: "Plan | None" = None, ident: str | None = None) -> str:
+    raw = (cell or "").strip().strip("*").strip()
+    s = STATUS_MAP.get(_norm_status_key(raw), _norm_status_key(raw))
+    if s in LIFECYCLE:
+        return s
+    # Unknown vocabulary (C17): operator status_map > semantic defaults > default.
+    # Every non-empty coercion is recorded — an empty cell -> default is absence, not
+    # coercion. Compound cells never auto-map (exact match only).
+    mapped = None
+    if plan is not None and plan.status_map:
+        mapped = plan.status_map.get(s)
+    if mapped is None:
+        mapped = STATUS_COERCE.get(s)
+    result = mapped or default
+    if raw and plan is not None:
+        plan.status_coerced.append({"id": ident, "original": raw, "coerced": result})
+    return result
 
 
 def _ids_in(text: str) -> list[str]:
@@ -134,8 +163,12 @@ class Plan:
         self.package: dict = {}
         # File-level loss accounting (field-evidence C13): unmapped is id-granular, so
         # whole-file outcomes get their own ledgers, surfaced in the preview.
-        self.partial_files: list[str] = []   # register rows migrated; surrounding prose not
-        self.skipped_files: list[str] = []   # skipped by design (derived views, unknown kinds)
+        self.partial_files: dict[str, int] = {}  # rows migrated per file; prose not (C17)
+        self.skipped_files: list[str] = []   # skipped by design (derived views)
+        # Preview-honesty ledgers (field-evidence C17): every judgment call reported.
+        self.status_coerced: list[dict] = []   # [{id, original, coerced}]
+        self.title_fallbacks: list[dict] = []  # rows whose title fell back to row[1]
+        self.status_map: dict[str, str] = {}   # operator overrides, normalized keys
 
     def add(self, table: str, row: dict):
         self.rows.setdefault(table, []).append(row)
@@ -160,34 +193,54 @@ def preflight(source: Path) -> dict:
     # inherits the JSON-RPC transport and can wedge on Windows. The frozen validator is
     # already imported as a library; calling it directly also removes the wedge-vs-slow
     # ambiguity. The try/except replaces the crash isolation the subprocess used to give.
+    # Which contract judged this (field-evidence C17): the frozen validator carries no
+    # version constant, so the content hash IS its identity — stale-copy incidents become
+    # auditable from the result alone.
+    src_bytes = Path(str(vp.__file__)).read_bytes()
+    validator = {"sha256": hashlib.sha256(src_bytes).hexdigest(), "bytes": len(src_bytes)}
     try:
         report = vp.build_summary(source, vp.run_gates(source))
     except Exception as exc:
-        return {"ok": False, "stage": "preflight",
+        return {"ok": False, "stage": "preflight", "validator": validator,
                 "error": f"pre-flight crashed inside the frozen v1 validator: {exc!r}",
                 "traceback": traceback.format_exc()[-2000:]}
     if not report["ok"]:
-        return {"ok": False, "stage": "preflight", "error":
+        return {"ok": False, "stage": "preflight", "validator": validator, "error":
                 "v1 validator failed (critical: %s) — fix the package under v1 or use "
                 "package_adopt if it is lineage-but-nonconformant"
                 % ", ".join(report["critical_failed"]),
                 "report": report}
-    return {"ok": True, "stage": "preflight"}
+    return {"ok": True, "stage": "preflight", "validator": validator}
 
 
 # --------------------------------------------------------------------------- stage 2
 
-def _map_register_row(plan: Plan, prefix: str, ident: str, t, row: list[str]):
+def _map_register_row(plan: Plan, prefix: str, ident: str, t, row: list[str],
+                      id_col: int = 0):
     def col(*aliases):
         return _cell(row, t.col_index(aliases))
 
+    def title_col(*aliases):
+        # Same matching as the frozen col_index (exact-equality, column order) but the id
+        # column never qualifies: a title alias resolving to the cell the id came from is
+        # never right (field-evidence C17: roadmap `| Phase | ... |` titled phases "PH-0").
+        norm = {a.lower() for a in aliases}
+        for i, header in enumerate(t.headers):
+            if i != id_col and header.strip().lower() in norm:
+                return _cell(row, i)
+        return None
+
     attrs = _row_attrs(t.headers, row)
-    status = _status(col("status"))
-    title = col("statement", "given / when / then", "criterion", "requirement",
-                "constraint", "assumption", "question", "decision", "risk", "invariant",
-                "dependency", "hypothesis", "milestone", "metric", "test", "work item",
-                "phase", "stakeholder / role",
-                "stakeholder") or _clean_line(" ".join(row[1:2]))
+    status = _status(col("status"), "Proposed" if prefix == "DEC" else "Draft",
+                     plan=plan, ident=ident)
+    title = title_col("statement", "given / when / then", "criterion", "requirement",
+                      "constraint", "assumption", "question", "decision", "risk",
+                      "invariant", "dependency", "hypothesis", "milestone", "metric",
+                      "test", "work item", "phase", "name", "stakeholder / role",
+                      "stakeholder")
+    if title is None:
+        title = _clean_line(" ".join(row[1:2]))
+        plan.title_fallbacks.append({"id": ident, "title": title})
     if prefix in ("FR", "NFR"):
         source = col("source") or ""
         kind = "clarification" if re.search(r"OQ-|clarif", source, re.I) else "brief"
@@ -232,7 +285,7 @@ def _map_register_row(plan: Plan, prefix: str, ident: str, t, row: list[str]):
                                  f"stored NULL ({promoted_cell[:60]!r})")
         plan.add("decisions", {"id": ident, "title": title[:200], "decision": title,
                                "rationale": col("rationale", "rationale (short)"),
-                               "lifecycle_status": _status(col("status"), "Proposed"),
+                               "lifecycle_status": status,
                                "promoted_to": promoted,
                                "custom_attributes": attrs})
     elif prefix == "RISK":
@@ -318,7 +371,9 @@ def _map_matrix(plan: Plan, t) -> None:
                     break
 
 
-def _map_adr(plan: Plan, pf) -> None:
+def _map_adr(plan: Plan, pf) -> bool:
+    """Returns True when the file became an adrs row; False = caller falls through to the
+    narrative catch-all (C17: an adrs/README.md index is prose worth keeping, not a loss)."""
     fm = pf.front_matter
     ident = (fm.get("id") or "").strip()
     status_src = fm.get("status")
@@ -329,7 +384,7 @@ def _map_adr(plan: Plan, pf) -> None:
         head = re.search(r"^#\s+(ADR-\d+)\b[:.]?\s*", pf.text, re.M)
         if not head:
             plan.unmapped.append(f"{pf.rel}: ADR file without front-matter or heading id")
-            return
+            return False
         ident = head.group(1)
         bullet = re.search(r"^[-*]\s*\**Status\**\s*:\s*([A-Za-z-]+)", pf.text, re.M | re.I)
         status_src = bullet.group(1) if bullet else status_src
@@ -352,28 +407,34 @@ def _map_adr(plan: Plan, pf) -> None:
         # outcome, never the drivers list (field-evidence C12/D4).
         "decision": section("decision outcome", "decision", exclude="driver"),
         "consequences": section("consequence"),
-        "lifecycle_status": _status(status_src, "Proposed"),
+        "lifecycle_status": _status(status_src, "Proposed", plan=plan, ident=ident),
         "custom_attributes": json.dumps({"v1": {"front_matter": dict(fm)}},
                                         ensure_ascii=False)})
+    return True
 
 
-def _map_exp_poc(plan: Plan, pf) -> None:
+def _map_exp_poc(plan: Plan, pf) -> bool:
     fm = pf.front_matter
     ident = (fm.get("id") or "").strip()
     table = "experiments" if ident.startswith("EXP-") else "pocs"
     if not ident:
         plan.unmapped.append(f"{pf.rel}: experiment/POC file without front-matter id")
-        return
+        return False
     title_m = re.search(r"^#\s+(.+)$", pf.text, re.M)
     plan.add(table, {
         "id": ident, "title": _clean_line(title_m.group(1)) if title_m else ident,
-        "verdict": "Pending", "lifecycle_status": _status(fm.get("status"), "Proposed"),
+        "verdict": "Pending",
+        "lifecycle_status": _status(fm.get("status"), "Proposed", plan=plan, ident=ident),
         "custom_attributes": json.dumps(
             {"v1": {"front_matter": dict(fm), "body": pf.text}}, ensure_ascii=False)})
+    return True
 
 
-def parse_v1(source: Path) -> Plan:
+def parse_v1(source: Path, status_map: dict[str, str] | None = None) -> Plan:
     plan = Plan()
+    # Operator status overrides (C17): keys normalized exactly as _status normalizes
+    # cells, so a supplied "resolved" matches a register's "Resolved".
+    plan.status_map = {_norm_status_key(k): v for k, v in (status_map or {}).items()}
     files = vp.load_package(source)
     by_rel = {pf.rel: pf for pf in files}
 
@@ -423,6 +484,7 @@ def parse_v1(source: Path) -> Plan:
             plan.skipped_files.append(pf.rel)  # derived views: regenerated in v2 (C13)
             continue
         if "acceptance-audit" in rel_l:
+            audits_before = len(plan.audits)
             for t in vp.parse_markdown_tables(pf.text):
                 for row in t.rows:
                     ac = next((i for i in _ids_in(row[0]) if i.startswith("AC-")), None)
@@ -434,12 +496,12 @@ def parse_v1(source: Path) -> Plan:
                             "ac_id": ac, "verdict": verdict,
                             "evidence": _cell(row, t.col_index(["evidence", "test ref"])),
                             "custom_attributes": _row_attrs(t.headers, row)})
-            plan.partial_files.append(pf.rel)
+            plan.partial_files[pf.rel] = len(plan.audits) - audits_before
             continue
         if "deferred-work" in rel_l:
             # Ungoverned `D-nn` rows (Keystone's own convention) are invisible to the ID
             # regex — 23 live items vanished from ACMP with no trace (field-evidence C13).
-            dw_seq = len(plan.rows.get("deferred_work", []))
+            dw_seq0 = dw_seq = len(plan.rows.get("deferred_work", []))
             for t in vp.parse_markdown_tables(pf.text):
                 for row in t.rows:
                     if not re.fullmatch(r"D-\d+", row[0].strip().strip("*")):
@@ -457,24 +519,24 @@ def parse_v1(source: Path) -> Plan:
                             ["activation trigger", "trigger", "activate when"])),
                         "source_kind": "brief", "source_span": f"v1:{pf.rel}",
                         "custom_attributes": _row_attrs(t.headers, row)})
-            plan.partial_files.append(pf.rel)
+            plan.partial_files[pf.rel] = len(plan.rows.get("deferred_work", [])) - dw_seq0
             continue
         if rel_l.startswith("adrs/"):
-            _map_adr(plan, pf)
-            continue
-        if rel_l.startswith(("experiments/", "pocs/")):
-            _map_exp_poc(plan, pf)
-            continue
-        if "/diagrams/" in rel_l:
+            if _map_adr(plan, pf):
+                continue  # success: rows-only; failure falls through to the catch-all (C17)
+        elif rel_l.startswith(("experiments/", "pocs/")):
+            if _map_exp_poc(plan, pf):
+                continue
+        elif "/diagrams/" in rel_l:
             stem = Path(rel_l).stem
             if stem in DIAGRAM_CLASS:
                 dia_seq += 1
                 plan.add("diagrams", {"id": f"DIA-{dia_seq:03d}", "kind": stem,
                                       "title": f"{stem} diagram", "body": pf.text,
                                       "generation_class": DIAGRAM_CLASS[stem]})
-            else:
-                plan.skipped_files.append(pf.rel)  # unknown diagram kind (C13: listed)
-            continue
+                continue
+            # unknown diagram kind: fall through to the narrative catch-all (C17 —
+            # listed-AND-preserved beats listed-only)
 
         prompt = next((k for s, k in PROMPT_KINDS if s in rel_l), None)
         if prompt:
@@ -495,8 +557,10 @@ def parse_v1(source: Path) -> Plan:
             for row in t.rows:
                 token = next(iter(_ids_in(row[id_col] if id_col < len(row) else "")), None)
                 if token and not plan.has(token):
-                    _map_register_row(plan, token.split("-")[0], token, t, row)
-        produced_rows = sum(len(v) for v in plan.rows.values()) > rows_before
+                    _map_register_row(plan, token.split("-")[0], token, t, row,
+                                      id_col=id_col)
+        rows_after = sum(len(v) for v in plan.rows.values())
+        produced_rows = rows_after > rows_before
 
         kind = next((k for s, k in NARRATIVE_KINDS if s in pf.rel), None)
         if kind is None and not prompt and not produced_rows:
@@ -506,17 +570,20 @@ def parse_v1(source: Path) -> Plan:
             # listed as partial instead (no double representation).
             kind = "other"
         elif kind is None and produced_rows:
-            plan.partial_files.append(pf.rel)
+            plan.partial_files[pf.rel] = rows_after - rows_before
         if kind and not prompt:
             doc_seq += 1
             doc_id = f"DOC-{doc_seq:03d}"
             title_m = re.search(r"^#\s+(.+)$", pf.text, re.M)
+            v1_attrs = {"path": pf.rel}
+            if pf.front_matter:  # C17: the one place a v1 value was neither mapped nor kept
+                v1_attrs["front_matter"] = dict(pf.front_matter)
             plan.add("narrative_documents", {
                 "id": doc_id, "doc_kind": kind,
                 "title": _clean_line(title_m.group(1)) if title_m else pf.rel,
-                "lifecycle_status": _status(pf.front_matter.get("status")),
-                "custom_attributes": json.dumps({"v1": {"path": pf.rel}},
-                                                ensure_ascii=False)})
+                "lifecycle_status": _status(pf.front_matter.get("status"),
+                                            plan=plan, ident=doc_id),
+                "custom_attributes": json.dumps({"v1": v1_attrs}, ensure_ascii=False)})
             for order, (heading, body) in enumerate(_sections(pf.text), 1):
                 sec_seq += 1
                 plan.add("document_sections", {
@@ -731,14 +798,20 @@ _CUTOVER_NEXT = (
 
 def run_migration(source_dir: str, dest_root: str | Path, name: str | None = None,
                   confirm: bool = False, allow_zero: list[str] | None = None,
-                  patch: str | None = None) -> dict:
+                  patch: str | None = None,
+                  status_map: dict[str, str] | None = None) -> dict:
     source = Path(source_dir)
     if not source.is_dir():
         return {"ok": False, "stage": "preflight", "error": f"{source_dir} is not a directory"}
+    bad_values = sorted(set((status_map or {}).values()) - LIFECYCLE)
+    if bad_values:
+        return {"ok": False, "stage": "preflight",
+                "error": f"status_map values outside the lifecycle vocabulary: {bad_values}"
+                         f" (allowed: {', '.join(sorted(LIFECYCLE))})"}
     pre = preflight(source)
     if not pre["ok"]:
         return pre
-    plan = parse_v1(source)
+    plan = parse_v1(source, status_map=status_map)
     patch_report = _apply_patch(plan, patch) if patch else None
     name = _kebab(name or plan.package["name"])
 
@@ -757,8 +830,14 @@ def run_migration(source_dir: str, dest_root: str | Path, name: str | None = Non
                "omissions": len(plan.omissions),
                "manifest_counts": plan.manifest_counts, "count_deltas": deltas,
                "zero_families": zero_families,
-               "partial_files": sorted(plan.partial_files),
+               "partial_files": {k: plan.partial_files[k]
+                                 for k in sorted(plan.partial_files)},
                "skipped_files": sorted(plan.skipped_files),
+               # C17 honesty ledgers: with no status_map, status_coerced shows the DEFAULT
+               # proposals — the operator confirms/overrides them on the confirm call.
+               "status_coerced": plan.status_coerced,
+               "title_fallbacks": plan.title_fallbacks,
+               "validator": pre.get("validator"),
                "patch": patch_report, "unmapped": plan.unmapped}
     if not confirm:
         return {"ok": True, **preview,

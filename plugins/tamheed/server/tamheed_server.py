@@ -535,18 +535,21 @@ def handoff_emit(target_dir: str) -> dict:
 
 def package_migrate(source_dir: str, name: str | None = None, confirm: bool = False,
                     allow_zero: list[str] | None = None,
-                    patch: str | None = None) -> dict:
+                    patch: str | None = None,
+                    status_map: dict[str, str] | None = None) -> dict:
     """Migrate a conformant v1 Keystone package into a v2 store (staged, operator-gated).
 
     Default = stages 1-2 (pre-flight + dry parse report). confirm=True = stages 4-5
     (populate in one transaction + post-flight fidelity). `allow_zero` acknowledges
     named families that legitimately parse to zero; `patch` is a JSON file of
     merge-by-id row overrides applied to the parsed plan before populate (the blessed
-    repair path — echoed in the preview). See references/migration-v1.md.
+    repair path — echoed in the preview); `status_map` maps v1 status words to lifecycle
+    values (present the preview's status_coerced proposals to the operator, then pass
+    the confirmed map here). See references/migration-v1.md.
     Migration is operator-initiated, always (D-REPO-5)."""
     import migrate
     out = migrate.run_migration(source_dir, PACKAGE_ROOT, name=name, confirm=confirm,
-                                allow_zero=allow_zero, patch=patch)
+                                allow_zero=allow_zero, patch=patch, status_map=status_map)
     out.setdefault("package_root", str(Path(PACKAGE_ROOT).resolve()))
     return out
 

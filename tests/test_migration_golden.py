@@ -233,7 +233,7 @@ class DialectToleranceTest(unittest.TestCase):
         plan.package = _package_row("t")
         plan.manifest_counts = {"ADR": 33}                     # ACMP shape: 33 ADRs -> 0
         migrate.preflight = lambda s: {"ok": True, "stage": "preflight"}
-        migrate.parse_v1 = lambda s: plan
+        migrate.parse_v1 = lambda s, **kw: plan
         try:
             with tempfile.TemporaryDirectory() as dest:
                 out = migrate.run_migration(".", dest, name="t", confirm=True)
@@ -245,6 +245,86 @@ class DialectToleranceTest(unittest.TestCase):
                 self.assertEqual(acked["stage"], "post-flight")  # populate proceeded
         finally:
             migrate.preflight, migrate.parse_v1 = real_pre, real_parse
+
+    def test_status_coercions_recorded_in_preview(self):
+        """Plan 018 (C17): unknown v1 statuses map semantically, always ledgered."""
+        md = ("| ID | Risk | Status |\n|----|------|--------|\n"
+              "| RISK-001 | a | Open |\n| RISK-002 | b | Monitoring |\n"
+              "| RISK-003 | c | Closed |\n| RISK-004 | d | Active |\n"
+              "| RISK-005 | e | Bizarre-word |\n| RISK-006 | f | |\n")
+        [table] = migrate.vp.parse_markdown_tables(md)
+        plan = migrate.Plan()
+        for row in table.rows:
+            migrate._map_register_row(plan, "RISK", row[0].strip(), table, row)
+        rows = {r["id"]: r["lifecycle_status"] for r in plan.rows["risks"]}
+        self.assertEqual(rows["RISK-001"], "Approved")     # Open
+        self.assertEqual(rows["RISK-002"], "Approved")     # Monitoring
+        self.assertEqual(rows["RISK-003"], "Obsolete")     # Closed
+        self.assertEqual(rows["RISK-004"], "Approved")     # Active
+        self.assertEqual(rows["RISK-005"], "Draft")        # unknown -> default
+        ledger = {e["id"]: e for e in plan.status_coerced}
+        self.assertEqual(len(ledger), 5)                   # empty cell NOT recorded
+        self.assertNotIn("RISK-006", ledger)
+        self.assertEqual(ledger["RISK-001"],
+                         {"id": "RISK-001", "original": "Open", "coerced": "Approved"})
+        # operator override wins over the semantic default (status_map, normalized keys)
+        plan2 = migrate.Plan()
+        plan2.status_map = {"Open": "Deferred"}
+        migrate._map_register_row(plan2, "RISK", "RISK-001", table, table.rows[0])
+        self.assertEqual(plan2.rows["risks"][0]["lifecycle_status"], "Deferred")
+
+    def test_status_map_values_validated(self):
+        out = migrate.run_migration(str(FIXTURES / "valid-package"), ".",
+                                    status_map={"Open": "NotAStatus"})
+        self.assertFalse(out["ok"])
+        self.assertIn("lifecycle vocabulary", out["error"])
+
+    def test_id_column_never_becomes_title(self):
+        """Plan 018 (C17/F2): a title alias must never resolve to the id column."""
+        md = ("| Phase | Goal | Status |\n|-------|------|--------|\n"
+              "| PH-0 | Build the foundations | Active |\n")
+        [table] = migrate.vp.parse_markdown_tables(md)
+        plan = migrate.Plan()
+        migrate._map_register_row(plan, "PH", "PH-0", table, table.rows[0])
+        row = plan.rows["phases"][0]
+        self.assertNotEqual(row["title"], "PH-0")
+        self.assertTrue(any(f["id"] == "PH-0" for f in plan.title_fallbacks))
+        # `name` alias resolves for stakeholder-style tables
+        md2 = ("| ID | Name | Interest |\n|----|------|----------|\n"
+               "| STK-001 | Ops lead | uptime |\n")
+        [t2] = migrate.vp.parse_markdown_tables(md2)
+        plan2 = migrate.Plan()
+        migrate._map_register_row(plan2, "STK", "STK-001", t2, t2.rows[0])
+        self.assertEqual(plan2.rows["stakeholders"][0]["name"], "Ops lead")
+
+    def test_failed_adr_falls_through_to_other_narrative(self):
+        """Plan 018 (C17/F3): parse failures are preserved, not just listed."""
+        with tempfile.TemporaryDirectory() as src:
+            tmp = Path(src)
+            (tmp / "adrs").mkdir()
+            (tmp / "architecture" / "diagrams").mkdir(parents=True)
+            (tmp / "manifest.json").write_text('{"package": "t"}', encoding="utf-8")
+            (tmp / "adrs" / "README.md").write_text(
+                "# ADR index\n\n## Purpose\nWhy these records exist.\n", encoding="utf-8")
+            (tmp / "adrs" / "notes.md").write_text(
+                "# Drafting notes\n\n## Style\nMADR, outcome-first.\n", encoding="utf-8")
+            (tmp / "adrs" / "adr-0001.md").write_text(
+                "# ADR-0001: Real one\n\n- Status: Accepted\n\n## Context\nc\n\n"
+                "## Decision Outcome\nd\n\n## Consequences\nq\n", encoding="utf-8")
+            (tmp / "architecture" / "diagrams" / "README.md").write_text(
+                "# Diagram index\n\n## Kinds\nWhat lives here.\n", encoding="utf-8")
+            plan = migrate.parse_v1(tmp)
+        by_path = {json.loads(d["custom_attributes"])["v1"]["path"]: d["doc_kind"]
+                   for d in plan.rows["narrative_documents"]}
+        # READMEs match the 'readme' narrative kind on fall-through; other prose -> 'other'.
+        self.assertIn("adrs/README.md", by_path)                     # preserved, not lost
+        self.assertIn("architecture/diagrams/README.md", by_path)    # unknown stem too
+        self.assertEqual(by_path["adrs/notes.md"], "other")          # non-README prose
+        self.assertEqual(len(plan.rows["adrs"]), 1)                  # real ADR: rows-only
+        adr_twin = [d for d in plan.rows["narrative_documents"]
+                    if "adr-0001" in d["custom_attributes"]]
+        self.assertEqual(adr_twin, [])                               # no double-processing
+        self.assertTrue(any("adrs/README.md" in u for u in plan.unmapped))
 
     def test_patch_applied_by_id_before_populate(self):
         plan = migrate.Plan()

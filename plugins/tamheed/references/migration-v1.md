@@ -75,6 +75,29 @@ lives under the v2 flow (ASM-A: v1 is supported for migration only). The operato
 11. **Manifest spellings (C12).** `generated` is accepted alongside `generated_at`; the
     raw `profile` string is preserved in `custom_attributes.v1_manifest` (normalization is
     lossy). An omission recorded for a family that also migrated rows is stale and dropped.
+12. **Status vocabulary (C17).** `Accepted`/`Planned` map silently (canonical pairs). Common
+    v1 vocabulary maps semantically — `Resolved→Implemented`, `Open→Approved`,
+    `Monitoring→Approved`, `Active→Approved`, `Closed→Obsolete` — and **every** such
+    coercion (plus any unknown-word → default) is reported in the preview's
+    `status_coerced` ledger `[{id, original, coerced}]`. The operator confirms or
+    overrides via `package_migrate(..., status_map={word: lifecycle-value})` on the
+    confirm call (keys normalized like status cells; values validated). Compound cells
+    ("Resolved (rule) / threshold pending EXP-001") never auto-map — exact match only,
+    default + ledger entry. Note: the FR/AC Draft→Approved post-bump is a separate
+    parser decision, not a ledger item. An empty status cell takes the default silently
+    (absence, not coercion).
+13. **Titles never come from the id column (C17).** A title alias resolving to the same
+    cell the id came from is never right (a `| Phase | ... |` roadmap once titled every
+    phase "PH-0"); `name` is a title alias. Rows whose title fell back to the second cell
+    are reported in the preview's `title_fallbacks` ledger.
+14. **Parse-failure fall-through (C17).** An `adrs/` or `experiments/`/`pocs/` file that
+    fails id parsing, and any diagram with an unknown stem, falls through to the narrative
+    catch-all (README-named files land as `readme`, other prose as `other`) — listed in
+    `unmapped` AND preserved. Narrative documents keep their full v1 `front_matter` in
+    `custom_attributes`.
+15. **Validator provenance (C17).** The pre-flight result carries the frozen validator's
+    sha256 + byte size — "which contract judged this" is auditable from the result alone.
+    `partial_files` reports per-file migrated-row counts.
 
 ## Field mapping (v1 → v2)
 
