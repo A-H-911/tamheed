@@ -10,6 +10,50 @@ All notable changes to Tamheed are documented here. The format is based on
 
 ## [Unreleased]
 
+## [2.4.0] - 2026-07-23
+
+**Data-fidelity release** (plan 020; evidence **C23–C25** from the fourth ACMP field report —
+the one that *retracted its own verdict* after a post-cutover column-level diff found twelve
+degradation classes that row-level checks certified as clean; archived WITH the retraction at
+`plans/evidence/acmp-field-report-4-2026-07-22.md`). **No schema migration — existing 2.x
+packages unaffected; ALREADY-MIGRATED packages should be re-populated per
+`docs/migrate-from-keystone.md` §7 to repair the damage the old parser caused.**
+
+### Fixed (migration data integrity — the ship-blockers)
+- Title cleaning strips markdown **positionally** — the old character class deleted every
+  ASCII hyphen, mangling governed ids (`FR-001`→`FR 001`) and severing cross-references; one
+  200-char cap replaces the hidden second 120 cap.
+- A fallback title **never becomes the statement**: long-form columns always take the raw
+  cell. Weak-definition rows (previously the only rows with NO provenance bag — genuinely
+  unrecoverable) now preserve their raw defining line in `custom_attributes.v1.raw_line`.
+- `D-nn`→`DW-` keys on the **parsed number**, never row position (an unsorted register once
+  silently shifted five ids); duplicate guard + full crosswalk in the preview.
+- Imported acceptance criteria land **`Proposed`**, never Approved — the immutability trigger
+  freezes `slice_id` at Approved and v1 has no slices; `v_phase_exit` stays completable.
+- Five typed-column starvation aliases (tests.kind `Type`, deferred `Trigger to activate`,
+  KPI `Measurement`/`Cadence`, bare phase numbers, stakeholder `role`); risks map their v1
+  status into `risk_state` too; row-bearing files also emit their narrative document;
+  sections split on the shallowest heading level; narrow phase prose-status parse;
+  `Living`/`Complete` join the semantic status map; degenerate-title guard.
+
+### Added
+- **Fidelity ledgers** — the report's central ask (*"every ledger so far reports choices;
+  none reports fidelity"*): post-flight `truncations` (length-histogram mass at exactly a
+  cap), `column_starvation` (typed column NULL while the attribute bag holds the value),
+  `field_mapping`, and an execution-state note. `title_fallbacks` reclassified as a
+  **data-loss warning**. Emitted prompt bodies join the stale-reference scan (v1-protocol
+  instructions + dead relative links; reported, never rewritten). Migrate leaves the package
+  open so `handoff_emit` follows directly.
+- **Viewer redesign** (maintainer requirements): dark **maximalist** identity (validated
+  8-hue family palette, glow accents, gradient headers, print falls back to light); sections
+  ordered State→Relations→Data; the **relations graph** — every entity a clickable node
+  jumping to its anchored register row, trace edges as a deterministic chord diagram, zero
+  JS, family-aggregate above 4,000 nodes; **per-table CSV downloads** (deterministic
+  `csv/<table>.csv`, managed emissions); long text wraps in place (supersedes the 2.3.0
+  horizontal-scroll behavior).
+- Runbook §7: re-populating an already-migrated package after a parser upgrade (the
+  no-revert repair path, including the PRM prompt refresh).
+
 ## [2.3.0] - 2026-07-22
 
 Third field-report hardening (plan 019; evidence **C20–C22** from the v2.2.0 ACMP
