@@ -311,12 +311,14 @@ def entity_query(type: str, id: str | None = None, status: str | None = None,
         if status_col is None:
             return _err(f"{type} has no status column")
         where.append(f"{status_col} = ?"); params.append(status)
-    sql = f"SELECT {', '.join(cols)} FROM {table}"
-    if where:
-        sql += " WHERE " + " AND ".join(where)
-    sql += f" ORDER BY id LIMIT {int(limit)}"
+    where_sql = (" WHERE " + " AND ".join(where)) if where else ""
+    # `total` alongside the LIMIT'd rows (field-evidence C17: limit=100 silently
+    # truncated a 218-row family and the caller had no way to know).
+    total = _CURRENT.conn.execute(
+        f"SELECT COUNT(*) FROM {table}{where_sql}", params).fetchone()[0]
+    sql = f"SELECT {', '.join(cols)} FROM {table}{where_sql} ORDER BY id LIMIT {int(limit)}"
     rows = [dict(zip(cols, r)) for r in _CURRENT.conn.execute(sql, params)]
-    return {"ok": True, "rows": rows, "count": len(rows)}
+    return {"ok": True, "rows": rows, "count": len(rows), "total": total}
 
 
 def trace_query(entity_id: str, direction: str = "both", relation: str | None = None) -> dict:
@@ -476,15 +478,67 @@ def work_bind(ref: str, entity_ids: list[str], note: str | None = None) -> dict:
 
 # --------------------------------------------------------------------------- handoff
 
-def handoff_emit(target_dir: str) -> dict:
+_PROMPTS_DIR = _SERVER_DIR.parent / "prompts"
+
+# v1-flow patterns for the cutover stale-reference scan (C19). Precision matters: the bare
+# word "Keystone" is NEVER matched alone — real projects use it as a product/domain term
+# (ACMP's "Keystone optional" feature, ADR-0007 lesson).
+_STALE_PATTERNS = [
+    (re.compile(r"validate_package\.py"),
+     "run gate_run via the tamheed MCP tools instead of the v1 validator"),
+    (re.compile(r"keystone-state\.json"),
+     "the package IS the state — query it with entity_query/trace_query"),
+    (re.compile(r"docs/handoff/"),
+     "use the emitted handoff/prm-*.md files and <package>/prompts/ instead"),
+    (re.compile(r"Keystone (?:v1|package|register|validator|tree)", re.IGNORECASE),
+     "the v1 tree is a frozen archive; the Tamheed package is the record"),
+]
+
+
+def _emit_prompt_library(pkg_dir: Path, name: str) -> list[str]:
+    """Copy the bundled scenario prompts into <package>/prompts/ (C19; user decision:
+    the library lives with the package). Deterministic: static content, {package}
+    substitution only."""
+    out_dir = pkg_dir / "prompts"
+    out_dir.mkdir(parents=True, exist_ok=True)
+    written = []
+    for src in sorted(_PROMPTS_DIR.glob("*.md")):
+        text = src.read_text(encoding="utf-8").replace("{package}", name)
+        (out_dir / src.name).write_text(text, encoding="utf-8", newline="\n")
+        written.append(f"prompts/{src.name}")
+    return written
+
+
+def _stale_reference_report(target: Path) -> list[dict]:
+    findings = []
+    for fname in ("CLAUDE.md", "AGENTS.md"):
+        path = target / fname
+        if not path.exists():
+            continue
+        for lineno, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+            for pattern, suggestion in _STALE_PATTERNS:
+                if pattern.search(line):
+                    findings.append({"file": fname, "line": lineno,
+                                     "text": line.strip()[:160],
+                                     "suggestion": suggestion})
+                    break
+    return findings
+
+
+def handoff_emit(target_dir: str, subdir: str = "handoff") -> dict:
     """Assemble handoff prompts into the target project + write the executor-side MCP
-    config (.mcp.json + CLAUDE.md note) so the executing agent can record progress
-    (W-V2-7). Emission is blocked if the injection screen finds instruction-shaped text."""
+    config (.mcp.json + CLAUDE.md operating note) so the executing agent can record
+    progress. Also emits the scenario prompt library into <package>/prompts/ and
+    reports stale v1 references found in the target's CLAUDE.md/AGENTS.md.
+    Emission is blocked if the injection screen finds instruction-shaped text."""
     if guard := _need_open():
         return guard
     target = Path(target_dir)
     if not target.is_dir():
         return _err(f"target_dir {target_dir!r} is not an existing directory")
+    sub = Path(subdir)
+    if sub.is_absolute() or ".." in sub.parts:
+        return _err(f"subdir {subdir!r} must be a relative path inside the target")
     conn = _CURRENT.conn
     prompts = conn.execute(
         "SELECT id, prompt_kind, title, body FROM prompts ORDER BY id"
@@ -497,38 +551,70 @@ def handoff_emit(target_dir: str) -> dict:
     if findings:
         return _err("G-INJECT: instruction-shaped text found — emission blocked",
                     gate="G-INJECT", findings=findings)
-    handoff = target / "handoff"
-    handoff.mkdir(exist_ok=True)
+    handoff = target / sub
+    handoff.mkdir(parents=True, exist_ok=True)
     written = []
     for pid, kind, title, body in prompts:
         path = handoff / f"{pid.lower()}-{kind}.md"
         path.write_text(f"# {title}\n\n{body}\n", encoding="utf-8", newline="\n")
         written.append(str(path.relative_to(target)))
-    server_path = str((_SERVER_DIR / "tamheed_server.py").resolve())
+
+    # Portable executor config (field-evidence C19): on a plugin install the server path
+    # points into the VERSIONED plugin cache — machine- and version-specific, and the
+    # installed plugin already registers a server named `tamheed`, so emitting one would
+    # double-register. Omit it and say so; standalone installs keep the absolute path.
+    resolved = str((_SERVER_DIR / "tamheed_server.py").resolve()).replace("\\", "/")
+    plugin_hosted = "/.claude/plugins/" in resolved
     mcp_cfg_path = target / ".mcp.json"
-    cfg = json.loads(mcp_cfg_path.read_text(encoding="utf-8")) if mcp_cfg_path.exists() else {}
-    cfg.setdefault("mcpServers", {})["tamheed"] = {
-        "command": "uv",
-        "args": ["run", server_path, "--package-dir", str(PACKAGE_ROOT.resolve())],
-    }
-    mcp_cfg_path.write_text(json.dumps(cfg, indent=2) + "\n", encoding="utf-8", newline="\n")
-    written.append(".mcp.json")
-    note = ("\n## Tamheed progress tracking\n\n"
-            f"This project executes Tamheed package `{_CURRENT_NAME}`. Record progress through "
-            "the `tamheed` MCP tools (`progress_update`, `audit_record`, `work_bind`) — "
-            "they are the only write path into the package.\n")
+    if not plugin_hosted:
+        cfg = (json.loads(mcp_cfg_path.read_text(encoding="utf-8"))
+               if mcp_cfg_path.exists() else {})
+        cfg.setdefault("mcpServers", {})["tamheed"] = {
+            "command": "uv",
+            "args": ["run", resolved, "--package-dir", str(PACKAGE_ROOT.resolve())],
+        }
+        mcp_cfg_path.write_text(json.dumps(cfg, indent=2) + "\n",
+                                encoding="utf-8", newline="\n")
+        written.append(".mcp.json")
+
+    library = _emit_prompt_library(PACKAGE_ROOT / _CURRENT_NAME, _CURRENT_NAME)
+    stale = _stale_reference_report(target)
+
+    server_line = ("The `tamheed` MCP server is provided by the installed tamheed plugin "
+                   "(no project-level .mcp.json entry needed)." if plugin_hosted else
+                   "The `tamheed` MCP server is registered in this project's `.mcp.json`.")
+    note = (
+        "\n## Tamheed progress tracking\n\n"
+        f"This project executes Tamheed package `{_CURRENT_NAME}` "
+        f"(under `{PACKAGE_ROOT.resolve()}`). **The package is the record — when code and "
+        "package disagree, fix the code or record a scope change; never let them drift.** "
+        f"{server_line} All package reads/writes go through the `tamheed` MCP tools; "
+        f"ready-made task prompts live in `{_CURRENT_NAME}/prompts/` "
+        "(orient-resume, progress-sync, integrity-check, generate-report, slice-review) "
+        f"and the human review surface is `{_CURRENT_NAME}/review.html`.\n"
+        "\n### Tool cheat-sheet (execution loop)\n\n"
+        "- `progress_update(entries=[{entry, phase_id?, slice_id?}])` — append progress\n"
+        "- `audit_record(verdicts=[{ac_id, verdict: Met|Partial|Not-met|Pending,"
+        " evidence?}])` — evidence ref = evidenced, not narrated\n"
+        "- `work_bind(ref, entity_ids=[...], note?)` — stamp a commit/PR onto entities\n"
+        "- `entity_query(type, id?, status?, columns?, limit?)` — rows + total\n"
+        "- `trace_query(entity_id, direction: out|in|both, relation?)` — typed links\n"
+        "- `entity_upsert(entities=[{type, id, ...}])` — FULL rows, even for updates\n"
+        "- `gate_run()` — mechanical gate verdict · `export_html()` — refresh review.html\n"
+        "- `server_info()` — version + resolved package root (orientation)\n")
     claude_md = target / "CLAUDE.md"
     existing = claude_md.read_text(encoding="utf-8") if claude_md.exists() else ""
-    if existing and re.search(r"validate_package\.py|keystone", existing, re.I):
-        # Cutover flag (field-evidence C15): stale v1 instructions silently steer every
-        # future agent session back to the dead source of truth.
-        note += ("\n> **Stale v1 reference detected in this file** (it mentions "
-                 "Keystone/validate_package.py): update those instructions to the "
-                 "Tamheed MCP flow and freeze the v1 planning tree.\n")
+    if stale:
+        # Cutover tripwire (C15/C19): stale v1 instructions silently steer every future
+        # session back to the dead source of truth. The result lists file:line + fix.
+        note += ("\n> **Stale v1 references detected** in this project's agent-control "
+                 "files — see `stale_references` in the handoff_emit result for "
+                 "file:line replacements. Apply them and freeze the v1 tree.\n")
     if "## Tamheed progress tracking" not in existing:
         claude_md.write_text(existing + note, encoding="utf-8", newline="\n")
         written.append("CLAUDE.md")
-    return {"ok": True, "written": written}
+    return {"ok": True, "written": written, "prompt_library": library,
+            "stale_references": stale}
 
 
 # --------------------------------------------------------------------------- staged flows & export
@@ -551,6 +637,10 @@ def package_migrate(source_dir: str, name: str | None = None, confirm: bool = Fa
     out = migrate.run_migration(source_dir, PACKAGE_ROOT, name=name, confirm=confirm,
                                 allow_zero=allow_zero, patch=patch, status_map=status_map)
     out.setdefault("package_root", str(Path(PACKAGE_ROOT).resolve()))
+    if out.get("stage") == "post-flight" and out.get("package_dir"):
+        # C19 (user decision): the package carries its own prompt library from birth.
+        pkg = Path(out["package_dir"])
+        out["prompt_library"] = _emit_prompt_library(pkg, pkg.name)
     return out
 
 
@@ -561,11 +651,14 @@ def package_adopt(source_dir: str, name: str | None = None, confirm: bool = Fals
     import adopt
     out = adopt.run_adoption(source_dir, PACKAGE_ROOT, name=name, confirm=confirm)
     out.setdefault("package_root", str(Path(PACKAGE_ROOT).resolve()))
+    if out.get("stage") == "post-flight" and out.get("package_dir"):
+        pkg = Path(out["package_dir"])
+        out["prompt_library"] = _emit_prompt_library(pkg, pkg.name)
     return out
 
 
 def export_html(output: str | None = None) -> dict:
-    """Export the self-contained static HTML review surface (plan 012/B6, D-REVIEW).
+    """Export the self-contained static HTML review surface (the human review view).
 
     Deterministic (same DB state => byte-identical file), so it is COMMITTED to the
     package's repo by default: writes <package>/review.html unless `output` overrides."""

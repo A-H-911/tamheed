@@ -28,6 +28,7 @@ plugins/tamheed/                     # THE installable bundle — self-contained
 ├── scripts/                          # validate_package.py (frozen v1 gate engine)
 ├── db/                               # v2 relational store: schema.sql, migrations/, store.py, CANONICAL.md
 ├── server/                           # Tamheed MCP server + .mcp.json launch config (plugin root)
+├── prompts/                          # scenario prompt library, emitted into <package>/prompts/ (plan 018)
 └── assets/                           # logos
 docs/                                 # architecture, methodology, workflow, design-decisions, install
 evals/                                # behavioral eval scenarios (skill-level, model-in-the-loop)

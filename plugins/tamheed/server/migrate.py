@@ -188,7 +188,7 @@ def preflight(source: Path) -> dict:
         return {"ok": False, "stage": "preflight",
                 "error": "no manifest.json — not a conformant v1 package. If this is a "
                          "Keystone-lineage project without the mechanical layer, use "
-                         "package_adopt (plan 011), which reconstructs with provenance."}
+                         "package_adopt, which reconstructs with provenance."}
     # In-process (field-evidence C11): a subprocess spawned from the stdio MCP server
     # inherits the JSON-RPC transport and can wedge on Windows. The frozen validator is
     # already imported as a library; calling it directly also removes the wedge-vs-slow

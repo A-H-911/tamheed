@@ -52,16 +52,16 @@ absolute root, and `server_info` reports it on demand.
 | `package_open(name)` | mutate | Open an existing package (takes the lock) |
 | `package_close()` | mutate | Write back canonical JSONL, release the lock |
 | `entity_upsert(entities[])` | mutate | Batch upsert; items are `{"type": ..., <columns>}`; per-item verdicts; all-or-nothing |
-| `entity_query(type, id?, status?, columns?, limit?)` | read | Targeted rows from one family — token-lean |
+| `entity_query(type, id?, status?, columns?, limit?)` | read | Targeted rows from one family — token-lean; returns `total` beside the LIMIT'd rows so truncation is never silent |
 | `trace_query(entity_id, direction?, relation?)` | read | Traverse typed `trace_edges` (in/out/both) |
 | `gate_run()` | read | Referential gates report as write-time-enforced; coverage gates run the SQL views; content tier scans placeholders (code spans stripped per the frozen v1 contract; `custom_attributes` exempt as provenance); warns when G-TRACE passes vacuously (0 MVP rows); audit evidence split evidenced/narrated |
 | `progress_update(entries[])` | mutate | Append progress entries (`PE-` ids auto-assigned) |
 | `audit_record(verdicts[])` | mutate | AC verdicts, optional `evidence` ref (C7); cascades auto-advance |
 | `work_bind(ref, entity_ids[], note?)` | mutate | "This commit/PR satisfies FR-x/AC-y/SL-z" — stamps `last_referenced` (C3) |
-| `handoff_emit(target_dir)` | mutate | Emit prompt files + executor-side `.mcp.json` + `CLAUDE.md` note (W-V2-7); injection-screened |
-| `package_migrate(source_dir)` | staged | Migrate a conformant v1 package (preview, then `confirm`) — plan 010 |
-| `package_adopt(source_dir)` | staged | Adopt a brownfield repo (scan/preview, then `confirm`) — plan 011 |
-| `export_html(output?)` | export | Render the HTML review surface to `<package>/review.html` — plan 012 |
+| `handoff_emit(target_dir, subdir?)` | mutate | Emit prompt files (into `<target>/<subdir>`, default `handoff/`) + executor-side `.mcp.json` (omitted on plugin-hosted servers — the installed plugin already registers `tamheed`) + the `CLAUDE.md` operating note with the tool cheat-sheet; emits the scenario prompt library into `<package>/prompts/`; reports `stale_references` (v1-flow pointers in CLAUDE.md/AGENTS.md, file:line + suggestion); injection-screened |
+| `package_migrate(source_dir, name?, confirm?, allow_zero?, patch?, status_map?)` | staged | Migrate a conformant v1 package (preview, then `confirm`); `status_map` confirms/overrides the preview's `status_coerced` proposals; emits the prompt library on success |
+| `package_adopt(source_dir, name?, confirm?)` | staged | Adopt a brownfield repo (scan/preview, then `confirm`); emits the prompt library on success |
+| `export_html(output?)` | export | Render the HTML review surface to `<package>/review.html` — sticky TOC, folded large tables, honest freshness |
 
 Entity `type` values mirror the `entity_types` registry (`requirement`, `decision`, `adr`,
 `risk`, `phase`, `slice`, `acceptance-criterion`, `deferred-work`, …) plus two write-only

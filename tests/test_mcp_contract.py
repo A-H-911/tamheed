@@ -141,6 +141,93 @@ class McpContractTest(unittest.TestCase):
             sp.run = real
         self.assertEqual(captured.get("stdin"), sp.DEVNULL)  # C11: never the MCP pipe
 
+    # ------------------------------------------------- plan 018 phase 3 (C17/C19)
+
+    def test_entity_query_total_beyond_limit(self):
+        srv.package_create("demo", "Demo", "rnd")
+        srv.entity_upsert([{"type": "risk", "id": f"RISK-{i:03d}", "title": f"r{i}"}
+                           for i in range(1, 4)])
+        out = srv.entity_query("risk", limit=1)
+        self.assertEqual(out["count"], 1)
+        self.assertEqual(out["total"], 3)          # C17: truncation is never silent
+        self.assertEqual(srv.entity_query("risk", id="RISK-002")["total"], 1)
+
+    def test_handoff_emit_custom_subdir_and_validation(self):
+        make_complete_package("demo")
+        srv.entity_upsert([{"type": "prompt", "id": "PRM-001", "prompt_kind": "initial",
+                            "title": "Kickoff", "body": "Start with SL-001."}])
+        with tempfile.TemporaryDirectory() as target:
+            self.assertFalse(srv.handoff_emit(target, subdir="../out")["ok"])
+            self.assertFalse(srv.handoff_emit(target, subdir="C:/abs")["ok"])
+            out = srv.handoff_emit(target, subdir="docs/handoff-v2")
+            self.assertTrue(out["ok"], out)
+            self.assertTrue((Path(target) / "docs" / "handoff-v2"
+                             / "prm-001-initial.md").exists())
+
+    def test_prompt_library_emitted_with_package_name(self):
+        make_complete_package("demo")
+        srv.entity_upsert([{"type": "prompt", "id": "PRM-001", "prompt_kind": "initial",
+                            "title": "Kickoff", "body": "Start."}])
+        with tempfile.TemporaryDirectory() as target:
+            out = srv.handoff_emit(target)
+            self.assertEqual(len(out["prompt_library"]), 5)
+        lib = srv.PACKAGE_ROOT / "demo" / "prompts"
+        names = sorted(p.name for p in lib.glob("*.md"))
+        self.assertEqual(names, ["generate-report.md", "integrity-check.md",
+                                 "orient-resume.md", "progress-sync.md",
+                                 "slice-review.md"])
+        text = (lib / "orient-resume.md").read_text(encoding="utf-8")
+        self.assertIn('package_open("demo")', text)      # {package} substituted
+        self.assertNotIn("{package}", text)
+
+    def test_claude_md_note_contains_cheatsheet(self):
+        make_complete_package("demo")
+        srv.entity_upsert([{"type": "prompt", "id": "PRM-001", "prompt_kind": "initial",
+                            "title": "K", "body": "b"}])
+        with tempfile.TemporaryDirectory() as target:
+            srv.handoff_emit(target)
+            note = (Path(target) / "CLAUDE.md").read_text(encoding="utf-8")
+        for needle in ("Tool cheat-sheet", "audit_record(", "work_bind(",
+                       "entity_query(", "FULL rows", "demo/prompts/"):
+            self.assertIn(needle, note)
+
+    def test_stale_reference_report_is_precise(self):
+        make_complete_package("demo")
+        srv.entity_upsert([{"type": "prompt", "id": "PRM-001", "prompt_kind": "initial",
+                            "title": "K", "body": "b"}])
+        with tempfile.TemporaryDirectory() as target:
+            (Path(target) / "AGENTS.md").write_text(
+                "# Ops\n"
+                "Kickoff from docs/handoff/initial-prompt.md as before.\n"
+                "Keystone optional; Webex = Phase 2.\n",  # product feature — NOT stale
+                encoding="utf-8")
+            out = srv.handoff_emit(target)
+            files_lines = {(f["file"], f["line"]) for f in out["stale_references"]}
+            self.assertIn(("AGENTS.md", 2), files_lines)          # docs/handoff/ flagged
+            self.assertNotIn(("AGENTS.md", 3), files_lines)       # bare 'Keystone' never
+            self.assertTrue(all(f["suggestion"] for f in out["stale_references"]))
+
+    def test_mcp_json_omitted_on_plugin_install(self):
+        make_complete_package("demo")
+        srv.entity_upsert([{"type": "prompt", "id": "PRM-001", "prompt_kind": "initial",
+                            "title": "K", "body": "b"}])
+        real = srv._SERVER_DIR
+        with tempfile.TemporaryDirectory() as target:
+            try:  # C19: a plugin-hosted server must not emit a machine/version-pinned
+                # path, nor double-register the already-installed `tamheed` server.
+                srv._SERVER_DIR = Path(
+                    "C:/Users/x/.claude/plugins/cache/tamheed/tamheed/9.9.9/server")
+                out = srv.handoff_emit(target)
+            finally:
+                srv._SERVER_DIR = real
+            self.assertTrue(out["ok"], out)
+            self.assertFalse((Path(target) / ".mcp.json").exists())
+            note = (Path(target) / "CLAUDE.md").read_text(encoding="utf-8")
+            self.assertIn("provided by the installed tamheed plugin", note)
+        with tempfile.TemporaryDirectory() as target2:  # standalone: absolute path kept
+            out2 = srv.handoff_emit(target2)
+            self.assertIn(".mcp.json", out2["written"])
+
     # ---------------------------------------------------------------- package lifecycle
 
     def test_create_open_close(self):
