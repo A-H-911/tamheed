@@ -72,12 +72,12 @@ class ExportHtmlTest(unittest.TestCase):
         srv.entity_upsert([{"type": "requirement", "id": "FR-001", "kind": "functional",
                             "title": "t", "lifecycle_status": "Approved",
                             "source_kind": "brief", "source_span": "x"}])
-        out_a = self._export("a.html")
+        out_a = self._export(str(Path(self._tmp.name) / "a.html"))
         self.assertIn("<details><summary>Risks (60 rows)</summary>", out_a)
         self.assertIn("<h3>Requirements (1)</h3>", out_a)      # small family stays flat
         self.assertNotIn("<summary>Requirements", out_a)
         # determinism at scale: byte-identical re-export
-        self.assertEqual(out_a, self._export("b.html"))
+        self.assertEqual(out_a, self._export(str(Path(self._tmp.name) / "b.html")))
 
     def test_freshness_reports_no_v2_activity(self):
         self._open_demo_copy()                     # migrated golden: no v2 timestamps
