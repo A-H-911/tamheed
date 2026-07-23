@@ -133,6 +133,17 @@ lives under the v2 flow (ASM-A: v1 is supported for migration only). The operato
     the semantic status map. Migrate leaves the package OPEN after post-flight so
     `handoff_emit` follows directly. Emitted prompt bodies are scanned for v1-protocol
     instructions and dead relative links (reported, never rewritten).
+19. **Table-shape tolerance II (C26).** Escaped in-cell pipes (`\|`) parse as literal
+    pipes inside ONE cell — rows no longer shear at the escape. Title resolution is
+    two-pass: an exact `Title`/`Name` column wins outright, then the alias set in column
+    order (an `EPIC` crosswalk cell can no longer out-rank the real Title column); the
+    long-form text resolves INDEPENDENTLY of the title column, and id-shaped titles
+    (`EPIC-18`) trigger the degenerate-title rescue. Deferred-work `Status` carries onto
+    the DW enum (off-enum words noted, left `Open`). Phase prose-status sections match by
+    heading id OR phase title. Note: `title_fallbacks` measures source SHAPE, not loss —
+    post-2.4.0 the count is structural and the loss is zero. Project-specific status
+    words (`Instrumented`, `Met`, …) deliberately stay unmapped — confirm them via
+    `status_map` each run (the grouped ledger makes replay drift visible).
 
 ## Field mapping (v1 → v2)
 

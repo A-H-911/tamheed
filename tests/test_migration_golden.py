@@ -476,6 +476,79 @@ class DialectToleranceTest(unittest.TestCase):
         starved = {(s["family"], s["column"]) for s in ledgers["column_starvation"]}
         self.assertIn(("invariants", "enforcement"), starved)
 
+    def test_title_column_beats_alias_columns(self):
+        """Plan 021 (C26/B1): an exact Title column wins over earlier alias columns —
+        the EPIC crosswalk cell must never become the title again."""
+        md = ("| EPIC | Title | Realizes |\n|------|-------|----------|\n"
+              "| EPIC-18 | Tarseem Diagram Management | WBS-18 |\n")
+        [table] = migrate.vp.parse_markdown_tables(md)
+        plan = migrate.Plan()
+        migrate._map_register_row(plan, "WBS", "WBS-18", table, table.rows[0], id_col=2)
+        self.assertEqual(plan.rows["wbs_items"][0]["title"],
+                         "Tarseem Diagram Management")
+
+    def test_title_never_displaces_statement(self):
+        """Plan 021 round-5 review guard: a Title column must not replace a Statement
+        column in the long-form text (the D-0 class reborn)."""
+        md = ("| ID | Title | Statement | Status |\n|----|-------|-----------|--------|\n"
+              "| FR-001 | Short name | The full long statement of the requirement with "
+              "detail. | Approved |\n")
+        [table] = migrate.vp.parse_markdown_tables(md)
+        plan = migrate.Plan()
+        migrate._map_register_row(plan, "FR", "FR-001", table, table.rows[0])
+        row = plan.rows["requirements"][0]
+        self.assertEqual(row["title"], "Short name")
+        self.assertIn("full long statement", row["statement"])
+
+    def test_escaped_pipes_do_not_shear_rows(self):
+        """Plan 021 (C26/B3): `\\|` is a literal pipe inside ONE cell."""
+        with tempfile.TemporaryDirectory() as src:
+            tmp = Path(src)
+            (tmp / "manifest.json").write_text('{"package": "t"}', encoding="utf-8")
+            (tmp / "functional.md").write_text(
+                "# FR\n\n| ID | Statement | Priority | Status |\n"
+                "|----|-----------|----------|--------|\n"
+                "| FR-100 | Lifecycle states (Superseded \\| Deprecated). No backward "
+                "transitions. | M | Approved |\n", encoding="utf-8")
+            plan = migrate.parse_v1(tmp)
+        row = plan.rows["requirements"][0]
+        self.assertIn("(Superseded | Deprecated)", row["statement"])   # one cell, unescaped
+        self.assertEqual(row["priority"], "M")                          # columns intact
+        self.assertNotIn("\\", row["statement"])
+
+    def test_deferred_work_status_carried(self):
+        """Plan 021 (C26 §A residual): the v1 Status maps onto the DW enum."""
+        with tempfile.TemporaryDirectory() as src:
+            tmp = Path(src)
+            (tmp / "execution").mkdir()
+            (tmp / "manifest.json").write_text('{"package": "t"}', encoding="utf-8")
+            (tmp / "execution" / "deferred-work-register.md").write_text(
+                "# Deferred\n\n| ID | Deferred item | Severity | Status |\n"
+                "|----|---------------|----------|--------|\n"
+                "| D-01 | a thing | High | Done |\n"
+                "| D-02 | b thing | Low | Activated |\n"
+                "| D-03 | c thing | Low | Someday-maybe |\n", encoding="utf-8")
+            plan = migrate.parse_v1(tmp)
+        rows = {r["id"]: r.get("status") for r in plan.rows["deferred_work"]}
+        self.assertEqual(rows["DW-001"], "Done")
+        self.assertEqual(rows["DW-002"], "Activated")
+        self.assertIsNone(rows["DW-003"])                    # off-enum -> schema default
+        self.assertTrue(any("Someday-maybe" in u for u in plan.unmapped))
+
+    def test_phase_prose_status_matches_by_title(self):
+        """Plan 021 (C26): headings carry titles, not ids — both now match."""
+        with tempfile.TemporaryDirectory() as src:
+            tmp = Path(src)
+            (tmp / "planning").mkdir()
+            (tmp / "manifest.json").write_text('{"package": "t"}', encoding="utf-8")
+            (tmp / "planning" / "roadmap.md").write_text(
+                "# Roadmap\n\n| ID | Title | Goal |\n|----|-------|------|\n"
+                "| PH-0 | Discovery & Validation | learn |\n\n"
+                "## Phase 0 — Discovery & Validation\n\n**Status: complete.**\n",
+                encoding="utf-8")
+            plan = migrate.parse_v1(tmp)
+        self.assertEqual(plan.rows["phases"][0]["lifecycle_status"], "Implemented")
+
     def test_patch_applied_by_id_before_populate(self):
         plan = migrate.Plan()
         plan.add("acceptance_criteria", {"id": "AC-001", "title": "truncated",

@@ -156,6 +156,30 @@ def _sections(text: str) -> list[tuple[str, str]]:
     return parts
 
 
+_PIPE_SENTINEL = "\x00"
+
+_TITLE_ALIASES = frozenset({
+    "title", "statement", "given / when / then", "criterion", "requirement",
+    "constraint", "assumption", "question", "decision", "risk", "invariant",
+    "dependency", "hypothesis", "milestone", "metric", "test", "work item", "epic",
+    "phase", "name", "stakeholder / role", "stakeholder"})
+
+_LONGFORM_ALIASES = frozenset({"statement", "given / when / then", "criterion",
+                               "description"})
+
+
+def _tables(text: str):
+    """C26/B3: escaped in-cell pipes (`\\|`) shear rows in the frozen table parser
+    (`| a (X \\| Y) b |` split at the escape, corrupting two columns). Substitute a
+    sentinel before parsing and restore the literal pipe in every header/cell after —
+    the frozen parser itself is never touched (never-a-second-parser rule intact)."""
+    tables = vp.parse_markdown_tables(text.replace("\\|", _PIPE_SENTINEL))
+    for t in tables:
+        t.headers = [h.replace(_PIPE_SENTINEL, "|") for h in t.headers]
+        t.rows = [[c.replace(_PIPE_SENTINEL, "|") for c in r] for r in t.rows]
+    return tables
+
+
 def _clean_line(line: str) -> str:
     """Markdown-strip a defining line into a title. POSITIONAL stripping only — the old
     `[#*`>-]+` character class deleted every ASCII hyphen, mangling governed ids
@@ -242,15 +266,14 @@ def _map_register_row(plan: Plan, prefix: str, ident: str, t, row: list[str],
     def col(*aliases):
         return _cell(row, t.col_index(aliases))
 
-    def title_col(*aliases):
-        # Same matching as the frozen col_index (exact-equality, column order) but the id
-        # column never qualifies: a title alias resolving to the cell the id came from is
-        # never right (field-evidence C17: roadmap `| Phase | ... |` titled phases "PH-0").
-        norm = {a.lower() for a in aliases}
+    def _scan_cols(names, skip):
+        # Frozen-col_index matching (exact-equality, COLUMN order) minus excluded columns:
+        # the id column never qualifies (C17), nor does the title's own column when
+        # resolving the long-form text (C26 round-5 guard).
         for i, header in enumerate(t.headers):
-            if i != id_col and header.strip().lower() in norm:
-                return _cell(row, i)
-        return None
+            if i not in skip and header.strip().lower() in names:
+                return _cell(row, i), i
+        return None, None
 
     attrs = _row_attrs(t.headers, row)
     if t.col_index(["status"]) is None:
@@ -266,11 +289,12 @@ def _map_register_row(plan: Plan, prefix: str, ident: str, t, row: list[str],
     else:
         status = _status(col("status"), "Proposed" if prefix == "DEC" else "Draft",
                          plan=plan, ident=ident)
-    title = title_col("title", "statement", "given / when / then", "criterion",
-                      "requirement", "constraint", "assumption", "question", "decision",
-                      "risk", "invariant", "dependency", "hypothesis", "milestone",
-                      "metric", "test", "work item", "epic", "phase", "name",
-                      "stakeholder / role", "stakeholder")
+    # Two-pass title (C26/B1): an EXACT Title/Name column wins outright — column order
+    # once let an `EPIC` crosswalk cell (matching the 'epic' alias) out-rank the real
+    # Title column sitting one position later.
+    title, title_ix = _scan_cols({"title", "name"}, {id_col})
+    if title is None:
+        title, title_ix = _scan_cols(_TITLE_ALIASES, {id_col})
     raw_fallback = None
     if title is None:
         # C24/D-0: the fallback CLEANS for the title but must never damage the long-form
@@ -278,17 +302,21 @@ def _map_register_row(plan: Plan, prefix: str, ident: str, t, row: list[str],
         raw_fallback = (row[1].strip() if len(row) > 1 else "") or "(untitled)"
         title = _clean_line(raw_fallback)
         plan.title_fallbacks.append({"id": ident, "family": prefix})
-    if len(title) <= 3:
-        # C24/D-5: a 1-3 char title is degenerate (a WBS epic once took the phase-number
-        # cell); prefer any Title-ish column the alias scan may have skipped.
-        better = col("title", "name", "epic")
-        if better and len(better) > 3:
+    if len(title) <= 3 or re.fullmatch(r"[A-Z]{2,10}-[\d.]+", title):
+        # C24/D-5 + C26/B1: a 1-3 char OR id-shaped title is degenerate; rescue from a
+        # real Title/Name column elsewhere in the row.
+        better, better_ix = _scan_cols(
+            {"title", "name"}, {id_col, -1 if title_ix is None else title_ix})
+        if better and len(better) > 3 and not re.fullmatch(r"[A-Z]{2,10}-[\d.]+", better):
             plan.unmapped.append(f"{ident}: degenerate title {title!r} replaced from the "
                                  "Title column")
-            title = better
-    # Long-form columns take the RAW text: the named-column path already returns the raw
-    # cell; on the fallback path it is the uncleaned raw cell, never the stripped title.
-    long_text = raw_fallback if raw_fallback is not None else title
+            title, title_ix = better, better_ix
+    # Long-form text resolved INDEPENDENTLY of the title (C26 round-5 guard: a Title
+    # column must never displace a Statement column). Named columns return raw cells;
+    # the fallback path carries the uncleaned raw cell.
+    stmt_cell, _six = _scan_cols(
+        _LONGFORM_ALIASES, {id_col, -1 if title_ix is None else title_ix})
+    long_text = raw_fallback if raw_fallback is not None else (stmt_cell or title)
     if prefix in ("FR", "NFR"):
         source = col("source") or ""
         kind = "clarification" if re.search(r"OQ-|clarif", source, re.I) else "brief"
@@ -542,13 +570,13 @@ def parse_v1(source: Path, status_map: dict[str, str] | None = None) -> Plan:
         rel_l = pf.rel.replace("\\", "/").lower()
         if any(s in rel_l for s in SKIP_FILES):
             if "traceability-matrix" in rel_l:
-                for t in vp.parse_markdown_tables(pf.text):
+                for t in _tables(pf.text):
                     _map_matrix(plan, t)
             plan.skipped_files.append(pf.rel)  # derived views: regenerated in v2 (C13)
             continue
         if "acceptance-audit" in rel_l:
             audits_before = len(plan.audits)
-            for t in vp.parse_markdown_tables(pf.text):
+            for t in _tables(pf.text):
                 for row in t.rows:
                     ac = next((i for i in _ids_in(row[0]) if i.startswith("AC-")), None)
                     verdict = _cell(row, t.col_index(["verdict"]))
@@ -565,7 +593,7 @@ def parse_v1(source: Path, status_map: dict[str, str] | None = None) -> Plan:
             # Ungoverned `D-nn` rows (Keystone's own convention) are invisible to the ID
             # regex — 23 live items vanished from ACMP with no trace (field-evidence C13).
             dw_before = len(plan.rows.get("deferred_work", []))
-            for t in vp.parse_markdown_tables(pf.text):
+            for t in _tables(pf.text):
                 for row in t.rows:
                     m = re.fullmatch(r"D-(\d+)", row[0].strip().strip("*"))
                     if not m:
@@ -583,8 +611,21 @@ def parse_v1(source: Path, status_map: dict[str, str] | None = None) -> Plan:
                                              f"{dw_id}")
                     plan.dw_crosswalk.setdefault(legacy, dw_id)  # first mapping wins
                     sev = (_cell(row, t.col_index(["severity"])) or "").lower()
+                    # C26 (§A residual): carry the v1 Status onto the DW enum so a
+                    # re-migration never needs the Done/Activated truth-up again.
+                    dw_status = {"Open": "Open", "Activated": "Activated",
+                                 "Scheduled": "Scheduled", "Done": "Done",
+                                 "Won't-do": "Won't-do", "Won't do": "Won't-do",
+                                 "Wont-do": "Won't-do"}.get(
+                        _norm_status_key(_cell(row, t.col_index(["status"]))))
+                    raw_dw_status = _cell(row, t.col_index(["status"]))
+                    if raw_dw_status and dw_status is None:
+                        plan.unmapped.append(f"{legacy}: deferred-work status "
+                                             f"{raw_dw_status!r} outside the enum — "
+                                             "left Open")
                     plan.add("deferred_work", {
                         "id": dw_id,
+                        **({"status": dw_status} if dw_status else {}),
                         "title": (_cell(row, t.col_index(
                             ["deferred item", "item", "description", "title", "work"]))
                             or _clean_line(" ".join(row[1:2]))),
@@ -625,7 +666,7 @@ def parse_v1(source: Path, status_map: dict[str, str] | None = None) -> Plan:
 
         # register tables anywhere (incl. KPI/STK tables inside the charter)
         rows_before = sum(len(v) for v in plan.rows.values())
-        for t in vp.parse_markdown_tables(pf.text):
+        for t in _tables(pf.text):
             id_col = t.col_index(vp.ID_HEADERS)
             if id_col is None:
                 id_col = vp._guess_id_column(t)
@@ -734,7 +775,12 @@ def parse_v1(source: Path, status_map: dict[str, str] | None = None) -> Plan:
         resolved = 0
         for heading, body in _sections(pf.text):
             ph = next((r["id"] for r in plan.rows.get("phases", [])
-                       if r["id"] in heading), None)
+                       if r["id"] in heading
+                       # C26/B1-adjacent: headings often carry the phase TITLE, not the
+                       # id ("## Phase 0 — Discovery & Validation") — meaningful now
+                       # that titles are real (post-020). Id match stays first.
+                       or (len(r.get("title") or "") >= 4
+                           and (r.get("title") or "") in heading)), None)
             m = re.search(r"^\**Status\**\s*:\s*\**([A-Za-z][A-Za-z -]*?)\**\s*[.\n]",
                           body + "\n", re.M) if ph else None
             if not m:
