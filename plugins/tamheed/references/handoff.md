@@ -86,4 +86,8 @@ register content — copies drift silently. When quoting a load-bearing subset i
 useful (e.g. invariants an agent must see without a tool call), label it as a snapshot AND
 keep the reference beside it; `handoff_emit` reports such blocks as `labeled-snapshot`
 (verify currency) and unlabeled copies as `unlabeled` (with a suggested reference rewrite).
+The detectors are HEURISTICS with deliberate anti-false-positive bounds (C29): the
+audit-tally pattern requires the word `Met` (a rewritten "73 evidenced / 1 narrated" tally
+cannot re-trigger it) and the restated-block pattern needs ≥3 *consecutive* id-led lines —
+a clean scan is evidence of no drift, not proof.
 State each fact once: CLAUDE.md imports AGENTS.md — keep Claude-specific notes only there.

@@ -141,10 +141,12 @@ standard check that a parser upgrade did what it promised (C27, findings_6 §E):
 
 1. Scratch-migrate the frozen v1 source under the CURRENT parser
    (`name="<package>-scratch"`, the replayed full `status_map`).
-2. Field-level-diff the scratch rows against the LIVE package (canonical JSONL diffs
-   row-scoped). The diff must enumerate the union of columns **including JSON blobs**
-   (`custom_attributes`) — skipping them silently under-reports (C28: the FR-100/107
-   stale provenance survived two audits exactly this way).
+2. Field-level-diff the scratch rows against the LIVE package with the bundled tool —
+   `python <plugin>/scripts/scratch_diff.py <live>/data <scratch>/data [--json]` (C29):
+   correct per-table keying and the union of columns **including JSON blobs**
+   (`custom_attributes`) are built in — skipping blobs silently under-reports (C28: the
+   FR-100/107 stale provenance survived two audits exactly this way). Exit 1
+   (differences) is normal mid-life; the pass criterion is your empty UNEXPECTED bucket.
 3. Bucket every difference: **VANISHED** (a past hand-repair the parser now reproduces),
    **REMAINED** (post-migration v2 work no parser can produce), **UNEXPECTED** (anything
    else). **Empty UNEXPECTED is the pass criterion** — a non-empty bucket is a parser

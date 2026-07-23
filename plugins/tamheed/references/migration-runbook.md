@@ -64,11 +64,15 @@ pass criterion is mechanical (C27, findings_6 §E):
 
 1. `package_migrate(<frozen v1 source>, name="<package>-scratch", confirm=true,
    status_map=<the replayed full map>)` — a fresh migration under the CURRENT parser.
-2. Field-level-diff the scratch package's rows against the LIVE package (canonical JSONL
-   makes this a plain text diff, row-scoped). **The diff must enumerate the union of
-   columns INCLUDING JSON blobs (`custom_attributes`)** — a diff that skips them silently
-   under-reports (C28: FR-100/107's stale pipe-shear provenance survived two audits
-   exactly this way).
+2. Field-level-diff the scratch package's rows against the LIVE package with the
+   **bundled tool** — `python <plugin>/scripts/scratch_diff.py <live>/data <scratch>/data`
+   (add `--json` for machine output). It bakes in what ad-hoc scripts get wrong (C29):
+   correct per-table keying (`trace_edges` on from/to/relation, `entity_types` on
+   `type_id`, …) and the **union of columns INCLUDING JSON blobs (`custom_attributes`)**
+   — a diff that skips them silently under-reports (C28: FR-100/107's stale pipe-shear
+   provenance survived two audits exactly this way). Exit 1 (differences) is the normal
+   mid-life outcome; the pass criterion is YOUR empty UNEXPECTED bucket, not the exit
+   code.
 3. Bucket every difference:
    - **VANISHED** — a past hand-repair the parser now reproduces mechanically (each
      upgrade's fix list should appear here);
