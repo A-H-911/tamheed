@@ -168,6 +168,21 @@ class McpContractTest(unittest.TestCase):
             self.assertIn("handoff/prm-001-initial.md", forced["written"])
             self.assertNotIn("OPERATOR NOTE", prm.read_text(encoding="utf-8"))
 
+    def test_upsert_accepts_dict_custom_attributes(self):
+        """Plan 023 (C28/C2): a JSON object serializes at binding — a raw dict used to
+        fail the whole batch with sqlite's opaque "type 'dict' is not supported"."""
+        srv.package_create("demo", "Demo", "rnd")
+        out = srv.entity_upsert([
+            {"type": "requirement", "id": "FR-001", "kind": "functional", "title": "t",
+             "mvp": 0, "lifecycle_status": "Approved", "source_kind": "brief",
+             "source_span": "x",
+             "custom_attributes": {"v1": {"Source": "S", "Priority": "M"}}}])
+        self.assertTrue(out["ok"], out)
+        row = srv.entity_query("requirement", id="FR-001",
+                               columns=["id", "custom_attributes"])["rows"][0]
+        self.assertEqual(json.loads(row["custom_attributes"]),
+                         {"v1": {"Source": "S", "Priority": "M"}})
+
     def test_prompt_body_leading_h1_stripped_at_emit(self):
         """Plan 022 (C27/D1): a body opening with its own identical H1 must not double
         the heading on disk; a DIFFERENT in-body H1 is preserved untouched."""

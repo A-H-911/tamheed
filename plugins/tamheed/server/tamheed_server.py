@@ -234,6 +234,9 @@ def entity_upsert(entities: list[dict]) -> dict:
     evaluates NOT NULL on omitted columns BEFORE conflict resolution, so a partial
     {'id', 'statement'} update of an existing row fails on e.g. title NOT NULL.
     Returns per-item verdicts; a violated constraint is named in the item's error.
+    JSON columns (custom_attributes) accept either a JSON string or a JSON
+    object/array — objects are serialized at binding (C28: a raw dict used to fail
+    the whole batch with sqlite's opaque "type 'dict' is not supported").
     """
     if guard := _need_open():
         return guard
@@ -267,7 +270,9 @@ def entity_upsert(entities: list[dict]) -> dict:
                    + (f" ON CONFLICT(id) DO UPDATE SET {updates}" if updates else ""))
         conn.execute(f"SAVEPOINT item{i}")
         try:
-            conn.execute(sql, [cols[c] for c in names])
+            conn.execute(sql, [json.dumps(v, ensure_ascii=False)
+                               if isinstance(v, (dict, list)) else v
+                               for v in (cols[c] for c in names)])
             conn.execute(f"RELEASE item{i}")
             results.append({"index": i, "ok": True, "id": cols.get("id")})
         except Exception as exc:  # IntegrityError carries the constraint name
