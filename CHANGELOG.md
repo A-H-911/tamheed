@@ -10,6 +10,35 @@ All notable changes to Tamheed are documented here. The format is based on
 
 ## [Unreleased]
 
+## [2.5.2] - 2026-07-23
+
+Patch release from the seventh ACMP field report — the first official runbook-§8 run: all
+four findings_6 gaps verified closed empirically, and the empty-UNEXPECTED criterion caught
+a **live-data blemish two prior audits had missed** (FR-100/107's stale pipe-shear
+provenance in `custom_attributes`; evidence **C28**, archived at
+`plans/evidence/acmp-field-report-7-2026-07-23.md`). **No schema migration — existing 2.x
+packages unaffected.**
+
+### Fixed
+- **The `In progress → Activated` carry is noted**: it moved out of the silent exact map
+  into a semantic-alias step (+ `In-progress` variant) with a ledger note like the prose
+  carries — the report caught the C27 honesty-symmetry comment being untrue while the
+  alias carried silently.
+- **Per-entry coercion basis**: every `status_coerced` entry now records which branch
+  fired (`status_map` | `semantic-default` | `default`) and the top-level
+  `status_coerced_basis` is derived from the entries — `mixed` when a supplied map covered
+  only some coerced words. A replayed map no longer takes credit for semantic-default
+  coercions.
+- **`entity_upsert` accepts JSON objects/arrays**: dict/list values serialize at binding —
+  a raw dict `custom_attributes` used to fail the whole batch with sqlite's opaque
+  "type 'dict' is not supported" (tripped in the field by the FR-100/107 provenance
+  repair).
+
+### Added
+- **Runbook §8 diff-method line**: the field diff must enumerate the union of columns
+  **including JSON blobs** (`custom_attributes`) — the exact blind spot that let the
+  FR-100/107 staleness survive two audits. Mirrored in `docs/migrate-from-keystone.md`.
+
 ## [2.5.1] - 2026-07-23
 
 Patch release from the sixth ACMP field report — the first with an **empty UNEXPECTED

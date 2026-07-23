@@ -39,7 +39,8 @@ Keystone 1.0.1.
 | 019 | Third field report: managed emissions, ledger ergonomics, viewer consistency | B15 | P1 | L | 018 DONE + the v2.2.0 ACMP re-migration; evidence C20–C22 | DONE — v2.3.0; process-acceptance clean, but findings_4 §D retracted the data verdict → plan 020 |
 | 020 | Fourth field report: DATA FIDELITY + viewer redesign + ACMP repair path | B16 | P1 | XL | 019 DONE + the retracted-verdict report; evidence C23–C25 | DONE — v2.4.0; §7 ACMP repair SUCCEEDED (zero blind repairs, v_phase_exit revived — plan 021 evidence) |
 | 021 | Fifth field report: title resolution, escaped pipes, emit-scan closure | B17 | P2 | M | 020 DONE + the §7 repair run; evidence C26 | DONE — executed 2026-07-23, v2.5.0; acceptance = the findings_6 scratch-diff (empty UNEXPECTED bucket) |
-| 022 | Sixth field report: DW prose carry, phase-regex fix, derived-artifact papercuts | B18 | P2 | S | 021 DONE + the scratch-diff regression run; evidence C27 | DONE — executed 2026-07-23, v2.5.1; acceptance = the §8 measurement on the next upgrade |
+| 022 | Sixth field report: DW prose carry, phase-regex fix, derived-artifact papercuts | B18 | P2 | S | 021 DONE + the scratch-diff regression run; evidence C27 | DONE — executed 2026-07-23, v2.5.1; acceptance = findings_7's §8 run (all four gaps closed) |
+| 023 | Seventh field report: ledger honesty + upsert ergonomics | B19 | P3 | S | 022 DONE + the first official §8 run; evidence C28 | DONE — executed 2026-07-23, v2.5.2; acceptance = the next §8 run |
 
 Status values: TODO | IN PROGRESS | DONE | BLOCKED (with one-line reason) | REJECTED (with
 one-line rationale).
@@ -57,6 +58,21 @@ export + freshness/lead renders (012); tamheed repo public from day one with WIP
 eval schedule disabled at close-out (016). **Execution driver: the maintainer runs the plans
 himself** — self-containment is the operative contract; this status table is the tracking
 surface.
+
+## Alignment record (2026-07-23, fourth entry — plan 023)
+
+findings_7 — the first official runbook-§8 run — closed all four findings_6 gaps
+empirically (DW 23/23 incl. the un-emoji'd D-16; PH-0/PH-1 `Implemented`; one-H1 prompts;
+CSV force recovery byte-identical) AND proved the §8 method's value in an unexpected
+direction: the empty-UNEXPECTED criterion caught a **live-data blemish two prior audits
+missed** (FR-100/107's `custom_attributes` still holding the 2.4.0 pipe-shear snapshot —
+the hand-repair never sent that column; operator-repaired same day, PE-130). The report
+also caught plan 022's own honesty gap: the C27 comment promised no silent judgment calls
+while `In progress → Activated` sat in the silent exact map. Plan 023 (evidence **C28**):
+the noted semantic alias, per-entry coercion `basis` (+ derived `mixed` summary),
+dict-accepting `entity_upsert`, and the §8 compare-JSON-blobs line. Record correction: the
+`restated_content` advisory findings_7 §D1 calls "new in 2.5.1" shipped in 2.3.0 (plan
+019); its two AGENTS.md hits are real ACMP-side drift, folded into the next ACMP prompt.
 
 ## Alignment record (2026-07-23, third entry — plan 022)
 
