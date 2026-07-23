@@ -38,7 +38,8 @@ Keystone 1.0.1.
 | 018 | Second field report: preview honesty, viewer scale, prompt library, cutover tooling | B14 | P1 | L | 017 DONE + the successful ACMP migration; evidence C17–C19 | DONE — v2.2.0; ACMP re-migration SUCCEEDED (zero repair loops — plan 019 evidence) |
 | 019 | Third field report: managed emissions, ledger ergonomics, viewer consistency | B15 | P1 | L | 018 DONE + the v2.2.0 ACMP re-migration; evidence C20–C22 | DONE — v2.3.0; process-acceptance clean, but findings_4 §D retracted the data verdict → plan 020 |
 | 020 | Fourth field report: DATA FIDELITY + viewer redesign + ACMP repair path | B16 | P1 | XL | 019 DONE + the retracted-verdict report; evidence C23–C25 | DONE — v2.4.0; §7 ACMP repair SUCCEEDED (zero blind repairs, v_phase_exit revived — plan 021 evidence) |
-| 021 | Fifth field report: title resolution, escaped pipes, emit-scan closure | B17 | P2 | M | 020 DONE + the §7 repair run; evidence C26 | DONE — executed 2026-07-23, v2.5.0; acceptance = next ACMP touchpoint |
+| 021 | Fifth field report: title resolution, escaped pipes, emit-scan closure | B17 | P2 | M | 020 DONE + the §7 repair run; evidence C26 | DONE — executed 2026-07-23, v2.5.0; acceptance = the findings_6 scratch-diff (empty UNEXPECTED bucket) |
+| 022 | Sixth field report: DW prose carry, phase-regex fix, derived-artifact papercuts | B18 | P2 | S | 021 DONE + the scratch-diff regression run; evidence C27 | DONE — executed 2026-07-23, v2.5.1; acceptance = the §8 measurement on the next upgrade |
 
 Status values: TODO | IN PROGRESS | DONE | BLOCKED (with one-line reason) | REJECTED (with
 one-line rationale).
@@ -56,6 +57,19 @@ export + freshness/lead renders (012); tamheed repo public from day one with WIP
 eval schedule disabled at close-out (016). **Execution driver: the maintainer runs the plans
 himself** — self-containment is the operative contract; this status table is the tracking
 surface.
+
+## Alignment record (2026-07-23, third entry — plan 022)
+
+findings_6 was the first report with an **empty UNEXPECTED bucket**: a scratch migration
+under 2.5.0 diffed field-by-field against the live package showed every difference was
+either a fix working as promised (VANISHED: epic titles, escaped pipes byte-exact) or
+post-migration scaffolding (REMAINED) — plan 021's acceptance, verified empirically. The
+un-suppressed B4 scan produced 46 precisely-marked findings in isolation. Four narrow items
+became plan 022 (evidence **C27**), the sharpest being B2: the 020 phase prose-status regex
+fired ZERO times on the fixture that motivated it (line-anchored + parenthesis-blind). The
+report's §E ask — institutionalize the scratch-diff measurement — became runbook §8; the
+round-6 review added the prose-carry visibility note, the `\bStatus\b` guard, and the
+`In progress` exact-map placement.
 
 ## Alignment record (2026-07-23, second entry — plan 021)
 

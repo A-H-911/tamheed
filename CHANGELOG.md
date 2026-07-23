@@ -10,6 +10,39 @@ All notable changes to Tamheed are documented here. The format is based on
 
 ## [Unreleased]
 
+## [2.5.1] - 2026-07-23
+
+Patch release from the sixth ACMP field report — the first with an **empty UNEXPECTED
+bucket**: a scratch migration under 2.5.0 diffed field-by-field against the live package
+verified every 2.5.0 fix byte-exact on real data (evidence **C27**, archived at
+`plans/evidence/acmp-field-report-6-2026-07-23.md`). **No schema migration — existing 2.x
+packages unaffected.**
+
+### Fixed
+- **Deferred-work prose statuses carry**: a status cell that fails exact enum matching
+  carries the enum word as a prefix after leading punctuation/emoji (`**✅ Done <date>
+  (<slice>)** — narrative` → `Done`), with a preview note per prose carry; `In progress`
+  maps to `Activated`. Takes the ACMP register from 18/23 to 23/23.
+- **The phase prose-status matcher actually fires**: the 020 pattern matched zero times on
+  the fixture that motivated it — now unanchored (status sentences ending
+  `- **Exit gate.** …` bullets match) with a word-boundary guard (`ExitStatus:` never
+  matches), and a parenthetical qualifier terminates the capture
+  (`Status: complete (delivered …)` carries `complete`).
+- **No more doubled H1s in emitted prompts**: a PRM body opening with its own H1 identical
+  to the title has that line stripped at emit time (a *different* in-body H1 is preserved) —
+  the `# {title}` composition rule is invisible to prompt authors.
+- **Diverged CSVs are recoverable**: `export_html` CSVs emit forced — they are derived
+  outputs regenerated from the DB, like `review.html` itself; a hand-edited CSV is
+  overwritten (reported `emitted`), while authored emissions (`handoff_emit`) keep the
+  refusal path.
+
+### Added
+- **Runbook §8 — the scratch-diff regression measurement** (institutionalizing the report's
+  method): scratch-migrate the frozen v1 source with the replayed `status_map`,
+  field-level-diff against the live package, bucket into VANISHED / REMAINED / UNEXPECTED —
+  **empty UNEXPECTED is the pass criterion**; delete the scratch. Mirrored in
+  `docs/migrate-from-keystone.md`.
+
 ## [2.5.0] - 2026-07-23
 
 Polish release from the fifth ACMP field report — the calmest of the cycle: the §7

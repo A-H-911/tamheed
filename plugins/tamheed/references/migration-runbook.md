@@ -56,3 +56,21 @@ Keep the v1 tree as a frozen archive (recommended) or remove it once the operato
    `diverged` — this one divergence is expected and self-inflicted (C26/B5).
 7. Re-run `handoff_emit` clean, refresh stale PRM rows (supersede + re-author), then
    `export_html` and commit `review.html` + `csv/`.
+
+## 8. The scratch-diff regression measurement (post-upgrade acceptance)
+
+The standard check that a parser upgrade did what it promised — cheap, decisive, and the
+pass criterion is mechanical (C27, findings_6 §E):
+
+1. `package_migrate(<frozen v1 source>, name="<package>-scratch", confirm=true,
+   status_map=<the replayed full map>)` — a fresh migration under the CURRENT parser.
+2. Field-level-diff the scratch package's rows against the LIVE package (canonical JSONL
+   makes this a plain text diff, row-scoped).
+3. Bucket every difference:
+   - **VANISHED** — a past hand-repair the parser now reproduces mechanically (each
+     upgrade's fix list should appear here);
+   - **REMAINED** — post-migration v2 work no parser can produce (progress entries,
+     verdicts, binds, new decisions) — expected, enumerable;
+   - **UNEXPECTED** — anything else. **Empty UNEXPECTED is the pass criterion**; a
+     non-empty bucket is a parser regression or an undocumented repair — stop and file it.
+4. Delete the scratch package (it was a measurement, never a candidate).

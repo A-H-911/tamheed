@@ -133,3 +133,18 @@ and not by reverting the repo:
    them and author current ones via `entity_upsert`, then re-emit; the emitted-prompt scan
    stays green from then on.
 7. `export_html` and commit the regenerated `review.html` + `csv/`.
+
+## The scratch-diff regression measurement (post-upgrade acceptance)
+
+Mirrors runbook §8 in the bundle (`plugins/tamheed/references/migration-runbook.md`) — the
+standard check that a parser upgrade did what it promised (C27, findings_6 §E):
+
+1. Scratch-migrate the frozen v1 source under the CURRENT parser
+   (`name="<package>-scratch"`, the replayed full `status_map`).
+2. Field-level-diff the scratch rows against the LIVE package (canonical JSONL diffs
+   row-scoped).
+3. Bucket every difference: **VANISHED** (a past hand-repair the parser now reproduces),
+   **REMAINED** (post-migration v2 work no parser can produce), **UNEXPECTED** (anything
+   else). **Empty UNEXPECTED is the pass criterion** — a non-empty bucket is a parser
+   regression or an undocumented repair; stop and file it.
+4. Delete the scratch package (a measurement, never a candidate).

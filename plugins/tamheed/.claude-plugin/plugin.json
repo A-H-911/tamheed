@@ -1,7 +1,7 @@
 {
   "name": "tamheed",
   "description": "Turn a project description into a validated, traceable, execution-ready planning & handoff package for Claude Code to implement.",
-  "version": "2.5.0",
+  "version": "2.5.1",
   "author": { "name": "Anas Hammo" },
   "homepage": "https://github.com/A-H-911/tamheed",
   "repository": "https://github.com/A-H-911/tamheed",
