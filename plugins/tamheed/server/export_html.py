@@ -175,9 +175,15 @@ def _graph_full(nodes, edges) -> str:
         edge_parts.append(
             f'<path d="M{x1:.1f} {y1:.1f} Q{cx:.1f} {cy:.1f} {x2:.1f} {y2:.1f}">'
             f"<title>{esc(f)} —{esc(rel)}→ {esc(t)}</title></path>")
+    return _graph_svg(half, edge_parts, node_parts, label_parts)
+
+
+def _graph_svg(half: float, edge_parts, node_parts, label_parts) -> str:
+    # C26 (maintainer): NO fixed pixel width — the viewBox scales to the container, so
+    # the default (Fit) shows ALL nodes; the CSS zoom radios scale width 100%..800%.
     d = f"{2 * half:.0f}"
     return (f'<svg class="graph" viewBox="{-half:.0f} {-half:.0f} {d} {d}" '
-            f'width="{d}" height="{d}" xmlns="http://www.w3.org/2000/svg">'
+            f'xmlns="http://www.w3.org/2000/svg">'
             f'<g class="edges">{"".join(edge_parts)}</g>'
             f'<g class="nodes">{"".join(node_parts)}</g>'
             f'<g class="labels">{"".join(label_parts)}</g></svg>')
@@ -220,12 +226,7 @@ def _graph_agg(nodes, edges) -> str:
         edge_parts.append(
             f'<path d="M{x1:.1f} {y1:.1f} L{x2:.1f} {y2:.1f}" stroke-width="{w}">'
             f"<title>{esc(fa)} ↔ {esc(fb)}: {n} edge(s)</title></path>")
-    d = f"{2 * half:.0f}"
-    return (f'<svg class="graph" viewBox="{-half:.0f} {-half:.0f} {d} {d}" '
-            f'width="{d}" height="{d}" xmlns="http://www.w3.org/2000/svg">'
-            f'<g class="edges">{"".join(edge_parts)}</g>'
-            f'<g class="nodes">{"".join(node_parts)}</g>'
-            f'<g class="labels">{"".join(label_parts)}</g></svg>')
+    return _graph_svg(half, edge_parts, node_parts, label_parts)
 
 
 def _graph(conn, gates, ready):
@@ -241,9 +242,17 @@ def _graph(conn, gates, ready):
             if len(nodes) > _G_AGG_LIMIT else
             "Hover a node for its id; click to jump to its register row. Zoomed out "
             "this is a density silhouette — scroll at 1:1 to navigate.")
+    # CSS-only zoom (C26, maintainer): radio inputs + sibling selectors — zero JS. The
+    # inputs must be direct siblings of .graphwrap for `:checked ~ .graphwrap` to apply.
+    zoom = "".join(
+        f'<input type="radio" name="gz" id="gz-{z}" class="gz"{chk}>'
+        f'<label for="gz-{z}" class="gzl">{lbl}</label>'
+        for z, lbl, chk in (("fit", "Fit all", " checked"), ("2", "2×", ""),
+                            ("4", "4×", ""), ("8", "8×", "")))
     return (f"<details><summary>Relations graph ({len(nodes)} nodes, "
             f"{len(edges)} edges)</summary>"
-            f'<p class="lead">{hint}</p>'
+            f'<p class="lead">{hint} Zoom: Fit shows every node; 2×–8× pan inside '
+            f"the frame.</p>{zoom}"
             f'<div class="graphwrap">{svg}</div></details>')
 
 

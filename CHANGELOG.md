@@ -31,6 +31,9 @@ schema migration — existing 2.x packages unaffected.**
 - A **refused (diverged) prompt write no longer suppresses the stale scan**: the PRM rows'
   would-be bodies are scanned and reported marked "(not emitted: diverged)" — the signal
   the runbook promised now always fires.
+- **Relations graph: fit-all by default + zoom controls** — the SVG scales to its
+  container (every node visible on open) and CSS-only radio controls (Fit/2×/4×/8×, zero
+  JS) zoom into the pannable frame.
 
 ### Added
 - **`references/migration-runbook.md` ships in the bundle** — the operator procedure

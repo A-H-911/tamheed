@@ -157,6 +157,20 @@ class ExportHtmlTest(unittest.TestCase):
         self.assertIn("<svg", out)
         self.assertIn('href="#graph"', out)              # TOC entry
 
+    def test_graph_zoom_fit_default_and_controls(self):
+        """Plan 021 (C26, maintainer): default zoom shows ALL nodes; CSS-only controls."""
+        self._open_demo_copy()
+        out = self._export()
+        self.assertIn('id="gz-fit" class="gz" checked', out)     # Fit is the default
+        for z in ("gz-2", "gz-4", "gz-8"):
+            self.assertIn(f'id="{z}"', out)
+        self.assertIn("#gz-fit:checked ~ .graphwrap svg { width: 100%", out)
+        # the svg carries NO fixed pixel width — the viewBox scales to the container
+        graph = out.split('<section id="graph">')[1].split("</section>")[0]
+        svg_tag = graph.split("<svg", 1)[1].split(">", 1)[0]
+        self.assertNotIn("width=", svg_tag)
+        self.assertIn("viewBox=", svg_tag)
+
     def test_graph_nodes_link_to_register_rows(self):
         self._open_demo_copy()
         out = self._export()

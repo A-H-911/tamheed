@@ -79,6 +79,19 @@ tbody tr:hover td { background: #3987e511; }
 .warn pre { white-space: pre-wrap; background: #00000055; padding: .5rem;
             overflow-x: auto; border-radius: .25rem; }
 .graphwrap { overflow: auto; max-height: 80vh; margin: 0; background: var(--panel); }
+/* CSS-only zoom (C26): Fit scales the viewBox to the container = ALL nodes visible by
+   default; larger steps overflow into the pannable frame. Zero JS. */
+input.gz { position: absolute; opacity: 0; pointer-events: none; }
+.gzl { display: inline-block; border: 1px solid var(--line); border-radius: .3rem;
+       padding: 0 .6rem; margin: 0 .35rem .5rem 0; cursor: pointer;
+       font-size: .75rem; font-weight: 700; color: var(--ink-2); }
+input.gz:checked + .gzl { border-color: var(--a1); color: var(--a1);
+                          box-shadow: 0 0 8px var(--a1); }
+input.gz:focus-visible + .gzl { outline: 2px solid var(--a1); }
+#gz-fit:checked ~ .graphwrap svg { width: 100%; height: auto; }
+#gz-2:checked ~ .graphwrap svg { width: 200%; height: auto; }
+#gz-4:checked ~ .graphwrap svg { width: 400%; height: auto; }
+#gz-8:checked ~ .graphwrap svg { width: 800%; height: auto; }
 .graph path { fill: none; stroke: #8b8a80; stroke-opacity: .22; }
 .graph path:hover { stroke-opacity: 1; stroke-width: 2; stroke: var(--a1); }
 .graph a:hover circle, .graph a:focus circle { stroke: var(--ink); stroke-width: 2; }
