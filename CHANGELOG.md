@@ -10,6 +10,30 @@ All notable changes to Tamheed are documented here. The format is based on
 
 ## [Unreleased]
 
+## [2.6.0] - 2026-07-23
+
+Feature release from the eighth ACMP field report — a full-green acceptance (empty
+UNEXPECTED bucket including JSON blobs; FR-100/107 provenance byte-equal; evidence
+**C29**, archived at `plans/evidence/acmp-field-report-8-2026-07-23.md`). **No schema
+migration — existing 2.x packages unaffected.**
+
+### Added
+- **`scripts/scratch_diff.py` — the runbook §8 diff, shipped in the bundle** (stdlib
+  only): field-level comparison of two canonical-JSONL package `data/` dirs with correct
+  per-table keying baked in (`trace_edges` on from/to/relation, `entity_types` on
+  `type_id`, `omissions` on entity_type/reason, `packages` as a singleton field-compare)
+  and the union of columns **including JSON blobs** — the exact mis-keyings that cost the
+  field run ~1,000 DUP-KEY noise lines are now impossible. Duplicates are reported, never
+  clobbered; human + `--json` output; exit 1 (differences) is the normal mid-life outcome
+  — bucketing into VANISHED/REMAINED/UNEXPECTED stays operator judgment. Runbook §8 (and
+  the docs mirror) now invoke it.
+
+### Changed
+- **`references/handoff.md` names the scan detectors' limits**: the audit-tally pattern
+  requires the word `Met` (a rewritten "73 evidenced / 1 narrated" tally cannot
+  re-trigger it) and the restated-block pattern needs ≥3 consecutive id-led lines — a
+  clean scan is evidence of no drift, not proof.
+
 ## [2.5.2] - 2026-07-23
 
 Patch release from the seventh ACMP field report — the first official runbook-§8 run: all

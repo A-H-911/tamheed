@@ -40,7 +40,8 @@ Keystone 1.0.1.
 | 020 | Fourth field report: DATA FIDELITY + viewer redesign + ACMP repair path | B16 | P1 | XL | 019 DONE + the retracted-verdict report; evidence C23–C25 | DONE — v2.4.0; §7 ACMP repair SUCCEEDED (zero blind repairs, v_phase_exit revived — plan 021 evidence) |
 | 021 | Fifth field report: title resolution, escaped pipes, emit-scan closure | B17 | P2 | M | 020 DONE + the §7 repair run; evidence C26 | DONE — executed 2026-07-23, v2.5.0; acceptance = the findings_6 scratch-diff (empty UNEXPECTED bucket) |
 | 022 | Sixth field report: DW prose carry, phase-regex fix, derived-artifact papercuts | B18 | P2 | S | 021 DONE + the scratch-diff regression run; evidence C27 | DONE — executed 2026-07-23, v2.5.1; acceptance = findings_7's §8 run (all four gaps closed) |
-| 023 | Seventh field report: ledger honesty + upsert ergonomics | B19 | P3 | S | 022 DONE + the first official §8 run; evidence C28 | DONE — executed 2026-07-23, v2.5.2; acceptance = the next §8 run |
+| 023 | Seventh field report: ledger honesty + upsert ergonomics | B19 | P3 | S | 022 DONE + the first official §8 run; evidence C28 | DONE — executed 2026-07-23, v2.5.2; acceptance = findings_8's blob-inclusive §8 run (empty UNEXPECTED) |
+| 024 | Eighth field report: ship the §8 scratch-diff tool | B20 | P3 | S | 023 DONE + the blob-inclusive §8 run; evidence C29 | DONE — executed 2026-07-23, v2.6.0; acceptance = the next §8 run via the bundled tool |
 
 Status values: TODO | IN PROGRESS | DONE | BLOCKED (with one-line reason) | REJECTED (with
 one-line rationale).
@@ -58,6 +59,23 @@ export + freshness/lead renders (012); tamheed repo public from day one with WIP
 eval schedule disabled at close-out (016). **Execution driver: the maintainer runs the plans
 himself** — self-containment is the operative contract; this status table is the tracking
 surface.
+
+## Alignment record (2026-07-23, fifth entry — plan 024)
+
+findings_8 — the first JSON-blob-inclusive §8 run — is plan 023's clean acceptance: empty
+UNEXPECTED bucket, FR-100/107 provenance **byte-equal** (the amended method proven on the
+exact case that motivated it), all three C28 ledger checks verified, dict upserts
+byte-identical to the migration path, AGENTS.md drift closed with `restated_content: []`.
+One expectation correction: PH-2/PH-3 carry basis `default`, not `semantic-default` —
+their words are in neither `STATUS_COERCE` nor the map, so the fallback label is the
+designed, honest outcome; the wrong prediction lived in the ACMP prompt, not the code
+(the operator predicted the correct labels from source before the run). The actionable
+residue (§E) became plan 024 (evidence **C29**): the §8 diff shipped as a bundled tool
+(`scripts/scratch_diff.py` — correct keying is part of the method; the report's ~1,000
+DUP-KEY noise lines came from exactly the two non-default keyings) and the
+detector-limits honesty line. Six consecutive releases have each closed the previous
+run's findings list; the measurement has twice caught non-parser drift (live data in
+findings_7, ambient docs in findings_8).
 
 ## Alignment record (2026-07-23, fourth entry — plan 023)
 
