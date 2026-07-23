@@ -37,6 +37,7 @@ SUITES = [
     "tests/test_adopt_sample.py",
     "tests/test_export_html.py",
     "tests/test_eval_runner.py",
+    "tests/test_scratch_diff.py",
 ]
 
 V1_VALIDATOR = "plugins/tamheed/scripts/validate_package.py"
