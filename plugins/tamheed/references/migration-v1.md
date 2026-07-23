@@ -146,6 +146,14 @@ mapping contract.
     post-2.4.0 the count is structural and the loss is zero. Project-specific status
     words (`Instrumented`, `Met`, …) deliberately stay unmapped — confirm them via
     `status_map` each run (the grouped ledger makes replay drift visible).
+20. **Status prose tolerance (C27).** A deferred-work status cell that fails exact enum
+    matching carries the enum word as a PREFIX after leading punctuation/emoji —
+    `**✅ Done 2026-07-12 (P9)** — narrative` carries `Done`, with a preview note per
+    prose carry (never a silent inference); `In progress` maps to `Activated`; truly
+    off-enum words keep the note and default `Open`. The phase `Status:` matcher is
+    unanchored (status sentences ending `- **Exit gate.** …` bullets now match) with a
+    word-boundary guard (`ExitStatus:` never matches), and a parenthetical qualifier
+    terminates the capture (`Status: complete (delivered …)` carries `complete`).
 
 ## Field mapping (v1 → v2)
 

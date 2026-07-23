@@ -613,16 +613,33 @@ def parse_v1(source: Path, status_map: dict[str, str] | None = None) -> Plan:
                     sev = (_cell(row, t.col_index(["severity"])) or "").lower()
                     # C26 (§A residual): carry the v1 Status onto the DW enum so a
                     # re-migration never needs the Done/Activated truth-up again.
+                    raw_dw_status = _cell(row, t.col_index(["status"]))
                     dw_status = {"Open": "Open", "Activated": "Activated",
                                  "Scheduled": "Scheduled", "Done": "Done",
                                  "Won't-do": "Won't-do", "Won't do": "Won't-do",
-                                 "Wont-do": "Won't-do"}.get(
-                        _norm_status_key(_cell(row, t.col_index(["status"]))))
-                    raw_dw_status = _cell(row, t.col_index(["status"]))
+                                 "Wont-do": "Won't-do",
+                                 "In progress": "Activated"}.get(
+                        _norm_status_key(raw_dw_status))
                     if raw_dw_status and dw_status is None:
-                        plan.unmapped.append(f"{legacy}: deferred-work status "
-                                             f"{raw_dw_status!r} outside the enum — "
-                                             "left Open")
+                        # C27 (B1): real registers write prose in the Status cell —
+                        # `**✅ Done 2026-07-12 (P9)** — narrative` is still a Done.
+                        # Prefix-match the enum word after stripping leading
+                        # punctuation/emoji; a prose carry is NOTED, never the one
+                        # silent judgment call in the mapping.
+                        pm = re.match(r"\W*(Open|Activated|Scheduled|Done|Won'?t.?do)\b",
+                                      raw_dw_status, re.IGNORECASE)
+                        if pm:
+                            dw_status = {"open": "Open", "activated": "Activated",
+                                         "scheduled": "Scheduled",
+                                         "done": "Done"}.get(pm.group(1).lower(),
+                                                             "Won't-do")
+                            plan.unmapped.append(
+                                f"{legacy}: status {dw_status!r} carried from prose "
+                                f"cell {raw_dw_status!r}")
+                        else:
+                            plan.unmapped.append(f"{legacy}: deferred-work status "
+                                                 f"{raw_dw_status!r} outside the enum "
+                                                 "— left Open")
                     plan.add("deferred_work", {
                         "id": dw_id,
                         **({"status": dw_status} if dw_status else {}),
@@ -781,8 +798,13 @@ def parse_v1(source: Path, status_map: dict[str, str] | None = None) -> Plan:
                        # that titles are real (post-020). Id match stays first.
                        or (len(r.get("title") or "") >= 4
                            and (r.get("title") or "") in heading)), None)
-            m = re.search(r"^\**Status\**\s*:\s*\**([A-Za-z][A-Za-z -]*?)\**\s*[.\n]",
-                          body + "\n", re.M) if ph else None
+            # C27 (B2): the 020 pattern fired ZERO times on the fixture that motivated
+            # it — status sentences end `- **Exit gate.** …` bullets (never at line
+            # start, so `^` never matched) and carry parenthetical qualifiers
+            # (`complete (delivered …)`). Unanchored with a \b guard (ExitStatus: must
+            # not match) and `(` joins the capture terminators.
+            m = re.search(r"\**\bStatus\b\**\s*:\s*\**([A-Za-z][A-Za-z -]*?)\**\s*[.(\n]",
+                          body + "\n") if ph else None
             if not m:
                 continue
             for r in plan.rows["phases"]:

@@ -535,6 +535,50 @@ class DialectToleranceTest(unittest.TestCase):
         self.assertIsNone(rows["DW-003"])                    # off-enum -> schema default
         self.assertTrue(any("Someday-maybe" in u for u in plan.unmapped))
 
+    def test_deferred_work_prose_status_carried(self):
+        """Plan 022 (C27/B1): enum-word prefix inside a prose cell carries, with a
+        note; `In progress` maps to Activated."""
+        with tempfile.TemporaryDirectory() as src:
+            tmp = Path(src)
+            (tmp / "execution").mkdir()
+            (tmp / "manifest.json").write_text('{"package": "t"}', encoding="utf-8")
+            (tmp / "execution" / "deferred-work-register.md").write_text(
+                "# Deferred\n\n| ID | Deferred item | Severity | Status |\n"
+                "|----|---------------|----------|--------|\n"
+                "| D-01 | a thing | High | **✅ Done 2026-07-12 (P9, DEC-021)** — "
+                "shipped with the slice |\n"
+                "| D-02 | b thing | Low | In progress |\n"
+                "| D-03 | c thing | Low | Openly speculative |\n", encoding="utf-8")
+            plan = migrate.parse_v1(tmp)
+        rows = {r["id"]: r.get("status") for r in plan.rows["deferred_work"]}
+        self.assertEqual(rows["DW-001"], "Done")             # prefix carry
+        self.assertEqual(rows["DW-002"], "Activated")        # exact-map alias
+        self.assertIsNone(rows["DW-003"])                    # \b guard: Openly != Open
+        self.assertTrue(any("carried from prose" in u for u in plan.unmapped))
+        self.assertTrue(any("Openly speculative" in u for u in plan.unmapped))
+
+    def test_phase_prose_status_bullet_end_and_parenthetical(self):
+        """Plan 022 (C27/B2): the 020 pattern fired zero times on ACMP — status
+        sentences end bullets and carry parenthetical qualifiers."""
+        with tempfile.TemporaryDirectory() as src:
+            tmp = Path(src)
+            (tmp / "planning").mkdir()
+            (tmp / "manifest.json").write_text('{"package": "t"}', encoding="utf-8")
+            (tmp / "planning" / "roadmap.md").write_text(
+                "# Roadmap\n\n| ID | Phase | Goal |\n|----|-------|------|\n"
+                "| PH-0 | Alpha | ship |\n| PH-1 | Beta | polish |\n"
+                "| PH-2 | Gamma | later |\n\n"
+                "## PH-0 — Alpha\n\n- **Exit gate.** All slices merged. "
+                "Status: complete.\n\n"
+                "## PH-1 — Beta\n\nStatus: complete (delivered incrementally through "
+                "P12; MVP live).\n\n"
+                "## PH-2 — Gamma\n\nExitStatus: complete.\n", encoding="utf-8")
+            plan = migrate.parse_v1(tmp)
+        rows = {r["id"]: r["lifecycle_status"] for r in plan.rows["phases"]}
+        self.assertEqual(rows["PH-0"], "Implemented")        # bullet-end sentence
+        self.assertEqual(rows["PH-1"], "Implemented")        # parenthetical qualifier
+        self.assertEqual(rows["PH-2"], "Approved")           # \b guard: ExitStatus
+
     def test_phase_prose_status_matches_by_title(self):
         """Plan 021 (C26): headings carry titles, not ids — both now match."""
         with tempfile.TemporaryDirectory() as src:
