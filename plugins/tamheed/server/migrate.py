@@ -107,15 +107,22 @@ def _status(cell: str | None, default: str = "Draft",
         return s
     # Unknown vocabulary (C17): operator status_map > semantic defaults > default.
     # Every non-empty coercion is recorded — an empty cell -> default is absence, not
-    # coercion. Compound cells never auto-map (exact match only).
-    mapped = None
+    # coercion. Compound cells never auto-map (exact match only). C28 (B2'): each entry
+    # records WHICH branch fired — a supplied map no longer takes credit for
+    # semantic-default coercions (findings_7 §B2).
+    mapped, basis = None, "default"
     if plan is not None and plan.status_map:
         mapped = plan.status_map.get(s)
+        if mapped is not None:
+            basis = "status_map"
     if mapped is None:
         mapped = STATUS_COERCE.get(s)
+        if mapped is not None:
+            basis = "semantic-default"
     result = mapped or default
     if raw and plan is not None:
-        plan.status_coerced.append({"id": ident, "original": raw, "coerced": result})
+        plan.status_coerced.append({"id": ident, "original": raw, "coerced": result,
+                                    "basis": basis})
     return result
 
 
@@ -617,14 +624,25 @@ def parse_v1(source: Path, status_map: dict[str, str] | None = None) -> Plan:
                     dw_status = {"Open": "Open", "Activated": "Activated",
                                  "Scheduled": "Scheduled", "Done": "Done",
                                  "Won't-do": "Won't-do", "Won't do": "Won't-do",
-                                 "Wont-do": "Won't-do",
-                                 "In progress": "Activated"}.get(
+                                 "Wont-do": "Won't-do"}.get(
                         _norm_status_key(raw_dw_status))
-                    if raw_dw_status and dw_status is None:
+                    alias = (None if dw_status else
+                             {"In progress": "Activated",
+                              "In-progress": "Activated"}.get(
+                                 _norm_status_key(raw_dw_status)))
+                    if alias:
+                        # C28 (B1'): a semantic alias is a judgment call too — findings_7
+                        # caught the C27 honesty-symmetry comment being untrue while
+                        # `In progress` sat in the silent exact map. Noted like the
+                        # prose carries.
+                        dw_status = alias
+                        plan.unmapped.append(f"{legacy}: status {alias!r} carried from "
+                                             f"semantic alias {raw_dw_status!r}")
+                    elif raw_dw_status and dw_status is None:
                         # C27 (B1): real registers write prose in the Status cell —
                         # `**✅ Done 2026-07-12 (P9)** — narrative` is still a Done.
                         # Prefix-match the enum word after stripping leading
-                        # punctuation/emoji; a prose carry is NOTED, never the one
+                        # punctuation/emoji; a prose carry is NOTED, never a
                         # silent judgment call in the mapping.
                         pm = re.match(r"\W*(Open|Activated|Scheduled|Done|Won'?t.?do)\b",
                                       raw_dw_status, re.IGNORECASE)
@@ -1102,7 +1120,14 @@ def run_migration(source_dir: str, dest_root: str | Path, name: str | None = Non
                "status_coerced_groups": _group(plan.status_coerced,
                                                lambda e: (e["original"], e["coerced"]),
                                                ("original", "proposed")),
-               "status_coerced_basis": "status_map" if status_map else "defaults",
+               # C28 (B2'): derived from the per-entry bases — "mixed" when a supplied
+               # map covered only some of the coerced words (was: map-presence only,
+               # which mislabeled semantic-default coercions as operator-confirmed).
+               "status_coerced_basis": (
+                   ("status_map" if bases == {"status_map"} else
+                    "mixed" if "status_map" in bases else "defaults")
+                   if (bases := {e["basis"] for e in plan.status_coerced})
+                   else ("status_map" if status_map else "defaults")),
                "title_fallbacks": _group(plan.title_fallbacks,
                                          lambda e: (e["family"],), ("family",)),
                "status_defaulted": [

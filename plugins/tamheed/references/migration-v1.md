@@ -81,7 +81,8 @@ mapping contract.
     v1 vocabulary maps semantically — `Resolved→Implemented`, `Open→Approved`,
     `Monitoring→Approved`, `Active→Approved`, `Closed→Obsolete` — and **every** such
     coercion (plus any unknown-word → default) is reported in the preview's
-    `status_coerced` ledger `[{id, original, coerced}]`. The operator confirms or
+    `status_coerced` ledger `[{id, original, coerced, basis}]` — `basis` names the branch
+    that fired (`status_map` | `semantic-default` | `default`; C28). The operator confirms or
     overrides via `package_migrate(..., status_map={word: lifecycle-value})` on the
     confirm call (keys normalized like status cells; values validated). Compound cells
     ("Resolved (rule) / threshold pending EXP-001") never auto-map — exact match only,
@@ -94,8 +95,10 @@ mapping contract.
     rendered approved) and is reported per (file, family, count) in the preview's
     `status_defaulted` ledger (C21/B1). The preview also ships grouped views
     (`status_coerced_groups`, grouped `title_fallbacks`) — the operator decision unit is
-    the group; and `status_coerced_basis` says whether the ledger reflects defaults or a
-    supplied `status_map`.
+    the group; and `status_coerced_basis` is derived from the per-entry bases —
+    `status_map` only when the map covered EVERY coerced word, `mixed` when it covered
+    some, `defaults` when none (C28: a supplied map no longer takes credit for
+    semantic-default coercions).
 13. **Titles never come from the id column (C17).** A title alias resolving to the same
     cell the id came from is never right (a `| Phase | ... |` roadmap once titled every
     phase "PH-0"); `name` is a title alias. Rows whose title fell back to the second cell
@@ -149,8 +152,9 @@ mapping contract.
 20. **Status prose tolerance (C27).** A deferred-work status cell that fails exact enum
     matching carries the enum word as a PREFIX after leading punctuation/emoji —
     `**✅ Done 2026-07-12 (P9)** — narrative` carries `Done`, with a preview note per
-    prose carry (never a silent inference); `In progress` maps to `Activated`; truly
-    off-enum words keep the note and default `Open`. The phase `Status:` matcher is
+    prose carry (never a silent inference); `In progress`/`In-progress` map to
+    `Activated` as a semantic alias — also noted (C28: an alias is a judgment call too);
+    truly off-enum words keep the note and default `Open`. The phase `Status:` matcher is
     unanchored (status sentences ending `- **Exit gate.** …` bullets now match) with a
     word-boundary guard (`ExitStatus:` never matches), and a parenthetical qualifier
     terminates the capture (`Status: complete (delivered …)` carries `complete`).

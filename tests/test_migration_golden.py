@@ -266,12 +266,39 @@ class DialectToleranceTest(unittest.TestCase):
         self.assertEqual(len(ledger), 5)                   # empty cell NOT recorded
         self.assertNotIn("RISK-006", ledger)
         self.assertEqual(ledger["RISK-001"],
-                         {"id": "RISK-001", "original": "Open", "coerced": "Approved"})
+                         {"id": "RISK-001", "original": "Open", "coerced": "Approved",
+                          "basis": "semantic-default"})
+        self.assertEqual(ledger["RISK-005"]["basis"], "default")   # unknown word
         # operator override wins over the semantic default (status_map, normalized keys)
         plan2 = migrate.Plan()
         plan2.status_map = {"Open": "Deferred"}
         migrate._map_register_row(plan2, "RISK", "RISK-001", table, table.rows[0])
         self.assertEqual(plan2.rows["risks"][0]["lifecycle_status"], "Deferred")
+        self.assertEqual(plan2.status_coerced[0]["basis"], "status_map")  # C28 (B2')
+
+    def test_status_coerced_basis_is_mixed_when_map_partial(self):
+        """Plan 023 (C28/B2'): a supplied map no longer takes credit for
+        semantic-default coercions — per-entry basis + derived summary."""
+        with tempfile.TemporaryDirectory() as src, tempfile.TemporaryDirectory() as dest:
+            tmp = Path(src)
+            (tmp / "risks").mkdir()
+            (tmp / "manifest.json").write_text('{"package": "t"}', encoding="utf-8")
+            (tmp / "risks" / "risk-register.md").write_text(
+                "# Risks\n\n| ID | Risk | Status |\n|----|------|--------|\n"
+                "| RISK-001 | a | Monitoring |\n| RISK-002 | b | Closed |\n",
+                encoding="utf-8")
+            real_pre = migrate.preflight
+            migrate.preflight = lambda s: {"ok": True, "stage": "preflight"}
+            try:
+                out = migrate.run_migration(str(tmp), dest, name="t",
+                                            status_map={"Monitoring": "Deferred"})
+            finally:
+                migrate.preflight = real_pre
+        self.assertEqual(out["stage"], "preview")
+        bases = {e["id"]: e["basis"] for e in out["status_coerced"]}
+        self.assertEqual(bases["RISK-001"], "status_map")
+        self.assertEqual(bases["RISK-002"], "semantic-default")
+        self.assertEqual(out["status_coerced_basis"], "mixed")
 
     def test_status_map_values_validated(self):
         out = migrate.run_migration(str(FIXTURES / "valid-package"), ".",
@@ -552,9 +579,11 @@ class DialectToleranceTest(unittest.TestCase):
             plan = migrate.parse_v1(tmp)
         rows = {r["id"]: r.get("status") for r in plan.rows["deferred_work"]}
         self.assertEqual(rows["DW-001"], "Done")             # prefix carry
-        self.assertEqual(rows["DW-002"], "Activated")        # exact-map alias
+        self.assertEqual(rows["DW-002"], "Activated")        # semantic alias
         self.assertIsNone(rows["DW-003"])                    # \b guard: Openly != Open
         self.assertTrue(any("carried from prose" in u for u in plan.unmapped))
+        # C28 (B1'): the alias is a judgment call — noted, never silent
+        self.assertTrue(any("semantic alias 'In progress'" in u for u in plan.unmapped))
         self.assertTrue(any("Openly speculative" in u for u in plan.unmapped))
 
     def test_phase_prose_status_bullet_end_and_parenthetical(self):
