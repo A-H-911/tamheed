@@ -41,8 +41,12 @@ evidence. Six consecutive releases have each closed the previous run's findings 
 `check.py` green throughout (~189 tests, 10 new; the new suite runs inside the gate from
 Phase 1 on). Golden delta N/A (no parser change). Demo self-diff smoke: the tool on the
 committed demo `data/` against itself → exit 0, "no differences" (a registered test).
-**Acceptance (maintainer): the next §8 run uses the bundled tool** — zero DUP-KEY noise,
-JSON blobs compared by construction, empty UNEXPECTED bucket.
+**Acceptance MET (findings_9, evidence C30)**: the §8 run via the bundled tool reproduced
+the retired ad-hoc script exactly (changed-field sets 185 = 185, symmetric difference
+empty), zero DUP-KEY noise (`problems: []`), strictly better in-band coverage (live-only
+rows/files; the `packages` singleton field-diff), empty UNEXPECTED bucket, ledgers
+byte-stable against findings_8. First zero-actionable-findings report of the cycle — no
+plan 025 followed.
 
 ## Rejected / recorded-not-planned
 

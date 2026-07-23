@@ -41,7 +41,7 @@ Keystone 1.0.1.
 | 021 | Fifth field report: title resolution, escaped pipes, emit-scan closure | B17 | P2 | M | 020 DONE + the §7 repair run; evidence C26 | DONE — executed 2026-07-23, v2.5.0; acceptance = the findings_6 scratch-diff (empty UNEXPECTED bucket) |
 | 022 | Sixth field report: DW prose carry, phase-regex fix, derived-artifact papercuts | B18 | P2 | S | 021 DONE + the scratch-diff regression run; evidence C27 | DONE — executed 2026-07-23, v2.5.1; acceptance = findings_7's §8 run (all four gaps closed) |
 | 023 | Seventh field report: ledger honesty + upsert ergonomics | B19 | P3 | S | 022 DONE + the first official §8 run; evidence C28 | DONE — executed 2026-07-23, v2.5.2; acceptance = findings_8's blob-inclusive §8 run (empty UNEXPECTED) |
-| 024 | Eighth field report: ship the §8 scratch-diff tool | B20 | P3 | S | 023 DONE + the blob-inclusive §8 run; evidence C29 | DONE — executed 2026-07-23, v2.6.0; acceptance = the next §8 run via the bundled tool |
+| 024 | Eighth field report: ship the §8 scratch-diff tool | B20 | P3 | S | 023 DONE + the blob-inclusive §8 run; evidence C29 | DONE — executed 2026-07-23, v2.6.0; acceptance SUCCEEDED (findings_9/C30: tool-vs-script 185=185, empty UNEXPECTED, scratchpad retired) |
 
 Status values: TODO | IN PROGRESS | DONE | BLOCKED (with one-line reason) | REJECTED (with
 one-line rationale).
@@ -59,6 +59,24 @@ export + freshness/lead renders (012); tamheed repo public from day one with WIP
 eval schedule disabled at close-out (016). **Execution driver: the maintainer runs the plans
 himself** — self-containment is the operative contract; this status table is the tracking
 surface.
+
+## Alignment record (2026-07-23, sixth entry — plan 024 acceptance, no plan 025)
+
+findings_9 — the §8 run via the bundled tool on v2.6.0 — is the first report of the cycle
+with **zero actionable findings**. The tool-vs-script reconciliation was exact
+(changed-field sets 185 = 185, symmetric difference empty), no noise was added
+(`problems: []` — both §E1 keying classes correct by construction), and the tool proved
+strictly better in-band (live-only rows/files the script needed a separate row-count pass
+for; the `packages` singleton field-diff). UNEXPECTED empty; ledgers byte-stable against
+findings_8 (load-bearing: the parser is byte-identical, so any delta would have been an
+environment problem); emit + gates clean; **the operator's scratchpad script is retired**.
+Loop-closure milestone: measurement (scratch migrate) and comparison (scratch_diff.py) are
+both bundled, keyed correctly, blob-inclusive by construction — the operator's remaining
+job is exactly the part that should stay human, bucketing VANISHED/REMAINED/UNEXPECTED.
+**Decision: no plan 025, no release** — a findings file with zero actionable items does
+not force one; this entry and evidence C30 are the whole deliverable. The one candidate
+(§C's 160-char human-output cap) is operator-assessed "fine for scanning" with `--json`
+as the reconciliation path — recorded, not planned.
 
 ## Alignment record (2026-07-23, fifth entry — plan 024)
 
