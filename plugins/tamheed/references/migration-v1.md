@@ -3,7 +3,9 @@
 `package_migrate` walks a **conformant v1 package** (Markdown registers + `manifest.json` +
 optionally `keystone-state.json`) into the v2 relational store — once. After migration the package
 lives under the v2 flow (ASM-A: v1 is supported for migration only). The operator-facing runbook is
-`docs/migrate-from-keystone.md` in the program repo; this file is the mapping contract.
+the bundled [`migration-runbook.md`](migration-runbook.md) (C26/B6 — the bundle links inward,
+never out; the program repo's `docs/migrate-from-keystone.md` mirrors it); this file is the
+mapping contract.
 
 ## Routing rule (C10)
 

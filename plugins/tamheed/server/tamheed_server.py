@@ -686,6 +686,25 @@ def handoff_emit(target_dir: str, subdir: str = "handoff", force: bool = False) 
     library = _emit_prompt_library(PACKAGE_ROOT / _CURRENT_NAME, _CURRENT_NAME,
                                    force=force)
     stale = _stale_reference_report(target) + _emitted_prompt_report(target, subdir)
+    # C26/B4: the disk scan covers emitted/unchanged files (disk == row content there),
+    # but a REFUSED write leaves stale PRM-row bodies unscanned — the one situation the
+    # scan exists for. Scan the diverged rows' would-be emissions, marked as such.
+    for pid, kind, _title, body in prompts:
+        rel = f"{subdir}/{pid.lower()}-{kind}.md".replace("\\", "/")
+        if rel not in diverged:
+            continue
+        marker = f"{rel} ({pid} — not emitted: diverged)"
+        for lineno, line in enumerate(body.splitlines(), 1):
+            hit = next(((p, s) for p, s in _STALE_PATTERNS if p.search(line)), None)
+            if hit:
+                stale.append({"file": marker, "line": lineno,
+                              "text": line.strip()[:160], "suggestion": hit[1]})
+                continue
+            for m in re.finditer(r"\]\(((?:\.\.?/)[^)#\s]+)\)", line):
+                if not (handoff / m.group(1)).resolve().exists():
+                    stale.append({"file": marker, "line": lineno, "text": m.group(1),
+                                  "suggestion": "dead relative link from the emit "
+                                                "location — refresh the PRM row"})
     restated = _restated_content_report(target)
 
     server_line = ("The `tamheed` MCP server is provided by the installed tamheed plugin "

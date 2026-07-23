@@ -213,7 +213,8 @@ Read the reference file when you reach the matching part of the work; do not loa
 | `references/quality-gates.md` | The three-tier gate model; running `gate_run` |
 | `references/safeguards.md` | The anti-patterns to actively prevent |
 | `references/handoff.md` | Assembling the execution-agent handoff |
-| `references/migration-v1.md` | Migrating a v1 Keystone package (`migrate` mode) |
+| `references/migration-v1.md` | Migrating a v1 Keystone package (`migrate` mode) — the mapping contract |
+| `references/migration-runbook.md` | The operator procedure: staged run, cutover, re-populate + swap |
 | `references/adopt.md` | Brownfield onboarding (`adopt` mode) |
 | `references/prompt-templates.md` | Writing initial / follow-up / review prompts |
 | `references/generated-structure.md` | The layout of a generated v2 package |

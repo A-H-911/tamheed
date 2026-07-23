@@ -123,6 +123,9 @@ and not by reverting the repo:
 4. Carry over post-migration v2 rows (progress entries, new audit verdicts, scope changes)
    into the new package via the MCP tools, then swap the directories and delete the old one
    (its damage is the reason for the exercise).
+4b. **After the swap, force-re-emit the prompt library once** (`handoff_emit(...,
+   force=true)`): the library files embed the package name, so a directory rename makes all
+   five report `diverged` — this one divergence is expected and self-inflicted (C26/B5).
 5. Re-run `handoff_emit` — managed emissions make it the verifier: expect `unchanged`
    everywhere except deliberate changes, no stale-warning block, and review the
    `stale_references`/`restated_content` findings including the **emitted prompt bodies**.

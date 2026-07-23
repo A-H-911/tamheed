@@ -244,6 +244,27 @@ class McpContractTest(unittest.TestCase):
                 encoding="utf-8")
             self.assertIn("validate_package.py", body)       # never silently rewritten
 
+    def test_diverged_prompt_rows_still_scanned(self):
+        """Plan 021 (C26/B4): a REFUSED write must not suppress the stale scan — the
+        one situation the scan exists for is stale PRM rows behind hand-authored files."""
+        make_complete_package("demo")
+        srv.entity_upsert([{"type": "prompt", "id": "PRM-001", "prompt_kind": "review",
+                            "title": "Audit",
+                            "body": "Run validate_package.py docs before merging."}])
+        with tempfile.TemporaryDirectory() as target:
+            prm = Path(target) / "handoff" / "prm-001-review.md"
+            prm.parent.mkdir(parents=True)
+            prm.write_text("# Audit\n\nHand-authored v2 body, fully clean.\n",
+                           encoding="utf-8")
+            out = srv.handoff_emit(target)
+            self.assertIn("handoff/prm-001-review.md", out["diverged"])
+            marked = [f for f in out["stale_references"]
+                      if "not emitted: diverged" in f["file"]]
+            self.assertEqual(len(marked), 1)                 # exactly once, marked
+            self.assertIn("validate_package.py", marked[0]["text"])
+            self.assertIn("Hand-authored",                    # disk file untouched
+                          prm.read_text(encoding="utf-8"))
+
     def test_emitted_paths_use_forward_slashes(self):
         self._emit_ready()
         with tempfile.TemporaryDirectory() as target:
