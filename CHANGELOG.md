@@ -10,6 +10,36 @@ All notable changes to Tamheed are documented here. The format is based on
 
 ## [Unreleased]
 
+## [2.5.0] - 2026-07-23
+
+Polish release from the fifth ACMP field report — the calmest of the cycle: the §7
+re-populate+swap on v2.4.0 needed **zero blind repairs** and revived `v_phase_exit`
+(evidence **C26**, archived at `plans/evidence/acmp-field-report-5-2026-07-23.md`). **No
+schema migration — existing 2.x packages unaffected.**
+
+### Fixed
+- **Two-pass title resolution**: an exact `Title`/`Name` column wins outright — an `EPIC`
+  crosswalk cell can no longer out-rank the real Title column via column-order alias
+  scanning; long-form text resolves independently of the title column; id-shaped titles
+  trigger the degenerate rescue.
+- **Escaped in-cell pipes** (`\|`) parse as literal pipes inside one cell — rows no longer
+  shear at the escape (sentinel substitution around the frozen parser).
+- **Deferred-work `Status` carries** onto the DW enum — the recurring Done/Activated
+  truth-up after re-migration is gone.
+- Phase prose-status sections match by heading id **or phase title** (real-world headings
+  carry titles).
+- A **refused (diverged) prompt write no longer suppresses the stale scan**: the PRM rows'
+  would-be bodies are scanned and reported marked "(not emitted: diverged)" — the signal
+  the runbook promised now always fires.
+
+### Added
+- **`references/migration-runbook.md` ships in the bundle** — the operator procedure
+  including the §7 re-populate + swap mechanics (populate refuses an existing `data/`;
+  `package_open` keys on the directory; `packages.name` is cosmetic; swap = close, rename,
+  reopen) and the after-swap note: force-re-emit the prompt library once (its content
+  embeds the package name). Fixes the standing self-containment violation (the mapping
+  contract pointed at a repo-only doc plugin installs never receive).
+
 ## [2.4.0] - 2026-07-23
 
 **Data-fidelity release** (plan 020; evidence **C23–C25** from the fourth ACMP field report —

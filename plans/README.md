@@ -37,7 +37,8 @@ Keystone 1.0.1.
 | 017 | Field-report hardening: core gates, shared pipeline, v1 dialect tolerance | B13 | P1 | L | 005–016 DONE, v2.0.0 tagged; evidence C11–C16 (ACMP run 2026-07-21) | DONE — v2.1.0; ACMP acceptance re-run SUCCEEDED 2026-07-21/22 (see plan 018 evidence) |
 | 018 | Second field report: preview honesty, viewer scale, prompt library, cutover tooling | B14 | P1 | L | 017 DONE + the successful ACMP migration; evidence C17–C19 | DONE — v2.2.0; ACMP re-migration SUCCEEDED (zero repair loops — plan 019 evidence) |
 | 019 | Third field report: managed emissions, ledger ergonomics, viewer consistency | B15 | P1 | L | 018 DONE + the v2.2.0 ACMP re-migration; evidence C20–C22 | DONE — v2.3.0; process-acceptance clean, but findings_4 §D retracted the data verdict → plan 020 |
-| 020 | Fourth field report: DATA FIDELITY + viewer redesign + ACMP repair path | B16 | P1 | XL | 019 DONE + the retracted-verdict report; evidence C23–C25 | DONE — executed 2026-07-23, v2.4.0; acceptance = maintainer's §7 ACMP repair run |
+| 020 | Fourth field report: DATA FIDELITY + viewer redesign + ACMP repair path | B16 | P1 | XL | 019 DONE + the retracted-verdict report; evidence C23–C25 | DONE — v2.4.0; §7 ACMP repair SUCCEEDED (zero blind repairs, v_phase_exit revived — plan 021 evidence) |
+| 021 | Fifth field report: title resolution, escaped pipes, emit-scan closure | B17 | P2 | M | 020 DONE + the §7 repair run; evidence C26 | DONE — executed 2026-07-23, v2.5.0; acceptance = next ACMP touchpoint |
 
 Status values: TODO | IN PROGRESS | DONE | BLOCKED (with one-line reason) | REJECTED (with
 one-line rationale).
@@ -55,6 +56,16 @@ export + freshness/lead renders (012); tamheed repo public from day one with WIP
 eval schedule disabled at close-out (016). **Execution driver: the maintainer runs the plans
 himself** — self-containment is the operative contract; this status table is the tracking
 surface.
+
+## Alignment record (2026-07-23, second entry — plan 021)
+
+The §7 re-populate+swap on v2.4.0 SUCCEEDED — the calmest report of the cycle: **zero blind
+repairs** (every hand correction was named by a ledger first), `v_phase_exit` revived from
+permanently-dead to 51/41 + 9/9, the fidelity ledgers "measurably worked," and the managed
+emitter's diverged-refusal "held under adversarial conditions." findings_5's seven polish
+items became plan 021 (evidence **C26**), including the round-5 mechanism correction (B1 was
+column-order scanning, not a missing alias) and the review-caught regression the draft plan
+would have shipped (Title displacing Statement in long-form text).
 
 ## Alignment record (2026-07-23 — plan 020)
 
