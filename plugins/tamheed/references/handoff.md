@@ -71,6 +71,10 @@ implicit:
 | `<target>/handoff/*.md` | Emission of the PRM rows | Managed: re-emit reports `unchanged` when identical, **refuses hand-edited files** (`diverged`) unless `force=true` |
 | `<package>/prompts/*.md` | The plugin bundle (static scenario library) | Emitted by migrate/adopt/handoff; plugin-versioned, deliberately NOT DB-backed; same managed-emission rules |
 
+Emission composes each file as `# <title>` + body; a body that opens with its own H1
+identical to the title has that line stripped at emit time (C27/D1 — no doubled heading;
+a *different* in-body H1 is preserved untouched).
+
 The CLAUDE.md operating note is append-once; its stale-v1 warning lives in a marker-managed
 block that retracts itself when a later emit's scan is clean. Re-running `handoff_emit` is
 therefore the standing cutover verifier: everything `unchanged`, no warnings, no

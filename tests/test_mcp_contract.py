@@ -168,6 +168,26 @@ class McpContractTest(unittest.TestCase):
             self.assertIn("handoff/prm-001-initial.md", forced["written"])
             self.assertNotIn("OPERATOR NOTE", prm.read_text(encoding="utf-8"))
 
+    def test_prompt_body_leading_h1_stripped_at_emit(self):
+        """Plan 022 (C27/D1): a body opening with its own identical H1 must not double
+        the heading on disk; a DIFFERENT in-body H1 is preserved untouched."""
+        make_complete_package("demo")
+        srv.entity_upsert([
+            {"type": "prompt", "id": "PRM-001", "prompt_kind": "initial",
+             "title": "Kickoff", "body": "# Kickoff\n\nStart with SL-001."},
+            {"type": "prompt", "id": "PRM-002", "prompt_kind": "review",
+             "title": "Resume", "body": "# Orientation\n\nRead the log."}])
+        with tempfile.TemporaryDirectory() as target:
+            self.assertTrue(srv.handoff_emit(target)["ok"])
+            one = (Path(target) / "handoff" / "prm-001-initial.md").read_text(
+                encoding="utf-8")
+            self.assertEqual(one.count("# Kickoff"), 1)      # stripped, not doubled
+            self.assertIn("Start with SL-001.", one)
+            two = (Path(target) / "handoff" / "prm-002-review.md").read_text(
+                encoding="utf-8")
+            self.assertIn("# Resume", two)
+            self.assertIn("# Orientation", two)              # different H1 preserved
+
     def test_stale_warning_block_retracts_when_clean(self):
         """C20/B2: the warning's lifetime is coupled to the CURRENT scan, not the first."""
         self._emit_ready()

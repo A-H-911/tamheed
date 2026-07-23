@@ -86,6 +86,18 @@ class ExportHtmlTest(unittest.TestCase):
         self.assertEqual(again["csv"]["diverged"], [])
         self.assertIn("csv/requirements.csv", again["csv"]["unchanged"])
 
+    def test_csv_hand_edit_overwritten_as_derived(self):
+        """Plan 022 (C27/D2): CSVs are derived outputs — a hand edit is overwritten
+        (reported emitted), never stuck diverged with no in-tool recovery."""
+        self._open_demo_copy()
+        result = srv.export_html()
+        req = Path(result["path"]).parent / "csv" / "requirements.csv"
+        req.write_text("tampered\n", encoding="utf-8")
+        again = srv.export_html()
+        self.assertIn("csv/requirements.csv", again["csv"]["emitted"])
+        self.assertEqual(again["csv"]["diverged"], [])
+        self.assertTrue(req.read_text(encoding="utf-8").startswith("id,"))
+
     def test_all_edges_table_always_collapsed(self):
         self._open_demo_copy()
         out = self._export()

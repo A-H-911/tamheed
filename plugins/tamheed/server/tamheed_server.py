@@ -664,6 +664,12 @@ def handoff_emit(target_dir: str, subdir: str = "handoff", force: bool = False) 
             rel.replace("\\", "/"))
 
     for pid, kind, title, body in prompts:
+        # C27 (D1): the composition rule (`# {title}` prepended) is invisible to prompt
+        # authors — a body opening with its own identical H1 doubled the heading on
+        # disk. Strip-if-identical only; a DIFFERENT in-body H1 is preserved.
+        head, _, rest = body.lstrip("\n").partition("\n")
+        if head.strip() == f"# {title}":
+            body = rest.lstrip("\n")
         emit(handoff / f"{pid.lower()}-{kind}.md", f"# {title}\n\n{body}\n",
              f"{subdir}/{pid.lower()}-{kind}.md")
 
@@ -812,7 +818,10 @@ def export_html(output: str | None = None) -> dict:
     path.write_text(text, encoding="utf-8", newline="\n")
     # C25 (maintainer req 3): per-table CSV beside the report — the viewer's summary
     # links point at csv/<table>.csv relative to review.html. Deterministic (same
-    # ordered queries as the tables), managed emissions (hand edits refused).
+    # ordered queries as the tables). C27 (D2): forced like review.html itself —
+    # CSVs are DERIVED outputs regenerated from the DB, never operator files; without
+    # force a diverged CSV was unrecoverable in-tool. Authored emissions (handoff_emit)
+    # keep the refusal path.
     conn = _CURRENT.conn
     csv_dir = path.parent / "csv"
     csv_out: dict[str, list[str]] = {"emitted": [], "unchanged": [], "diverged": []}
@@ -829,7 +838,7 @@ def export_html(output: str | None = None) -> dict:
         writer = _csv.writer(buf, lineterminator="\n")
         writer.writerow(cols)
         writer.writerows(rows)
-        status = _managed_emit(csv_dir / f"{table}.csv", buf.getvalue())
+        status = _managed_emit(csv_dir / f"{table}.csv", buf.getvalue(), force=True)
         csv_out[status].append(f"csv/{table}.csv")
     return {"ok": True, "path": str(path), "bytes": len(text.encode("utf-8")),
             "csv": csv_out}
