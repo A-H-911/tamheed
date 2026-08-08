@@ -184,6 +184,45 @@ class RoundTripTest(unittest.TestCase):
         with store.PackageStore(self.pkg):
             pass
 
+    def test_lock_error_names_holder(self):
+        """Plan 025 (C31/D): the lock says WHO and SINCE WHEN — a bare PID invited an
+        unsound liveness check (PID reuse); legacy bare-int locks still describe."""
+        import os as _os
+        with store.PackageStore(self.pkg):
+            with self.assertRaises(store.StoreLockedError) as ctx:
+                store.PackageStore(self.pkg).__enter__()
+            self.assertIn(f"pid {_os.getpid()}", str(ctx.exception))
+            self.assertIn("since", str(ctx.exception))
+        legacy = Path(self.pkg) / "data" / ".lock"
+        legacy.write_text("71948", encoding="utf-8")     # pre-2.7.0 bare-PID lock
+        try:
+            with self.assertRaises(store.StoreLockedError) as ctx:
+                store.PackageStore(self.pkg).__enter__()
+            self.assertIn("pid 71948", str(ctx.exception))
+        finally:
+            legacy.unlink()
+
+    def test_commit_refuses_stale_tree(self):
+        """Plan 025 (C31/C1): data/ moved underneath the session (git checkout, a
+        second writer) -> StoreStaleError naming the file; disk state preserved."""
+        with store.PackageStore(self.pkg) as s:
+            seed(s.conn)
+            s.commit()                                    # baseline fingerprints
+            path = Path(self.pkg) / "data" / "requirements.jsonl"
+            external = path.read_text(encoding="utf-8") + "\n"
+            path.write_text(external, encoding="utf-8")   # the tree moves underneath
+            s.conn.execute("UPDATE requirements SET title = 'clobber?' WHERE id = 'FR-001'")
+            with self.assertRaises(store.StoreStaleError) as ctx:
+                s.commit()
+            self.assertIn("requirements.jsonl", str(ctx.exception))
+            self.assertEqual(path.read_text(encoding="utf-8"), external)  # not clobbered
+        # a fresh session reconciles: reopening reads the disk truth and can commit
+        norm = external.rstrip("\n") + "\n"               # canonical load ignores blanks
+        with store.PackageStore(self.pkg) as s2:
+            s2.commit()
+        self.assertEqual((Path(self.pkg) / "data" / "requirements.jsonl")
+                         .read_text(encoding="utf-8"), norm)
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)

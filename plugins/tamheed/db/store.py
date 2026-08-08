@@ -5,9 +5,12 @@ and is reused by the plan-008 MCP server. See ADR-0001 for the doctrine.
 """
 from __future__ import annotations
 
+import hashlib
 import json
 import os
+import socket
 import sqlite3
+from datetime import datetime, timezone
 from pathlib import Path
 
 SCHEMA_PATH = Path(__file__).with_name("schema.sql")
@@ -18,6 +21,39 @@ DERIVED_TABLES = frozenset({"entity_index"})  # trigger-maintained; never serial
 
 class StoreLockedError(RuntimeError):
     """Another writer holds this package's data/.lock — fail loud, never wait."""
+
+
+class StoreStaleError(RuntimeError):
+    """data/ changed on disk since this session loaded it — refuse to clobber (C31/C1).
+
+    A package's data/ lives in a git working tree, so `git checkout`/`pull`/a second
+    writer can move it underneath an open session; an unconditional dump would then
+    silently overwrite every incoming change with the session's older in-memory copy."""
+
+
+def _describe_lock(lock_path: Path) -> str:
+    # C31 (D): the lock names WHO and SINCE WHEN — a bare PID invited an unsound
+    # liveness check (the OS reuses PIDs; field case: a dead writer's PID belonged to
+    # VS Code started hours later). Tolerant of legacy bare-int locks and unreadable
+    # content (Windows share modes may deny the read while the owner holds the fd).
+    try:
+        raw = lock_path.read_text(encoding="utf-8").strip()
+    except OSError:
+        raw = ""
+    try:
+        parsed = json.loads(raw)
+    except ValueError:
+        parsed = None
+    holder = (parsed if isinstance(parsed, dict)
+              else {"pid": parsed} if isinstance(parsed, int)  # legacy bare-PID lock
+              else {})
+    try:
+        mtime = datetime.fromtimestamp(lock_path.stat().st_mtime, timezone.utc)
+        fallback = mtime.isoformat(timespec="seconds")
+    except OSError:
+        fallback = "unknown"
+    return (f"held by pid {holder.get('pid', '?')} on {holder.get('host', '?')} "
+            f"since {holder.get('taken_at') or fallback}")
 
 
 def connect() -> sqlite3.Connection:
@@ -130,6 +166,11 @@ class PackageStore:
         self.data_dir = Path(package_dir) / "data"
         self.conn: sqlite3.Connection | None = None
         self._lock_fd: int | None = None
+        self._fingerprints: dict[str, str] = {}
+
+    def _fingerprint(self) -> dict[str, str]:
+        return {p.name: hashlib.sha256(p.read_bytes()).hexdigest()
+                for p in sorted(self.data_dir.glob("*.jsonl"))}
 
     def __enter__(self) -> "PackageStore":
         self.data_dir.mkdir(parents=True, exist_ok=True)
@@ -139,19 +180,38 @@ class PackageStore:
         except FileExistsError:
             raise StoreLockedError(
                 f"{lock_path} exists — another writer owns this package "
-                "(remove the stale lock deliberately if the writer crashed)"
+                f"({_describe_lock(lock_path)}; remove the stale lock deliberately "
+                "if the writer crashed)"
             ) from None
-        os.write(self._lock_fd, str(os.getpid()).encode("ascii"))
+        os.write(self._lock_fd, json.dumps({
+            "pid": os.getpid(), "host": socket.gethostname(),
+            "taken_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+        }).encode("utf-8"))
         try:
             self.conn = load(self.data_dir)
         except BaseException:
             self._release_lock()
             raise
+        self._fingerprints = self._fingerprint()
         return self
 
     def commit(self) -> None:
+        # C31 (C1): verify the tree did not move underneath the session BEFORE the
+        # unconditional dump — the field cost of skipping this is silent overwrite of
+        # every incoming change (measured guard cost on a real package: 29 files /
+        # 3.1 MB ≈ 0.02 s per commit).
+        current = self._fingerprint()
+        if current != self._fingerprints:
+            changed = sorted(
+                (set(current) ^ set(self._fingerprints))
+                | {name for name in current.keys() & self._fingerprints.keys()
+                   if current[name] != self._fingerprints[name]})
+            raise StoreStaleError(
+                f"data/ changed on disk since this session loaded it ({', '.join(changed)})"
+                " — refusing to overwrite")
         self.conn.commit()
         dump(self.conn, self.data_dir)
+        self._fingerprints = self._fingerprint()
 
     def __exit__(self, exc_type, exc, tb) -> None:
         if self.conn is not None:

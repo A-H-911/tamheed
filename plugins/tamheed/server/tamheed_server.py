@@ -149,6 +149,19 @@ def _need_open():
     return None
 
 
+def _commit() -> dict | None:
+    """Write-back via the store; a tree that moved underneath the session is refused
+    loudly (C31/C1) and the pending batch is rolled back so it cannot ride a LATER
+    commit. Returns an error dict to surface, or None on success."""
+    try:
+        _CURRENT.commit()
+    except store.StoreStaleError as exc:
+        _CURRENT.conn.rollback()
+        return _err(f"{exc} — the batch was NOT applied; close the package, reconcile "
+                    "data/ via git, then reopen and retry")
+    return None
+
+
 def _columns(table: str) -> list[str]:
     return [r[1] for r in _CURRENT.conn.execute(f"PRAGMA table_info({table})")]
 
@@ -224,9 +237,15 @@ def package_close() -> dict:
     global _CURRENT, _CURRENT_NAME
     if _CURRENT is None:
         return _err("no package open")
-    _CURRENT.commit()
+    # C31 (C1): a stale tree must not TRAP the session — the close still releases the
+    # lock, but skips the final flush (every refused write was already reported "NOT
+    # applied" at write time, so nothing unreported is discarded).
+    err = _commit()
     _CURRENT.__exit__(None, None, None)
     name, _CURRENT, _CURRENT_NAME = _CURRENT_NAME, None, None
+    if err:
+        return {"ok": True, "package": name, "flushed": False,
+                "warning": f"closed WITHOUT the final flush — {err['error']}"}
     return {"ok": True, "package": name}
 
 
@@ -327,7 +346,8 @@ def entity_upsert(entities: list[dict]) -> dict:
                 "error": "batch rolled back — one or more items violated constraints",
                 "items": results}
     conn.execute("RELEASE batch")
-    _CURRENT.commit()
+    if err := _commit():
+        return err
     # C31 (A3): `applied` counts WRITES, not attempts — ignored duplicates are ok
     # per-item (`unchanged`) but never counted as applied.
     return {"ok": True,
@@ -465,7 +485,8 @@ def progress_update(entries: list[dict]) -> dict:
     except Exception as exc:
         conn.rollback()
         return _err(str(exc))
-    _CURRENT.commit()
+    if err := _commit():
+        return err
     return {"ok": True, "ids": ids}
 
 
@@ -493,7 +514,8 @@ def audit_record(verdicts: list[dict]) -> dict:
     except Exception as exc:
         conn.rollback()
         return _err(str(exc))
-    _CURRENT.commit()
+    if err := _commit():
+        return err
     return {"ok": True, "ids": ids}
 
 
@@ -533,7 +555,8 @@ def work_bind(ref: str, entity_ids: list[str], note: str | None = None) -> dict:
     except Exception as exc:
         conn.rollback()
         return _err(str(exc))
-    _CURRENT.commit()
+    if err := _commit():
+        return err
     return {"ok": True, "bound": stamped, "progress_entry": pe_id}
 
 

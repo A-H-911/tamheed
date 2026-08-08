@@ -248,6 +248,23 @@ class McpContractTest(unittest.TestCase):
             "SELECT last_referenced FROM requirements WHERE id = 'FR-001'").fetchone()[0]
         self.assertIsNone(lr)                           # the stamp did not leak
 
+    def test_stale_tree_refused_by_write_tools(self):
+        """Plan 025 (C31/C1): a data/ that moved underneath the open session (git
+        checkout, second writer) turns write tools into loud refusals — never a
+        silent clobber of either side."""
+        make_complete_package("demo")
+        path = srv._CURRENT.data_dir / "requirements.jsonl"
+        moved = path.read_text(encoding="utf-8").replace("Triage email", "Edited outside")
+        path.write_text(moved, encoding="utf-8")
+        out = srv.progress_update([{"entry": "should be refused"}])
+        self.assertFalse(out["ok"])
+        self.assertIn("NOT applied", out["error"])
+        self.assertEqual(path.read_text(encoding="utf-8"), moved)   # disk preserved
+        closed = srv.package_close()             # a stale tree must not TRAP the session
+        self.assertTrue(closed["ok"])
+        self.assertIn("WITHOUT the final flush", closed["warning"])
+        self.assertEqual(path.read_text(encoding="utf-8"), moved)   # still preserved
+
     def test_prompt_body_leading_h1_stripped_at_emit(self):
         """Plan 022 (C27/D1): a body opening with its own identical H1 must not double
         the heading on disk; a DIFFERENT in-body H1 is preserved untouched."""
