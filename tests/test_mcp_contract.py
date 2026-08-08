@@ -696,6 +696,39 @@ class McpContractTest(unittest.TestCase):
         message = stderr.getvalue()
         self.assertIn("uv run", message)
         self.assertIn("pip install mcp", message)
+        self.assertIn("import failed:", message)   # C33 (A2): the caught exception shows
+
+    def test_incompatible_sdk_names_version_and_pin(self):
+        """Plan 026 (C33/A2): mcp installed but without mcp.server.fastmcp (the SDK
+        2.0.0 shape) — the guard must say incompatible-with-version, never send the
+        operator to install the package that is already present and is the cause."""
+        import types
+        blocked = {name: sys.modules.pop(name) for name in list(sys.modules)
+                   if name == "mcp" or name.startswith("mcp.")}
+        fake = types.ModuleType("mcp")
+        fake.__version__ = "2.0.0"
+        sys.modules["mcp"] = fake                  # importable, no server.fastmcp
+        stderr = io.StringIO()
+        try:
+            with contextlib.redirect_stderr(stderr):
+                code = srv.serve()
+        finally:
+            sys.modules.pop("mcp", None)
+            sys.modules.update(blocked)
+        self.assertEqual(code, 1)
+        message = stderr.getvalue()
+        self.assertIn("mcp 2.0.0 is installed", message)
+        self.assertIn("requires mcp<2", message)
+        self.assertNotIn("pip install mcp.", message)   # no install-what-you-have advice
+
+    def test_selftest_reports_sdk_availability(self):
+        """Plan 026 (C33 ask 4): selftest names SDK serving status without failing —
+        'selftest passes' must never again be mistaken for 'serving works'."""
+        stdout = io.StringIO()
+        with contextlib.redirect_stdout(stdout):
+            code = srv.main(["--selftest"])
+        self.assertEqual(code, 0)                  # informational, never fatal
+        self.assertIn("mcp sdk:", stdout.getvalue())
 
     def test_selftest_lists_full_tool_surface(self):
         stdout = io.StringIO()

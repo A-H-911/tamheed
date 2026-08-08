@@ -1,7 +1,11 @@
 # /// script
 # requires-python = ">=3.10"
-# dependencies = ["mcp"]
+# dependencies = ["mcp>=1.2,<2"]
 # ///
+# C33 (A1): the ONE external dependency is bounded below the major — MCP SDK 2.0.0
+# removed mcp.server.fastmcp, so an unbounded resolve broke every fresh environment
+# (new installs, CI, cleaned uv caches) while cached ones kept working. Porting to
+# mcp.server.mcpserver is deferred, deliberate work — never widen this pin without it.
 """Tamheed MCP server — the only write path into a v2 package (plan 008/B3, ADR-0001).
 
 Successor of validate_package.py: the mechanical half of the capability the skill owns.
@@ -971,18 +975,51 @@ _SDK_ERROR = ("tamheed MCP server requires the 'mcp' SDK (Python >=3.10): launch
               " 'uv run tamheed_server.py' (PEP 723 fetches it) or 'pip install mcp'.")
 
 
+def _mcp_version() -> str:
+    # The module's own __version__ wins (vendored copies describe themselves); the
+    # shipped SDK exposes none, so distribution metadata is the usual answer.
+    import mcp
+    if v := getattr(mcp, "__version__", None):
+        return str(v)
+    try:
+        from importlib.metadata import version
+        return version("mcp")
+    except Exception:
+        return "unknown"
+
+
 def selftest() -> int:
     print(f"tamheed MCP server — {len(TOOLS)} tools")
     for name, (_, desc) in TOOLS.items():
         print(f"  {name}: {desc}")
+    # C33 (ask 4): the broken import was the ONE path no health check touched —
+    # report SDK availability without failing (the contract tests run SDK-free by
+    # design, and the tool surface itself needs no SDK).
+    try:
+        from mcp.server.fastmcp import FastMCP  # noqa: F401
+        print(f"mcp sdk: ok ({_mcp_version()})")
+    except ImportError as exc:
+        print(f"mcp sdk: UNAVAILABLE for serving ({exc})")
     return 0
 
 
 def serve() -> int:
     try:
         from mcp.server.fastmcp import FastMCP
-    except ImportError:
-        print(_SDK_ERROR, file=sys.stderr)
+    except ImportError as exc:
+        # C33 (A2): print the CAUGHT exception and distinguish absent from
+        # incompatible — the old hint told the operator to install a package that
+        # was already present and was the cause (an hour lost to three confident
+        # wrong conclusions; the truth was one printed exception away).
+        try:
+            import mcp  # noqa: F401
+            print(f"tamheed MCP server: mcp {_mcp_version()}"
+                  f" is installed but does not provide mcp.server.fastmcp ({exc}) —"
+                  " this build requires mcp<2; relaunch with a bounded resolve"
+                  " (uv run reads the PEP 723 pin; or pip install 'mcp<2').",
+                  file=sys.stderr)
+        except ImportError:
+            print(f"{_SDK_ERROR} (import failed: {exc})", file=sys.stderr)
         return 1
     app = FastMCP("tamheed")
     for name, (func, desc) in TOOLS.items():
