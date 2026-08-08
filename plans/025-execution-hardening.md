@@ -48,10 +48,13 @@ the lock parse for Windows.
 
 `check.py` green throughout (~198 tests, 10 new). Golden delta N/A (migrate.py
 untouched); canonical round-trip unaffected (fingerprinting is read-only).
-**Acceptance (maintainer): the next ACMP run on 2.7.0** — the §A repros show the fixed
-behaviors; a deliberate mid-session `git checkout` is refused loudly, not clobbered;
-existing targets add the working-tree line to their CLAUDE.md manually (the operating
-note is append-once, so upgrades don't rewrite it).
+**Acceptance MET (findings_11, evidence C32)**: all four §A defects verified FIXED by
+running the tools (A1 with a text-order control; A2 both spellings; A3
+rejected-vs-unchanged; A4 append-only hint), C1 exercised deliberately (file named, disk
+preserved, close never traps), D verified across a real process boundary, F6's manual
+line added on the ACMP side. C2 source-confirmed in the report; unit-verified in-repo.
+Second zero-actionable-findings report — no plan 026 followed. The §C MCP-reconnect note
+is harness-side (byte-identical launcher, clean selftest), not a plugin fault.
 
 ## Rejected / recorded-not-planned
 

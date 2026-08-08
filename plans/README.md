@@ -42,7 +42,7 @@ Keystone 1.0.1.
 | 022 | Sixth field report: DW prose carry, phase-regex fix, derived-artifact papercuts | B18 | P2 | S | 021 DONE + the scratch-diff regression run; evidence C27 | DONE — executed 2026-07-23, v2.5.1; acceptance = findings_7's §8 run (all four gaps closed) |
 | 023 | Seventh field report: ledger honesty + upsert ergonomics | B19 | P3 | S | 022 DONE + the first official §8 run; evidence C28 | DONE — executed 2026-07-23, v2.5.2; acceptance = findings_8's blob-inclusive §8 run (empty UNEXPECTED) |
 | 024 | Eighth field report: ship the §8 scratch-diff tool | B20 | P3 | S | 023 DONE + the blob-inclusive §8 run; evidence C29 | DONE — executed 2026-07-23, v2.6.0; acceptance SUCCEEDED (findings_9/C30: tool-vs-script 185=185, empty UNEXPECTED, scratchpad retired) |
-| 025 | Tenth field report: EXECUTION hardening (allocator ceiling, truthful surfaces, stale guard) | B21 | P1 | M | findings_10 (first execution-shaped report); evidence C31 | DONE — executed 2026-08-08, v2.7.0; acceptance = the next ACMP run on 2.7.0 |
+| 025 | Tenth field report: EXECUTION hardening (allocator ceiling, truthful surfaces, stale guard) | B21 | P1 | M | findings_10 (first execution-shaped report); evidence C31 | DONE — executed 2026-08-08, v2.7.0; acceptance SUCCEEDED (findings_11/C32: all four §A defects verified FIXED by running the tools, C1/D exercised, zero asks) |
 
 Status values: TODO | IN PROGRESS | DONE | BLOCKED (with one-line reason) | REJECTED (with
 one-line rationale).
@@ -60,6 +60,24 @@ export + freshness/lead renders (012); tamheed repo public from day one with WIP
 eval schedule disabled at close-out (016). **Execution driver: the maintainer runs the plans
 himself** — self-containment is the operative contract; this status table is the tracking
 surface.
+
+## Alignment record (2026-08-08, second entry — plan 025 acceptance, no plan 026)
+
+findings_11 — the C31 verification run on v2.7.0 — is the second zero-actionable-findings
+report. All four §A defects verified FIXED by RUNNING the tools (the report's standing
+method: "every verdict came from running the call"): A1 with a text-order control line
+(`max by TEXT order: PE-999` while the tool allocated PE-1000/PE-1001), A2's write-only
+message on both hyphen/underscore spellings, A3's rejected-vs-`unchanged` split with
+`applied` counting writes, A4's append-only refusal teaching the right move. C1 exercised
+deliberately (names the changed file, preserves disk, batch NOT applied, close releases
+the lock with `flushed: false`); D verified across a real process boundary. C2 is
+source-confirmed-only in the report — covered in-repo by the shipped
+`test_work_bind_failure_leaves_no_pending_stamp`. Both long threads answered in-surface
+(the verdict-rows ≥ criteria line rendered live: "105 verdict row(s) over 86 criteria").
+§C's MCP-reconnect failure after the plugin upgrade is diagnosed harness-side
+(byte-identical `.mcp.json`, clean `--selftest`) — not a tamheed fault; noted caveat:
+the run verified tool functions + store in-process, not the MCP transport layer.
+**Decision: no plan 026, no release** — this entry and evidence C32 are the deliverable.
 
 ## Alignment record (2026-08-08 — plan 025, the first execution-shaped report)
 
