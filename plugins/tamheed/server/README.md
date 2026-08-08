@@ -33,6 +33,11 @@ absolute root, and `server_info` reports it on demand.
 
 - **No raw SQL, ever.** Tools take structured, validated arguments; unknown types/columns
   are rejected by name.
+- **One external dependency, bounded (C33).** Everything is stdlib except the MCP SDK,
+  pinned `mcp>=1.2,<2` in the PEP 723 header — SDK 2.0.0 removed `mcp.server.fastmcp`
+  and an unbounded resolve broke every fresh environment while cached ones kept working.
+  `--selftest` reports SDK serving status (`mcp sdk: ok (<version>)`) without requiring
+  it; the pin is never widened without a deliberate port to the SDK's successor module.
 - **Single writer.** Opening a package takes `data/.lock` (from `db/store.py`); a second
   opener fails loud, and the lock names who holds it and since when (C31: a bare PID
   invited an unsound liveness check — the OS reuses PIDs). The lock releases on

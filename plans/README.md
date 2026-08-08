@@ -43,6 +43,7 @@ Keystone 1.0.1.
 | 023 | Seventh field report: ledger honesty + upsert ergonomics | B19 | P3 | S | 022 DONE + the first official §8 run; evidence C28 | DONE — executed 2026-07-23, v2.5.2; acceptance = findings_8's blob-inclusive §8 run (empty UNEXPECTED) |
 | 024 | Eighth field report: ship the §8 scratch-diff tool | B20 | P3 | S | 023 DONE + the blob-inclusive §8 run; evidence C29 | DONE — executed 2026-07-23, v2.6.0; acceptance SUCCEEDED (findings_9/C30: tool-vs-script 185=185, empty UNEXPECTED, scratchpad retired) |
 | 025 | Tenth field report: EXECUTION hardening (allocator ceiling, truthful surfaces, stale guard) | B21 | P1 | M | findings_10 (first execution-shaped report); evidence C31 | DONE — executed 2026-08-08, v2.7.0; acceptance SUCCEEDED (findings_11/C32: all four §A defects verified FIXED by running the tools, C1/D exercised, zero asks) |
+| 026 | Twelfth field report (INCIDENT): pin the MCP SDK, truthful startup diagnostics | B22 | P0 | S | findings_12 (SDK 2.0.0 broke every fresh resolve); evidence C33 | DONE — executed 2026-08-08, v2.7.1; acceptance = ACMP reconnects on a fresh resolve |
 
 Status values: TODO | IN PROGRESS | DONE | BLOCKED (with one-line reason) | REJECTED (with
 one-line rationale).
@@ -60,6 +61,24 @@ export + freshness/lead renders (012); tamheed repo public from day one with WIP
 eval schedule disabled at close-out (016). **Execution driver: the maintainer runs the plans
 himself** — self-containment is the operative contract; this status table is the tracking
 surface.
+
+## Alignment record (2026-08-08, third entry — plan 026, the SDK incident)
+
+findings_12 landed hours after findings_11 closed C31 clean: **MCP SDK 2.0.0 removed
+`mcp.server.fastmcp`**, and the unbounded `dependencies = ["mcp"]` — the ONE external
+dependency in an otherwise stdlib-only plugin — made every freshly resolved environment
+unable to start the server, across all plugin versions; cached `uv` environments masked
+it, which is why 2.6.0 "worked" and the 2.6.0→2.7.0 upgrade merely forced the fresh
+resolve. The report retracts findings_11 §C (the "harness-side" attribution) with
+surgical scope — the in-process §A/§B verifications stand, and the transport caveat
+written beside the wrong sentence was the correct hedge; the C32 evidence header's
+harness-side note is SUPERSEDED by C33, never edited. Plan 026 shipped the same day:
+the `mcp>=1.2,<2` pin (verified end-to-end — fresh resolve serves on mcp 1.28.1), the
+guard printing the caught exception and distinguishing absent from incompatible (the
+second consecutive report to catch an error message stating something untrue — error
+text is part of the data contract), and a selftest SDK probe so "selftest passes" can
+never again be read as "serving works". The `mcp.server.mcpserver` port is DEFERRED
+deliberate work; the pin is never widened without it. v2.7.1, PATCH.
 
 ## Alignment record (2026-08-08, second entry — plan 025 acceptance, no plan 026)
 

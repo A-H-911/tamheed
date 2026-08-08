@@ -10,6 +10,30 @@ All notable changes to Tamheed are documented here. The format is based on
 
 ## [Unreleased]
 
+## [2.7.1] - 2026-08-08
+
+Incident release from the twelfth ACMP field report (evidence **C33**, archived at
+`plans/evidence/acmp-field-report-12-2026-08-08.md`): **MCP SDK 2.0.0 removed
+`mcp.server.fastmcp`**, and the plugin's unbounded PEP 723 dependency made every freshly
+resolved environment unable to start the MCP server — across all plugin versions; cached
+`uv` environments masked it. **No schema migration — existing 2.x packages unaffected.**
+
+### Fixed
+- **The `mcp` dependency is bounded**: `dependencies = ["mcp>=1.2,<2"]` — verified
+  end-to-end (a fresh `uv` resolve serves on mcp 1.28.1). Porting `serve()` to the SDK's
+  successor module is deferred, deliberate work; the pin is never widened without it.
+- **The startup guard tells the truth**: the ImportError path prints the caught
+  exception and distinguishes *absent* (install guidance + the real error) from
+  *incompatible* (`mcp <version> is installed but does not provide mcp.server.fastmcp —
+  this build requires mcp<2`) — the old hint advised installing the package that was
+  already present and was the cause.
+
+### Added
+- **`--selftest` reports SDK serving status** (`mcp sdk: ok (<version>)` /
+  `UNAVAILABLE for serving (<error>)`) — informational, never failing, so a passing
+  selftest can no longer be mistaken for a serving server (the broken import was the one
+  path no health check touched).
+
 ## [2.7.0] - 2026-08-08
 
 Execution-hardening release from the tenth ACMP field report — the first from
