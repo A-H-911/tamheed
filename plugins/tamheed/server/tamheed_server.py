@@ -154,11 +154,16 @@ def _columns(table: str) -> list[str]:
 
 
 def _next_id(prefix: str, table: str, width: int = 3) -> str:
+    # C31 (A1): MAX over the parsed NUMBER, never `ORDER BY id DESC` — text order agrees
+    # with numeric order only below 1000 ("PE-999" > "PE-1000" as text), so the old form
+    # permanently re-allocated PE-1000 once an executed package crossed 999 rows. CAST
+    # absorbs a non-numeric suffix a caller-supplied id may have slipped in; MAX over an
+    # empty set is NULL, which also covers the empty-table case.
     row = _CURRENT.conn.execute(
-        f"SELECT id FROM {table} WHERE id GLOB ? ORDER BY id DESC LIMIT 1", (prefix + "*",)
+        f"SELECT MAX(CAST(SUBSTR(id, ?) AS INTEGER)) FROM {table} WHERE id GLOB ?",
+        (len(prefix) + 1, prefix + "*"),
     ).fetchone()
-    n = int(row[0][len(prefix):]) + 1 if row else 1
-    return f"{prefix}{n:0{width}d}"
+    return f"{prefix}{(row[0] or 0) + 1:0{width}d}"
 
 
 # --------------------------------------------------------------------------- package tools
@@ -263,6 +268,11 @@ def entity_upsert(entities: list[dict]) -> dict:
         if etype in ("trace-edge", "omission"):
             sql = (f"INSERT OR IGNORE INTO {table} ({', '.join(names)})"
                    f" VALUES ({', '.join('?' for _ in names)})")
+        elif etype in ("progress-entry", "audit-verdict"):
+            # C31 (A4): the journal is APPEND-ONLY — no ON CONFLICT path, so writing an
+            # existing id errors instead of silently rewriting recorded history.
+            sql = (f"INSERT INTO {table} ({', '.join(names)})"
+                   f" VALUES ({', '.join('?' for _ in names)})")
         else:
             updates = ", ".join(f"{c} = excluded.{c}" for c in names if c != "id")
             sql = (f"INSERT INTO {table} ({', '.join(names)})"
@@ -270,11 +280,30 @@ def entity_upsert(entities: list[dict]) -> dict:
                    + (f" ON CONFLICT(id) DO UPDATE SET {updates}" if updates else ""))
         conn.execute(f"SAVEPOINT item{i}")
         try:
-            conn.execute(sql, [json.dumps(v, ensure_ascii=False)
-                               if isinstance(v, (dict, list)) else v
-                               for v in (cols[c] for c in names)])
+            cur = conn.execute(sql, [json.dumps(v, ensure_ascii=False)
+                                     if isinstance(v, (dict, list)) else v
+                                     for v in (cols[c] for c in names)])
             conn.execute(f"RELEASE item{i}")
-            results.append({"index": i, "ok": True, "id": cols.get("id")})
+            if etype in ("trace-edge", "omission") and cur.rowcount == 0:
+                # C31 (A3): IGNORE dropped the row — distinguish the idempotent
+                # duplicate (fine, the reason IGNORE exists) from a constraint
+                # rejection (an attempt is not a write and must not count as one).
+                pk = (("from_id", "to_id", "relation") if etype == "trace-edge"
+                      else ("entity_type",))
+                exists = conn.execute(
+                    f"SELECT 1 FROM {table} WHERE "
+                    + " AND ".join(f"{c} = ?" for c in pk),
+                    [cols.get(c) for c in pk]).fetchone()
+                if exists:
+                    results.append({"index": i, "ok": True, "unchanged": True,
+                                    "id": cols.get("id")})
+                else:
+                    results.append({"index": i, "ok": False, "id": cols.get("id"),
+                                    "error": "row rejected by a constraint "
+                                             "(CHECK/NOT NULL) — not written"})
+                    failed = True
+            else:
+                results.append({"index": i, "ok": True, "id": cols.get("id")})
         except Exception as exc:  # IntegrityError carries the constraint name
             conn.execute(f"ROLLBACK TO item{i}")
             msg = str(exc)
@@ -284,6 +313,11 @@ def entity_upsert(entities: list[dict]) -> dict:
                 if exists:  # field-evidence C11 (D2): name the actual cause
                     msg += (" — the row exists; entity_upsert requires FULL rows even for"
                             " updates (INSERT evaluates NOT NULL before conflict resolution)")
+            if (etype in ("progress-entry", "audit-verdict")
+                    and "UNIQUE constraint failed" in msg):
+                msg += (" — append-only journal: append a new entry via progress_update /"
+                        " audit_record instead of editing history; corrections are"
+                        " recorded as new entries")
             results.append({"index": i, "ok": False, "id": cols.get("id"), "error": msg})
             failed = True
     if failed:
@@ -294,7 +328,11 @@ def entity_upsert(entities: list[dict]) -> dict:
                 "items": results}
     conn.execute("RELEASE batch")
     _CURRENT.commit()
-    return {"ok": True, "applied": len(entities), "items": results}
+    # C31 (A3): `applied` counts WRITES, not attempts — ignored duplicates are ok
+    # per-item (`unchanged`) but never counted as applied.
+    return {"ok": True,
+            "applied": sum(1 for r in results if r["ok"] and not r.get("unchanged")),
+            "items": results}
 
 
 def entity_query(type: str, id: str | None = None, status: str | None = None,
@@ -303,8 +341,13 @@ def entity_query(type: str, id: str | None = None, status: str | None = None,
     if guard := _need_open():
         return guard
     table = ENTITY_TABLES.get(type)
-    if table is None or type in ("trace-edge", "omission"):
+    if table is None:
         return _err(f"unknown entity type {type!r}")
+    if type in ("trace-edge", "omission"):
+        # C31 (A2): write-only is not nonexistent — the old "unknown entity type"
+        # message here sent a false statement into a package's permanent record.
+        return _err(f"entity type {type!r} is write-only (composite key, no id column)"
+                    " — writable via entity_upsert; query edges via trace_query")
     all_cols = _columns(table)
     cols = columns or all_cols
     if bad := set(cols) - set(all_cols):
@@ -463,22 +506,33 @@ def work_bind(ref: str, entity_ids: list[str], note: str | None = None) -> dict:
         return _err("entity_ids must be a non-empty array")
     conn = _CURRENT.conn
     stamped, now = [], _now()
-    for eid in entity_ids:
-        row = conn.execute("SELECT entity_type FROM entity_index WHERE id = ?", (eid,)).fetchone()
-        if row is None:
-            conn.rollback()
-            return _err(f"unknown entity id {eid!r}")
-        table = ENTITY_TABLES[row[0]]
-        if "last_referenced" in _columns(table):
-            conn.execute(f"UPDATE {table} SET last_referenced = ? WHERE id = ?", (now, eid))
-        stamped.append(eid)
-    pe_id = _next_id("PE-", "progress_entries")
-    conn.execute(
-        "INSERT INTO progress_entries (id, entry, occurred_at, custom_attributes)"
-        " VALUES (?, ?, ?, ?)",
-        (pe_id, note or f"{ref} satisfies {', '.join(stamped)}", now,
-         json.dumps({"ref": ref, "binds": stamped})),
-    )
+    # C31 (C2): one transactional unit — any failure past the first UPDATE used to
+    # leave pending last_referenced stamps that rode whatever the NEXT tool call did.
+    try:
+        for eid in entity_ids:
+            row = conn.execute("SELECT entity_type FROM entity_index WHERE id = ?",
+                               (eid,)).fetchone()
+            if row is None:
+                conn.rollback()
+                return _err(f"unknown entity id {eid!r}")
+            table = ENTITY_TABLES.get(row[0])
+            if table is None:
+                conn.rollback()
+                return _err(f"entity id {eid!r} has unmapped type {row[0]!r}")
+            if "last_referenced" in _columns(table):
+                conn.execute(f"UPDATE {table} SET last_referenced = ? WHERE id = ?",
+                             (now, eid))
+            stamped.append(eid)
+        pe_id = _next_id("PE-", "progress_entries")
+        conn.execute(
+            "INSERT INTO progress_entries (id, entry, occurred_at, custom_attributes)"
+            " VALUES (?, ?, ?, ?)",
+            (pe_id, note or f"{ref} satisfies {', '.join(stamped)}", now,
+             json.dumps({"ref": ref, "binds": stamped})),
+        )
+    except Exception as exc:
+        conn.rollback()
+        return _err(str(exc))
     _CURRENT.commit()
     return {"ok": True, "bound": stamped, "progress_entry": pe_id}
 

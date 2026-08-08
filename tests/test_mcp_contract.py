@@ -183,6 +183,71 @@ class McpContractTest(unittest.TestCase):
         self.assertEqual(json.loads(row["custom_attributes"]),
                          {"v1": {"Source": "S", "Priority": "M"}})
 
+    def test_next_id_survives_the_1000_row_boundary(self):
+        """Plan 025 (C31/A1): text ordering dies at PE-1000 ("PE-999" > "PE-1000" as
+        text) — the numeric MAX does not, so executed packages never hit a ceiling."""
+        srv.package_create("demo", "Demo", "rnd")
+        srv._CURRENT.conn.executemany(
+            "INSERT INTO progress_entries (id, entry, occurred_at) VALUES (?, ?, ?)",
+            [(f"PE-{n:03d}", f"e{n}", "2026-08-08") for n in range(1, 1000)])
+        first = srv.progress_update([{"entry": "the thousandth"}])
+        second = srv.progress_update([{"entry": "the thousand-and-first"}])
+        self.assertEqual(first["ids"], ["PE-1000"])
+        self.assertEqual(second["ids"], ["PE-1001"])   # was PE-1000 forever
+
+    def test_entity_query_write_only_is_not_unknown(self):
+        """Plan 025 (C31/A2): a registered write surface must never be reported as a
+        nonexistent type — the old message ended up in a package's permanent record."""
+        srv.package_create("demo", "Demo", "rnd")
+        out = srv.entity_query("trace-edge")
+        self.assertFalse(out["ok"])
+        self.assertIn("write-only", out["error"])
+        self.assertIn("trace_query", out["error"])
+        self.assertIn("unknown entity type",
+                      srv.entity_query("trace_edge")["error"])   # underscore: genuinely unknown
+
+    def test_trace_edge_rejection_vs_duplicate(self):
+        """Plan 025 (C31/A3): an IGNORE-dropped row is an error, an idempotent
+        duplicate is `unchanged`, and `applied` counts writes — never attempts."""
+        make_complete_package("demo")
+        bogus = srv.entity_upsert([{"type": "trace-edge", "from_id": "AC-001",
+                                    "to_id": "FR-001", "relation": "bogus_rel"}])
+        self.assertFalse(bogus["ok"])
+        self.assertIn("rejected by a constraint", bogus["items"][0]["error"])
+        dup = srv.entity_upsert([{"type": "trace-edge", "from_id": "SL-001",
+                                  "to_id": "FR-001", "relation": "implements"}])
+        self.assertTrue(dup["ok"])
+        self.assertTrue(dup["items"][0]["unchanged"])
+        self.assertEqual(dup["applied"], 0)
+
+    def test_journal_is_append_only(self):
+        """Plan 025 (C31/A4): recorded history cannot be rewritten via entity_upsert."""
+        make_complete_package("demo")
+        srv.progress_update([{"entry": "original"}])
+        out = srv.entity_upsert([{"type": "progress-entry", "id": "PE-001",
+                                  "entry": "rewritten", "occurred_at": "2026-08-08"}])
+        self.assertFalse(out["ok"])
+        self.assertIn("append-only journal", out["items"][0]["error"])
+        row = srv.entity_query("progress-entry", id="PE-001", columns=["entry"])
+        self.assertEqual(row["rows"][0]["entry"], "original")
+
+    def test_work_bind_failure_leaves_no_pending_stamp(self):
+        """Plan 025 (C31/C2): a failing bind rolls back its last_referenced stamps
+        instead of leaving them pending for the next tool call's commit."""
+        make_complete_package("demo")
+        self.assertIn("last_referenced", srv._columns("requirements"))
+        real = srv._next_id
+        srv._next_id = lambda *a, **k: "PE-001"
+        try:
+            srv.progress_update([{"entry": "takes PE-001"}])
+            out = srv.work_bind("abc123", ["FR-001"])   # final INSERT collides
+        finally:
+            srv._next_id = real
+        self.assertFalse(out["ok"])
+        lr = srv._CURRENT.conn.execute(
+            "SELECT last_referenced FROM requirements WHERE id = 'FR-001'").fetchone()[0]
+        self.assertIsNone(lr)                           # the stamp did not leak
+
     def test_prompt_body_leading_h1_stripped_at_emit(self):
         """Plan 022 (C27/D1): a body opening with its own identical H1 must not double
         the heading on disk; a DIFFERENT in-body H1 is preserved untouched."""
