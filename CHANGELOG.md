@@ -10,6 +10,52 @@ All notable changes to Tamheed are documented here. The format is based on
 
 ## [Unreleased]
 
+## [2.7.0] - 2026-08-08
+
+Execution-hardening release from the tenth ACMP field report — the first from
+**sustained execution use** (a month of daily `progress_update`/`audit_record`/
+`work_bind`/`entity_upsert` against a live package), which surfaced defect classes nine
+migration runs structurally could not (evidence **C31**, archived at
+`plans/evidence/acmp-field-report-10-2026-08-08.md`). **No schema migration — existing
+2.x packages unaffected.**
+
+### Fixed
+- **The 1000-row id ceiling is gone**: `_next_id` orders by the parsed number
+  (`MAX(CAST(SUBSTR))`) instead of lexicographic `ORDER BY id DESC` — text order agrees
+  with numeric order only below 1000, so an executed package permanently re-allocated
+  `PE-1000` and could never again write a progress entry or audit verdict.
+- **`entity_query` tells the truth about write-only types**: `trace-edge`/`omission` are
+  no longer reported as "unknown entity type" (that false message put a wrong statement
+  into a package's permanent record for three days) — the refusal now names
+  `entity_upsert` and `trace_query`.
+- **Writes are counted, attempts are not**: an `INSERT OR IGNORE` row dropped by a
+  constraint is a per-item error (batch fails), an idempotent duplicate reports
+  `unchanged`, and `applied` counts actual writes.
+- **The append-only journal is enforced**: `progress-entry`/`audit-verdict` rows can no
+  longer be silently rewritten via `entity_upsert` — a conflicting id errors with a
+  targeted hint (append via `progress_update`/`audit_record`; corrections are new
+  entries).
+- **`work_bind` is one transactional unit**: failures roll back pending
+  `last_referenced` stamps instead of leaving them to ride the next tool call's commit.
+
+### Added
+- **Stale-tree guard**: the store fingerprints `data/*.jsonl` at load and refuses to
+  dump over a tree that moved underneath the session (`git checkout`/`pull`, a second
+  writer) — new `StoreStaleError` names the changed files; write tools return a loud
+  "batch NOT applied" with recovery guidance, and `package_close` still releases the
+  lock (flush skipped, with a warning) so a stale tree never traps the session.
+- **Lock metadata**: `data/.lock` records `{pid, host, taken_at}`; a lock conflict names
+  who holds it and since when (legacy bare-PID locks still described). Deliberately no
+  auto-reclaim: PID reuse makes a liveness check unsound.
+- **The working-tree warning, where it's load-bearing**: package `data/` lives in the
+  git working tree — uncommitted package writes are destroyed by `git reset --hard` /
+  `checkout` / `stash` like any uncommitted change. Stated in the emitted CLAUDE.md
+  operating note (new emits), `references/handoff.md`, the migration runbook, and the
+  server README.
+- The review surface's execution section states **verdict rows ≥ criteria**
+  (supersessions append; `gate_run` counts rows, the table shows each criterion's
+  latest) — ending a recurring reconcile cost.
+
 ## [2.6.0] - 2026-07-23
 
 Feature release from the eighth ACMP field report — a full-green acceptance (empty

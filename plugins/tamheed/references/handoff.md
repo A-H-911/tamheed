@@ -80,6 +80,13 @@ block that retracts itself when a later emit's scan is clean. Re-running `handof
 therefore the standing cutover verifier: everything `unchanged`, no warnings, no
 `restated_content` findings = the cutover is done and undrifted.
 
+**Package writes are working-tree changes (C31).** The canonical `data/` lives inside the
+project's git working tree, so uncommitted package writes are destroyed by
+`git reset --hard`, `git checkout`, and `git stash` exactly like uncommitted source —
+commit package data before branch operations. The store refuses to overwrite a tree that
+moved underneath an open session (`StoreStaleError`: close, reconcile via git, reopen),
+but nothing can protect writes that were never committed.
+
 **Reference, don't restate.** Agent-control files (CLAUDE.md/AGENTS.md) should cite the
 package (`entity_query`, `gate_run`, `review.html`, the prompt library) rather than copying
 register content — copies drift silently. When quoting a load-bearing subset is genuinely

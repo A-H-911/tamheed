@@ -335,6 +335,14 @@ def _execution(conn, gates, ready):
              if ac_rows else
              '<h3>Acceptance criteria × audit verdicts</h3>'
              '<p class="empty">No acceptance criteria recorded.</p>']
+    # C31 (threads-continued): gate_run counts verdict ROWS, this table shows one line
+    # per CRITERION (latest verdict) — rows >= criteria because supersessions append.
+    if ac_rows:
+        n_verdicts = conn.execute("SELECT COUNT(*) FROM audit_verdicts").fetchone()[0]
+        parts.append(f'<p class="freshness">{n_verdicts} verdict row(s) over '
+                     f'{len(ac_rows)} criteria — verdict rows ≥ criteria because '
+                     'corrections and re-verdicts APPEND (gate_run counts rows; this '
+                     'table shows each criterion&#8217;s latest).</p>')
     entries = conn.execute(
         "SELECT id, occurred_at, entry, phase_id, slice_id FROM progress_entries"
         " ORDER BY id").fetchall()

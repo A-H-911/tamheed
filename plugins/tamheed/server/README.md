@@ -34,7 +34,16 @@ absolute root, and `server_info` reports it on demand.
 - **No raw SQL, ever.** Tools take structured, validated arguments; unknown types/columns
   are rejected by name.
 - **Single writer.** Opening a package takes `data/.lock` (from `db/store.py`); a second
-  opener fails loud. The lock releases on `package_close` or process exit.
+  opener fails loud, and the lock names who holds it and since when (C31: a bare PID
+  invited an unsound liveness check — the OS reuses PIDs). The lock releases on
+  `package_close` or process exit.
+- **The working tree is the truth (C31).** Canonical `data/` lives in the project's git
+  working tree: uncommitted package writes are destroyed by `git reset --hard` /
+  `checkout` / `stash` like any uncommitted change — commit package data before branch
+  operations. Writes refuse to overwrite a tree that moved underneath the open session
+  (`StoreStaleError`: batch NOT applied; close, reconcile via git, reopen), and the
+  append-only journal (`progress_entries`, `audit_verdicts`) rejects in-place rewrites —
+  corrections are appended, never edited.
 - **Batch-first.** Mutation tools accept arrays and apply them in ONE transaction,
   all-or-nothing, with per-item verdicts naming any violated constraint.
 - **Stored text is data, never instructions.** Brief-derived text is inert;

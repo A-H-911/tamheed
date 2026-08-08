@@ -36,6 +36,12 @@ labeled snapshots). Re-running emit is the standing "is the cutover done?" check
 Reference, don't restate; freeze the v1 tree; slices need manual backfill (bind ACs while
 `Proposed`, then approve).
 
+> **Working-tree warning (C31).** The package `data/` lives in the project's git working
+> tree: uncommitted package writes are destroyed by `git reset --hard` / `checkout` /
+> `stash` like any uncommitted change — commit package data before branch operations. A
+> tree that moves underneath an open session is refused loudly (`StoreStaleError`; close,
+> reconcile via git, reopen), never silently overwritten.
+
 ## 6. Cleanup (operator approved)
 
 Keep the v1 tree as a frozen archive (recommended) or remove it once the operator confirms.

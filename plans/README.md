@@ -42,6 +42,7 @@ Keystone 1.0.1.
 | 022 | Sixth field report: DW prose carry, phase-regex fix, derived-artifact papercuts | B18 | P2 | S | 021 DONE + the scratch-diff regression run; evidence C27 | DONE — executed 2026-07-23, v2.5.1; acceptance = findings_7's §8 run (all four gaps closed) |
 | 023 | Seventh field report: ledger honesty + upsert ergonomics | B19 | P3 | S | 022 DONE + the first official §8 run; evidence C28 | DONE — executed 2026-07-23, v2.5.2; acceptance = findings_8's blob-inclusive §8 run (empty UNEXPECTED) |
 | 024 | Eighth field report: ship the §8 scratch-diff tool | B20 | P3 | S | 023 DONE + the blob-inclusive §8 run; evidence C29 | DONE — executed 2026-07-23, v2.6.0; acceptance SUCCEEDED (findings_9/C30: tool-vs-script 185=185, empty UNEXPECTED, scratchpad retired) |
+| 025 | Tenth field report: EXECUTION hardening (allocator ceiling, truthful surfaces, stale guard) | B21 | P1 | M | findings_10 (first execution-shaped report); evidence C31 | DONE — executed 2026-08-08, v2.7.0; acceptance = the next ACMP run on 2.7.0 |
 
 Status values: TODO | IN PROGRESS | DONE | BLOCKED (with one-line reason) | REJECTED (with
 one-line rationale).
@@ -59,6 +60,27 @@ export + freshness/lead renders (012); tamheed repo public from day one with WIP
 eval schedule disabled at close-out (016). **Execution driver: the maintainer runs the plans
 himself** — self-containment is the operative contract; this status table is the tracking
 surface.
+
+## Alignment record (2026-08-08 — plan 025, the first execution-shaped report)
+
+findings_10 ended the post-C30 idle: a month of production execution (SL-025/026, DR
+drills, DEF-014→027, daily governance traffic) surfaced the class migration runs
+structurally cannot — **the tool under sustained use**. Four confirmed defects, every
+one verified against source before planning: the `_next_id` text-sort ceiling (every
+executed package permanently stops accepting PE/AV writes at row 1000 — ACMP was at
+PE-182 with the clock running), the false "unknown entity type" refusal that wrote a
+wrong claim into ACMP's permanent record for three days, `INSERT OR IGNORE` counting
+discarded rows as applied, and the append-only journal accepting silent in-place
+rewrites. Two hazards (stale-tree clobber, work_bind partial writes), the bare-PID
+lock, and the F6 working-tree docs omission complete the set. The report's §B — the
+operator retracting their own "tamheed loses writes" claim (it was their `git reset`) —
+is recorded as calibration and drove the C1 guard for the inverse direction. Round-9
+review corrections: omissions PK is entity_type alone; refused batches roll back
+(never ride a later commit); a stale tree must not trap the session (package_close
+releases the lock, flush skipped with a warning — the suite caught the first cut
+trapping it); the operating note is append-once so existing targets take the
+working-tree line manually. §E's don't-optimize-dump() ask is honored in the rejected
+list. v2.7.0, MINOR, no schema migration.
 
 ## Alignment record (2026-07-23, sixth entry — plan 024 acceptance, no plan 025)
 
