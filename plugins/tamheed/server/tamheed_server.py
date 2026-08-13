@@ -76,7 +76,8 @@ ENTITY_TABLES = {
     "narrative-document": "narrative_documents",
     "document-section": "document_sections",
     "diagram": "diagrams",
-    "prompt": "prompts",
+    # "prompt" removed in v3.0.0 (plan 027, migration 003) — prompts are .md files in
+    # <package>/prompts/, not entities; a legacy prompts.jsonl converts at package_open.
     "glossary-term": "glossary_terms",  # community-extension worked example (migration 002)
     "trace-edge": "trace_edges",   # composite PK; write surface for relations
     "omission": "omissions",       # G-SET recorded-omitted rows (entity_type + reason)
@@ -117,7 +118,7 @@ BASELINE_ENTITY_TYPES = [
     ("narrative-document", "Narrative document", "DOC-", "Always"),
     ("document-section", "Document section", "SEC-", "Always"),
     ("diagram", "Diagram", "DIA-", "Conditional"),
-    ("prompt", "Handoff prompt", "PRM-", "Conditional"),
+    # ("prompt", …) removed in v3.0.0 — see the ENTITY_TABLES note above.
     ("glossary-term", "Glossary term (extension example)", "GT-", "On-request"),
 ]
 
@@ -207,7 +208,7 @@ def package_create(name: str, title: str, profile: str, mode: str = "full") -> d
         )
         s.conn.execute(
             "INSERT INTO packages (name, title, profile, mode, package_version, created_at)"
-            " VALUES (?, ?, ?, ?, '2.0.0', ?)",
+            " VALUES (?, ?, ?, ?, '3.0.0', ?)",
             (name, title, profile, mode, _now()),
         )
         s.commit()
@@ -215,25 +216,148 @@ def package_create(name: str, title: str, profile: str, mode: str = "full") -> d
         s.__exit__(None, None, None)
         return _err(f"create failed: {exc}")
     _CURRENT, _CURRENT_NAME = s, name
+    # v3.0.0 (plan 027): <package>/prompts/ is the Stage-20 authoring surface — it
+    # exists from birth, seeded with the stock scenario library.
+    library = _emit_prompt_library(pkg_dir, name)
     return {"ok": True, "package": name, "dir": str(pkg_dir),
-            "package_root": str(Path(PACKAGE_ROOT).resolve())}
+            "package_root": str(Path(PACKAGE_ROOT).resolve()),
+            "prompt_library": library}
+
+
+def _strip_identical_h1(title: str, body: str) -> str:
+    # C27 (D1): the composition rule (`# {title}` prepended) is invisible to prompt
+    # authors — strip an in-body H1 only when identical; a DIFFERENT H1 is preserved.
+    head, _, rest = body.lstrip("\n").partition("\n")
+    return rest.lstrip("\n") if head.strip() == f"# {title}" else body
+
+
+def _filter_jsonl(path: Path, keep) -> list[str]:
+    """Drop lines failing `keep(parsed_row)`; surviving lines stay byte-identical.
+    Empty result deletes the file (CANONICAL: empty table = no file). Returns dropped
+    lines (raw)."""
+    lines = path.read_text(encoding="utf-8").splitlines(keepends=True)
+    kept, dropped = [], []
+    for line in lines:
+        if line.strip() and not keep(json.loads(line)):
+            dropped.append(line)
+        else:
+            kept.append(line)
+    if not dropped:
+        return []
+    if any(line.strip() for line in kept):
+        path.write_text("".join(kept), encoding="utf-8", newline="\n")
+    else:
+        path.unlink()
+    return dropped
+
+
+def _convert_legacy_prompts(pkg_dir: Path) -> dict | None:
+    """v3.0.0 (plan 027, migration 003): turn a legacy data/prompts.jsonl into
+    <package>/prompts/*.md files, ONCE, loudly — or abort the open on ANY anomaly
+    (parse error, content collision) with the package untouched. The source is renamed
+    to prompts.jsonl.converted (audit trail; escapes the *.jsonl fingerprint/dump
+    globs), PRM- trace edges and the 'prompt' registry/omission rows are scrubbed
+    (they would FK-fail against a schema without the table). Raises ValueError with
+    the operator-facing message on refusal."""
+    legacy = pkg_dir / "data" / "prompts.jsonl"
+    if not legacy.exists():
+        return None
+    rows = []
+    for lineno, line in enumerate(
+            legacy.read_text(encoding="utf-8").splitlines(), 1):
+        if not line.strip():
+            continue
+        try:
+            rows.append(json.loads(line))
+        except ValueError:
+            raise ValueError(
+                f"data/prompts.jsonl:{lineno} unparseable — conversion aborted, "
+                "package NOT opened; fix the line or move the file aside") from None
+    out_dir = pkg_dir / "prompts"
+    planned: list[tuple[Path, str, str]] = []
+    collisions: list[str] = []
+    for row in rows:
+        pid, kind = row.get("id", "PRM-?"), row.get("prompt_kind", "prompt")
+        title, body = row.get("title", ""), _strip_identical_h1(
+            row.get("title", ""), row.get("body", ""))
+        # No timestamp: deterministic content (idempotent re-open, stable goldens);
+        # the conversion moment lives in the package_open report.
+        provenance = (f"<!-- converted from data/prompts.jsonl {pid} (kind: {kind}, "
+                      f"phase_id: {row.get('phase_id')}) by tamheed 3.0.0 -->")
+        content = f"{provenance}\n# {title}\n\n{body}\n"
+        dest = out_dir / f"{pid.lower()}-{kind}.md"
+        if dest.exists() and dest.read_text(encoding="utf-8") != content:
+            collisions.append(f"prompts/{dest.name}")
+        planned.append((dest, content, pid))
+    if collisions:
+        raise ValueError(
+            "conversion collision: " + ", ".join(collisions) +
+            " exist(s) with different content — resolve and re-open")
+    converted, warnings = [], []
+    out_dir.mkdir(parents=True, exist_ok=True)
+    for dest, content, pid in planned:
+        dest.write_text(content, encoding="utf-8", newline="\n")
+        converted.append(f"prompts/{dest.name}")
+        if m := _INJECT_RE.search(content):
+            warnings.append({"file": f"prompts/{dest.name}",
+                             "pattern": m.group(0)[:60]})
+    edges_path = pkg_dir / "data" / "trace_edges.jsonl"
+    removed_edges = []
+    if edges_path.exists():
+        removed_edges = [
+            json.loads(line) for line in _filter_jsonl(
+                edges_path,
+                lambda r: not (str(r.get("from_id", "")).startswith("PRM-")
+                               or str(r.get("to_id", "")).startswith("PRM-")))]
+    for fname, key in (("entity_types.jsonl", "type_id"), ("omissions.jsonl",
+                                                          "entity_type")):
+        path = pkg_dir / "data" / fname
+        if path.exists():
+            _filter_jsonl(path, lambda r, k=key: r.get(k) != "prompt")
+    legacy.rename(legacy.with_suffix(".jsonl.converted"))
+    return {"prompts_converted": converted,
+            "source_renamed": "data/prompts.jsonl.converted",
+            "trace_edges_removed": [
+                [e.get("from_id"), e.get("to_id"), e.get("relation")]
+                for e in removed_edges],
+            "inject_warnings": warnings}
 
 
 def package_open(name: str) -> dict:
-    """Open an existing package (takes the single-writer lock)."""
+    """Open an existing package (takes the single-writer lock). A legacy v2 package
+    (data/prompts.jsonl present) is converted to file-based prompts first — once,
+    loudly, abort-on-anomaly (plan 027)."""
     global _CURRENT, _CURRENT_NAME
     if _CURRENT is not None:
         return _err(f"package '{_CURRENT_NAME}' is already open — package_close it first")
     pkg_dir = PACKAGE_ROOT / name
     if not (pkg_dir / "data").exists():
         return _err(f"package '{name}' not found under {PACKAGE_ROOT}")
+    conversion = None
+    if (pkg_dir / "data" / "prompts.jsonl").exists():
+        # Hold the store's own lock for the conversion window (single-writer doctrine).
+        lock = pkg_dir / "data" / store.LOCK_NAME
+        try:
+            fd = os.open(lock, os.O_CREAT | os.O_EXCL | os.O_WRONLY)
+        except FileExistsError:
+            return _err(f"package '{name}' is locked ({store._describe_lock(lock)})")
+        try:
+            conversion = _convert_legacy_prompts(pkg_dir)
+        except ValueError as exc:
+            return _err(str(exc))
+        finally:
+            os.close(fd)
+            lock.unlink()
     try:
         s = store.PackageStore(pkg_dir).__enter__()
     except store.StoreLockedError as exc:
         return _err(str(exc))
     _CURRENT, _CURRENT_NAME = s, name
-    return {"ok": True, "package": name,
-            "package_root": str(Path(PACKAGE_ROOT).resolve())}
+    out = {"ok": True, "package": name,
+           "package_root": str(Path(PACKAGE_ROOT).resolve())}
+    if conversion:
+        out["legacy_prompts"] = conversion
+    return out
 
 
 def package_close() -> dict:
@@ -577,35 +701,12 @@ _STALE_PATTERNS = [
     (re.compile(r"keystone-state\.json"),
      "the package IS the state — query it with entity_query/trace_query"),
     (re.compile(r"docs/handoff/"),
-     "use the emitted handoff/prm-*.md files and <package>/prompts/ instead"),
+     "prompts live in <package>/prompts/ (v3.0.0) — point there instead"),
     (re.compile(r"Keystone (?:v1|package|register|validator|tree)", re.IGNORECASE),
      "the v1 tree is a frozen archive; the Tamheed package is the record"),
     (re.compile(r"progress-log\.md|acceptance-audit\.md"),
      "v1 hand-edited artifacts — record via progress_update/audit_record instead"),
 ]
-
-
-def _emitted_prompt_report(target: Path, subdir: str) -> list[dict]:
-    """C24/D-8: emitted prompt bodies (v1-migrated PRM rows) can carry v1-protocol
-    instructions and dead relative links written for the old tree depth — the kickoff
-    then actively misdirects. Scan them like the agent-control files; never rewrite."""
-    findings = []
-    base = target / subdir
-    for path in (sorted(base.glob("*.md")) if base.exists() else []):
-        rel = f"{subdir}/{path.name}".replace("\\", "/")
-        for lineno, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
-            hit = next(((p, s) for p, s in _STALE_PATTERNS if p.search(line)), None)
-            if hit:
-                findings.append({"file": rel, "line": lineno,
-                                 "text": line.strip()[:160], "suggestion": hit[1]})
-                continue
-            for m in re.finditer(r"\]\(((?:\.\.?/)[^)#\s]+)\)", line):
-                if not (path.parent / m.group(1)).resolve().exists():
-                    findings.append({
-                        "file": rel, "line": lineno, "text": m.group(1),
-                        "suggestion": "dead relative link from the emit location — "
-                                      "refresh the PRM row to reference the package"})
-    return findings
 
 
 def _managed_emit(path: Path, content: str, force: bool = False) -> str:
@@ -712,34 +813,41 @@ _STALE_BLOCK_RE = re.compile(
 
 
 def handoff_emit(target_dir: str, subdir: str = "handoff", force: bool = False) -> dict:
-    """Assemble handoff prompts into the target project + write the executor-side MCP
-    config (.mcp.json + CLAUDE.md operating note) so the executing agent can record
-    progress. Every file is a MANAGED emission: hand-edited files are reported as
-    `diverged` and never overwritten without force=true. Also emits the scenario prompt
-    library into <package>/prompts/, reports stale v1 references AND restated register
-    content found in the target's CLAUDE.md/AGENTS.md.
-    Emission is blocked if the injection screen finds instruction-shaped text."""
+    """Wire the target project to the package: .mcp.json (standalone installs) + the
+    CLAUDE.md operating note. v3.0.0 (plan 027): prompts are NOT copied into the
+    target — <package>/prompts/ is the single source (stock scenario library +
+    project-authored kickoff prompts, all plain .md the operator reads and picks).
+    Emission is blocked if the injection screen finds instruction-shaped text in any
+    package prompt file. Reports stale v1 references AND restated register content
+    found in the target's CLAUDE.md/AGENTS.md."""
     if guard := _need_open():
         return guard
     target = Path(target_dir)
     if not target.is_dir():
         return _err(f"target_dir {target_dir!r} is not an existing directory")
-    sub = Path(subdir)
-    if sub.is_absolute() or ".." in sub.parts:
-        return _err(f"subdir {subdir!r} must be a relative path inside the target")
-    conn = _CURRENT.conn
-    prompts = conn.execute(
-        "SELECT id, prompt_kind, title, body FROM prompts ORDER BY id"
-    ).fetchall()
-    if not prompts:
-        return _err("no prompts in package — upsert prompt entities first")
-    findings = [{"id": pid, "pattern": m.group(0)[:60]}
-                for pid, _, title, body in prompts
-                for m in [_INJECT_RE.search(f"{title}\n{body}")] if m]
+    if subdir != "handoff":  # kept in the signature for MCP-schema stability only
+        return _err("subdir removed in v3.0.0 — prompts live in <package>/prompts/ "
+                    "and are no longer copied into the target")
+    pkg_dir = PACKAGE_ROOT / _CURRENT_NAME
+    library = _emit_prompt_library(pkg_dir, _CURRENT_NAME, force=force)
+    stock = {p.name for p in _PROMPTS_DIR.glob("*.md")}
+    prompts_dir = pkg_dir / "prompts"
+    prompt_files = sorted(prompts_dir.glob("*.md")) if prompts_dir.exists() else []
+    project = [p.name for p in prompt_files if p.name not in stock]
+    if not project:
+        return _err("no project-authored prompts in <package>/prompts/ — write the "
+                    "kickoff prompt file(s) there first (Stage 20; adopted packages: "
+                    "author at least a kickoff prompt)")
+    # G-INJECT, relocated to the file substrate (v3.0.0): scan EVERY package prompt —
+    # project-authored AND stock (stock scanning is free and catches tampering).
+    findings = []
+    for path in prompt_files:
+        if m := _INJECT_RE.search(path.read_text(encoding="utf-8")):
+            findings.append({"file": f"prompts/{path.name}",
+                             "pattern": m.group(0)[:60]})
     if findings:
         return _err("G-INJECT: instruction-shaped text found — emission blocked",
                     gate="G-INJECT", findings=findings)
-    handoff = target / sub
     emitted: list[str] = []
     unchanged: list[str] = []
     diverged: list[str] = []
@@ -748,16 +856,6 @@ def handoff_emit(target_dir: str, subdir: str = "handoff", force: bool = False) 
         status = _managed_emit(path, content, force=force)
         {"emitted": emitted, "unchanged": unchanged, "diverged": diverged}[status].append(
             rel.replace("\\", "/"))
-
-    for pid, kind, title, body in prompts:
-        # C27 (D1): the composition rule (`# {title}` prepended) is invisible to prompt
-        # authors — a body opening with its own identical H1 doubled the heading on
-        # disk. Strip-if-identical only; a DIFFERENT in-body H1 is preserved.
-        head, _, rest = body.lstrip("\n").partition("\n")
-        if head.strip() == f"# {title}":
-            body = rest.lstrip("\n")
-        emit(handoff / f"{pid.lower()}-{kind}.md", f"# {title}\n\n{body}\n",
-             f"{subdir}/{pid.lower()}-{kind}.md")
 
     # Portable executor config (field-evidence C19): on a plugin install the server path
     # points into the VERSIONED plugin cache — machine- and version-specific, and the
@@ -775,28 +873,32 @@ def handoff_emit(target_dir: str, subdir: str = "handoff", force: bool = False) 
         }
         emit(mcp_cfg_path, json.dumps(cfg, indent=2) + "\n", ".mcp.json")
 
-    library = _emit_prompt_library(PACKAGE_ROOT / _CURRENT_NAME, _CURRENT_NAME,
-                                   force=force)
-    stale = _stale_reference_report(target) + _emitted_prompt_report(target, subdir)
-    # C26/B4: the disk scan covers emitted/unchanged files (disk == row content there),
-    # but a REFUSED write leaves stale PRM-row bodies unscanned — the one situation the
-    # scan exists for. Scan the diverged rows' would-be emissions, marked as such.
-    for pid, kind, _title, body in prompts:
-        rel = f"{subdir}/{pid.lower()}-{kind}.md".replace("\\", "/")
-        if rel not in diverged:
-            continue
-        marker = f"{rel} ({pid} — not emitted: diverged)"
-        for lineno, line in enumerate(body.splitlines(), 1):
+    warnings: list[str] = []
+    # v3.0.0: nothing is emitted into handoff/ anymore — leftover v2 copies actively
+    # mislead (they freeze the prompts as they stood at the last v2 emit).
+    leftover_dir = target / "handoff"
+    leftovers = sorted(leftover_dir.glob("prm-*.md")) if leftover_dir.exists() else []
+    if leftovers:
+        warnings.append("leftover v2 handoff copies — <package>/prompts/ is now the "
+                        "source; delete " +
+                        ", ".join(f"handoff/{p.name}" for p in leftovers))
+    stale = _stale_reference_report(target)
+    # C24/D-8, carried into v3: v1-protocol instructions and dead relative links inside
+    # package prompt files (migrated v1 prompts land there) misdirect the kickoff —
+    # scan them like the target's agent-control files; never rewrite.
+    for path in prompt_files:
+        rel = f"prompts/{path.name}"
+        for lineno, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
             hit = next(((p, s) for p, s in _STALE_PATTERNS if p.search(line)), None)
             if hit:
-                stale.append({"file": marker, "line": lineno,
+                stale.append({"file": rel, "line": lineno,
                               "text": line.strip()[:160], "suggestion": hit[1]})
                 continue
             for m in re.finditer(r"\]\(((?:\.\.?/)[^)#\s]+)\)", line):
-                if not (handoff / m.group(1)).resolve().exists():
-                    stale.append({"file": marker, "line": lineno, "text": m.group(1),
-                                  "suggestion": "dead relative link from the emit "
-                                                "location — refresh the PRM row"})
+                if not (path.parent / m.group(1)).resolve().exists():
+                    stale.append({"file": rel, "line": lineno, "text": m.group(1),
+                                  "suggestion": "dead relative link from "
+                                                "<package>/prompts/ — fix the path"})
     restated = _restated_content_report(target)
 
     server_line = ("The `tamheed` MCP server is provided by the installed tamheed plugin "
@@ -845,8 +947,9 @@ def handoff_emit(target_dir: str, subdir: str = "handoff", force: bool = False) 
     else:
         unchanged.append("CLAUDE.md")
     return {"ok": True, "written": emitted, "unchanged": unchanged, "diverged": diverged,
-            "prompt_library": library, "stale_references": stale,
-            "restated_content": restated}
+            "prompt_library": library, "project_prompts": project,
+            "stale_references": stale, "restated_content": restated,
+            "warnings": warnings}
 
 
 # --------------------------------------------------------------------------- staged flows & export

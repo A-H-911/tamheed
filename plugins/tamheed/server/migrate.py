@@ -215,6 +215,9 @@ class Plan:
         # whole-file outcomes get their own ledgers, surfaced in the preview.
         self.partial_files: dict[str, int] = {}  # rows migrated per file; prose not (C17)
         self.skipped_files: list[str] = []   # skipped by design (derived views)
+        # v3.0.0 (plan 027): v1 prompt files become <package>/prompts/*.md files, never
+        # rows — (v1_rel, out_name, text), written by populate after the store commit.
+        self.prompt_files: list[tuple[str, str, str]] = []
         # Preview-honesty ledgers (field-evidence C17): every judgment call reported.
         self.status_coerced: list[dict] = []   # [{id, original, coerced}]
         self.title_fallbacks: list[dict] = []  # [{id, family}] — title fell back to row[1]
@@ -570,7 +573,7 @@ def parse_v1(source: Path, status_map: dict[str, str] | None = None) -> Plan:
                 plan.omissions.append((etype, reason))
                 break
 
-    doc_seq = sec_seq = dia_seq = prm_seq = 0
+    doc_seq = sec_seq = dia_seq = 0
     for pf in files:
         if pf.is_json or vp.is_template_path(pf.rel, Path(pf.rel).name):
             continue
@@ -693,11 +696,10 @@ def parse_v1(source: Path, status_map: dict[str, str] | None = None) -> Plan:
 
         prompt = next((k for s, k in PROMPT_KINDS if s in rel_l), None)
         if prompt:
-            prm_seq += 1
-            title_m = re.search(r"^#\s+(.+)$", pf.text, re.M)
-            plan.add("prompts", {"id": f"PRM-{prm_seq:03d}", "prompt_kind": prompt,
-                                 "title": _clean_line(title_m.group(1)) if title_m else prompt,
-                                 "body": pf.text})
+            # v3.0.0 (plan 027): prompt files stay FILES — body verbatim (v1 prompts
+            # carry their own H1), landing in <package>/prompts/<v1-stem>.md. The v1
+            # stems never collide with the stock library names.
+            plan.prompt_files.append((pf.rel, f"{Path(rel_l).stem}.md", pf.text))
 
         # register tables anywhere (incl. KPI/STK tables inside the charter)
         rows_before = sum(len(v) for v in plan.rows.values())
@@ -850,7 +852,7 @@ INSERT_ORDER = ["requirements", "constraints", "invariants", "assumptions", "dep
                 "open_questions", "adrs", "decisions", "risks", "hypotheses", "experiments",
                 "pocs", "kpis", "stakeholders", "phases", "milestones", "wbs_items",
                 "acceptance_criteria", "tests", "deferred_work", "narrative_documents",
-                "document_sections", "diagrams", "prompts"]
+                "document_sections", "diagrams"]  # prompts: files since v3.0.0 (plan 027)
 
 
 
@@ -923,7 +925,21 @@ def populate(plan: Plan, dest_root: Path, name: str) -> dict:
         shutil.rmtree(pkg_dir / "data", ignore_errors=True)
         return {"ok": False, "stage": "populate",
                 "error": f"populate failed at {step}: {exc}"}
-    return {"ok": True, "stage": "populate", "package_dir": str(pkg_dir)}
+    # v3.0.0 (plan 027): v1 prompt files land as package files, after the store commit
+    # (plain files, not part of the transaction; a failure here leaves a valid package).
+    written_prompts = []
+    if plan.prompt_files:
+        out_dir = pkg_dir / "prompts"
+        out_dir.mkdir(parents=True, exist_ok=True)
+        # No timestamp: emissions stay byte-reproducible (golden regression); the
+        # migration date lives in the run report, not the file.
+        for rel, out_name, text in plan.prompt_files:
+            header = f"<!-- migrated from v1 {rel} by tamheed 3.0.0 -->\n"
+            (out_dir / out_name).write_text(header + text, encoding="utf-8",
+                                            newline="\n")
+            written_prompts.append(f"prompts/{out_name}")
+    return {"ok": True, "stage": "populate", "package_dir": str(pkg_dir),
+            "prompt_files": written_prompts}
 
 
 def fidelity(plan: Plan, pkg_dir: Path) -> dict:
@@ -1100,11 +1116,16 @@ def run_migration(source_dir: str, dest_root: str | Path, name: str | None = Non
     for ident in plan.defined:
         prefix = ident.split("-")[0]
         parsed[prefix] = parsed.get(prefix, 0) + 1
+    if plan.prompt_files:
+        # v3.0.0 (plan 027): prompts migrate as FILES, not PRM- rows — count them so a
+        # manifest-declared PRM family doesn't trip the zero-family refusal falsely.
+        parsed["PRM"] = parsed.get("PRM", 0) + len(plan.prompt_files)
     deltas = {p: {"manifest": n, "parsed": parsed.get(p, 0)}
               for p, n in plan.manifest_counts.items() if parsed.get(p, 0) != n}
     zero_families = sorted(p for p, n in plan.manifest_counts.items()
                            if n and not parsed.get(p))
     preview = {"stage": "preview", "package": name, "counts": plan.counts(),
+               "prompt_files": sorted(out for _, out, _ in plan.prompt_files),
                "edges": len(plan.edges), "audit_verdicts": len(plan.audits),
                "omissions": len(plan.omissions),
                "manifest_counts": plan.manifest_counts, "count_deltas": deltas,
@@ -1159,7 +1180,8 @@ def run_migration(source_dir: str, dest_root: str | Path, name: str | None = Non
         return pop
     fid = fidelity(plan, Path(dest_root) / name)
     return {"ok": fid["ok"], "stage": "post-flight", "preview": preview,
-            "package_dir": pop["package_dir"], "fidelity": fid,
+            "package_dir": pop["package_dir"],
+            "prompt_files": pop.get("prompt_files", []), "fidelity": fid,
             "next": _CUTOVER_NEXT if fid["ok"] else None,
             "note": None if fid["ok"] else
             "fidelity gaps are reported, never auto-resolved — review before use"}
