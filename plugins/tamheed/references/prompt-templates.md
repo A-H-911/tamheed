@@ -2,7 +2,11 @@
 
 Operational guidance for writing the project prompt **files** (v3, plan 027: prompts are plain
 `.md` in `<package>/prompts/`, never database rows — any non-stock filename marks a project
-prompt; `handoff_emit` G-INJECT- and stale-scans every file). Blank fill-in forms live in
+prompt; `handoff_emit` G-INJECT- and stale-scans every file). **Naming (plan 028): project
+prompts are purpose-named kebab-case like the stock library — `kickoff.md`,
+`phase3-resume.md`. The `prm-NNN-<kind>.md` names on converted legacy prompts are conversion
+audit identifiers, not a pattern to imitate; the tool never renames — renames are the
+operator's, git keeps history.** Blank fill-in forms live in
 `../templates/initial-prompt.template.md`, `follow-up-prompts.template.md`, and
 `review-prompts.template.md`. Write prompts for Claude Code (CLI/IDE) and reference real entity ids;
 keep the plan's technology choices vendor-neutral. Use Claude Code affordances — plan mode,

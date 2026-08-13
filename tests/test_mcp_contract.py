@@ -507,6 +507,11 @@ class McpContractTest(unittest.TestCase):
         self.assertEqual(conv["prompts_converted"],
                          ["prompts/prm-001-initial.md", "prompts/prm-002-review.md"])
         self.assertEqual(conv["source_renamed"], "data/prompts.jsonl.converted")
+        # plan 028: per-kind curation hints ship at conversion time too
+        kinds = {c["file"]: c["kind"] for c in conv["curation"]}
+        self.assertEqual(kinds, {"prompts/prm-001-initial.md": "initial",
+                                 "prompts/prm-002-review.md": "review"})
+        self.assertIn("package-onboarding", conv["curation"][0]["hint"])
         self.assertFalse((pkg / "data" / "prompts.jsonl").exists())
         self.assertTrue((pkg / "data" / "prompts.jsonl.converted").exists())
         one = (pkg / "prompts" / "prm-001-initial.md").read_text(encoding="utf-8")
@@ -747,21 +752,90 @@ class McpContractTest(unittest.TestCase):
         self._emit_ready()
         with tempfile.TemporaryDirectory() as target:
             out = srv.handoff_emit(target)
-            self.assertEqual(len(out["prompt_library"]["unchanged"]), 14)  # from create
-            self.assertEqual(out["project_prompts"], ["kickoff.md"])
+            self.assertEqual(len(out["prompt_library"]["unchanged"]), 15)  # from create
+            self.assertEqual(out["project_prompts"], ["kickoff.md"])  # README is stock
         lib = srv.PACKAGE_ROOT / "demo" / "prompts"
         stock = sorted(p.name for p in lib.glob("*.md") if p.name != "kickoff.md")
-        self.assertEqual(stock, [  # plan 027: 14 scenarios, both operator styles
-            "defect-triage.md", "drift-register.md", "generate-report.md",
-            "integrity-check.md", "loop-guard.md", "loop-iteration.md",
-            "orient-resume.md", "package-onboarding.md", "phase-close.md",
-            "progress-sync.md", "release-close-out.md", "replan-deferred.md",
-            "slice-kickoff.md", "slice-review.md"])
+        self.assertEqual(stock, [  # plan 027/028: guide + 14 scenarios, both styles
+            "README.md", "defect-triage.md", "drift-register.md",
+            "generate-report.md", "integrity-check.md", "loop-guard.md",
+            "loop-iteration.md", "orient-resume.md", "package-onboarding.md",
+            "phase-close.md", "progress-sync.md", "release-close-out.md",
+            "replan-deferred.md", "slice-kickoff.md", "slice-review.md"])
         text = (lib / "orient-resume.md").read_text(encoding="utf-8")
         self.assertIn('package_open("demo")', text)      # {package} substituted
         self.assertNotIn("{package}", text)
         loop = (lib / "loop-iteration.md").read_text(encoding="utf-8")
         self.assertIn("ITERATION: wbs=", loop)           # the machine contract line
+        guide = (lib / "README.md").read_text(encoding="utf-8")
+        self.assertIn("Which prompt, when", guide)       # plan 028: the operator guide
+        self.assertIn("`demo` prompt guide", guide)
+        self.assertNotIn("{package}", guide)
+
+    def test_leftover_verdicts_delete_vs_move(self):
+        """Plan 028 (C34 §2): the leftover warning is per file — a byte/normalized
+        copy of a package prompt says delete; unique content says MOVE."""
+        self._emit_ready()
+        pkg_prompt = srv.PACKAGE_ROOT / "demo" / "prompts" / "prm-001-initial.md"
+        pkg_prompt.write_text(
+            "<!-- converted from data/prompts.jsonl PRM-001 (kind: initial, "
+            "phase_id: None) by tamheed 3.0.0 -->\n# K\n\nbody\n", encoding="utf-8")
+        with tempfile.TemporaryDirectory() as target:
+            handoff = Path(target) / "handoff"
+            handoff.mkdir()
+            # the old v2 emission had no provenance header — normalized compare
+            (handoff / "prm-001-initial.md").write_text("# K\n\nbody\n",
+                                                        encoding="utf-8")
+            (handoff / "prm-002-live.md").write_text("# Unique live kickoff\n",
+                                                     encoding="utf-8")
+            out = srv.handoff_emit(target)
+            verdicts = {w.split(":")[0]: w for w in out["warnings"]
+                        if w.startswith("handoff/")}
+            self.assertIn("safe to delete", verdicts["handoff/prm-001-initial.md"])
+            self.assertIn("MOVE", verdicts["handoff/prm-002-live.md"])
+            self.assertIn("destroy live content",
+                          verdicts["handoff/prm-002-live.md"])
+
+    def test_converted_prompts_standing_hint_clears_on_header_removal(self):
+        """Plan 028: converted files get a per-kind hint on EVERY emit until the
+        operator removes the provenance header (rename does NOT clear it)."""
+        self._emit_ready()
+        conv = srv.PACKAGE_ROOT / "demo" / "prompts" / "prm-007-follow-up.md"
+        conv.write_text(
+            "<!-- converted from data/prompts.jsonl PRM-007 (kind: follow-up, "
+            "phase_id: None) by tamheed 3.0.0 -->\n# F\n\nbody\n", encoding="utf-8")
+        with tempfile.TemporaryDirectory() as target:
+            out = srv.handoff_emit(target)
+            self.assertEqual(len(out["converted_prompts"]), 1)
+            entry = out["converted_prompts"][0]
+            self.assertEqual(entry["file"], "prompts/prm-007-follow-up.md")
+            self.assertEqual(entry["kind"], "follow-up")
+            self.assertIn("orient-resume", entry["hint"])
+            self.assertIn("remove this header line", entry["hint"])
+            renamed = conv.with_name("phase-resume.md")   # rename keeps the reminder
+            conv.rename(renamed)
+            out = srv.handoff_emit(target)
+            self.assertEqual(out["converted_prompts"][0]["file"],
+                             "prompts/phase-resume.md")
+            body = renamed.read_text(encoding="utf-8").split("\n", 1)[1]
+            renamed.write_text(body, encoding="utf-8")    # header removed = reviewed
+            out = srv.handoff_emit(target)
+            self.assertEqual(out["converted_prompts"], [])
+
+    def test_restated_tally_in_prompt_is_advisory(self):
+        """Plan 028 (C34): the C22 detectors cover package prompts — a hard-coded
+        audit tally is flagged, and emission is NEVER blocked by it."""
+        self._emit_ready()
+        stale = srv.PACKAGE_ROOT / "demo" / "prompts" / "kickoff.md"
+        stale.write_text("# Kickoff\n\nStatus: 62 Met / 11 Partial / 1 Pending.\n",
+                         encoding="utf-8")
+        with tempfile.TemporaryDirectory() as target:
+            out = srv.handoff_emit(target)
+            self.assertTrue(out["ok"], out)               # advisory, never blocks
+            tallies = [f for f in out["restated_content"]
+                       if f["file"] == "prompts/kickoff.md"]
+            self.assertEqual(len(tallies), 1)
+            self.assertEqual(tallies[0]["family"], "audit-verdict")
 
     def test_claude_md_note_contains_cheatsheet(self):
         self._emit_ready()
@@ -775,7 +849,8 @@ class McpContractTest(unittest.TestCase):
                        "<!-- tamheed:note v2 -->", "<!-- /tamheed:note -->",
                        "Recording obligations", "`scope-change` row (`SC-`) FIRST",
                        "activation trigger", "readiness_check(scope)",
-                       "STOP and tell the operator"):
+                       "STOP and tell the operator",
+                       "demo/prompts/README.md"):     # plan 028: the operator guide
             self.assertIn(needle, note)
 
     def test_claude_md_v1_note_warned_never_touched(self):

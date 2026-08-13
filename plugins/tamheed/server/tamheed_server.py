@@ -346,7 +346,7 @@ def _convert_legacy_prompts(pkg_dir: Path) -> dict | None:
                 f"data/prompts.jsonl:{lineno} unparseable — conversion aborted, "
                 "package NOT opened; fix the line or move the file aside") from None
     out_dir = pkg_dir / "prompts"
-    planned: list[tuple[Path, str, str]] = []
+    planned: list[tuple[Path, str, str, str]] = []
     collisions: list[str] = []
     for row in rows:
         pid, kind = row.get("id", "PRM-?"), row.get("prompt_kind", "prompt")
@@ -360,16 +360,20 @@ def _convert_legacy_prompts(pkg_dir: Path) -> dict | None:
         dest = out_dir / f"{pid.lower()}-{kind}.md"
         if dest.exists() and dest.read_text(encoding="utf-8") != content:
             collisions.append(f"prompts/{dest.name}")
-        planned.append((dest, content, pid))
+        planned.append((dest, content, pid, kind))
     if collisions:
         raise ValueError(
             "conversion collision: " + ", ".join(collisions) +
             " exist(s) with different content — resolve and re-open")
-    converted, warnings = [], []
+    converted, warnings, curation = [], [], []
     out_dir.mkdir(parents=True, exist_ok=True)
-    for dest, content, pid in planned:
+    for dest, content, pid, kind in planned:
         dest.write_text(content, encoding="utf-8", newline="\n")
         converted.append(f"prompts/{dest.name}")
+        # Plan 028 (C34): the per-kind curation hint ships AT conversion too — the
+        # standing converted_prompts report in handoff_emit repeats it thereafter.
+        curation.append({"file": f"prompts/{dest.name}", "kind": kind,
+                         "hint": _converted_hint(kind)})
         if m := _INJECT_RE.search(content):
             warnings.append({"file": f"prompts/{dest.name}",
                              "pattern": m.group(0)[:60]})
@@ -387,7 +391,7 @@ def _convert_legacy_prompts(pkg_dir: Path) -> dict | None:
         if path.exists():
             _filter_jsonl(path, lambda r, k=key: r.get(k) != "prompt")
     legacy.rename(legacy.with_suffix(".jsonl.converted"))
-    return {"prompts_converted": converted,
+    return {"prompts_converted": converted, "curation": curation,
             "source_renamed": "data/prompts.jsonl.converted",
             "trace_edges_removed": [
                 [e.get("from_id"), e.get("to_id"), e.get("relation")]
@@ -1094,50 +1098,95 @@ _PKG_REF_RE = re.compile(r"entity_query\(|review\.html|gate_run")
 _PREFIX_TYPE = {p.rstrip("-"): tid for tid, _label, p, _cls in BASELINE_ENTITY_TYPES}
 
 
+def _restated_findings(label: str, lines: list[str]) -> list[dict]:
+    """The C22 detectors over one file's lines (plan 028: also run over package prompt
+    files — a hard-coded tally in a prompt drifts exactly like one in AGENTS.md).
+    Anti-false-positive bounds unchanged: tally needs the word Met; blocks need >=3
+    consecutive id-led lines."""
+    findings = []
+
+    def labeled(start: int, end: int) -> bool:
+        lo = max(0, start - 3)
+        return any(_PKG_REF_RE.search(lines[i]) for i in range(lo, end))
+
+    run_start, run_prefixes = None, []
+    for i, line in enumerate(lines + [""]):  # sentinel flushes a trailing run
+        m = _ID_LED_LINE_RE.match(line)
+        if m and m.group(1) in _PREFIX_TYPE:
+            if run_start is None:
+                run_start = i
+            run_prefixes.append(m.group(1))
+        else:
+            if run_start is not None and len(run_prefixes) >= 3:
+                prefix = max(set(run_prefixes), key=run_prefixes.count)
+                tid = _PREFIX_TYPE[prefix]
+                kind = ("labeled-snapshot" if labeled(run_start, i) else "unlabeled")
+                suggestion = (
+                    f'labeled snapshot of {tid} rows — verify it is still current '
+                    f'(quoted register content drifts silently); the live form is '
+                    f'`entity_query("{tid}")` / review.html#registers'
+                    if kind == "labeled-snapshot" else
+                    f'replace the restated {tid} rows with a reference: '
+                    f'`entity_query("{tid}")` — full text in review.html#registers')
+                findings.append({"file": label, "line": run_start + 1,
+                                 "family": tid, "count": len(run_prefixes),
+                                 "kind": kind, "suggestion": suggestion})
+            run_start, run_prefixes = None, []
+        if _AUDIT_TALLY_RE.search(line):
+            kind = ("labeled-snapshot" if labeled(i, i + 1) else "unlabeled")
+            findings.append({
+                "file": label, "line": i + 1, "family": "audit-verdict", "count": 1,
+                "kind": kind,
+                "suggestion": "a hard-coded audit tally goes stale on the first new "
+                              "verdict — the live form is gate_run()'s audit_evidence "
+                              "split / review.html#execution"})
+    return findings
+
+
 def _restated_content_report(target: Path) -> list[dict]:
     findings = []
     for fname in ("CLAUDE.md", "AGENTS.md"):
         path = target / fname
-        if not path.exists():
-            continue
-        lines = path.read_text(encoding="utf-8").splitlines()
-
-        def labeled(start: int, end: int) -> bool:
-            lo = max(0, start - 3)
-            return any(_PKG_REF_RE.search(lines[i]) for i in range(lo, end))
-
-        run_start, run_prefixes = None, []
-        for i, line in enumerate(lines + [""]):  # sentinel flushes a trailing run
-            m = _ID_LED_LINE_RE.match(line)
-            if m and m.group(1) in _PREFIX_TYPE:
-                if run_start is None:
-                    run_start = i
-                run_prefixes.append(m.group(1))
-            else:
-                if run_start is not None and len(run_prefixes) >= 3:
-                    prefix = max(set(run_prefixes), key=run_prefixes.count)
-                    tid = _PREFIX_TYPE[prefix]
-                    kind = ("labeled-snapshot" if labeled(run_start, i) else "unlabeled")
-                    suggestion = (
-                        f'labeled snapshot of {tid} rows — verify it is still current '
-                        f'(quoted register content drifts silently); the live form is '
-                        f'`entity_query("{tid}")` / review.html#registers'
-                        if kind == "labeled-snapshot" else
-                        f'replace the restated {tid} rows with a reference: '
-                        f'`entity_query("{tid}")` — full text in review.html#registers')
-                    findings.append({"file": fname, "line": run_start + 1,
-                                     "family": tid, "count": len(run_prefixes),
-                                     "kind": kind, "suggestion": suggestion})
-                run_start, run_prefixes = None, []
-            if _AUDIT_TALLY_RE.search(line):
-                kind = ("labeled-snapshot" if labeled(i, i + 1) else "unlabeled")
-                findings.append({
-                    "file": fname, "line": i + 1, "family": "audit-verdict", "count": 1,
-                    "kind": kind,
-                    "suggestion": "a hard-coded audit tally goes stale on the first new "
-                                  "verdict — the live form is gate_run()'s audit_evidence "
-                                  "split / review.html#execution"})
+        if path.exists():
+            findings += _restated_findings(
+                fname, path.read_text(encoding="utf-8").splitlines())
     return findings
+
+
+# ------------------------------------------------------- converted-prompt lifecycle
+# Plan 028 (C34): a converted legacy prompt is PROJECT content preserved verbatim —
+# ~50-70% restated generic workflow the stock library now covers, interleaved with
+# unique project knowledge. The tool never deletes or renames; it says which question
+# to ask, per KIND (deterministic — no content-similarity heuristics), until the
+# operator curates (removes the header line or the file).
+_CONVERTED_RE = re.compile(
+    r"^<!-- converted from data/prompts\.jsonl (PRM-\S+) \(kind: ([a-z-]+)")
+_CONVERTED_HINTS = {
+    "initial": "generic half now covered by package-onboarding.md/slice-kickoff.md; "
+               "keep only project-specific content (and check any restated state for "
+               "staleness)",
+    "follow-up": "generic half now covered by orient-resume/replan-deferred/"
+                 "slice-review; keep project-specific cautions",
+    "review": "generic half now covered by integrity-check/slice-review; keep "
+              "project-specific checklists",
+}
+_CONVERTED_CURATE = ("curate = extract the project-specific half into a purpose-named "
+                     "prompt (or keep as-is) and remove this header line once "
+                     "reviewed — this hint clears itself")
+
+
+def _converted_hint(kind: str) -> str:
+    return (f"{_CONVERTED_HINTS.get(kind, 'review against the stock library')}; "
+            f"{_CONVERTED_CURATE}")
+
+
+def _normalized_prompt(text: str) -> str:
+    """Content identity across the conversion delta: drop the provenance header,
+    normalize trailing whitespace (the v2 handoff copy and the converted package file
+    share the same H1-strip composition, so this is the only legitimate difference)."""
+    lines = [ln for ln in text.splitlines()
+             if not ln.startswith("<!-- converted from data/prompts.jsonl")]
+    return "\n".join(ln.rstrip() for ln in lines).strip()
 
 
 _STALE_BLOCK_RE = re.compile(
@@ -1210,13 +1259,34 @@ def handoff_emit(target_dir: str, subdir: str = "handoff", force: bool = False) 
 
     warnings: list[str] = []
     # v3.0.0: nothing is emitted into handoff/ anymore — leftover v2 copies actively
-    # mislead (they freeze the prompts as they stood at the last v2 emit).
+    # mislead. Plan 028 (C34 §2): the verdict is PER FILE, by content compare — a
+    # blanket "delete" would have destroyed a live project prompt that existed nowhere
+    # else (the operator had to do this compare by hand; now the tool does).
     leftover_dir = target / "handoff"
     leftovers = sorted(leftover_dir.glob("prm-*.md")) if leftover_dir.exists() else []
-    if leftovers:
-        warnings.append("leftover v2 handoff copies — <package>/prompts/ is now the "
-                        "source; delete " +
-                        ", ".join(f"handoff/{p.name}" for p in leftovers))
+    for left in leftovers:
+        pkg_copy = prompts_dir / left.name
+        verdict = None
+        if pkg_copy.exists():
+            left_text = left.read_text(encoding="utf-8")
+            pkg_text = pkg_copy.read_text(encoding="utf-8")
+            if (left_text == pkg_text
+                    or _normalized_prompt(left_text) == _normalized_prompt(pkg_text)):
+                verdict = (f"handoff/{left.name}: copy of prompts/{left.name} — "
+                           "safe to delete")
+        if verdict is None:
+            verdict = (f"handoff/{left.name}: NOT a copy of any package prompt — MOVE "
+                       "it into <package>/prompts/ (deleting would destroy live "
+                       "content)")
+        warnings.append(verdict)
+    # Plan 028: converted legacy prompts get a standing, self-clearing per-kind hint —
+    # the conversion report was a one-shot moment already gone for converted packages.
+    converted = []
+    for path in prompt_files:
+        first = path.read_text(encoding="utf-8").split("\n", 1)[0]
+        if m := _CONVERTED_RE.match(first):
+            converted.append({"file": f"prompts/{path.name}", "id": m.group(1),
+                              "kind": m.group(2), "hint": _converted_hint(m.group(2))})
     stale = _stale_reference_report(target)
     # C24/D-8, carried into v3: v1-protocol instructions and dead relative links inside
     # package prompt files (migrated v1 prompts land there) misdirect the kickoff —
@@ -1235,6 +1305,12 @@ def handoff_emit(target_dir: str, subdir: str = "handoff", force: bool = False) 
                                   "suggestion": "dead relative link from "
                                                 "<package>/prompts/ — fix the path"})
     restated = _restated_content_report(target)
+    # Plan 028 (C34): the C22 detectors run over package prompt files too — a converted
+    # prompt's hard-coded audit tally had drifted factually wrong with no signal.
+    # Advisory only; never blocks emission (that strength stays G-INJECT's alone).
+    for path in prompt_files:
+        restated += _restated_findings(
+            f"prompts/{path.name}", path.read_text(encoding="utf-8").splitlines())
 
     server_line = ("The `tamheed` MCP server is provided by the installed tamheed plugin "
                    "(no project-level .mcp.json entry needed)." if plugin_hosted else
@@ -1248,8 +1324,10 @@ def handoff_emit(target_dir: str, subdir: str = "handoff", force: bool = False) 
         "are destroyed by `git reset --hard` / `git checkout` / `git stash` exactly like "
         "uncommitted source — commit the package `data/` before branch operations. "
         f"{server_line} All package reads/writes go through the `tamheed` MCP tools; "
-        f"ready-made task prompts live in `{_CURRENT_NAME}/prompts/` — read the folder "
-        f"and pick; the human review surface is `{_CURRENT_NAME}/review.html`.\n"
+        f"ready-made task prompts live in `{_CURRENT_NAME}/prompts/` — start with "
+        f"`{_CURRENT_NAME}/prompts/README.md`, the operator guide (which prompt for "
+        f"which situation, semi-auto vs fully-auto); the human review surface is "
+        f"`{_CURRENT_NAME}/review.html`.\n"
         "\n### Recording obligations (mandatory — unrecorded work is drift)\n\n"
         "| During execution, when… | Record BEFORE moving on |\n"
         "|---|---|\n"
@@ -1317,8 +1395,8 @@ def handoff_emit(target_dir: str, subdir: str = "handoff", force: bool = False) 
         unchanged.append("CLAUDE.md")
     return {"ok": True, "written": emitted, "unchanged": unchanged, "diverged": diverged,
             "prompt_library": library, "project_prompts": project,
-            "stale_references": stale, "restated_content": restated,
-            "warnings": warnings}
+            "converted_prompts": converted, "stale_references": stale,
+            "restated_content": restated, "warnings": warnings}
 
 
 # --------------------------------------------------------------------------- staged flows & export

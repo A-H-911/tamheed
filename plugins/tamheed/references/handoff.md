@@ -80,7 +80,7 @@ Two prompt surfaces, one folder:
 
 | Surface | Source of truth | Lifecycle |
 |---|---|---|
-| `<package>/prompts/` project files | Authored at Stage 20 (any non-stock filename) | Plain files, operator-owned; G-INJECT + stale-scanned at every `handoff_emit`; legacy `PRM-` rows were converted here once at first v3 `package_open` |
+| `<package>/prompts/` project files | Authored at Stage 20 (any non-stock filename) | Plain files, operator-owned; G-INJECT + stale-scanned + restated-state-scanned at every `handoff_emit`; legacy `PRM-` rows were converted here once at first v3 `package_open` — converted files (provenance header) get a standing per-kind curation hint until the operator reviews them (remove the header = reviewed); the folder's `README.md` is the operator guide |
 | `<package>/prompts/` stock library | The plugin bundle | Seeded at `package_create` and refreshed by migrate/adopt/handoff via managed emission (`emitted`/`unchanged`/`diverged`, force to overwrite a hand edit) |
 
 The v2 `prompts` table and the `<target>/handoff/*.md` copies are GONE (migration 003): opening a
