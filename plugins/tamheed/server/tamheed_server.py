@@ -85,6 +85,78 @@ ENTITY_TABLES = {
 
 _NON_ID_TABLES = {"trace_edges": "from_id", "omissions": "entity_type"}
 
+# ------------------------------------------------------------- relation endpoint rules
+# Plan 027 (B23): a typed relation constrains what its endpoints may BE — the schema
+# CHECK constrains the vocabulary, these rules constrain the semantics (TEST —mitigates→
+# FR was accepted for a year). Enforced HARD on new entity_upsert writes only; migrate/
+# adopt insert via raw SQL, so legacy data loads untouched and gate_run reports stored
+# violations as an ADVISORY list. Anchors: references/traceability.md chain,
+# workflow.md stages 10/12/14, schema.sql risks.discharged_by, the golden's edge combos.
+_REQ_LIKE = frozenset({"requirement", "constraint", "invariant", "assumption"})
+_DECISION = frozenset({"decision", "adr"})
+_WORK = frozenset({"phase", "milestone", "slice", "wbs-item", "execution-plan",
+                   "defect", "deferred-work"})
+_VERIF = frozenset({"test", "acceptance-criterion", "experiment", "poc"})
+
+# relation -> (allowed from-types | None=any, allowed to-types | None=any).
+# Absent relation ('relates_to') = the untyped escape hatch. "SAME_TYPE" = both
+# endpoints must share one entity type (supersession is always within a family).
+RELATION_RULES: dict = {
+    "derives_from": (_REQ_LIKE | {"acceptance-criterion", "open-question", "hypothesis"},
+                     _DECISION | _REQ_LIKE),
+    "mitigates": (_DECISION | _WORK | _VERIF | _REQ_LIKE | {"convention"},
+                  frozenset({"risk"})),
+    "verifies": (_VERIF | {"invariant", "kpi"},
+                 _REQ_LIKE | {"acceptance-criterion", "hypothesis", "risk"}),
+    "supersedes": "SAME_TYPE",
+    "blocked_by": (_WORK | {"open-question", "decision", "requirement"},
+                   _WORK | {"open-question", "dependency", "decision", "risk",
+                            "assumption"}),
+    "implements": (_WORK, _REQ_LIKE | _DECISION | {"acceptance-criterion"}),
+    "satisfies": (_WORK | {"poc"}, _REQ_LIKE | {"acceptance-criterion", "kpi"}),
+    "tests": (frozenset({"test"}),
+              _REQ_LIKE | _DECISION | {"acceptance-criterion", "risk", "wbs-item",
+                                       "slice", "defect"}),
+    # binds_to: semantics unpinned (zero documented usage anywhere in the repo) —
+    # unconstrained until first real use defines it; a guessed rule risks false
+    # rejections with no evidence base (plan 027 adversarial review, resolution 2).
+    "binds_to": (None, None),
+    "discharges": (frozenset({"acceptance-criterion", "test"}),
+                   frozenset({"risk", "assumption", "open-question", "hypothesis"})),
+}
+
+
+def _relation_rule_error(conn, cols: dict) -> str | None:
+    """The endpoint-type check for a trace-edge item; None = no objection.
+    Missing endpoints and unknown relations fall through to the FK / SQL-CHECK paths
+    (which already report them precisely)."""
+    rule = RELATION_RULES.get(cols.get("relation"))
+    if rule is None:
+        return None
+    types = {}
+    for side in ("from_id", "to_id"):
+        row = conn.execute("SELECT entity_type FROM entity_index WHERE id = ?",
+                           (cols.get(side),)).fetchone()
+        if row is None:
+            return None  # unknown endpoint: the IGNORE/rowcount path names it
+        types[side] = row[0]
+    relation = cols["relation"]
+    if rule == "SAME_TYPE":
+        if types["from_id"] != types["to_id"]:
+            return (f"relation 'supersedes' requires matching endpoint types; got "
+                    f"{types['from_id']} ({cols['from_id']}) -> "
+                    f"{types['to_id']} ({cols['to_id']})")
+        return None
+    from_ok, to_ok = rule
+    if ((from_ok is None or types["from_id"] in from_ok)
+            and (to_ok is None or types["to_id"] in to_ok)):
+        return None
+    return (f"relation {relation!r} does not allow {types['from_id']} -> "
+            f"{types['to_id']} ({cols['from_id']} -> {cols['to_id']}); allowed from: "
+            f"{', '.join(sorted(from_ok)) if from_ok else 'any'}; allowed to: "
+            f"{', '.join(sorted(to_ok)) if to_ok else 'any'} — use 'relates_to' for "
+            "an untyped association")
+
 # (type_id, label, id_prefix, generation_class) — seeded into entity_types at create.
 BASELINE_ENTITY_TYPES = [
     ("requirement", "Requirement (FR-/NFR-)", "FR-", "Always"),
@@ -412,6 +484,13 @@ def entity_upsert(entities: list[dict]) -> dict:
             failed = True
             continue
         names = list(cols)
+        if etype == "trace-edge":
+            # Plan 027: endpoint-type rules, HARD on new writes. Same-batch endpoints
+            # are visible (the entity_index triggers fire per statement).
+            if msg := _relation_rule_error(conn, cols):
+                results.append({"index": i, "ok": False, "id": None, "error": msg})
+                failed = True
+                continue
         if etype in ("trace-edge", "omission"):
             sql = (f"INSERT OR IGNORE INTO {table} ({', '.join(names)})"
                    f" VALUES ({', '.join('?' for _ in names)})")
@@ -541,15 +620,52 @@ def trace_query(entity_id: str, direction: str = "both", relation: str | None = 
 # --------------------------------------------------------------------------- gates
 
 def gate_run() -> dict:
-    """Run the mechanical gates. Referential gates are enforced at write time (schema);
-    coverage gates are the SQL views; the content tier is a placeholder scan here."""
+    """Run the mechanical gates. Plan 027: the referential gates VERIFY at gate time
+    (the old hardcoded "enforced at write time" literals asserted integrity the gate
+    never checked); coverage gates are the SQL views; the content tier is a
+    placeholder scan here."""
     if guard := _need_open():
         return guard
     conn = _CURRENT.conn
+    # G-IDS: run the FK check + entity_index<->tables consistency NOW, both directions.
+    fk_failures = [f"{table} row {rowid} -> {parent}" for table, rowid, parent, _
+                   in conn.execute("PRAGMA foreign_key_check")]
+    index_failures = []
+    checked_ids = 0
+    for etype, table in ENTITY_TABLES.items():
+        if table in _NON_ID_TABLES:
+            continue  # write-only families have no id column
+        for (missing,) in conn.execute(
+                f"SELECT id FROM {table}"
+                " WHERE id NOT IN (SELECT id FROM entity_index)"):
+            index_failures.append(f"{missing} in {table} but not in entity_index")
+        for (orphan,) in conn.execute(
+                "SELECT id FROM entity_index WHERE entity_type = ?"
+                f" AND id NOT IN (SELECT id FROM {table})", (etype,)):
+            index_failures.append(f"{orphan} in entity_index but not in {table}")
+        checked_ids += conn.execute(f"SELECT COUNT(*) FROM {table}").fetchone()[0]
+    ids_failures = fk_failures + index_failures
+    # G-DEC-STATUS / G-REQ-SRC: cheap real SELECTs. The trim() catches whitespace-only
+    # provenance the DDL CHECK (source_span <> '') structurally misses.
+    dec_failures = [f"{row[0]}: {row[1]!r}" for row in conn.execute(
+        "SELECT id, lifecycle_status FROM decisions WHERE lifecycle_status NOT IN"
+        " ('Proposed','Approved','Rejected','Superseded','Deferred','Implemented')")]
+    src_failures = [row[0] for row in conn.execute(
+        "SELECT id FROM requirements WHERE source_kind IS NULL"
+        " OR source_span IS NULL OR trim(source_span) = ''")]
     report = {
-        "G-IDS": {"status": "pass", "note": "enforced at write time (FKs + entity_index)"},
-        "G-DEC-STATUS": {"status": "pass", "note": "enforced at write time (CHECK)"},
-        "G-REQ-SRC": {"status": "pass", "note": "enforced at write time (NOT NULL provenance)"},
+        "G-IDS": {"status": "fail" if ids_failures else "pass",
+                  "failures": ids_failures,
+                  "note": f"verified now: foreign_key_check clean, entity_index"
+                          f" consistent ({checked_ids} ids)" if not ids_failures
+                          else "verified now: referential integrity violated"},
+        "G-DEC-STATUS": {"status": "fail" if dec_failures else "pass",
+                         "failures": dec_failures,
+                         "note": "verified now (also DDL CHECK-enforced at write time)"},
+        "G-REQ-SRC": {"status": "fail" if src_failures else "pass",
+                      "failures": src_failures,
+                      "note": "verified now: NULL/whitespace-only provenance caught"
+                              " (the DDL CHECK misses whitespace-only)"},
     }
     for gate, view in (("G-TRACE", "g_trace_failures"), ("G-SET", "g_set_failures"),
                        ("G-PROGRESS", "g_progress_failures")):
@@ -587,6 +703,31 @@ def gate_run() -> dict:
     ).fetchone()
     report["audit_evidence"] = {"evidenced": evidenced or 0, "narrated": narrated or 0,
                                 "note": "narrated verdicts are the graded party grading itself (C7)"}
+    # Plan 027: ADVISORY sweep of stored edges against RELATION_RULES — legacy data
+    # (migrate/adopt write via raw SQL) may hold mistypes new writes now reject. The
+    # key deliberately does NOT start with "G-": `ready` and pkg_check cmd_gates
+    # (which surfaces G-* lines only) are unaffected; this never fails the gate.
+    mistyped = []
+    for from_id, to_id, relation, ftype, ttype in conn.execute(
+            "SELECT e.from_id, e.to_id, e.relation, a.entity_type, b.entity_type"
+            " FROM trace_edges e JOIN entity_index a ON a.id = e.from_id"
+            " JOIN entity_index b ON b.id = e.to_id"
+            " ORDER BY e.from_id, e.to_id, e.relation"):
+        rule = RELATION_RULES.get(relation)
+        if rule is None:
+            continue
+        if rule == "SAME_TYPE":
+            bad = ftype != ttype
+        else:
+            from_ok, to_ok = rule
+            bad = ((from_ok is not None and ftype not in from_ok)
+                   or (to_ok is not None and ttype not in to_ok))
+        if bad:
+            mistyped.append(f"{from_id} ({ftype}) —{relation}→ {to_id} ({ttype})")
+    report["relation_rules"] = {
+        "status": "advisory", "mistyped": mistyped,
+        "note": "stored edges violating RELATION_RULES (legacy data) — new writes are"
+                " rejected; never fails the gate"}
     ready = all(v.get("status") == "pass" for k, v in report.items() if k.startswith("G-"))
     return {"ok": True, "ready": ready, "gates": report}
 

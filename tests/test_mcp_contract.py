@@ -229,6 +229,86 @@ class McpContractTest(unittest.TestCase):
         self.assertTrue(dup["items"][0]["unchanged"])
         self.assertEqual(dup["applied"], 0)
 
+    def test_relation_rules_reject_mistyped_edge(self):
+        """Plan 027: a typed relation constrains endpoint TYPES — TEST —mitigates→ FR
+        is rejected naming both types, both ids, and the escape hatch; the batch stays
+        all-or-nothing."""
+        make_complete_package("demo")
+        out = srv.entity_upsert([
+            {"type": "trace-edge", "from_id": "TEST-001", "to_id": "FR-001",
+             "relation": "mitigates"},
+            {"type": "risk", "id": "RISK-777", "title": "sibling item"}])
+        self.assertFalse(out["ok"])
+        err = out["items"][0]["error"]
+        for needle in ("mitigates", "test", "requirement", "TEST-001", "FR-001",
+                       "relates_to"):
+            self.assertIn(needle, err)
+        self.assertEqual(out["applied"], 0)  # the valid sibling rolled back too
+        self.assertEqual(srv.entity_query("risk", id="RISK-777")["total"], 0)
+
+    def test_relation_rules_supersedes_same_type(self):
+        make_complete_package("demo")
+        srv.entity_upsert([{"type": "decision", "id": "DEC-777", "title": "successor",
+                            "lifecycle_status": "Proposed", "source_kind": "brief",
+                            "source_span": "x"}])
+        ok = srv.entity_upsert([{"type": "trace-edge", "from_id": "DEC-777",
+                                 "to_id": "DEC-001", "relation": "supersedes"}])
+        self.assertTrue(ok["ok"], ok)
+        bad = srv.entity_upsert([{"type": "trace-edge", "from_id": "DEC-777",
+                                  "to_id": "FR-001", "relation": "supersedes"}])
+        self.assertFalse(bad["ok"])
+        self.assertIn("matching endpoint types", bad["items"][0]["error"])
+
+    def test_relates_to_unconstrained(self):
+        """The untyped escape hatch: any endpoints, by design."""
+        make_complete_package("demo")
+        out = srv.entity_upsert([{"type": "trace-edge", "from_id": "TEST-001",
+                                  "to_id": "FR-001", "relation": "relates_to"}])
+        self.assertTrue(out["ok"], out)
+
+    def test_relation_rules_skip_missing_endpoint(self):
+        """An unknown endpoint is the FK/IGNORE path's finding, not a rules finding."""
+        make_complete_package("demo")
+        out = srv.entity_upsert([{"type": "trace-edge", "from_id": "TEST-001",
+                                  "to_id": "FR-999", "relation": "tests"}])
+        self.assertFalse(out["ok"])
+        self.assertIn("FOREIGN KEY constraint failed", out["items"][0]["error"])
+
+    def test_gate_referential_checks_run_now(self):
+        """Plan 027: the three referential gates VERIFY at gate time — no hardcoded
+        'enforced at write time' pass literals anywhere in the report."""
+        make_complete_package("demo")
+        gates = srv.gate_run()["gates"]
+        for g in ("G-IDS", "G-DEC-STATUS", "G-REQ-SRC"):
+            self.assertEqual(gates[g]["status"], "pass")
+            self.assertIn("verified now", gates[g]["note"])
+            self.assertNotIn("enforced at write time", gates[g]["note"].split("(")[0])
+        self.assertIn("entity_index consistent", gates["G-IDS"]["note"])
+
+    def test_gate_req_src_catches_whitespace_source(self):
+        """trim() catches what the DDL CHECK (source_span <> '') structurally misses."""
+        make_complete_package("demo")
+        srv.entity_upsert([{"type": "requirement", "id": "FR-777",
+                            "kind": "functional", "title": "ws", "mvp": 0,
+                            "lifecycle_status": "Approved", "source_kind": "brief",
+                            "source_span": "   "}])
+        gate = srv.gate_run()["gates"]["G-REQ-SRC"]
+        self.assertEqual(gate["status"], "fail")
+        self.assertIn("FR-777", gate["failures"])
+
+    def test_gate_relation_rules_advisory_never_blocks(self):
+        """Legacy mistyped edges (raw-SQL inserts, the migrate path) surface in the
+        advisory relation_rules report — listed, never failing the gate."""
+        make_complete_package("demo")
+        srv._CURRENT.conn.execute(
+            "INSERT INTO trace_edges (from_id, to_id, relation)"
+            " VALUES ('PH-1', 'FR-001', 'tests')")   # simulating legacy data
+        out = srv.gate_run()
+        adv = out["gates"]["relation_rules"]
+        self.assertEqual(adv["status"], "advisory")
+        self.assertEqual(adv["mistyped"], ["PH-1 (phase) —tests→ FR-001 (requirement)"])
+        self.assertTrue(out["ready"])                # advisory never blocks
+
     def test_journal_is_append_only(self):
         """Plan 025 (C31/A4): recorded history cannot be rewritten via entity_upsert."""
         make_complete_package("demo")

@@ -65,6 +65,30 @@ class MigrationGoldenTest(unittest.TestCase):
                              msg=f"{view} not clean on the committed golden")
         conn.close()
 
+    def test_golden_advisory_lists_legacy_mistyped_edges(self):
+        """Plan 027: the golden's two legacy PH- edges (tests/verifies with a phase
+        endpoint) are the advisory report's living test data — listed, never blocking.
+        Do NOT 'fix' them in a re-canonicalization; they exist to prove the sweep."""
+        sys.path.insert(0, str(REPO_ROOT / "plugins" / "tamheed" / "server"))
+        import tamheed_server as srv
+        with tempfile.TemporaryDirectory() as root:
+            import shutil
+            pkg = Path(root) / "golden"
+            shutil.copytree(GOLDEN_V2, pkg)
+            saved = srv.PACKAGE_ROOT
+            try:
+                srv.PACKAGE_ROOT = Path(root)
+                self.assertTrue(srv.package_open("golden")["ok"])
+                out = srv.gate_run()
+                adv = out["gates"]["relation_rules"]
+                self.assertTrue(out["ready"])            # advisory never blocks
+                self.assertEqual(len(adv["mistyped"]), 2, adv["mistyped"])
+                for line in adv["mistyped"]:
+                    self.assertIn("(phase)", line)
+                srv.package_close()
+            finally:
+                srv.PACKAGE_ROOT = saved
+
     def test_preview_writes_nothing(self):
         with tempfile.TemporaryDirectory() as dest:
             out = migrate.run_migration(str(FIXTURES / "valid-package"), dest)
