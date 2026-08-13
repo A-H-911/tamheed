@@ -10,6 +10,51 @@ All notable changes to Tamheed are documented here. The format is based on
 
 ## [Unreleased]
 
+## [3.1.0] - 2026-08-13
+
+Follow-up release from the thirteenth ACMP field report — the v3.0.0 acceptance run
+(evidence **C34**, archived at `plans/evidence/acmp-field-report-13-2026-08-13.md`):
+"the MAJOR landed clean", and `readiness_check` caught a prematurely-closed slice that
+seven passing gates structurally could not see. This release answers its findings plus
+the maintainer's converted-prompt questions. **No schema migration — existing 3.x
+packages unaffected.**
+
+### Added
+- **`prompts/README.md` operator guide** ships inside the stock library (14 → 15
+  files, managed like the rest): which prompt for which situation, the semi-auto day
+  loop, the fully-auto loop-iteration/loop-guard pairing with the `ITERATION:`
+  contract, and project-prompt naming/curation rules. The CLAUDE.md note points at it.
+- **Converted-prompt curation hints**: files converted from the legacy prompts table
+  (provenance header) get a standing per-KIND hint in every `handoff_emit`
+  (`converted_prompts`) naming their stock counterparts — self-clearing when the
+  operator removes the header line (reviewed) or the file; the same hints ship at
+  conversion time (`curation` in the open report). The tool never deletes or renames
+  converted files: they interleave restated generic workflow with unique project
+  knowledge that exists nowhere else (preserve-and-signal, measured on the field data).
+- **`requirements_unwired` advisory on both surfaces** (gate_run + the
+  `requirements-wired` package readiness rule): execution-created requirements with
+  zero trace edges — invisible to G-TRACE (mvp-matrix only) until now;
+  drift-register/progress-sync prompts gain the wire-in-the-same-session step.
+- **Hover-isolate in both graph views**: hovering a node dims every edge except its
+  own — pure CSS (`:has()` + hidden incident-edge copies), zero JS, graceful
+  degradation on older browsers.
+
+### Changed
+- **Leftover `handoff/prm-*.md` warnings are per-file verdicts** by content compare:
+  "copy of prompts/<name> — safe to delete" vs "NOT a copy — MOVE it into
+  <package>/prompts/" (the blanket "delete" would have destroyed a live project
+  prompt; the operator had to do this compare by hand in findings_13 §2).
+- **Readiness rules say when they cannot discriminate**: a rule keyed on a column that
+  is NULL for every row of its type carries `discriminating: false` and a "0 of N rows
+  have <column> set" note — severity unchanged (an unpopulated column is itself a
+  package deficiency); slice/phase `defects-closed` also counts open defects with no
+  `found_in` ("invisible to this scope").
+- **The isolated fold breaks down per family**, isolated requirements sort first with
+  a ⚠ prefix, and the flow lead names how many requirements the view cannot draw —
+  the unverified requirements were exactly the ones the picture hid.
+- The C22 restated-state detectors now cover package prompt files (advisory): a
+  hard-coded audit tally inside a prompt drifts exactly like one in AGENTS.md.
+
 ## [3.0.0] - 2026-08-13
 
 Major release from seven direct maintainer observations after sustained ACMP usage

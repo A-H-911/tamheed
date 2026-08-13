@@ -44,7 +44,8 @@ Keystone 1.0.1.
 | 024 | Eighth field report: ship the §8 scratch-diff tool | B20 | P3 | S | 023 DONE + the blob-inclusive §8 run; evidence C29 | DONE — executed 2026-07-23, v2.6.0; acceptance SUCCEEDED (findings_9/C30: tool-vs-script 185=185, empty UNEXPECTED, scratchpad retired) |
 | 025 | Tenth field report: EXECUTION hardening (allocator ceiling, truthful surfaces, stale guard) | B21 | P1 | M | findings_10 (first execution-shaped report); evidence C31 | DONE — executed 2026-08-08, v2.7.0; acceptance SUCCEEDED (findings_11/C32: all four §A defects verified FIXED by running the tools, C1/D exercised, zero asks) |
 | 026 | Twelfth field report (INCIDENT): pin the MCP SDK, truthful startup diagnostics | B22 | P0 | S | findings_12 (SDK 2.0.0 broke every fresh resolve); evidence C33 | DONE — executed 2026-08-08, v2.7.1; acceptance = ACMP reconnects on a fresh resolve |
-| 027 | Maintainer observations: prompts→files, readiness engine, typed relations, flow viewer, drift enforcement | B23 | P1 | XL | seven direct maintainer notes 2026-08-13 (no findings file); 3 exploration passes + devil's-advocate round + 2 interviews | DONE — executed 2026-08-13, **v3.0.0** (migrations 003+004); acceptance = the next ACMP run on 3.0.0 (live-package conversion, flow view, unprompted recording, readiness at a real close) |
+| 027 | Maintainer observations: prompts→files, readiness engine, typed relations, flow viewer, drift enforcement | B23 | P1 | XL | seven direct maintainer notes 2026-08-13 (no findings file); 3 exploration passes + devil's-advocate round + 2 interviews | DONE — executed 2026-08-13, **v3.0.0** (migrations 003+004); acceptance MET same day (findings_13/C34: conversion clean, readiness caught SL-004) |
+| 028 | Thirteenth field report: prompt lifecycle signals, readiness discrimination, flow legibility, operator guide | B24 | P2 | M | findings_13 (the v3.0.0 acceptance) + the maintainer's prm-naming/overlap probe + user-guide ask; evidence C34 | DONE — executed 2026-08-13, v3.1.0; acceptance = the next ACMP run (curation hints fire on the real prm files, hover-isolate UX verdict, FR-156..159 wired, the §6 clean drift session) |
 
 Status values: TODO | IN PROGRESS | DONE | BLOCKED (with one-line reason) | REJECTED (with
 one-line rationale).
@@ -62,6 +63,24 @@ export + freshness/lead renders (012); tamheed repo public from day one with WIP
 eval schedule disabled at close-out (016). **Execution driver: the maintainer runs the plans
 himself** — self-containment is the operative contract; this status table is the tracking
 surface.
+
+## Alignment record (2026-08-13, second entry — plan 028, the findings_13 cycle)
+
+findings_13 (C34) accepted the MAJOR same-day: conversion verbatim-clean, cutover
+idempotent, mistype rejection exact — and the readiness engine's first field catch
+(SL-004 closed with four never-evidenced ACs, invisible to 7/7 gates) is the feature's
+justifying case delivered on day one. The cycle's second driver was the maintainer's
+prm-naming/overlap probe, which exposed two holes in the draft plan (a generic curation
+note where the tool KNOWS each converted file's kind; a conversion-moment-only signal
+that could never reach already-converted packages) — both fixed by the standing
+self-clearing `converted_prompts` report. Measuring the overlap (all files read:
+~50-70% generic restatement interleaved with unique project knowledge) killed both
+auto-delete and auto-replace; preserve-and-signal is now the recorded doctrine. Two
+interview rounds locked every fork explicitly — notably keeping undiscriminating
+readiness rules BLOCKING (visible note instead of auto-downgrade) and shipping
+hover-isolate in both views despite the file-size cost. The operator guide
+(prompts/README.md) ships inside the stock library because the operator of a generated
+package has the folder, not the repo docs. v3.1.0, MINOR.
 
 ## Alignment record (2026-08-13 — plan 027, the v3 maintainer-observation cycle)
 
