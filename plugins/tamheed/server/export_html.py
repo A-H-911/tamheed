@@ -172,14 +172,17 @@ def _marker(marker_id: str) -> str:
 def _graph_full(nodes, edges) -> str:
     """The circular overview. Plan 027: connected nodes only (74% of the golden's
     nodes were isolated dots), degree-scaled radii, arrowheads, per-relation edge
-    classes; 12 hues + a ring stroke as the second-cycle family disambiguator."""
+    classes; 12 hues + a ring stroke as the second-cycle family disambiguator.
+    Plan 028 (C34 §5.1): hover-isolate — each node group carries hidden .hl copies of
+    its incident edges; :has() dims the base layer on hover, pure CSS."""
     deg = _degrees(edges)
     fams = _grouped_nodes(nodes)
     S = len(nodes) + _G_GAP * len(fams)
     R = max(_G_RMIN, S * _G_SPACING / (2 * math.pi))
     half = R + _G_LABELS + 10
     pos: dict[str, tuple[float, float]] = {}
-    node_parts, label_parts = [], []
+    meta: list[tuple[str, str, int, str]] = []   # (nid, fam, fi, ring)
+    label_parts = []
     slot = 0
     for fi, (fam, ids) in enumerate(fams):
         start = slot
@@ -188,11 +191,7 @@ def _graph_full(nodes, edges) -> str:
             th = 2 * math.pi * slot / S - math.pi / 2
             x, y = R * math.cos(th), R * math.sin(th)
             pos[nid] = (x, y)  # 0.1px rounding absorbs cross-platform libm variation
-            r = min(7.0, 3.0 + 0.8 * math.sqrt(deg.get(nid, 0)))
-            node_parts.append(
-                f'<a href="#{esc(nid)}"><circle cx="{x:.1f}" cy="{y:.1f}" r="{r:.1f}" '
-                f'class="g{fi % 12}{ring}"/><title>{esc(nid)} ({esc(fam)}, '
-                f'{deg.get(nid, 0)} edge(s))</title></a>')
+            meta.append((nid, fam, fi, ring))
             slot += 1
         mid = 2 * math.pi * ((start + slot - 1) / 2) / S - math.pi / 2
         lx, ly = (R + 16) * math.cos(mid), (R + 16) * math.sin(mid)
@@ -202,6 +201,7 @@ def _graph_full(nodes, edges) -> str:
             f"{esc(fam)} ({len(ids)})</text>")
         slot += _G_GAP
     edge_parts = []
+    incident: dict[str, list[str]] = {}
     for f, t, rel in edges:
         if f not in pos or t not in pos:
             continue
@@ -209,10 +209,24 @@ def _graph_full(nodes, edges) -> str:
         # quadratic pull toward the center: short edges hug the rim, long ones sweep
         # through the middle — the chord-diagram trick that keeps 1,000 edges legible
         cx, cy = 0.35 * (x1 + x2) / 2, 0.35 * (y1 + y2) / 2
+        d = f"M{x1:.1f} {y1:.1f} Q{cx:.1f} {cy:.1f} {x2:.1f} {y2:.1f}"
         edge_parts.append(
-            f'<path d="M{x1:.1f} {y1:.1f} Q{cx:.1f} {cy:.1f} {x2:.1f} {y2:.1f}" '
-            f'class="e-{esc(rel)}" marker-end="url(#arrow)">'
+            f'<path d="{d}" class="e-{esc(rel)}" marker-end="url(#arrow)">'
             f"<title>{esc(f)} —{esc(rel)}→ {esc(t)}</title></path>")
+        hl = f'<path d="{d}" class="hl e-{esc(rel)}" marker-end="url(#arrow)"/>'
+        incident.setdefault(f, []).append(hl)
+        if t != f:
+            incident.setdefault(t, []).append(hl)
+    node_parts = []
+    for nid, fam, fi, ring in meta:
+        x, y = pos[nid]
+        r = min(7.0, 3.0 + 0.8 * math.sqrt(deg.get(nid, 0)))
+        node_parts.append(
+            f'<g class="nod"><a href="#{esc(nid)}">'
+            f'<circle cx="{x:.1f}" cy="{y:.1f}" r="{r:.1f}" '
+            f'class="g{fi % 12}{ring}"/><title>{esc(nid)} ({esc(fam)}, '
+            f'{deg.get(nid, 0)} edge(s))</title></a>'
+            f'{"".join(incident.get(nid, []))}</g>')
     return _graph_svg(half, edge_parts, node_parts, label_parts, "arrow")
 
 
@@ -308,8 +322,23 @@ def _graph(conn, gates, ready):
         parts.append('<p class="empty">No trace edges recorded — every entity is '
                      "isolated (see the fold below).</p>")
     if isolated:
-        parts.append(_fold("Isolated entities (no trace edges)", len(isolated),
-                           _table(["id", "family"], isolated)))
+        # Plan 028 (C34 §5.2): "1,699 isolated" is a number; the per-family breakdown
+        # is information — and an isolated REQUIREMENT is a coverage hole, not noise:
+        # it sorts first and gets the ⚠ prefix.
+        order = {t: i for i, t in enumerate(ENTITY_TABLES)}
+        counts: dict[str, int] = {}
+        for _nid, fam in isolated:
+            counts[fam] = counts.get(fam, 0) + 1
+        breakdown = ", ".join(
+            f"{fam} {n}" for fam, n in
+            sorted(counts.items(), key=lambda kv: (order.get(kv[0], 99), kv[0])))
+        req_n = counts.get("requirement", 0)
+        warn = f"⚠ {req_n} requirement(s) — " if req_n else ""
+        iso_sorted = sorted(isolated, key=lambda n: (n[1] != "requirement",
+                                                     order.get(n[1], 99), n[1], n[0]))
+        parts.append(_fold(
+            f"Isolated entities (no trace edges) — {warn}{breakdown}",
+            len(isolated), _table(["id", "family"], iso_sorted)))
     return "".join(parts)
 
 
@@ -352,21 +381,17 @@ def _flow(conn, gates, ready):
     fam_index = {fam: fi for fi, (fam, _ids) in
                  enumerate(_grouped_nodes(connected))}
     pos: dict[str, tuple[float, float, int]] = {}
-    node_parts, header_parts = [], []
+    header_parts = []
+    placed: list[tuple[str, str]] = []
     for li, (title, lane) in enumerate(live):
         x = 40.0 + li * _LANE_W
         header_parts.append(f'<text x="{x:.1f}" y="14" class="lane">'
                             f"{esc(title)} ({len(lane)})</text>")
         for row, (nid, fam) in enumerate(lane):
-            y = 34.0 + row * _ROW_H
-            pos[nid] = (x, y, li)
-            fi = fam_index.get(fam, 0)
-            ring = " ring" if fi >= 12 else ""
-            node_parts.append(
-                f'<a href="#{esc(nid)}"><circle cx="{x:.1f}" cy="{y:.1f}" r="4" '
-                f'class="g{fi % 12}{ring}"/><text x="{x + 8:.1f}" y="{y + 3:.1f}">'
-                f"{esc(nid)}</text><title>{esc(nid)} ({esc(fam)})</title></a>")
+            pos[nid] = (x, 34.0 + row * _ROW_H, li)
+            placed.append((nid, fam))
     edge_parts = []
+    incident: dict[str, list[str]] = {}
     for f, t, rel in edges:
         if f not in pos or t not in pos:
             continue
@@ -384,6 +409,22 @@ def _flow(conn, gates, ready):
         edge_parts.append(f'<path d="{d}" class="e-{esc(rel)}" '
                           f'marker-end="url(#arrowf)">'
                           f"<title>{esc(f)} —{esc(rel)}→ {esc(t)}</title></path>")
+        # Plan 028 (C34 §5.1): hidden incident copies power the CSS hover-isolate.
+        hl = f'<path d="{d}" class="hl e-{esc(rel)}" marker-end="url(#arrowf)"/>'
+        incident.setdefault(f, []).append(hl)
+        if t != f:
+            incident.setdefault(t, []).append(hl)
+    node_parts = []
+    for nid, fam in placed:
+        x, y, _li = pos[nid]
+        fi = fam_index.get(fam, 0)
+        ring = " ring" if fi >= 12 else ""
+        node_parts.append(
+            f'<g class="nod"><a href="#{esc(nid)}">'
+            f'<circle cx="{x:.1f}" cy="{y:.1f}" r="4" '
+            f'class="g{fi % 12}{ring}"/><text x="{x + 8:.1f}" y="{y + 3:.1f}">'
+            f"{esc(nid)}</text><title>{esc(nid)} ({esc(fam)})</title></a>"
+            f'{"".join(incident.get(nid, []))}</g>')
     width = 40 + len(live) * _LANE_W
     height = 50 + max(len(lane) for _t, lane in live) * _ROW_H
     svg = (f'<svg class="graph flow" viewBox="0 0 {width} {height}" '
@@ -392,11 +433,19 @@ def _flow(conn, gates, ready):
            f'<g class="nodes">{"".join(node_parts)}</g>'
            f'<g class="labels">{"".join(header_parts)}</g></svg>')
     rels = _rel_filter("fr", (r for _f, _t, r in edges))
+    # Plan 028 (C34 §5.2): unwired requirements are EXACTLY the ones this view cannot
+    # draw — say so in the lead instead of letting the picture read rosier than reality.
+    iso_reqs = sum(1 for nid, fam in nodes
+                   if fam == "requirement" and nid not in linked)
+    iso_line = (f' <strong>⚠ {iso_reqs} requirement(s) have no trace edges and are '
+                "not drawn — see the isolated fold in the relations graph "
+                "section.</strong>" if iso_reqs else "")
     return (f"<details><summary>Traceability flow ({len(connected)} connected, "
             f"{len(edges)} edges)</summary>"
             '<p class="lead">Needs → decisions → work → verification, left to right. '
-            "Every node is labeled and clickable; arrowheads show direction; pick a "
-            "relation to isolate it. The section scrolls vertically.</p>"
+            "Every node is labeled and clickable; hover a node to isolate its edges; "
+            "arrowheads show direction; pick a relation to isolate it. The section "
+            f"scrolls vertically.{iso_line}</p>"
             f"{rels}"
             f'<div class="graphwrap">{svg}</div></details>')
 

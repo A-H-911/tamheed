@@ -98,6 +98,12 @@ input.gz:focus-visible + .gzl { outline: 2px solid var(--a1); }
 #gz-8:checked ~ .graphwrap svg { width: 800%; height: auto; }
 .graph path { fill: none; stroke: #8b8a80; stroke-opacity: .22; }
 .graph path:hover { stroke-opacity: 1; stroke-width: 2; }
+/* plan 028 (C34 §5.1): hover-isolate — hovering a node dims every edge except its own.
+   Pure CSS via :has(); each .nod group carries hidden .hl copies of its incident
+   edges. Browsers without :has() simply keep today's behavior. */
+.graph .nod path.hl { display: none; }
+.graph:has(.nod:hover) .edges path { stroke-opacity: .04; }
+.graph .nod:hover path.hl { display: inline; stroke-opacity: .95; stroke-width: 1.5; }
 .graph a:hover circle, .graph a:focus circle { stroke: var(--ink); stroke-width: 2; }
 .graph text { font-size: 11px; fill: var(--ink-2); }
 .graph text.lane { font-weight: 700; letter-spacing: .05em; fill: var(--ink); }

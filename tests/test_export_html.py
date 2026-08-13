@@ -60,7 +60,8 @@ class ExportHtmlTest(unittest.TestCase):
 
     def test_graph_connected_only_isolated_folded(self):
         """Plan 027: 74% dead dots on the golden — isolated entities leave the svg
-        and land in their own fold, every one accounted for."""
+        and land in their own fold, every one accounted for. Plan 028: the fold
+        summary breaks the count down per family."""
         self._open_demo_copy()
         out = self._export()
         import re as _re
@@ -68,7 +69,11 @@ class ExportHtmlTest(unittest.TestCase):
         self.assertIsNotNone(m)
         n_connected, n_isolated = int(m.group(1)), int(m.group(2))
         self.assertGreater(n_isolated, 0)                # the demo has isolated nodes
-        self.assertIn(f"Isolated entities (no trace edges) ({n_isolated} rows)", out)
+        fold = _re.search(
+            r"Isolated entities \(no trace edges\) — ([^<]+) \((\d+) rows\)", out)
+        self.assertIsNotNone(fold)
+        self.assertEqual(int(fold.group(2)), n_isolated)
+        self.assertIn("document-section", fold.group(1))  # per-family breakdown
         # an isolated document-section is in the fold, not the svg
         conn = srv._CURRENT.conn
         linked = {r[0] for r in conn.execute("SELECT from_id FROM trace_edges")} | \
@@ -79,6 +84,54 @@ class ExportHtmlTest(unittest.TestCase):
             " AND id NOT IN (SELECT to_id FROM trace_edges) LIMIT 1")))
         self.assertNotIn(sec_id, linked)
         self.assertNotIn(f'<a href="#{sec_id}"><circle', out)
+
+    def test_hover_isolate_incident_copies(self):
+        """Plan 028 (C34 §5.1): each node group carries hidden .hl copies of its
+        incident edges; :has() dims the base layer on hover — both svgs, zero JS."""
+        self._open_demo_copy()
+        out = self._export()
+        self.assertIn('.graph:has(.nod:hover) .edges path', out)   # the CSS mechanism
+        self.assertIn('class="nod"', out)
+        n_hl = out.count('class="hl e-')
+        conn = srv._CURRENT.conn
+        (n_edges,) = conn.execute("SELECT COUNT(*) FROM trace_edges").fetchone()
+        # each edge yields exactly 2 incident copies per svg (flow + graph = 4×),
+        # minus self-loops (none in the demo) — a sane, deterministic bound
+        self.assertEqual(n_hl, 4 * n_edges)
+        self.assertLessEqual(out.count('marker-end="url(#arrow)"'),
+                             3 * n_edges + n_hl)          # base + copies, no leak
+
+    def test_hover_isolate_hostile_id_inert(self):
+        srv.package_create("hostg", "H", "rnd")
+        srv.entity_upsert([
+            {"type": "risk", "id": 'RISK-1"><script>', "title": "x"},
+            {"type": "risk", "id": "RISK-2", "title": "y"},
+            {"type": "trace-edge", "from_id": 'RISK-1"><script>', "to_id": "RISK-2",
+             "relation": "relates_to"}])
+        out = self._export()
+        self.assertNotIn("<script", out)                  # esc() holds in .hl copies
+        self.assertIn('class="nod"', out)
+
+    def test_flow_lead_flags_isolated_requirements(self):
+        """Plan 028 (C34 §5.2): the requirements the flow view cannot draw are the
+        unverified ones — the lead says so instead of reading rosier than reality."""
+        srv.package_create("isoreq", "I", "rnd")
+        srv.entity_upsert([
+            {"type": "requirement", "id": "FR-001", "kind": "functional",
+             "title": "wired", "mvp": 0, "lifecycle_status": "Approved",
+             "source_kind": "brief", "source_span": "x"},
+            {"type": "requirement", "id": "FR-002", "kind": "functional",
+             "title": "unwired", "mvp": 0, "lifecycle_status": "Approved",
+             "source_kind": "brief", "source_span": "x"},
+            {"type": "test", "id": "TEST-001", "title": "t"},
+            {"type": "trace-edge", "from_id": "TEST-001", "to_id": "FR-001",
+             "relation": "tests"}])
+        out = self._export()
+        self.assertIn("⚠ 1 requirement(s) have no trace edges and are not drawn", out)
+        m = __import__("re").search(
+            r"Isolated entities \(no trace edges\) — ⚠ 1 requirement\(s\) — ", out)
+        self.assertIsNotNone(m)                           # fold prefix + sorts first
+        self.assertRegex(out, r'<tr id="FR-002"><td>FR-002</td>')
 
     def test_relation_filter_radios_and_classes(self):
         self._open_demo_copy()

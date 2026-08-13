@@ -20,7 +20,10 @@ Register every piece of drift between reality and the `{package}` Tamheed packag
      `DEC-`/`ADR-` — upsert the decision row (status Proposed) if none exists, and
      STOP for approval before treating it as settled;
    - work simply unrecorded → `progress_update` per unit + `work_bind` per orphan
-     commit + `audit_record` for any criterion actually verified (with evidence).
+     commit + `audit_record` for any criterion actually verified (with evidence);
+   - a requirement created during execution → wire its trace edges (`derives_from` /
+     `implements` / `tests`) NOW — `work_bind` stamps commits, it does NOT wire
+     traceability (`gate_run`'s `requirements_unwired` advisory lists the strays).
 4. `gate_run()` and `readiness_check("package")` — report what was registered and
    what the package now says is blocking.
 5. `package_close()` and remind the operator to commit `data/`.

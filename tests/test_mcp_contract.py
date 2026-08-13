@@ -472,6 +472,25 @@ class McpContractTest(unittest.TestCase):
                                   "lifecycle_status": "Implemented"}])
         self.assertTrue(wbs["ok"], wbs)                      # unit of work: unguarded
 
+    def test_requirements_unwired_advisory_both_surfaces(self):
+        """Plan 028 (C34 §7): an execution-created requirement with zero trace edges
+        surfaces on gate_run AND package readiness — advisory on both, ready
+        untouched."""
+        make_complete_package("demo")
+        srv.entity_upsert([{"type": "requirement", "id": "FR-777",
+                            "kind": "functional", "title": "born mid-execution",
+                            "mvp": 0, "lifecycle_status": "Approved",
+                            "source_kind": "code", "source_span": "src/x.py"}])
+        out = srv.gate_run()
+        adv = out["gates"]["requirements_unwired"]
+        self.assertEqual(adv["status"], "advisory")
+        self.assertEqual(adv["requirements"], ["FR-777"])
+        self.assertTrue(out["ready"])                       # never blocks
+        rules = {r["rule"]: r for r in srv.readiness_check("package")["rules"]}
+        wired = rules["requirements-wired"]
+        self.assertEqual(wired["severity"], "advisory")
+        self.assertEqual(wired["entities"], ["FR-777"])
+
     def test_journal_is_append_only(self):
         """Plan 025 (C31/A4): recorded history cannot be rewritten via entity_upsert."""
         make_complete_package("demo")

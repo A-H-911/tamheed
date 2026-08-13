@@ -779,6 +779,19 @@ def gate_run() -> dict:
         "status": "advisory", "mistyped": mistyped,
         "note": "stored edges violating RELATION_RULES (legacy data) — new writes are"
                 " rejected; never fails the gate"}
+    # Plan 028 (C34 §7, the FR-156..159 class): requirements created during execution
+    # never get wired — work_bind stamps commits, it does not create trace edges, and
+    # G-TRACE only sees mvp=1 matrix rows. Advisory on the habitual every-session
+    # surface so a new unwired requirement surfaces within a session of being created.
+    unwired = [r[0] for r in conn.execute(
+        "SELECT id FROM requirements WHERE retired_in IS NULL"
+        " AND id NOT IN (SELECT from_id FROM trace_edges)"
+        " AND id NOT IN (SELECT to_id FROM trace_edges) ORDER BY id")]
+    report["requirements_unwired"] = {
+        "status": "advisory", "requirements": unwired,
+        "note": "non-retired requirements with ZERO trace edges — wire derives_from/"
+                "implements/tests in the session that creates them; never fails the"
+                " gate"}
     ready = all(v.get("status") == "pass" for k, v in report.items() if k.startswith("G-"))
     return {"ok": True, "ready": ready, "gates": report}
 
@@ -864,6 +877,12 @@ def _readiness_report(conn, scope: str, scope_id: str | None) -> dict:
              ids("SELECT id FROM execution_plans WHERE lifecycle_status NOT IN"
                  " ('Approved','Implemented','Superseded','Obsolete')"),
              "execution plans never approved")
+        rule("requirements-wired", "advisory",
+             ids("SELECT id FROM requirements WHERE retired_in IS NULL"
+                 " AND id NOT IN (SELECT from_id FROM trace_edges)"
+                 " AND id NOT IN (SELECT to_id FROM trace_edges)"),
+             "requirements with zero trace edges — execution-created rows never wired"
+             " (work_bind stamps commits, it does not wire traceability)")
         gate_where, gate_params = "applies_to IS NULL", ()
     elif scope == "phase":
         rule("acs-met", "blocking",

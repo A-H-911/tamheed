@@ -17,4 +17,8 @@ Sync the `{package}` Tamheed package with the work just completed:
    beats a narrated one; never record Met without pointing at the proof.
 5. If scope changed (something deferred, cancelled, expanded): write the typed
    `scope-change` row FIRST, then the mutation it authorizes.
-6. `gate_run()` — report the verdict delta, then `package_close()`.
+6. Any requirement created during this work gets its trace edges (`derives_from` /
+   `implements` / `tests`) in the SAME sync — `work_bind` stamps commits, it does
+   NOT wire traceability.
+7. `gate_run()` — report the verdict delta (including `requirements_unwired`),
+   then `package_close()`.
