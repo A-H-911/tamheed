@@ -177,13 +177,16 @@ human-intervention point.
   critical failure → loop to the owning stage. **Human:** review warnings. **Writes:** none (read-only).
 
 ### 20. Execution-agent handoff
-- **In:** validated package. **Do:** write `prompt` rows (initial / follow-up per phase gate / review)
-  per `prompt-templates.md`; `handoff_emit(target_dir)` — screens prompts (G-INJECT), writes prompt
-  files + the executor-side MCP config (`.mcp.json` + `CLAUDE.md` note) so the executing agent records
-  progress through the tools. **Out:** emitted handoff. **Enter:** Stage 19 green. **Exit:** Claude Code
-  could start from the initial prompt with no missing context. **Validate:** G-HANDOFF; emission not
-  blocked by G-INJECT. **Fail:** prompt references a missing entity → fix. **Human:** approve handoff.
-- **Writes:** prompts; then handoff_emit (external files).
+- **In:** validated package. **Do (v3, plan 027):** author prompt **files** (kickoff / follow-up per
+  phase gate / situational) in `<package>/prompts/` per `prompt-templates.md`;
+  `handoff_emit(target_dir)` — screens every package prompt file (G-INJECT + the stale scan), then
+  wires the target: `.mcp.json` + the marker-managed `CLAUDE.md` note (with the recording-obligations
+  table) so the executing agent records progress through the tools. Nothing is copied into the
+  target — the package folder is the single prompt source. **Out:** wired target. **Enter:** Stage 19
+  green. **Exit:** Claude Code could start from the kickoff prompt with no missing context.
+  **Validate:** G-HANDOFF; emission not blocked by G-INJECT. **Fail:** prompt references a missing
+  entity → fix; no project-authored prompt file → write one. **Human:** approve handoff.
+- **Writes:** `<package>/prompts/*.md`; then handoff_emit (target wiring only).
 
 ### 21. Progress & decision update cycles
 - **In:** execution feedback. **Do:** the executing agent (or operator) calls `progress_update` (journal),
@@ -191,6 +194,9 @@ human-intervention point.
   ("commit X satisfies FR-x/AC-y/SL-z" — stamps `last_referenced`). Cascades are automatic: all ACs of a
   requirement `Met` → requirement auto-advances to Implemented; views stay current by construction.
   Decision flips, supersessions, and typed scope changes follow `modes.md` (`scope-change` row first).
+  Close boundaries run `readiness_check(scope)` (plan 027): blocking rules guard the phase/slice
+  `Implemented` transition — `"force": true` only on the operator's explicit words, and the server
+  writes the FORCED audit row itself.
 - **Out:** current execution state. **Enter:** package handed off; an update arrives. **Exit:** entities
   and views consistent (they cannot drift — views are queries). **Validate:** G-PROGRESS via `gate_run`.
 - **Fail:** FK violation on an update = the update referenced a ghost — fix the caller. **Human:**

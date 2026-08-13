@@ -152,30 +152,39 @@ test → requirement (G-TRACE runs over these).
 canonical JSONL) and have the operator commit `data/` to their repository. No repository scaffolding —
 that capability was removed in v2 (ASM-B).
 
-**Quality validation (stage 19).** `gate_run` — referential gates report as enforced-at-write-time;
-coverage gates (G-TRACE, G-SET, G-PROGRESS) execute as SQL views; the content tier scans for
-placeholders. Record omissions honestly: an absent Always-class family needs an `omission` row with a
-reason, or G-SET fails.
+**Quality validation (stage 19).** `gate_run` — referential gates VERIFY at gate time (plan 027:
+foreign_key_check, entity_index consistency, real status/provenance SELECTs); coverage gates
+(G-TRACE, G-SET, G-PROGRESS) execute as SQL views; the content tier scans for placeholders; the
+advisory `relation_rules` sweep lists legacy mistyped edges (new writes are hard-rejected — typed
+relations constrain endpoint types, `relates_to` is the untyped escape hatch). Record omissions
+honestly: an absent Always-class family needs an `omission` row with a reason, or G-SET fails.
 
-**Handoff (stage 20).** Write `prompt` rows (initial / follow-up / review) from the prompt templates;
-`handoff_emit(target_dir)` screens them (G-INJECT), writes the prompt files, and installs the
-executor-side MCP config (`.mcp.json` + `CLAUDE.md` note) so the executing agent can record progress.
-See `references/handoff.md`.
+**Handoff (stage 20, v3).** Author prompt **files** (kickoff / follow-up / situational) in
+`<package>/prompts/` from the prompt templates — prompts are plain `.md` the operator reads and
+picks, never database rows; `handoff_emit(target_dir)` screens every package prompt file
+(G-INJECT + the stale scan) and wires the target: `.mcp.json` + the marker-managed `CLAUDE.md`
+note carrying the mandatory recording-obligations table. See `references/handoff.md`.
 
 **Update cycles (stage 21).** The executing agent (or operator) calls `progress_update`,
 `audit_record` (with evidence refs — an evidenced verdict beats a narrated one), and `work_bind`
 ("this commit satisfies FR-x/AC-y/SL-z"). Verdicts cascade: all ACs of a requirement `Met` →
 the requirement auto-advances. Scope changes follow the D-UPDATE flow in `references/modes.md` —
-**a `scope-change` row is written before any requirement/phase mutation, always.**
+**a `scope-change` row is written before any requirement/phase mutation, always.** Discovered
+defects become `defect` rows BEFORE the fix; out-of-scope finds become `deferred-work` rows with
+activation triggers. Close boundaries run `readiness_check(scope)`: its blocking rules guard the
+phase/slice `Implemented` transition (`"force": true` only on the operator's explicit words — the
+server records every forced transition itself).
 
-**Readiness (stage 22).** `gate_run` again; emit the readiness verdict from the gate report + open
-items + residual risks. Never declare ready while a critical gate fails.
+**Readiness (stage 22).** `gate_run` + `readiness_check("package")`; emit the readiness verdict
+from the gate report + blocking readiness failures + open items + residual risks. Never declare
+ready while a critical gate fails or a blocking readiness rule does.
 
 ## Governance, identifiers, and traceability
 
 All entities use the identifier scheme, lifecycle statuses, and cross-reference rules in
 `references/governance.md` (`FR-/NFR-/CON-/INV-/ASM-/DEP-/OQ-/DEC-/ADR-/RISK-/HYP-/EXP-/POC-/TEST-/
-KPI-/STK-/PH-/SL-/WBS-/MS-/AC-/AV-/PE-/DEF-/DW-/GATE-/EP-/CONV-/SC-/DOC-/SEC-/DIA-/PRM-`). Statuses are
+KPI-/STK-/PH-/SL-/WBS-/MS-/AC-/AV-/PE-/DEF-/DW-/GATE-/EP-/CONV-/SC-/DOC-/SEC-/DIA-`; `PRM-`
+retired in v3 — prompts are files, not entities). Statuses are
 three-axis (ADR-0001): `lifecycle_status` (Draft → Proposed → Approved / Rejected / Deferred →
 Implemented, Superseded → Obsolete), `verdict` (Met/Not-met, PASS/FAIL), and `disposition`
 (superseded / accepted-with-deviation / void — always with the deciding decision ref). A *proposed*
@@ -216,7 +225,7 @@ Read the reference file when you reach the matching part of the work; do not loa
 | `references/migration-v1.md` | Migrating a v1 Keystone package (`migrate` mode) — the mapping contract |
 | `references/migration-runbook.md` | The operator procedure: staged run, cutover, re-populate + swap |
 | `references/adopt.md` | Brownfield onboarding (`adopt` mode) |
-| `references/prompt-templates.md` | Writing initial / follow-up / review prompts |
+| `references/prompt-templates.md` | Writing project prompt files + the 14-file stock scenario library |
 | `references/generated-structure.md` | The layout of a generated v2 package |
 | `references/state.md` | State, resumption, and update cycles |
 | `references/extension.md` | Adding capabilities without touching core logic |

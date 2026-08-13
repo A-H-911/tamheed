@@ -136,8 +136,10 @@ mapping contract.
     risks map their v1 status into `risk_state` too (Open/Monitoring→open,
     Mitigated→mitigated, Closed→retired, Accepted→accepted). `Living`/`Complete` join
     the semantic status map. Migrate leaves the package OPEN after post-flight so
-    `handoff_emit` follows directly. Emitted prompt bodies are scanned for v1-protocol
-    instructions and dead relative links (reported, never rewritten).
+    `handoff_emit` follows directly. v1 prompt files land as `<package>/prompts/*.md`
+    (v3, plan 027 — body verbatim + provenance header, never rows); `handoff_emit`
+    scans them for v1-protocol instructions and dead relative links (reported, never
+    rewritten).
 19. **Table-shape tolerance II (C26).** Escaped in-cell pipes (`\|`) parse as literal
     pipes inside ONE cell — rows no longer shear at the escape. Title resolution is
     two-pass: an exact `Title`/`Name` column wins outright, then the alias set in column
@@ -182,7 +184,7 @@ mapping contract.
 | milestone rows (`Phase` cell) | `milestones` (`phase_id` = the `PH-` token found in the row) |
 | WBS ids `WBS-N.N` | `wbs_items` with `parent_id` derived from the ID (parents first) |
 | diagrams by filename | `diagrams` (`context`/`component`/`integration` → Conditional; `data-flow`/`deployment` → On-request) |
-| handoff prompt files | `prompts` (`initial`/`follow-up`/`review`) |
+| handoff prompt files | `<package>/prompts/<v1-stem>.md` files, body verbatim + provenance header (v3, plan 027 — the `prompts` table is gone) |
 | experiment/POC files | `experiments`/`pocs` (front-matter id/status; body preserved in `custom_attributes`) |
 | readiness report, status report, backlog | **not migrated** — derived views in v2 (regenerated from the rows) |
 | v1 progress log / running narrative | narrative document only — **no `PE-` rows are synthesized** (v2 progress starts empty; timestamps would be fabricated). The dated history survives in the document body (C21/B7) |

@@ -1,9 +1,11 @@
 # Handoff prompt templates
 
-Operational guidance for writing the three prompt kinds. Blank fill-in forms live in
+Operational guidance for writing the project prompt **files** (v3, plan 027: prompts are plain
+`.md` in `<package>/prompts/`, never database rows — any non-stock filename marks a project
+prompt; `handoff_emit` G-INJECT- and stale-scans every file). Blank fill-in forms live in
 `../templates/initial-prompt.template.md`, `follow-up-prompts.template.md`, and
-`review-prompts.template.md`. Write prompts for Claude Code (CLI/IDE) and reference real artifacts by
-path; keep the plan's technology choices vendor-neutral. Use Claude Code affordances — plan mode,
+`review-prompts.template.md`. Write prompts for Claude Code (CLI/IDE) and reference real entity ids;
+keep the plan's technology choices vendor-neutral. Use Claude Code affordances — plan mode,
 TodoWrite, subagents, a code-review pass — where they help, named as capabilities, not hard dependencies.
 
 ## Initial prompt — shape
@@ -40,29 +42,39 @@ Prompts that make Claude Code (or a human) check work against the plan — a cod
 implementation honors `INV-001..INV-00n`; report violations with file:line"), readiness recheck ("re-run
 the quality gates against the current repo"), and PR review against acceptance criteria.
 
-## The emitted scenario library (plan 018)
+## The stock scenario library (plan 018, grown in plan 027)
 
-Distinct from the three PRM- kinds above: five ready-to-paste operator prompts ship in the
+Distinct from the project prompts above: fourteen ready-to-paste operator prompts ship in the
 bundle (`../prompts/`) and are emitted verbatim (only `{package}` substituted) into
-`<package>/prompts/` by `package_migrate`, `package_adopt`, and `handoff_emit`:
+`<package>/prompts/` by `package_create`, `package_migrate`, `package_adopt`, and `handoff_emit`:
 
 | File | Scenario |
 |---|---|
 | `orient-resume.md` | Re-orient after a session clear/compaction — tools + git-history cross-check against `work_bind` records |
+| `package-onboarding.md` | A cold agent meets the package from zero: charter → invariants → roadmap → state → obligations |
+| `slice-kickoff.md` | Start the next open slice plan-first (STOP for approval, then AC-first execution) |
 | `progress-sync.md` | Record completed work: progress entries, bindings, evidenced verdicts, typed scope changes |
-| `integrity-check.md` | Read-only audit: gates, count totals, trace spot-checks, narrated verdicts, staleness vs git |
+| `defect-triage.md` | A bug surfaced: `DEF-` row BEFORE the fix, then fix/audit/bind/close the loop |
+| `drift-register.md` | Work happened unrecorded: classify everything into DEF-/DW-/SC-first + progress/bindings |
+| `slice-review.md` | Slice completion: audit ACs with evidence, bind commits, `readiness_check("slice")`, stop at the gate |
+| `phase-close.md` | Phase exit: phase-scope readiness blocking-clean, milestones, human GATE- confirmations, the guarded transition |
+| `release-close-out.md` | Package-scope readiness blocking-clean, human gates recorded, export, notes, close |
+| `replan-deferred.md` | Deferred-work triggers review: SC- first, activate, wire edges, STOP on new scope |
+| `integrity-check.md` | Read-only audit: gates, counts, trace spot-checks, narrated verdicts, staleness + unbound commits |
 | `generate-report.md` | Export + how to read `review.html` (nav, folded tables, freshness) |
-| `slice-review.md` | Slice/phase completion: audit ACs with evidence, bind commits, close out, stop at the gate |
+| `loop-iteration.md` | Fully-auto: ONE unattended pass ending in the machine-parseable `ITERATION:` block |
+| `loop-guard.md` | Fully-auto: the stop conditions — scope decisions and forced transitions always need a human |
 
-They are package artifacts for the *operator and executing agent*, not PRM- rows — no
-G-INJECT screening needed (trusted bundle content, no package-derived text). All three
-prompt surfaces (PRM rows → `handoff/*.md` emissions → this static library) follow the
+They are trusted bundle content with no package-derived text; the relocated G-INJECT screen
+scans them anyway at `handoff_emit` (tamper detection is free). Stock files follow the
 managed-emission sync model in `handoff.md`: re-emit refreshes, hand edits are detected and
-refused, nothing is silently clobbered.
+refused, nothing is silently clobbered. Project prompt files are operator-owned — never
+managed-refreshed, only screened.
 
 ## Wiring rules
 
 - Replace every placeholder; a shipped prompt with an unfilled `<…>` is a G-HANDOFF failure.
-- Reference artifacts by relative path that exists in the package.
+- Reference entities by id (`FR-012`, `SL-003`) — the package is the source of truth; any
+  file path a prompt names must exist (the stale scan flags dead relative links).
 - List invariant IDs explicitly; don't paraphrase them loosely.
 - State the stop/approval gate in every step that produces meaningful change.

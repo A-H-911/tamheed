@@ -10,6 +10,82 @@ All notable changes to Tamheed are documented here. The format is based on
 
 ## [Unreleased]
 
+## [3.0.0] - 2026-08-13
+
+Major release from seven direct maintainer observations after sustained ACMP usage
+(plan 027/B23 — no findings file; the observations, verification, and two interview
+rounds are recorded in `plans/027-v3-prompts-files-readiness.md`). Prompts leave the
+database, execution agents are bound to record drift, relations get typed rules, phase/
+slice closes get a deep readiness engine with a hard transition guard, and the review
+surface gains a layered traceability-flow view.
+
+> **Migration note (v2 → v3).** Two append-only schema migrations ship:
+> `003_drop_prompts.sql` (the prompts table is gone) and `004_readiness_views.sql`
+> (latest-verdict views); the store now tracks the applied head via
+> `PRAGMA user_version` (the full shipped set: `001_init.sql` = the schema itself,
+> `002_example_glossary.sql` = plan 015's extension worked example, 003, 004). Opening a v2 package converts `data/prompts.jsonl` to
+> `<package>/prompts/*.md` ONCE — loudly, abort-on-anomaly; the source is kept as
+> `data/prompts.jsonl.converted`, PRM- trace edges and the `prompt` registry/omission
+> rows are scrubbed, and the full report lands in the `package_open` result.
+> `handoff_emit` no longer copies prompts into the target and its `subdir` parameter is
+> refused: delete any leftover `handoff/prm-*.md` copies, delete the v1
+> `## Tamheed progress tracking` section from the target's CLAUDE.md, and re-run
+> `handoff_emit` for the marker-managed v2 note.
+
+### Changed (BREAKING)
+- **Prompts are `.md` files in `<package>/prompts/`, never database rows** (maintainer
+  note 1): migration `003_drop_prompts.sql` drops the table; the `prompt` entity type
+  is gone; `package_open` converts legacy packages once (see the migration note);
+  Stage 20 authors prompt FILES; `package_create` seeds the folder from birth;
+  `migrate` lands v1 prompt files as package files verbatim. G-INJECT and the C24/D-8
+  stale scan now run over the package prompt files at `handoff_emit`.
+- **`handoff_emit` is pure target wiring**: `.mcp.json` + the CLAUDE.md operating note;
+  no prompt copies; `subdir` refused; leftover v2 copies warned.
+- **Typed relations enforce endpoint types** (note 4): `RELATION_RULES` hard-rejects a
+  mistyped edge on new writes (e.g. `TEST —mitigates→ FR`) naming both types and the
+  `relates_to` escape hatch; stored legacy edges are untouched and reported by an
+  advisory `relation_rules` sweep in `gate_run` (never blocks).
+- **`gate_run` verifies at gate time**: G-IDS runs `PRAGMA foreign_key_check` +
+  entity_index consistency, G-DEC-STATUS/G-REQ-SRC run real SELECTs (whitespace-only
+  provenance is now caught) — the three hardcoded "enforced at write time" pass
+  literals are gone.
+- **Phase/slice → `Implemented` is guarded** (note 8, maintainer interview): the
+  blocking readiness rules refuse the transition; `"force": true` (operator-confirmed
+  only) proceeds and the server itself appends a `FORCED transition` progress entry.
+  Full-row re-upserts of already-Implemented rows never re-fire; `wbs-item` writes and
+  `package_close` are never guarded.
+
+### Added
+- **`readiness_check(scope, id?)`** — deep lifecycle-state validation at close
+  boundaries: blocking rules (decisions/ADRs pre-approval, ACs not latest-Met, open
+  defects, undischarged risks) + advisory rules (deferred work, open questions,
+  unapproved execution plans) + `human_required` (declared `execution_gates` rows —
+  prose definitions surfaced for human confirmation, never machine-evaluated).
+- **Migration `004_readiness_views.sql`** — `v_latest_verdicts` with NUMERIC journal
+  ordering, `v_phase_exit` rebuilt on it, new `v_slice_exit`. Fixes two latent
+  defects: the any-Met-ever phase-exit count (verdicts append; an old Met survived a
+  newer Not-met) and the string `ORDER BY id` latest-verdict (wrong past 1000 rows).
+- **Traceability flow view** (note 5): a layered left-to-right `#flow` section (Needs →
+  Decisions → Work → Verification → Risks), connected nodes only, labeled and
+  clickable, arrowheads, per-relation colors with CSS-only filter radios — zero JS.
+  The circular graph draws connected nodes only (74% of the golden's nodes were
+  isolated dots — now their own fold), with degree-scaled radii and a 12-hue palette.
+- **Recording obligations on every always-loaded surface** (note 3): the emitted
+  CLAUDE.md note is marker-managed (`tamheed:note v2`) and carries a mandatory 7-row
+  obligations table (defect → `DEF-` first; out-of-scope → `DW-` with trigger;
+  deviation → `SC-` FIRST; progress/audit/bind per unit; `readiness_check` before
+  declaring done); the three Stage-20 templates instruct the MCP tools instead of v1
+  markdown files; agent-control carries the same table verbatim.
+- **Scenario prompt library 5 → 14** (note 2): slice-kickoff, defect-triage,
+  drift-register, replan-deferred, release-close-out, phase-close, package-onboarding
+  (semi-auto) and loop-iteration + loop-guard (fully-auto, machine-parseable
+  `ITERATION:` contract for in-session /loop or external harnesses).
+- **`PRAGMA user_version` migration tracking** in the store (stamped from Python;
+  `server_info` reports `schema_version`) + a dedicated migration-mechanics suite.
+- **Three new lints** (note 6): CHANGELOG releases strictly newest-first; the PEP 723
+  `mcp<2` pin present and bounded (guards C33); every shipped migration named in this
+  file. Plus an `execution-loop` eval case exercising the record-as-you-execute shape.
+
 ## [2.7.1] - 2026-08-08
 
 Incident release from the twelfth ACMP field report (evidence **C33**, archived at

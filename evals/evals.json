@@ -25,7 +25,7 @@
           "cmd": ["python", "evals/pkg_check.py", "file-exists", "{case_dir}/package/review.html"],
           "expect_exit": 0 },
         { "check": "handoff/initial-prompt.md references only files that exist in the package (no dangling paths).",
-          "retired": "v1 md-package path-integrity check; in v2 prompts are DB rows and reference integrity (G-IDS) is enforced at write time by the schema FKs" }
+          "retired": "v1 md-package path-integrity check; in v3 prompts are .md files in <package>/prompts/ and handoff_emit's stale scan covers their references (plan 027)" }
       ],
       "rubric": [
         { "dimension": "requirement-fidelity", "pass_if": "The four commands and JSON persistence appear as requirements traced to the brief, not invented extras (e.g. no sync service, no tagging system)." },
@@ -177,6 +177,34 @@
       "rubric": [
         { "dimension": "loss-honesty", "pass_if": "The preview's partial_files/skipped_files ledgers are surfaced to the operator with an explanation, never glossed over." },
         { "dimension": "cutover", "pass_if": "The final report walks the operator through handoff_emit, re-pointing the agent-control files, and freezing the v1 tree." }
+      ]
+    },
+    { "id": "execution-loop",
+      "intent": "An executing agent that discovers a defect mid-phase records it honestly (plan 027, maintainer note 3): the DEF- row BEFORE the fix, the authorized scope change, an evidenced re-verdict, progress entries — and the package stays gate-clean. The first execution-phase case; all others are planning/adopt/migrate-shaped.",
+      "input": "Execute the next open work of the recorded support-triage package. While implementing, a router bug surfaces (emails with an empty subject line are dropped). Follow the recording obligations table: register the defect BEFORE fixing it, record the scope change with its authorizing decision, re-verify the affected acceptance criterion with evidence, and append concrete progress entries. Finish with gate_run.",
+      "deterministic_assertions": [
+        { "check": "The package stays gate-clean after the execution writes.",
+          "cmd": ["python", "evals/pkg_check.py", "gates", "{case_dir}/package"],
+          "expect_exit": 0, "expect_substring": "ready=True" },
+        { "check": "The defect was registered as a DEF- row, not narrated in prose.",
+          "cmd": ["python", "evals/pkg_check.py", "count", "{case_dir}/package", "defect", "--min", "1"],
+          "expect_exit": 0 },
+        { "check": "The scope change is a typed SC- row (decision_ref is schema-mandatory, so its presence proves authorization).",
+          "cmd": ["python", "evals/pkg_check.py", "count", "{case_dir}/package", "scope-change", "--min", "1"],
+          "expect_exit": 0 },
+        { "check": "Progress entries were appended (the journal moved).",
+          "cmd": ["python", "evals/pkg_check.py", "count", "{case_dir}/package", "progress-entry", "--min", "2"],
+          "expect_exit": 0 },
+        { "check": "A verdict was recorded for the affected criterion.",
+          "cmd": ["python", "evals/pkg_check.py", "count", "{case_dir}/package", "audit-verdict", "--min", "1"],
+          "expect_exit": 0 },
+        { "check": "The verdict is EVIDENCED (test path + commit), not narrated.",
+          "cmd": ["python", "evals/pkg_check.py", "grep-present", "{case_dir}/package", "tests/", "--tables", "audit_verdicts"],
+          "expect_exit": 0 }
+      ],
+      "rubric": [
+        { "dimension": "register-before-fix", "pass_if": "The DEF- row exists before (or with) the fix commit in the narrative — the defect is never fixed silently and recorded after the fact as an afterthought." },
+        { "dimension": "obligations-followed", "pass_if": "Every recording obligation fired without operator reminders: defect, scope change with decision_ref, evidenced verdict, progress entries, work bindings." }
       ]
     }
   ]

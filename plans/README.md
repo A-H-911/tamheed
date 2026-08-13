@@ -44,6 +44,7 @@ Keystone 1.0.1.
 | 024 | Eighth field report: ship the §8 scratch-diff tool | B20 | P3 | S | 023 DONE + the blob-inclusive §8 run; evidence C29 | DONE — executed 2026-07-23, v2.6.0; acceptance SUCCEEDED (findings_9/C30: tool-vs-script 185=185, empty UNEXPECTED, scratchpad retired) |
 | 025 | Tenth field report: EXECUTION hardening (allocator ceiling, truthful surfaces, stale guard) | B21 | P1 | M | findings_10 (first execution-shaped report); evidence C31 | DONE — executed 2026-08-08, v2.7.0; acceptance SUCCEEDED (findings_11/C32: all four §A defects verified FIXED by running the tools, C1/D exercised, zero asks) |
 | 026 | Twelfth field report (INCIDENT): pin the MCP SDK, truthful startup diagnostics | B22 | P0 | S | findings_12 (SDK 2.0.0 broke every fresh resolve); evidence C33 | DONE — executed 2026-08-08, v2.7.1; acceptance = ACMP reconnects on a fresh resolve |
+| 027 | Maintainer observations: prompts→files, readiness engine, typed relations, flow viewer, drift enforcement | B23 | P1 | XL | seven direct maintainer notes 2026-08-13 (no findings file); 3 exploration passes + devil's-advocate round + 2 interviews | DONE — executed 2026-08-13, **v3.0.0** (migrations 003+004); acceptance = the next ACMP run on 3.0.0 (live-package conversion, flow view, unprompted recording, readiness at a real close) |
 
 Status values: TODO | IN PROGRESS | DONE | BLOCKED (with one-line reason) | REJECTED (with
 one-line rationale).
@@ -61,6 +62,24 @@ export + freshness/lead renders (012); tamheed repo public from day one with WIP
 eval schedule disabled at close-out (016). **Execution driver: the maintainer runs the plans
 himself** — self-containment is the operative contract; this status table is the tracking
 surface.
+
+## Alignment record (2026-08-13 — plan 027, the v3 maintainer-observation cycle)
+
+The first cycle driven by **direct maintainer observations** (seven notes) instead of a
+findings file, and the first MAJOR since v2.0.0. Method notes worth keeping: (1) every
+note was verified against source by three parallel exploration passes BEFORE design —
+note 4 ("relations are loose") was largely contradicted at the schema layer (47 FKs, both
+edge endpoints constrained) and the real defects were elsewhere (hardcoded gate passes,
+no endpoint-type rules); note 5 was quantified (74% isolated nodes, 24 families / 8
+hues). (2) The maintainer's devil's-advocate round re-verified all sub-agent claims by
+direct read and paid for itself twice: SQLite does NOT drop views with a table (had to
+be proven before shipping a bare DROP), and a NEW latent defect fell out — the viewer's
+string-ordered latest-verdict, wrong past 1000 rows, invisible until an executed package
+gets there. (3) Two interview rounds hardened decisions the plan had softer: readiness
+enforcement went from advisory-only to the HARD transition guard with operator-confirmed
+force + a server-written audit row, and undischarged risks joined the blocking set.
+Locked decisions: full prompts-table removal + convert-on-open; flat prompts folder;
+hard relation rules with `relates_to` escape; BOTH viewer views; v3.0.0. v3.0.0, MAJOR.
 
 ## Alignment record (2026-08-08, third entry — plan 026, the SDK incident)
 

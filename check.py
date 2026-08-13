@@ -146,6 +146,41 @@ def gate_lint() -> None:
              " — bump both together (plan 017 W8)")
     print(f"lint: plugin.json {plugin_ver} == newest CHANGELOG release")
 
+    changelog = (REPO / "CHANGELOG.md").read_text(encoding="utf-8")
+
+    # 5) CHANGELOG ordering (plan 027): lint 4 trusts the FIRST heading to be the
+    #    newest — that trust was never checked. Releases must be strictly descending.
+    versions = [tuple(int(p) for p in m.groups()) for m in
+                re.finditer(r"^## \[(\d+)\.(\d+)\.(\d+)\]", changelog, re.M)]
+    for newer, older in zip(versions, versions[1:]):
+        if newer <= older:
+            fail("CHANGELOG releases not newest-first: "
+                 f"{'.'.join(map(str, newer))} appears above {'.'.join(map(str, older))}")
+    print(f"lint: CHANGELOG {len(versions)} releases strictly newest-first")
+
+    # 6) the MCP SDK pin (plan 027, guards C33): SDK 2.0.0 removed mcp.server.fastmcp
+    #    and the unbounded dep broke every fresh resolve — the bound must never widen
+    #    silently (the deliberate mcpserver port is the only sanctioned path).
+    server_head = "\n".join(
+        (REPO / "plugins" / "tamheed" / "server" / "tamheed_server.py")
+        .read_text(encoding="utf-8").splitlines()[:15])
+    if not re.search(r'dependencies = \["mcp>=[0-9.]+,<2"\]', server_head):
+        fail("PEP 723 mcp pin missing or widened in tamheed_server.py — this build"
+             " requires mcp<2 (C33); port serve() to mcp.server.mcpserver before"
+             " touching the bound")
+    print("lint: PEP 723 mcp pin bounded (<2)")
+
+    # 7) migrations are announced (plan 027): every shipped schema migration must be
+    #    named somewhere in the CHANGELOG — a migration without a release note is how
+    #    an operator meets a schema change unwarned.
+    unannounced = sorted(
+        p.name for p in
+        (REPO / "plugins" / "tamheed" / "db" / "migrations").glob("[0-9]*.sql")
+        if p.name != "001_init.sql" and p.name not in changelog)
+    if unannounced:
+        fail(f"schema migration(s) never mentioned in CHANGELOG.md: {unannounced}")
+    print("lint: every migration (002+) is named in the CHANGELOG")
+
 
 def gate_canonical() -> None:
     sys.path.insert(0, str(REPO / "plugins" / "tamheed" / "db"))

@@ -1,0 +1,2 @@
+{"id":"PE-001","entry":"Reproduced the empty-subject drop as a failing test, registered DEF-001 BEFORE fixing, fixed to green.","phase_id":"PH-1","slice_id":null,"occurred_at":"2026-08-13T16:55:00Z","custom_attributes":null,"last_referenced":null}
+{"id":"PE-002","entry":"SC-001 recorded (normalization step, authorized by DEC-001); AC-001 re-verified with evidence.","phase_id":"PH-1","slice_id":null,"occurred_at":"2026-08-13T16:55:00Z","custom_attributes":null,"last_referenced":null}

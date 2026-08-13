@@ -1,7 +1,8 @@
-# Generated package structure (v2)
+# Generated package structure (v3)
 
-The layout Tamheed produces **for a target project** (distinct from the Tamheed repo itself). A v2
-package is a data directory plus emitted handoff surfaces — not a tree of Markdown registers.
+The layout Tamheed produces **for a target project** (distinct from the Tamheed repo itself). A
+package is a data directory plus the prompts folder plus emitted review surfaces — not a tree of
+Markdown registers.
 
 ```
 <project-package>/
@@ -14,14 +15,16 @@ package is a data directory plus emitted handoff surfaces — not a tree of Mark
 │   ├── phases.jsonl               # kpis, stakeholders, milestones, slices, wbs_items,
 │   ├── acceptance_criteria.jsonl  # audit_verdicts, progress_entries, defects, deferred_work,
 │   ├── trace_edges.jsonl          # execution_gates, execution_plans, conventions, scope_changes,
-│   ├── narrative_documents.jsonl  # document_sections, diagrams, prompts, omissions
+│   ├── narrative_documents.jsonl  # document_sections, diagrams, omissions
 │   ├── …
 │   └── .lock                      # single-writer lock (transient; never committed)
-├── handoff/                       # emitted by handoff_emit into the TARGET project
-│   └── prm-*.md                   # rendered prompt files (initial / follow-up / review)
-└── (target project root)          # handoff_emit also writes there:
+├── prompts/                       # v3 (plan 027): ALL prompts, plain .md — read the folder, pick
+│   ├── <kickoff>.md               # project-authored (Stage 20; any non-stock filename)
+│   └── <14 stock scenarios>.md    # the bundled library ({package} substituted), seeded at create
+├── review.html (+ csv/)           # the human review surface, exported on demand
+└── (target project root)          # handoff_emit writes there (wiring only, no prompt copies):
     ├── .mcp.json                  #   executor-side MCP config → the tamheed server
-    └── CLAUDE.md                  #   progress-tracking note appended
+    └── CLAUDE.md                  #   the marker-managed operating note (obligations table)
 ```
 
 The operator commits `<project-package>/data/` to whichever repository they choose — the package
