@@ -1143,6 +1143,9 @@ def _restated_content_report(target: Path) -> list[dict]:
 _STALE_BLOCK_RE = re.compile(
     r"\n?<!-- tamheed:stale-warning -->.*?<!-- /tamheed:stale-warning -->\n?", re.S)
 
+# Plan 027: the operating note's managed span (any version — v-bump = an update).
+_NOTE_BLOCK_RE = re.compile(r"<!-- tamheed:note v\d+ -->.*?<!-- /tamheed:note -->", re.S)
+
 
 def handoff_emit(target_dir: str, subdir: str = "handoff", force: bool = False) -> dict:
     """Wire the target project to the package: .mcp.json (standalone installs) + the
@@ -1236,8 +1239,8 @@ def handoff_emit(target_dir: str, subdir: str = "handoff", force: bool = False) 
     server_line = ("The `tamheed` MCP server is provided by the installed tamheed plugin "
                    "(no project-level .mcp.json entry needed)." if plugin_hosted else
                    "The `tamheed` MCP server is registered in this project's `.mcp.json`.")
-    note = (
-        "\n## Tamheed progress tracking\n\n"
+    note_block = (
+        "<!-- tamheed:note v2 -->\n\n"
         f"This project executes Tamheed package `{_CURRENT_NAME}` "
         f"(under `{PACKAGE_ROOT.resolve()}`). **The package is the record — when code and "
         "package disagree, fix the code or record a scope change; never let them drift.** "
@@ -1245,9 +1248,27 @@ def handoff_emit(target_dir: str, subdir: str = "handoff", force: bool = False) 
         "are destroyed by `git reset --hard` / `git checkout` / `git stash` exactly like "
         "uncommitted source — commit the package `data/` before branch operations. "
         f"{server_line} All package reads/writes go through the `tamheed` MCP tools; "
-        f"ready-made task prompts live in `{_CURRENT_NAME}/prompts/` "
-        "(orient-resume, progress-sync, integrity-check, generate-report, slice-review) "
-        f"and the human review surface is `{_CURRENT_NAME}/review.html`.\n"
+        f"ready-made task prompts live in `{_CURRENT_NAME}/prompts/` — read the folder "
+        f"and pick; the human review surface is `{_CURRENT_NAME}/review.html`.\n"
+        "\n### Recording obligations (mandatory — unrecorded work is drift)\n\n"
+        "| During execution, when… | Record BEFORE moving on |\n"
+        "|---|---|\n"
+        "| you find a defect | `entity_upsert` a `defect` row (`DEF-`, status Open) —"
+        " then fix it |\n"
+        "| you find needed work that is out of scope | `entity_upsert` a `deferred-work`"
+        " row (`DW-`) with an activation trigger |\n"
+        "| you deviate from the approved plan in any way | a `scope-change` row (`SC-`)"
+        " FIRST, `decision_ref` naming the deciding `DEC-`/`ADR-` — then the change |\n"
+        "| you finish a unit of work | `progress_update(...)` — concrete entry with"
+        " phase/slice ids |\n"
+        "| you verify an acceptance criterion | `audit_record(...)` with evidence —"
+        " never Met without proof |\n"
+        "| you create a commit or PR | `work_bind(ref, entity_ids=[...])` |\n"
+        "| you declare a slice/phase/release done | `readiness_check(scope)` first —"
+        " resolve every blocking failure or register the waiving SC-/DW-; NEVER pass"
+        " `\"force\": true` without the operator's explicit words |\n"
+        "\nIf you cannot record (lock held, package missing), STOP and tell the"
+        " operator — do not proceed unrecorded.\n"
         "\n### Tool cheat-sheet (execution loop)\n\n"
         "- `progress_update(entries=[{entry, phase_id?, slice_id?}])` — append progress\n"
         "- `audit_record(verdicts=[{ac_id, verdict: Met|Partial|Not-met|Pending,"
@@ -1256,16 +1277,32 @@ def handoff_emit(target_dir: str, subdir: str = "handoff", force: bool = False) 
         "- `entity_query(type, id?, status?, columns?, limit?)` — rows + total\n"
         "- `trace_query(entity_id, direction: out|in|both, relation?)` — typed links\n"
         "- `entity_upsert(entities=[{type, id, ...}])` — FULL rows, even for updates\n"
-        "- `gate_run()` — mechanical gate verdict · `export_html()` — refresh review.html\n"
-        "- `server_info()` — version + resolved package root (orientation)\n")
+        "- `gate_run()` — mechanical gate verdict · `readiness_check(scope, id?)` —"
+        " is it actually DONE\n"
+        "- `export_html()` — refresh review.html · `server_info()` — version + root\n"
+        "<!-- /tamheed:note -->\n")
+    note = "\n## Tamheed progress tracking\n" + note_block
     claude_md = target / "CLAUDE.md"
     existing = claude_md.read_text(encoding="utf-8") if claude_md.exists() else ""
     # Marker-managed warning block (C20/B2): rebuilt on EVERY emit — added while the scan
-    # finds stale references, REMOVED once it is clean. The operating note itself stays
-    # append-once. "Re-run emit to verify the cutover" is thereby self-contained.
+    # finds stale references, REMOVED once it is clean.
     content = _STALE_BLOCK_RE.sub("\n", existing)
+    # Plan 027: the operating note is marker-managed too (v1 was append-once and could
+    # never receive updates). A v1 note (heading, no markers) has no terminator to
+    # bound a safe machine edit — warned, never touched; one manual deletion upgrades.
+    note_m = _NOTE_BLOCK_RE.search(content)
     if "## Tamheed progress tracking" not in content:
         content = content + note
+    elif note_m is None:
+        warnings.append(
+            "CLAUDE.md carries the v1 Tamheed operating note — delete the"
+            " '## Tamheed progress tracking' section and re-run handoff_emit; the v2"
+            " note is marker-managed and self-updates thereafter")
+    elif note_m.group(0) != note_block.rstrip("\n"):
+        if force:
+            content = content.replace(note_m.group(0), note_block.rstrip("\n"))
+        else:
+            diverged.append("CLAUDE.md (tamheed:note)")
     if stale:
         content += ("\n<!-- tamheed:stale-warning -->\n"
                     "> **Stale v1 references detected** in this project's agent-control "

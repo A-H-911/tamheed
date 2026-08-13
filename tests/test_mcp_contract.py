@@ -764,8 +764,53 @@ class McpContractTest(unittest.TestCase):
             srv.handoff_emit(target)
             note = (Path(target) / "CLAUDE.md").read_text(encoding="utf-8")
         for needle in ("Tool cheat-sheet", "audit_record(", "work_bind(",
-                       "entity_query(", "FULL rows", "demo/prompts/"):
+                       "entity_query(", "FULL rows", "demo/prompts/",
+                       # plan 027: the note is marker-managed and carries the
+                       # mandatory obligations table + the readiness protocol
+                       "<!-- tamheed:note v2 -->", "<!-- /tamheed:note -->",
+                       "Recording obligations", "`scope-change` row (`SC-`) FIRST",
+                       "activation trigger", "readiness_check(scope)",
+                       "STOP and tell the operator"):
             self.assertIn(needle, note)
+
+    def test_claude_md_v1_note_warned_never_touched(self):
+        """Plan 027: a v1 note (heading, no markers) has no terminator to bound a safe
+        machine edit — warned, never modified; operator prose below it survives."""
+        self._emit_ready()
+        with tempfile.TemporaryDirectory() as target:
+            v1 = ("# Project\n\n## Tamheed progress tracking\n\nOld v1 note body.\n\n"
+                  "## Operator section\n\nPrecious hand-written notes.\n")
+            (Path(target) / "CLAUDE.md").write_text(v1, encoding="utf-8")
+            out = srv.handoff_emit(target)
+            self.assertTrue(out["ok"], out)
+            self.assertTrue(any("v1 Tamheed operating note" in w
+                                for w in out["warnings"]))
+            after = (Path(target) / "CLAUDE.md").read_text(encoding="utf-8")
+            self.assertIn("Old v1 note body.", after)          # untouched
+            self.assertIn("Precious hand-written notes.", after)
+            self.assertNotIn("tamheed:note v2", after)         # not machine-upgraded
+
+    def test_claude_md_marked_note_updates_and_diverges(self):
+        """Plan 027: the marked block self-updates when the emission changes, refuses a
+        hand edit without force, and force replaces exactly the span."""
+        self._emit_ready()
+        with tempfile.TemporaryDirectory() as target:
+            srv.handoff_emit(target)
+            claude = Path(target) / "CLAUDE.md"
+            second = srv.handoff_emit(target)
+            self.assertIn("CLAUDE.md", second["unchanged"])    # identical: no rewrite
+            hacked = claude.read_text(encoding="utf-8").replace(
+                "never Met without proof", "verdicts are optional")
+            claude.write_text(hacked, encoding="utf-8")
+            third = srv.handoff_emit(target)
+            self.assertIn("CLAUDE.md (tamheed:note)", third["diverged"])
+            self.assertIn("verdicts are optional",
+                          claude.read_text(encoding="utf-8"))  # refused, not clobbered
+            forced = srv.handoff_emit(target, force=True)
+            self.assertIn("CLAUDE.md", forced["written"])
+            restored = claude.read_text(encoding="utf-8")
+            self.assertIn("never Met without proof", restored)
+            self.assertNotIn("verdicts are optional", restored)
 
     def test_stale_reference_report_is_precise(self):
         self._emit_ready()

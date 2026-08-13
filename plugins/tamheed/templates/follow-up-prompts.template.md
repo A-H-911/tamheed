@@ -27,12 +27,12 @@ Phase `PH-1` is complete and approved; its exit criteria were: <restate PH-1 exi
 1. <task> — PASS = <observable>; FAIL = <observable>. Traces to `WBS-2.x`, `AC-0xx`.
 2. <task> — PASS = <…>; FAIL = <…>.
 
-**Before the exit gate — update tracking:** `../validation/acceptance-criteria.md` (status + evidence),
-`../validation/acceptance-audit.md` (verdict + evidence per `AC-`), `../progress/progress-log.md`
-(append), and regenerate `../progress/status-report.md`.
+**Before the exit gate — record through the tools (v3):** `audit_record` (verdict + evidence
+per `AC-`), `progress_update` (what actually happened), `work_bind` per commit, then
+`gate_run()` and `readiness_check("phase", "PH-2")` — resolve every blocking failure.
 
 **Exit gate:** <the PH-2 exit criteria>. When met, **STOP** and request review before `PH-3`.
-Record any deviation as an ADR.
+Any deviation: `scope-change` row FIRST (`decision_ref` → the deciding `DEC-`/`ADR-`).
 
 ### → Enter Phase `PH-3` — <phase title>
 
@@ -72,22 +72,27 @@ Given <symptom>, reproduce it, identify the failing `INV-`/`AC-`/`TEST-`, propos
 the current phase, and state the PASS/FAIL that proves it fixed. Pause for approval before large changes.
 
 ### Release prep
-Confirm Definition of Done (`../execution/definition-of-done.md`) for the release scope, re-run the quality
-gates, ensure the readiness report is **go**, and prepare release notes from the progress log.
+Run `readiness_check("package")` — resolve every blocking failure (pre-approval
+decisions/ADRs, ACs not latest-Met, open defects, undischarged risks) and confirm the
+`human_required` gates with the operator, recording each confirmation via
+`progress_update`. Then `gate_run()`, `export_html()`, and release notes from
+`entity_query("progress-entry")`. (The emitted `<package>/prompts/release-close-out.md`
+is the full version of this.)
 
 ### Deviation ADR
-A change departs from the approved plan. Draft `adr-NNNN-<title>.md` (status Proposed) capturing context,
-the decision, consequences, and rejected alternatives. STOP for approval before implementing.
+A change departs from the approved plan. Upsert the `adr` row (status Proposed) capturing
+context, decision, consequences, and rejected alternatives, then the `scope-change` row
+with `decision_ref` pointing at it. STOP for approval before implementing.
 
 ### Status report
-Regenerate `../progress/status-report.md` from current state: phase, milestones, completed/in-progress
-work, blockers, active risks, and decisions since the last report.
+`export_html()` and read `review.html` — overview chips, execution progress, phase
+readiness. The report is generated, never hand-maintained.
 
 ### Acceptance audit (at each phase gate)
-Update `../validation/acceptance-audit.md`: for every `AC-` this phase covers, set the verdict (Met /
-Partial / Not-met / Pending) with evidence (`TEST-`/commit/CI/golden). Call out Partial/Not-met honestly
-with a reason — never rubber-stamp. Every `AC-` in `../validation/acceptance-criteria.md` must appear
-(gate G-PROGRESS checks this coverage).
+`audit_record` a verdict (Met / Partial / Not-met / Pending) with evidence
+(`TEST-`/commit/CI/golden) for every `AC-` this phase covers. Call out Partial/Not-met
+honestly with a reason — never rubber-stamp (gate G-PROGRESS checks coverage; verdicts
+APPEND — corrections are new rows, and only the latest counts).
 
 ### Phase-exit summary
 Write a short phase-exit summary: per-item verdicts vs the phase's exit/acceptance criteria, decisions
@@ -101,10 +106,11 @@ pre-committed criteria, measurements, surprises/caveats, and implications carrie
 deciding `DEC-`/`HYP-`. Pause for review before acting on the result.
 
 ### Defect log
-For a reported bug: reproduce it as a minimal failing test, record it (id · symptom · status · fix layer
-· commit), fix to green, and note whether any baseline legitimately changed. Keep the log so a later
-session can pick it up cold.
+For a reported bug: reproduce it as a minimal failing test, **`entity_upsert` the `defect`
+row (`DEF-`, status Open, `found_in` the phase/slice) BEFORE fixing**, fix to green,
+`work_bind` the fix commit to the `DEF-` and affected `AC-`, and flip the DEF- status.
+(The emitted `<package>/prompts/defect-triage.md` is the full version of this.)
 
 ### Phase 1 — baseline (seed ADRs from the architecture)
-Begin Phase 1: seed the ADRs from `../architecture/architecture.md` into `../adrs/` (status Proposed),
+Begin Phase 1: seed the `adr` rows from the architecture decisions (status Proposed),
 propose the package scaffolding + CI skeleton, and STOP before writing implementation code.

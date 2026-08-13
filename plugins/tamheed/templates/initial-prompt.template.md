@@ -54,16 +54,21 @@ Work **acceptance-criteria-first**, one bounded task at a time: pick an `AC-`, w
 implement until it passes, then repeat — e.g. "Implement <thin slice> so that `AC-001` passes. PASS =
 <observable>; FAIL = <observable>." Do one task, then **pause for review** — do not batch ahead.
 
-**Track as you go (before each pause / phase gate):** keep a live task list with TodoWrite; update `../validation/acceptance-criteria.md`
-(status + evidence), update `../validation/acceptance-audit.md` (verdict + evidence per `AC-`), append
-`../progress/progress-log.md`, and regenerate `../progress/status-report.md`. Keep the acceptance
-criteria as the live checklist and report progress against it.
+**Track as you go (v3, plan 027 — the MCP tools ARE the record):** keep a live task list
+with TodoWrite; per unit of work `progress_update(...)`; per verified criterion
+`audit_record(verdicts=[{ac_id, verdict, evidence}])` — evidence always, never Met without
+proof; per commit/PR `work_bind(ref, entity_ids=[...])`. The package is the live
+checklist — report progress against `gate_run()` / `readiness_check(scope)`, never a
+hand-maintained copy.
 
 ### Rules
 
 - Respect the invariants (`INV-`) at every step.
 - Pin dependency versions; introduce no unvetted dependencies (see prerequisites).
-- Record any deviation from the plan as a new **ADR** (`adrs/adr-NNNN-*.md`) — never silently deviate.
+- Any deviation from the plan: a `scope-change` row (`SC-`) FIRST, `decision_ref` naming
+  the deciding `DEC-`/`ADR-` (upsert the decision if none exists) — never silently
+  deviate. A defect found → `defect` row (`DEF-`) before fixing; out-of-scope discovery
+  → `deferred-work` row (`DW-`) with an activation trigger.
 - Do **not** expand scope beyond Phase `PH-1`.
 - When in doubt about an approved decision, ask rather than re-deciding.
 
