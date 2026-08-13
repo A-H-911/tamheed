@@ -17,5 +17,11 @@ Run a read-only integrity check on the `{package}` Tamheed package:
 5. Check staleness: compare the freshness line in a fresh `export_html()` against
    `git log -1` — if git is ahead of the package's recorded activity, the package
    is stale; recommend a progress sync.
-6. Report: gate verdict, count anomalies, trace gaps, narrated verdicts, staleness
-   — then `package_close()`. Change NOTHING in this run.
+6. **Cross-check git against the bindings**: `git log --oneline -15` vs the recorded
+   `work_bind` refs — list package-relevant commits with no recorded binding (drift;
+   recommend the drift-register prompt). Do NOT invent records for them.
+7. `readiness_check("package")` — report the blocking/advisory findings as data
+   (this run resolves nothing).
+8. Report: gate verdict, count anomalies, trace gaps, narrated verdicts, staleness,
+   unbound commits, readiness blockers — then `package_close()`. Change NOTHING in
+   this run.

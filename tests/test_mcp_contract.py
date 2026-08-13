@@ -747,16 +747,21 @@ class McpContractTest(unittest.TestCase):
         self._emit_ready()
         with tempfile.TemporaryDirectory() as target:
             out = srv.handoff_emit(target)
-            self.assertEqual(len(out["prompt_library"]["unchanged"]), 5)  # from create
+            self.assertEqual(len(out["prompt_library"]["unchanged"]), 14)  # from create
             self.assertEqual(out["project_prompts"], ["kickoff.md"])
         lib = srv.PACKAGE_ROOT / "demo" / "prompts"
         stock = sorted(p.name for p in lib.glob("*.md") if p.name != "kickoff.md")
-        self.assertEqual(stock, ["generate-report.md", "integrity-check.md",
-                                 "orient-resume.md", "progress-sync.md",
-                                 "slice-review.md"])
+        self.assertEqual(stock, [  # plan 027: 14 scenarios, both operator styles
+            "defect-triage.md", "drift-register.md", "generate-report.md",
+            "integrity-check.md", "loop-guard.md", "loop-iteration.md",
+            "orient-resume.md", "package-onboarding.md", "phase-close.md",
+            "progress-sync.md", "release-close-out.md", "replan-deferred.md",
+            "slice-kickoff.md", "slice-review.md"])
         text = (lib / "orient-resume.md").read_text(encoding="utf-8")
         self.assertIn('package_open("demo")', text)      # {package} substituted
         self.assertNotIn("{package}", text)
+        loop = (lib / "loop-iteration.md").read_text(encoding="utf-8")
+        self.assertIn("ITERATION: wbs=", loop)           # the machine contract line
 
     def test_claude_md_note_contains_cheatsheet(self):
         self._emit_ready()

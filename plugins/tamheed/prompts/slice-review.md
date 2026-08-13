@@ -19,6 +19,11 @@ Review the just-completed slice/phase of the `{package}` Tamheed package:
    trigger), via `entity_upsert` — full rows.
 6. Scope deviations found during review: typed `scope-change` row before anything
    else moves.
-7. `gate_run()` — G-PROGRESS must hold (every AC has a verdict once auditing
+7. `readiness_check("slice", "<SL-x>")` — resolve every blocking failure (ACs not
+   latest-Met, open work items, open defects) or register the waiving SC-/DW- row.
+   The slice's `lifecycle_status: "Implemented"` transition is guarded by these same
+   rules; `"force": true` only on the operator's explicit words.
+8. `gate_run()` — G-PROGRESS must hold (every AC has a verdict once auditing
    started). `export_html()` to refresh the committed review, report the verdict,
-   and STOP at the phase gate for operator approval before the next slice.
+   and STOP at the phase gate for operator approval before the next slice (phase
+   exits use the phase-close prompt).

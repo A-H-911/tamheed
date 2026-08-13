@@ -20,4 +20,6 @@ Orient yourself on this project's Tamheed package before doing anything else:
    and the roadmap order — state which slice you believe is in progress and why.
 7. Report back in five lines: package state, gate verdict, last recorded activity,
    unrecorded-work findings, and the slice you propose to resume. STOP for
-   confirmation before writing anything.
+   confirmation before writing anything. (Resuming work on an approved slice →
+   slice-kickoff.md; a cold agent that has never seen this package →
+   package-onboarding.md.)
