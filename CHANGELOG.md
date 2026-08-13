@@ -10,6 +10,36 @@ All notable changes to Tamheed are documented here. The format is based on
 
 ## [Unreleased]
 
+## [3.2.1] - 2026-08-14
+
+Documentation release from the fifteenth ACMP field report — the v3.2.0 acceptance
+(evidence **C36**, archived at `plans/evidence/acmp-field-report-15-2026-08-14.md`):
+all three findings_14 negatives verified fixed, the prompt curation completed, and the
+obligations note's **instruction transfer proven** in a controlled probe (autonomous
+discharge awaits a genuinely fresh session). **No schema migration, no code-behavior
+change.**
+
+### Fixed
+- **`prompts/README.md` indexes the folder, not just the library** (C36): a closing
+  table row points table-scanners at project prompts ("any other `.md` here —
+  operator-authored, purpose-named"), and a new **"One session at a time"** section
+  teaches the single-writer lock and the field-validated stale-lock discipline (two
+  discriminators: a live pid that plausibly IS an agent session AND that started
+  before the lock's `taken_at`; never auto-clear).
+
+### Changed
+- **The documentation READMEs are updated with every release — lint-enforced**
+  (maintainer contract): check.py lint #8 requires the root README, the server
+  README, and the prompts operator guide to carry the current version string; a
+  release that skips one fails the gate. The root README received its full v3 content
+  sweep (11 verified-stale spots: version badge, prompts-as-files + the 15-file
+  library, the note-span/force contract, the transition guard + typed relations,
+  `readiness_check` in the tools table, the flow view + hover-isolate + readiness
+  panel, the mermaid handoff node, the repo tree's missing `prompts/` +
+  `db/migrations/`, ten suites, Maturity v3.x). The versioned operator guide
+  deliberately diverges package copies each release — that IS the guide-update
+  delivery signal via the documented delete+re-emit path.
+
 ## [3.2.0] - 2026-08-14
 
 Fix release from the fourteenth ACMP field report — the v3.1.0 acceptance run

@@ -181,6 +181,16 @@ def gate_lint() -> None:
         fail(f"schema migration(s) never mentioned in CHANGELOG.md: {unannounced}")
     print("lint: every migration (002+) is named in the CHANGELOG")
 
+    # 8) README freshness (plan 030, maintainer contract): the documentation READMEs
+    #    are updated with EVERY release — each must carry the current version string,
+    #    so a release that skips one fails the gate (the version-sync-lint precedent).
+    for rel in ("README.md", "plugins/tamheed/server/README.md",
+                "plugins/tamheed/prompts/README.md"):
+        if plugin_ver not in (REPO / rel).read_text(encoding="utf-8"):
+            fail(f"{rel} does not mention the current version {plugin_ver} — the"
+                 " READMEs are updated with every release (plan 030)")
+    print(f"lint: all 3 READMEs carry v{plugin_ver}")
+
 
 def gate_canonical() -> None:
     sys.path.insert(0, str(REPO / "plugins" / "tamheed" / "db"))

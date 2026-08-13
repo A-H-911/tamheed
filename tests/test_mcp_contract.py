@@ -850,6 +850,11 @@ class McpContractTest(unittest.TestCase):
         self.assertIn("Which prompt, when", guide)       # plan 028: the operator guide
         self.assertIn("`demo` prompt guide", guide)
         self.assertNotIn("{package}", guide)
+        # plan 030 (C36): the table indexes the FOLDER, not just the library, and the
+        # guide teaches the single-writer lock + the stale-lock discipline
+        self.assertIn("project prompts are operator-authored", guide)
+        self.assertIn("single-writer lock", guide)
+        self.assertIn("Never auto-clear", guide)
 
     def test_leftover_verdicts_delete_vs_move(self):
         """Plan 028 (C34 §2): the leftover warning is per file — a byte/normalized

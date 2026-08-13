@@ -1,6 +1,8 @@
 # Tamheed MCP server
 
-The **only write path** into a Tamheed v2 package (ADR-0001). Agents interact with a package
+Documents the tool surface as of **tamheed v3.2.1**.
+
+The **only write path** into a Tamheed package (ADR-0001). Agents interact with a package
 exclusively through these MCP tools: every write passes schema validation (FKs, CHECKs,
 NOT NULL provenance), queries return rows instead of whole documents, and a constraint
 violation surfaced by a tool *is* the quality-gate report. This server is the successor of

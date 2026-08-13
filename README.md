@@ -11,7 +11,7 @@
 <p align="center"><strong>Turn a project description into a validated, traceable, execution-ready planning &amp; handoff package for Claude Code to implement.</strong></p>
 
 <p align="center">
-  <em>Claude Code plugin + MCP-backed agent skill &middot; v2.0</em> &middot;
+  <em>Claude Code plugin + MCP-backed agent skill &middot; v3.2.1</em> &middot;
   <a href="#license">MIT</a> &middot;
   <a href="docs/install.md">Install</a> &middot;
   <a href="docs/migrate-from-keystone.md">Migrate from Keystone</a> &middot;
@@ -224,36 +224,51 @@ entity counts and gate deltas, then everything rolls back — nothing is written
 
 ### During and after execution
 
-`handoff_emit` installs the executor-side wiring into the target project — a `CLAUDE.md` operating note
-with a full MCP tool cheat-sheet (plus `.mcp.json` on standalone installs; plugin installs already
-register the server). **Every emitted file is managed**: re-running emit reports each file as
-`written`/`unchanged`/`diverged` — a file you hand-edited is never silently overwritten (pass
-`force=true` to replace it deliberately), and the stale-v1 warning block retracts itself once your
-agent-control files are clean, so *re-running `handoff_emit` is the standing "is the cutover done?"
-check*. It also reports `stale_references` (leftover v1-flow pointers, each with a suggested
-replacement) and `restated_content` (package register content copied into `CLAUDE.md`/`AGENTS.md` —
-copies drift silently; the report suggests the reference form, and blocks that already cite
-`entity_query`/`review.html` are gently asked to verify currency instead). The executing agent records
-progress through the same governed write path that built the package (`progress_update`,
+`handoff_emit` wires the target project to the package — nothing is copied: `.mcp.json` on standalone
+installs (plugin installs already register the server) plus the `CLAUDE.md` operating note, a
+**tool-owned marker span** rebuilt on every emit (always current, no force involved; keep your own
+content outside the `<!-- tamheed:note -->` markers). The note carries the **mandatory
+recording-obligations table** — defect found → `DEF-` row *before* the fix; out-of-scope discovery →
+`DW-` row with a trigger; any deviation → `SC-` row *first*; progress/audit/bind per unit;
+`readiness_check` before declaring anything done — plus the full tool cheat-sheet. Stock prompt files
+stay managed (`written`/`unchanged`/`diverged`; a hand-customised file is never overwritten without
+`force`, and accepting a new template for ONE file is just delete + re-emit). Emission is screened
+(G-INJECT blocks instruction-shaped text) and reported: `stale_references`, `restated_content`
+(copies drift silently — the report suggests the live reference form), and `converted_prompts`
+(legacy prompts converted from v2 get per-kind curation hints until reviewed). The executing agent
+records progress through the same governed write path that built the package (`progress_update`,
 `audit_record` with evidence refs, `work_bind` binding commits/PRs to the `FR-`/`AC-`/`SL-` they
-satisfy).
+satisfy) — and **declaring a phase or slice `Implemented` is guarded**: the blocking readiness rules
+refuse the transition until resolved, overridable only by an explicit operator-confirmed
+`"force": true`, which the server itself records as a `FORCED transition` progress entry. Typed
+relations are validated at write time too: a semantically wrong edge (say `TEST —mitigates→ FR`) is
+rejected with both endpoint types named; `relates_to` stays the untyped escape hatch.
 
-**Your package carries its own prompt library.** Migration, adoption, and handoff all emit
-`<package>/prompts/` — five ready-to-paste task prompts: `orient-resume` (re-orient an agent after a
-session clear/compaction, including a git-history cross-check against recorded work), `progress-sync`,
-`integrity-check`, `generate-report`, and `slice-review` (phase/slice close-out with evidenced
-verdicts). Paste the relevant one instead of hand-writing tool calls.
+**Your package carries its own prompt library — and prompts are plain `.md` files, never database
+rows** (v3). `<package>/prompts/` is the single prompt surface, seeded at creation and refreshed by
+migration/adoption/handoff: **15 stock scenario prompts** covering both operator styles —
+orientation (`orient-resume`, `package-onboarding`), execution (`slice-kickoff`, `progress-sync`,
+`defect-triage`, `drift-register`), close-outs (`slice-review`, `phase-close`,
+`release-close-out`), replanning (`replan-deferred`), audit/report (`integrity-check`,
+`generate-report`), the fully-auto pair (`loop-iteration` + `loop-guard`, with a machine-parseable
+`ITERATION:` contract), and **`README.md`, the operator guide** (which prompt for which situation,
+semi-auto vs fully-auto, the single-writer-lock discipline). Your own project prompts live beside
+them — purpose-named, operator-owned, screened (G-INJECT + stale/restated scans) but never
+rewritten by the tool.
 
 You follow along through the committed **`review.html`** (regenerated via `export_html` —
-deterministic, so its diffs are meaningful): a dark, maximalist single page ordered
-State→Relations→Data — verdict and identity first, then the **relations graph** (every entity a
-clickable node that jumps to its register row; trace edges drawn as a chord diagram), the
-traceability matrix, execution progress, and every register folded with its row count and a
-**per-table CSV download** (`csv/<table>.csv`, emitted deterministically beside the report). Long
-text wraps in place; the freshness line distinguishes real recorded activity from a just-migrated
-package ("no v2 activity recorded yet"). Migration results now also carry **fidelity ledgers**
-(truncation histograms, column-starvation, field-mapping coverage) — column-level honesty that
-row-level counts cannot see.
+deterministic, so its diffs are meaningful; zero JavaScript): a dark, maximalist single page —
+verdict and identity first, then the **traceability flow** (layered Needs → Decisions → Work →
+Verification lanes, every node labeled and clickable, arrowheads, CSS-only relation filters), the
+**relations graph** (connected entities on a chord diagram with degree-scaled nodes; isolated
+entities in their own per-family fold, isolated *requirements* flagged first — they are the
+unverified ones), the traceability matrix, execution progress with a **per-phase readiness panel**
+(latest-verdict semantics) and declared human gates, and every register folded with its row count
+and a **per-table CSV download**. Hovering a node isolates its own edges (pure CSS `:has()`; older
+browsers simply keep the normal view). Long text wraps in place; the freshness line distinguishes
+real recorded activity from a just-migrated package. Migration results also carry **fidelity
+ledgers** (truncation histograms, column-starvation, field-mapping coverage) — column-level honesty
+that row-level counts cannot see.
 
 #### MCP tools at a glance
 
@@ -264,7 +279,8 @@ row-level counts cannot see.
 | `entity_upsert(entities[])` | Batch writes — full rows, per-item verdicts |
 | `entity_query(type, …)` | Targeted rows + `total` |
 | `trace_query(entity_id, …)` | Typed traceability links |
-| `gate_run()` | Mechanical quality-gate verdict |
+| `gate_run()` | Mechanical quality-gate verdict (+ advisory relation/unwired sweeps) |
+| `readiness_check(scope, id?)` | Deep lifecycle readiness at a close boundary — "is this actually DONE?" |
 | `progress_update / audit_record / work_bind` | The execution-tracking loop |
 | `package_migrate / package_adopt` | Staged v1 migration / brownfield onboarding |
 | `handoff_emit / export_html` | Executor wiring + the HTML review surface |
@@ -299,7 +315,7 @@ flowchart LR
         T --> DB
     end
 
-    DB --> OUT["execution-ready package<br/>data/*.jsonl + handoff prompts + review.html"]
+    DB --> OUT["execution-ready package<br/>data/*.jsonl + prompts/ + review.html"]
     OUT --> EXEC["Claude Code executes"]
     EXEC -- "progress_update · audit_record · work_bind" --> T
 
@@ -363,14 +379,15 @@ tamheed/
 │   ├── templates/                    # surviving narrative section templates
 │   ├── schemas/                      # frozen v1 JSON schemas (migration contract)
 │   ├── scripts/                      # validate_package.py (frozen v1 gate engine, migration contract)
-│   ├── db/                           # v2 relational store: schema.sql, store.py, CANONICAL.md
+│   ├── prompts/                      # the stock scenario library + operator guide (emitted into <package>/prompts/)
+│   ├── db/                           # relational store: schema.sql, migrations/ (append-only), store.py, CANONICAL.md
 │   ├── server/                       # the Tamheed MCP server (the only write path into a package)
 │   └── assets/                       # logos
 ├── docs/                             # architecture, methodology, workflow, design decisions, install
 ├── evals/                            # behavioral eval spec + deterministic eval runner
 ├── examples/                         # input briefs + expected package outlines
 ├── generated-samples/                # demonstration packages (v1 original + its v2 migration)
-├── tests/                            # the seven test suites + fixtures
+├── tests/                            # the ten test suites + fixtures
 ├── check.py                          # THE one deterministic gate — CI job 1 runs exactly this
 ├── .github/workflows/                # CI (check.py + server smoke) + scheduled eval-spec lint
 └── SECURITY.md                       # trust model, untrusted-content posture, reporting
@@ -379,7 +396,7 @@ tamheed/
 ## Verifying a local checkout
 
 ```bash
-python check.py        # everything CI runs: 7 suites, v1 goldens, lint, canonical form, eval sample
+python check.py        # everything CI runs: 10 suites, v1 goldens, 8 lints, canonical form, eval fixtures
 ```
 
 ## Contributing
@@ -391,11 +408,15 @@ See [`CONTRIBUTING.md`](CONTRIBUTING.md) and
 
 ## Maturity
 
-**v2.0.** The methodology (22 stages), the relational package store (ADR-0001), the MCP tool surface, the
-canonical serialization, and the migration path from v1 are defined, tested, and stable. Any future change
-to the DDL, the identifier scheme, or the tool contract ships per the versioning rules in
-[`plugins/tamheed/references/governance.md`](plugins/tamheed/references/governance.md) (additive = MINOR,
-breaking = MAJOR + migration note). Changes are tracked in [`CHANGELOG.md`](CHANGELOG.md).
+**v3.x** (currently v3.2.1). The methodology (22 stages), the relational package store (ADR-0001), the
+MCP tool surface, the canonical serialization, and the migration paths (v1 Markdown packages AND v2
+prompts-table packages — opening one converts it once, loudly) are defined, tested, and stable —
+hardened by fifteen field reports from sustained production use, each answered by a same-day release.
+Any change to the DDL, the identifier scheme, or the tool contract ships per the versioning rules in
+[`plugins/tamheed/references/governance.md`](plugins/tamheed/references/governance.md) (additive =
+MINOR, breaking = MAJOR + migration note; DDL changes are append-only `migrations/NNN_*.sql`, tracked
+via `PRAGMA user_version`). Changes are tracked in [`CHANGELOG.md`](CHANGELOG.md); the READMEs (this
+file, the server reference, and the operator guide) are updated with every release — lint-enforced.
 
 ## License
 
