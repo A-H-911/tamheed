@@ -31,6 +31,7 @@ REPO = Path(__file__).resolve().parent
 SUITES = [
     "tests/test_validate_package.py",
     "tests/test_db_roundtrip.py",
+    "tests/test_store_migrations.py",
     "tests/test_mcp_contract.py",
     "tests/test_migration_golden.py",
     "tests/test_migration_dialect.py",

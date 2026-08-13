@@ -56,20 +56,43 @@ def _describe_lock(lock_path: Path) -> str:
             f"since {holder.get('taken_at') or fallback}")
 
 
+def _apply_migrations(conn: sqlite3.Connection) -> None:
+    """Apply pending migrations (NNN > PRAGMA user_version) in lexical order.
+
+    Plan 027 (B23): user_version is stamped from PYTHON, never inside the SQL files —
+    schema.sql stays the frozen byte-identical twin of 001_init.sql (check.py enforces
+    the identity). On today's always-fresh :memory: connections the skip is a no-op;
+    it is the contract a future persistent database and `server_info.schema_version`
+    stand on, and it makes double-application (a re-run over an existing schema) safe.
+    """
+    applied = conn.execute("PRAGMA user_version").fetchone()[0]
+    for migration in sorted(MIGRATIONS_DIR.glob("[0-9]*.sql")):
+        number = int(migration.name[:3])
+        if number <= applied:
+            continue  # 001 == schema.sql (stamped by connect); older = already applied
+        conn.executescript(migration.read_text(encoding="utf-8"))
+        conn.execute(f"PRAGMA user_version = {number}")
+        applied = number
+
+
+def schema_version() -> int:
+    """The migration head this build applies (the newest migrations/NNN_*.sql number)."""
+    numbers = [int(p.name[:3]) for p in MIGRATIONS_DIR.glob("[0-9]*.sql")]
+    return max(numbers) if numbers else 0
+
+
 def connect() -> sqlite3.Connection:
     """The single connection factory: FK enforcement ON, schema + migrations applied.
 
-    schema.sql is the frozen byte-identical twin of migrations/001_init.sql (check.py
-    enforces the identity); every later append-only migration (002+) is applied here in
-    lexical order — that is what makes "new artifact type = registry entries + one
-    migration file" real (plan 015/B9).
+    schema.sql is the frozen byte-identical twin of migrations/001_init.sql; every
+    later append-only migration (002+) is applied by _apply_migrations — that is what
+    makes "new artifact type = registry entries + one migration file" real (plan 015/B9).
     """
     conn = sqlite3.connect(":memory:")
     conn.execute("PRAGMA foreign_keys = ON")
     conn.executescript(SCHEMA_PATH.read_text(encoding="utf-8"))
-    for migration in sorted(MIGRATIONS_DIR.glob("[0-9]*.sql")):
-        if migration.name != "001_init.sql":  # 001 == schema.sql, already applied
-            conn.executescript(migration.read_text(encoding="utf-8"))
+    conn.execute("PRAGMA user_version = 1")  # schema.sql IS migration 001
+    _apply_migrations(conn)
     return conn
 
 

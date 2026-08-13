@@ -948,7 +948,9 @@ def server_info() -> dict:
     return {"ok": True, "version": version,
             "package_root": str(Path(PACKAGE_ROOT).resolve()),
             "open_package": _CURRENT_NAME,
-            "migrations_head": migrations[-1] if migrations else None}
+            "migrations_head": migrations[-1] if migrations else None,
+            # plan 027 (B23): the numeric schema head (PRAGMA user_version contract)
+            "schema_version": store.schema_version()}
 
 
 # --------------------------------------------------------------------------- server plumbing
