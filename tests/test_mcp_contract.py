@@ -309,6 +309,131 @@ class McpContractTest(unittest.TestCase):
         self.assertEqual(adv["mistyped"], ["PH-1 (phase) —tests→ FR-001 (requirement)"])
         self.assertTrue(out["ready"])                # advisory never blocks
 
+    # ------------------------------------------------- plan 027 (readiness engine)
+
+    def test_readiness_package_scope_reports_blockers(self):
+        """Note 8: deep lifecycle validation — pre-approval decisions/ADRs, ACs not
+        latest-Met, undischarged risks BLOCK (maintainer-locked severities); open
+        questions stay advisory."""
+        make_complete_package("demo")
+        srv.entity_upsert([{"type": "adr", "id": "ADR-0001", "title": "Store choice",
+                            "lifecycle_status": "Proposed"}])
+        out = srv.readiness_check("package")
+        self.assertTrue(out["ok"])
+        self.assertFalse(out["ready"])
+        rules = {r["rule"]: r for r in out["rules"]}
+        self.assertIn("ADR-0001", rules["adrs-approved"]["entities"])
+        self.assertIn("AC-001", rules["acs-met"]["entities"])       # no verdict yet
+        self.assertIn("RISK-001", rules["risks-discharged"]["entities"])
+        self.assertEqual(rules["risks-discharged"]["severity"], "blocking")
+        self.assertEqual(rules["open-questions-resolved"]["severity"], "advisory")
+        self.assertIn("OQ-001", rules["open-questions-resolved"]["entities"])
+
+    def test_readiness_latest_verdict_wins(self):
+        """The any-Met-ever flaw AND the string-ordering flaw, both dead: an AC
+        re-judged Not-met fails even though an old Met exists, and AV-1000 beats
+        AV-999 numerically (as text it would sort BEFORE it)."""
+        make_complete_package("demo")
+        conn = srv._CURRENT.conn
+        conn.executemany(
+            "INSERT INTO audit_verdicts (id, ac_id, verdict, evidence) VALUES (?, ?, ?, ?)",
+            [(f"AV-{n:03d}", "AC-001", "Met", "old proof") for n in range(1, 1000)])
+        conn.execute("INSERT INTO audit_verdicts (id, ac_id, verdict) VALUES"
+                     " ('AV-1000', 'AC-001', 'Not-met')")
+        out = srv.readiness_check("slice", id="SL-001")
+        rules = {r["rule"]: r for r in out["rules"]}
+        self.assertIn("AC-001", rules["acs-met"]["entities"])   # Not-met IS the latest
+        conn.execute("INSERT INTO audit_verdicts (id, ac_id, verdict, evidence) VALUES"
+                     " ('AV-1001', 'AC-001', 'Met', 'fixed + re-verified')")
+        out = srv.readiness_check("slice", id="SL-001")
+        rules = {r["rule"]: r for r in out["rules"]}
+        self.assertEqual(rules["acs-met"]["entities"], [])
+
+    def test_readiness_phase_and_slice_scope(self):
+        make_complete_package("demo")
+        srv.audit_record([{"ac_id": "AC-001", "verdict": "Met", "evidence": "e2e run"}])
+        out = srv.entity_upsert([
+            {"type": "wbs-item", "id": "WBS-001", "title": "ingest worker",
+             "slice_id": "SL-001"},
+            {"type": "defect", "id": "DEF-001", "title": "crash on empty subject",
+             "severity": "high", "status": "Open", "found_in": "SL-001"}])
+        self.assertTrue(out["ok"], out)
+        for scope, sid in (("slice", "SL-001"), ("phase", "PH-1")):
+            out = srv.readiness_check(scope, id=sid)
+            rules = {r["rule"]: r for r in out["rules"]}
+            self.assertFalse(out["ready"])
+            self.assertIn("WBS-001", rules["wbs-done"]["entities"], (scope, rules))
+            self.assertIn("DEF-001", rules["defects-closed"]["entities"])
+            self.assertEqual(rules["acs-met"]["entities"], [])   # Met verdict counted
+        phase_rules = {r["rule"]: r
+                       for r in srv.readiness_check("phase", id="PH-1")["rules"]}
+        self.assertIn("SL-001", phase_rules["slices-closed"]["entities"])
+
+    def test_readiness_human_required_gates(self):
+        """Declared execution_gates surface as a human checklist — prose definitions
+        are never machine-evaluated and never block `ready`."""
+        make_complete_package("demo")
+        srv.entity_upsert([
+            {"type": "execution-gate", "id": "GATE-001", "gate_kind": "done",
+             "definition": "CI green on main", "applies_to": "SL-001"},
+            {"type": "execution-gate", "id": "GATE-002", "gate_kind": "approval",
+             "definition": "Operator signs the release notes"}])
+        slice_hr = srv.readiness_check("slice", id="SL-001")["human_required"]
+        self.assertEqual([g["gate"] for g in slice_hr], ["GATE-001"])
+        self.assertEqual(slice_hr[0]["definition"], "CI green on main")
+        pkg_hr = srv.readiness_check("package")["human_required"]
+        self.assertEqual([g["gate"] for g in pkg_hr], ["GATE-002"])
+
+    def test_readiness_scope_validation(self):
+        make_complete_package("demo")
+        self.assertIn("unknown scope", srv.readiness_check("release")["error"])
+        self.assertIn("requires an id", srv.readiness_check("phase")["error"])
+        self.assertIn("unknown slice id", srv.readiness_check("slice", id="SL-999")["error"])
+
+    def test_transition_guard_refuses_then_forces_with_audit(self):
+        """Maintainer decision (interview): phase/slice -> Implemented is HARD-guarded
+        by the blocking readiness rules; force needs the operator's explicit words and
+        leaves a server-written PE- audit row."""
+        make_complete_package("demo")
+        row = {"type": "slice", "id": "SL-001", "title": "Ingest", "phase_id": "PH-1",
+               "lifecycle_status": "Implemented"}
+        out = srv.entity_upsert([row])
+        self.assertFalse(out["ok"])
+        err = out["items"][0]["error"]
+        for needle in ("readiness", "acs-met", "AC-001", '"force": true',
+                       "operator confirmation"):
+            self.assertIn(needle, err)
+        forced = srv.entity_upsert([dict(row, force=True)])
+        self.assertTrue(forced["ok"], forced)
+        item = forced["items"][0]
+        self.assertTrue(item["forced"])
+        pe = srv.entity_query("progress-entry", id=item["forced_audit"])["rows"][0]
+        self.assertIn("FORCED transition: SL-001", pe["entry"])
+        self.assertIn("acs-met", pe["entry"])
+        status = srv.entity_query("slice", id="SL-001",
+                                  columns=["id", "lifecycle_status"])["rows"][0]
+        self.assertEqual(status["lifecycle_status"], "Implemented")
+
+    def test_transition_guard_edge_detection(self):
+        """Full-row re-upserts of an ALREADY-Implemented row never re-fire (the
+        FULL-rows contract); Rejected is not a completion claim; wbs-items are never
+        guarded."""
+        make_complete_package("demo")
+        row = {"type": "slice", "id": "SL-001", "title": "Ingest", "phase_id": "PH-1",
+               "lifecycle_status": "Implemented"}
+        srv.entity_upsert([dict(row, force=True)])
+        again = srv.entity_upsert([dict(row, title="Ingest (renamed)")])
+        self.assertTrue(again["ok"], again)
+        self.assertNotIn("forced", again["items"][0])       # no re-fire, no new PE
+        rejected = srv.entity_upsert([{"type": "slice", "id": "SL-002",
+                                       "title": "Dropped", "phase_id": "PH-1",
+                                       "lifecycle_status": "Rejected"}])
+        self.assertTrue(rejected["ok"], rejected)            # not a completion claim
+        wbs = srv.entity_upsert([{"type": "wbs-item", "id": "WBS-001", "title": "w",
+                                  "slice_id": "SL-002",
+                                  "lifecycle_status": "Implemented"}])
+        self.assertTrue(wbs["ok"], wbs)                      # unit of work: unguarded
+
     def test_journal_is_append_only(self):
         """Plan 025 (C31/A4): recorded history cannot be rewritten via entity_upsert."""
         make_complete_package("demo")

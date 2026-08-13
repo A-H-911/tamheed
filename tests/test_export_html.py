@@ -43,6 +43,21 @@ class ExportHtmlTest(unittest.TestCase):
         self.assertTrue(result["ok"], result)
         return Path(result["path"]).read_text(encoding="utf-8")
 
+    # -------------------------------------------- plan 027: readiness panel
+
+    def test_execution_readiness_panel(self):
+        """Per-phase readiness (latest-verdict semantics) + declared human gates
+        render in the execution section."""
+        self._open_demo_copy()
+        srv.entity_upsert([{"type": "execution-gate", "id": "GATE-901",
+                            "gate_kind": "approval",
+                            "definition": "Operator signs off the release"}])
+        out = self._export()
+        self.assertIn("Phase readiness", out)
+        self.assertIn("latest-verdict semantics", out)
+        self.assertIn("Declared human gates", out)
+        self.assertIn("Operator signs off the release", out)
+
     # -------------------------------------------- plan 018 phase 2 (C18): navigation & scale
 
     def test_toc_links_all_sections(self):

@@ -319,13 +319,14 @@ def _traceability(conn, gates, ready):
 
 
 def _execution(conn, gates, ready):
+    # Plan 027: v_latest_verdicts (migration 004) orders NUMERICALLY — the old string
+    # `ORDER BY av.id DESC` here silently showed a stale verdict as latest once a
+    # package crossed 1000 verdict rows (AV-1000 < AV-999 as text).
     acs = conn.execute(
-        "SELECT ac.id, ac.title, ac.lifecycle_status,"
-        " (SELECT verdict FROM audit_verdicts av WHERE av.ac_id = ac.id"
-        "  ORDER BY av.id DESC LIMIT 1),"
-        " (SELECT evidence FROM audit_verdicts av WHERE av.ac_id = ac.id"
-        "  ORDER BY av.id DESC LIMIT 1)"
-        " FROM acceptance_criteria ac ORDER BY ac.id").fetchall()
+        "SELECT ac.id, ac.title, ac.lifecycle_status, lv.verdict, lv.evidence"
+        " FROM acceptance_criteria ac"
+        " LEFT JOIN v_latest_verdicts lv ON lv.ac_id = ac.id"
+        " ORDER BY ac.id").fetchall()
     ac_rows = [[ac_id, title, lifecycle, verdict or "Pending",
                 "evidenced" if evidence else ("narrated" if verdict else ""), evidence]
                for ac_id, title, lifecycle, verdict, evidence in acs]
@@ -357,6 +358,31 @@ def _execution(conn, gates, ready):
                        _table(["id", "iteration", "authorized by", "description"], changes))
                  if changes else
                  '<h3>Scope changes</h3><p class="empty">No scope changes recorded.</p>')
+    # Plan 027: per-phase readiness panel — v_phase_exit (latest-verdict semantics) +
+    # declared human gates. The full rule report is `readiness_check` (the tool).
+    exits = conn.execute(
+        "SELECT phase_id, title, acs_met, acs_total, open_defects FROM v_phase_exit"
+        " ORDER BY phase_id").fetchall()
+    if exits:
+        rows = [[pid, title, f"{met}/{total}" if total else "—", defects,
+                 "ready" if (total and met == total and not defects) else "not ready"]
+                for pid, title, met, total, defects in exits]
+        parts.append(_fold("Phase readiness (ACs latest-Met / open defects)",
+                           len(rows),
+                           _table(["phase", "title", "ACs met", "open defects",
+                                   "exit"], rows)))
+        parts.append('<p class="freshness">latest-verdict semantics — an old Met never '
+                     'survives a newer Not-met; the full rule report (risks, decisions, '
+                     'deferred work) is <code>readiness_check</code>.</p>')
+    gates_h = conn.execute(
+        "SELECT id, gate_kind, applies_to, definition FROM execution_gates"
+        " WHERE gate_kind IN ('done','approval','checkpoint') ORDER BY id").fetchall()
+    if gates_h:
+        parts.append(_fold("Declared human gates (confirm + record via "
+                           "progress_update)", len(gates_h),
+                           _table(["gate", "kind", "applies to", "definition"],
+                                  [[g, k, a or "(package)", d]
+                                   for g, k, a, d in gates_h])))
     return "".join(parts)
 
 

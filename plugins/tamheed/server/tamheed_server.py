@@ -476,13 +476,46 @@ def entity_upsert(entities: list[dict]) -> dict:
             results.append({"index": i, "ok": False, "error": f"unknown entity type {etype!r}"})
             failed = True
             continue
-        cols = {k: v for k, v in item.items() if k != "type"}
+        # "force" is the transition-guard override (plan 027), never a column.
+        force = bool(item.get("force"))
+        cols = {k: v for k, v in item.items() if k not in ("type", "force")}
         unknown = set(cols) - set(_columns(table))
         if unknown:
             results.append({"index": i, "ok": False,
                             "error": f"unknown columns for {etype}: {sorted(unknown)}"})
             failed = True
             continue
+        forced_note = None
+        if (etype in ("phase", "slice") and cols.get("id")
+                and cols.get("lifecycle_status") == "Implemented"):
+            # Plan 027 (maintainer decision): declaring a phase/slice DONE is guarded
+            # by the blocking readiness rules. Transition-edge detection: a full-row
+            # re-upsert of an ALREADY-Implemented row must not re-fire (entity_upsert
+            # requires FULL rows even for updates). Rejected/Obsolete/… are never
+            # guarded — only the success-terminal status is a claim of completion.
+            current = conn.execute(f"SELECT lifecycle_status FROM {table} WHERE id = ?",
+                                   (cols["id"],)).fetchone()
+            if current is None or current[0] != "Implemented":
+                rep = _readiness_report(conn, etype, cols["id"])
+                blockers = [r for r in rep["rules"]
+                            if r["severity"] == "blocking" and r["status"] == "fail"]
+                if blockers and not force:
+                    detail = "; ".join(
+                        f"{r['rule']}: {', '.join(r['entities'][:5])}"
+                        + (f" (+{len(r['entities']) - 5} more)"
+                           if len(r["entities"]) > 5 else "")
+                        for r in blockers)
+                    results.append({
+                        "index": i, "ok": False, "id": cols["id"],
+                        "error": f"readiness: {cols['id']} cannot transition to"
+                                 f" Implemented — {detail} — resolve the blockers, or"
+                                 " re-run this item with \"force\": true after EXPLICIT"
+                                 " operator confirmation"})
+                    failed = True
+                    continue
+                if blockers:  # forced past blocking failures: the record is automatic
+                    forced_note = "; ".join(
+                        f"{r['rule']} ({len(r['entities'])})" for r in blockers)
         names = list(cols)
         if etype == "trace-edge":
             # Plan 027: endpoint-type rules, HARD on new writes. Same-batch endpoints
@@ -529,7 +562,21 @@ def entity_upsert(entities: list[dict]) -> dict:
                                              "(CHECK/NOT NULL) — not written"})
                     failed = True
             else:
-                results.append({"index": i, "ok": True, "id": cols.get("id")})
+                res = {"index": i, "ok": True, "id": cols.get("id")}
+                if forced_note:
+                    # The permanent record of a forced close does not depend on the
+                    # agent remembering to write one — the server appends it, inside
+                    # the same transaction as the transition itself.
+                    pe_id = _next_id("PE-", "progress_entries")
+                    conn.execute(
+                        "INSERT INTO progress_entries (id, entry, occurred_at)"
+                        " VALUES (?, ?, ?)",
+                        (pe_id, f"FORCED transition: {cols['id']} -> Implemented past"
+                                f" blocking readiness failures ({forced_note}) —"
+                                " operator-confirmed override", _now()))
+                    res["forced"] = True
+                    res["forced_audit"] = pe_id
+                results.append(res)
         except Exception as exc:  # IntegrityError carries the constraint name
             conn.execute(f"ROLLBACK TO item{i}")
             msg = str(exc)
@@ -730,6 +777,150 @@ def gate_run() -> dict:
                 " rejected; never fails the gate"}
     ready = all(v.get("status") == "pass" for k, v in report.items() if k.startswith("G-"))
     return {"ok": True, "ready": ready, "gates": report}
+
+
+# --------------------------------------------------------------------------- readiness
+
+def _readiness_report(conn, scope: str, scope_id: str | None) -> dict:
+    """The lifecycle-readiness rule engine (plan 027, maintainer note 8): "is this
+    phase/slice/release actually DONE?" — the semantic layer above gate_run's
+    mechanical floor. Blocking severities are maintainer-locked (interview
+    2026-08-13): pre-approval decisions/ADRs, ACs not latest-Met, open defects,
+    undischarged risks; judgment-dependent items (prose triggers, open questions)
+    stay advisory. Declared execution_gates rows surface as human_required — prose
+    definitions are NEVER machine-evaluated."""
+    rules: list[dict] = []
+
+    def rule(name: str, severity: str, entities: list, note: str) -> None:
+        rules.append({"rule": name, "severity": severity,
+                      "status": "fail" if entities else "pass",
+                      "entities": entities, "note": note})
+
+    def ids(sql: str, params: tuple = ()) -> list:
+        return [r[0] for r in conn.execute(sql, params)]
+
+    if scope == "package":
+        rule("decisions-approved", "blocking",
+             ids("SELECT id FROM decisions WHERE lifecycle_status = 'Proposed'"),
+             "a closed package cannot rest on proposed decisions")
+        rule("adrs-approved", "blocking",
+             ids("SELECT id FROM adrs WHERE lifecycle_status IN ('Draft','Proposed')"),
+             "ADRs left pre-approval — approve, reject, or supersede")
+        rule("acs-met", "blocking",
+             ids("SELECT ac.id FROM acceptance_criteria ac"
+                 " LEFT JOIN v_latest_verdicts lv ON lv.ac_id = ac.id"
+                 " WHERE ac.retired_in IS NULL"
+                 " AND (lv.verdict IS NULL OR lv.verdict <> 'Met')"),
+             "every active AC's LATEST verdict must be Met (verdicts append —"
+             " an old Met does not survive a newer Not-met)")
+        rule("defects-closed", "blocking",
+             ids("SELECT id FROM defects WHERE status IN ('Open','In-progress')"),
+             "open defects: fix, disposition, or convert to deferred-work"
+             " (scope-change first if it changes scope)")
+        rule("risks-discharged", "blocking",
+             ids("SELECT id FROM risks WHERE risk_state IN ('open','materialized')"
+                 " AND discharged_by IS NULL"),
+             "open/materialized risks with no discharging AC/test")
+        rule("deferred-work-reviewed", "advisory",
+             ids("SELECT id FROM deferred_work"
+                 " WHERE status IN ('Open','Activated','Scheduled')"),
+             "activation triggers are prose — a human judges whether each fired")
+        rule("open-questions-resolved", "advisory",
+             ids("SELECT id FROM open_questions WHERE resolved_by IS NULL"),
+             "unresolved open questions at close — resolve or carry deliberately")
+        rule("execution-plans-approved", "advisory",
+             ids("SELECT id FROM execution_plans WHERE lifecycle_status NOT IN"
+                 " ('Approved','Implemented','Superseded','Obsolete')"),
+             "execution plans never approved")
+        gate_where, gate_params = "applies_to IS NULL", ()
+    elif scope == "phase":
+        rule("acs-met", "blocking",
+             ids("SELECT ac.id FROM acceptance_criteria ac"
+                 " JOIN slices s ON ac.slice_id = s.id"
+                 " LEFT JOIN v_latest_verdicts lv ON lv.ac_id = ac.id"
+                 " WHERE s.phase_id = ? AND ac.retired_in IS NULL"
+                 " AND (lv.verdict IS NULL OR lv.verdict <> 'Met')", (scope_id,)),
+             "ACs of this phase's slices whose latest verdict is not Met")
+        rule("slices-closed", "blocking",
+             ids("SELECT id FROM slices WHERE phase_id = ? AND retired_in IS NULL"
+                 " AND lifecycle_status NOT IN"
+                 " ('Implemented','Superseded','Obsolete','Rejected')", (scope_id,)),
+             "slices of this phase not closed")
+        rule("wbs-done", "blocking",
+             ids("SELECT w.id FROM wbs_items w"
+                 " LEFT JOIN slices s ON w.slice_id = s.id"
+                 " WHERE (w.phase_id = ? OR s.phase_id = ?)"
+                 " AND w.lifecycle_status NOT IN"
+                 " ('Implemented','Superseded','Obsolete','Rejected')",
+                 (scope_id, scope_id)),
+             "open work items in this phase")
+        rule("defects-closed", "blocking",
+             ids("SELECT d.id FROM defects d WHERE d.status IN ('Open','In-progress')"
+                 " AND (d.found_in = ? OR d.found_in IN"
+                 " (SELECT id FROM slices WHERE phase_id = ?))", (scope_id, scope_id)),
+             "open defects found in this phase or its slices")
+        rule("milestones-reached", "advisory",
+             ids("SELECT id FROM milestones WHERE phase_id = ?"
+                 " AND lifecycle_status NOT IN"
+                 " ('Implemented','Superseded','Obsolete','Rejected')", (scope_id,)),
+             "milestones of this phase not marked reached")
+        gate_where, gate_params = "applies_to = ?", (scope_id,)
+    else:  # slice
+        rule("acs-met", "blocking",
+             ids("SELECT ac.id FROM acceptance_criteria ac"
+                 " LEFT JOIN v_latest_verdicts lv ON lv.ac_id = ac.id"
+                 " WHERE ac.slice_id = ? AND ac.retired_in IS NULL"
+                 " AND (lv.verdict IS NULL OR lv.verdict <> 'Met')", (scope_id,)),
+             "ACs bound to this slice whose latest verdict is not Met")
+        rule("wbs-done", "blocking",
+             ids("SELECT id FROM wbs_items WHERE slice_id = ?"
+                 " AND lifecycle_status NOT IN"
+                 " ('Implemented','Superseded','Obsolete','Rejected')", (scope_id,)),
+             "open work items in this slice")
+        rule("defects-closed", "blocking",
+             ids("SELECT id FROM defects WHERE found_in = ?"
+                 " AND status IN ('Open','In-progress')", (scope_id,)),
+             "open defects found in this slice")
+        rule("execution-plan-approved", "advisory",
+             ids("SELECT id FROM execution_plans WHERE slice_id = ?"
+                 " AND lifecycle_status NOT IN"
+                 " ('Approved','Implemented','Superseded','Obsolete')", (scope_id,)),
+             "this slice's execution plan was never approved")
+        gate_where, gate_params = "applies_to = ?", (scope_id,)
+    human_required = [
+        {"gate": gid, "gate_kind": kind, "definition": definition}
+        for gid, kind, definition in conn.execute(
+            "SELECT id, gate_kind, definition FROM execution_gates"
+            f" WHERE gate_kind IN ('done','approval','checkpoint') AND {gate_where}"
+            " ORDER BY id", gate_params)]
+    ready = not any(r["severity"] == "blocking" and r["status"] == "fail"
+                    for r in rules)
+    return {"scope": scope, "id": scope_id, "ready": ready, "rules": rules,
+            "human_required": human_required}
+
+
+def readiness_check(scope: str = "package", id: str | None = None) -> dict:
+    """Deep lifecycle-state validation at a close boundary: is this package/phase/slice
+    actually DONE? Read-only reporting; the same blocking rules also guard the
+    phase/slice -> 'Implemented' transition in entity_upsert (force + operator
+    confirmation to override). human_required lists declared execution_gates whose
+    prose definitions a human must confirm (recorded via progress_update)."""
+    if guard := _need_open():
+        return guard
+    if scope not in ("package", "phase", "slice"):
+        return _err(f"unknown scope {scope!r} — one of package, phase, slice")
+    conn = _CURRENT.conn
+    if scope == "package":
+        scope_id = None
+    else:
+        if not id:
+            return _err(f"scope {scope!r} requires an id (e.g. "
+                        f"{'PH-1' if scope == 'phase' else 'SL-001'})")
+        table = "phases" if scope == "phase" else "slices"
+        if conn.execute(f"SELECT 1 FROM {table} WHERE id = ?", (id,)).fetchone() is None:
+            return _err(f"unknown {scope} id {id!r}")
+        scope_id = id
+    return {"ok": True, **_readiness_report(conn, scope, scope_id)}
 
 
 # --------------------------------------------------------------------------- execution loop
@@ -1208,6 +1399,8 @@ TOOLS = {
     "entity_query": (entity_query, "Query one entity family with targeted columns"),
     "trace_query": (trace_query, "Traverse typed trace edges from/to an entity"),
     "gate_run": (gate_run, "Run the mechanical quality gates; returns the gate report"),
+    "readiness_check": (readiness_check,
+                        "Lifecycle readiness at a close boundary (package/phase/slice)"),
     "progress_update": (progress_update, "Append progress entries (execution tracking)"),
     "audit_record": (audit_record, "Record AC verdicts, optionally evidence-bound"),
     "work_bind": (work_bind, "Bind a commit/PR to the entities it satisfies (stamps last_referenced)"),
