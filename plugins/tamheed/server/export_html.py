@@ -139,7 +139,41 @@ def _grouped_nodes(nodes):
     return fams
 
 
+def _degrees(edges) -> dict[str, int]:
+    deg: dict[str, int] = {}
+    for f, t, _rel in edges:
+        deg[f] = deg.get(f, 0) + 1
+        deg[t] = deg.get(t, 0) + 1
+    return deg
+
+
+def _rel_filter(prefix: str, relations) -> str:
+    """CSS-only relation filter (plan 027): radio siblings of .graphwrap — the proven
+    gz-zoom pattern. Labels double as the color legend (per-relation chip colors in
+    viewer.css). Only relations present in the data get a radio (deterministic)."""
+    parts = [f'<input type="radio" name="{prefix}" id="{prefix}-all" class="gz" checked>'
+             f'<label for="{prefix}-all" class="gzl">all relations</label>']
+    for rel in sorted(set(relations)):
+        parts.append(
+            f'<input type="radio" name="{prefix}" id="{prefix}-{esc(rel)}" class="gz">'
+            f'<label for="{prefix}-{esc(rel)}" class="gzl rl-{esc(rel)}">'
+            f"{esc(rel)}</label>")
+    return "".join(parts)
+
+
+def _marker(marker_id: str) -> str:
+    # One neutral-ink arrowhead per svg (ids are document-unique). Per-relation marker
+    # color needs `context-stroke` — unportable, deferred (plan 027).
+    return (f'<defs><marker id="{marker_id}" viewBox="0 0 8 8" refX="7" refY="4" '
+            'markerWidth="5" markerHeight="5" orient="auto-start-reverse">'
+            '<path d="M0 0 L8 4 L0 8 z" class="arrowhead"/></marker></defs>')
+
+
 def _graph_full(nodes, edges) -> str:
+    """The circular overview. Plan 027: connected nodes only (74% of the golden's
+    nodes were isolated dots), degree-scaled radii, arrowheads, per-relation edge
+    classes; 12 hues + a ring stroke as the second-cycle family disambiguator."""
+    deg = _degrees(edges)
     fams = _grouped_nodes(nodes)
     S = len(nodes) + _G_GAP * len(fams)
     R = max(_G_RMIN, S * _G_SPACING / (2 * math.pi))
@@ -149,13 +183,16 @@ def _graph_full(nodes, edges) -> str:
     slot = 0
     for fi, (fam, ids) in enumerate(fams):
         start = slot
+        ring = " ring" if fi >= 12 else ""
         for nid in ids:
             th = 2 * math.pi * slot / S - math.pi / 2
             x, y = R * math.cos(th), R * math.sin(th)
             pos[nid] = (x, y)  # 0.1px rounding absorbs cross-platform libm variation
+            r = min(7.0, 3.0 + 0.8 * math.sqrt(deg.get(nid, 0)))
             node_parts.append(
-                f'<a href="#{esc(nid)}"><circle cx="{x:.1f}" cy="{y:.1f}" r="3" '
-                f'class="g{fi % 8}"/><title>{esc(nid)} ({esc(fam)})</title></a>')
+                f'<a href="#{esc(nid)}"><circle cx="{x:.1f}" cy="{y:.1f}" r="{r:.1f}" '
+                f'class="g{fi % 12}{ring}"/><title>{esc(nid)} ({esc(fam)}, '
+                f'{deg.get(nid, 0)} edge(s))</title></a>')
             slot += 1
         mid = 2 * math.pi * ((start + slot - 1) / 2) / S - math.pi / 2
         lx, ly = (R + 16) * math.cos(mid), (R + 16) * math.sin(mid)
@@ -173,17 +210,20 @@ def _graph_full(nodes, edges) -> str:
         # through the middle — the chord-diagram trick that keeps 1,000 edges legible
         cx, cy = 0.35 * (x1 + x2) / 2, 0.35 * (y1 + y2) / 2
         edge_parts.append(
-            f'<path d="M{x1:.1f} {y1:.1f} Q{cx:.1f} {cy:.1f} {x2:.1f} {y2:.1f}">'
+            f'<path d="M{x1:.1f} {y1:.1f} Q{cx:.1f} {cy:.1f} {x2:.1f} {y2:.1f}" '
+            f'class="e-{esc(rel)}" marker-end="url(#arrow)">'
             f"<title>{esc(f)} —{esc(rel)}→ {esc(t)}</title></path>")
-    return _graph_svg(half, edge_parts, node_parts, label_parts)
+    return _graph_svg(half, edge_parts, node_parts, label_parts, "arrow")
 
 
-def _graph_svg(half: float, edge_parts, node_parts, label_parts) -> str:
+def _graph_svg(half: float, edge_parts, node_parts, label_parts,
+               marker_id: str | None = None) -> str:
     # C26 (maintainer): NO fixed pixel width — the viewBox scales to the container, so
     # the default (Fit) shows ALL nodes; the CSS zoom radios scale width 100%..800%.
     d = f"{2 * half:.0f}"
+    defs = _marker(marker_id) if marker_id else ""
     return (f'<svg class="graph" viewBox="{-half:.0f} {-half:.0f} {d} {d}" '
-            f'xmlns="http://www.w3.org/2000/svg">'
+            f'xmlns="http://www.w3.org/2000/svg">{defs}'
             f'<g class="edges">{"".join(edge_parts)}</g>'
             f'<g class="nodes">{"".join(node_parts)}</g>'
             f'<g class="labels">{"".join(label_parts)}</g></svg>')
@@ -236,23 +276,128 @@ def _graph(conn, gates, ready):
                          " ORDER BY from_id, to_id, relation").fetchall()
     if not nodes:
         return '<p class="empty">No entities recorded.</p>'
-    svg = _graph_agg(nodes, edges) if len(nodes) > _G_AGG_LIMIT \
-        else _graph_full(nodes, edges)
-    hint = ("Hover a family for its size; click to jump to its register."
-            if len(nodes) > _G_AGG_LIMIT else
-            "Hover a node for its id; click to jump to its register row. Zoomed out "
-            "this is a density silhouette — scroll at 1:1 to navigate.")
-    # CSS-only zoom (C26, maintainer): radio inputs + sibling selectors — zero JS. The
-    # inputs must be direct siblings of .graphwrap for `:checked ~ .graphwrap` to apply.
-    zoom = "".join(
-        f'<input type="radio" name="gz" id="gz-{z}" class="gz"{chk}>'
-        f'<label for="gz-{z}" class="gzl">{lbl}</label>'
-        for z, lbl, chk in (("fit", "Fit all", " checked"), ("2", "2×", ""),
-                            ("4", "4×", ""), ("8", "8×", "")))
-    return (f"<details><summary>Relations graph ({len(nodes)} nodes, "
-            f"{len(edges)} edges)</summary>"
+    # Plan 027: draw CONNECTED nodes only — on the golden 74% of nodes had zero edges
+    # and buried the structure in dead dots. Isolated entities get their own fold.
+    linked = {f for f, _t, _r in edges} | {t for _f, t, _r in edges}
+    connected = [(nid, fam) for nid, fam in nodes if nid in linked]
+    isolated = [(nid, fam) for nid, fam in nodes if nid not in linked]
+    parts = []
+    if connected:
+        svg = _graph_agg(connected, edges) if len(connected) > _G_AGG_LIMIT \
+            else _graph_full(connected, edges)
+        hint = ("Hover a family for its size; click to jump to its register."
+                if len(connected) > _G_AGG_LIMIT else
+                "Hover a node for its id (radius = edge count); click to jump to its "
+                "register row. Arrowheads show direction; pick a relation to isolate "
+                "it.")
+        # CSS-only zoom (C26): radio inputs + sibling selectors — zero JS. The inputs
+        # must be direct siblings of .graphwrap for `:checked ~ .graphwrap` to apply.
+        zoom = "".join(
+            f'<input type="radio" name="gz" id="gz-{z}" class="gz"{chk}>'
+            f'<label for="gz-{z}" class="gzl">{lbl}</label>'
+            for z, lbl, chk in (("fit", "Fit all", " checked"), ("2", "2×", ""),
+                                ("4", "4×", ""), ("8", "8×", "")))
+        rels = _rel_filter("gr", (r for _f, _t, r in edges))
+        parts.append(
+            f"<details><summary>Relations graph ({len(connected)} connected, "
+            f"{len(isolated)} isolated, {len(edges)} edges)</summary>"
             f'<p class="lead">{hint} Zoom: Fit shows every node; 2×–8× pan inside '
-            f"the frame.</p>{zoom}"
+            f"the frame.</p>{zoom}<br>{rels}"
+            f'<div class="graphwrap">{svg}</div></details>')
+    else:
+        parts.append('<p class="empty">No trace edges recorded — every entity is '
+                     "isolated (see the fold below).</p>")
+    if isolated:
+        parts.append(_fold("Isolated entities (no trace edges)", len(isolated),
+                           _table(["id", "family"], isolated)))
+    return "".join(parts)
+
+
+# ------------------------------------------------------------------ traceability flow
+# Plan 027 (maintainer decision: BOTH views — flow primary, circle overview): layered
+# left-to-right lanes matching how a package is read. Same doctrine: deterministic
+# geometry, esc() everywhere, zero JS, fragment links only.
+_LANES = [
+    ("Needs", ("requirement", "constraint", "invariant", "assumption")),
+    ("Decisions", ("decision", "adr", "open-question")),
+    ("Work", ("phase", "milestone", "slice", "wbs-item", "execution-plan",
+              "defect", "deferred-work")),
+    ("Verification", ("test", "acceptance-criterion", "experiment", "poc")),
+    ("Risks & measures", ("risk", "kpi")),
+]
+_LANE_W = 240   # px per lane
+_ROW_H = 16    # px per node row
+
+
+def _flow(conn, gates, ready):
+    nodes = conn.execute(
+        "SELECT id, entity_type FROM entity_index ORDER BY id").fetchall()
+    edges = conn.execute("SELECT from_id, to_id, relation FROM trace_edges"
+                         " ORDER BY from_id, to_id, relation").fetchall()
+    linked = {f for f, _t, _r in edges} | {t for _f, t, _r in edges}
+    connected = [(nid, fam) for nid, fam in nodes if nid in linked]
+    if not connected:
+        return '<p class="empty">No trace edges recorded — nothing flows yet.</p>'
+    if len(connected) > _G_AGG_LIMIT:
+        return (f'<p class="empty">{len(connected)} connected entities exceed the '
+                "labeled-flow limit — use the aggregate relations graph below.</p>")
+    lane_of = {fam: i for i, (_t, fams) in enumerate(_LANES) for fam in fams}
+    order = {t: i for i, t in enumerate(ENTITY_TABLES)}
+    lanes: list[list[tuple[str, str]]] = [[] for _ in range(len(_LANES) + 1)]
+    for nid, fam in sorted(connected,
+                           key=lambda n: (order.get(n[1], 99), n[1], n[0])):
+        lanes[lane_of.get(fam, len(_LANES))].append((nid, fam))
+    titles = [t for t, _f in _LANES] + ["Other"]
+    live = [(titles[i], lane) for i, lane in enumerate(lanes) if lane]
+    fam_index = {fam: fi for fi, (fam, _ids) in
+                 enumerate(_grouped_nodes(connected))}
+    pos: dict[str, tuple[float, float, int]] = {}
+    node_parts, header_parts = [], []
+    for li, (title, lane) in enumerate(live):
+        x = 40.0 + li * _LANE_W
+        header_parts.append(f'<text x="{x:.1f}" y="14" class="lane">'
+                            f"{esc(title)} ({len(lane)})</text>")
+        for row, (nid, fam) in enumerate(lane):
+            y = 34.0 + row * _ROW_H
+            pos[nid] = (x, y, li)
+            fi = fam_index.get(fam, 0)
+            ring = " ring" if fi >= 12 else ""
+            node_parts.append(
+                f'<a href="#{esc(nid)}"><circle cx="{x:.1f}" cy="{y:.1f}" r="4" '
+                f'class="g{fi % 12}{ring}"/><text x="{x + 8:.1f}" y="{y + 3:.1f}">'
+                f"{esc(nid)}</text><title>{esc(nid)} ({esc(fam)})</title></a>")
+    edge_parts = []
+    for f, t, rel in edges:
+        if f not in pos or t not in pos:
+            continue
+        x1, y1, l1 = pos[f]
+        x2, y2, l2 = pos[t]
+        if l1 == l2:  # same-lane: bow out to the left of the lane
+            d = (f"M{x1 - 6:.1f} {y1:.1f} C{x1 - 40:.1f} {y1:.1f}, "
+                 f"{x2 - 40:.1f} {y2:.1f}, {x2 - 6:.1f} {y2:.1f}")
+        elif x2 > x1:  # rightward
+            d = (f"M{x1 + 6:.1f} {y1:.1f} C{x1 + 90:.1f} {y1:.1f}, "
+                 f"{x2 - 90:.1f} {y2:.1f}, {x2 - 6:.1f} {y2:.1f}")
+        else:  # leftward
+            d = (f"M{x1 - 6:.1f} {y1:.1f} C{x1 - 90:.1f} {y1:.1f}, "
+                 f"{x2 + 90:.1f} {y2:.1f}, {x2 + 6:.1f} {y2:.1f}")
+        edge_parts.append(f'<path d="{d}" class="e-{esc(rel)}" '
+                          f'marker-end="url(#arrowf)">'
+                          f"<title>{esc(f)} —{esc(rel)}→ {esc(t)}</title></path>")
+    width = 40 + len(live) * _LANE_W
+    height = 50 + max(len(lane) for _t, lane in live) * _ROW_H
+    svg = (f'<svg class="graph flow" viewBox="0 0 {width} {height}" '
+           f'xmlns="http://www.w3.org/2000/svg">{_marker("arrowf")}'
+           f'<g class="edges">{"".join(edge_parts)}</g>'
+           f'<g class="nodes">{"".join(node_parts)}</g>'
+           f'<g class="labels">{"".join(header_parts)}</g></svg>')
+    rels = _rel_filter("fr", (r for _f, _t, r in edges))
+    return (f"<details><summary>Traceability flow ({len(connected)} connected, "
+            f"{len(edges)} edges)</summary>"
+            '<p class="lead">Needs → decisions → work → verification, left to right. '
+            "Every node is labeled and clickable; arrowheads show direction; pick a "
+            "relation to isolate it. The section scrolls vertically.</p>"
+            f"{rels}"
             f'<div class="graphwrap">{svg}</div></details>')
 
 
@@ -414,6 +559,7 @@ def _gaps(conn, gates, ready):
 # raw registers last, warnings at the end.
 SECTIONS = [
     ("overview", "Overview", _overview),
+    ("flow", "Traceability flow", _flow),
     ("graph", "Relations graph", _graph),
     ("traceability", "Traceability", _traceability),
     ("execution", "Execution progress", _execution),

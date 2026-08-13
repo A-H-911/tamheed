@@ -43,6 +43,82 @@ class ExportHtmlTest(unittest.TestCase):
         self.assertTrue(result["ok"], result)
         return Path(result["path"]).read_text(encoding="utf-8")
 
+    # -------------------------------------------- plan 027: flow view + graph rework
+
+    def test_flow_section_lanes_and_arrowheads(self):
+        self._open_demo_copy()
+        out = self._export()
+        self.assertIn('<section id="flow"', out)
+        for lane in ("Needs (", "Decisions (", "Work (", "Verification ("):
+            self.assertIn(f'class="lane">{lane}', out)
+        self.assertIn('<marker id="arrowf"', out)        # flow arrowheads
+        self.assertIn('<marker id="arrow"', out)         # graph arrowheads
+        self.assertIn('marker-end="url(#arrowf)"', out)
+        self.assertIn('marker-end="url(#arrow)"', out)
+        # flow nodes are labeled: id text beside the circle
+        self.assertIn('r="4" class="g0"/><text', out)
+
+    def test_graph_connected_only_isolated_folded(self):
+        """Plan 027: 74% dead dots on the golden — isolated entities leave the svg
+        and land in their own fold, every one accounted for."""
+        self._open_demo_copy()
+        out = self._export()
+        import re as _re
+        m = _re.search(r"Relations graph \((\d+) connected, (\d+) isolated,", out)
+        self.assertIsNotNone(m)
+        n_connected, n_isolated = int(m.group(1)), int(m.group(2))
+        self.assertGreater(n_isolated, 0)                # the demo has isolated nodes
+        self.assertIn(f"Isolated entities (no trace edges) ({n_isolated} rows)", out)
+        # an isolated document-section is in the fold, not the svg
+        conn = srv._CURRENT.conn
+        linked = {r[0] for r in conn.execute("SELECT from_id FROM trace_edges")} | \
+                 {r[0] for r in conn.execute("SELECT to_id FROM trace_edges")}
+        (sec_id,) = next(iter(conn.execute(
+            "SELECT id FROM document_sections WHERE id NOT IN"
+            " (SELECT from_id FROM trace_edges)"
+            " AND id NOT IN (SELECT to_id FROM trace_edges) LIMIT 1")))
+        self.assertNotIn(sec_id, linked)
+        self.assertNotIn(f'<a href="#{sec_id}"><circle', out)
+
+    def test_relation_filter_radios_and_classes(self):
+        self._open_demo_copy()
+        out = self._export()
+        conn = srv._CURRENT.conn
+        rels = {r[0] for r in conn.execute("SELECT DISTINCT relation FROM trace_edges")}
+        for prefix in ("fr", "gr"):
+            self.assertIn(f'id="{prefix}-all" class="gz" checked', out)
+            for rel in rels:
+                self.assertIn(f'id="{prefix}-{rel}"', out)
+        for rel in rels:
+            self.assertIn(f'class="e-{rel}"', out)
+        self.assertIn("#fr-tests:checked ~ .graphwrap path:not(.e-tests)", out)
+
+    def test_degree_scaled_radius(self):
+        srv.package_create("deg", "Deg", "rnd")
+        srv.entity_upsert([{"type": "risk", "id": f"RISK-{i:03d}", "title": "r"}
+                           for i in range(1, 8)])
+        srv.entity_upsert([{"type": "trace-edge", "from_id": "RISK-001",
+                            "to_id": f"RISK-{i:03d}", "relation": "relates_to"}
+                           for i in range(2, 7)])        # RISK-001: 5 edges
+        out = self._export()
+        import re as _re
+        radius = {m.group(1): float(m.group(2)) for m in _re.finditer(
+            r'href="#(RISK-\d+)"><circle cx="[^"]+" cy="[^"]+" r="([\d.]+)"', out)}
+        self.assertGreater(radius["RISK-001"], radius["RISK-002"])
+        self.assertGreaterEqual(radius["RISK-002"], 3.0)
+
+    def test_flow_hostile_id_inert(self):
+        srv.package_create("hostf", "H", "rnd")
+        srv.entity_upsert([
+            {"type": "risk", "id": 'RISK-1"><script>', "title": "x"},
+            {"type": "risk", "id": "RISK-2", "title": "y"},
+            {"type": "trace-edge", "from_id": 'RISK-1"><script>', "to_id": "RISK-2",
+             "relation": "relates_to"}])
+        out = self._export()
+        self.assertNotIn("<script", out)                 # esc() holds in the flow too
+        self.assertIn("RISK-1&quot;&gt;&lt;script&gt;", out)
+        self.assertIn('<section id="flow"', out)
+
     # -------------------------------------------- plan 027: readiness panel
 
     def test_execution_readiness_panel(self):
@@ -76,10 +152,13 @@ class ExportHtmlTest(unittest.TestCase):
         self.assertNotIn("max-content", out)
 
     def test_section_order_state_relations_data(self):
+        """Plan 027: the full SECTIONS order, no hardcoded subset (this test missed
+        the graph section for two releases)."""
         self._open_demo_copy()
         out = self._export()
-        order = [out.index(f'<section id="{a}"')
-                 for a in ("overview", "traceability", "execution", "registers", "gaps")]
+        anchors = [a for a, _title, _fn in viewer.SECTIONS]
+        self.assertEqual(anchors[:3], ["overview", "flow", "graph"])
+        order = [out.index(f'<section id="{a}"') for a in anchors]
         self.assertEqual(order, sorted(order))          # C25 req 1: maintainer order
 
     def test_csv_links_and_files(self):
@@ -229,7 +308,8 @@ class ExportHtmlTest(unittest.TestCase):
         a = self._export(str(Path(self._tmp.name) / "a.html"))
         b = self._export(str(Path(self._tmp.name) / "b.html"))
         self.assertEqual(a, b)                           # byte-deterministic at scale
-        self.assertIn("Relations graph (300 nodes, 100 edges)", a)
+        # plan 027: 100 tests + 100 distinct risk targets connected; 100 risks isolated
+        self.assertIn("Relations graph (200 connected, 100 isolated, 100 edges)", a)
 
     def test_graph_aggregates_above_limit(self):
         old = viewer._G_AGG_LIMIT
@@ -238,6 +318,9 @@ class ExportHtmlTest(unittest.TestCase):
             srv.package_create("agg", "Agg", "rnd")
             srv.entity_upsert([{"type": "risk", "id": f"RISK-{i:03d}", "title": "r"}
                                for i in range(1, 11)])
+            srv.entity_upsert([{"type": "trace-edge", "from_id": f"RISK-{i:03d}",
+                                "to_id": f"RISK-{i + 1:03d}",
+                                "relation": "relates_to"} for i in range(1, 10)])
             out = self._export()
         finally:
             viewer._G_AGG_LIMIT = old
@@ -257,12 +340,11 @@ class ExportHtmlTest(unittest.TestCase):
 
     # ------------------------------------------------------------ (a) sections
 
-    def test_demo_package_renders_five_sections(self):
+    def test_demo_package_renders_all_sections(self):
         self._open_demo_copy()
         out = self._export()
-        for anchor in ('id="overview"', 'id="registers"', 'id="traceability"',
-                       'id="execution"', 'id="gaps"'):
-            self.assertIn(anchor, out)
+        for anchor, _title, _fn in viewer.SECTIONS:   # plan 027: never a stale subset
+            self.assertIn(f'id="{anchor}"', out)
         self.assertIn("FR-001", out)                       # registers carry demo content
         self.assertIn("Gate verdict:", out)                # per-gate chips summary
         self.assertIn("Design-ahead lead", out)            # C9 roadmap render

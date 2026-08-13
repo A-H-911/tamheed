@@ -11,6 +11,9 @@
   --ink: #ffffff; --ink-2: #c3c2b7; --line: #3a3a38;
   --a1: #3987e5; --a2: #d95926; --a3: #199e70; --a4: #c98500;
   --a5: #d55181; --a6: #008300; --a7: #9085e9; --a8: #e66767;
+  /* plan 027: +4 hand-picked hues (same mid-lightness band on #1a1a19); families
+     past 12 additionally wear .ring as the second-cycle disambiguator. */
+  --a9: #0ba3a3; --a10: #b0803f; --a11: #7fa650; --a12: #c96bd6;
   --good: #3fb950; --bad: #f85149;
 }
 body { font: 14px/1.55 system-ui, sans-serif; margin: 0 auto; max-width: 76rem;
@@ -31,6 +34,7 @@ section:nth-of-type(3) h2 { border-left-color: var(--a3); }
 section:nth-of-type(4) h2 { border-left-color: var(--a4); }
 section:nth-of-type(5) h2 { border-left-color: var(--a5); }
 section:nth-of-type(6) h2 { border-left-color: var(--a8); }
+section:nth-of-type(7) h2 { border-left-color: var(--a2); }
 h3 { font-size: 1rem; margin-top: 1.5rem; color: var(--ink-2); }
 .freshness { color: var(--ink-2); font-size: .8rem; margin: .2rem 0 1rem; }
 .ready { font-weight: 800; font-size: 1.05rem; letter-spacing: .03em; }
@@ -93,12 +97,54 @@ input.gz:focus-visible + .gzl { outline: 2px solid var(--a1); }
 #gz-4:checked ~ .graphwrap svg { width: 400%; height: auto; }
 #gz-8:checked ~ .graphwrap svg { width: 800%; height: auto; }
 .graph path { fill: none; stroke: #8b8a80; stroke-opacity: .22; }
-.graph path:hover { stroke-opacity: 1; stroke-width: 2; stroke: var(--a1); }
+.graph path:hover { stroke-opacity: 1; stroke-width: 2; }
 .graph a:hover circle, .graph a:focus circle { stroke: var(--ink); stroke-width: 2; }
 .graph text { font-size: 11px; fill: var(--ink-2); }
+.graph text.lane { font-weight: 700; letter-spacing: .05em; fill: var(--ink); }
+.graph .arrowhead { fill: #8b8a80; }
 .g0 { fill: var(--a1); } .g1 { fill: var(--a2); } .g2 { fill: var(--a3); }
 .g3 { fill: var(--a4); } .g4 { fill: var(--a5); } .g5 { fill: var(--a6); }
-.g6 { fill: var(--a7); } .g7 { fill: var(--a8); }
+.g6 { fill: var(--a7); } .g7 { fill: var(--a8); } .g8 { fill: var(--a9); }
+.g9 { fill: var(--a10); } .g10 { fill: var(--a11); } .g11 { fill: var(--a12); }
+circle.ring { stroke: var(--ink-2); stroke-width: 1; }
+/* plan 027: relation identity on every edge — stroke by kind (relates_to stays the
+   neutral default), legend chips wear the same hue. */
+.graph path.e-derives_from { stroke: var(--a1); }  .rl-derives_from { color: var(--a1); border-color: var(--a1); }
+.graph path.e-implements { stroke: var(--a3); }    .rl-implements { color: var(--a3); border-color: var(--a3); }
+.graph path.e-tests { stroke: var(--a4); }         .rl-tests { color: var(--a4); border-color: var(--a4); }
+.graph path.e-verifies { stroke: var(--a7); }      .rl-verifies { color: var(--a7); border-color: var(--a7); }
+.graph path.e-mitigates { stroke: var(--a5); }     .rl-mitigates { color: var(--a5); border-color: var(--a5); }
+.graph path.e-supersedes { stroke: var(--a8); }    .rl-supersedes { color: var(--a8); border-color: var(--a8); }
+.graph path.e-blocked_by { stroke: var(--a2); }    .rl-blocked_by { color: var(--a2); border-color: var(--a2); }
+.graph path.e-satisfies { stroke: var(--a6); }     .rl-satisfies { color: var(--a6); border-color: var(--a6); }
+.graph path.e-binds_to { stroke: var(--a9); }      .rl-binds_to { color: var(--a9); border-color: var(--a9); }
+.graph path.e-discharges { stroke: var(--a10); }   .rl-discharges { color: var(--a10); border-color: var(--a10); }
+/* CSS-only relation filter (plan 027): the checked radio dims every other kind —
+   same sibling mechanics as the gz zoom. fr-* = flow section, gr-* = graph section. */
+#fr-derives_from:checked ~ .graphwrap path:not(.e-derives_from), #gr-derives_from:checked ~ .graphwrap path:not(.e-derives_from),
+#fr-implements:checked ~ .graphwrap path:not(.e-implements), #gr-implements:checked ~ .graphwrap path:not(.e-implements),
+#fr-tests:checked ~ .graphwrap path:not(.e-tests), #gr-tests:checked ~ .graphwrap path:not(.e-tests),
+#fr-verifies:checked ~ .graphwrap path:not(.e-verifies), #gr-verifies:checked ~ .graphwrap path:not(.e-verifies),
+#fr-mitigates:checked ~ .graphwrap path:not(.e-mitigates), #gr-mitigates:checked ~ .graphwrap path:not(.e-mitigates),
+#fr-supersedes:checked ~ .graphwrap path:not(.e-supersedes), #gr-supersedes:checked ~ .graphwrap path:not(.e-supersedes),
+#fr-blocked_by:checked ~ .graphwrap path:not(.e-blocked_by), #gr-blocked_by:checked ~ .graphwrap path:not(.e-blocked_by),
+#fr-satisfies:checked ~ .graphwrap path:not(.e-satisfies), #gr-satisfies:checked ~ .graphwrap path:not(.e-satisfies),
+#fr-binds_to:checked ~ .graphwrap path:not(.e-binds_to), #gr-binds_to:checked ~ .graphwrap path:not(.e-binds_to),
+#fr-discharges:checked ~ .graphwrap path:not(.e-discharges), #gr-discharges:checked ~ .graphwrap path:not(.e-discharges),
+#fr-relates_to:checked ~ .graphwrap path:not(.e-relates_to), #gr-relates_to:checked ~ .graphwrap path:not(.e-relates_to)
+  { stroke-opacity: .04; }
+#fr-derives_from:checked ~ .graphwrap path.e-derives_from, #gr-derives_from:checked ~ .graphwrap path.e-derives_from,
+#fr-implements:checked ~ .graphwrap path.e-implements, #gr-implements:checked ~ .graphwrap path.e-implements,
+#fr-tests:checked ~ .graphwrap path.e-tests, #gr-tests:checked ~ .graphwrap path.e-tests,
+#fr-verifies:checked ~ .graphwrap path.e-verifies, #gr-verifies:checked ~ .graphwrap path.e-verifies,
+#fr-mitigates:checked ~ .graphwrap path.e-mitigates, #gr-mitigates:checked ~ .graphwrap path.e-mitigates,
+#fr-supersedes:checked ~ .graphwrap path.e-supersedes, #gr-supersedes:checked ~ .graphwrap path.e-supersedes,
+#fr-blocked_by:checked ~ .graphwrap path.e-blocked_by, #gr-blocked_by:checked ~ .graphwrap path.e-blocked_by,
+#fr-satisfies:checked ~ .graphwrap path.e-satisfies, #gr-satisfies:checked ~ .graphwrap path.e-satisfies,
+#fr-binds_to:checked ~ .graphwrap path.e-binds_to, #gr-binds_to:checked ~ .graphwrap path.e-binds_to,
+#fr-discharges:checked ~ .graphwrap path.e-discharges, #gr-discharges:checked ~ .graphwrap path.e-discharges,
+#fr-relates_to:checked ~ .graphwrap path.e-relates_to, #gr-relates_to:checked ~ .graphwrap path.e-relates_to
+  { stroke-opacity: .95; }
 @media print {
   :root { color-scheme: light; }
   body { background: #fff; color: #000; }
