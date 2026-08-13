@@ -88,11 +88,14 @@ v2 package converts its `data/prompts.jsonl` once (source kept as `prompts.jsonl
 `handoff_emit` warns about leftover `handoff/prm-*.md` copies — delete them; the package folder is
 the single source.
 
-The CLAUDE.md operating note is **marker-managed** (`<!-- tamheed:note v2 -->…<!-- /tamheed:note -->`):
-identical → `unchanged`; the emission changed → updated in place; a hand edit inside the markers →
-`diverged` (force to replace); a v1 note (heading, no markers) is warned and never machine-edited —
-delete the section once and re-emit. The stale-v1 warning block still retracts itself when a later
-emit's scan is clean. Re-running `handoff_emit` is therefore the standing cutover verifier:
+The CLAUDE.md operating note is a **tool-owned marker span** (`<!-- tamheed:note v2 -->…<!--
+/tamheed:note -->`, plan 029): rebuilt on EVERY emit — always current, no force involved. A hand
+edit inside the markers is overwritten (with a warning); operator content belongs OUTSIDE the
+markers — the AGENTS.md template carries the same obligations table for project customization. A
+v1 note (heading, no markers) is warned and never machine-edited — delete the section once and
+re-emit. `force` means exactly one thing: overwrite ALL diverged stock prompt files (+ .mcp.json);
+to accept the current template for ONE file, delete it and re-emit. The stale-v1 warning block
+still retracts itself when a later emit's scan is clean. Re-running `handoff_emit` is therefore the standing cutover verifier:
 everything `unchanged`, no warnings, no `restated_content` findings = the cutover is done and
 undrifted.
 

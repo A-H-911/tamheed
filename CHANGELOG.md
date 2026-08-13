@@ -10,6 +10,36 @@ All notable changes to Tamheed are documented here. The format is based on
 
 ## [Unreleased]
 
+## [3.2.0] - 2026-08-14
+
+Fix release from the fourteenth ACMP field report — the v3.1.0 acceptance run
+(evidence **C35**, archived at `plans/evidence/acmp-field-report-14-2026-08-14.md`):
+every findings_13 recommendation verified working, plus two real defects the run
+caught in the note/force machinery. **No schema migration — existing 3.x packages
+unaffected.**
+
+### Fixed
+- **The CLAUDE.md note now actually self-updates** (C35/N1 — the code refused
+  divergent updates while its own warning text promised "self-updates thereafter";
+  the operator quoted the code back). The `<!-- tamheed:note v2 -->` span is
+  **tool-owned** and rebuilt on every `handoff_emit` — no `force`, no `diverged`
+  bookkeeping; a hand edit inside the markers is overwritten WITH a warning ("keep
+  operator content OUTSIDE the markers"); content outside the markers is never
+  touched.
+- **`force` no longer couples the note to prompt clobbering** (C35/N2): with the note
+  self-updating, `force` means exactly one thing — overwrite ALL diverged stock
+  prompt files (+ `.mcp.json`). A new guidance warning states that the two divergence
+  kinds (your customisation vs a template that moved on) are indistinguishable
+  without history, and names the zero-machinery per-file acceptance path: **delete
+  the file and re-emit**.
+
+### Changed
+- **`indeterminate` readiness status** (C35/N3): a rule with `discriminating: false`
+  whose query found nothing reads `indeterminate`, never `pass` — "cannot measure" is
+  not "verified clean". `ready` and the `Implemented` transition guard trip only on
+  real `fail` (non-blocking, maintainer-locked); the loud all-null-fail case
+  (`risks-discharged` firing on every risk) stays `fail`.
+
 ## [3.1.0] - 2026-08-13
 
 Follow-up release from the thirteenth ACMP field report — the v3.0.0 acceptance run

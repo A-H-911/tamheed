@@ -820,6 +820,11 @@ def _readiness_report(conn, scope: str, scope_id: str | None) -> dict:
             # blind-spot counts WITHOUT the flag (partial population still
             # discriminates).
             entry["discriminating"] = False
+            if not entities:
+                # C35/N3: a vacuous pass is not "verified clean" — the rule measured
+                # nothing. `indeterminate` is a loud amber; `ready` and the transition
+                # guard trip only on real "fail" (maintainer decision, non-blocking).
+                entry["status"] = "indeterminate"
         rules.append(entry)
 
     def ids(sql: str, params: tuple = ()) -> list:
@@ -1309,6 +1314,15 @@ def handoff_emit(target_dir: str, subdir: str = "handoff", force: bool = False) 
         emit(mcp_cfg_path, json.dumps(cfg, indent=2) + "\n", ".mcp.json")
 
     warnings: list[str] = []
+    # Plan 029 (C35/N2): the two kinds of stock divergence — operator customisation vs
+    # a template that moved on — are indistinguishable without history; say so and name
+    # the zero-machinery per-file acceptance path instead of leaving force blunt-only.
+    if library["diverged"]:
+        warnings.append(
+            f"{len(library['diverged'])} stock prompt(s) differ from the current"
+            " template — your customisation or a template update (indistinguishable"
+            " without history); to accept the current template for ONE file, delete it"
+            " and re-emit; force=True overwrites ALL diverged stock files")
     # v3.0.0: nothing is emitted into handoff/ anymore — leftover v2 copies actively
     # mislead. Plan 028 (C34 §2): the verdict is PER FILE, by content compare — a
     # blanket "delete" would have destroyed a live project prompt that existed nowhere
@@ -1428,10 +1442,16 @@ def handoff_emit(target_dir: str, subdir: str = "handoff", force: bool = False) 
             " '## Tamheed progress tracking' section and re-run handoff_emit; the v2"
             " note is marker-managed and self-updates thereafter")
     elif note_m.group(0) != note_block.rstrip("\n"):
-        if force:
-            content = content.replace(note_m.group(0), note_block.rstrip("\n"))
-        else:
-            diverged.append("CLAUDE.md (tamheed:note)")
+        # Plan 029 (C35/N1): the marker-delimited span is TOOL-OWNED and rebuilt on
+        # EVERY emit — the stale-warning-block precedent. The v3.1.0 divergence
+        # bookkeeping made the documented "self-updates" promise false, and applying
+        # the note then required a force that clobbered operator-owned prompt files.
+        # A hand edit inside the markers is overwritten — warned, never silent.
+        content = content.replace(note_m.group(0), note_block.rstrip("\n"))
+        warnings.append(
+            "the tamheed:note span in CLAUDE.md was rebuilt — it is tool-owned and"
+            " always reflects the current emission; keep operator content OUTSIDE the"
+            " <!-- tamheed:note --> markers")
     if stale:
         content += ("\n<!-- tamheed:stale-warning -->\n"
                     "> **Stale v1 references detected** in this project's agent-control "

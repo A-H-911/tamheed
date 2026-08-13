@@ -422,6 +422,28 @@ class McpContractTest(unittest.TestCase):
         self.assertIn("INVISIBLE to slice scope", closed["note"])
         self.assertNotIn("discriminating", closed)             # partial still counts
 
+    def test_readiness_vacuous_pass_reads_indeterminate(self):
+        """Plan 029 (C35/N3): a blocking rule whose keyed column is NULL everywhere
+        and whose query finds nothing is NOT 'verified clean' — status becomes
+        `indeterminate` (loud amber); ready and the transition guard trip only on
+        real fail."""
+        make_complete_package("demo")
+        srv.entity_upsert([{"type": "defect", "id": "DEF-001", "title": "floating",
+                            "severity": "high", "status": "Open"}])  # no found_in
+        out = srv.readiness_check("slice", id="SL-001")
+        rules = {r["rule"]: r for r in out["rules"]}
+        closed = rules["defects-closed"]
+        self.assertEqual(closed["status"], "indeterminate")    # not a false green
+        self.assertIs(closed["discriminating"], False)
+        self.assertEqual(closed["entities"], [])
+        # indeterminate never blocks: ready reflects only the real failures
+        blocking_fails = [r for r in out["rules"]
+                          if r["severity"] == "blocking" and r["status"] == "fail"]
+        self.assertEqual(out["ready"], not blocking_fails)
+        # the loud all-null case stays a real fail (maintainer-locked)
+        pkg = {r["rule"]: r for r in srv.readiness_check("package")["rules"]}
+        self.assertEqual(pkg["risks-discharged"]["status"], "fail")
+
     def test_readiness_scope_validation(self):
         make_complete_package("demo")
         self.assertIn("unknown scope", srv.readiness_check("release")["error"])
@@ -927,27 +949,50 @@ class McpContractTest(unittest.TestCase):
             self.assertIn("Precious hand-written notes.", after)
             self.assertNotIn("tamheed:note v2", after)         # not machine-upgraded
 
-    def test_claude_md_marked_note_updates_and_diverges(self):
-        """Plan 027: the marked block self-updates when the emission changes, refuses a
-        hand edit without force, and force replaces exactly the span."""
+    def test_claude_md_note_span_is_tool_owned(self):
+        """Plan 029 (C35/N1): the marked span self-updates on EVERY emit — no force,
+        no diverged bookkeeping (the v3.1.0 refusal made the documented 'self-updates'
+        promise false and coupled the note to a prompt-clobbering force). A hand edit
+        inside the markers is rebuilt over, WITH a warning; operator content outside
+        the markers survives untouched."""
         self._emit_ready()
         with tempfile.TemporaryDirectory() as target:
             srv.handoff_emit(target)
             claude = Path(target) / "CLAUDE.md"
             second = srv.handoff_emit(target)
             self.assertIn("CLAUDE.md", second["unchanged"])    # identical: no rewrite
+            self.assertFalse(any("tamheed:note span" in w
+                                 for w in second["warnings"]))
             hacked = claude.read_text(encoding="utf-8").replace(
                 "never Met without proof", "verdicts are optional")
-            claude.write_text(hacked, encoding="utf-8")
-            third = srv.handoff_emit(target)
-            self.assertIn("CLAUDE.md (tamheed:note)", third["diverged"])
-            self.assertIn("verdicts are optional",
-                          claude.read_text(encoding="utf-8"))  # refused, not clobbered
-            forced = srv.handoff_emit(target, force=True)
-            self.assertIn("CLAUDE.md", forced["written"])
-            restored = claude.read_text(encoding="utf-8")
-            self.assertIn("never Met without proof", restored)
-            self.assertNotIn("verdicts are optional", restored)
+            claude.write_text(hacked + "\n## Operator notes\n\nkeep me\n",
+                              encoding="utf-8")
+            third = srv.handoff_emit(target)                   # NO force
+            self.assertIn("CLAUDE.md", third["written"])
+            self.assertEqual(third["diverged"], [])            # never diverges
+            self.assertTrue(any("tool-owned" in w and "OUTSIDE" in w
+                                for w in third["warnings"]))
+            after = claude.read_text(encoding="utf-8")
+            self.assertIn("never Met without proof", after)    # span rebuilt
+            self.assertNotIn("verdicts are optional", after)
+            self.assertIn("keep me", after)                    # outside markers: kept
+
+    def test_stock_divergence_warning_names_the_per_file_path(self):
+        """Plan 029 (C35/N2): diverged stock prompts get honest guidance — the two
+        divergence kinds are indistinguishable without history; delete+re-emit is the
+        per-file acceptance path; force stays all-or-nothing."""
+        self._emit_ready()
+        stock = srv.PACKAGE_ROOT / "demo" / "prompts" / "orient-resume.md"
+        stock.write_text(stock.read_text(encoding="utf-8") + "\ncustomised\n",
+                         encoding="utf-8")
+        with tempfile.TemporaryDirectory() as target:
+            out = srv.handoff_emit(target)
+            self.assertIn("prompts/orient-resume.md",
+                          out["prompt_library"]["diverged"])   # still refused
+            w = next(w for w in out["warnings"] if "stock prompt(s) differ" in w)
+            self.assertIn("indistinguishable without history", w)
+            self.assertIn("delete it and re-emit", w)
+            self.assertIn("force=True overwrites ALL", w)
 
     def test_stale_reference_report_is_precise(self):
         self._emit_ready()

@@ -47,7 +47,10 @@ tiers (ADR-0001) — the strongest ones stopped being checks and became properti
   package/phase/slice close boundary it answers "is this actually DONE?" — blocking rules
   (pre-approval decisions/ADRs, ACs not latest-Met, open defects, undischarged risks), advisory
   rules, and the `human_required` checklist from declared `execution_gates` rows. The same
-  blocking rules guard the phase/slice `Implemented` transition.
+  blocking rules guard the phase/slice `Implemented` transition. Rule statuses (plans 028-029):
+  `pass` / `fail` / **`indeterminate`** — a rule whose keyed column is unpopulated for every row
+  of its type carries `discriminating: false`, and when its query finds nothing it reads
+  `indeterminate`, never `pass` ("cannot measure" ≠ "verified clean"); only real `fail` blocks.
 - Judgment gates: perform the check and record the verdict (a `progress-entry` note with the evidence).
 - Stage 19 runs everything; Stage 22 re-confirms criticals + `readiness_check("package")` for the
   readiness verdict.
