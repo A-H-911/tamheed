@@ -48,4 +48,18 @@ cross-checked against CHANGELOG 3.0.0–3.2.1 + source; no claims past shipped b
 **Acceptance (maintainer): the next ACMP run on 3.2.1** — delete `prompts/README.md`
 + re-emit (the per-file template-acceptance path, first real field use), confirm the
 folder row + lock section render, then the genuinely fresh primary-session drift test
-(the ONLY remaining open verdict).
+(the ONLY remaining open verdict). → **Acceptance MET (findings_16/C37, same day):
+steps 1–2 clean — the per-file path field-proven, both additions render, the lock
+section judged faithful. Zero defects; close-out only, no release.**
+
+## Deferred (post-acceptance, findings_16)
+
+- **Lock-section wording** (ships with the next release; C37 phrasing note, not a
+  defect): "Only when both say stale, delete" is stricter than the logic requires —
+  rewrite to "delete when EITHER discriminator proves staleness (identity failure =
+  pid reuse; ordering failure = the process cannot be the holder); keep the lock only
+  when both checks pass." The current wording errs toward not-deleting — safe
+  meanwhile.
+- §6 drift discharge: the interactive fresh session remains the only valid
+  instrument (headless permission modes block the tool path; delegated agents
+  correctly defer) — operator-side, no tamheed change.

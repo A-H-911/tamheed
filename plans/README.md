@@ -47,7 +47,7 @@ Keystone 1.0.1.
 | 027 | Maintainer observations: prompts→files, readiness engine, typed relations, flow viewer, drift enforcement | B23 | P1 | XL | seven direct maintainer notes 2026-08-13 (no findings file); 3 exploration passes + devil's-advocate round + 2 interviews | DONE — executed 2026-08-13, **v3.0.0** (migrations 003+004); acceptance MET same day (findings_13/C34: conversion clean, readiness caught SL-004) |
 | 028 | Thirteenth field report: prompt lifecycle signals, readiness discrimination, flow legibility, operator guide | B24 | P2 | M | findings_13 (the v3.0.0 acceptance) + the maintainer's prm-naming/overlap probe + user-guide ask; evidence C34 | DONE — executed 2026-08-13, v3.1.0; acceptance ran same-day (findings_14/C35: §2/§4/§5 all verified; two note/force defects → plan 029) |
 | 029 | Fourteenth field report: tool-owned note span, honest force, indeterminate readiness | B25 | P2 | S | findings_14 (the v3.1.0 acceptance); evidence C35; all forks interview-locked | DONE — executed 2026-08-14, v3.2.0; acceptance ran same-day (findings_15/C36: all three fixes verified; curation done; instruction transfer PROVEN) |
-| 030 | Fifteenth field report: README folder index + lock guidance; the README release contract (lint-enforced) | B26 | P3 | S | findings_15 (the v3.2.0 acceptance) + the maintainer's update-READMEs-each-release instruction; evidence C36 | DONE — executed 2026-08-14, v3.2.1; acceptance = the next ACMP run (README delete+re-emit path, then the genuinely fresh-session drift test — the last open verdict) |
+| 030 | Fifteenth field report: README folder index + lock guidance; the README release contract (lint-enforced) | B26 | P3 | S | findings_15 (the v3.2.0 acceptance) + the maintainer's update-READMEs-each-release instruction; evidence C36 | DONE — executed 2026-08-14, v3.2.1; **acceptance MET (findings_16/C37: per-file path field-proven, both additions render; zero defects — no plan, no release)**; carried: the interactive fresh-session drift test (operator-side) + the either-discriminator lock rewording (next release) |
 
 Status values: TODO | IN PROGRESS | DONE | BLOCKED (with one-line reason) | REJECTED (with
 one-line rationale).
@@ -65,6 +65,21 @@ export + freshness/lead renders (012); tamheed repo public from day one with WIP
 eval schedule disabled at close-out (016). **Execution driver: the maintainer runs the plans
 himself** — self-containment is the operative contract; this status table is the tracking
 surface.
+
+## Alignment record (2026-08-14 — findings_16/C37, the v3.2.1 acceptance close-out)
+
+The third zero-actionable acceptance of the series (after findings_9/11), and the
+fastest loop yet: findings_13→16 spanned two days, four releases, every finding
+answered same-day and every fix field-verified in the next report. findings_16's
+substance: the per-file template-acceptance path worked in the field on first use;
+zero tamheed defects (the lone ⚠ is a phrasing note, deferred: the stale-lock guidance
+should say EITHER discriminator proves staleness — the current stricter wording errs
+toward not-deleting, the safe direction). §6 (drift) remains the one open verdict, and
+the report's own methodology note says why: the headless run's permission mode blocked
+the tool path, so its null "cannot tell the two states apart" — while instruction
+transfer is now proven in a second independent context. The last instrument is an
+interactive fresh session, operator-side. Close-out only: evidence C37 + these
+records; no plan number, no release (precedent holds).
 
 ## Alignment record (2026-08-13, second entry — plan 028, the findings_13 cycle)
 
