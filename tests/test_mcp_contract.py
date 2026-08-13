@@ -384,6 +384,44 @@ class McpContractTest(unittest.TestCase):
         pkg_hr = srv.readiness_check("package")["human_required"]
         self.assertEqual([g["gate"] for g in pkg_hr], ["GATE-002"])
 
+    def test_readiness_says_when_it_cannot_discriminate(self):
+        """Plan 028 (C34 §4): a rule keyed on a column NULL for EVERY row says so and
+        carries discriminating:false — but STAYS blocking (an unpopulated column is
+        itself a package deficiency; maintainer-locked)."""
+        make_complete_package("demo")   # RISK-001: risk_state open, discharged_by NULL
+        rules = {r["rule"]: r for r in srv.readiness_check("package")["rules"]}
+        risky = rules["risks-discharged"]
+        self.assertEqual(risky["severity"], "blocking")        # unchanged
+        self.assertEqual(risky["status"], "fail")
+        self.assertIs(risky["discriminating"], False)
+        self.assertIn("0 of 1 risks rows have discharged_by set", risky["note"])
+        self.assertIn("cannot discriminate", risky["note"])
+        oq = rules["open-questions-resolved"]
+        self.assertIs(oq["discriminating"], False)
+        # populate one row → the rule discriminates again, no flag, no note
+        srv._CURRENT.conn.execute(
+            "UPDATE risks SET discharged_by = 'AC-001' WHERE id = 'RISK-001'")
+        rules = {r["rule"]: r for r in srv.readiness_check("package")["rules"]}
+        self.assertNotIn("discriminating", rules["risks-discharged"])
+        self.assertNotIn("cannot discriminate", rules["risks-discharged"]["note"])
+
+    def test_readiness_slice_reports_unlocated_defects(self):
+        """Plan 028 (C34 §4, the DEF-057 blind spot): open defects with no found_in are
+        invisible to slice scope — the note says how many are hiding."""
+        make_complete_package("demo")
+        srv.entity_upsert([
+            {"type": "defect", "id": "DEF-001", "title": "located",
+             "severity": "high", "status": "Open", "found_in": "SL-001"},
+            {"type": "defect", "id": "DEF-002", "title": "floating",
+             "severity": "high", "status": "Open"}])
+        rules = {r["rule"]: r
+                 for r in srv.readiness_check("slice", id="SL-001")["rules"]}
+        closed = rules["defects-closed"]
+        self.assertEqual(closed["entities"], ["DEF-001"])      # only the located one
+        self.assertIn("1 open defect(s) have no found_in", closed["note"])
+        self.assertIn("INVISIBLE to slice scope", closed["note"])
+        self.assertNotIn("discriminating", closed)             # partial still counts
+
     def test_readiness_scope_validation(self):
         make_complete_package("demo")
         self.assertIn("unknown scope", srv.readiness_check("release")["error"])

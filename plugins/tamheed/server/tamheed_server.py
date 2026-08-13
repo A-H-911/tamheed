@@ -795,13 +795,39 @@ def _readiness_report(conn, scope: str, scope_id: str | None) -> dict:
     definitions are NEVER machine-evaluated."""
     rules: list[dict] = []
 
-    def rule(name: str, severity: str, entities: list, note: str) -> None:
-        rules.append({"rule": name, "severity": severity,
-                      "status": "fail" if entities else "pass",
-                      "entities": entities, "note": note})
+    def rule(name: str, severity: str, entities: list, note: str,
+             na: str | None = None, extra: str | None = None) -> None:
+        entry = {"rule": name, "severity": severity,
+                 "status": "fail" if entities else "pass",
+                 "entities": entities, "note": note + (na or "") + (extra or "")}
+        if na:
+            # C34 §4: a rule firing on ALL rows is indistinguishable from a rule
+            # measuring nothing — say so. Severity is NOT downgraded (maintainer-locked:
+            # an unpopulated column is itself a package deficiency). `extra` carries
+            # blind-spot counts WITHOUT the flag (partial population still
+            # discriminates).
+            entry["discriminating"] = False
+        rules.append(entry)
 
     def ids(sql: str, params: tuple = ()) -> list:
         return [r[0] for r in conn.execute(sql, params)]
+
+    def na_note(table: str, column: str) -> str | None:
+        total, populated = conn.execute(
+            f"SELECT COUNT(*), COUNT({column}) FROM {table}").fetchone()
+        if total and not populated:
+            return (f" — 0 of {total} {table} rows have {column} set; this rule "
+                    f"cannot discriminate (populate {column} to make it meaningful)")
+        return None
+
+    def unlocated_defects_note(scope_name: str) -> str | None:
+        (n,) = conn.execute(
+            "SELECT COUNT(*) FROM defects WHERE status IN ('Open','In-progress')"
+            " AND found_in IS NULL").fetchone()
+        if n:
+            return (f" — {n} open defect(s) have no found_in and are INVISIBLE to "
+                    f"{scope_name} scope")
+        return None
 
     if scope == "package":
         rule("decisions-approved", "blocking",
@@ -824,14 +850,16 @@ def _readiness_report(conn, scope: str, scope_id: str | None) -> dict:
         rule("risks-discharged", "blocking",
              ids("SELECT id FROM risks WHERE risk_state IN ('open','materialized')"
                  " AND discharged_by IS NULL"),
-             "open/materialized risks with no discharging AC/test")
+             "open/materialized risks with no discharging AC/test",
+             na=na_note("risks", "discharged_by"))
         rule("deferred-work-reviewed", "advisory",
              ids("SELECT id FROM deferred_work"
                  " WHERE status IN ('Open','Activated','Scheduled')"),
              "activation triggers are prose — a human judges whether each fired")
         rule("open-questions-resolved", "advisory",
              ids("SELECT id FROM open_questions WHERE resolved_by IS NULL"),
-             "unresolved open questions at close — resolve or carry deliberately")
+             "unresolved open questions at close — resolve or carry deliberately",
+             na=na_note("open_questions", "resolved_by"))
         rule("execution-plans-approved", "advisory",
              ids("SELECT id FROM execution_plans WHERE lifecycle_status NOT IN"
                  " ('Approved','Implemented','Superseded','Obsolete')"),
@@ -858,11 +886,13 @@ def _readiness_report(conn, scope: str, scope_id: str | None) -> dict:
                  " ('Implemented','Superseded','Obsolete','Rejected')",
                  (scope_id, scope_id)),
              "open work items in this phase")
+        found_na = na_note("defects", "found_in")
         rule("defects-closed", "blocking",
              ids("SELECT d.id FROM defects d WHERE d.status IN ('Open','In-progress')"
                  " AND (d.found_in = ? OR d.found_in IN"
                  " (SELECT id FROM slices WHERE phase_id = ?))", (scope_id, scope_id)),
-             "open defects found in this phase or its slices")
+             "open defects found in this phase or its slices", na=found_na,
+             extra=None if found_na else unlocated_defects_note("phase"))
         rule("milestones-reached", "advisory",
              ids("SELECT id FROM milestones WHERE phase_id = ?"
                  " AND lifecycle_status NOT IN"
@@ -881,10 +911,12 @@ def _readiness_report(conn, scope: str, scope_id: str | None) -> dict:
                  " AND lifecycle_status NOT IN"
                  " ('Implemented','Superseded','Obsolete','Rejected')", (scope_id,)),
              "open work items in this slice")
+        found_na = na_note("defects", "found_in")
         rule("defects-closed", "blocking",
              ids("SELECT id FROM defects WHERE found_in = ?"
                  " AND status IN ('Open','In-progress')", (scope_id,)),
-             "open defects found in this slice")
+             "open defects found in this slice", na=found_na,
+             extra=None if found_na else unlocated_defects_note("slice"))
         rule("execution-plan-approved", "advisory",
              ids("SELECT id FROM execution_plans WHERE slice_id = ?"
                  " AND lifecycle_status NOT IN"
