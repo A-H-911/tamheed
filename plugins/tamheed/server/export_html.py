@@ -539,19 +539,31 @@ def _execution(conn, gates, ready):
                      'corrections and re-verdicts APPEND (gate_run counts rows; this '
                      'table shows each criterion&#8217;s latest).</p>')
     entries = conn.execute(
-        "SELECT id, occurred_at, entry, phase_id, slice_id FROM progress_entries"
-        " ORDER BY id").fetchall()
-    parts.append(_fold("Progress log", len(entries),
-                       _table(["id", "occurred at", "entry", "phase", "slice"], entries))
+        "SELECT id, occurred_at, event_type, entry, subject_id, actor, corrects,"
+        " phase_id, slice_id FROM progress_entries ORDER BY id").fetchall()
+    parts.append(_fold("Progress log (typed events)", len(entries),
+                       _table(["id", "occurred at", "event", "entry", "subject",
+                               "actor", "corrects", "phase", "slice"], entries))
                  if entries else
                  '<h3>Progress log</h3><p class="empty">No progress entries recorded.</p>')
     changes = conn.execute(
-        "SELECT id, iteration, decision_ref, description FROM scope_changes"
-        " ORDER BY id").fetchall()
-    parts.append(_fold("Scope changes", len(changes),
-                       _table(["id", "iteration", "authorized by", "description"], changes))
+        "SELECT id, iteration, lifecycle_status, decision_ref, description"
+        " FROM scope_changes ORDER BY id").fetchall()
+    parts.append(_fold("Scope changes (Proposed → Approved → Merged)", len(changes),
+                       _table(["id", "iteration", "lifecycle", "authorized by",
+                               "description"], changes))
                  if changes else
                  '<h3>Scope changes</h3><p class="empty">No scope changes recorded.</p>')
+    waivers = conn.execute(
+        "SELECT id, rule, applies_to, justification, approver, expires FROM waivers"
+        " ORDER BY id").fetchall()
+    if waivers:
+        parts.append(_fold("Readiness waivers (operator-approved; expiring)",
+                           len(waivers),
+                           _table(["waiver", "rule", "applies to", "justification",
+                                   "approver", "expires"],
+                                  [[w, r, a or "(whole rule)", j, ap, e or "(close-out)"]
+                                   for w, r, a, j, ap, e in waivers])))
     # Plan 027: per-phase readiness panel — v_phase_exit (latest-verdict semantics) +
     # declared human gates. The full rule report is `readiness_check` (the tool).
     exits = conn.execute(
@@ -568,15 +580,30 @@ def _execution(conn, gates, ready):
         parts.append('<p class="freshness">latest-verdict semantics — an old Met never '
                      'survives a newer Not-met; the full rule report (risks, decisions, '
                      'deferred work) is <code>readiness_check</code>.</p>')
+    slice_exits = conn.execute(
+        "SELECT slice_id, title, phase_id, acs_met, acs_total, wbs_open, open_defects"
+        " FROM v_slice_exit ORDER BY slice_id").fetchall()
+    if slice_exits:
+        rows = [[sid, title, pid, f"{met}/{total}" if total else "—", wbs, defects,
+                 "ready" if (total and met == total and not wbs and not defects)
+                 else "not ready"]
+                for sid, title, pid, met, total, wbs, defects in slice_exits]
+        parts.append(_fold("Slice readiness (ACs latest-Met / open work incl. Review /"
+                           " open defects)", len(rows),
+                           _table(["slice", "title", "phase", "ACs met", "open work",
+                                   "open defects", "exit"], rows)))
+    # v4: all four gate kinds surface ('ready' was silently dropped through v3) plus
+    # the latest Go/Hold/Redirect/Kill outcome.
     gates_h = conn.execute(
-        "SELECT id, gate_kind, applies_to, definition FROM execution_gates"
-        " WHERE gate_kind IN ('done','approval','checkpoint') ORDER BY id").fetchall()
+        "SELECT id, gate_kind, applies_to, definition, outcome FROM execution_gates"
+        " ORDER BY id").fetchall()
     if gates_h:
         parts.append(_fold("Declared human gates (confirm + record via "
                            "progress_update)", len(gates_h),
-                           _table(["gate", "kind", "applies to", "definition"],
-                                  [[g, k, a or "(package)", d]
-                                   for g, k, a, d in gates_h])))
+                           _table(["gate", "kind", "applies to", "definition",
+                                   "outcome"],
+                                  [[g, k, a or "(package)", d, o or "—"]
+                                   for g, k, a, d, o in gates_h])))
     return "".join(parts)
 
 

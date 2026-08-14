@@ -1,0 +1,2 @@
+{"id":"TEST-001","title":"Overdue boundary tests (fixed dates)","kind":"unit","verdict":"Pending","lifecycle_status":"Approved","disposition":null,"disposition_reason_ref":null,"source_kind":"code","source_span":"lab/seed/test_tracker.py:9","custom_attributes":null,"last_referenced":null}
+{"id":"TEST-002","title":"tasks.json record-shape round-trip","kind":"unit","verdict":"Pending","lifecycle_status":"Approved","disposition":null,"disposition_reason_ref":null,"source_kind":"clarification","source_span":"ADR-0001 confirmation","custom_attributes":null,"last_referenced":null}

@@ -1,0 +1,1 @@
+{"id":"CON-001","title":"Single-file preference","statement":"Keep the implementation to one file if reasonably possible.","lifecycle_status":"Approved","disposition":null,"disposition_reason_ref":null,"source_kind":"brief","source_span":"lab/brief.md:4","custom_attributes":null,"last_referenced":null}

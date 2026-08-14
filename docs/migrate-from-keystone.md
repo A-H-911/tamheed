@@ -1,5 +1,16 @@
 # Migrating from Keystone v1 to Tamheed — agent runbook
 
+> **v4 note (plan 031): the one-step v1 import was retired.** Tamheed v4's
+> `package_migrate` converts **v2/v3 stores** to v4; it no longer reads Keystone
+> markdown trees. The escape route for a v1 package is two explicit steps:
+> 1. install **tamheed v3.2.1** (`/plugin install tamheed@tamheed` pinned to the
+>    v3.2.1 release, or a checkout of that tag) and run THIS runbook there — it
+>    produces a v3 store;
+> 2. upgrade to tamheed v4 and run `package_migrate(name)` (preview, then
+>    `confirm=true`) to convert the v3 store to v4.
+>
+> Everything below documents step 1 exactly as it worked in v3.2.1.
+
 An executable checklist written **for an AI agent** operating inside a project that used old
 Keystone. Follow it top to bottom; stop at every operator gate.
 

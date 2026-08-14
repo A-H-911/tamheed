@@ -23,9 +23,9 @@ remove the guidance comments; blank forms only — filled content lives in the p
 | `adr.template.md` | ADR prose shape (context/decision/consequences → `adrs` row columns) | Conditional |
 | `technology-comparison.template.md` | Weighted comparison matrix narrative (keep losers) | Conditional |
 | `research-plan.template.md` | Research plan narrative (absorbs the v1 R&D backlog) | Conditional |
-| `initial-prompt.template.md` | First execution-agent prompt (orient → 1 task → stop) → `prompts` row | Always |
-| `follow-up-prompts.template.md` | Per-phase + situational prompts → `prompts` rows | Conditional |
-| `review-prompts.template.md` | Audit / readiness / PR-review prompts → `prompts` rows | Conditional |
+| `initial-prompt.template.md` | First execution-agent prompt (orient → 1 task → stop) → a project prompt file in `<package>/prompts/` | Always |
+| `follow-up-prompts.template.md` | Per-phase + situational prompt patterns → project prompt files in `<package>/prompts/` | Conditional |
+| `review-prompts.template.md` | Audit / readiness / PR-review prompt patterns → project prompt files in `<package>/prompts/` | Conditional |
 | `package-readme.template.md` | README of the generated package (reading order) | Always |
 | `agent-control.template.md` | `CLAUDE.md` + `AGENTS.md` executor control surface | Derived |
 | `naming-conventions.template.md` | Package naming/identifier conventions | Conditional |

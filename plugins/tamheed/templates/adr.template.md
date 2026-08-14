@@ -1,5 +1,5 @@
 ---
-status: Proposed        # Proposed | Accepted | Rejected | Superseded | Deprecated
+status: Proposed        # Draft | Proposed | Approved | Rejected | Deferred | Implemented | Superseded | Obsolete
 version: 0.1.0
 updated: <YYYY-MM-DD>
 owner: <name-or-role>
@@ -11,11 +11,13 @@ superseded_by: <ADR-NNNN or none>
 # ADR-NNNN — <short decision title>
 
 <!-- One Architecture Decision Record per file. ADRs capture architecturally SIGNIFICANT decisions
-     (hard to reverse, broad blast radius). They are IMMUTABLE after acceptance: to change a decision,
+     (the one-way-door test: hard to reverse, broad blast radius). They are IMMUTABLE after approval: to change a decision,
      write a new ADR that supersedes this one — do not rewrite history (typo fixes excepted).
      Filename: adr-NNNN-short-title.md. Generation class: Conditional (significant decisions).
      Lives at: adrs/. If promoted from a DEC-, note it under Context.
-     ADR statuses: Proposed | Accepted | Rejected | Superseded | Deprecated. -->
+     ADR statuses are the standard lifecycle (governance.md): Draft | Proposed | Approved |
+     Rejected | Deferred | Implemented | Superseded | Obsolete — the store CHECK rejects
+     'Accepted'/'Deprecated' (use Approved / Obsolete). -->
 
 ## Status
 
@@ -47,6 +49,14 @@ We will <decision>.
 
 ### Follow-ups
 - <e.g. introduces RISK-00x; requires TEST-00x; creates DEP-00x>
+
+## Confirmation
+
+<!-- v4 (MADR 4.x): HOW compliance with this decision will be verified — a fitness
+     function, a review checklist item, a test, a gate. Stored in the adrs.confirmation
+     column; part of the frozen content once approved. An ADR whose confirmation is
+     never exercised is drift waiting to be found. -->
+- <e.g. TEST-00x asserts the boundary; review checklist item; G-REL edge rule>
 
 ## Alternatives considered (and why rejected)
 

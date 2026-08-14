@@ -3,7 +3,7 @@ name: CI
 # Deterministic, fail-closed gate for every push to main and every PR (plan 013/B10).
 # Job 1 runs EXACTLY `python check.py` — the same one command contributors run
 # locally, so "passes locally != passes CI" cannot happen. check.py owns the gate
-# list (suites, v1 goldens, structure lint, canonical form, eval-runner sample);
+# list (suites, structure lint, canonical form, eval-runner sample);
 # anything deterministic goes there, never here. All checks are stdlib (D-U3).
 # Python floor is 3.10 per ASM-D (the MCP SDK's requires-python; 3.9 dropped —
 # see CHANGELOG).

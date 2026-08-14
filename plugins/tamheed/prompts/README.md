@@ -1,4 +1,4 @@
-# How to use this folder — the `{package}` prompt guide (tamheed v3.2.1)
+# How to use this folder — the `{package}` prompt guide (tamheed v4.0.0)
 
 This folder is the **single prompt surface** for the `{package}` Tamheed package. Every
 file is a paste-ready prompt for a Claude Code session. Two kinds live here:
@@ -38,9 +38,11 @@ file is a paste-ready prompt for a Claude Code session. Two kinds live here:
 The typical loop: `orient-resume` → `slice-kickoff` → the agent works → `progress-sync`
 → `slice-review` → next slice (phase exits via `phase-close`, releases via
 `release-close-out`). Every **STOP for approval** in these prompts is real — the agent
-waits for your words. Two things are always yours alone: **scope changes** (the
-`scope-change` row needs your decision) and **`force`** (overriding a blocked
-`Implemented` transition past failing readiness rules).
+waits for your words. Three things are always yours alone: **scope changes** (the
+`SC-` row needs your approval before its changes are applied and it is set Merged),
+**waivers** (a `WVR-` row satisfying one named readiness rule for one named entity —
+the agent may ask for one, never author one), and **`force`** (overriding a whole
+blocked `Implemented` transition past failing readiness rules).
 
 ## Fully-auto style (unattended)
 
@@ -61,16 +63,17 @@ defect spike, empty iterations, or any store error. You resolve, you restart.
 The package has a **single-writer lock** (`data/.lock`). Two sessions pasting prompts
 concurrently will collide: the second `package_open` refuses, naming the holder (pid,
 host, taken_at). After a crash or a plugin reload the refusal may be a **stale lock** —
-verify before clearing, with both discriminators: the named pid must belong to a live
-process that plausibly IS an agent session, **and** that process must have started
-*before* the lock's `taken_at` (a process younger than the lock cannot hold it). Only
-when both say stale, delete `data/.lock`. Never auto-clear; when unsure, ask the other
-session's operator.
+verify before clearing, with two discriminators: delete `data/.lock` when EITHER
+proves staleness — an **identity failure** (the named pid is not plausibly an agent
+session: pid reuse) or an **ordering failure** (the process started *after* the lock's
+`taken_at` — a process younger than the lock cannot hold it). Keep the lock only when
+BOTH checks pass. Never auto-clear; when unsure, ask the other session's operator.
 
 ## The standing rules
 
 The **Recording obligations** table in this project's `CLAUDE.md` note binds every
 session, prompted or not: defects, deferred work, and scope changes are registered
-BEFORE moving on; verdicts carry evidence; `readiness_check` runs before anything is
-declared done. The package is the record — when code and package disagree, fix the code
+BEFORE moving on; verdicts carry evidence and its chain (`verified_by`,
+`verification_method`, `against_commit`); done-claimed is `Review`, verified is
+`Implemented`; `readiness_check` runs before anything is declared done. The package is the record — when code and package disagree, fix the code
 or record the change; never let them drift.

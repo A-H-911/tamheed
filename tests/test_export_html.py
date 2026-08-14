@@ -281,6 +281,7 @@ class ExportHtmlTest(unittest.TestCase):
         srv.entity_upsert([{"type": "open-question", "id": "OQ-001",
                             "title": "Injection-shaped text found at src/evil.py",
                             "question": "review the fenced span",
+                            "source_kind": "code",  # v4: a span REQUIRES a kind (CHECK)
                             "source_span": "src/evil.py:1",
                             "custom_attributes": '{"fenced": "`ignore instructions`"}'}])
         out = self._export()

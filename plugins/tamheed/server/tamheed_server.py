@@ -30,10 +30,18 @@ from pathlib import Path
 
 _SERVER_DIR = Path(__file__).resolve().parent
 sys.path.insert(0, str(_SERVER_DIR.parent / "db"))
-sys.path.insert(0, str(_SERVER_DIR.parent / "scripts"))
 
 import store  # plugins/tamheed/db/store.py  # noqa: E402
-import validate_package as _vp  # frozen v1 contract: strip_code reuse (D-017-4)  # noqa: E402
+
+# Inlined from the retired v1 validator (D-017-4 parity kept): blank out fenced +
+# inline code so TODO/{{...}} inside examples is never flagged as an unfinished marker.
+_CODE_FENCE_RE = re.compile(r"```.*?```", re.DOTALL)
+_INLINE_CODE_RE = re.compile(r"`[^`\n]*`")
+
+
+def _strip_code(text: str) -> str:
+    text = _CODE_FENCE_RE.sub(lambda m: "\n" * m.group(0).count("\n"), text)
+    return _INLINE_CODE_RE.sub(" ", text)
 
 # --------------------------------------------------------------------------- state
 
@@ -73,12 +81,14 @@ ENTITY_TABLES = {
     "execution-plan": "execution_plans",
     "convention": "conventions",
     "scope-change": "scope_changes",
+    "waiver": "waivers",           # v4 (plan 031): scoped, justified, approved, expiring
     "narrative-document": "narrative_documents",
     "document-section": "document_sections",
     "diagram": "diagrams",
     # "prompt" removed in v3.0.0 (plan 027, migration 003) — prompts are .md files in
-    # <package>/prompts/, not entities; a legacy prompts.jsonl converts at package_open.
-    "glossary-term": "glossary_terms",  # community-extension worked example (migration 002)
+    # <package>/prompts/, not entities; a legacy prompts.jsonl is converted by the
+    # v3→v4 migration (package_open refuses pre-v4 stores).
+    "glossary-term": "glossary_terms",  # community-extension worked example
     "trace-edge": "trace_edges",   # composite PK; write surface for relations
     "omission": "omissions",       # G-SET recorded-omitted rows (entity_type + reason)
 }
@@ -94,16 +104,29 @@ _NON_ID_TABLES = {"trace_edges": "from_id", "omissions": "entity_type"}
 # workflow.md stages 10/12/14, schema.sql risks.discharged_by, the golden's edge combos.
 _REQ_LIKE = frozenset({"requirement", "constraint", "invariant", "assumption"})
 _DECISION = frozenset({"decision", "adr"})
-_WORK = frozenset({"phase", "milestone", "slice", "wbs-item", "execution-plan",
+# v4: `milestone` left _WORK with its demotion to a label (plan 031) — a roadmap
+# marker neither implements nor blocks; existing milestone edges retype to
+# relates_to at migration.
+_WORK = frozenset({"phase", "slice", "wbs-item", "execution-plan",
                    "defect", "deferred-work"})
 _VERIF = frozenset({"test", "acceptance-criterion", "experiment", "poc"})
+
+# The drift-delta targets: what a scope change may add/modify/remove (plan 031).
+_PLAN_ROWS = (_REQ_LIKE | _WORK
+              | frozenset({"acceptance-criterion", "risk", "kpi", "open-question"}))
 
 # relation -> (allowed from-types | None=any, allowed to-types | None=any).
 # Absent relation ('relates_to') = the untyped escape hatch. "SAME_TYPE" = both
 # endpoints must share one entity type (supersession is always within a family).
+# v4 (plan 031): binds_to DELETED (zero usage ever); scope_adds/scope_modifies/
+# scope_removes carry drift-delta intent. Kinds with no evidenced edge semantics
+# (stakeholder, audit-verdict, progress-entry, execution-gate as source, waiver,
+# narrative-document, document-section, diagram, glossary-term) are DELIBERATELY
+# relates_to-only — a guessed rule risks false rejections (the binds_to lesson);
+# waivers and gates point at entities via their own applies_to column instead.
 RELATION_RULES: dict = {
     "derives_from": (_REQ_LIKE | {"acceptance-criterion", "open-question", "hypothesis"},
-                     _DECISION | _REQ_LIKE),
+                     _DECISION | _REQ_LIKE | {"stakeholder"}),
     "mitigates": (_DECISION | _WORK | _VERIF | _REQ_LIKE | {"convention"},
                   frozenset({"risk"})),
     "verifies": (_VERIF | {"invariant", "kpi"},
@@ -111,19 +134,41 @@ RELATION_RULES: dict = {
     "supersedes": "SAME_TYPE",
     "blocked_by": (_WORK | {"open-question", "decision", "requirement"},
                    _WORK | {"open-question", "dependency", "decision", "risk",
-                            "assumption"}),
+                            "assumption", "execution-gate"}),
     "implements": (_WORK, _REQ_LIKE | _DECISION | {"acceptance-criterion"}),
     "satisfies": (_WORK | {"poc"}, _REQ_LIKE | {"acceptance-criterion", "kpi"}),
     "tests": (frozenset({"test"}),
               _REQ_LIKE | _DECISION | {"acceptance-criterion", "risk", "wbs-item",
                                        "slice", "defect"}),
-    # binds_to: semantics unpinned (zero documented usage anywhere in the repo) —
-    # unconstrained until first real use defines it; a guessed rule risks false
-    # rejections with no evidence base (plan 027 adversarial review, resolution 2).
-    "binds_to": (None, None),
     "discharges": (frozenset({"acceptance-criterion", "test"}),
                    frozenset({"risk", "assumption", "open-question", "hypothesis"})),
+    "scope_adds": (frozenset({"scope-change"}), _PLAN_ROWS),
+    "scope_modifies": (frozenset({"scope-change"}), _PLAN_ROWS),
+    "scope_removes": (frozenset({"scope-change"}), _PLAN_ROWS),
 }
+
+
+def _edge_rule_violations(conn) -> list[str]:
+    """Stored trace edges violating RELATION_RULES (the G-REL substrate; also run by
+    package_adopt, whose raw-SQL inserts bypass the per-write enforcement)."""
+    mistyped = []
+    for from_id, to_id, relation, ftype, ttype in conn.execute(
+            "SELECT e.from_id, e.to_id, e.relation, a.entity_type, b.entity_type"
+            " FROM trace_edges e JOIN entity_index a ON a.id = e.from_id"
+            " JOIN entity_index b ON b.id = e.to_id"
+            " ORDER BY e.from_id, e.to_id, e.relation"):
+        rule = RELATION_RULES.get(relation)
+        if rule is None:
+            continue
+        if rule == "SAME_TYPE":
+            bad = ftype != ttype
+        else:
+            from_ok, to_ok = rule
+            bad = ((from_ok is not None and ftype not in from_ok)
+                   or (to_ok is not None and ttype not in to_ok))
+        if bad:
+            mistyped.append(f"{from_id} ({ftype}) —{relation}→ {to_id} ({ttype})")
+    return mistyped
 
 
 def _relation_rule_error(conn, cols: dict) -> str | None:
@@ -143,7 +188,7 @@ def _relation_rule_error(conn, cols: dict) -> str | None:
     relation = cols["relation"]
     if rule == "SAME_TYPE":
         if types["from_id"] != types["to_id"]:
-            return (f"relation 'supersedes' requires matching endpoint types; got "
+            return (f"relation {relation!r} requires matching endpoint types; got "
                     f"{types['from_id']} ({cols['from_id']}) -> "
                     f"{types['to_id']} ({cols['to_id']})")
         return None
@@ -187,6 +232,7 @@ BASELINE_ENTITY_TYPES = [
     ("execution-plan", "Execution plan (per slice)", "EP-", "Conditional"),
     ("convention", "Durable convention", "CONV-", "Conditional"),
     ("scope-change", "Scope change", "SC-", "Continuous"),
+    ("waiver", "Readiness waiver", "WVR-", "Conditional"),
     ("narrative-document", "Narrative document", "DOC-", "Always"),
     ("document-section", "Document section", "SEC-", "Always"),
     ("diagram", "Diagram", "DIA-", "Conditional"),
@@ -198,6 +244,46 @@ BASELINE_ENTITY_TYPES = [
 _PLACEHOLDER_RE = re.compile(
     r"\bTODO\b|\bTBD\b|\bFIXME\b|<placeholder>|\{\{[^}]*\}\}|lorem ipsum", re.IGNORECASE
 )
+# v4 (plan 031): the first-class ambiguity marker — spec-kit's forbidden-to-assume
+# idea, tamheed-native: a marker is LEGAL only when it cites an existing, UNRESOLVED
+# open question. Anything else (no id, dangling id, resolved OQ) fails G-COMPLETE.
+_MARKER_RE = re.compile(r"\[NEEDS-CLARIFICATION(?::\s*([A-Za-z]+-\d+))?[^\]]*\]",
+                        re.IGNORECASE)
+
+
+def _scan_markers(conn) -> list[dict]:
+    """Every [NEEDS-CLARIFICATION…] marker in prose columns; `invalid` is None for a
+    legal marker (cites an existing unresolved OQ), else the operator-facing reason."""
+    found = []
+    for table in ENTITY_TABLES.values():
+        text_cols = [r[1] for r in conn.execute(f"PRAGMA table_info({table})")
+                     if (r[2] or "").upper() == "TEXT" and r[1] != "custom_attributes"]
+        if not text_cols:
+            continue
+        pk = _NON_ID_TABLES.get(table, "id")
+        for row in conn.execute(f"SELECT {pk}, {', '.join(text_cols)} FROM {table}"):
+            for col, value in zip(text_cols, row[1:]):
+                if not value:
+                    continue
+                for m in _MARKER_RE.finditer(str(value)):
+                    cited = (m.group(1) or "").upper()
+                    invalid = None
+                    if not cited.startswith("OQ-"):
+                        invalid = ("marker cites no OQ id — write"
+                                   " [NEEDS-CLARIFICATION: OQ-NNN] and create the OQ")
+                    else:
+                        oq = conn.execute(
+                            "SELECT resolution, resolved_by, lifecycle_status"
+                            " FROM open_questions WHERE id = ?", (cited,)).fetchone()
+                        if oq is None:
+                            invalid = f"{cited} does not exist"
+                        elif oq[0] is not None or oq[1] is not None:
+                            invalid = f"{cited} is resolved — remove the marker"
+                        elif oq[2] in ("Superseded", "Obsolete", "Rejected"):
+                            invalid = f"{cited} is {oq[2]} — remove or re-cite"
+                    found.append({"id": row[0], "column": col,
+                                  "oq": cited or None, "invalid": invalid})
+    return found
 # G-INJECT-style screen on handoff emission. Stored text is data; these patterns catch
 # text that tries to become instructions when a downstream agent reads it.
 _INJECT_RE = re.compile(
@@ -280,7 +366,7 @@ def package_create(name: str, title: str, profile: str, mode: str = "full") -> d
         )
         s.conn.execute(
             "INSERT INTO packages (name, title, profile, mode, package_version, created_at)"
-            " VALUES (?, ?, ?, ?, '3.0.0', ?)",
+            " VALUES (?, ?, ?, ?, '4.0.0', ?)",
             (name, title, profile, mode, _now()),
         )
         s.commit()
@@ -399,41 +485,44 @@ def _convert_legacy_prompts(pkg_dir: Path) -> dict | None:
             "inject_warnings": warnings}
 
 
+def _stored_package_version(pkg_dir: Path) -> str | None:
+    """Read package_version straight from data/packages.jsonl (no store open)."""
+    path = pkg_dir / "data" / "packages.jsonl"
+    if not path.exists():
+        return None
+    for line in path.read_text(encoding="utf-8").splitlines():
+        if line.strip():
+            try:
+                return str(json.loads(line).get("package_version"))
+            except ValueError:
+                return None
+    return None
+
+
 def package_open(name: str) -> dict:
-    """Open an existing package (takes the single-writer lock). A legacy v2 package
-    (data/prompts.jsonl present) is converted to file-based prompts first — once,
-    loudly, abort-on-anomaly (plan 027)."""
+    """Open an existing package (takes the single-writer lock). v4 (plan 031): a
+    pre-v4 package is REFUSED, never silently upgraded — migration is explicit."""
     global _CURRENT, _CURRENT_NAME
     if _CURRENT is not None:
         return _err(f"package '{_CURRENT_NAME}' is already open — package_close it first")
     pkg_dir = PACKAGE_ROOT / name
     if not (pkg_dir / "data").exists():
         return _err(f"package '{name}' not found under {PACKAGE_ROOT}")
-    conversion = None
-    if (pkg_dir / "data" / "prompts.jsonl").exists():
-        # Hold the store's own lock for the conversion window (single-writer doctrine).
-        lock = pkg_dir / "data" / store.LOCK_NAME
-        try:
-            fd = os.open(lock, os.O_CREAT | os.O_EXCL | os.O_WRONLY)
-        except FileExistsError:
-            return _err(f"package '{name}' is locked ({store._describe_lock(lock)})")
-        try:
-            conversion = _convert_legacy_prompts(pkg_dir)
-        except ValueError as exc:
-            return _err(str(exc))
-        finally:
-            os.close(fd)
-            lock.unlink()
+    stored = _stored_package_version(pkg_dir)
+    if stored is not None and not stored.startswith("4."):
+        return _err(
+            f"package '{name}' is a v{stored} store — this server is v4 and does not"
+            " open it. Back the package up first (git commit, or copy data/), then run"
+            " package_migrate(name=…) for a preview and"
+            " package_migrate(name=…, confirm=true) to convert. The migration keeps a"
+            " copy of the old files in data-v3-backup/.")
     try:
         s = store.PackageStore(pkg_dir).__enter__()
     except store.StoreLockedError as exc:
         return _err(str(exc))
     _CURRENT, _CURRENT_NAME = s, name
-    out = {"ok": True, "package": name,
-           "package_root": str(Path(PACKAGE_ROOT).resolve())}
-    if conversion:
-        out["legacy_prompts"] = conversion
-    return out
+    return {"ok": True, "package": name,
+            "package_root": str(Path(PACKAGE_ROOT).resolve())}
 
 
 def package_close() -> dict:
@@ -477,7 +566,9 @@ def entity_upsert(entities: list[dict]) -> dict:
         etype = item.get("type")
         table = ENTITY_TABLES.get(etype)
         if table is None:
-            results.append({"index": i, "ok": False, "error": f"unknown entity type {etype!r}"})
+            results.append({"index": i, "ok": False,
+                            "error": f"unknown entity type {etype!r} — one of: "
+                                     f"{', '.join(sorted(ENTITY_TABLES))}"})
             failed = True
             continue
         # "force" is the transition-guard override (plan 027), never a column.
@@ -573,11 +664,13 @@ def entity_upsert(entities: list[dict]) -> dict:
                     # the same transaction as the transition itself.
                     pe_id = _next_id("PE-", "progress_entries")
                     conn.execute(
-                        "INSERT INTO progress_entries (id, entry, occurred_at)"
-                        " VALUES (?, ?, ?)",
-                        (pe_id, f"FORCED transition: {cols['id']} -> Implemented past"
-                                f" blocking readiness failures ({forced_note}) —"
-                                " operator-confirmed override", _now()))
+                        "INSERT INTO progress_entries (id, event_type, entry,"
+                        " subject_id, actor, occurred_at) VALUES (?, ?, ?, ?, ?, ?)",
+                        (pe_id, "forced-override",
+                         f"FORCED transition: {cols['id']} -> Implemented past"
+                         f" blocking readiness failures ({forced_note}) —"
+                         " operator-confirmed override",
+                         cols.get("id"), "system:transition-guard", _now()))
                     res["forced"] = True
                     res["forced_audit"] = pe_id
                 results.append(res)
@@ -620,7 +713,8 @@ def entity_query(type: str, id: str | None = None, status: str | None = None,
         return guard
     table = ENTITY_TABLES.get(type)
     if table is None:
-        return _err(f"unknown entity type {type!r}")
+        return _err(f"unknown entity type {type!r} — one of: "
+                f"{', '.join(sorted(ENTITY_TABLES))}")
     if type in ("trace-edge", "omission"):
         # C31 (A2): write-only is not nonexistent — the old "unknown entity type"
         # message here sent a false statement into a package's permanent record.
@@ -730,6 +824,15 @@ def gate_run() -> dict:
         report["G-TRACE"]["warning"] = (
             "0 MVP requirements — G-TRACE passed vacuously; set mvp=1 on the MVP set "
             "(expected only for adopt-mode or pre-scoping packages)")
+    # v4 (plan 031): the SAME tripwire for G-PROGRESS — with zero verdicts anywhere the
+    # view is globally gated off and passes over ACs nobody ever audited.
+    verdict_rows = conn.execute("SELECT COUNT(*) FROM audit_verdicts").fetchone()[0]
+    active_acs = conn.execute("SELECT COUNT(*) FROM acceptance_criteria"
+                              " WHERE retired_in IS NULL").fetchone()[0]
+    if verdict_rows == 0 and active_acs:
+        report["G-PROGRESS"]["warning"] = (
+            f"0 audit verdicts — G-PROGRESS passed vacuously over {active_acs} active"
+            " AC(s); every one of them is unverified (expected only pre-execution)")
     findings = []
     for table in ENTITY_TABLES.values():
         text_cols = [r[1] for r in conn.execute(f"PRAGMA table_info({table})")
@@ -742,10 +845,19 @@ def gate_run() -> dict:
         pk = _NON_ID_TABLES.get(table, "id")
         for row in conn.execute(f"SELECT {pk}, {', '.join(text_cols)} FROM {table}"):
             for col, value in zip(text_cols, row[1:]):
-                # strip_code first — parity with the frozen v1 gate (D-017-4, C14):
+                # strip_code first — parity with the retired v1 gate (D-017-4, C14):
                 # `TODO`/{{...}} inside code spans is example text, not an unfinished marker.
-                if value and _PLACEHOLDER_RE.search(_vp.strip_code(str(value))):
+                if value and _PLACEHOLDER_RE.search(_strip_code(str(value))):
                     findings.append({"id": row[0], "column": col})
+    # v4 (plan 031): NEEDS-CLARIFICATION markers are legal ONLY when they cite an
+    # existing unresolved OQ — a dangling/uncited/resolved-cite marker is an
+    # unfinished marker like any other. Valid markers do NOT fail (they are the
+    # honest record of a known ambiguity; the open-markers readiness advisory counts
+    # them).
+    for marker in _scan_markers(conn):
+        if marker["invalid"]:
+            findings.append({"id": marker["id"], "column": marker["column"],
+                             "marker": marker["invalid"]})
     report["G-COMPLETE"] = {"status": "fail" if findings else "pass", "failures": findings}
     evidenced, narrated = conn.execute(
         "SELECT SUM(CASE WHEN evidence IS NOT NULL AND evidence <> '' THEN 1 ELSE 0 END),"
@@ -754,31 +866,15 @@ def gate_run() -> dict:
     ).fetchone()
     report["audit_evidence"] = {"evidenced": evidenced or 0, "narrated": narrated or 0,
                                 "note": "narrated verdicts are the graded party grading itself (C7)"}
-    # Plan 027: ADVISORY sweep of stored edges against RELATION_RULES — legacy data
-    # (migrate/adopt write via raw SQL) may hold mistypes new writes now reject. The
-    # key deliberately does NOT start with "G-": `ready` and pkg_check cmd_gates
-    # (which surfaces G-* lines only) are unaffected; this never fails the gate.
-    mistyped = []
-    for from_id, to_id, relation, ftype, ttype in conn.execute(
-            "SELECT e.from_id, e.to_id, e.relation, a.entity_type, b.entity_type"
-            " FROM trace_edges e JOIN entity_index a ON a.id = e.from_id"
-            " JOIN entity_index b ON b.id = e.to_id"
-            " ORDER BY e.from_id, e.to_id, e.relation"):
-        rule = RELATION_RULES.get(relation)
-        if rule is None:
-            continue
-        if rule == "SAME_TYPE":
-            bad = ftype != ttype
-        else:
-            from_ok, to_ok = rule
-            bad = ((from_ok is not None and ftype not in from_ok)
-                   or (to_ok is not None and ttype not in to_ok))
-        if bad:
-            mistyped.append(f"{from_id} ({ftype}) —{relation}→ {to_id} ({ttype})")
-    report["relation_rules"] = {
-        "status": "advisory", "mistyped": mistyped,
-        "note": "stored edges violating RELATION_RULES (legacy data) — new writes are"
-                " rejected; never fails the gate"}
+    # v4 (plan 031): the stored-edge sweep is a BLOCKING gate. Safe because every v4
+    # package starts rule-clean — the migrate tool retypes violating edges to
+    # relates_to at conversion, entity_upsert rejects them at write time, and adopt
+    # reports them at adoption.
+    mistyped = _edge_rule_violations(conn)
+    report["G-REL"] = {
+        "status": "pass" if not mistyped else "fail", "mistyped": mistyped,
+        "note": "stored edges must satisfy RELATION_RULES; retype a wrong edge to"
+                " relates_to (delete + re-add) if the link itself is real"}
     # Plan 028 (C34 §7, the FR-156..159 class): requirements created during execution
     # never get wired — work_bind stamps commits, it does not create trace edges, and
     # G-TRACE only sees mvp=1 matrix rows. Advisory on the habitual every-session
@@ -802,17 +898,47 @@ def _readiness_report(conn, scope: str, scope_id: str | None) -> dict:
     """The lifecycle-readiness rule engine (plan 027, maintainer note 8): "is this
     phase/slice/release actually DONE?" — the semantic layer above gate_run's
     mechanical floor. Blocking severities are maintainer-locked (interview
-    2026-08-13): pre-approval decisions/ADRs, ACs not latest-Met, open defects,
-    undischarged risks; judgment-dependent items (prose triggers, open questions)
-    stay advisory. Declared execution_gates rows surface as human_required — prose
-    definitions are NEVER machine-evaluated."""
+    2026-08-13, revised plan 031): pre-approval decisions/ADRs, ACs not latest-Met,
+    open CRITICAL/HIGH defects (medium/low advise — every real gate regime
+    severity-thresholds), undischarged risks; judgment-dependent items stay advisory.
+    v4: a WVR- waiver row satisfies a named rule for a named entity (or the whole
+    rule) — reported as `waived`, never silent; expired waivers are surfaced and
+    ignored. `Review` (done-claimed) counts as OPEN everywhere — only verified
+    Implemented closes work. Declared execution_gates rows surface as human_required —
+    prose definitions are NEVER machine-evaluated."""
     rules: list[dict] = []
+    today = _now()[:10]
+    waivers, expired_waivers = {}, []
+    for wid, wrule, applies, expires in conn.execute(
+            "SELECT id, rule, applies_to, expires FROM waivers ORDER BY id"):
+        if expires is not None and str(expires)[:10] < today:
+            expired_waivers.append({"waiver": wid, "rule": wrule,
+                                    "applies_to": applies, "expired": expires})
+        else:
+            waivers.setdefault(wrule, []).append((wid, applies))
 
     def rule(name: str, severity: str, entities: list, note: str,
              na: str | None = None, extra: str | None = None) -> None:
         entry = {"rule": name, "severity": severity,
                  "status": "fail" if entities else "pass",
                  "entities": entities, "note": note + (na or "") + (extra or "")}
+        if entities and name in waivers:
+            waived, remaining = [], []
+            whole_rule = [wid for wid, applies in waivers[name] if applies is None]
+            per_entity = {applies: wid for wid, applies in waivers[name]
+                          if applies is not None}
+            for ent in entities:
+                if whole_rule:
+                    waived.append({"entity": ent, "waiver": whole_rule[0]})
+                elif ent in per_entity:
+                    waived.append({"entity": ent, "waiver": per_entity[ent]})
+                else:
+                    remaining.append(ent)
+            if waived:
+                entry["waived"] = waived
+                entry["entities"] = remaining
+                if not remaining:
+                    entry["status"] = "waived"
         if na:
             # C34 §4: a rule firing on ALL rows is indistinguishable from a rule
             # measuring nothing — say so. Severity is NOT downgraded (maintainer-locked:
@@ -840,7 +966,8 @@ def _readiness_report(conn, scope: str, scope_id: str | None) -> dict:
 
     def unlocated_defects_note(scope_name: str) -> str | None:
         (n,) = conn.execute(
-            "SELECT COUNT(*) FROM defects WHERE status IN ('Open','In-progress')"
+            "SELECT COUNT(*) FROM defects"
+            " WHERE lifecycle_status IN ('Open','In-progress')"
             " AND found_in IS NULL").fetchone()
         if n:
             return (f" — {n} open defect(s) have no found_in and are INVISIBLE to "
@@ -862,9 +989,15 @@ def _readiness_report(conn, scope: str, scope_id: str | None) -> dict:
              "every active AC's LATEST verdict must be Met (verdicts append —"
              " an old Met does not survive a newer Not-met)")
         rule("defects-closed", "blocking",
-             ids("SELECT id FROM defects WHERE status IN ('Open','In-progress')"),
-             "open defects: fix, disposition, or convert to deferred-work"
+             ids("SELECT id FROM defects WHERE lifecycle_status IN ('Open','In-progress')"
+                 " AND severity IN ('critical','high')"),
+             "open critical/high defects: fix, disposition, or convert to deferred-work"
              " (scope-change first if it changes scope)")
+        rule("defects-minor", "advisory",
+             ids("SELECT id FROM defects WHERE lifecycle_status IN ('Open','In-progress')"
+                 " AND severity IN ('medium','low')"),
+             "open medium/low defects — carrying them is legal, silence is not"
+             " (plan 031: severity-thresholded blocking)")
         rule("risks-discharged", "blocking",
              ids("SELECT id FROM risks WHERE risk_state IN ('open','materialized')"
                  " AND discharged_by IS NULL"),
@@ -872,7 +1005,7 @@ def _readiness_report(conn, scope: str, scope_id: str | None) -> dict:
              na=na_note("risks", "discharged_by"))
         rule("deferred-work-reviewed", "advisory",
              ids("SELECT id FROM deferred_work"
-                 " WHERE status IN ('Open','Activated','Scheduled')"),
+                 " WHERE lifecycle_status IN ('Open','Activated','Scheduled')"),
              "activation triggers are prose — a human judges whether each fired")
         rule("open-questions-resolved", "advisory",
              ids("SELECT id FROM open_questions WHERE resolved_by IS NULL"),
@@ -888,6 +1021,64 @@ def _readiness_report(conn, scope: str, scope_id: str | None) -> dict:
                  " AND id NOT IN (SELECT to_id FROM trace_edges)"),
              "requirements with zero trace edges — execution-created rows never wired"
              " (work_bind stamps commits, it does not wire traceability)")
+        # ---- v4 liveness advisories (plan 031: registers stay alive because the
+        # engine nags, not because columns exist) ----
+        rule("decisions-look-architectural", "advisory",
+             ids("SELECT DISTINCT d.id FROM decisions d"
+                 " WHERE d.promoted_to IS NULL"
+                 " AND d.lifecycle_status IN ('Approved','Implemented')"
+                 " AND (EXISTS (SELECT 1 FROM trace_edges e WHERE e.to_id = d.id"
+                 "              AND e.relation IN ('implements','satisfies'))"
+                 "   OR EXISTS (SELECT 1 FROM trace_edges e"
+                 "              JOIN entity_index x ON x.id = CASE WHEN e.from_id = d.id"
+                 "                   THEN e.to_id ELSE e.from_id END"
+                 "              WHERE (e.from_id = d.id OR e.to_id = d.id)"
+                 "              AND x.entity_type IN ('invariant','constraint')))"
+                 " ORDER BY d.id"),
+             "DECs that work items implement or that touch invariants/constraints,"
+             " never promoted — apply the one-way-door test (hard to reverse, broad"
+             " blast radius => promote to an ADR)")
+        rule("scope-changes-merged", "advisory",
+             ids("SELECT id FROM scope_changes WHERE lifecycle_status = 'Approved'"),
+             "approved scope changes whose deltas never merged into the plan rows —"
+             " apply the scope_adds/scope_modifies/scope_removes edges' intent via"
+             " entity_upsert, then set the SC- row to Merged")
+        rule("open-questions-overdue", "advisory",
+             ids("SELECT id FROM open_questions WHERE resolved_by IS NULL"
+                 " AND resolution IS NULL AND due_by IS NOT NULL AND due_by < ?",
+                 (today,)),
+             "open questions past their due_by — answer, re-date, or escalate",
+             na=na_note("open_questions", "due_by"))
+        rule("risk-liveness", "advisory",
+             ids("SELECT id FROM risks WHERE risk_state IN ('open','materialized')"
+                 " AND (probability = 'high' OR impact = 'high')"
+                 " AND (owner IS NULL OR response_strategy IS NULL)"),
+             "open high-probability/high-impact risks missing an owner or response"
+             " strategy — no owner means nobody monitors (the register-rot finding)",
+             na=na_note("risks", "owner"))
+        rule("assumptions-current", "advisory",
+             ids("SELECT id FROM assumptions WHERE validation_date IS NOT NULL"
+                 " AND validation_date < ? AND lifecycle_status NOT IN"
+                 " ('Rejected','Superseded','Obsolete')", (today,)),
+             "assumptions past their validation date — re-validate, or escalate the"
+             " invalidated ones to risks (assumptions decay)",
+             na=na_note("assumptions", "validation_date"))
+        rule("hypotheses-measurable", "advisory",
+             ids("SELECT id FROM hypotheses WHERE lifecycle_status NOT IN"
+                 " ('Draft','Rejected','Superseded','Obsolete')"
+                 " AND (metric IS NULL OR threshold IS NULL)"),
+             "hypotheses past Draft without a metric + threshold — the number is"
+             " decided BEFORE the experiment runs (anti-confirmation-bias)")
+        rule("acs-slice-bound", "advisory",
+             ids("SELECT id FROM acceptance_criteria WHERE retired_in IS NULL"
+                 " AND slice_id IS NULL"),
+             "active ACs bound to no slice — INVISIBLE to phase/slice exit views and"
+             " scoped readiness; bind them or accept package-scope-only verification")
+        markers = [f"{m['id']}.{m['column']} -> {m['oq']}"
+                   for m in _scan_markers(conn) if not m["invalid"]]
+        rule("clarifications-open", "advisory", markers,
+             "open [NEEDS-CLARIFICATION: OQ-…] markers in prose fields — each cites a"
+             " live OQ; resolve the OQ and remove the marker")
         gate_where, gate_params = "applies_to IS NULL", ()
     elif scope == "phase":
         rule("acs-met", "blocking",
@@ -912,16 +1103,22 @@ def _readiness_report(conn, scope: str, scope_id: str | None) -> dict:
              "open work items in this phase")
         found_na = na_note("defects", "found_in")
         rule("defects-closed", "blocking",
-             ids("SELECT d.id FROM defects d WHERE d.status IN ('Open','In-progress')"
+             ids("SELECT d.id FROM defects d"
+                 " WHERE d.lifecycle_status IN ('Open','In-progress')"
+                 " AND d.severity IN ('critical','high')"
                  " AND (d.found_in = ? OR d.found_in IN"
                  " (SELECT id FROM slices WHERE phase_id = ?))", (scope_id, scope_id)),
-             "open defects found in this phase or its slices", na=found_na,
-             extra=None if found_na else unlocated_defects_note("phase"))
-        rule("milestones-reached", "advisory",
-             ids("SELECT id FROM milestones WHERE phase_id = ?"
-                 " AND lifecycle_status NOT IN"
-                 " ('Implemented','Superseded','Obsolete','Rejected')", (scope_id,)),
-             "milestones of this phase not marked reached")
+             "open critical/high defects found in this phase or its slices",
+             na=found_na, extra=None if found_na else unlocated_defects_note("phase"))
+        rule("defects-minor", "advisory",
+             ids("SELECT d.id FROM defects d"
+                 " WHERE d.lifecycle_status IN ('Open','In-progress')"
+                 " AND d.severity IN ('medium','low')"
+                 " AND (d.found_in = ? OR d.found_in IN"
+                 " (SELECT id FROM slices WHERE phase_id = ?))", (scope_id, scope_id)),
+             "open medium/low defects in this phase — carry deliberately or fix")
+        # v4: no milestones rule — MS- is a roadmap label with no lifecycle (plan 031);
+        # a milestone that gates is an execution_gate.
         gate_where, gate_params = "applies_to = ?", (scope_id,)
     else:  # slice
         rule("acs-met", "blocking",
@@ -938,25 +1135,36 @@ def _readiness_report(conn, scope: str, scope_id: str | None) -> dict:
         found_na = na_note("defects", "found_in")
         rule("defects-closed", "blocking",
              ids("SELECT id FROM defects WHERE found_in = ?"
-                 " AND status IN ('Open','In-progress')", (scope_id,)),
-             "open defects found in this slice", na=found_na,
+                 " AND lifecycle_status IN ('Open','In-progress')"
+                 " AND severity IN ('critical','high')", (scope_id,)),
+             "open critical/high defects found in this slice", na=found_na,
              extra=None if found_na else unlocated_defects_note("slice"))
+        rule("defects-minor", "advisory",
+             ids("SELECT id FROM defects WHERE found_in = ?"
+                 " AND lifecycle_status IN ('Open','In-progress')"
+                 " AND severity IN ('medium','low')", (scope_id,)),
+             "open medium/low defects in this slice — carry deliberately or fix")
         rule("execution-plan-approved", "advisory",
              ids("SELECT id FROM execution_plans WHERE slice_id = ?"
                  " AND lifecycle_status NOT IN"
                  " ('Approved','Implemented','Superseded','Obsolete')", (scope_id,)),
              "this slice's execution plan was never approved")
         gate_where, gate_params = "applies_to = ?", (scope_id,)
+    # v4: all four gate kinds surface ('ready' was silently dropped through v3 — a
+    # recorded DoR gate the operator never saw), plus the latest Go/Hold/Redirect/Kill
+    # outcome when one was recorded (gate-decision PE- events carry the history).
     human_required = [
-        {"gate": gid, "gate_kind": kind, "definition": definition}
-        for gid, kind, definition in conn.execute(
-            "SELECT id, gate_kind, definition FROM execution_gates"
-            f" WHERE gate_kind IN ('done','approval','checkpoint') AND {gate_where}"
-            " ORDER BY id", gate_params)]
+        {"gate": gid, "gate_kind": kind, "definition": definition, "outcome": outcome}
+        for gid, kind, definition, outcome in conn.execute(
+            "SELECT id, gate_kind, definition, outcome FROM execution_gates"
+            f" WHERE {gate_where} ORDER BY id", gate_params)]
     ready = not any(r["severity"] == "blocking" and r["status"] == "fail"
                     for r in rules)
-    return {"scope": scope, "id": scope_id, "ready": ready, "rules": rules,
-            "human_required": human_required}
+    out = {"scope": scope, "id": scope_id, "ready": ready, "rules": rules,
+           "human_required": human_required}
+    if expired_waivers:
+        out["expired_waivers"] = expired_waivers
+    return out
 
 
 def readiness_check(scope: str = "package", id: str | None = None) -> dict:
@@ -986,7 +1194,16 @@ def readiness_check(scope: str = "package", id: str | None = None) -> dict:
 # --------------------------------------------------------------------------- execution loop
 
 def progress_update(entries: list[dict]) -> dict:
-    """Append progress entries (batch, one transaction). Item: {'entry', 'phase_id'?, 'slice_id'?}."""
+    """Append progress entries (batch, one transaction). Item: {'entry', 'event_type'?,
+    'subject_id'?, 'actor'?, 'corrects'?, 'phase_id'?, 'slice_id'?}.
+
+    v4 (plan 031): events are TYPED — event_type from {work-done, verdict-recorded,
+    transition, forced-override, gate-decision, escalation, correction, note}
+    (default 'note', the deliberate escape hatch: the vocabulary never blocks a
+    write). subject_id names the entity the event is about; actor follows the
+    human:<name> | agent:<session> | system:<component> convention; `corrects`
+    points at an earlier PE- — journals are corrected by compensating events, never
+    edited."""
     if guard := _need_open():
         return guard
     if not isinstance(entries, list) or not entries:
@@ -997,9 +1214,12 @@ def progress_update(entries: list[dict]) -> dict:
         for e in entries:
             pe_id = _next_id("PE-", "progress_entries")
             conn.execute(
-                "INSERT INTO progress_entries (id, entry, phase_id, slice_id, occurred_at)"
-                " VALUES (?, ?, ?, ?, ?)",
-                (pe_id, e.get("entry"), e.get("phase_id"), e.get("slice_id"), _now()),
+                "INSERT INTO progress_entries (id, event_type, entry, subject_id,"
+                " actor, corrects, phase_id, slice_id, occurred_at)"
+                " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                (pe_id, e.get("event_type", "note"), e.get("entry"),
+                 e.get("subject_id"), e.get("actor"), e.get("corrects"),
+                 e.get("phase_id"), e.get("slice_id"), _now()),
             )
             ids.append(pe_id)
     except Exception as exc:
@@ -1011,9 +1231,15 @@ def progress_update(entries: list[dict]) -> dict:
 
 
 def audit_record(verdicts: list[dict]) -> dict:
-    """Record AC verdicts (batch). Item: {'ac_id', 'verdict', 'evidence'?}. Evidence refs
-    (test file, CI run id) make the verdict evidenced rather than narrated (C7). The
-    requirement auto-advance trigger cascades in the same transaction (C4)."""
+    """Record AC verdicts (batch). Item: {'ac_id', 'verdict', 'evidence'?,
+    'verified_by'?, 'verification_method'?, 'against_commit'?}.
+
+    Evidence refs (test file, CI run id) make the verdict evidenced rather than
+    narrated (C7). v4 (plan 031): say WHO rendered it (human|agent|ci), HOW
+    (auto-test|manual|inspection), and against WHAT commit — a Met the readiness
+    engine can audit is worth more than a Met it must take on faith. The requirement
+    auto-advance trigger cascades in the same transaction (C4), on LATEST-verdict
+    semantics."""
     if guard := _need_open():
         return guard
     if not isinstance(verdicts, list) or not verdicts:
@@ -1025,9 +1251,12 @@ def audit_record(verdicts: list[dict]) -> dict:
         for v in verdicts:
             av_id = _next_id("AV-", "audit_verdicts")
             conn.execute(
-                "INSERT INTO audit_verdicts (id, ac_id, verdict, evidence, iteration, recorded_at)"
-                " VALUES (?, ?, ?, ?, ?, ?)",
+                "INSERT INTO audit_verdicts (id, ac_id, verdict, evidence,"
+                " verified_by, verification_method, against_commit, iteration,"
+                " recorded_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
                 (av_id, v.get("ac_id"), v.get("verdict"), v.get("evidence"),
+                 v.get("verified_by"), v.get("verification_method"),
+                 v.get("against_commit"),
                  iteration[0] if iteration else 1, _now()),
             )
             ids.append(av_id)
@@ -1381,7 +1610,7 @@ def handoff_emit(target_dir: str, subdir: str = "handoff", force: bool = False) 
                    "(no project-level .mcp.json entry needed)." if plugin_hosted else
                    "The `tamheed` MCP server is registered in this project's `.mcp.json`.")
     note_block = (
-        "<!-- tamheed:note v2 -->\n\n"
+        "<!-- tamheed:note v3 -->\n\n"
         f"This project executes Tamheed package `{_CURRENT_NAME}` "
         f"(under `{PACKAGE_ROOT.resolve()}`). **The package is the record — when code and "
         "package disagree, fix the code or record a scope change; never let them drift.** "
@@ -1396,32 +1625,45 @@ def handoff_emit(target_dir: str, subdir: str = "handoff", force: bool = False) 
         "\n### Recording obligations (mandatory — unrecorded work is drift)\n\n"
         "| During execution, when… | Record BEFORE moving on |\n"
         "|---|---|\n"
-        "| you find a defect | `entity_upsert` a `defect` row (`DEF-`, status Open) —"
-        " then fix it |\n"
+        "| you find a defect | `entity_upsert` a `defect` row (`DEF-`, honest severity —"
+        " open critical/high BLOCK readiness) — then fix it |\n"
         "| you find needed work that is out of scope | `entity_upsert` a `deferred-work`"
         " row (`DW-`) with an activation trigger |\n"
         "| you deviate from the approved plan in any way | a `scope-change` row (`SC-`)"
-        " FIRST, `decision_ref` naming the deciding `DEC-`/`ADR-` — then the change |\n"
-        "| you finish a unit of work | `progress_update(...)` — concrete entry with"
-        " phase/slice ids |\n"
-        "| you verify an acceptance criterion | `audit_record(...)` with evidence —"
-        " never Met without proof |\n"
+        " FIRST, `decision_ref` naming the deciding `DEC-`/`ADR-`, delta edges"
+        " (`scope_adds`/`scope_modifies`/`scope_removes`) naming the affected rows —"
+        " after approval, apply the row changes and set the `SC-` to Merged |\n"
+        "| you hit genuine ambiguity | an `open-question` row (`OQ-`, with owner +"
+        " due_by) and `[NEEDS-CLARIFICATION: OQ-NNN]` at the exact spot — NEVER"
+        " assume |\n"
+        "| you finish a unit of work | `progress_update(...)` — event_type `work-done`,"
+        " `subject_id`, your `actor` string, phase/slice ids |\n"
+        "| you believe a slice/wbs-item is complete | set its `lifecycle_status` to"
+        " **Review** (done-claimed) — `Implemented` means VERIFIED and is"
+        " readiness-guarded |\n"
+        "| you verify an acceptance criterion | `audit_record(...)` with evidence +"
+        " `verified_by` + `verification_method` + `against_commit` — never Met without"
+        " proof |\n"
         "| you create a commit or PR | `work_bind(ref, entity_ids=[...])` |\n"
         "| you declare a slice/phase/release done | `readiness_check(scope)` first —"
-        " resolve every blocking failure or register the waiving SC-/DW-; NEVER pass"
-        " `\"force\": true` without the operator's explicit words |\n"
+        " resolve every blocking failure, or ask the OPERATOR for a `WVR-` waiver"
+        " (their words; you never author your own) — `\"force\": true` only on the"
+        " operator's explicit words |\n"
         "\nIf you cannot record (lock held, package missing), STOP and tell the"
         " operator — do not proceed unrecorded.\n"
         "\n### Tool cheat-sheet (execution loop)\n\n"
-        "- `progress_update(entries=[{entry, phase_id?, slice_id?}])` — append progress\n"
+        "- `progress_update(entries=[{entry, event_type?, subject_id?, actor?,"
+        " corrects?, phase_id?, slice_id?}])` — append TYPED progress (correct via a"
+        " `correction` event, never edit)\n"
         "- `audit_record(verdicts=[{ac_id, verdict: Met|Partial|Not-met|Pending,"
-        " evidence?}])` — evidence ref = evidenced, not narrated\n"
+        " evidence?, verified_by?, verification_method?, against_commit?}])` —"
+        " evidence ref = evidenced, not narrated\n"
         "- `work_bind(ref, entity_ids=[...], note?)` — stamp a commit/PR onto entities\n"
         "- `entity_query(type, id?, status?, columns?, limit?)` — rows + total\n"
         "- `trace_query(entity_id, direction: out|in|both, relation?)` — typed links\n"
         "- `entity_upsert(entities=[{type, id, ...}])` — FULL rows, even for updates\n"
         "- `gate_run()` — mechanical gate verdict · `readiness_check(scope, id?)` —"
-        " is it actually DONE\n"
+        " is it actually DONE (waivers honored, Review counts open)\n"
         "- `export_html()` — refresh review.html · `server_info()` — version + root\n"
         "<!-- /tamheed:note -->\n")
     note = "\n## Tamheed progress tracking\n" + note_block
@@ -1472,33 +1714,147 @@ def handoff_emit(target_dir: str, subdir: str = "handoff", force: bool = False) 
 
 # --------------------------------------------------------------------------- staged flows & export
 
-def package_migrate(source_dir: str, name: str | None = None, confirm: bool = False,
-                    allow_zero: list[str] | None = None,
-                    patch: str | None = None,
-                    status_map: dict[str, str] | None = None) -> dict:
-    """Migrate a conformant v1 Keystone package into a v2 store (staged, operator-gated).
+def _read_jsonl_tables(data_dir: Path) -> dict[str, list[dict]]:
+    """Parse every data/<table>.jsonl into rows, keyed by table name (file stem)."""
+    tables: dict[str, list[dict]] = {}
+    for path in sorted(data_dir.glob("*.jsonl")):
+        rows = []
+        for lineno, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+            if not line.strip():
+                continue
+            try:
+                rows.append(json.loads(line))
+            except ValueError:
+                raise ValueError(f"{path.name}:{lineno} unparseable JSON") from None
+        tables[path.stem] = rows
+    return tables
 
-    Default = stages 1-2 (pre-flight + dry parse report). confirm=True = stages 4-5
-    (populate in one transaction + post-flight fidelity). `allow_zero` acknowledges
-    named families that legitimately parse to zero; `patch` is a JSON file of
-    merge-by-id row overrides applied to the parsed plan before populate (the blessed
-    repair path — echoed in the preview); `status_map` maps v1 status words to lifecycle
-    values (present the preview's status_coerced proposals to the operator, then pass
-    the confirmed map here). See references/migration-v1.md.
-    Migration is operator-initiated, always (D-REPO-5)."""
-    import migrate
-    out = migrate.run_migration(source_dir, PACKAGE_ROOT, name=name, confirm=confirm,
-                                allow_zero=allow_zero, patch=patch, status_map=status_map)
-    out.setdefault("package_root", str(Path(PACKAGE_ROOT).resolve()))
-    if out.get("stage") == "post-flight" and out.get("package_dir"):
-        # C19 (user decision): the package carries its own prompt library from birth.
-        pkg = Path(out["package_dir"])
-        out["prompt_library"] = _emit_prompt_library(pkg, pkg.name)
-        if _CURRENT is None:  # C24/B2: leave the package open so handoff_emit follows
-            opened = package_open(pkg.name)
-            if opened.get("ok"):
-                out["package_opened"] = pkg.name
-    return out
+
+def package_migrate(name: str, confirm: bool = False) -> dict:
+    """Migrate a v2/v3 package IN PLACE to the v4 store shape (staged, operator-gated).
+
+    Default = preview: the full rewrite report (every value coercion, edge retype,
+    column drop), nothing written. confirm=True = convert: the old data/ files are
+    copied to data-v3-backup/ first, a legacy data/prompts.jsonl becomes
+    prompts/*.md (the v3 converter, abort-on-anomaly), rows are transformed
+    (migrate_v3to4.transform_tables), and the result is validated + canonicalized
+    through a full store round-trip BEFORE it replaces the live files — a package
+    that fails v4 integrity is left untouched. Migration is operator-initiated,
+    always; package_open refuses pre-v4 stores and names this tool.
+    v1 Keystone markdown packages are no longer ingested here — migrate them under
+    tamheed 3.2.1 first (docs/migrate-from-keystone.md), then re-run this."""
+    import shutil
+    import tempfile
+
+    import migrate_v3to4
+
+    if _CURRENT is not None:
+        return _err(f"package '{_CURRENT_NAME}' is open — package_close it first")
+    pkg_dir = PACKAGE_ROOT / name
+    data = pkg_dir / "data"
+    if not data.exists():
+        return _err(f"package '{name}' not found under {PACKAGE_ROOT}")
+    lock = data / store.LOCK_NAME
+    try:
+        fd = os.open(lock, os.O_CREAT | os.O_EXCL | os.O_WRONLY)
+    except FileExistsError:
+        return _err(f"package '{name}' is locked ({store._describe_lock(lock)})")
+    try:
+        conversion = None
+        if confirm:
+            backup = pkg_dir / "data-v3-backup"
+            if backup.exists():
+                return _err("data-v3-backup/ already exists — a previous migration ran;"
+                            " remove or rename it before migrating again")
+            backup.mkdir()
+            for f in data.iterdir():
+                if f.name != store.LOCK_NAME:
+                    shutil.copy2(f, backup / f.name)
+            try:
+                conversion = _convert_legacy_prompts(pkg_dir)
+            except ValueError as exc:
+                shutil.rmtree(backup)
+                return _err(str(exc))
+        try:
+            tables = _read_jsonl_tables(data)
+        except ValueError as exc:
+            return _err(str(exc))
+        legacy_note = None
+        if not confirm and "prompts" in tables:
+            # Preview parity with the confirm path's converter: PRM- rows/edges leave.
+            tables.pop("prompts")
+            tables["trace_edges"] = [
+                e for e in tables.get("trace_edges", [])
+                if not (str(e.get("from_id", "")).startswith("PRM-")
+                        or str(e.get("to_id", "")).startswith("PRM-"))]
+            legacy_note = ("data/prompts.jsonl will be converted to prompts/*.md on"
+                           " confirm (the v3 prompt converter, abort-on-anomaly)")
+        type_of_table = {tbl: kind for kind, tbl in ENTITY_TABLES.items()
+                         if tbl not in _NON_ID_TABLES}
+        try:
+            tables, rep = migrate_v3to4.transform_tables(tables, RELATION_RULES,
+                                                         type_of_table)
+        except ValueError as exc:
+            return _err(str(exc))
+        have = {r.get("type_id") for r in tables.get("entity_types", [])}
+        added = [tid for tid, _, _, _ in BASELINE_ENTITY_TYPES if tid not in have]
+        for tid, label, prefix, gclass in BASELINE_ENTITY_TYPES:
+            if tid in added:
+                tables.setdefault("entity_types", []).append(
+                    {"type_id": tid, "label": label, "id_prefix": prefix,
+                     "generation_class": gclass, "custom_attributes": None})
+        if added:
+            rep["entity_types_added"] = added
+        pe_rows = tables.setdefault("progress_entries", [])
+        nxt = max((int(str(r.get("id"))[3:]) for r in pe_rows
+                   if str(r.get("id", "")).startswith("PE-")), default=0) + 1
+        rewrites = sorted(k for k in rep if k not in ("target_version", "version_from"))
+        pe_rows.append({
+            "id": f"PE-{nxt:03d}", "event_type": "note",
+            "entry": (f"MIGRATED store v{rep.get('version_from')} -> v4.0.0"
+                      f" ({', '.join(rewrites) if rewrites else 'no value rewrites'})"),
+            "actor": "system:migrate"})
+        if legacy_note:
+            rep["legacy_prompts"] = legacy_note
+        if not confirm:
+            return {"ok": True, "stage": "preview", "package": name, "report": rep,
+                    "note": "nothing written — back the package up (git commit or"
+                            " copy data/), then re-run with confirm=true"}
+        # Validate + canonicalize in a scratch store before touching the live files.
+        with tempfile.TemporaryDirectory() as td:
+            tmp_pkg = Path(td) / "pkg"
+            (tmp_pkg / "data").mkdir(parents=True)
+            for tname, rows in tables.items():
+                if rows:
+                    (tmp_pkg / "data" / f"{tname}.jsonl").write_bytes(
+                        ("\n".join(json.dumps(r, ensure_ascii=False,
+                                              separators=(",", ":")) for r in rows)
+                         + "\n").encode("utf-8"))
+            try:
+                ts = store.PackageStore(tmp_pkg).__enter__()
+            except Exception as exc:
+                return _err(f"migration validation failed — package UNCHANGED"
+                            f" (old files intact, backup at data-v3-backup/): {exc}")
+            try:
+                ts.commit()
+            finally:
+                ts.__exit__(None, None, None)
+            stale = set(tables) | {p.stem for p in data.glob("*.jsonl")}
+            for tname in stale:
+                (data / f"{tname}.jsonl").unlink(missing_ok=True)
+            for f in (tmp_pkg / "data").glob("*.jsonl"):
+                shutil.copy2(f, data / f.name)
+        out = {"ok": True, "stage": "migrated", "package": name, "report": rep,
+               "backup": "data-v3-backup/",
+               "package_root": str(Path(PACKAGE_ROOT).resolve()),
+               "note": "review the report, commit the diff, then package_open"}
+        if conversion:
+            out["legacy_prompts"] = conversion
+        out["prompt_library"] = _emit_prompt_library(pkg_dir, name)
+        return out
+    finally:
+        os.close(fd)
+        lock.unlink()
 
 
 def package_adopt(source_dir: str, name: str | None = None, confirm: bool = False) -> dict:
@@ -1511,6 +1867,19 @@ def package_adopt(source_dir: str, name: str | None = None, confirm: bool = Fals
     if out.get("stage") == "post-flight" and out.get("package_dir"):
         pkg = Path(out["package_dir"])
         out["prompt_library"] = _emit_prompt_library(pkg, pkg.name)
+        # v4 (plan 031): adopt writes via raw SQL, bypassing per-write relation
+        # enforcement — run the same edge sweep G-REL blocks on, HERE, so an adopted
+        # package cannot fail readiness on day one without the operator being told.
+        try:
+            with store.PackageStore(pkg) as s:
+                viol = _edge_rule_violations(s.conn)
+            if viol:
+                out["relation_rule_violations"] = {
+                    "mistyped": viol,
+                    "note": "these edges will FAIL the blocking G-REL gate — retype"
+                            " to relates_to or fix the endpoints before handoff"}
+        except store.StoreLockedError:
+            pass  # the adoption report stands; the sweep re-runs at first gate_run
     return out
 
 
@@ -1591,7 +1960,7 @@ TOOLS = {
     "audit_record": (audit_record, "Record AC verdicts, optionally evidence-bound"),
     "work_bind": (work_bind, "Bind a commit/PR to the entities it satisfies (stamps last_referenced)"),
     "handoff_emit": (handoff_emit, "Emit handoff prompts + executor MCP config (injection-screened)"),
-    "package_migrate": (package_migrate, "Migrate a conformant v1 package (staged: preview, then confirm)"),
+    "package_migrate": (package_migrate, "Migrate a v2/v3 package in place to the v4 store (staged: preview, then confirm)"),
     "package_adopt": (package_adopt, "Adopt a brownfield repo (staged: scan/preview, then confirm)"),
     "export_html": (export_html, "Export the HTML review surface to <package>/review.html"),
 }

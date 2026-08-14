@@ -48,6 +48,7 @@ Keystone 1.0.1.
 | 028 | Thirteenth field report: prompt lifecycle signals, readiness discrimination, flow legibility, operator guide | B24 | P2 | M | findings_13 (the v3.0.0 acceptance) + the maintainer's prm-naming/overlap probe + user-guide ask; evidence C34 | DONE — executed 2026-08-13, v3.1.0; acceptance ran same-day (findings_14/C35: §2/§4/§5 all verified; two note/force defects → plan 029) |
 | 029 | Fourteenth field report: tool-owned note span, honest force, indeterminate readiness | B25 | P2 | S | findings_14 (the v3.1.0 acceptance); evidence C35; all forks interview-locked | DONE — executed 2026-08-14, v3.2.0; acceptance ran same-day (findings_15/C36: all three fixes verified; curation done; instruction transfer PROVEN) |
 | 030 | Fifteenth field report: README folder index + lock guidance; the README release contract (lint-enforced) | B26 | P3 | S | findings_15 (the v3.2.0 acceptance) + the maintainer's update-READMEs-each-release instruction; evidence C36 | DONE — executed 2026-08-14, v3.2.1; **acceptance MET (findings_16/C37: per-file path field-proven, both additions render; zero defects — no plan, no release)**; carried: the interactive fresh-session drift test (operator-side) + the either-discriminator lock rewording (next release) |
+| 031 | The v4 entity-model redesign: full entity study + external research, re-baselined store, claimed-vs-verified Review, waivers, drift deltas, typed journal, blocking G-REL, v1 retirement, the lab | B27 | P1 | XL | maintainer v4 directive (study every entity, deep research, relations/validations, migration, lab testing, Mermaid docs); 15 decisions locked over five interview rounds + a devil's-advocate round | DONE — executed 2026-08-14, v4.0.0; docs/entities.md is the rationale record; the lab package is the lab-tracker eval case |
 
 Status values: TODO | IN PROGRESS | DONE | BLOCKED (with one-line reason) | REJECTED (with
 one-line rationale).
@@ -345,5 +346,5 @@ Markdown · ASM-D Python floor rises to the MCP SDK's (≥3.10).
   (post-v2: wrap `gate_run`).
 - An extension/marketplace registry for community entity types (beyond plan 015's in-repo
   mechanism).
-- Retiring the frozen v1 contract (validator + schemas) — a future maintainer decision once
-  migration demand ends.
+- ~~Retiring the frozen v1 contract (validator + schemas)~~ — DONE in plan 031 (v4.0.0): the
+  two-step escape route via tamheed 3.2.1 replaces in-repo v1 ingestion.

@@ -1,117 +1,156 @@
 # Governance: identifiers, statuses, versioning, cross-references
 
-This is the single source of truth for how every Keystone-generated artifact is named, identified,
-versioned, and linked. Apply it uniformly — consistent identifiers are what make the traceability matrix
+This is the single source of truth for how every Tamheed entity is named, identified,
+versioned, and linked. Apply it uniformly — consistent identifiers are what make traceability
 and the handoff trustworthy.
 
 ## Identifier scheme
 
-Each identifier is a stable prefix + zero-padded number, unique within a package and never reused (retire,
-don't recycle). Use them in registers, in artifact front-matter, and as link targets.
+Each identifier is a stable prefix + zero-padded number, unique within a package and never
+reused (retire, don't recycle). Every entity lives in its `data/<table>.jsonl` family
+(see `artifact-catalog.md`).
 
-| Entity | ID format | Lives in |
+| Entity | ID format | Family (table) |
 |---|---|---|
-| Functional requirement | `FR-NNN` | requirements/ |
-| Non-functional requirement | `NFR-NNN` | requirements/ |
-| Constraint | `CON-NNN` | requirements/constraint-register |
-| Invariant (non-negotiable) | `INV-NNN` | requirements/invariant-register |
-| Assumption | `ASM-NNN` | decisions/assumption-register |
-| Dependency | `DEP-NNN` | requirements/dependency-register |
-| Open question | `OQ-NNN` | decisions/open-question-register |
-| Decision (lightweight) | `DEC-NNN` | decisions/open-decision-register |
-| Architecture Decision Record | `ADR-NNNN` | adrs/ |
-| Risk | `RISK-NNN` | risks/risk-register |
-| Hypothesis | `HYP-NNN` | research/hypothesis-register |
-| Experiment / POC | `EXP-NNN` / `POC-NNN` | experiments/ , pocs/ |
-| Success metric / KPI | `KPI-NNN` | charter / success-metrics |
-| Stakeholder | `STK-NNN` | stakeholder-register |
-| Phase | `PH-N` | planning/roadmap |
-| Milestone | `MS-NNN` | planning/milestones |
-| Work item (WBS) | `WBS-N[.N[.N]]` (group `WBS-N`, leaf `WBS-N.N`, sub-leaf `WBS-N.N.N`) | planning/work-breakdown |
-| Acceptance criterion | `AC-NNN` | validation/acceptance-criteria |
-| Test / validation item | `TEST-NNN` | validation/test-strategy |
-| Slice (v2) | `SL-NNN` | slices table (phase → slice) |
-| Audit verdict (v2) | `AV-NNN` | audit_verdicts table |
-| Progress entry (v2) | `PE-NNN` | progress_entries table |
-| Defect (v2) | `DEF-NNN` | defects table |
-| Deferred work (v2) | `DW-NNN` | deferred_work table |
-| Execution gate (v2) | `GATE-NNN` | execution_gates table |
-| Execution plan (v2) | `EP-NNN` | execution_plans table (per slice) |
-| Convention (v2) | `CONV-NNN` | conventions table |
-| Scope change (v2) | `SC-NNN` | scope_changes table |
-| Narrative document / section (v2) | `DOC-NNN` / `SEC-NNN` | narrative_documents / document_sections |
-| Diagram (v2) | `DIA-NNN` | diagrams table |
-| Handoff prompt (v2) | `PRM-NNN` | prompts table |
+| Functional requirement | `FR-NNN` | requirements |
+| Non-functional requirement | `NFR-NNN` | requirements |
+| Constraint | `CON-NNN` | constraints |
+| Invariant (non-negotiable) | `INV-NNN` | invariants |
+| Assumption | `ASM-NNN` | assumptions |
+| Dependency | `DEP-NNN` | dependencies |
+| Open question | `OQ-NNN` | open_questions |
+| Decision (any project decision) | `DEC-NNN` | decisions |
+| Architecture Decision Record | `ADR-NNNN` (exactly 4 digits) | adrs |
+| Risk | `RISK-NNN` | risks |
+| Hypothesis | `HYP-NNN` | hypotheses |
+| Experiment / POC | `EXP-NNN` / `POC-NNN` | experiments / pocs |
+| Success metric / KPI | `KPI-NNN` | kpis |
+| Stakeholder | `STK-NNN` | stakeholders |
+| Phase | `PH-N` | phases |
+| Milestone (roadmap label) | `MS-NNN` | milestones |
+| Slice (vertical increment) | `SL-NNN` | slices |
+| Work item (WBS) | `WBS-N[.N[.N]]` (group `WBS-N`, leaf `WBS-N.N`) | wbs_items |
+| Acceptance criterion | `AC-NNN` | acceptance_criteria |
+| Test / validation item | `TEST-NNN` | tests |
+| Audit verdict | `AV-NNN` | audit_verdicts (append-only) |
+| Progress entry | `PE-NNN` | progress_entries (append-only, typed) |
+| Defect | `DEF-NNN` | defects |
+| Deferred work | `DW-NNN` | deferred_work |
+| Execution gate | `GATE-NNN` | execution_gates |
+| Execution plan | `EP-NNN` | execution_plans (per slice) |
+| Convention | `CONV-NNN` | conventions |
+| Scope change | `SC-NNN` | scope_changes |
+| Waiver (v4) | `WVR-NNN` | waivers |
+| Narrative document / section | `DOC-NNN` / `SEC-NNN` | narrative_documents / document_sections |
+| Diagram | `DIA-NNN` | diagrams |
+| Glossary term | `GT-NNN` | glossary_terms |
 
-`DEC` vs `ADR`: use `DEC-` for any decision in the open-decision register; **promote** a decision to an
-`ADR-NNNN` when it is architecturally significant (hard to reverse, broad blast radius). Record the
-promotion (`DEC-007 → ADR-0003`) so the link is never lost.
+Retired prefixes: `PRM-` (v3 — prompts became files under `<package>/prompts/`; ids of that
+shape in a converted package are conversion-audit provenance, not entities).
+
+**`DEC` vs `ADR` — the promotion rule (v4, plan 031).** Use `DEC-` for ANY decision. Promote
+to an `ADR-NNNN` when the **one-way-door test** says yes: hard to reverse (a week of
+refactoring, not a config flip), broad blast radius (structure, a critical -ility,
+dependencies, interfaces, or construction techniques — Nygard's five), or the same question
+keeps being re-debated. Record the promotion (`decisions.promoted_to = ADR-0003`) so the link
+is never lost. ADRs are immutable after approval and carry `confirmation` — how compliance
+will be verified. The `decisions-look-architectural` readiness advisory flags DECs that work
+items implement, or that touch invariants/constraints, but were never promoted.
 
 ## Lifecycle statuses
 
-Every register row and every standalone document carries a status.
+Every status-bearing row carries `lifecycle_status` (the column name is uniform in v4 —
+the three-axis doctrine below is why it is not just `status`).
 
 ```
 Draft → Proposed → Approved → Implemented
                  ↘ Rejected
                  ↘ Deferred  (→ back to Proposed later)
-        Approved/Implemented → Superseded (by a newer item)  → Obsolete
+        Approved/Implemented → Superseded (by a newer item) → Obsolete
 ```
 
 - **Draft** — being written; not yet offered for approval.
-- **Proposed** — offered to the human; awaiting an approval decision. The default for anything Keystone
-  authored on its own initiative.
-- **Approved** — the human (or an authorized gate) accepted it. Only Approved items constrain execution.
-- **Rejected** — considered and declined; kept with the reason (rejected alternatives are evidence).
+- **Proposed** — offered to the human. The default for anything Tamheed authored on its own
+  initiative.
+- **Approved** — the human (or an authorized gate) accepted it. **Only Approved items
+  constrain execution.**
+- **Rejected** — considered and declined; kept with the reason (rejected alternatives are
+  evidence).
 - **Deferred** — postponed with a trigger/condition for revisiting.
-- **Superseded** — replaced by a newer item; row points to its successor (`superseded_by`).
-- **Implemented** — realized in the execution repo (set during update cycles).
-- **Obsolete** — no longer relevant; retained for history, excluded from active views.
+- **Review** *(v4; wbs-items and slices only)* — **done-CLAIMED**: the agent asserts the work
+  is complete but verification has not confirmed it. Counts as OPEN in every readiness
+  closed-set; only the guarded transition to Implemented closes work.
+- **Implemented** — done-VERIFIED: realized in the execution repo and past the readiness
+  rules (phase/slice transitions to Implemented are guarded; `force` requires the operator's
+  explicit words and leaves a forced-override audit event).
+- **Superseded** — replaced; row points to its successor (`superseded_by`).
+- **Obsolete** — retained for history, excluded from active views.
 
-**Decision statuses** are exactly: Proposed, Approved, Rejected, Superseded, Deferred — plus
-Implemented once a decision is realized during execution/update cycles. Never render a
-Proposed decision as if Approved — this is a core safeguard. (In v2 this is a CHECK constraint:
-`Draft` is unrepresentable on a decision row.)
+**Decision statuses** are exactly: Proposed, Approved, Rejected, Superseded, Deferred,
+Implemented — `Draft` is unrepresentable on a decision row (CHECK-enforced). Never render a
+Proposed decision as if Approved — this is a core safeguard.
 
-**Three-axis status (v2, ADR-0001).** Lifecycle, verdict, and disposition are independent columns:
-`lifecycle_status` (the set above), `verdict` (Met/Partial/Not-met/Pending for audits, PASS/FAIL/Pending
-for experiments, Pass/Fail/Pending for tests), and `disposition` ∈ {superseded, accepted-with-deviation,
-void} — always with a `disposition_reason_ref` to the deciding decision/ADR. A cancelled criterion is
-*void*, not *Not-met*; risks additionally carry `risk_state` ∈ {open, mitigated, materialized, retired,
-accepted}.
+**Domain lifecycles** (same column name, domain vocabularies — CHECK-enforced):
+
+| Family | `lifecycle_status` values |
+|---|---|
+| defect | Open, In-progress, Fixed, Won't-fix, Duplicate |
+| deferred-work | Open, Activated, Scheduled, Done, Won't-do |
+| scope-change | Proposed, Approved, **Merged** (deltas applied to the plan rows) |
+
+**Three-axis status (ADR-0001, revised plan 031).** Lifecycle, verdict, and disposition are
+independent columns:
+
+- `lifecycle_status` — the sets above.
+- `verdict` — **Met/Partial/Not-met/Pending** for audit verdicts;
+  **Validated/Invalidated/Inconclusive/Pending** for experiments/POCs (a hypothesis verdict);
+  **Pass/Fail/Pending** for tests. Domain sets are deliberate — a test result and a
+  hypothesis outcome are different judgments.
+- `disposition` ∈ {superseded, accepted-with-deviation, void} — always with a
+  `disposition_reason_ref` to the deciding decision/ADR. A cancelled criterion is *void*,
+  not *Not-met*.
+- Risks additionally carry `risk_state` ∈ {open, mitigated, materialized, retired, accepted}
+  with `discharged_by` naming the AC/test that retires the risk.
+
+**Audit verdicts carry their evidence chain (v4):** `evidence` (what proves it),
+`verified_by` (human/agent/ci), `verification_method` (auto-test/manual/inspection),
+`against_commit` (what state it was judged against). A Met without evidence is *narrated*,
+not *evidenced* — gate_run counts the split.
+
+## The ambiguity marker (v4)
+
+Never assume. Where prose is ambiguous, write `[NEEDS-CLARIFICATION: OQ-NNN]` in place and
+create the OQ (with owner + due_by). G-COMPLETE validates markers: one citing an existing,
+unresolved OQ is legal; a marker with no id, a dangling id, or a resolved cite is an
+unfinished-marker failure. The `clarifications-open` advisory counts live markers.
 
 ## Versioning
 
-- **Package / skill version:** semver `MAJOR.MINOR.PATCH`. MINOR = additive (new artifacts/fields, no
-  break). MAJOR = breaking change to schemas, identifiers, or the handoff contract; ship a migration note.
-- **Document version:** each generated document carries front-matter `status`, `version` (semver or `vN`),
-  and `updated` (ISO date). Bump on material change.
-- **Immutable-after-approval artifacts** (ADRs, approved acceptance criteria): never edit in place. To
-  change, add a new item that supersedes the old one. Correcting typos is allowed; changing meaning is not.
-- **Derived artifacts** (traceability matrix, readiness report, roadmap rollups) are regenerated, never
-  hand-edited; they are reproducible from their sources.
-
-## File & directory naming
-
-- All files and directories: **kebab-case**. ASCII, no spaces.
-- Ordered narrative docs: `NN-topic.md` (`00-charter.md`, `10-architecture.md`).
-- Registers: `<thing>-register.md` (`risk-register.md`).
-- ADRs: `adr-NNNN-short-title.md`.
-- One entity family per register file; one ADR per file.
+- **Package / skill version:** semver `MAJOR.MINOR.PATCH`. MINOR = additive. MAJOR =
+  breaking change to the store shape, identifiers, or the handoff contract; ships with an
+  explicit migration (`package_migrate` — `package_open` refuses older stores).
+- **Document rows:** narrative documents carry `lifecycle_status`; material change bumps it
+  back through Proposed.
+- **Immutable-after-approval** (ADRs incl. `confirmation`, approved acceptance criteria):
+  never edit in place — supersede. Typos yes, meaning no (trigger-enforced).
+- **Derived artifacts** (views, review.html, CSVs, the CLAUDE.md note span) are regenerated,
+  never hand-edited.
 
 ## Cross-reference rules
 
-- Reference any entity by its ID in running text: "mitigated by `RISK-012`'s plan", "depends on `DEC-004`".
-- A row that exists because of another entity records the link in a typed field (`derives_from`,
-  `mitigates`, `verifies`, `supersedes`, `blocked_by`), not only in prose.
-- Every `FR-/NFR-` should be reachable in the traceability matrix to at least one decision, task, test, and
-  (where it asserts user-visible behavior) an acceptance criterion. Unlinked requirements are a gate
-  failure, not a silent omission.
-- Links between files use relative Markdown paths so the package stays portable.
+- Reference any entity by its ID in running text: "mitigated by `RISK-012`", "per `DEC-004`".
+- A row that exists because of another records the link as a **typed trace edge**
+  (`derives_from`, `implements`, `verifies`, `tests`, `mitigates`, `discharges`,
+  `blocked_by`, `satisfies`, `supersedes`, `scope_adds`/`scope_modifies`/`scope_removes`),
+  not only in prose. `relates_to` is the documented untyped escape hatch. Endpoint types are
+  enforced at write time and by the **blocking G-REL gate**.
+- Every MVP `FR-/NFR-` must be reachable to ≥1 decision, ≥1 work item, and ≥1 test (G-TRACE);
+  a requirement with zero edges trips the `requirements-wired` advisory.
+- Waivers and gates point at entities via their own `applies_to` column, not edges.
 
 ## Supersession & deprecation
 
-- Superseding creates a new ID and sets `superseded_by`/`supersedes` on both ends; the old item stays
-  (status Superseded) so history and rationale survive.
-- Deprecating marks an item Obsolete with a one-line reason and date; downstream references are updated or
-  explicitly noted as historical.
+- Superseding creates a new ID and sets `superseded_by`/a `supersedes` edge; the old item
+  stays (status Superseded) so history and rationale survive.
+- Deprecating marks an item Obsolete with a one-line reason; downstream references are
+  updated or explicitly noted as historical.

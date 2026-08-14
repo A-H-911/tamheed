@@ -35,8 +35,7 @@
 {"from_id":"NFR-003","to_id":"DEC-001","relation":"derives_from"}
 {"from_id":"NFR-004","to_id":"ADR-0003","relation":"derives_from"}
 {"from_id":"NFR-005","to_id":"ADR-0001","relation":"derives_from"}
-{"from_id":"PH-2","to_id":"FR-008","relation":"tests"}
-{"from_id":"PH-2","to_id":"FR-008","relation":"verifies"}
+{"from_id":"PH-2","to_id":"FR-008","relation":"relates_to"}
 {"from_id":"RISK-001","to_id":"FR-002","relation":"relates_to"}
 {"from_id":"RISK-001","to_id":"FR-004","relation":"relates_to"}
 {"from_id":"RISK-001","to_id":"FR-005","relation":"relates_to"}

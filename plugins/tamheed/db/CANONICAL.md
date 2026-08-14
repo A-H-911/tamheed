@@ -1,4 +1,4 @@
-# Canonical serialization — Tamheed v2 package data
+# Canonical serialization — Tamheed v4 package data
 
 The canonical form of a package's data is **one JSONL file per table** under the package's
 `data/` directory, committed to git. SQLite is only the runtime (`store.py` loads text in,
@@ -37,10 +37,13 @@ violations, and bad JSON fail loud — nothing is silently repaired.
 
 One loader/writer per package, guarded by a lockfile:
 
-- `data/.lock` is created with `O_CREAT | O_EXCL` on open-for-write; it contains the writer's
-  PID for diagnostics.
+- `data/.lock` is created with `O_CREAT | O_EXCL` on open-for-write; it contains a JSON
+  object `{pid, host, taken_at}` for diagnostics (legacy bare-integer locks are tolerated
+  when read).
 - If `data/.lock` already exists, opening the store **fails loud** (`StoreLockedError`) — no
-  waiting, no stealing. A crashed writer's stale lock is removed by the operator, deliberately.
+  waiting, no stealing. A crashed writer's stale lock is removed by the operator, deliberately
+  (delete it when EITHER staleness discriminator proves the holder cannot be live: the pid is
+  not a plausible agent session, or the process started after `taken_at`).
 - The lock is released (file removed) when the store closes, including on error exit.
 
 ## Byte-stability guarantee (field-proven, plan 019)

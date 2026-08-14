@@ -18,7 +18,7 @@ from pathlib import Path
 _HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(_HERE))
 
-import migrate  # reuse Plan/populate/fidelity: one recording pipeline  # noqa: E402
+import record  # the shared Plan/populate/fidelity recording pipeline (plan 031)  # noqa: E402
 from tamheed_server import _INJECT_RE  # the same untrusted-content screen  # noqa: E402
 
 README_NAMES = ("README.md", "README.rst", "README.txt", "readme.md")
@@ -65,9 +65,9 @@ def scan(source: Path) -> dict:
             "git_history": (source / ".git").exists(), "_code_list": code_files}
 
 
-def extract(source: Path, inventory: dict) -> tuple[migrate.Plan, list, list]:
+def extract(source: Path, inventory: dict) -> tuple[record.Plan, list, list]:
     """Mechanical baseline over the default-ON sources. Everything Proposed, code-provenanced."""
-    plan = migrate.Plan()
+    plan = record.Plan()
     gaps: list[str] = []
     injections: list[dict] = []
     seq = {k: 0 for k in ("FR", "DEP", "TEST", "DW", "OQ", "DOC", "SEC", "CON")}
@@ -101,7 +101,7 @@ def extract(source: Path, inventory: dict) -> tuple[migrate.Plan, list, list]:
             "title": (title_m.group(1).strip() if title_m else rel)[:200],
             "lifecycle_status": "Draft",
             "custom_attributes": json.dumps({"adopt": {"path": rel}})})
-        for order, (heading, body) in enumerate(migrate._sections(text), 1):
+        for order, (heading, body) in enumerate(record._sections(text), 1):
             plan.add("document_sections", {"id": nid("SEC"), "document_id": doc_id,
                                            "heading": heading[:200], "body": body,
                                            "sort_order": order})
@@ -191,7 +191,7 @@ def extract(source: Path, inventory: dict) -> tuple[migrate.Plan, list, list]:
             line = text[: m.start()].count("\n") + 1
             plan.add("deferred_work", {
                 "id": nid("DW"), "title": m.group(2).strip()[:200] or "unlabelled marker",
-                "severity": "low", "status": "Open",
+                "severity": "low", "lifecycle_status": "Open",
                 "activation_trigger": "operator review (adopted marker)",
                 "source_kind": "code", "source_span": f"{rel}:{line}"})
 
@@ -255,11 +255,11 @@ def run_adoption(source_dir: str, dest_root: str | Path, name: str | None = None
         return {"ok": False, "stage": "scan", "error": f"{source_dir} is not a directory"}
     inventory = scan(source)
     plan, gaps, injections = extract(source, inventory)
-    name = migrate._kebab(name or source.name)
+    name = record._kebab(name or source.name)
     git_recent = plan.package.pop("_git_recent", None)
     plan.package = {
         "name": name, "title": f"Adopted: {source.name}", "profile": "unknown",
-        "mode": "adopt", "package_version": "0.1.0",
+        "mode": "adopt", "package_version": "4.0.0",  # store-shape version: package_open keys on it (plan 031)
         "mvp_definition": None, "entry_point": None, "go_no_go": None,
         "created_at": "adopted",
         "custom_attributes": json.dumps(
@@ -290,11 +290,11 @@ def run_adoption(source_dir: str, dest_root: str | Path, name: str | None = None
         return {"ok": True, **preview,
                 "next": "operator gate: confirm the scan scope, then re-run with "
                         "confirm=true to record"}
-    pop = migrate.populate(plan, Path(dest_root), name)
+    pop = record.populate(plan, Path(dest_root), name)
     if not pop["ok"]:
         return pop
-    fid = migrate.fidelity(plan, Path(dest_root) / name)
+    fid = record.fidelity(plan, Path(dest_root) / name)
     return {"ok": fid["ok"], "stage": "post-flight", "preview": preview,
             "package_dir": pop["package_dir"], "gap_report": gaps,
             "gate_failures": fid["gate_failures"], "unmapped": fid["unmapped"],
-            "next": migrate._CUTOVER_NEXT if fid["ok"] else None}
+            "next": record._CUTOVER_NEXT if fid["ok"] else None}

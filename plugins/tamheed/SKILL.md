@@ -87,7 +87,7 @@ Default to **interactive**. Modes are defined in `references/modes.md`:
 - `stage:<id>` — run or re-run a single stage.
 - `update` — the agile heart of v2: diff-aware re-derivation, execution-progress sync, and typed
   scope changes (D-UPDATE; see `references/modes.md`).
-- `migrate` — walk a conformant v1 Keystone package into the store (`package_migrate`, staged and
+- `migrate` — convert a v2/v3 store to v4 in place (`package_migrate`, staged and
   operator-gated; mapping contract in `references/migration-v1.md`). **Present the preview's
   ledgers to the operator before confirming**: use `status_coerced_groups` (the grouped view
   — one decision per original word, not per row) as a multi-select confirmation passed back
@@ -137,13 +137,14 @@ goals/non-goals, scope, KPIs) from `templates/project-charter.template.md`; `kpi
 rows are entities. Scope lock: later changes require a recorded scope change (see `update`).
 
 **Explore (stages 9–15).** Research plan as narrative; `hypothesis`/`experiment`/`poc` rows with
-PASS/FAIL + timebox; technology comparison narrative; `decision`/`adr` rows (statuses enforced by
+Validated/Invalidated/Inconclusive verdicts + metric/threshold set BEFORE the run; technology
+comparison narrative; `decision`/`adr` rows (statuses enforced by
 CHECK — a decision literally cannot be `Draft`); `risk` rows. Add `trace-edge` rows as you decide
 (`derives_from`, `mitigates`) — traceability is built live, not assembled at the end.
 
 **Plan & generate (stages 16–17).** `phase` rows, then **`slice` rows under each phase** — slices are
-what branches/PRs/ACs bind to; `wbs-item`, `milestone`, `acceptance-criterion` (bound to requirement +
-slice), `execution-gate`, `test` rows; per-slice `execution-plan` and `convention` rows. Narrative
+what branches/PRs/ACs bind to; `wbs-item`, `milestone` (a roadmap LABEL — no lifecycle, never gates; v4),
+`acceptance-criterion` (bound to requirement + slice), `execution-gate`, `test` rows; per-slice `execution-plan` and `convention` rows. Narrative
 documents from the surviving section templates. Trace edges: requirement → decision, slice → requirement,
 test → requirement (G-TRACE runs over these).
 
@@ -155,8 +156,9 @@ that capability was removed in v2 (ASM-B).
 **Quality validation (stage 19).** `gate_run` — referential gates VERIFY at gate time (plan 027:
 foreign_key_check, entity_index consistency, real status/provenance SELECTs); coverage gates
 (G-TRACE, G-SET, G-PROGRESS) execute as SQL views; the content tier scans for placeholders; the
-advisory `relation_rules` sweep lists legacy mistyped edges (new writes are hard-rejected — typed
-relations constrain endpoint types, `relates_to` is the untyped escape hatch). Record omissions
+**blocking G-REL gate** fails on stored edges violating the endpoint rules (new writes are
+hard-rejected too; `relates_to` is the untyped escape hatch); `[NEEDS-CLARIFICATION: OQ-NNN]`
+markers are legal only while their OQ is live (v4). Record omissions
 honestly: an absent Always-class family needs an `omission` row with a reason, or G-SET fails.
 
 **Handoff (stage 20, v3).** Author prompt **files** (kickoff / follow-up / situational) in
@@ -165,15 +167,19 @@ picks, never database rows; `handoff_emit(target_dir)` screens every package pro
 (G-INJECT + the stale scan) and wires the target: `.mcp.json` + the marker-managed `CLAUDE.md`
 note carrying the mandatory recording-obligations table. See `references/handoff.md`.
 
-**Update cycles (stage 21).** The executing agent (or operator) calls `progress_update`,
-`audit_record` (with evidence refs — an evidenced verdict beats a narrated one), and `work_bind`
+**Update cycles (stage 21).** The executing agent (or operator) calls `progress_update` (typed
+events: event_type/subject/actor), `audit_record` (evidence + verified_by + verification_method +
+against_commit — an evidenced verdict beats a narrated one), and `work_bind`
 ("this commit satisfies FR-x/AC-y/SL-z"). Verdicts cascade: all ACs of a requirement `Met` →
 the requirement auto-advances. Scope changes follow the D-UPDATE flow in `references/modes.md` —
 **a `scope-change` row is written before any requirement/phase mutation, always.** Discovered
 defects become `defect` rows BEFORE the fix; out-of-scope finds become `deferred-work` rows with
-activation triggers. Close boundaries run `readiness_check(scope)`: its blocking rules guard the
-phase/slice `Implemented` transition (`"force": true` only on the operator's explicit words — the
-server records every forced transition itself).
+activation triggers. Work an agent believes done goes to **Review** (claimed); `Implemented` means VERIFIED. Close
+boundaries run `readiness_check(scope)`: blocking rules (open critical/high defects block;
+medium/low advise) guard the phase/slice `Implemented` transition; a single stubborn failure is
+waived only by an operator-approved `WVR-` row (reported as `waived`, never silent);
+`"force": true` only on the operator's explicit words — the server records every forced
+transition itself.
 
 **Readiness (stage 22).** `gate_run` + `readiness_check("package")`; emit the readiness verdict
 from the gate report + blocking readiness failures + open items + residual risks. Never declare
@@ -222,7 +228,6 @@ Read the reference file when you reach the matching part of the work; do not loa
 | `references/quality-gates.md` | The three-tier gate model; running `gate_run` |
 | `references/safeguards.md` | The anti-patterns to actively prevent |
 | `references/handoff.md` | Assembling the execution-agent handoff |
-| `references/migration-v1.md` | Migrating a v1 Keystone package (`migrate` mode) — the mapping contract |
 | `references/migration-runbook.md` | The operator procedure: staged run, cutover, re-populate + swap |
 | `references/adopt.md` | Brownfield onboarding (`adopt` mode) |
 | `references/prompt-templates.md` | Writing project prompt files + the 14-file stock scenario library |
@@ -234,5 +239,6 @@ Read the reference file when you reach the matching part of the work; do not loa
 
 This skill is **self-contained**: everything it reads or invokes at runtime lives in this directory —
 references, section templates in `templates/`, the DDL + store in `db/`, and the MCP server in
-`server/`. (`schemas/` and `scripts/validate_package.py` are the frozen v1 contract, kept for
-migration.)
+`server/`. (The v1 validator, schemas, and importer were retired in v4 — an old Keystone
+package migrates under tamheed 3.2.1 first, then v3→v4 here; see
+`docs/migrate-from-keystone.md` in the repo.)

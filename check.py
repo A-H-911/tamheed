@@ -1,18 +1,21 @@
 #!/usr/bin/env python3
-"""The one-command deterministic gate (plan 013/B10) — stdlib only.
+"""The one-command deterministic gate (plan 013/B10; re-based for v4 by plan 031) —
+stdlib only.
 
 CI job 1 runs exactly `python check.py`, so local and CI cannot drift. Gates run
 in order and stop at the first failure with the failing command echoed:
 
   suites    — every unit/contract suite under tests/
-  goldens   — the frozen v1 validator against its four golden packages (0/0/1/1)
-  lint      — every tracked *.json parses; the v2 entity_types registry, the
-              entity-type->table map, and the DDL agree; the frozen v1 Always
-              mirror (required-artifacts.json) stays in sync with the artifact
-              catalog while v1 artifacts remain
-  canonical — load+dump of the committed v2 demo package is byte-identical
+  lint      — every tracked *.json parses; the entity_types registry, the
+              entity-type->table map, and the DDL agree; the registry's Always
+              class stays in sync with the artifact catalog; version/CHANGELOG/
+              README/migration/pin invariants hold
+  canonical — load+dump of the committed v4 demo package is byte-identical
               (the guard against W-V2-5 git churn)
   evals     — the deterministic eval runner passes on the shipped sample fixture
+
+The v1 validator + goldens gate was retired with v1 ingestion (plan 031): old
+Keystone markdown packages migrate under tamheed 3.2.1 first, then v3→v4.
 
 `python check.py <gate> [<gate> ...]` runs a subset. New suites register in
 SUITES here, nowhere else.
@@ -29,28 +32,17 @@ from pathlib import Path
 REPO = Path(__file__).resolve().parent
 
 SUITES = [
-    "tests/test_validate_package.py",
     "tests/test_db_roundtrip.py",
     "tests/test_store_migrations.py",
     "tests/test_mcp_contract.py",
-    "tests/test_migration_golden.py",
-    "tests/test_migration_dialect.py",
+    "tests/test_migrate_v3to4.py",
     "tests/test_adopt_sample.py",
     "tests/test_export_html.py",
     "tests/test_eval_runner.py",
     "tests/test_scratch_diff.py",
 ]
 
-V1_VALIDATOR = "plugins/tamheed/scripts/validate_package.py"
-V1_GOLDENS = [  # (package, expected exit) — the frozen migration contract
-    ("tests/fixtures/valid-package", 0),
-    ("tests/fixtures/dialect-package", 0),  # v1-green in the ACMP dialect (plan 017)
-    ("generated-samples/support-triage-agent", 0),
-    ("tests/fixtures/invalid-package", 1),
-    ("tests/fixtures/incomplete-package", 1),
-]
-
-V2_DEMO_DATA = REPO / "generated-samples" / "support-triage-agent-v2" / "data"
+V4_DEMO_DATA = REPO / "generated-samples" / "support-triage-agent-v2" / "data"
 
 
 def fail(reason: str, cmd: list[str] | None = None) -> None:
@@ -73,11 +65,6 @@ def run(args: list[str], expected: int = 0) -> None:
 def gate_suites() -> None:
     for suite in SUITES:
         run([suite])
-
-
-def gate_goldens() -> None:
-    for package, expected in V1_GOLDENS:
-        run([V1_VALIDATOR, package], expected=expected)
 
 
 def gate_lint() -> None:
@@ -120,16 +107,18 @@ def gate_lint() -> None:
     print(f"lint: v2 registry ({len(registry)} types) <-> table map <-> DDL in sync;"
           " schema.sql == 001_init.sql")
 
-    # 3) v1 sync (while v1 artifacts remain): every Always mirror entry's match
-    #    paths appear in the artifact catalog — the two files must move together.
+    # 3) Always-class sync (plan 031, replacing the retired v1 mirror lint): every
+    #    Always type in the live registry (BASELINE_ENTITY_TYPES — what G-SET
+    #    enforces) must be named in the artifact catalog — the enforcing surface and
+    #    the teaching surface move together.
     refs = REPO / "plugins" / "tamheed" / "references"
-    mirror = json.loads((refs / "required-artifacts.json").read_text(encoding="utf-8"))
     catalog = (refs / "artifact-catalog.md").read_text(encoding="utf-8")
-    stale = [entry["id"] for entry in mirror["always"]
-             if not any(path in catalog for path in entry["match"])]
+    always = [tid for tid, _, _, gclass in srv.BASELINE_ENTITY_TYPES
+              if gclass == "Always"]
+    stale = [tid for tid in always if tid not in catalog]
     if stale:
-        fail(f"required-artifacts.json entries missing from artifact-catalog.md: {stale}")
-    print(f"lint: v1 Always mirror ({len(mirror['always'])} entries) <-> artifact catalog in sync")
+        fail(f"Always entity types missing from artifact-catalog.md: {stale}")
+    print(f"lint: registry Always class ({len(always)} types) <-> artifact catalog in sync")
 
     # 4) version sync (plan 017/C16): the version string that travels with the installed
     #    bundle IS the version as far as every user and field report is concerned — it must
@@ -195,12 +184,12 @@ def gate_lint() -> None:
 def gate_canonical() -> None:
     sys.path.insert(0, str(REPO / "plugins" / "tamheed" / "db"))
     import store  # noqa: PLC0415
-    conn = store.load(V2_DEMO_DATA)
+    conn = store.load(V4_DEMO_DATA)
     with tempfile.TemporaryDirectory() as tmp:
         store.dump(conn, tmp)
         dumped = {p.name: p.read_bytes() for p in Path(tmp).glob("*.jsonl")}
     conn.close()
-    committed = {p.name: p.read_bytes() for p in V2_DEMO_DATA.glob("*.jsonl")}
+    committed = {p.name: p.read_bytes() for p in V4_DEMO_DATA.glob("*.jsonl")}
     if set(dumped) != set(committed):
         fail("canonical round-trip changed the demo's file set: "
              f"only-dumped={sorted(set(dumped) - set(committed))}, "
@@ -217,7 +206,6 @@ def gate_evals() -> None:
 
 GATES = [
     ("suites", gate_suites),
-    ("goldens", gate_goldens),
     ("lint", gate_lint),
     ("canonical", gate_canonical),
     ("evals", gate_evals),

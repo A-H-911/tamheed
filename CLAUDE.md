@@ -4,128 +4,128 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this repository is
 
-Keystone is **not an application** — it is a reusable, vendor/stack-neutral agent **skill**, packaged as a
-**Claude Code plugin**, that turns a project description into an execution-ready planning & handoff package
-for *another* agent to implement. The "product" is mostly Markdown (a methodology spec, blank artifact
-templates, JSON schemas) plus two small stdlib-only Python tools. There is no build step; the only executable
-code is the repo bootstrapper and the package validator.
+Tamheed is **not an application** — it is a reusable, vendor/stack-neutral agent **skill**, packaged
+as a **Claude Code plugin**, that turns a project description into an execution-ready planning &
+handoff package for *another* agent to implement. The "product" is a methodology spec plus a small
+stdlib-only relational package store and MCP server. There is no build step.
 
-This repo is the home of the *capability*, not of any project Keystone plans. Generated output only ever
-lives under `examples/` and `generated-samples/` (curated) — never elsewhere.
+This repo is the home of the *capability*, not of any project Tamheed plans. Generated output only
+ever lives under `examples/`, `generated-samples/`, and `evals/sample-results/` (curated) — never
+elsewhere.
 
-## Layout (post-restructure)
+## Layout (v4)
 
 The repository is its own **plugin marketplace**, and the skill is one **self-contained bundle**:
 
 ```
-.claude-plugin/marketplace.json      # repo = marketplace (one plugin: keystone)
+.claude-plugin/marketplace.json      # repo = marketplace (one plugin: tamheed)
 plugins/tamheed/                     # THE installable bundle — self-contained, copied intact on install
 ├── .claude-plugin/plugin.json
 ├── SKILL.md                          # always-loaded front door (owns the capability)
-├── references/                       # on-demand depth, incl. artifact-catalog.md (the artifact catalog)
-├── templates/                        # blank artifact forms (single source of truth for document shape)
-├── schemas/                          # JSON schemas (single source of truth for data shape)
-├── scripts/                          # validate_package.py (frozen v1 gate engine)
-├── db/                               # v2 relational store: schema.sql, migrations/, store.py, CANONICAL.md
-├── server/                           # Tamheed MCP server + .mcp.json launch config (plugin root)
-├── prompts/                          # scenario prompt library, emitted into <package>/prompts/ (plan 018)
+├── references/                       # on-demand depth: artifact-catalog, governance, workflow, entity-guide
+├── templates/                        # section templates for narrative prose + prompt patterns
+├── db/                               # the store: schema.sql (v4 DDL), migrations/, store.py, CANONICAL.md
+├── server/                           # Tamheed MCP server + migrate_v3to4 + adopt + export_html + viewer.css
+├── prompts/                          # scenario prompt library, emitted into <package>/prompts/
 └── assets/                           # logos
-docs/                                 # architecture, methodology, workflow, design-decisions, install
+docs/                                 # architecture, methodology, workflow, entities (the v4 study), install
 evals/                                # behavioral eval scenarios (skill-level, model-in-the-loop)
-examples/  generated-samples/  tests/ # teaching material, demo package, validator self-test
-.github/workflows/                    # CI (validator + golden packages) + scheduled eval-spec lint
+lab/                                  # the permanent mock lab project (v4 acceptance harness)
+examples/  generated-samples/  tests/ # teaching material, demo package, test suites
+.github/workflows/                    # CI (runs exactly `python check.py`) + scheduled eval-spec lint
 SECURITY.md                           # trust model, untrusted-content posture, reporting
 ```
 
-The bundle also carries `references/required-artifacts.json` — the machine-readable mirror of the **Always**
-class in `artifact-rules.md`, read by gate **G-SET**. There is **no** top-level `skill/`, `templates/`,
-`schemas/`, `scripts/`, `commands/`, or `adrs/` anymore — everything runtime moved into `plugins/tamheed/`;
-build-history docs were removed.
+**v1 machinery is gone (plan 031):** no `schemas/`, no `scripts/validate_package.py`, no
+`required-artifacts.json`, no markdown-tree importer. A v1 Keystone package migrates under
+tamheed 3.2.1 first, then v3→v4 (`docs/migrate-from-keystone.md`).
 
 ## Commands
 
-Python 3.9+ is the only hard dependency (stdlib only — no pytest, no third-party packages).
+Python 3.9+ for the store/tests (stdlib only); the MCP server needs 3.10+ (ASM-D).
 
 ```bash
-# Validator self-test (this is the test suite)
-python tests/test_validate_package.py
+# THE gate — suites + lints + canonical round-trip + evals (CI runs exactly this)
+python check.py                       # subset: python check.py lint
 
-# Validate a generated package against the 7 mechanical quality gates
-python plugins/tamheed/scripts/validate_package.py <package-dir>          # human report
-python plugins/tamheed/scripts/validate_package.py <package-dir> --json   # machine-readable
-
-# v2 store + MCP server suites
+# Individual suites
 python tests/test_db_roundtrip.py
 python tests/test_mcp_contract.py
+python tests/test_migrate_v3to4.py
 
-# MCP server selftest (PEP 723: uv fetches the mcp SDK; Python >=3.10 per ASM-D)
+# MCP server selftest (PEP 723: uv fetches the mcp SDK)
 uv run plugins/tamheed/server/tamheed_server.py --selftest
 ```
 
-`validate_package.py` exits `0` (all critical gates pass), `1` (a critical gate failed → NOT READY), `2`
-(usage/IO error). It is the **frozen v1 gate engine** — the migration source contract (plan 010); v2
-gates run through the MCP server's `gate_run`. The v1 repository bootstrapper was removed in v2 (ASM-B).
-
-> Windows note: `tamheed_server.py` reconfigures stdout/stderr to UTF-8 at startup, so its output doesn't
-> raise `UnicodeEncodeError` on legacy code pages such as cp1252.
+> Windows note: `tamheed_server.py` reconfigures stdout/stderr to UTF-8 at startup, so its output
+> doesn't raise `UnicodeEncodeError` on legacy code pages such as cp1252.
 
 ## Architecture — the governing principle
 
 > **The skill owns the capability; every entry point is a thin wrapper.**
 
-All methodology — the 22 stages, artifact selection, quality gates, handoff logic — lives in
-`plugins/tamheed/SKILL.md` + its `references/`. External entry points (CLI/API/MCP/UI) only normalize input,
-invoke the skill, and route output, carrying no methodology (gate **G-CMD-THIN**). In Claude Code the skill
-*is* the entry point (invoked as `/keystone:keystone` when installed as a plugin, or `/keystone` when copied
-standalone into a skills dir) — there is no separate command file.
+All methodology — the 22 stages, artifact selection, quality gates, readiness, handoff — lives in
+`plugins/tamheed/SKILL.md` + its `references/`. External entry points only normalize input, invoke
+the skill, and route output. In Claude Code the skill *is* the entry point.
 
-The 22 stages: **Understand** (1–8 intake→scope) → **Explore** (9–15 research→decisions→risk) → **Plan &
-hand off** (16–22 execution plan→artifacts→repo init→validation→handoff). Authoritative per-stage spec:
-`plugins/tamheed/references/workflow.md`.
+The 22 stages: **Understand** (1–8 intake→scope) → **Explore** (9–15 research→decisions→risk) →
+**Plan & hand off** (16–22 execution plan→artifacts→storage→validation→handoff). Authoritative
+per-stage spec: `plugins/tamheed/references/workflow.md`.
 
 ## Invariants that must stay true
 
-- **Self-contained bundle (mechanically required).** Claude Code copies only the plugin directory on install,
-  so everything the skill reads/invokes at runtime must live inside `plugins/tamheed/` with **zero** outward
-  (`../..`, repo-root) references. `docs/` may link into the bundle; the bundle never links out.
-- **Single source of truth** = the bundle: forms in `plugins/tamheed/templates/`, data shapes in
-  `plugins/tamheed/schemas/`, the artifact catalog in `plugins/tamheed/references/artifact-catalog.md`.
-  Never make a second copy.
-- **Identifier scheme** (`plugins/tamheed/references/governance.md`): `FR-`/`NFR-`, `CON-`, `INV-`, `ASM-`,
-  `DEP-`, `OQ-`, `DEC-`, `ADR-`, `RISK-`, `HYP-`, `EXP-`, `AC-`, `PH-`, `WBS-`, `MS-`. Statuses:
-  `Draft → Proposed → Approved / Rejected / Superseded / Deferred → Implemented`. A *proposed* decision is
-  never rendered as *approved*.
-- **New identifier prefixes** must be added to `ID_PATTERNS` in `plugins/tamheed/scripts/validate_package.py`
-  or gate **G-IDS** won't recognize them.
-- **Immutable-after-approval** artifacts (ADRs, approved acceptance criteria) are *superseded*, never edited.
-- **Extend additively** via the registries in `plugins/tamheed/references/extension.md` (templates, schemas,
-  gates, profiles, diagram kinds, entry points). Additive = MINOR; changing a schema's required fields, the
-  identifier scheme, or the handoff contract = MAJOR + migration note.
+- **Self-contained bundle (mechanically required).** Claude Code copies only the plugin directory on
+  install, so everything the skill reads/invokes at runtime must live inside `plugins/tamheed/`
+  with **zero** outward (`../..`, repo-root) references. `docs/` may link into the bundle; the
+  bundle never links out.
+- **Single source of truth** = the bundle: the DDL (`db/schema.sql`) is the single source of data
+  shape; the artifact catalog is `references/artifact-catalog.md`; the registry
+  (`BASELINE_ENTITY_TYPES`) is the machine mirror of the Always class — `check.py` lints the
+  registry ↔ catalog ↔ table-map ↔ DDL sync and the `schema.sql` == `migrations/001_init.sql`
+  byte-twin.
+- **Identifier scheme** (`plugins/tamheed/references/governance.md`): `FR-`/`NFR-`, `CON-`, `INV-`,
+  `ASM-`, `DEP-`, `OQ-`, `DEC-`, `ADR-`, `RISK-`, `HYP-`, `EXP-`, `POC-`, `TEST-`, `KPI-`, `STK-`,
+  `PH-`, `MS-`, `SL-`, `WBS-`, `AC-`, `AV-`, `PE-`, `DEF-`, `DW-`, `GATE-`, `EP-`, `CONV-`, `SC-`,
+  `WVR-`, `DOC-`/`SEC-`, `DIA-`, `GT-`. Statuses: `Draft → Proposed → Approved / Rejected /
+  Superseded / Deferred → Implemented` (+ `Review` = done-claimed, wbs/slices only; `Obsolete`).
+  A *proposed* decision is never rendered as *approved*; `Review` never counts as done.
+- **A new entity family** = DDL table + `ENTITY_TABLES` + `BASELINE_ENTITY_TYPES` + catalog row +
+  governance row (the check.py sync lints catch a partial add).
+- **Immutable-after-approval** artifacts (ADRs incl. `confirmation`, approved acceptance criteria)
+  are *superseded*, never edited — trigger-enforced.
+- **Byte-canonical JSONL** (`db/CANONICAL.md`): an idle open→close produces zero git diff; goldens
+  are regenerated by scripts, never hand-edited.
+- **Migration is explicit.** `package_open` refuses pre-v4 stores; `package_migrate` is staged
+  (preview → operator backs up → confirm; old files kept in `data-v3-backup/`).
+- **Extend additively** via `plugins/tamheed/references/extension.md`. Additive = MINOR; changing
+  the store shape, the identifier scheme, or the handoff contract = MAJOR + explicit migration.
 
-Note: paths inside `*.template.md` describe the **generated** package structure — intentional output
-content, not stale references to this repo's layout.
+Note: paths inside `*.template.md` describe the **generated** package structure — intentional
+output content, not stale references to this repo's layout.
 
-## The 7 mechanical quality gates (validator)
+## The quality gates (gate_run, all mechanical)
 
-`plugins/tamheed/scripts/validate_package.py` implements the mechanical subset of
-`plugins/tamheed/references/quality-gates.md`; all seven are Critical:
+`gate_run` on an open package (all blocking except where noted):
 
-- **G-IDS** — identifiers well-formed, defined once, every referenced id resolves (no dangling refs).
-- **G-DEC-STATUS** — every decision/ADR row carries an explicit status from the allowed set.
-- **G-REQ-SRC** — every `FR-`/`NFR-` row has a non-empty source/provenance.
-- **G-COMPLETE** — no unfinished markers (`TODO`/`TBD`/`<placeholder>`/`{{…}}`/…) and no empty sections.
-- **G-TRACE** — every MVP requirement in the traceability matrix links to ≥1 decision, ≥1 work item, ≥1 test.
-- **G-SET** — every **Always** artifact (`references/required-artifacts.json`, the machine mirror of the
-  `artifact-rules.md` Always class) is present on disk or recorded in `manifest.json` `omitted_artifacts[]`
-  with a reason; the manifest exists; nothing it declares present is missing. Closes the gap where a hollow
-  package (charter + README only) passed because every other gate SKIPped on the absent input.
-- **G-PROGRESS** — when an acceptance audit (`validation/acceptance-audit.md`) is present, every `AC-` in
-  the acceptance criteria appears in it with a verdict from {Met, Partial, Not-met, Pending}; **SKIPs** when
-  no audit exists (the audit is Conditional — handoff / long execution horizon), so a planning-only package
-  is never penalised. Closes the execution-tracking loop (the downstream agent's during/after-exec close-out
-  of the acceptance criteria).
+- **G-IDS** — foreign_key_check + entity_index⇄tables consistency, verified at gate time.
+- **G-DEC-STATUS** — decision statuses in the allowed set (also CHECK-enforced at write).
+- **G-REQ-SRC** — every requirement has non-empty provenance (whitespace-only caught).
+- **G-COMPLETE** — no unfinished markers; `[NEEDS-CLARIFICATION: OQ-NNN]` legal only while the
+  cited OQ is live.
+- **G-TRACE** — every MVP requirement links to ≥1 decision, ≥1 work item, ≥1 test (vacuous-pass
+  warning at zero MVP rows).
+- **G-SET** — every Always family present or omission-recorded (vacuous-pass warning for
+  G-PROGRESS at zero verdicts).
+- **G-PROGRESS** — active ACs all carry verdicts once auditing has begun.
+- **G-REL** — stored trace edges satisfy the endpoint-type rules (v4: blocking; migrate cleans at
+  conversion, adopt reports, writes reject).
 
-When changing the validator, exercise `tests/fixtures/valid-package/` (must pass, exit 0),
-`tests/fixtures/invalid-package/` (must fail, exit 1, each seeded defect caught by the right gate), and
-`tests/fixtures/incomplete-package/` (internals valid but a required artifact missing → must fail on G-SET).
-Adding/removing an Always artifact means editing **both** `artifact-rules.md` and `required-artifacts.json`.
+Above the gates sits `readiness_check(scope)` — the semantic layer: blocking rules (pre-approval
+decisions/ADRs, ACs not latest-Met, open critical/high defects, undischarged risks, open
+slices/work incl. `Review`) + advisory liveness rules + operator-approved `WVR-` waivers
+(reported `waived`, never silent) + `human_required` execution gates. The phase/slice →
+`Implemented` transition is guarded by the same blocking rules; `force` is operator-words-only
+and self-audited.
+
+When changing the engine, run `python check.py` — suites, lints, the canonical round-trip, and
+the eval fixtures are the merge bar.

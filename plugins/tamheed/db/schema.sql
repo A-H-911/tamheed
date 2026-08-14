@@ -1,15 +1,27 @@
--- Tamheed v2 relational package store — schema (ADR-0001, plan 007/B2).
+-- Tamheed v4 relational package store — schema (plan 031/B27; supersedes the v2 baseline of ADR-0001).
 -- Canonical storage is JSONL per table (see CANONICAL.md); this schema is the SQLite
 -- runtime the loader enforces integrity with. `PRAGMA foreign_keys = ON` is set by the
 -- single connection factory in store.py — NOT here (pragmas don't persist in DDL).
 --
--- Conventions (ADR-0001):
---   * TEXT primary keys use the governed ID scheme (FR-001 style) — v1 identifiers
---     survive migration unchanged.
+-- Conventions (ADR-0001, revised by plan 031):
+--   * TEXT primary keys use the governed ID scheme (FR-001 style).
 --   * Three-axis status: lifecycle_status / verdict / disposition are independent.
---     A non-null disposition REQUIRES disposition_reason_ref (the deciding DEC-/ADR-).
---   * Provenance: source_kind + source_span; NOT NULL on requirements (G-REQ-SRC).
---   * `custom_attributes` (JSON TEXT) + `last_referenced` on every entity table.
+--     The lifecycle column is named `lifecycle_status` on EVERY status-bearing table
+--     (v4 unification — defects/deferred_work renamed from `status`), even where the
+--     vocabulary is domain-specific. A non-null disposition REQUIRES
+--     disposition_reason_ref (the deciding DEC-/ADR-).
+--   * Verdict vocabularies are domain sets by design: tests Pass/Fail/Pending;
+--     experiments/pocs Validated/Invalidated/Inconclusive/Pending (a hypothesis
+--     verdict is not a test verdict); audits Met/Partial/Not-met/Pending.
+--   * `Review` = done-CLAIMED (agent asserts); `Implemented` = done-VERIFIED.
+--     Review exists ONLY on wbs_items/slices and counts as OPEN in every
+--     closed-set — readiness never treats claimed work as done (plan 031, the
+--     claimed-vs-verified consensus across agent harnesses).
+--   * Provenance: source_kind + source_span; NOT NULL on requirements (G-REQ-SRC);
+--     elsewhere a span REQUIRES a kind (CHECK) — a located quote with no source
+--     class is meaningless.
+--   * `custom_attributes` (JSON TEXT) + `last_referenced` on every entity table
+--     (trace_edges and omissions are write-only surfaces and carry neither).
 --   * entity_index is DERIVED (trigger-maintained) — never serialized to JSONL.
 --     Cross-type references (trace_edges, disposition_reason_ref, discharged_by)
 --     FK into it: G-IDS as schema.
@@ -17,12 +29,15 @@
 --     supersede (INSERT successor, set superseded_by), never edit — trigger-enforced.
 --   * This file's versioned twin is migrations/001_init.sql (byte-identical).
 --     Never edit 001 after it ships; future change = migrations/NNN_*.sql (append-only).
+--     v4 re-baselined the chain (plan 031): the v2/v3 lineage lives in the migrate
+--     tool, not in stacked ALTERs.
 --
 -- Required entity_types registry rows (seeded at package init, not here — DDL stays pure):
 --   requirement constraint invariant assumption dependency open-question decision adr risk
 --   hypothesis experiment poc test kpi stakeholder phase milestone slice wbs-item
 --   acceptance-criterion audit-verdict progress-entry defect deferred-work execution-gate
---   execution-plan convention diagram prompt scope-change narrative-document document-section
+--   execution-plan convention diagram scope-change waiver narrative-document
+--   document-section glossary-term
 
 -- ---------------------------------------------------------------- package & registry
 
@@ -30,7 +45,8 @@ CREATE TABLE packages (
   name              TEXT PRIMARY KEY,
   title             TEXT NOT NULL,
   profile           TEXT NOT NULL CHECK (profile IN ('enterprise','rnd','legacy','ai-agentic','unknown')),
-  mode              TEXT NOT NULL,
+  mode              TEXT NOT NULL CHECK (mode IN
+    ('full','intake','plan','resume','update','migrate','adopt') OR mode GLOB 'stage:*'),
   iteration         INTEGER NOT NULL DEFAULT 1,          -- D-UPDATE iteration counter
   package_version   TEXT NOT NULL,
   mvp_definition    TEXT,
@@ -46,7 +62,6 @@ CREATE TABLE entity_types (                              -- extensibility regist
   id_prefix         TEXT UNIQUE,                         -- NULL for un-prefixed families
   generation_class  TEXT NOT NULL CHECK (generation_class IN
                       ('Always','Conditional','Derived','On-request','Continuous')),
-  template_ref      TEXT,
   custom_attributes TEXT
 );
 
@@ -67,7 +82,10 @@ CREATE TABLE requirements (
   kind              TEXT NOT NULL,
   title             TEXT NOT NULL,
   statement         TEXT,
+  rationale         TEXT,                                -- WHY it exists (29148: first-class)
   priority          TEXT,
+  verification_method TEXT CHECK (verification_method IN
+    ('Test','Demonstration','Inspection','Analysis')),   -- 29148 canonical enum
   mvp               INTEGER NOT NULL DEFAULT 0 CHECK (mvp IN (0,1)),
   lifecycle_status  TEXT NOT NULL DEFAULT 'Draft' CHECK (lifecycle_status IN
     ('Draft','Proposed','Approved','Rejected','Deferred','Implemented','Superseded','Obsolete')),
@@ -96,7 +114,8 @@ CREATE TABLE constraints (
   source_span       TEXT,
   custom_attributes TEXT,
   last_referenced   TEXT,
-  CHECK (disposition IS NULL OR disposition_reason_ref IS NOT NULL)
+  CHECK (disposition IS NULL OR disposition_reason_ref IS NOT NULL),
+  CHECK (source_span IS NULL OR source_kind IS NOT NULL)
 );
 
 CREATE TABLE invariants (
@@ -112,14 +131,16 @@ CREATE TABLE invariants (
   source_span       TEXT,
   custom_attributes TEXT,
   last_referenced   TEXT,
-  CHECK (disposition IS NULL OR disposition_reason_ref IS NOT NULL)
+  CHECK (disposition IS NULL OR disposition_reason_ref IS NOT NULL),
+  CHECK (source_span IS NULL OR source_kind IS NOT NULL)
 );
 
 CREATE TABLE assumptions (
   id                TEXT PRIMARY KEY CHECK (id GLOB 'ASM-[0-9]*'),
   title             TEXT NOT NULL,
   statement         TEXT,
-  risk_if_wrong     TEXT,
+  risk_if_wrong     TEXT,                                -- the RAID impact-if-false field
+  validation_date   TEXT,                                -- confirm-or-challenge by (RAID: assumptions decay)
   lifecycle_status  TEXT NOT NULL DEFAULT 'Draft' CHECK (lifecycle_status IN
     ('Draft','Proposed','Approved','Rejected','Deferred','Implemented','Superseded','Obsolete')),
   disposition       TEXT CHECK (disposition IN ('superseded','accepted-with-deviation','void')),
@@ -128,7 +149,8 @@ CREATE TABLE assumptions (
   source_span       TEXT,
   custom_attributes TEXT,
   last_referenced   TEXT,
-  CHECK (disposition IS NULL OR disposition_reason_ref IS NOT NULL)
+  CHECK (disposition IS NULL OR disposition_reason_ref IS NOT NULL),
+  CHECK (source_span IS NULL OR source_kind IS NOT NULL)
 );
 
 CREATE TABLE dependencies (
@@ -144,7 +166,8 @@ CREATE TABLE dependencies (
   source_span       TEXT,
   custom_attributes TEXT,
   last_referenced   TEXT,
-  CHECK (disposition IS NULL OR disposition_reason_ref IS NOT NULL)
+  CHECK (disposition IS NULL OR disposition_reason_ref IS NOT NULL),
+  CHECK (source_span IS NULL OR source_kind IS NOT NULL)
 );
 
 -- ---------------------------------------------------------------- decisions family
@@ -153,6 +176,8 @@ CREATE TABLE open_questions (
   id                TEXT PRIMARY KEY CHECK (id GLOB 'OQ-[0-9]*'),
   title             TEXT NOT NULL,
   question          TEXT,
+  owner             TEXT,                                -- RAID: a question without an owner is parked
+  due_by            TEXT,                                -- readiness advisory keys on this (open-questions-overdue)
   resolution        TEXT,
   resolved_by       TEXT REFERENCES entity_index(id),
   lifecycle_status  TEXT NOT NULL DEFAULT 'Draft' CHECK (lifecycle_status IN
@@ -163,7 +188,8 @@ CREATE TABLE open_questions (
   source_span       TEXT,
   custom_attributes TEXT,
   last_referenced   TEXT,
-  CHECK (disposition IS NULL OR disposition_reason_ref IS NOT NULL)
+  CHECK (disposition IS NULL OR disposition_reason_ref IS NOT NULL),
+  CHECK (source_span IS NULL OR source_kind IS NOT NULL)
 );
 
 CREATE TABLE decisions (
@@ -181,7 +207,8 @@ CREATE TABLE decisions (
   source_span       TEXT,
   custom_attributes TEXT,
   last_referenced   TEXT,
-  CHECK (disposition IS NULL OR disposition_reason_ref IS NOT NULL)
+  CHECK (disposition IS NULL OR disposition_reason_ref IS NOT NULL),
+  CHECK (source_span IS NULL OR source_kind IS NOT NULL)
 );
 
 CREATE TABLE adrs (
@@ -190,6 +217,7 @@ CREATE TABLE adrs (
   context           TEXT,
   decision          TEXT,
   consequences      TEXT,
+  confirmation      TEXT,                                -- MADR 4.x: HOW compliance is verified
   lifecycle_status  TEXT NOT NULL DEFAULT 'Proposed' CHECK (lifecycle_status IN
     ('Draft','Proposed','Approved','Rejected','Deferred','Implemented','Superseded','Obsolete')),
   disposition       TEXT CHECK (disposition IN ('superseded','accepted-with-deviation','void')),
@@ -199,7 +227,8 @@ CREATE TABLE adrs (
   source_span       TEXT,
   custom_attributes TEXT,
   last_referenced   TEXT,
-  CHECK (disposition IS NULL OR disposition_reason_ref IS NOT NULL)
+  CHECK (disposition IS NULL OR disposition_reason_ref IS NOT NULL),
+  CHECK (source_span IS NULL OR source_kind IS NOT NULL)
 );
 
 -- ---------------------------------------------------------------- risk
@@ -208,8 +237,10 @@ CREATE TABLE risks (
   id                TEXT PRIMARY KEY CHECK (id GLOB 'RISK-[0-9]*'),
   title             TEXT NOT NULL,
   description       TEXT,
-  probability       TEXT,
-  impact            TEXT,
+  probability       TEXT CHECK (probability IN ('high','medium','low')),
+  impact            TEXT CHECK (impact IN ('high','medium','low')),
+  owner             TEXT,                                -- highest-weight register field: no owner = nobody monitors
+  response_strategy TEXT CHECK (response_strategy IN ('avoid','mitigate','transfer','accept')),
   mitigation        TEXT,                                -- mitigation-plan row folded in (R2)
   -- Field-evidence C5: execution lifecycle so risks stop being write-only.
   risk_state        TEXT NOT NULL DEFAULT 'open' CHECK (risk_state IN
@@ -223,7 +254,8 @@ CREATE TABLE risks (
   source_span       TEXT,
   custom_attributes TEXT,
   last_referenced   TEXT,
-  CHECK (disposition IS NULL OR disposition_reason_ref IS NOT NULL)
+  CHECK (disposition IS NULL OR disposition_reason_ref IS NOT NULL),
+  CHECK (source_span IS NULL OR source_kind IS NOT NULL)
 );
 
 -- ---------------------------------------------------------------- research family
@@ -232,6 +264,8 @@ CREATE TABLE hypotheses (
   id                TEXT PRIMARY KEY CHECK (id GLOB 'HYP-[0-9]*'),
   title             TEXT NOT NULL,
   statement         TEXT,                                -- falsifiable form
+  metric            TEXT,                                -- what is measured
+  threshold         TEXT,                                -- decided BEFORE the experiment runs
   lifecycle_status  TEXT NOT NULL DEFAULT 'Draft' CHECK (lifecycle_status IN
     ('Draft','Proposed','Approved','Rejected','Deferred','Implemented','Superseded','Obsolete')),
   disposition       TEXT CHECK (disposition IN ('superseded','accepted-with-deviation','void')),
@@ -240,7 +274,8 @@ CREATE TABLE hypotheses (
   source_span       TEXT,
   custom_attributes TEXT,
   last_referenced   TEXT,
-  CHECK (disposition IS NULL OR disposition_reason_ref IS NOT NULL)
+  CHECK (disposition IS NULL OR disposition_reason_ref IS NOT NULL),
+  CHECK (source_span IS NULL OR source_kind IS NOT NULL)
 );
 
 CREATE TABLE experiments (
@@ -248,7 +283,8 @@ CREATE TABLE experiments (
   title             TEXT NOT NULL,
   method            TEXT,
   timebox           TEXT,
-  verdict           TEXT NOT NULL DEFAULT 'Pending' CHECK (verdict IN ('PASS','FAIL','Pending')),
+  verdict           TEXT NOT NULL DEFAULT 'Pending' CHECK (verdict IN
+    ('Validated','Invalidated','Inconclusive','Pending')),  -- hypothesis verdict, not a test verdict
   results           TEXT,                                -- append-only by convention
   lifecycle_status  TEXT NOT NULL DEFAULT 'Draft' CHECK (lifecycle_status IN
     ('Draft','Proposed','Approved','Rejected','Deferred','Implemented','Superseded','Obsolete')),
@@ -258,7 +294,8 @@ CREATE TABLE experiments (
   source_span       TEXT,
   custom_attributes TEXT,
   last_referenced   TEXT,
-  CHECK (disposition IS NULL OR disposition_reason_ref IS NOT NULL)
+  CHECK (disposition IS NULL OR disposition_reason_ref IS NOT NULL),
+  CHECK (source_span IS NULL OR source_kind IS NOT NULL)
 );
 
 CREATE TABLE pocs (
@@ -266,7 +303,8 @@ CREATE TABLE pocs (
   title             TEXT NOT NULL,
   method            TEXT,
   timebox           TEXT,
-  verdict           TEXT NOT NULL DEFAULT 'Pending' CHECK (verdict IN ('PASS','FAIL','Pending')),
+  verdict           TEXT NOT NULL DEFAULT 'Pending' CHECK (verdict IN
+    ('Validated','Invalidated','Inconclusive','Pending')),
   results           TEXT,
   lifecycle_status  TEXT NOT NULL DEFAULT 'Draft' CHECK (lifecycle_status IN
     ('Draft','Proposed','Approved','Rejected','Deferred','Implemented','Superseded','Obsolete')),
@@ -276,7 +314,8 @@ CREATE TABLE pocs (
   source_span       TEXT,
   custom_attributes TEXT,
   last_referenced   TEXT,
-  CHECK (disposition IS NULL OR disposition_reason_ref IS NOT NULL)
+  CHECK (disposition IS NULL OR disposition_reason_ref IS NOT NULL),
+  CHECK (source_span IS NULL OR source_kind IS NOT NULL)
 );
 
 -- ---------------------------------------------------------------- validation family
@@ -294,7 +333,8 @@ CREATE TABLE tests (
   source_span       TEXT,
   custom_attributes TEXT,
   last_referenced   TEXT,
-  CHECK (disposition IS NULL OR disposition_reason_ref IS NOT NULL)
+  CHECK (disposition IS NULL OR disposition_reason_ref IS NOT NULL),
+  CHECK (source_span IS NULL OR source_kind IS NOT NULL)
 );
 
 CREATE TABLE kpis (
@@ -310,12 +350,13 @@ CREATE TABLE kpis (
   source_span       TEXT,
   custom_attributes TEXT,
   last_referenced   TEXT,
-  CHECK (disposition IS NULL OR disposition_reason_ref IS NOT NULL)
+  CHECK (disposition IS NULL OR disposition_reason_ref IS NOT NULL),
+  CHECK (source_span IS NULL OR source_kind IS NOT NULL)
 );
 
 CREATE TABLE stakeholders (
   id                TEXT PRIMARY KEY CHECK (id GLOB 'STK-[0-9]*'),
-  name              TEXT NOT NULL,
+  title             TEXT NOT NULL,                       -- v4: unified label column (was `name`)
   role              TEXT,
   interest          TEXT,
   lifecycle_status  TEXT NOT NULL DEFAULT 'Draft' CHECK (lifecycle_status IN
@@ -326,7 +367,8 @@ CREATE TABLE stakeholders (
   source_span       TEXT,
   custom_attributes TEXT,
   last_referenced   TEXT,
-  CHECK (disposition IS NULL OR disposition_reason_ref IS NOT NULL)
+  CHECK (disposition IS NULL OR disposition_reason_ref IS NOT NULL),
+  CHECK (source_span IS NULL OR source_kind IS NOT NULL)
 );
 
 -- ---------------------------------------------------------------- planning family
@@ -347,21 +389,17 @@ CREATE TABLE phases (
   source_span       TEXT,
   custom_attributes TEXT,
   last_referenced   TEXT,
-  CHECK (disposition IS NULL OR disposition_reason_ref IS NOT NULL)
+  CHECK (disposition IS NULL OR disposition_reason_ref IS NOT NULL),
+  CHECK (source_span IS NULL OR source_kind IS NOT NULL)
 );
 
-CREATE TABLE milestones (                                -- document merged into roadmap; DATA lives (006)
-  id                TEXT PRIMARY KEY CHECK (id GLOB 'MS-[0-9]*'),
-  title             TEXT NOT NULL,
+CREATE TABLE milestones (                                -- v4: demoted to a LABEL (plan 031) — a named
+  id                TEXT PRIMARY KEY CHECK (id GLOB 'MS-[0-9]*'),  -- roadmap marker with no lifecycle;
+  title             TEXT NOT NULL,                       -- a milestone that gates is an execution_gate
   phase_id          TEXT NOT NULL REFERENCES phases(id),
   due               TEXT,
-  lifecycle_status  TEXT NOT NULL DEFAULT 'Draft' CHECK (lifecycle_status IN
-    ('Draft','Proposed','Approved','Rejected','Deferred','Implemented','Superseded','Obsolete')),
-  disposition       TEXT CHECK (disposition IN ('superseded','accepted-with-deviation','void')),
-  disposition_reason_ref TEXT REFERENCES entity_index(id),
   custom_attributes TEXT,
-  last_referenced   TEXT,
-  CHECK (disposition IS NULL OR disposition_reason_ref IS NOT NULL)
+  last_referenced   TEXT
 );
 
 CREATE TABLE slices (                                    -- field-evidence C6: phase -> slice
@@ -370,8 +408,9 @@ CREATE TABLE slices (                                    -- field-evidence C6: p
   phase_id          TEXT NOT NULL REFERENCES phases(id),
   objective         TEXT,
   sort_order        INTEGER NOT NULL DEFAULT 0,
+  -- `Review` = done-claimed; only `Implemented` (guarded) is done-verified.
   lifecycle_status  TEXT NOT NULL DEFAULT 'Draft' CHECK (lifecycle_status IN
-    ('Draft','Proposed','Approved','Rejected','Deferred','Implemented','Superseded','Obsolete')),
+    ('Draft','Proposed','Approved','Rejected','Deferred','Review','Implemented','Superseded','Obsolete')),
   disposition       TEXT CHECK (disposition IN ('superseded','accepted-with-deviation','void')),
   disposition_reason_ref TEXT REFERENCES entity_index(id),
   introduced_in     INTEGER NOT NULL DEFAULT 1,
@@ -389,14 +428,15 @@ CREATE TABLE wbs_items (
   slice_id          TEXT REFERENCES slices(id),
   effort            TEXT,
   lifecycle_status  TEXT NOT NULL DEFAULT 'Draft' CHECK (lifecycle_status IN
-    ('Draft','Proposed','Approved','Rejected','Deferred','Implemented','Superseded','Obsolete')),
+    ('Draft','Proposed','Approved','Rejected','Deferred','Review','Implemented','Superseded','Obsolete')),
   disposition       TEXT CHECK (disposition IN ('superseded','accepted-with-deviation','void')),
   disposition_reason_ref TEXT REFERENCES entity_index(id),
   source_kind       TEXT CHECK (source_kind IN ('brief','clarification','code','inferred')),
   source_span       TEXT,
   custom_attributes TEXT,
   last_referenced   TEXT,
-  CHECK (disposition IS NULL OR disposition_reason_ref IS NOT NULL)
+  CHECK (disposition IS NULL OR disposition_reason_ref IS NOT NULL),
+  CHECK (source_span IS NULL OR source_kind IS NOT NULL)
 );
 
 -- ---------------------------------------------------------------- acceptance & audit
@@ -418,7 +458,8 @@ CREATE TABLE acceptance_criteria (
   source_span       TEXT,
   custom_attributes TEXT,
   last_referenced   TEXT,
-  CHECK (disposition IS NULL OR disposition_reason_ref IS NOT NULL)
+  CHECK (disposition IS NULL OR disposition_reason_ref IS NOT NULL),
+  CHECK (source_span IS NULL OR source_kind IS NOT NULL)
 );
 
 CREATE TABLE audit_verdicts (                            -- acceptance audit as data (006: Always in execution)
@@ -426,6 +467,10 @@ CREATE TABLE audit_verdicts (                            -- acceptance audit as 
   ac_id             TEXT NOT NULL REFERENCES acceptance_criteria(id),
   verdict           TEXT NOT NULL CHECK (verdict IN ('Met','Partial','Not-met','Pending')),
   evidence          TEXT,
+  -- v4 claimed-vs-verified: WHO rendered the verdict, HOW, and against WHAT (plan 031).
+  verified_by       TEXT CHECK (verified_by IN ('human','agent','ci')),
+  verification_method TEXT CHECK (verification_method IN ('auto-test','manual','inspection')),
+  against_commit    TEXT,                                -- the commit/build the verdict was taken against
   iteration         INTEGER NOT NULL DEFAULT 1,
   recorded_at       TEXT,
   custom_attributes TEXT,
@@ -434,9 +479,15 @@ CREATE TABLE audit_verdicts (                            -- acceptance audit as 
 
 -- ---------------------------------------------------------------- execution tracking
 
-CREATE TABLE progress_entries (                          -- append-only journal
+CREATE TABLE progress_entries (                          -- append-only journal, typed events (plan 031)
   id                TEXT PRIMARY KEY CHECK (id GLOB 'PE-[0-9]*'),
-  entry             TEXT NOT NULL,
+  event_type        TEXT NOT NULL DEFAULT 'note' CHECK (event_type IN
+    ('work-done','verdict-recorded','transition','forced-override','gate-decision',
+     'escalation','correction','note')),                 -- `note` is the deliberate escape hatch
+  entry             TEXT NOT NULL,                       -- the human-readable line
+  subject_id        TEXT REFERENCES entity_index(id),    -- the entity the event is about
+  actor             TEXT,                                -- convention: human:<name> | agent:<session> | system:<component>
+  corrects          TEXT REFERENCES progress_entries(id),-- compensating event — journals are never edited
   phase_id          TEXT REFERENCES phases(id),
   slice_id          TEXT REFERENCES slices(id),
   occurred_at       TEXT,
@@ -448,7 +499,9 @@ CREATE TABLE defects (                                   -- 006 pre-approved add
   id                TEXT PRIMARY KEY CHECK (id GLOB 'DEF-[0-9]*'),
   title             TEXT NOT NULL,
   severity          TEXT NOT NULL CHECK (severity IN ('critical','high','medium','low')),
-  status            TEXT NOT NULL DEFAULT 'Open' CHECK (status IN
+  -- v4: renamed from `status` (lifecycle axis unification); vocabulary unchanged.
+  -- Readiness blocks on OPEN critical/high only; medium/low surface as advisory (plan 031).
+  lifecycle_status  TEXT NOT NULL DEFAULT 'Open' CHECK (lifecycle_status IN
     ('Open','In-progress','Fixed','Won''t-fix','Duplicate')),
   found_in          TEXT REFERENCES entity_index(id),    -- slice/phase/AC where found
   fixed_by          TEXT REFERENCES entity_index(id),
@@ -462,12 +515,13 @@ CREATE TABLE deferred_work (                             -- field-evidence C2: t
   severity          TEXT NOT NULL CHECK (severity IN ('critical','high','medium','low')),
   activation_trigger TEXT,                               -- when this must be picked up
   invariant_at_stake TEXT REFERENCES invariants(id),
-  status            TEXT NOT NULL DEFAULT 'Open' CHECK (status IN
+  lifecycle_status  TEXT NOT NULL DEFAULT 'Open' CHECK (lifecycle_status IN
     ('Open','Activated','Scheduled','Done','Won''t-do')),
   source_kind       TEXT CHECK (source_kind IN ('brief','clarification','code','inferred')),
   source_span       TEXT,
   custom_attributes TEXT,
-  last_referenced   TEXT
+  last_referenced   TEXT,
+  CHECK (source_span IS NULL OR source_kind IS NOT NULL)
 );
 
 CREATE TABLE execution_gates (                           -- 006: DoR/DoD/checkpoints/gate-definitions merged
@@ -475,6 +529,9 @@ CREATE TABLE execution_gates (                           -- 006: DoR/DoD/checkpo
   gate_kind         TEXT NOT NULL CHECK (gate_kind IN ('ready','done','checkpoint','approval')),
   definition        TEXT NOT NULL,
   applies_to        TEXT REFERENCES entity_index(id),    -- NULL = package-wide
+  -- v4: the gate's LATEST decision (stage-gate practice: richer than pass/fail);
+  -- each decision act is also a typed PE- event (event_type gate-decision).
+  outcome           TEXT CHECK (outcome IN ('Go','Hold','Redirect','Kill')),
   custom_attributes TEXT,
   last_referenced   TEXT
 );
@@ -502,6 +559,22 @@ CREATE TABLE scope_changes (                             -- D-UPDATE: agile scop
   decision_ref      TEXT NOT NULL REFERENCES entity_index(id),  -- the DEC-/ADR- authorizing it
   description       TEXT NOT NULL,
   iteration         INTEGER NOT NULL,
+  -- v4 drift-delta lifecycle (OpenSpec-inspired, plan 031): Approved drift must be
+  -- MERGED into the plan rows (via scope_adds/scope_modifies/scope_removes edges +
+  -- normal entity_upsert) — the scope-changes-merged advisory flags Approved-never-Merged.
+  lifecycle_status  TEXT NOT NULL DEFAULT 'Proposed' CHECK (lifecycle_status IN
+    ('Proposed','Approved','Merged')),
+  custom_attributes TEXT,
+  last_referenced   TEXT
+);
+
+CREATE TABLE waivers (                                   -- v4 (plan 031): a gate with no waiver path
+  id                TEXT PRIMARY KEY CHECK (id GLOB 'WVR-[0-9]*'),  -- gets bypassed informally
+  rule              TEXT NOT NULL CHECK (rule <> ''),    -- the readiness rule waived (e.g. 'defects-closed')
+  applies_to        TEXT REFERENCES entity_index(id),    -- the entity whose failure is waived; NULL = whole rule
+  justification     TEXT NOT NULL CHECK (justification <> ''),
+  approver          TEXT NOT NULL CHECK (approver <> ''),-- operator identity — never the working agent
+  expires           TEXT,                                -- ISO date; NULL = until release close-out review
   custom_attributes TEXT,
   last_referenced   TEXT
 );
@@ -536,33 +609,42 @@ CREATE TABLE diagrams (                                  -- 006: five catalog ro
     ('context','component','integration','deployment','data-flow')),  -- new kind = migration (additive)
   title             TEXT NOT NULL,
   body              TEXT,                                -- diagram source (e.g. mermaid)
-  generation_class  TEXT NOT NULL CHECK (generation_class IN ('Conditional','On-request')),
   custom_attributes TEXT,
   last_referenced   TEXT
 );
 
-CREATE TABLE prompts (                                   -- handoff prompt bodies as data
-  id                TEXT PRIMARY KEY CHECK (id GLOB 'PRM-[0-9]*'),
-  prompt_kind       TEXT NOT NULL CHECK (prompt_kind IN ('initial','follow-up','review','situational')),
-  title             TEXT NOT NULL,
-  body              TEXT NOT NULL,
-  phase_id          TEXT REFERENCES phases(id),
+CREATE TABLE glossary_terms (                            -- v4: folded into the baseline (was migration 002)
+  id                TEXT PRIMARY KEY CHECK (id GLOB 'GT-[0-9]*'),
+  term              TEXT NOT NULL,
+  definition        TEXT,
+  source_kind       TEXT CHECK (source_kind IN ('brief','clarification','code','inferred')),
+  source_span       TEXT,
   custom_attributes TEXT,
-  last_referenced   TEXT
+  last_referenced   TEXT,
+  CHECK (source_span IS NULL OR source_kind IS NOT NULL)
 );
 
--- ---------------------------------------------------------------- typed relations (G-IDS)
+-- ---------------------------------------------------------------- typed relations (G-IDS / G-REL)
 
+-- Endpoint-type rules live in RELATION_RULES (tamheed_server.py) and are enforced HARD
+-- on writes plus the blocking G-REL gate (plan 031). `relates_to` is the documented
+-- untyped escape hatch. scope_adds/scope_modifies/scope_removes carry drift-delta
+-- intent (from: scope-change only). `binds_to` was deleted in v4 (zero usage).
 CREATE TABLE trace_edges (
   from_id           TEXT NOT NULL REFERENCES entity_index(id),
   to_id             TEXT NOT NULL REFERENCES entity_index(id),
   relation          TEXT NOT NULL CHECK (relation IN
     ('derives_from','mitigates','verifies','supersedes','blocked_by','implements',
-     'satisfies','tests','binds_to','discharges','relates_to')),
+     'satisfies','tests','discharges','scope_adds','scope_modifies','scope_removes',
+     'relates_to')),
   PRIMARY KEY (from_id, to_id, relation)
 );
 
 CREATE INDEX idx_trace_edges_to ON trace_edges(to_id);
+CREATE INDEX idx_audit_verdicts_ac ON audit_verdicts(ac_id);
+CREATE INDEX idx_acceptance_criteria_req ON acceptance_criteria(requirement_id);
+CREATE INDEX idx_acceptance_criteria_slice ON acceptance_criteria(slice_id);
+CREATE INDEX idx_document_sections_doc ON document_sections(document_id);
 
 -- ---------------------------------------------------------------- entity_index maintenance
 -- Two triggers per entity table keep the derived index exact. Deleting an entity that is
@@ -680,6 +762,10 @@ CREATE TRIGGER trg_scope_changes_ai AFTER INSERT ON scope_changes
   BEGIN INSERT INTO entity_index(id, entity_type) VALUES (NEW.id, 'scope-change'); END;
 CREATE TRIGGER trg_scope_changes_ad AFTER DELETE ON scope_changes
   BEGIN DELETE FROM entity_index WHERE id = OLD.id; END;
+CREATE TRIGGER trg_waivers_ai AFTER INSERT ON waivers
+  BEGIN INSERT INTO entity_index(id, entity_type) VALUES (NEW.id, 'waiver'); END;
+CREATE TRIGGER trg_waivers_ad AFTER DELETE ON waivers
+  BEGIN DELETE FROM entity_index WHERE id = OLD.id; END;
 CREATE TRIGGER trg_narrative_documents_ai AFTER INSERT ON narrative_documents
   BEGIN INSERT INTO entity_index(id, entity_type) VALUES (NEW.id, 'narrative-document'); END;
 CREATE TRIGGER trg_narrative_documents_ad AFTER DELETE ON narrative_documents
@@ -692,19 +778,22 @@ CREATE TRIGGER trg_diagrams_ai AFTER INSERT ON diagrams
   BEGIN INSERT INTO entity_index(id, entity_type) VALUES (NEW.id, 'diagram'); END;
 CREATE TRIGGER trg_diagrams_ad AFTER DELETE ON diagrams
   BEGIN DELETE FROM entity_index WHERE id = OLD.id; END;
-CREATE TRIGGER trg_prompts_ai AFTER INSERT ON prompts
-  BEGIN INSERT INTO entity_index(id, entity_type) VALUES (NEW.id, 'prompt'); END;
-CREATE TRIGGER trg_prompts_ad AFTER DELETE ON prompts
+CREATE TRIGGER trg_glossary_terms_ai AFTER INSERT ON glossary_terms
+  BEGIN INSERT INTO entity_index(id, entity_type) VALUES (NEW.id, 'glossary-term'); END;
+CREATE TRIGGER trg_glossary_terms_ad AFTER DELETE ON glossary_terms
   BEGIN DELETE FROM entity_index WHERE id = OLD.id; END;
 
 -- ---------------------------------------------------------------- immutability (supersession)
 
 -- Approved/Implemented ADRs: content is frozen; only supersession/disposition/telemetry
 -- columns may change. Change of meaning = INSERT successor + set superseded_by.
+-- `confirmation` is part of the frozen content — how compliance is verified is part
+-- of what was approved.
 CREATE TRIGGER trg_adrs_immutable BEFORE UPDATE ON adrs
   WHEN OLD.lifecycle_status IN ('Approved','Implemented')
    AND (NEW.title IS NOT OLD.title OR NEW.context IS NOT OLD.context
-     OR NEW.decision IS NOT OLD.decision OR NEW.consequences IS NOT OLD.consequences)
+     OR NEW.decision IS NOT OLD.decision OR NEW.consequences IS NOT OLD.consequences
+     OR NEW.confirmation IS NOT OLD.confirmation)
   BEGIN SELECT RAISE(ABORT, 'approved ADRs are immutable: supersede, never edit'); END;
 
 CREATE TRIGGER trg_acceptance_criteria_immutable BEFORE UPDATE ON acceptance_criteria
@@ -715,8 +804,11 @@ CREATE TRIGGER trg_acceptance_criteria_immutable BEFORE UPDATE ON acceptance_cri
 
 -- ---------------------------------------------------------------- requirement auto-advance (C5)
 
--- When every non-retired AC of a requirement has a Met verdict, an Approved requirement
--- advances to Implemented (Marid shipped v0.3.0 with 77/78 requirements still Draft).
+-- When every non-retired AC of a requirement has a LATEST verdict of Met, an Approved
+-- requirement advances to Implemented (Marid shipped v0.3.0 with 77/78 requirements
+-- still Draft). v4 (plan 031): latest-verdict semantics — verdicts APPEND, so an AC
+-- re-judged Not-met no longer counts as met (the any-Met-ever flaw migration 004
+-- fixed in the views was still live in this trigger through v3).
 CREATE TRIGGER trg_requirement_auto_advance AFTER INSERT ON audit_verdicts
   WHEN NEW.verdict = 'Met'
   BEGIN
@@ -726,8 +818,9 @@ CREATE TRIGGER trg_requirement_auto_advance AFTER INSERT ON audit_verdicts
       AND NOT EXISTS (
         SELECT 1 FROM acceptance_criteria ac
         WHERE ac.requirement_id = requirements.id AND ac.retired_in IS NULL
-          AND NOT EXISTS (SELECT 1 FROM audit_verdicts av
-                          WHERE av.ac_id = ac.id AND av.verdict = 'Met'));
+          AND COALESCE((SELECT av.verdict FROM audit_verdicts av WHERE av.ac_id = ac.id
+                        ORDER BY CAST(SUBSTR(av.id, 4) AS INTEGER) DESC LIMIT 1),
+                       'Pending') <> 'Met');
   END;
 
 -- ---------------------------------------------------------------- derived views (C1: never stored)
@@ -746,6 +839,7 @@ CREATE VIEW v_backlog AS                                  -- 006: the backlog IS
   FROM wbs_items w
   WHERE w.lifecycle_status NOT IN ('Implemented','Superseded','Obsolete','Rejected')
   ORDER BY w.phase_id, w.slice_id, w.id;
+  -- `Review` is deliberately NOT in the closed set: claimed work stays on the backlog.
 
 CREATE VIEW v_req_links AS                                -- helper: requirement -> linked entity types
   SELECT r.id AS req_id,
@@ -776,6 +870,12 @@ CREATE VIEW g_progress_failures AS                        -- G-PROGRESS as a vie
     AND EXISTS (SELECT 1 FROM audit_verdicts)
     AND NOT EXISTS (SELECT 1 FROM audit_verdicts av WHERE av.ac_id = ac.id);
 
+CREATE VIEW v_latest_verdicts AS                          -- ac_id -> its LATEST verdict (numeric order)
+  SELECT av.ac_id, av.verdict, av.evidence
+  FROM audit_verdicts av
+  WHERE av.id = (SELECT av2.id FROM audit_verdicts av2 WHERE av2.ac_id = av.ac_id
+                 ORDER BY CAST(SUBSTR(av2.id, 4) AS INTEGER) DESC LIMIT 1);
+
 CREATE VIEW v_status_report AS
   SELECT 'requirements' AS family, lifecycle_status AS status, COUNT(*) AS n
     FROM requirements GROUP BY lifecycle_status
@@ -784,22 +884,37 @@ CREATE VIEW v_status_report AS
   UNION ALL SELECT 'acceptance_criteria', lifecycle_status, COUNT(*)
     FROM acceptance_criteria GROUP BY lifecycle_status
   UNION ALL SELECT 'wbs_items', lifecycle_status, COUNT(*) FROM wbs_items GROUP BY lifecycle_status
-  UNION ALL SELECT 'deferred_work', status, COUNT(*) FROM deferred_work GROUP BY status
-  UNION ALL SELECT 'defects', status, COUNT(*) FROM defects GROUP BY status;
+  UNION ALL SELECT 'deferred_work', lifecycle_status, COUNT(*) FROM deferred_work GROUP BY lifecycle_status
+  UNION ALL SELECT 'defects', lifecycle_status, COUNT(*) FROM defects GROUP BY lifecycle_status;
 
 CREATE VIEW v_readiness AS                                -- gate rollup for the readiness report
   SELECT 'G-TRACE' AS gate, COUNT(*) AS failures FROM g_trace_failures
   UNION ALL SELECT 'G-SET', COUNT(*) FROM g_set_failures
   UNION ALL SELECT 'G-PROGRESS', COUNT(*) FROM g_progress_failures;
 
-CREATE VIEW v_phase_exit AS                               -- phase-exit report data (006 add-new, derived)
+CREATE VIEW v_phase_exit AS                               -- phase-exit report data
   SELECT p.id AS phase_id, p.title,
          (SELECT COUNT(*) FROM acceptance_criteria ac JOIN slices s ON ac.slice_id = s.id
            WHERE s.phase_id = p.id AND ac.retired_in IS NULL) AS acs_total,
          (SELECT COUNT(*) FROM acceptance_criteria ac JOIN slices s ON ac.slice_id = s.id
+           JOIN v_latest_verdicts lv ON lv.ac_id = ac.id
            WHERE s.phase_id = p.id AND ac.retired_in IS NULL
-             AND EXISTS (SELECT 1 FROM audit_verdicts av
-                         WHERE av.ac_id = ac.id AND av.verdict = 'Met')) AS acs_met,
+             AND lv.verdict = 'Met') AS acs_met,
          (SELECT COUNT(*) FROM defects d WHERE d.found_in = p.id
-             AND d.status IN ('Open','In-progress')) AS open_defects
+             AND d.lifecycle_status IN ('Open','In-progress')) AS open_defects
   FROM phases p;
+
+CREATE VIEW v_slice_exit AS                               -- slice-scope readiness data
+  SELECT s.id AS slice_id, s.title, s.phase_id,
+         (SELECT COUNT(*) FROM acceptance_criteria ac
+           WHERE ac.slice_id = s.id AND ac.retired_in IS NULL) AS acs_total,
+         (SELECT COUNT(*) FROM acceptance_criteria ac
+           JOIN v_latest_verdicts lv ON lv.ac_id = ac.id
+           WHERE ac.slice_id = s.id AND ac.retired_in IS NULL
+             AND lv.verdict = 'Met') AS acs_met,
+         (SELECT COUNT(*) FROM wbs_items w WHERE w.slice_id = s.id
+           AND w.lifecycle_status NOT IN
+               ('Implemented','Superseded','Obsolete','Rejected')) AS wbs_open,
+         (SELECT COUNT(*) FROM defects d WHERE d.found_in = s.id
+             AND d.lifecycle_status IN ('Open','In-progress')) AS open_defects
+  FROM slices s;

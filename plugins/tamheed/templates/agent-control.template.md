@@ -46,17 +46,19 @@ generation: derived      # regenerated from the package each update cycle
 ## Recording obligations (mandatory — unrecorded work is drift)
 
 <!-- Keep this table IDENTICAL to the one in the emitted CLAUDE.md operating note
-     (tamheed_server.py, tamheed:note v2) — drift between the two is grep-detectable. -->
+     (tamheed_server.py, tamheed:note v3) — drift between the two is grep-detectable. -->
 
 | During execution, when… | Record BEFORE moving on |
 |---|---|
-| you find a defect | `entity_upsert` a `defect` row (`DEF-`, status Open) — then fix it |
+| you find a defect | `entity_upsert` a `defect` row (`DEF-`, honest severity — open critical/high BLOCK readiness) — then fix it |
 | you find needed work that is out of scope | `entity_upsert` a `deferred-work` row (`DW-`) with an activation trigger |
-| you deviate from the approved plan in any way | a `scope-change` row (`SC-`) FIRST, `decision_ref` naming the deciding `DEC-`/`ADR-` — then the change |
-| you finish a unit of work | `progress_update(...)` — concrete entry with phase/slice ids |
-| you verify an acceptance criterion | `audit_record(...)` with evidence — never Met without proof |
+| you deviate from the approved plan in any way | a `scope-change` row (`SC-`) FIRST, `decision_ref` naming the deciding `DEC-`/`ADR-`, delta edges (`scope_adds`/`scope_modifies`/`scope_removes`) naming the affected rows — after approval, apply the row changes and set the `SC-` to Merged |
+| you hit genuine ambiguity | an `open-question` row (`OQ-`, with owner + due_by) and `[NEEDS-CLARIFICATION: OQ-NNN]` at the exact spot — NEVER assume |
+| you finish a unit of work | `progress_update(...)` — event_type `work-done`, `subject_id`, your `actor` string, phase/slice ids |
+| you believe a slice/wbs-item is complete | set its `lifecycle_status` to **Review** (done-claimed) — `Implemented` means VERIFIED and is readiness-guarded |
+| you verify an acceptance criterion | `audit_record(...)` with evidence + `verified_by` + `verification_method` + `against_commit` — never Met without proof |
 | you create a commit or PR | `work_bind(ref, entity_ids=[...])` |
-| you declare a slice/phase/release done | `readiness_check(scope)` first — resolve every blocking failure or register the waiving SC-/DW-; NEVER pass `"force": true` without the operator's explicit words |
+| you declare a slice/phase/release done | `readiness_check(scope)` first — resolve every blocking failure, or ask the OPERATOR for a `WVR-` waiver (their words; you never author your own) — `"force": true` only on the operator's explicit words |
 
 If you cannot record (lock held, package missing), STOP and tell the operator — do not
 proceed unrecorded.

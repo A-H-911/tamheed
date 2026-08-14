@@ -10,6 +10,107 @@ All notable changes to Tamheed are documented here. The format is based on
 
 ## [Unreleased]
 
+## [4.0.0] - 2026-08-14
+
+**MAJOR — the entity-model redesign (plan 031/B27).** Built on a full study of every
+entity family (three exhaustive code scans + three external best-practice research
+reports incl. a dedicated DEC-vs-ADR study; 15 maintainer-locked decisions across five
+interview rounds — the rationale record is `docs/entities.md`). A v3 package is NOT
+opened by this release: back it up, then run `package_migrate(name)` (preview) and
+`package_migrate(name, confirm=true)` — the old files are kept in `data-v3-backup/`.
+
+### Changed — the store (re-baselined schema)
+
+- **The schema chain was re-baselined**: `schema.sql` is the full v4 DDL and the new
+  `migrations/001_init.sql` byte-twin; the v2/v3 migrations (002_example_glossary,
+  003_drop_prompts, 004_readiness_views) were retired — their end-state is folded into
+  the baseline (glossary_terms is a baseline table; the prompts table no longer exists
+  anywhere; the latest-verdict views ship in the DDL) and the v2/v3→v4 lineage lives in
+  the migrate tool, not stacked ALTERs.
+- **Claimed vs verified done**: `Review` (done-claimed) joins the wbs-item/slice
+  lifecycle, distinct from `Implemented` (done-verified); every readiness closed-set
+  counts Review as OPEN. Audit verdicts carry their evidence chain: `verified_by`
+  (human/agent/ci), `verification_method` (auto-test/manual/inspection),
+  `against_commit`. The requirement auto-advance trigger now uses LATEST-verdict
+  semantics (the any-Met-ever flaw migration 004 fixed in the views was still live in
+  the trigger through v3).
+- **Lifecycle column unified**: `defects.status` and `deferred_work.status` are
+  `lifecycle_status` (vocabularies unchanged) — one column name for the lifecycle axis
+  (ADR-0001's three-axis doctrine).
+- **Verdict vocabularies normalized, domain sets kept**: experiments/POCs conclude
+  `Validated/Invalidated/Inconclusive/Pending` (a hypothesis verdict, not a test
+  verdict — was PASS/FAIL); tests keep Pass/Fail/Pending; audits keep
+  Met/Partial/Not-met/Pending.
+- **Milestones demoted to roadmap labels**: no lifecycle, no disposition, never gate —
+  a milestone that gates is an execution gate. Gates gained `outcome`
+  (Go/Hold/Redirect/Kill, stage-gate practice).
+- **Scope changes got a drift-delta lifecycle**: Proposed → Approved → **Merged**, with
+  typed delta edges (`scope_adds`/`scope_modifies`/`scope_removes`) naming the affected
+  rows; the `scope-changes-merged` advisory flags Approved-never-Merged.
+- **The progress journal is typed**: `event_type` (work-done/verdict-recorded/
+  transition/forced-override/gate-decision/escalation/correction/note) + `subject_id` +
+  `actor` + `corrects` (compensating events — journals are never edited).
+- **Lightweight enrichment, gate-checkable only**: requirements gained `rationale` +
+  `verification_method` (Test/Demonstration/Inspection/Analysis); risks gained
+  `owner` + `response_strategy` + high/medium/low enums on probability/impact; OQs
+  gained `owner` + `due_by`; assumptions gained `validation_date`; hypotheses gained
+  `metric` + `threshold`; ADRs gained `confirmation` (MADR 4.x — how compliance is
+  verified; part of the immutable content).
+- Stakeholders' label column is `title` (was `name`); a provenance `source_span` now
+  REQUIRES a `source_kind`; `packages.mode` is CHECK-constrained; five indexes back the
+  hot view scans; `binds_to` (zero usage ever), `entity_types.template_ref` (never
+  read), and per-row `diagrams.generation_class` were deleted.
+
+### Added
+
+- **`WVR-` waivers**: an operator-approved row (rule + entity + justification +
+  approver + expiry) satisfies a named readiness rule for a named entity — reported as
+  `waived`, never silent; expired waivers are surfaced and ignored. The alternative to
+  a waiver path is informal bypass.
+- **Severity-thresholded blocking**: open critical/high defects block phase/slice/
+  package readiness; medium/low surface as the `defects-minor` advisory.
+- **`[NEEDS-CLARIFICATION: OQ-NNN]` markers** (spec-kit's forbidden-to-assume idea,
+  tamheed-native): legal in any prose field while the cited OQ is live; a marker with
+  no id, a dangling id, or a resolved cite fails G-COMPLETE; the `clarifications-open`
+  advisory counts live markers.
+- **Blocking G-REL gate**: stored trace edges must satisfy the endpoint-type rules
+  (safe because the migrate tool retypes violating edges to `relates_to` at conversion,
+  adopt reports them, and writes reject them). RELATION_RULES cover the scope-delta
+  kinds; kinds with no evidenced edge semantics are deliberately relates_to-only.
+- **Liveness advisories** (registers stay alive because the engine nags, not because
+  columns exist): `decisions-look-architectural` (the DEC→ADR one-way-door nag),
+  `open-questions-overdue`, `risk-liveness`, `assumptions-current`,
+  `hypotheses-measurable`, `acs-slice-bound`, `clarifications-open`,
+  `scope-changes-merged`, `defects-minor`. G-PROGRESS warns on its vacuous pass;
+  `human_required` now surfaces `ready` (DoR) gates and gate outcomes.
+- **`package_migrate` is the in-place v2/v3→v4 converter**: staged (preview = the full
+  rewrite report, nothing written; confirm = backup to `data-v3-backup/`, legacy
+  prompt conversion, transform, store-validated canonical write-back, a
+  `system:migrate` audit event). `package_open` refuses pre-v4 stores by version.
+  `package_adopt` runs the edge-rule sweep at adoption. Migration suite:
+  `tests/test_migrate_v3to4.py` (incl. byte-determinism).
+
+### Removed
+
+- **v1 ingestion is retired**: the frozen v1 validator, the markdown importer, the v1
+  goldens/fixtures, `required-artifacts.json`, and the `schemas/` directory (runtime-
+  dead; the DDL is the single source of data shape). Escape route for a v1 Keystone
+  package: migrate under tamheed 3.2.1, then v3→v4 here
+  (`docs/migrate-from-keystone.md`). The shared recording pipeline adopt used moved to
+  `server/record.py`; check.py's catalog-sync lint retargeted to the live registry's
+  Always class.
+
+### Documentation
+
+- `references/artifact-catalog.md` rewritten as the v4 catalog (lint-synced to the
+  registry); `references/governance.md` carries the full v4 identifier/status/vocabulary
+  tables incl. the DEC-vs-ADR one-way-door promotion rule; the recording-obligations
+  table (agent-control template + the emitted CLAUDE.md note, now `tamheed:note v3`)
+  teaches Review, waivers, markers, delta edges, and the evidence chain; all 14 stock
+  prompts + the prompts README updated (incl. the findings_16 either-discriminator
+  stale-lock wording); `docs/entities.md` is the full per-entity study with the
+  decision rationale and source register.
+
 ## [3.2.1] - 2026-08-14
 
 Documentation release from the fifteenth ACMP field report — the v3.2.0 acceptance

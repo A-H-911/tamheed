@@ -11,7 +11,7 @@
 <p align="center"><strong>Turn a project description into a validated, traceable, execution-ready planning &amp; handoff package for Claude Code to implement.</strong></p>
 
 <p align="center">
-  <em>Claude Code plugin + MCP-backed agent skill &middot; v3.2.1</em> &middot;
+  <em>Claude Code plugin + MCP-backed agent skill &middot; v4.0.0</em> &middot;
   <a href="#license">MIT</a> &middot;
   <a href="docs/install.md">Install</a> &middot;
   <a href="docs/migrate-from-keystone.md">Migrate from Keystone</a> &middot;
@@ -117,7 +117,7 @@ Options:
 
 Omit `--mode` and the skill infers one from the input and **confirms it before doing heavy work** —
 a sparse idea proposes `intake` first, a rich structured brief proposes `full`, an existing package
-directory proposes `resume`/`update`, a v1 Keystone package proposes `migrate`, and a bare codebase
+directory proposes `resume`/`update`, a v2/v3 store proposes `migrate`, and a bare codebase
 proposes `adopt`. It never guesses silently.
 
 | Mode | What it does |
@@ -128,7 +128,7 @@ proposes `adopt`. It never guesses silently.
 | `resume` | `package_open` an existing package and continue from the last incomplete stage. |
 | `stage:<id>` | Run or re-run a single stage (e.g. `stage:risk-analysis`). |
 | `update` | The agile heart of v2 (D-UPDATE), three capabilities: **diff-aware re-derivation** (change an entity, regenerate only its dependents via `trace_query`), **execution-progress sync** (`progress_update` / `audit_record` with evidence / `work_bind`), and **typed scope changes** (defer / reschedule / reclassify / cancel / expand — a `scope-change` row is written before any mutation, always). |
-| `migrate` | Walk a conformant v1 Keystone package into the store (`package_migrate`: staged preview → confirm, post-flight fidelity report). |
+| `migrate` | Convert a v2/v3 store to v4 in place (`package_migrate`: staged preview → operator backup → confirm; old files kept in `data-v3-backup/`). v1 Keystone trees migrate under tamheed 3.2.1 first (`docs/migrate-from-keystone.md`). |
 | `adopt` | Onboard a brownfield project that never used Tamheed (`package_adopt`: staged scan → confirm; nothing inferred is Approved, provenance is code-shaped, the gap report is first-class). |
 
 (The v1 `--no-repo` flag is gone with the repository bootstrapper itself — ASM-B; a package is data the
@@ -192,10 +192,13 @@ bumps the package iteration, and stamps new/retired rows with `introduced_in`/`r
 ever deleted. Evidence-backed audit verdicts cascade: when every acceptance criterion of a requirement is
 `Met`, the requirement auto-advances to `Implemented` in the same transaction.
 
-**`migrate` — bring a v1 Keystone package forward.** Staged and operator-gated: the first run is a
-pre-flight (frozen v1 validator) + dry parse report; only your explicit confirmation populates the store,
-followed by a post-flight fidelity check (identifier sets, family counts, gates). Identifiers survive
-unchanged:
+**`migrate` — bring a v2/v3 store to v4.** Staged and operator-gated: the first run is a
+preview (the FULL rewrite report — every value coercion, edge retype, column drop — nothing
+written); only your explicit `confirm=true` converts, and the old files are kept in
+`data-v3-backup/`. The result is validated through a complete store round-trip BEFORE it
+replaces the live files — a package that fails v4 integrity is left untouched. `package_open`
+refuses pre-v4 stores by version, so migration is never silent. (v1 Keystone Markdown packages:
+two-step escape route via tamheed 3.2.1 — `docs/migrate-from-keystone.md`.)
 
 ```text
 /tamheed:tamheed ./old-project/planning-package --mode migrate --package-dir ./planning
@@ -238,11 +241,21 @@ stay managed (`written`/`unchanged`/`diverged`; a hand-customised file is never 
 (legacy prompts converted from v2 get per-kind curation hints until reviewed). The executing agent
 records progress through the same governed write path that built the package (`progress_update`,
 `audit_record` with evidence refs, `work_bind` binding commits/PRs to the `FR-`/`AC-`/`SL-` they
-satisfy) — and **declaring a phase or slice `Implemented` is guarded**: the blocking readiness rules
-refuse the transition until resolved, overridable only by an explicit operator-confirmed
-`"force": true`, which the server itself records as a `FORCED transition` progress entry. Typed
+satisfy) — and **work an agent believes done is `Review` (claimed), not `Implemented` (verified)**:
+declaring a phase or slice `Implemented` is guarded by the blocking readiness rules — open
+critical/high defects block while medium/low advise, a single stubborn failure is satisfied only by
+an operator-approved **`WVR-` waiver** (reported as `waived`, never silent, expiring), and the
+whole-transition override stays an explicit operator-confirmed `"force": true`, which the server
+itself records as a typed `forced-override` progress event. Audit verdicts carry their **evidence
+chain** (`verified_by`, `verification_method`, `against_commit`); the progress journal is **typed
+events** corrected by compensating entries, never edited; genuine ambiguity is recorded in place as
+`[NEEDS-CLARIFICATION: OQ-NNN]` markers that G-COMPLETE validates against live open questions. Typed
 relations are validated at write time too: a semantically wrong edge (say `TEST —mitigates→ FR`) is
-rejected with both endpoint types named; `relates_to` stays the untyped escape hatch.
+rejected with both endpoint types named, stored violations FAIL the blocking **G-REL** gate, and
+`relates_to` stays the untyped escape hatch. Scope deviations follow the drift-delta lifecycle:
+an `SC-` row FIRST (Proposed), typed `scope_adds`/`scope_modifies`/`scope_removes` edges naming the
+affected rows, then — after operator approval — the agent applies the changes and sets the row to
+`Merged` (the `scope-changes-merged` advisory flags anything approved but never reconciled).
 
 **Your package carries its own prompt library — and prompts are plain `.md` files, never database
 rows** (v3). `<package>/prompts/` is the single prompt surface, seeded at creation and refreshed by
@@ -263,7 +276,8 @@ Verification lanes, every node labeled and clickable, arrowheads, CSS-only relat
 **relations graph** (connected entities on a chord diagram with degree-scaled nodes; isolated
 entities in their own per-family fold, isolated *requirements* flagged first — they are the
 unverified ones), the traceability matrix, execution progress with a **per-phase readiness panel**
-(latest-verdict semantics) and declared human gates, and every register folded with its row count
+(latest-verdict semantics), a **per-slice readiness panel** (Review counts as open), declared human
+gates with their `Go/Hold/Redirect/Kill` outcomes, recorded waivers, and every register folded with its row count
 and a **per-table CSV download**. Hovering a node isolates its own edges (pure CSS `:has()`; older
 browsers simply keep the normal view). Long text wraps in place; the freshness line distinguishes
 real recorded activity from a just-migrated package. Migration results also carry **fidelity
@@ -279,17 +293,17 @@ that row-level counts cannot see.
 | `entity_upsert(entities[])` | Batch writes — full rows, per-item verdicts |
 | `entity_query(type, …)` | Targeted rows + `total` |
 | `trace_query(entity_id, …)` | Typed traceability links |
-| `gate_run()` | Mechanical quality-gate verdict (+ advisory relation/unwired sweeps) |
+| `gate_run()` | Mechanical quality-gate verdict incl. the blocking G-REL relation gate |
 | `readiness_check(scope, id?)` | Deep lifecycle readiness at a close boundary — "is this actually DONE?" |
 | `progress_update / audit_record / work_bind` | The execution-tracking loop |
-| `package_migrate / package_adopt` | Staged v1 migration / brownfield onboarding |
+| `package_migrate / package_adopt` | Staged in-place v3→v4 conversion / brownfield onboarding |
 | `handoff_emit / export_html` | Executor wiring + the HTML review surface |
 
 Full signatures and semantics: [`plugins/tamheed/server/README.md`](plugins/tamheed/server/README.md).
 
 Worked, end-to-end examples live in [`examples/`](examples) (input briefs + expected outlines) and
 [`generated-samples/`](generated-samples) — including
-[`support-triage-agent-v2/`](generated-samples/support-triage-agent-v2), a full v1→v2 migrated package.
+[`support-triage-agent-v2/`](generated-samples/support-triage-agent-v2), the demonstration package (migrated in place through every store generation, v1→v4).
 
 ## How it works
 
@@ -348,7 +362,7 @@ artifacts → package storage → validation → handoff). One principle governs
 All judgment — the 22 stages, artifact selection, quality gates, handoff logic — lives in the
 [`tamheed` skill](plugins/tamheed/SKILL.md): a **progressive-disclosure** bundle (a short `SKILL.md` front
 door plus `references/` loaded on demand). The **MCP server is not an entry point** — it is the mechanical
-half of the capability itself, the successor of the v1 validator: referential gates (identifiers, decision
+half of the capability itself: referential gates (identifiers, decision
 statuses, requirement provenance) are FOREIGN KEY / CHECK / NOT NULL constraints enforced at write time,
 coverage gates are SQL views, and `gate_run` reports it all. The bundle is **self-contained** — everything
 it reads or invokes at runtime lives inside `plugins/tamheed/`, so the plugin installs and runs as one
@@ -377,8 +391,7 @@ tamheed/
 │   ├── SKILL.md                      # always-loaded entry point (owns the capability)
 │   ├── references/                   # per-stage / per-concern depth (incl. artifact-catalog.md)
 │   ├── templates/                    # surviving narrative section templates
-│   ├── schemas/                      # frozen v1 JSON schemas (migration contract)
-│   ├── scripts/                      # validate_package.py (frozen v1 gate engine, migration contract)
+│   ├── scripts/                      # scratch_diff.py (package diff utility)
 │   ├── prompts/                      # the stock scenario library + operator guide (emitted into <package>/prompts/)
 │   ├── db/                           # relational store: schema.sql, migrations/ (append-only), store.py, CANONICAL.md
 │   ├── server/                       # the Tamheed MCP server (the only write path into a package)
@@ -386,7 +399,7 @@ tamheed/
 ├── docs/                             # architecture, methodology, workflow, design decisions, install
 ├── evals/                            # behavioral eval spec + deterministic eval runner
 ├── examples/                         # input briefs + expected package outlines
-├── generated-samples/                # demonstration packages (v1 original + its v2 migration)
+├── generated-samples/                # the demonstration package (migrated in place through v2→v3→v4)
 ├── tests/                            # the ten test suites + fixtures
 ├── check.py                          # THE one deterministic gate — CI job 1 runs exactly this
 ├── .github/workflows/                # CI (check.py + server smoke) + scheduled eval-spec lint
@@ -396,7 +409,7 @@ tamheed/
 ## Verifying a local checkout
 
 ```bash
-python check.py        # everything CI runs: 10 suites, v1 goldens, 8 lints, canonical form, eval fixtures
+python check.py        # everything CI runs: 8 suites, 8 lints, canonical form, eval fixtures
 ```
 
 ## Contributing
@@ -408,8 +421,10 @@ See [`CONTRIBUTING.md`](CONTRIBUTING.md) and
 
 ## Maturity
 
-**v3.x** (currently v3.2.1). The methodology (22 stages), the relational package store (ADR-0001), the
-MCP tool surface, the canonical serialization, and the migration paths (v1 Markdown packages AND v2
+**v4.x** (currently v4.0.0). The methodology (22 stages), the re-baselined relational store (plan 031:
+claimed-vs-verified `Review`, evidence-chained verdicts, `WVR-` waivers, severity-thresholded blocking,
+typed progress events, drift-delta scope changes, blocking G-REL, `[NEEDS-CLARIFICATION]` markers), the
+MCP tool surface, the canonical serialization, and the in-place migration path (v2/v3
 prompts-table packages — opening one converts it once, loudly) are defined, tested, and stable —
 hardened by fifteen field reports from sustained production use, each answered by a same-day release.
 Any change to the DDL, the identifier scheme, or the tool contract ships per the versioning rules in

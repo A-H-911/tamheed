@@ -21,11 +21,13 @@ GOLDEN_DATA = REPO_ROOT / "generated-samples" / "support-triage-agent-v2" / "dat
 
 class StoreMigrationTest(unittest.TestCase):
     def test_user_version_tracks_migration_head(self):
-        """connect() leaves user_version at the newest migrations/NNN number."""
+        """connect() leaves user_version at the newest migrations/NNN number.
+        v4 (plan 031) re-baselined the chain: schema.sql IS the new 001, so a fresh
+        repo checkout sits at head 1 until a future 002 ships."""
         conn = store.connect()
         head = conn.execute("PRAGMA user_version").fetchone()[0]
         self.assertEqual(head, store.schema_version())
-        self.assertGreaterEqual(head, 2)  # 002_example_glossary.sql ships with the repo
+        self.assertGreaterEqual(head, 1)
         conn.close()
 
     def test_apply_migrations_idempotent(self):

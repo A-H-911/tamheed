@@ -1,0 +1,3 @@
+{"id":"DEF-001","title":"overdue() off-by-one: a task due TODAY is flagged OVERDUE (uses <= instead of <)","severity":"high","lifecycle_status":"Fixed","found_in":"SL-002","fixed_by":null,"custom_attributes":null,"last_referenced":null}
+{"id":"DEF-002","title":"Flaky test: test_added_timestamp_is_now compares two wall-clock now() reads (fails across a second boundary) and never exercises tracker.add() at all","severity":"low","lifecycle_status":"Fixed","found_in":"SL-002","fixed_by":null,"custom_attributes":null,"last_referenced":null}
+{"id":"DEF-003","title":"Help text typo: 'trakcer' instead of 'tracker' in tick --help output","severity":"low","lifecycle_status":"Open","found_in":"SL-002","fixed_by":null,"custom_attributes":null,"last_referenced":null}

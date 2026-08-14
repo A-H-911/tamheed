@@ -78,6 +78,6 @@ python check.py
 # the MCP server's tool surface (uv fetches the SDK via PEP 723; no install step)
 uv run plugins/tamheed/server/tamheed_server.py --selftest
 
-# validate a *v1* package against the frozen v1 gate engine (migration contract)
-python plugins/tamheed/scripts/validate_package.py generated-samples/support-triage-agent
+# the whole deterministic gate (suites + lints + canonical form + eval fixtures)
+python check.py
 ```

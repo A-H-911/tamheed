@@ -1,0 +1,2 @@
+{"id":"GATE-001","gate_kind":"ready","definition":"Operator confirms the seed tests were triaged before SL-002 work starts.","applies_to":"SL-002","outcome":"Go","custom_attributes":null,"last_referenced":null}
+{"id":"GATE-002","gate_kind":"approval","definition":"Operator approves the MVP for team rollout.","applies_to":null,"outcome":"Go","custom_attributes":null,"last_referenced":null}

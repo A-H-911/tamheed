@@ -81,8 +81,8 @@ The identifier/status/source/completeness/traceability gates check the internal 
 artifacts exist. That left a gap: a package missing its core artifacts could pass, because each gate
 SKIPped on the absent input. Gate **G-SET** closes it by requiring every **Always**-class artifact family
 to be present or explicitly recorded as omitted *with a reason* — omission is a conscious, recorded act,
-never a silent gap. In v1 the Always set was `required-artifacts.json` (the frozen machine mirror, still
-read by the frozen v1 validator); in v2 it is the **`entity_types` registry** seeded into every package,
+never a silent gap. In v1 the Always set was `required-artifacts.json` (retired with v1 ingestion in
+v4, plan 031); since v2 it is the **`entity_types` registry** seeded into every package,
 checked by the `g_set_failures` view and an `omissions` table whose reason column is NOT NULL. That
 completeness discipline is what lets the "execution-ready" verdict be trusted. Deterministic checks stay
 mechanical (schema + views + scans); judgment gates stay with the model and are recorded.

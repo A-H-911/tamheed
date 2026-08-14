@@ -200,7 +200,9 @@ human-intervention point.
 - **Out:** current execution state. **Enter:** package handed off; an update arrives. **Exit:** entities
   and views consistent (they cannot drift — views are queries). **Validate:** G-PROGRESS via `gate_run`.
 - **Fail:** FK violation on an update = the update referenced a ghost — fix the caller. **Human:**
-  approve material changes. **Writes:** progress_entries, audit_verdicts, scope_changes, affected rows.
+  approve material changes. **Writes:** progress_entries (typed events), audit_verdicts
+  (evidence-chained), scope_changes (+ delta edges; Merged after the rows move), defects,
+  deferred_work, waivers (operator-approved only), affected rows.
 
 ### 22. Final readiness assessment
 - **In:** the whole package. **Do:** `gate_run`; summarize gate results, open items (accepted-open

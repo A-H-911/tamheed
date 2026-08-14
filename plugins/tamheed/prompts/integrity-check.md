@@ -6,8 +6,10 @@ Paste this to audit the `{package}` package without changing anything.
 
 Run a read-only integrity check on the `{package}` Tamheed package:
 
-1. `package_open("{package}")`, then `gate_run()` — every Critical gate must pass;
-   treat a G-TRACE "passed vacuously" warning as a finding, not a pass.
+1. `package_open("{package}")`, then `gate_run()` — every Critical gate must pass
+   (G-REL now FAILS on stored trace edges violating the endpoint rules, no longer
+   advisory; `relates_to` is the escape hatch); treat a G-TRACE "passed vacuously"
+   warning as a finding, not a pass.
 2. Spot-check counts: `entity_query("requirement", limit=1)` and read `total`;
    compare `total` per family against expectations from the roadmap/charter.
 3. `trace_query` a sample of MVP requirements — each should reach a decision,

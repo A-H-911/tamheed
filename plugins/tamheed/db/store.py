@@ -1,4 +1,4 @@
-"""Tamheed v2 package store — JSONL <-> SQLite, honoring CANONICAL.md (plan 007/B2).
+"""Tamheed v4 package store — JSONL <-> SQLite, honoring CANONICAL.md (plan 007/B2; re-baselined plan 031/B27).
 
 Stdlib only. This module is the single loader/writer for a package's ``data/`` directory
 and is reused by the plan-008 MCP server. See ADR-0001 for the doctrine.

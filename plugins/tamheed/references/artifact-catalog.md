@@ -1,202 +1,109 @@
-# Artifact Catalog
+# Artifact Catalog (v4)
 
-> **v2 note (plan 009).** This is the **v1 catalog**, kept as the per-artifact reference and migration
-> map. The **decided v2 artifact set** is `plans/deliverables-review.md` in the program repo (approved
-> 2026-07-17); the machine mirror of v2 generation classes is the `entity_types` registry
-> (`../db/schema.sql`, seeded at `package_create`). v2 dispositions in brief: register-class artifacts
-> became **relational entities** (their templates retired — see `../templates/README.md`); charter
-> sections, mitigation plan, validation strategy, tech assessments, and the evaluation framework folded
-> into their parent rows; the five diagram rows collapsed into one `diagrams` family; milestones merged
-> into the roadmap data; the execution backlog, traceability matrix, status report, and readiness report
-> are **derived views**; DoR/DoD/checkpoints/gate-definitions merged into `execution_gates`; the
-> standalone stakeholder register and handoff manifest were dropped (their data lives in tables);
-> `keystone-state.json` was replaced by the store itself; new first-class families: `deferred_work`,
-> `defects`, `slices`, `execution_plans`, `conventions`, `scope_changes`, phase-exit view. Template and
-> schema paths below describe v1 packages — the frozen migration source contract (plan 010).
+The authoritative, human-facing list of every artifact a Tamheed package carries. Since v2
+the package **is a relational store** (`data/*.jsonl`, one file per entity family — see
+`../db/CANONICAL.md`); since v3 the handoff prompts are **files** under `<package>/prompts/`;
+v4 (plan 031) re-baselined the schema, added waivers, typed the progress journal, and made
+this catalog the teaching mirror of the live registry. The machine mirror of the generation
+classes is `BASELINE_ENTITY_TYPES` (`../server/tamheed_server.py`), seeded into the
+`entity_types` table at `package_create` — **G-SET enforces the Always class from the
+registry, and `check.py` lints that every Always type is named here** (the enforcing surface
+and the teaching surface move together).
 
-The authoritative, human-facing list of every artifact v1 could produce, with its identifier prefix,
-location in a generated package, generation class, lifecycle note, template, and schema. The **decision
-logic** for which optional artifacts get generated is in
-[`artifact-rules.md`](artifact-rules.md); the **package layout** is in
-[`generated-structure.md`](generated-structure.md); the **identifiers,
-statuses, and versioning** are in [`governance.md`](governance.md). This
-catalog is the per-artifact reference those documents point back to.
+The **decision logic** for optional artifacts is in [`artifact-rules.md`](artifact-rules.md);
+the **package layout** in [`generated-structure.md`](generated-structure.md); **identifiers,
+statuses, versioning** in [`governance.md`](governance.md); the per-entity operator guide
+(why/when/how for every family) is [`entity-guide.md`](entity-guide.md).
 
-## How to read this catalog
+## Generation classes
 
-**Generation class** — when the artifact is produced:
+- **Always** — every package gets rows (or a recorded `omission` with reason — G-SET).
+- **Conditional** — created when a trigger holds (profile, size, risk, handoff — see
+  `artifact-rules.md`).
+- **On-request** — only when the user asks.
+- **Continuous** — created early, appended throughout execution (stage 21).
+- **Derived** — computed views; never hand-authored.
 
-- **Always** — every package gets it; skipping requires an explicit recorded reason.
-- **Conditional** — generated when a trigger holds (project profile, size, risk, regulatory context, repo
-  requested, etc.). The trigger is noted.
-- **On-request** — produced only when the user asks.
-- **Continuous** — created early and refreshed every update cycle (stage 21).
-- **Derived** — computed from other artifacts; never hand-authored. Regenerate, don't edit.
+## Entity families (the store)
 
-**Lifecycle note** — how the artifact changes over time: *versioned-on-change* (carries front-matter
-`status`/`version`/`updated`, bumped on material change), *immutable-after-approval* (never edited in meaning;
-superseded instead), *derived-regenerate* (reproduced from sources), or *machine-owned* (written and read by
-Keystone's runtime, not hand-edited).
+One `data/<table>.jsonl` file per non-empty family. Class = the registry's generation class.
 
-**Location** is relative to the generated `<project-package>/` root. **Template** paths are relative to the
-bundle's `templates/` directory (`../templates/` relative to this file); **Schema** paths to the bundle's
-`schemas/` directory (`../schemas/`). A `—` in
-the Schema column means the artifact is narrative Markdown with no separate structured schema. Multiple
-register kinds that share one register file (e.g. open questions / open decisions / assumptions under
-`decisions/`) are listed on their own rows for clarity.
+### Requirements & registers
 
-> Templates and schemas are bundled alongside this catalog in `../templates/` and `../schemas/` — the skill
-> is self-contained. The exact template/schema filenames below follow the naming convention
-> `<name>.template.md` / `<name>.schema.json`; if a packaged repo renames one, the catalog row is the place
-> that records it.
+| Family (type id) | Prefix | Class | Purpose |
+|---|---|---|---|
+| requirement | `FR-`/`NFR-` | Always | What the system must do / how well; NOT NULL provenance (G-REQ-SRC), `rationale`, `verification_method` (Test/Demonstration/Inspection/Analysis), `mvp` flag (G-TRACE scope) |
+| constraint | `CON-` | Always | Imposed limits the design cannot negotiate |
+| invariant | `INV-` | Conditional | Properties that must NEVER break; `enforcement` says how |
+| assumption | `ASM-` | Always | Beliefs the plan rests on; `risk_if_wrong` + `validation_date` (assumptions decay — the assumptions-current advisory) |
+| dependency | `DEP-` | Conditional | External parties/systems the plan waits on; `owner` |
+| open-question | `OQ-` | Always | Unresolved ambiguity; `owner` + `due_by` (open-questions-overdue advisory); citable in prose via `[NEEDS-CLARIFICATION: OQ-NNN]` markers (G-COMPLETE-validated) |
+| glossary-term | `GT-` | On-request | Domain vocabulary (also the community-extension worked example) |
 
----
+### Decisions
 
-## Charter & scope
+| Family | Prefix | Class | Purpose |
+|---|---|---|---|
+| decision | `DEC-` | Always | Any project decision (scope, vendor, priority, process); statuses have no Draft — born Proposed; **only Approved decisions constrain execution**; `promoted_to` links to an ADR when the one-way-door test says so |
+| adr | `ADR-` (4 digits) | Conditional | Architecturally significant decisions: context/decision/consequences + `confirmation` (HOW compliance is verified); **immutable after approval** (trigger-enforced) — supersede, never edit |
 
-| Artifact | ID prefix | Location | Generation class | Lifecycle note | Template | Schema |
-|---|---|---|---|---|---|---|
-| Project charter | (hosts `KPI-`) | `00-charter.md` | Always | versioned-on-change; Proposed→Approved at scope lock (stage 8) | `templates/project-charter.template.md` | — |
-| Executive summary | — | `01-executive-summary.md` | Always | versioned-on-change | `templates/executive-summary.template.md` | — |
-| Problem statement | — | `00-charter.md` (section) | Always | versioned-on-change | (within charter template) | — |
-| Goals / non-goals | — | `00-charter.md` (section) | Always | versioned-on-change; locked at stage 8 | (within charter template) | — |
-| Scope / out-of-scope | — | `00-charter.md` (section) | Always | versioned-on-change; scope drift after lock needs a `DEC-` | (within charter template) | — |
-| Success metrics / KPIs | `KPI-` | `00-charter.md` (success-metrics section) | Always | versioned-on-change | (within charter template) | — |
-| Stakeholder register | `STK-` | `stakeholder-register.md` | Conditional — cross-team / multi-actor delivery | versioned-on-change | `templates/stakeholder-register.template.md` | — |
+### Risk & research
 
-## Requirements & registers
+| Family | Prefix | Class | Purpose |
+|---|---|---|---|
+| risk | `RISK-` | Always | probability/impact (high/medium/low), `owner` + `response_strategy` (avoid/mitigate/transfer/accept — risk-liveness advisory), `risk_state` execution lifecycle, `discharged_by` |
+| hypothesis | `HYP-` | Conditional | Falsifiable statement + `metric` + `threshold` (decided BEFORE the experiment — hypotheses-measurable advisory) |
+| experiment | `EXP-` | Conditional | Method/timebox; verdict Validated/Invalidated/Inconclusive/Pending |
+| poc | `POC-` | Conditional | Same shape as experiment, build-flavored |
 
-| Artifact | ID prefix | Location | Generation class | Lifecycle note | Template | Schema |
-|---|---|---|---|---|---|---|
-| Functional requirements | `FR-` | `requirements/functional.md` | Always | versioned-on-change; every row carries a `source` | `templates/functional-requirements.template.md` | `schemas/requirement.schema.json` |
-| Non-functional requirements | `NFR-` | `requirements/non-functional.md` | Always | versioned-on-change; every row carries a `source` | `templates/non-functional-requirements.template.md` | `schemas/requirement.schema.json` |
-| Constraint register | `CON-` | `requirements/constraint-register.md` | Always | versioned-on-change | `templates/constraint-register.template.md` | `schemas/constraint.schema.json` |
-| Invariant register | `INV-` | `requirements/invariant-register.md` | Conditional — invariants present | versioned-on-change; invariants are non-negotiable, surfaced early in handoff | `templates/invariant-register.template.md` | `schemas/invariant.schema.json` |
-| Assumption register | `ASM-` | `decisions/assumption-register.md` | Always | versioned-on-change; each row carries `risk_if_wrong` | `templates/assumption-register.template.md` | `schemas/assumption.schema.json` |
-| Dependency register | `DEP-` | `requirements/dependency-register.md` | Conditional — external dependencies | versioned-on-change | `templates/dependency-register.template.md` | `schemas/dependency.schema.json` |
-| Open-question register | `OQ-` | `decisions/open-question-register.md` | Always | versioned-on-change; first-class, surfaced in readiness report | `templates/open-question-register.template.md` | `schemas/open-question.schema.json` |
-| Open-decision register | `DEC-` | `decisions/open-decision-register.md` | Always | versioned-on-change; status ∈ Proposed/Approved/Rejected/Superseded/Deferred | `templates/open-decision-register.template.md` | `schemas/decision.schema.json` |
+### Validation
 
-## Research & experiments
+| Family | Prefix | Class | Purpose |
+|---|---|---|---|
+| test | `TEST-` | Conditional | Planned/tracked tests; verdict Pass/Fail/Pending |
+| kpi | `KPI-` | Conditional | Success metrics (measure + target); hosted by the charter |
+| stakeholder | `STK-` | Conditional | Who cares and why (title/role/interest) |
+| acceptance-criterion | `AC-` | Always | The done-contract; binds to a requirement and a slice (acs-slice-bound advisory); **immutable after approval** |
+| audit-verdict | `AV-` | Continuous | Append-only AC verdicts (Met/Partial/Not-met/Pending) with `evidence`, `verified_by` (human/agent/ci), `verification_method` (auto-test/manual/inspection), `against_commit` — the LATEST verdict is the truth (v_latest_verdicts) |
 
-| Artifact | ID prefix | Location | Generation class | Lifecycle note | Template | Schema |
-|---|---|---|---|---|---|---|
-| Research plan | — | `research/research-plan.md` | Conditional — genuine technical uncertainty | versioned-on-change; timeboxed, proportional to risk | `templates/research-plan.template.md` | — |
-| R&D backlog | — | `research/rnd-backlog.md` | Conditional — genuine technical uncertainty | versioned-on-change | `templates/rnd-backlog.template.md` | — |
-| Hypothesis register | `HYP-` | `research/hypothesis-register.md` | Conditional — unknowns blocking decisions | versioned-on-change; hypotheses are falsifiable | `templates/hypothesis-register.template.md` | `schemas/hypothesis.schema.json` |
-| Experiment plans | `EXP-` | `experiments/` | Conditional — decision-blocking hypothesis exists | versioned-on-change; each has PASS/FAIL + timebox | `templates/experiment-plan.template.md` | `schemas/experiment.schema.json` |
-| POC plans + results | `POC-` | `pocs/` | Conditional — decision-blocking hypothesis exists | versioned-on-change; results appended, not overwritten | `templates/poc-plan.template.md` | `schemas/experiment.schema.json` |
-| Evaluation framework | — | `research/research-plan.md` (or `architecture/technology-comparison.md`) | Conditional — ≥2 viable options to weigh | versioned-on-change; weighted criteria stated before scoring | — (section within research-plan / technology-comparison) | `schemas/comparison-criteria.schema.json` |
+### Planning & execution
 
-## Architecture & decisions
+| Family | Prefix | Class | Purpose |
+|---|---|---|---|
+| phase | `PH-` | Always | The roadmap's chapters; exit_criteria; readiness-guarded transition to Implemented |
+| slice | `SL-` | Conditional | Thin vertical increments — the unit branches/PRs/ACs bind to; lifecycle includes **Review** (done-claimed) distinct from Implemented (done-verified); guarded transition |
+| milestone | `MS-` | Conditional | A named roadmap **label** (title/phase/due) — no lifecycle, never gates (v4 demotion); a milestone that gates is an execution-gate |
+| wbs-item | `WBS-` | Conditional | Work breakdown (self-parenting hierarchy); lifecycle includes Review |
+| execution-plan | `EP-` | Conditional | Per-slice how-to, package-resident |
+| execution-gate | `GATE-` | Conditional | DoR/DoD/checkpoint/approval definitions (prose a HUMAN evaluates — surfaced as human_required); `outcome` records the latest Go/Hold/Redirect/Kill decision |
+| convention | `CONV-` | Conditional | Durable conventions the executor must honor |
+| defect | `DEF-` | Conditional | Found bugs; severity critical/high/medium/low — **open critical/high block readiness, medium/low advise**; `found_in` locates it |
+| deferred-work | `DW-` | Conditional | Postponed work with severity + activation trigger + invariant at stake |
+| scope-change | `SC-` | Continuous | Drift record: Proposed → Approved → **Merged** (deltas applied to plan rows via scope_adds/scope_modifies/scope_removes edges; scope-changes-merged advisory flags Approved-never-Merged) |
+| waiver | `WVR-` | Conditional | A named readiness rule satisfied for a named entity: justification + approver + expiry; reported as `waived`, never silent (v4 — the alternative is informal bypass) |
+| progress-entry | `PE-` | Continuous | Append-only TYPED journal: event_type (work-done/verdict-recorded/transition/forced-override/gate-decision/escalation/correction/note) + subject + actor + `corrects` compensation pointer |
 
-| Artifact | ID prefix | Location | Generation class | Lifecycle note | Template | Schema |
-|---|---|---|---|---|---|---|
-| Architecture document | — | `architecture/architecture.md` | Conditional — architecturally significant decisions | versioned-on-change; must cover all MVP requirements | `templates/architecture.template.md` | — |
-| Context diagram | — | `architecture/diagrams/` | Conditional — architecture doc generated | versioned-on-change; only if it adds understanding | — (diagram-as-code in the architecture doc) | — |
-| Component diagram | — | `architecture/diagrams/` | Conditional — architecture doc generated | versioned-on-change | — (diagram-as-code in the architecture doc) | — |
-| Deployment diagram | — | `architecture/diagrams/` | On-request (beyond MVP) | versioned-on-change | — (diagram-as-code in the architecture doc) | — |
-| Data-flow diagram | — | `architecture/diagrams/` | On-request (beyond MVP) | versioned-on-change | — (diagram-as-code in the architecture doc) | — |
-| Integration diagram | — | `architecture/diagrams/` | Conditional — multiple integrated systems | versioned-on-change | — (diagram-as-code in the architecture doc) | — |
-| Architecture Decision Record | `ADR-NNNN` | `adrs/adr-NNNN-*.md` | Conditional — a significant decision is promoted | **immutable-after-approval**; supersede, never rewrite | `templates/adr.template.md` | `schemas/adr-metadata.schema.json` (state-owned) |
-| Technology comparison matrices | — | `architecture/technology-comparison.md` | Conditional — ≥2 viable technology options | versioned-on-change; losers retained, claims cited/`unverified` | `templates/technology-comparison.template.md` | — |
-| Technology assessments | — | `architecture/technology-comparison.md` (section) | Conditional — a candidate needs a deeper standalone evaluation | versioned-on-change | `templates/technology-comparison.template.md` | — |
+### Prose & artifacts
 
-## Risk
+| Family | Prefix | Class | Purpose |
+|---|---|---|---|
+| narrative-document | `DOC-` | Always | Charter-class prose (charter, executive summary, architecture, research plan, …) |
+| document-section | `SEC-` | Always | The sections of narrative documents (heading/body/order) |
+| diagram | `DIA-` | Conditional | Diagram source (mermaid) by kind: context/component/integration/deployment/data-flow |
 
-| Artifact | ID prefix | Location | Generation class | Lifecycle note | Template | Schema |
-|---|---|---|---|---|---|---|
-| Risk register | `RISK-` | `risks/risk-register.md` | Always | versioned-on-change; impact·likelihood·mitigation·trigger·MVP-or-Full | `templates/risk-register.template.md` | `schemas/risk.schema.json` |
-| Mitigation plan | — | `risks/risk-register.md` (mitigation fields) | Always (with risk register) | versioned-on-change | (within risk-register template) | `schemas/risk.schema.json` |
+## File artifacts (outside the store)
 
-## Planning & execution
+| Artifact | Location | Class | Notes |
+|---|---|---|---|
+| Prompt library | `<package>/prompts/*.md` | Always | 14 stock scenario prompts + README (managed emission: emitted/unchanged/diverged) + operator-authored project prompts |
+| Review surface | `<package>/review.html` (+ `csv/`) | Derived | `export_html` — deterministic, zero-JS, committed |
+| Agent-control note | executor repo `CLAUDE.md` (tool-owned marker span) | Derived | `handoff_emit` — carries the recording-obligations table |
+| Executor MCP config | executor repo `.mcp.json` | Derived | `handoff_emit` |
 
-| Artifact | ID prefix | Location | Generation class | Lifecycle note | Template | Schema |
-|---|---|---|---|---|---|---|
-| Phased roadmap | `PH-` | `planning/roadmap.md` | Always | versioned-on-change; each phase has goal/scope/deliverables/validation/risks/exit | `templates/roadmap.template.md` | `schemas/execution-phase.schema.json` (state-owned) |
-| Work breakdown | `WBS-N.N` | `planning/work-breakdown.md` | Conditional — non-trivial / multi-actor delivery | versioned-on-change; leaf items actionable + testable | `templates/work-breakdown.template.md` | — |
-| Milestones | `MS-` | `planning/milestones.md` | Conditional — multi-phase delivery | versioned-on-change | `templates/milestones.template.md` | — |
-| Execution backlog | — | `execution/backlog.md` | Conditional — handoff to a coding agent | versioned-on-change | — (derived from work-breakdown) | — |
-| Deferred-work / tech-debt register | — | `execution/deferred-work-register.md` | Conditional — long execution horizon / handoff | versioned-on-change; durable index of known-not-done + accepted debt (distinct from the forward backlog) | `templates/deferred-work-register.template.md` | — |
-| Definition of Ready | — | `execution/definition-of-ready.md` | Conditional — repo requested / handoff | versioned-on-change | `templates/definition-of-ready.template.md` | — |
-| Definition of Done | — | `execution/definition-of-done.md` | Conditional — repo requested / handoff | versioned-on-change | `templates/definition-of-done.template.md` | — |
-| Checkpoints (review/approval gates) | — | `execution/checkpoints.md` | Conditional — long execution horizon | versioned-on-change | — (no dedicated template) | — |
+## Derived views (never stored, never hand-edited)
 
-## Validation & traceability
-
-| Artifact | ID prefix | Location | Generation class | Lifecycle note | Template | Schema |
-|---|---|---|---|---|---|---|
-| Acceptance criteria | `AC-` | `validation/acceptance-criteria.md` | Always | **immutable-after-approval** once accepted; testable, MVP + full target; optional Evidence column | `templates/acceptance-criteria.template.md` | `schemas/acceptance-criterion.schema.json` |
-| Acceptance audit | `AC-` (refs) | `validation/acceptance-audit.md` | **Derived** — Conditional (handoff / long execution horizon) | **derived-regenerate** each gate; criterion → verdict (Met/Partial/Not-met/Pending) × evidence; the downstream agent's during/after-execution close-out — distinct from the planner's pre-handoff readiness report; gate **G-PROGRESS** checks AC coverage | `templates/acceptance-audit.template.md` | — |
-| Test strategy | `TEST-` | `validation/test-strategy.md` | Conditional — non-trivial NFRs / handoff | versioned-on-change | `templates/test-strategy.template.md` | — |
-| Validation strategy | — | `validation/test-strategy.md` (validation-approach section) | Conditional — non-trivial NFRs / regulatory | versioned-on-change | (within test-strategy template) | — |
-| Traceability matrix | — | `validation/traceability-matrix.md` | **Derived** (Always) | **derived-regenerate**; FR/NFR → DEC/ADR → WBS → TEST → RISK → AC | `templates/traceability-matrix.template.md` | `schemas/traceability-row.schema.json` |
-
-## Progress
-
-| Artifact | ID prefix | Location | Generation class | Lifecycle note | Template | Schema |
-|---|---|---|---|---|---|---|
-| Progress log | — | `progress/progress-log.md` | Continuous — long execution horizon | append-only; updated each cycle (stage 21) | `templates/progress-log.template.md` | `schemas/progress-update.schema.json` (state-owned) |
-| Status report | — | `progress/status-report.md` | **Derived** / Continuous | **derived-regenerate** each update cycle | `templates/status-report.template.md` | `schemas/progress-update.schema.json` (state-owned) |
-
-## Handoff
-
-| Artifact | ID prefix | Location | Generation class | Lifecycle note | Template | Schema |
-|---|---|---|---|---|---|---|
-| Handoff instructions (overview) | — | `handoff/` (README/overview) | Always | versioned-on-change | — (no dedicated template) | — |
-| Initial prompt | — | `handoff/initial-prompt.md` | Always | versioned-on-change; orient + one bounded task + approval gate | `templates/initial-prompt.template.md` | — |
-| Follow-up prompts | — | `handoff/follow-up-prompts.md` | Conditional — multi-phase / repo handoff | versioned-on-change; one per phase gate + situational | `templates/follow-up-prompts.template.md` | — |
-| Review prompts | — | `handoff/review-prompts.md` | Conditional — repo handoff | versioned-on-change; audit / readiness-recheck / PR review | `templates/review-prompts.template.md` | — |
-| Handoff manifest | — | `handoff/handoff-manifest.(yaml\|json)` | Always | machine-owned; versioned | `templates/handoff-manifest.template.md` | `schemas/handoff-package.schema.json` |
-| Final execution-readiness report | — | `handoff/execution-readiness-report.md` | Always | **derived-regenerate**; stage-22 go/no-go on Critical gates | `templates/execution-readiness-report.template.md` | — |
-
-## Governance & repository
-
-| Artifact | ID prefix | Location | Generation class | Lifecycle note | Template | Schema |
-|---|---|---|---|---|---|---|
-| Repository bootstrap script | — | `scripts/init_repo.*` (target repo) | Conditional — repo requested | versioned-on-change; dry-run-capable, idempotent, never-overwrite | — (emitted by `scripts/`, not a template) | — |
-| Contribution doc | — | `governance/contributing.md` | Conditional — repo / multi-contributor | versioned-on-change | `templates/contributing.template.md` | — |
-| Governance doc | — | `governance/governance.md` | Conditional — repo / multi-contributor | versioned-on-change | `templates/governance.template.md` | — |
-| Naming conventions | — | `governance/naming-conventions.md` | Conditional — repo / multi-contributor | versioned-on-change | `templates/naming-conventions.template.md` | — |
-| Documentation templates | — | `governance/` (or `docs/templates/`) | On-request | versioned-on-change | — (no dedicated template) | — |
-| Review / approval gates (definitions) | — | `execution/checkpoints.md` + readiness report | Always (definitions); applied at gates | versioned-on-change | (within checkpoints template) | — |
-
-## Package-level
-
-| Artifact | ID prefix | Location | Generation class | Lifecycle note | Template | Schema |
-|---|---|---|---|---|---|---|
-| Package README | — | `README.md` | Always | versioned-on-change; consumption + reading order for the agent | `templates/package-readme.template.md` | — |
-| Agent-control surface | — | `CLAUDE.md` (imports `AGENTS.md`) | **Derived** — Conditional (handoff / repo requested) | **derived-regenerate**; the ambient control surface Claude Code auto-loads — `CLAUDE.md` at the package/repo root importing `AGENTS.md`: invariants (violation⇒ADR) + hard constraints + conventions + current-phase pointer + tracking protocol; renders/links the registers (not a second copy); also emitted into a bootstrapped repo by `scripts/init_repo.*` | `templates/agent-control.template.md` | — |
-| Package manifest | — | `manifest.json` | Always | machine-owned; lists artifacts present, versions, generation metadata, omission reasons | `templates/package-manifest.template.md` | `schemas/package-manifest.schema.json` |
-| Normalized state | — | `keystone-state.json` | Always | **machine-owned**; powers resume/update; never hand-edited | — | `schemas/keystone-state.schema.json` |
-
----
-
-## Quick view: the Always set
-
-Every package, absent an explicit recorded reason to skip, contains: charter (with problem statement,
-goals/non-goals, scope/out-of-scope, success metrics), executive summary, functional and non-functional
-requirements, constraint register, assumption register, open-question register, open-decision register, risk
-register (with mitigations), phased roadmap, acceptance criteria, traceability matrix (derived), handoff
-overview + initial prompt + handoff manifest, execution-readiness report, package README, package manifest,
-and normalized state. Everything else is Conditional, On-request, Continuous, or Derived per the rows above
-and the triggers in [`artifact-rules.md`](artifact-rules.md).
-
-## Lifecycle quick reference
-
-- **Immutable-after-approval:** ADRs; approved acceptance criteria. Change by superseding, never by rewriting
-  meaning (typo fixes allowed).
-- **Derived-regenerate (never hand-edit):** traceability matrix, execution-readiness report, status report,
-  roadmap rollups.
-- **Machine-owned:** `keystone-state.json`, `manifest.json`, the handoff manifest.
-- **Continuous:** progress log (append-only), status report (regenerated each cycle).
-- **Everything else:** versioned-on-change — carries front-matter `status` / `version` / `updated`, bumped on
-  material change, following [`governance.md`](governance.md).
-
-## Anti-bloat reminder
-
-An artifact is generated only when it earns its keep. If it would merely restate another, **derive or link**
-instead of duplicating; if a section has no project-specific content, **omit** it rather than emit a
-placeholder; prefer one well-populated register over several thin ones; and a diagram must add understanding a
-paragraph cannot. Any artifact in the selected set that ends up empty is dropped, and the omission reason is
-recorded in `manifest.json` (safeguard 11; gates G-BLOAT and G-COMPLETE).
+`v_backlog` (open work), `v_status_report` (per-family status counts),
+`v_latest_verdicts` (AC → latest verdict), `v_phase_exit` / `v_slice_exit`
+(readiness substrates), `v_artifact_membership` (G-SET), `v_identifier_counts`,
+`g_trace_failures` / `g_set_failures` / `g_progress_failures` (gate substrates),
+`v_readiness` (gate rollup).
