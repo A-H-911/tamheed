@@ -16,7 +16,7 @@ Kick off the next slice of the `{package}` Tamheed package:
    `entity_query("acceptance-criterion")`, and the invariants in force
    (`entity_query("invariant")`).
 4. Propose a bounded, acceptance-criteria-first plan: per `AC-`, the failing test you
-   will write, the implementation step, and the PASS/FAIL observable. **STOP for
+   will write, the implementation step, and the pass/fail observable. **STOP for
    operator approval before writing any code.**
 5. After approval, per unit of work: failing test → implement → `progress_update`
    (event_type "work-done", subject_id the `WBS-`/`AC-`, actor "agent:<session>") →

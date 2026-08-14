@@ -1,4 +1,4 @@
-# Entity Guide — the operator card (tamheed v4.0.0)
+# Entity Guide — the operator card (tamheed v4.1.0)
 
 One row per entity family: when you need it and the one rule that keeps it honest.
 Columns and constraints: `../db/schema.sql` (the single source of data shape). Families,

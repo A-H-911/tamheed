@@ -37,10 +37,10 @@ protocol below). These steps bootstrap and gate; that standing context governs e
 Read these plan documents:
 - [Charter](../00-charter.md)
 - [Architecture](../architecture/architecture.md)
-- [Functional requirements](../requirements/functional.md) and [non-functional](../requirements/non-functional.md)
-- [Roadmap](../planning/roadmap.md) and [acceptance criteria](../validation/acceptance-criteria.md)
-- [Invariant register](../requirements/invariant-register.md)
-<!-- List only the few documents needed to orient. Use paths that EXIST in this package. -->
+- `entity_query("requirement", status="Approved")` and `entity_query("invariant")`
+- `entity_query("phase")`, `entity_query("slice")`, `entity_query("acceptance-criterion")`
+- the human surface: `<package>/review.html`
+<!-- Orientation is QUERIES, not files — the store is the record (v2+). -->
 
 Then give me:
 (a) a **<=1-page summary** of what you will build and the invariants you must respect (`INV-001..INV-00n`);
@@ -54,11 +54,14 @@ Work **acceptance-criteria-first**, one bounded task at a time: pick an `AC-`, w
 implement until it passes, then repeat — e.g. "Implement <thin slice> so that `AC-001` passes. PASS =
 <observable>; FAIL = <observable>." Do one task, then **pause for review** — do not batch ahead.
 
-**Track as you go (v3, plan 027 — the MCP tools ARE the record):** keep a live task list
-with TodoWrite; per unit of work `progress_update(...)`; per verified criterion
-`audit_record(verdicts=[{ac_id, verdict, evidence}])` — evidence always, never Met without
-proof; per commit/PR `work_bind(ref, entity_ids=[...])`. The package is the live
-checklist — report progress against `gate_run()` / `readiness_check(scope)`, never a
+**Track as you go (v4, plan 031 — the MCP tools ARE the record):** keep a live task list
+with TodoWrite; per unit of work `progress_update(...)` (event_type `work-done`,
+`subject_id`, your `actor` string); per verified criterion `audit_record(verdicts=[{ac_id,
+verdict, evidence, verified_by, verification_method, against_commit}])` — the full
+evidence chain, never Met without proof; per commit/PR `work_bind(ref, entity_ids=[...])`.
+Work you believe complete is claimed as **`Review`** (full-row upsert) — `Implemented`
+means VERIFIED and the slice/phase transition is readiness-guarded. The package is the
+live checklist — report progress against `gate_run()` / `readiness_check(scope)`, never a
 hand-maintained copy.
 
 ### Rules
@@ -69,6 +72,10 @@ hand-maintained copy.
   the deciding `DEC-`/`ADR-` (upsert the decision if none exists) — never silently
   deviate. A defect found → `defect` row (`DEF-`) before fixing; out-of-scope discovery
   → `deferred-work` row (`DW-`) with an activation trigger.
+- Genuine ambiguity is never assumed away: an `open-question` row (`OQ-`, owner +
+  due_by) and `[NEEDS-CLARIFICATION: OQ-NNN]` at the exact ambiguous spot.
+- A readiness rule failing on one item you cannot resolve: ask the operator for a
+  `WVR-` waiver — never author one yourself; `"force": true` only on their words.
 - Do **not** expand scope beyond Phase `PH-1`.
 - When in doubt about an approved decision, ask rather than re-deciding.
 

@@ -10,6 +10,55 @@ All notable changes to Tamheed are documented here. The format is based on
 
 ## [Unreleased]
 
+## [4.1.0] - 2026-08-14
+
+**MINOR — the prompt-surface completion (plan 032).** Closes the v4.0.0 teaching gaps
+found by the maintainer-requested prompt assessment, and fixes the diverged-wave
+problem at its root. No schema change, no migration.
+
+### Added
+
+- **Stock-history classification + safe refresh**: the bundle ships
+  `prompts/stock-history.json` — every stock prompt body ever released
+  (v3.0.0→v4.1.0, deduped, `{package}` placeholder intact). Every `diverged` stock
+  file is now classified: **`stale-stock`** (byte-equal to an older release's stock
+  after the substitution — the operator never customised it; reported with the release
+  it matches) vs **`customized`** (equals none). `handoff_emit(refresh_stock=true)`
+  safely overwrites ONLY stale-stock files (before the injection/stale screens);
+  customized files are never touched by refresh; `force` still overwrites ALL
+  diverged. This resolves the findings_14 "indistinguishable without history" gap at
+  its cause — the v3.2 warning now names each class and its safe path. Missing
+  history degrades to `customized` for everything (never a false stale-stock).
+- **`register-liveness.md`** — the 15th stock scenario: the playbook for the readiness
+  engine's amber list, walking all thirteen package-scope advisories (markers, overdue
+  and unresolved OQs, decaying assumptions, unowned high risks, unmeasurable
+  hypotheses, unpromoted architectural DECs, unmerged scope changes, unbound ACs,
+  minor defects, deferred-work triggers, unapproved plans, unwired requirements) with
+  operator STOPs for promotions, waivers, plan approvals, and activations.
+- **Teaching-surface lint (check.py lint 9)**: prompts + prompt templates may only
+  teach vocabulary the engine has — G-* gate names (mechanical roster imported from
+  the server + the judgment tier synced against `quality-gates.md`), `event_type`
+  values, relation kinds — with a retired-name blacklist (`binds_to`,
+  `milestones-reached`, the old `"status"` column key, `PRM-`, uppercase `PASS/FAIL`
+  verdict teaching); plus a stock-history currency check — a release that changes a
+  stock prompt without appending its body cannot ship. `GATE_NAMES` and
+  `PE_EVENT_TYPES` are tied to gate_run's real report keys and the DDL CHECK by
+  contract tests.
+
+### Fixed
+
+- **The three prompt-pattern templates were never swept for v4** (a 4.0.0 miss):
+  `initial-prompt`, `follow-up-prompts`, and `review-prompts` templates now teach the
+  v4 recording contract — the `Review` claim, the full evidence chain on
+  `audit_record`, the `[NEEDS-CLARIFICATION: OQ-NNN]` marker rule, the operator-only
+  `WVR-` waiver route, the SC- drift lifecycle with delta edges — and orient via
+  `entity_query`, not retired v1 file paths.
+- `defect-triage.md` taught the retired `"status"` column key in its upsert example
+  (the engine rejects it; now `lifecycle_status` — the class of bug lint 9 exists to
+  prevent).
+- `release-close-out.md` and `phase-close.md` now sweep `expired_waivers` (resolve the
+  underlying item, or fresh operator words — never a silent carry-over).
+
 ## [4.0.0] - 2026-08-14
 
 **MAJOR — the entity-model redesign (plan 031/B27).** Built on a full study of every

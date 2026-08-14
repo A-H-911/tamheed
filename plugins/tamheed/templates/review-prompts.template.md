@@ -14,7 +14,7 @@ owner: <name-or-role>
 ## Invariant audit
 
 Verify the current implementation honors the invariants `INV-001..INV-00n` listed in
-[invariant register](../requirements/invariant-register.md). For each: state whether it holds, and for any
+`entity_query("invariant")`. For each: state whether it holds, and for any
 violation give `file:line` and a proposed minimal fix. Do not make functional changes during the audit —
 produce a report only.
 
@@ -28,9 +28,12 @@ and the gate list). Report each **Critical** gate (`G-TRACE`, `G-COMPLETE`, `G-I
 ## PR review against acceptance criteria
 
 Review the changes in <PR / branch> against the acceptance criteria in
-[acceptance-criteria.md](../validation/acceptance-criteria.md) — running a code review (e.g. `/code-review`)
+`entity_query("acceptance-criterion")` — running a code review (e.g. `/code-review`)
 where available is a good way to do this. For each `AC-` the PR claims to satisfy:
-confirm it is met (cite the evidence/test), or flag it as not met. Also check:
+confirm it is met — record via `audit_record` with the full evidence chain (evidence,
+`verified_by`, `verification_method`, `against_commit`) — or record **Not-met honestly,
+never softened** (a Not-met that blocks is resolved, waived by the OPERATOR's `WVR-`, or
+carried loudly — not narrated away). Also check:
 - Invariants (`INV-`) not regressed.
 - NFR thresholds (`NFR-`) it touches still met.
 - No scope beyond the current phase (`PH-`); deviations captured as ADRs.
@@ -40,7 +43,8 @@ Output: a PASS/FAIL per `AC-`, a list of issues, and an approve / request-change
 
 ## Traceability audit
 
-Walk [traceability-matrix.md](../validation/traceability-matrix.md). Confirm every **MVP** `FR-/NFR-`
+Walk the coverage matrix in `review.html#traceability` (or `trace_query` per
+requirement). Confirm every **MVP** `FR-/NFR-`
 reaches >=1 decision, >=1 work item, and >=1 test, and that behavior-bearing ones reach an `AC-`. Report
 any `gap`/`partial` row and whether it is a real gap or a missing link. Backward check: list any `WBS-` or
 `TEST-` that traces to no requirement (possible gold-plating).

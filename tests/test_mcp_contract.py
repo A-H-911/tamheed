@@ -845,16 +845,17 @@ class McpContractTest(unittest.TestCase):
         self._emit_ready()
         with tempfile.TemporaryDirectory() as target:
             out = srv.handoff_emit(target)
-            self.assertEqual(len(out["prompt_library"]["unchanged"]), 15)  # from create
+            self.assertEqual(len(out["prompt_library"]["unchanged"]), 16)  # from create
             self.assertEqual(out["project_prompts"], ["kickoff.md"])  # README is stock
         lib = srv.PACKAGE_ROOT / "demo" / "prompts"
         stock = sorted(p.name for p in lib.glob("*.md") if p.name != "kickoff.md")
-        self.assertEqual(stock, [  # plan 027/028: guide + 14 scenarios, both styles
+        self.assertEqual(stock, [  # plans 027/028/032: guide + 15 scenarios, both styles
             "README.md", "defect-triage.md", "drift-register.md",
             "generate-report.md", "integrity-check.md", "loop-guard.md",
             "loop-iteration.md", "orient-resume.md", "package-onboarding.md",
-            "phase-close.md", "progress-sync.md", "release-close-out.md",
-            "replan-deferred.md", "slice-kickoff.md", "slice-review.md"])
+            "phase-close.md", "progress-sync.md", "register-liveness.md",
+            "release-close-out.md", "replan-deferred.md", "slice-kickoff.md",
+            "slice-review.md"])
         text = (lib / "orient-resume.md").read_text(encoding="utf-8")
         self.assertIn('package_open("demo")', text)      # {package} substituted
         self.assertNotIn("{package}", text)
@@ -1000,22 +1001,100 @@ class McpContractTest(unittest.TestCase):
             self.assertNotIn("verdicts are optional", after)
             self.assertIn("keep me", after)                    # outside markers: kept
 
-    def test_stock_divergence_warning_names_the_per_file_path(self):
-        """Plan 029 (C35/N2): diverged stock prompts get honest guidance — the two
-        divergence kinds are indistinguishable without history; delete+re-emit is the
-        per-file acceptance path; force stays all-or-nothing."""
+    def test_stock_divergence_classified_customized(self):
+        """Plan 032: the v3.2 'indistinguishable without history' era is over — a
+        hand edit matches no historical stock, classifies CUSTOMISED, and the warning
+        names the per-file acceptance path + force; refresh never touches it."""
         self._emit_ready()
         stock = srv.PACKAGE_ROOT / "demo" / "prompts" / "orient-resume.md"
-        stock.write_text(stock.read_text(encoding="utf-8") + "\ncustomised\n",
-                         encoding="utf-8")
+        edited = stock.read_text(encoding="utf-8") + "\ncustomised\n"
+        stock.write_text(edited, encoding="utf-8")
         with tempfile.TemporaryDirectory() as target:
-            out = srv.handoff_emit(target)
-            self.assertIn("prompts/orient-resume.md",
-                          out["prompt_library"]["diverged"])   # still refused
-            w = next(w for w in out["warnings"] if "stock prompt(s) differ" in w)
-            self.assertIn("indistinguishable without history", w)
+            out = srv.handoff_emit(target, refresh_stock=True)
+            lib = out["prompt_library"]
+            self.assertIn("prompts/orient-resume.md", lib["diverged"])
+            self.assertIn("prompts/orient-resume.md", lib["diverged_customized"])
+            self.assertEqual(lib["diverged_stale_stock"], [])
+            self.assertEqual(lib["refreshed"], [])
+            w = next(w for w in out["warnings"] if "CUSTOMISED" in w)
             self.assertIn("delete it and re-emit", w)
             self.assertIn("force=True overwrites ALL", w)
+        self.assertEqual(stock.read_text(encoding="utf-8"), edited)  # never touched
+
+    def test_stale_stock_classified_and_safely_refreshed(self):
+        """Plan 032: a package file byte-equal to an OLDER release's stock (with the
+        {package} substitution applied) classifies STALE-STOCK, names the release it
+        matches, and refresh_stock=true — and ONLY refresh — updates it; a plain emit
+        just reports it."""
+        self._emit_ready()
+        history = json.loads(
+            (REPO_ROOT / "plugins" / "tamheed" / "prompts" / "stock-history.json")
+            .read_text(encoding="utf-8"))
+        old_release, old_body = sorted(history["slice-kickoff.md"].items())[0]
+        stock = srv.PACKAGE_ROOT / "demo" / "prompts" / "slice-kickoff.md"
+        stock.write_text(old_body.replace("{package}", "demo"),
+                         encoding="utf-8", newline="\n")
+        with tempfile.TemporaryDirectory() as target:
+            out = srv.handoff_emit(target)                     # no refresh: report only
+            lib = out["prompt_library"]
+            self.assertEqual(lib["diverged_stale_stock"],
+                             [{"file": "prompts/slice-kickoff.md",
+                               "matches": old_release}])
+            self.assertIn("prompts/slice-kickoff.md", lib["diverged"])
+            self.assertTrue(any("STALE-STOCK" in w and "refresh_stock=true" in w
+                                for w in out["warnings"]))
+        with tempfile.TemporaryDirectory() as target:
+            out = srv.handoff_emit(target, refresh_stock=True)
+            lib = out["prompt_library"]
+            self.assertEqual(lib["refreshed"], ["prompts/slice-kickoff.md"])
+            self.assertNotIn("prompts/slice-kickoff.md", lib["diverged"])
+        current = (REPO_ROOT / "plugins" / "tamheed" / "prompts" /
+                   "slice-kickoff.md").read_text(encoding="utf-8")
+        self.assertEqual(stock.read_text(encoding="utf-8"),
+                         current.replace("{package}", "demo"))
+
+    def test_refresh_then_force_precedence(self):
+        """Plan 032: refresh handles stale-stock; force covers the customized
+        remainder — composable in one call, refresh never widening force's blast."""
+        self._emit_ready()
+        history = json.loads(
+            (REPO_ROOT / "plugins" / "tamheed" / "prompts" / "stock-history.json")
+            .read_text(encoding="utf-8"))
+        _, old_body = sorted(history["defect-triage.md"].items())[0]
+        stale = srv.PACKAGE_ROOT / "demo" / "prompts" / "defect-triage.md"
+        stale.write_text(old_body.replace("{package}", "demo"),
+                         encoding="utf-8", newline="\n")
+        custom = srv.PACKAGE_ROOT / "demo" / "prompts" / "orient-resume.md"
+        custom.write_text(custom.read_text(encoding="utf-8") + "\nmine\n",
+                          encoding="utf-8")
+        with tempfile.TemporaryDirectory() as target:
+            lib = srv.handoff_emit(target, refresh_stock=True,
+                                   force=True)["prompt_library"]
+        self.assertIn("prompts/orient-resume.md", lib["emitted"])   # force took it
+        self.assertIn("prompts/defect-triage.md",
+                      lib["refreshed"] + lib["emitted"])            # stale updated
+        self.assertNotIn("mine", custom.read_text(encoding="utf-8"))
+
+    def test_stock_history_missing_degrades_to_customized(self):
+        """No history file = every divergence reads customized — never a false
+        stale-stock, so refresh can never clobber."""
+        self._emit_ready()
+        stock = srv.PACKAGE_ROOT / "demo" / "prompts" / "orient-resume.md"
+        stock.write_text("anything\n", encoding="utf-8")
+        real = srv._PROMPTS_DIR
+        with tempfile.TemporaryDirectory() as empty, \
+                tempfile.TemporaryDirectory() as target:
+            for src in real.glob("*.md"):
+                (Path(empty) / src.name).write_text(
+                    src.read_text(encoding="utf-8"), encoding="utf-8")
+            srv._PROMPTS_DIR = Path(empty)     # library without stock-history.json
+            try:
+                lib = srv.handoff_emit(target, refresh_stock=True)["prompt_library"]
+            finally:
+                srv._PROMPTS_DIR = real
+        self.assertIn("prompts/orient-resume.md", lib["diverged_customized"])
+        self.assertEqual(lib["refreshed"], [])
+        self.assertEqual(stock.read_text(encoding="utf-8"), "anything\n")
 
     def test_stale_reference_report_is_precise(self):
         self._emit_ready()
@@ -1459,6 +1538,63 @@ class V4EngineTest(unittest.TestCase):
         gate = srv.gate_run()["gates"]["G-PROGRESS"]
         self.assertEqual(gate["status"], "pass")
         self.assertIn("vacuously", gate["warning"])
+
+    # ------------------------------------------------- plan 032 (teaching surface)
+
+    def test_gate_names_roster_matches_gate_run(self):
+        """GATE_NAMES (the teaching-lint roster) is tied to gate_run's ACTUAL G-*
+        report keys — the single-source promise is a test, not a comment."""
+        keys = {k for k in srv.gate_run()["gates"] if k.startswith("G-")}
+        self.assertEqual(keys, set(srv.GATE_NAMES))
+
+    def test_pe_event_types_roster_matches_ddl(self):
+        """Every PE_EVENT_TYPES value writes through the DDL CHECK; a bogus one is
+        rejected — the roster and the schema move together."""
+        for etype in sorted(srv.PE_EVENT_TYPES):
+            out = srv.progress_update([{"entry": f"tie-test {etype}",
+                                        "event_type": etype}])
+            self.assertTrue(out["ok"], (etype, out))
+        bad = srv.progress_update([{"entry": "x", "event_type": "not-a-type"}])
+        self.assertFalse(bad["ok"])
+
+    def test_register_liveness_prompt_teaches_the_amber_families(self):
+        """The liveness playbook names every package-scope advisory rule the engine
+        actually runs (enumerated from _readiness_report at plan time; this needle
+        keeps them from drifting apart)."""
+        text = (REPO_ROOT / "plugins" / "tamheed" / "prompts" /
+                "register-liveness.md").read_text(encoding="utf-8")
+        for rule_name in ("clarifications-open", "open-questions-overdue",
+                          "open-questions-resolved", "assumptions-current",
+                          "risk-liveness", "hypotheses-measurable",
+                          "decisions-look-architectural", "scope-changes-merged",
+                          "acs-slice-bound", "defects-minor",
+                          "deferred-work-reviewed", "execution-plans-approved",
+                          "requirements-wired"):
+            self.assertIn(rule_name, text, rule_name)
+        self.assertIn("STOP for operator approval", text)
+        self.assertIn("you NEVER author a `WVR-` row", text)
+
+    def test_templates_teach_v4_recording(self):
+        """Plan 032 (the 031 release miss): the three prompt-pattern templates teach
+        the v4 mechanisms — Review claim, evidence chain, marker rule, waiver route."""
+        tdir = REPO_ROOT / "plugins" / "tamheed" / "templates"
+        initial = (tdir / "initial-prompt.template.md").read_text(encoding="utf-8")
+        follow = (tdir / "follow-up-prompts.template.md").read_text(encoding="utf-8")
+        review = (tdir / "review-prompts.template.md").read_text(encoding="utf-8")
+        for text in (initial, follow):
+            self.assertIn("`Review`", text)
+            self.assertIn("against_commit", text)
+            self.assertIn("NEEDS-CLARIFICATION", text)
+            self.assertIn("WVR-", text)
+        self.assertIn("scope_adds", follow)
+        self.assertIn("against_commit", review)
+        self.assertIn("never softened", review)
+
+    def test_close_outs_sweep_expired_waivers(self):
+        for name in ("release-close-out.md", "phase-close.md"):
+            text = (REPO_ROOT / "plugins" / "tamheed" / "prompts" / name)\
+                .read_text(encoding="utf-8")
+            self.assertIn("expired_waivers", text, name)
 
 
 if __name__ == "__main__":

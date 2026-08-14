@@ -22,13 +22,17 @@ Close out the release against the `{package}` Tamheed package:
    - a rule that genuinely cannot be met this release → a `WVR-` waiver (rule +
      entity + justification + approver + expiry) on the operator's explicit words
      only; readiness reports it "waived", never silently.
-3. Advisory findings (open questions, deferred work, unapproved EPs): review each and
+3. **Expired waivers**: the readiness report lists `expired_waivers` — an expired
+   waiver no longer satisfies its rule. For each: prefer RESOLVING the underlying
+   item now; re-approval is a fresh operator-worded `WVR-` row (or a full-row
+   upsert with a new `expires`) — never a silent carry-over into the release.
+4. Advisory findings (the register-liveness prompt is the full playbook): review each and
    say what you decided — carrying one is legal, silence is not.
-4. `human_required` gates: read each `GATE-` definition to the operator, get the
+5. `human_required` gates: read each `GATE-` definition to the operator, get the
    explicit decision, upsert the gate row's `outcome` (Go/Hold/Redirect/Kill), and
    record it as a `progress_update` (event_type "gate-decision", subject_id the
    `GATE-` id).
-5. `gate_run()` must pass; `export_html()` — the review surface ships with the release.
-6. Release notes from `entity_query("progress-entry")` since the last release;
+6. `gate_run()` must pass; `export_html()` — the review surface ships with the release.
+7. Release notes from `entity_query("progress-entry")` since the last release;
    `work_bind` the release tag/commit to the phase and headline entities.
-7. `package_close()` and commit the package `data/` with the release.
+8. `package_close()` and commit the package `data/` with the release.

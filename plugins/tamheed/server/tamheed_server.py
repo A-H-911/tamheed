@@ -240,6 +240,16 @@ BASELINE_ENTITY_TYPES = [
     ("glossary-term", "Glossary term (extension example)", "GT-", "On-request"),
 ]
 
+# Taught-vocabulary rosters (plan 032): the single source the check.py teaching lint
+# imports — prompts/templates may only teach names that exist here. GATE_NAMES is
+# tied to gate_run's actual report keys by a contract test; PE_EVENT_TYPES to the DDL
+# CHECK by a write-through test.
+GATE_NAMES = frozenset({"G-IDS", "G-DEC-STATUS", "G-REQ-SRC", "G-TRACE", "G-SET",
+                        "G-PROGRESS", "G-COMPLETE", "G-REL"})
+PE_EVENT_TYPES = frozenset({"work-done", "verdict-recorded", "transition",
+                            "forced-override", "gate-decision", "escalation",
+                            "correction", "note"})
+
 # G-COMPLETE-style placeholder screen (content tier — stays outside the schema).
 _PLACEHOLDER_RE = re.compile(
     r"\bTODO\b|\bTBD\b|\bFIXME\b|<placeholder>|\{\{[^}]*\}\}|lorem ipsum", re.IGNORECASE
@@ -1346,15 +1356,55 @@ def _managed_emit(path: Path, content: str, force: bool = False) -> str:
     return "emitted"
 
 
-def _emit_prompt_library(pkg_dir: Path, name: str, force: bool = False) -> dict:
+def _load_stock_history() -> dict:
+    """The bundled roster of every stock body ever shipped ({package} intact) —
+    plan 032: the history that makes stock divergence classifiable. Missing file =
+    empty history (classification degrades to 'customized' for everything, never
+    a false stale-stock)."""
+    path = _PROMPTS_DIR / "stock-history.json"
+    if not path.exists():
+        return {}
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+def _emit_prompt_library(pkg_dir: Path, name: str, force: bool = False,
+                         refresh_stock: bool = False) -> dict:
     """Copy the bundled scenario prompts into <package>/prompts/ (C19; the library lives
-    with the package). Deterministic: static content, {package} substitution only."""
+    with the package). Deterministic: static content, {package} substitution only.
+
+    v4.1 (plan 032): every `diverged` stock file is subclassified against the bundled
+    stock history — `stale-stock` (byte-equals a HISTORICAL release's stock after the
+    {package} substitution: the operator never customised it; reported with the release
+    it matches) vs `customized` (equals none — a hand edit that byte-reproduces old
+    stock is a no-op revert and correctly reads stale-stock).
+    refresh_stock=True overwrites ONLY stale-stock files with current
+    stock (safe by construction — reported as `refreshed`, not diverged); customized
+    files are never touched by refresh; `force` still overwrites ALL diverged."""
     out_dir = pkg_dir / "prompts"
-    result: dict[str, list[str]] = {"emitted": [], "unchanged": [], "diverged": []}
+    result: dict[str, list] = {"emitted": [], "unchanged": [], "diverged": [],
+                               "diverged_stale_stock": [], "diverged_customized": [],
+                               "refreshed": []}
+    history = _load_stock_history()
     for src in sorted(_PROMPTS_DIR.glob("*.md")):
         text = src.read_text(encoding="utf-8").replace("{package}", name)
-        status = _managed_emit(out_dir / src.name, text, force=force)
-        result[status].append(f"prompts/{src.name}")
+        path = out_dir / src.name
+        status = _managed_emit(path, text, force=force)
+        rel = f"prompts/{src.name}"
+        if status == "diverged":
+            on_disk = path.read_text(encoding="utf-8")
+            matches = next(
+                (release for release, body in
+                 sorted(history.get(src.name, {}).items(), reverse=True)
+                 if body.replace("{package}", name) == on_disk), None)
+            if matches is not None and refresh_stock:
+                path.write_text(text, encoding="utf-8", newline="\n")
+                result["refreshed"].append(rel)
+                continue
+            if matches is not None:
+                result["diverged_stale_stock"].append({"file": rel, "matches": matches})
+            else:
+                result["diverged_customized"].append(rel)
+        result[status].append(rel)
     return result
 
 
@@ -1481,14 +1531,22 @@ _STALE_BLOCK_RE = re.compile(
 _NOTE_BLOCK_RE = re.compile(r"<!-- tamheed:note v\d+ -->.*?<!-- /tamheed:note -->", re.S)
 
 
-def handoff_emit(target_dir: str, subdir: str = "handoff", force: bool = False) -> dict:
+def handoff_emit(target_dir: str, subdir: str = "handoff", force: bool = False,
+                 refresh_stock: bool = False) -> dict:
     """Wire the target project to the package: .mcp.json (standalone installs) + the
     CLAUDE.md operating note. v3.0.0 (plan 027): prompts are NOT copied into the
     target — <package>/prompts/ is the single source (stock scenario library +
     project-authored kickoff prompts, all plain .md the operator reads and picks).
     Emission is blocked if the injection screen finds instruction-shaped text in any
     package prompt file. Reports stale v1 references AND restated register content
-    found in the target's CLAUDE.md/AGENTS.md."""
+    found in the target's CLAUDE.md/AGENTS.md.
+
+    v4.1 (plan 032): diverged stock prompts are classified against the bundled stock
+    history (`stale-stock` — byte-equal to an older release's stock, never customised
+    — vs `customized`). refresh_stock=True safely overwrites ONLY the stale-stock
+    files (runs before the injection/stale scans, so the screens see what is actually
+    on disk); `force` still overwrites ALL remaining diverged files — refresh first,
+    force covers the customized remainder."""
     if guard := _need_open():
         return guard
     target = Path(target_dir)
@@ -1498,7 +1556,8 @@ def handoff_emit(target_dir: str, subdir: str = "handoff", force: bool = False) 
         return _err("subdir removed in v3.0.0 — prompts live in <package>/prompts/ "
                     "and are no longer copied into the target")
     pkg_dir = PACKAGE_ROOT / _CURRENT_NAME
-    library = _emit_prompt_library(pkg_dir, _CURRENT_NAME, force=force)
+    library = _emit_prompt_library(pkg_dir, _CURRENT_NAME, force=force,
+                                   refresh_stock=refresh_stock)
     stock = {p.name for p in _PROMPTS_DIR.glob("*.md")}
     prompts_dir = pkg_dir / "prompts"
     prompt_files = sorted(prompts_dir.glob("*.md")) if prompts_dir.exists() else []
@@ -1543,15 +1602,23 @@ def handoff_emit(target_dir: str, subdir: str = "handoff", force: bool = False) 
         emit(mcp_cfg_path, json.dumps(cfg, indent=2) + "\n", ".mcp.json")
 
     warnings: list[str] = []
-    # Plan 029 (C35/N2): the two kinds of stock divergence — operator customisation vs
-    # a template that moved on — are indistinguishable without history; say so and name
-    # the zero-machinery per-file acceptance path instead of leaving force blunt-only.
-    if library["diverged"]:
+    # Plan 032: the v3.2 warning said the two kinds of stock divergence were
+    # "indistinguishable without history" — the bundled stock history now IS that
+    # history, so the warning names each class and its safe path.
+    if stale := library["diverged_stale_stock"]:
         warnings.append(
-            f"{len(library['diverged'])} stock prompt(s) differ from the current"
-            " template — your customisation or a template update (indistinguishable"
-            " without history); to accept the current template for ONE file, delete it"
-            " and re-emit; force=True overwrites ALL diverged stock files")
+            f"{len(stale)} stock prompt(s) are STALE-STOCK — byte-equal to an older"
+            " release's stock, never customised: re-run with refresh_stock=true to"
+            " update them safely (customised files are never touched by refresh)")
+    if custom := library["diverged_customized"]:
+        warnings.append(
+            f"{len(custom)} stock prompt(s) are CUSTOMISED — kept; to accept the"
+            " current template for ONE file, delete it and re-emit; force=True"
+            " overwrites ALL diverged stock files (customised included)")
+    if library["refreshed"]:
+        warnings.append(
+            f"{len(library['refreshed'])} stale-stock prompt(s) refreshed to the"
+            " current template (refresh_stock)")
     # v3.0.0: nothing is emitted into handoff/ anymore — leftover v2 copies actively
     # mislead. Plan 028 (C34 §2): the verdict is PER FILE, by content compare — a
     # blanket "delete" would have destroyed a live project prompt that existed nowhere

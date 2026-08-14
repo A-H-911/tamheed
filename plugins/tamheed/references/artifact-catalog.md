@@ -95,7 +95,7 @@ One `data/<table>.jsonl` file per non-empty family. Class = the registry's gener
 
 | Artifact | Location | Class | Notes |
 |---|---|---|---|
-| Prompt library | `<package>/prompts/*.md` | Always | 14 stock scenario prompts + README (managed emission: emitted/unchanged/diverged) + operator-authored project prompts |
+| Prompt library | `<package>/prompts/*.md` | Always | 15 stock scenario prompts + README (managed emission: emitted/unchanged/diverged, diverged classified stale-stock vs customized against the bundled stock history; refresh_stock safely updates stale-stock) + operator-authored project prompts |
 | Review surface | `<package>/review.html` (+ `csv/`) | Derived | `export_html` — deterministic, zero-JS, committed |
 | Agent-control note | executor repo `CLAUDE.md` (tool-owned marker span) | Derived | `handoff_emit` — carries the recording-obligations table |
 | Executor MCP config | executor repo `.mcp.json` | Derived | `handoff_emit` |

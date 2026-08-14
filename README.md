@@ -11,7 +11,7 @@
 <p align="center"><strong>Turn a project description into a validated, traceable, execution-ready planning &amp; handoff package for Claude Code to implement.</strong></p>
 
 <p align="center">
-  <em>Claude Code plugin + MCP-backed agent skill &middot; v4.0.0</em> &middot;
+  <em>Claude Code plugin + MCP-backed agent skill &middot; v4.1.0</em> &middot;
   <a href="#license">MIT</a> &middot;
   <a href="docs/install.md">Install</a> &middot;
   <a href="docs/migrate-from-keystone.md">Migrate from Keystone</a> &middot;
@@ -259,10 +259,12 @@ affected rows, then — after operator approval — the agent applies the change
 
 **Your package carries its own prompt library — and prompts are plain `.md` files, never database
 rows** (v3). `<package>/prompts/` is the single prompt surface, seeded at creation and refreshed by
-migration/adoption/handoff: **15 stock scenario prompts** covering both operator styles —
+migration/adoption/handoff: **16 stock files (15 scenario prompts + the operator README)**
+covering both operator styles —
 orientation (`orient-resume`, `package-onboarding`), execution (`slice-kickoff`, `progress-sync`,
 `defect-triage`, `drift-register`), close-outs (`slice-review`, `phase-close`,
-`release-close-out`), replanning (`replan-deferred`), audit/report (`integrity-check`,
+`release-close-out`), the advisory playbook (`register-liveness` — the amber-list
+sweep), replanning (`replan-deferred`), audit/report (`integrity-check`,
 `generate-report`), the fully-auto pair (`loop-iteration` + `loop-guard`, with a machine-parseable
 `ITERATION:` contract), and **`README.md`, the operator guide** (which prompt for which situation,
 semi-auto vs fully-auto, the single-writer-lock discipline). Your own project prompts live beside
@@ -421,7 +423,7 @@ See [`CONTRIBUTING.md`](CONTRIBUTING.md) and
 
 ## Maturity
 
-**v4.x** (currently v4.0.0). The methodology (22 stages), the re-baselined relational store (plan 031:
+**v4.x** (currently v4.1.0). The methodology (22 stages), the re-baselined relational store (plan 031:
 claimed-vs-verified `Review`, evidence-chained verdicts, `WVR-` waivers, severity-thresholded blocking,
 typed progress events, drift-delta scope changes, blocking G-REL, `[NEEDS-CLARIFICATION]` markers), the
 MCP tool surface, the canonical serialization, and the in-place migration path (v2/v3

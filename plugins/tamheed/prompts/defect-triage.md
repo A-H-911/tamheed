@@ -10,7 +10,7 @@ BEFORE the fix, so the record survives even if the session dies mid-repair:
 1. `package_open("{package}")` if not already open.
 2. Reproduce the symptom as a minimal failing test — no fix yet.
 3. Register it: `entity_upsert([{"type": "defect", "id": "DEF-<next>", "title":
-   "<symptom>", "severity": "critical|high|medium|low", "status": "Open",
+   "<symptom>", "severity": "critical|high|medium|low", "lifecycle_status": "Open",
    "found_in": "<PH-x or SL-x>"}])` — full row; check the next free id with
    `entity_query("defect")`. Severity is honest impact: critical/high BLOCK
    readiness, medium/low only surface as the defects-minor advisory — never pick a

@@ -180,6 +180,62 @@ def gate_lint() -> None:
                  " READMEs are updated with every release (plan 030)")
     print(f"lint: all 3 READMEs carry v{plugin_ver}")
 
+    # 9) the teaching surface (plan 032): prompts/templates may only teach vocabulary
+    #    the engine has, and the stock history must be CURRENT — a release that
+    #    changes a stock prompt without appending its body cannot ship.
+    prompts_dir = REPO / "plugins" / "tamheed" / "prompts"
+    history = json.loads((prompts_dir / "stock-history.json").read_text(encoding="utf-8"))
+    stale_hist = [p.name for p in sorted(prompts_dir.glob("*.md"))
+                  if p.read_text(encoding="utf-8")
+                  not in history.get(p.name, {}).values()]
+    if stale_hist:
+        fail(f"stock-history.json is missing the CURRENT body of: {stale_hist} — "
+             "append each changed stock prompt's body under the release version"
+             " (plan 032: the history is what makes divergence classifiable)")
+    print(f"lint: stock history current ({len(history)} files,"
+          f" {sum(len(v) for v in history.values())} bodies)")
+
+    teaching = {f"prompts/{p.name}": (REPO / "plugins" / "tamheed" / "prompts" / p.name)
+                .read_text(encoding="utf-8")
+                for p in sorted(prompts_dir.glob("*.md"))}
+    for tpl in ("initial-prompt", "follow-up-prompts", "review-prompts",
+                "agent-control"):
+        rel = f"templates/{tpl}.template.md"
+        teaching[rel] = (REPO / "plugins" / "tamheed" / rel).read_text(encoding="utf-8")
+    relations = set(srv.RELATION_RULES) | {"relates_to"}
+    # Judgment-tier gates have no engine constant (they are the skill's judgment, not
+    # code) — prose-defined in references/quality-gates.md; the sync check below keeps
+    # this set honest (the two-surface doctrine).
+    judgment_gates = {"G-INJECT", "G-CONFLICT", "G-EXEC", "G-HANDOFF", "G-OQ"}
+    qg = (refs / "quality-gates.md").read_text(encoding="utf-8")
+    if missing_qg := sorted(g for g in judgment_gates if g not in qg):
+        fail(f"judgment gate(s) {missing_qg} not defined in references/quality-gates.md"
+             " — the lint roster and the gate doc move together")
+    # (name, applies-to-templates-too, pattern-is-regex)
+    blacklist = [("binds_to", True), ("milestones-reached", True),
+                 ('"status":', True), ("PRM-", True), ("PASS/FAIL", False)]
+    problems = []
+    for rel, text in teaching.items():
+        for tok in set(re.findall(r"\bG-[A-Z][A-Z-]+\b", text)):
+            if tok.rstrip("-") not in srv.GATE_NAMES | judgment_gates:
+                problems.append(f"{rel}: unknown gate {tok!r}")
+        for line in text.splitlines():
+            if "event_type" in line:
+                for tok in re.findall(r"[\"'`]([a-z][a-z-]+)[\"'`]", line):
+                    if tok in {"event-type", "event_type"}:
+                        continue
+                    if "-" in tok and tok not in srv.PE_EVENT_TYPES:
+                        problems.append(f"{rel}: unknown event_type {tok!r}")
+        for tok in set(re.findall(r"`(scope_[a-z_]+)`?", text)):
+            if tok not in relations:
+                problems.append(f"{rel}: unknown relation {tok!r}")
+        for name, everywhere in blacklist:
+            if (everywhere or rel.startswith("prompts/")) and name in text:
+                problems.append(f"{rel}: retired/wrong vocabulary {name!r}")
+    if problems:
+        fail("teaching-surface vocabulary drift (plan 032):\n  " + "\n  ".join(problems))
+    print(f"lint: teaching surface ({len(teaching)} files) speaks only engine vocabulary")
+
 
 def gate_canonical() -> None:
     sys.path.insert(0, str(REPO / "plugins" / "tamheed" / "db"))

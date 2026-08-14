@@ -19,20 +19,26 @@ owner: <name-or-role>
 
 Phase `PH-1` is complete and approved; its exit criteria were: <restate PH-1 exit criteria>.
 
-**Invariants still in force:** `INV-001..INV-00n` (see [invariant register](../requirements/invariant-register.md)).
+**Invariants still in force:** `INV-001..INV-00n` (`entity_query("invariant")`).
 
-**Goal of `PH-2`:** <phase goal> (see [roadmap](../planning/roadmap.md)).
+**Goal of `PH-2`:** <phase goal> (`entity_query("phase", id="PH-2")`).
 
 **Tasks (bounded; PASS/FAIL each) — work acceptance-criteria-first (failing test → implement → repeat):**
 1. <task> — PASS = <observable>; FAIL = <observable>. Traces to `WBS-2.x`, `AC-0xx`.
 2. <task> — PASS = <…>; FAIL = <…>.
 
-**Before the exit gate — record through the tools (v3):** `audit_record` (verdict + evidence
-per `AC-`), `progress_update` (what actually happened), `work_bind` per commit, then
+**Before the exit gate — record through the tools (v4):** `audit_record` per `AC-` with the
+full evidence chain (evidence + `verified_by` + `verification_method` + `against_commit`),
+`progress_update` typed (`work-done`, `subject_id`, your `actor` string), `work_bind` per
+commit, finished work claimed as **`Review`** (Implemented = verified, guarded), then
 `gate_run()` and `readiness_check("phase", "PH-2")` — resolve every blocking failure.
 
 **Exit gate:** <the PH-2 exit criteria>. When met, **STOP** and request review before `PH-3`.
-Any deviation: `scope-change` row FIRST (`decision_ref` → the deciding `DEC-`/`ADR-`).
+Any deviation: `scope-change` row FIRST (`decision_ref` → the deciding `DEC-`/`ADR-`,
+delta edges `scope_adds`/`scope_modifies`/`scope_removes` naming the affected rows;
+after approval apply the changes and set the `SC-` to Merged). Ambiguity: an `OQ-`
+(owner + due_by) + `[NEEDS-CLARIFICATION: OQ-NNN]` in place — never assume. A stubborn
+readiness failure: ask the operator for a `WVR-` waiver — never self-authored.
 
 ### → Enter Phase `PH-3` — <phase title>
 
@@ -89,7 +95,7 @@ with `decision_ref` pointing at it. STOP for approval before implementing.
 readiness. The report is generated, never hand-maintained.
 
 ### Acceptance audit (at each phase gate)
-`audit_record` a verdict (Met / Partial / Not-met / Pending) with evidence
+`audit_record` a verdict (Met / Partial / Not-met / Pending) with the evidence chain
 (`TEST-`/commit/CI/golden) for every `AC-` this phase covers. Call out Partial/Not-met
 honestly with a reason — never rubber-stamp (gate G-PROGRESS checks coverage; verdicts
 APPEND — corrections are new rows, and only the latest counts).
@@ -107,7 +113,8 @@ deciding `DEC-`/`HYP-`. Pause for review before acting on the result.
 
 ### Defect log
 For a reported bug: reproduce it as a minimal failing test, **`entity_upsert` the `defect`
-row (`DEF-`, status Open, `found_in` the phase/slice) BEFORE fixing**, fix to green,
+row (`DEF-`, lifecycle_status Open, honest severity, `found_in` the phase/slice) BEFORE
+fixing**, fix to green,
 `work_bind` the fix commit to the `DEF-` and affected `AC-`, and flip the DEF- status.
 (The emitted `<package>/prompts/defect-triage.md` is the full version of this.)
 

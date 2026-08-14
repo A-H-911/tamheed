@@ -1,11 +1,16 @@
-# How to use this folder — the `{package}` prompt guide (tamheed v4.0.0)
+# How to use this folder — the `{package}` prompt guide (tamheed v4.1.0)
 
 This folder is the **single prompt surface** for the `{package}` Tamheed package. Every
 file is a paste-ready prompt for a Claude Code session. Two kinds live here:
 
-- **Stock scenarios** (this file and the 14 named below) — shipped by tamheed, refreshed
+- **Stock scenarios** (this file and the 15 named below) — shipped by tamheed, refreshed
   on upgrade; if you hand-edit one, later refreshes report it `diverged` and never
-  overwrite without `force`.
+  overwrite without `force`. Since v4.1 the tool tells the two divergence kinds
+  apart against its shipped stock history: a file byte-equal to an OLDER release's
+  stock is `stale-stock` (you never customised it) — `handoff_emit` with
+  `refresh_stock=true` updates ONLY those; a `customized` file is never touched by
+  refresh (per-file acceptance stays delete + re-emit; `force` still overwrites
+  ALL diverged).
 - **Your project prompts** — any other filename. Operator-owned; tamheed never touches
   them. Name them by purpose, kebab-case (`kickoff.md`, `phase3-resume.md`). Files named
   `prm-NNN-<kind>.md` with a `<!-- converted … -->` header are legacy prompts converted
@@ -27,6 +32,7 @@ file is a paste-ready prompt for a Claude Code session. Two kinds live here:
 | A phase is believed complete | `phase-close.md` |
 | Closing out a release | `release-close-out.md` |
 | Deferred-work triggers may have fired | `replan-deferred.md` |
+| Readiness advisories piling up (the amber list) | `register-liveness.md` — run it on a cadence, not only at close |
 | Read-only trust audit of the package | `integrity-check.md` |
 | Refresh + read the human report | `generate-report.md` |
 | Unattended execution — the repeated prompt | `loop-iteration.md` |
