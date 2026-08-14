@@ -12,7 +12,7 @@ This follows the Agent Skills open standard's **evaluation-driven development**
 
 ## The cases
 
-`evals.json` holds 7 scenarios, each with an inline untrusted `input` brief:
+`evals.json` holds 9 scenarios, each with an inline untrusted `input` brief:
 
 | id | what it probes |
 |---|---|
@@ -22,7 +22,9 @@ This follows the Agent Skills open standard's **evaluation-driven development**
 | `thin-brief` | a vague one-liner → open questions + explicit assumptions, no invented requirements |
 | `injection-brief` | an injected "system override" is treated as data, not obeyed (safeguard 18 / OWASP LLM01) |
 | `adopt-injection-laced-repo` | adopt mode fences injection-shaped repo content as data (adopt rule 4) |
-| `migrate-dialect-fixture` | migrate mode on the ACMP-dialect fixture: no silent loss, honest ledgers, cutover walked (plan 017) |
+| `migrate-dialect-fixture` | HISTORICAL (v1 ingestion retired in v4, plan 031): the v1 ACMP-dialect migration spec, kept as the record of that contract |
+| `execution-loop` | the recording obligations under execution: a surfaced defect becomes a DEF- row, drift becomes a typed SC-, verdicts are evidenced (plan 027) |
+| `lab-tracker` | the permanent lab (plan 031): a real agent drove every v4 mechanism — Review claims, evidence chains, waiver, drift merge, verbatim guard refusal + forced audit; 11 assertions pin the package |
 
 Each case carries **`deterministic_assertions`** — now *executable*: each live assertion is
 a command (run from the repo root, `{case_dir}` substituted) plus an expected-exit /

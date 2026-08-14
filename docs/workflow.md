@@ -65,7 +65,8 @@ final readiness go/no-go from the gate report.
 
 Everything Tamheed produces carries a status, so a reader always knows how much weight it bears. In v2
 the status is **three-axis** (ADR-0001): `lifecycle_status` (the flow below), `verdict` (Met/Not-met,
-PASS/FAIL — outcomes, not lifecycle), and `disposition` (superseded / accepted-with-deviation / void —
+Validated/Invalidated/Inconclusive for experiments, Pass/Fail for tests, Met/Partial/Not-met
+for audits — outcomes, not lifecycle), and `disposition` (superseded / accepted-with-deviation / void —
 always with the deciding decision reference).
 
 **Documents and register rows** move through:
@@ -141,7 +142,7 @@ does not replace it. Gate IDs reference [`../plugins/tamheed/references/quality-
 | 10 | Architecture exploration | Explore candidate architectures/components; name decision points; draft diagrams | Architecture draft + diagrams | Architecture covers all MVP requirements |
 | 11 | Option comparison | Compare options on **explicit weighted criteria**; keep losers | Technology-comparison matrices | Criteria stated before scoring; claims cited or `unverified` |
 | 12 | Hypothesis definition | State falsifiable hypotheses with confirm/refute signals | Hypothesis register (`HYP-`) | Each blocking unknown has a hypothesis or a decision |
-| 13 | POC & experiment planning | Plan minimal experiments/POCs with PASS/FAIL + timebox | `EXP-`/`POC-` plans | Approve experiment budget for costly POCs ✅ |
+| 13 | POC & experiment planning | Plan minimal experiments/POCs with a threshold decided BEFORE the run + timebox | `EXP-`/`POC-` plans | Approve experiment budget for costly POCs ✅ |
 | 14 | Decision capture | Record decisions with status, rationale, alternatives, consequences; promote to ADRs | `decision` + `adr` rows (promotion link recorded) | G-DEC-STATUS enforced at write time; approve key decisions ✅; losers retained |
 | 15 | Risk analysis | Enumerate + score risks; write mitigations; tag MVP/Full | Risk register (`RISK-`) | G-RISK; confirm risk appetite ✅ |
 

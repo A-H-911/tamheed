@@ -107,7 +107,7 @@ options stay on record as evidence. Significant, hard-to-reverse choices are pro
 
 **Uncertainty-proportional R&D.** Research and experimentation are sized to *genuine* uncertainty, not to a
 fixed template. A blocking unknown gets a falsifiable hypothesis and a minimal experiment or POC with
-explicit PASS/FAIL criteria and a timebox; a well-understood area gets none.
+an explicit metric + threshold (decided before the run) and a timebox; a well-understood area gets none.
 
 **Gated, testable planning.** The plan is a phased roadmap where each phase has a goal, scope, deliverables,
 a validation method, its risks, and explicit exit criteria; the work breakdown decomposes until leaf items
@@ -210,7 +210,7 @@ Research is planned in proportion to risk ([`../plugins/tamheed/references/resea
 targeting the riskiest unknowns first and timeboxing to avoid unbounded investigation. The chain is
 deliberate: an unknown that blocks a decision becomes a **falsifiable hypothesis** (`HYP-`) with the signal
 that would confirm or refute it; that hypothesis gets a **minimal experiment or POC** (`EXP-`/`POC-`) with
-explicit PASS/FAIL criteria and a timebox; the result feeds **decision capture**. Findings live in
+an explicit metric + threshold and a timebox; the Validated/Invalidated/Inconclusive verdict feeds **decision capture**. Findings live in
 `research/` and never silently become decisions — a finding becomes a decision only through an explicit
 decision row (safeguard 6). An evaluation/comparison framework with weighted criteria governs how options and
 experiment outcomes are judged.
@@ -251,7 +251,7 @@ is what ships; the left column is the recurring practice it generalizes.
 | Recording "we are assuming X because the answer isn't available yet" | **Assumption register** (`ASM-`) with `risk_if_wrong`; the control for proceeding without an answer (safeguard 2) |
 | ADRs written for the significant, hard-to-reverse choices | **ADR mechanism** (`ADR-NNNN`), immutable-after-approval, with `DEC-`→ADR promotion recorded |
 | Comparing tools/approaches in a weighted table before choosing | **Technology-comparison matrices** with explicit weighted criteria stated before scoring; losers retained |
-| Spiking risky unknowns with small throwaway experiments | **Hypothesis → experiment/POC** chain (`HYP-`/`EXP-`/`POC-`) with PASS/FAIL + timebox, sized to genuine uncertainty |
+| Spiking risky unknowns with small throwaway experiments | **Hypothesis → experiment/POC** chain (`HYP-`/`EXP-`/`POC-`) with threshold-before-run + timebox, sized to genuine uncertainty |
 | A phased plan where each phase had to "finish" before the next | **Phased roadmap** (`PH-`) with per-phase exit criteria + gated **work breakdown** (`WBS-`) |
 | A risk list with impact, likelihood, and what we'd do about it | **Risk register** (`RISK-`) with impact·likelihood scoring, mitigations, triggers, and MVP/Full tagging |
 | A spreadsheet linking requirements to where they were satisfied and tested | **Typed trace edges** queried live (`trace_query`); the matrix is a derived view in `review.html`, never a stored snapshot |
