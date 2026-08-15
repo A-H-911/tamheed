@@ -55,6 +55,9 @@ lessons reach the executor's always-loaded note).
 
 Deep stakeholder analysis, cost/budget models, deployment/data-flow diagrams beyond MVP,
 code-of-conduct, governance charter beyond the baseline, marketing/positioning material.
+**Skills** (`SKL-`) are On-request in the strictest sense: created only by the operator's
+promotion interview (the `skill-promote` prompt) distilling Approved lessons — never by a loop
+or on the agent's initiative.
 
 ## Right-sizing (field evidence, 2026-07-17)
 

@@ -55,7 +55,7 @@ class ExportHtmlTest(unittest.TestCase):
             {"type": "lesson", "id": "LL-002", "title": "evidence chain",
              "statement": "every done-claim carries its evidence",
              "kind": "sustain", "lifecycle_status": "Approved", "pinned": 1,
-             "confirmed_by": "operator:test",
+             "confirmed_by": "operator:test", "operator_confirm": True,
              "impact_if_followed": "verifiable history",
              "impact_if_ignored": "narrated verdicts"}])
         self.assertTrue(out["ok"], out)

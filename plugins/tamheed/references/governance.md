@@ -45,6 +45,7 @@ reused (retire, don't recycle). Every entity lives in its `data/<table>.jsonl` f
 | Diagram | `DIA-NNN` | diagrams |
 | Glossary term | `GT-NNN` | glossary_terms |
 | Lesson | `LL-NNN` | lessons |
+| Skill | `SKL-NNN` | skills |
 
 Retired prefixes: `PRM-` (v3 — prompts became files under `<package>/prompts/`; ids of that
 shape in a converted package are conversion-audit provenance, not entities).
@@ -91,13 +92,29 @@ Draft → Proposed → Approved → Implemented
 Implemented — `Draft` is unrepresentable on a decision row (CHECK-enforced). Never render a
 Proposed decision as if Approved — this is a core safeguard.
 
-**Lesson statuses** (v4.3) are exactly: Proposed, Approved, Rejected, Superseded, Obsolete —
-no Draft (a lesson is born Proposed, awaiting the operator's interview) and no Deferred
-(an undecided lesson keeps nagging via the `lessons-confirmed` advisory; Rejected is the
-decided-no, kept as evidence). **Only operator-Approved lessons bind future sessions**
-(rendered into the CLAUDE.md note, pinned lessons always). Approved lesson CONTENT is
-immutable — supersede, never edit; `pinned`, the lifecycle transition, and `superseded_by`
-stay operator-mutable (curation and closure are not content edits).
+**Lesson statuses** (v4.3, extended v4.4) are exactly: Proposed, Approved, **Promoted**,
+Rejected, Superseded, Obsolete — no Draft (a lesson is born Proposed, awaiting the
+operator's interview) and no Deferred (an undecided lesson keeps nagging via the
+`lessons-confirmed` advisory; Rejected is the decided-no, kept as evidence). **Only
+operator-Approved lessons bind future sessions** (rendered into the CLAUDE.md note, pinned
+lessons always), and **landing a lesson in Approved or Promoted — from any state,
+including birth — requires the operator's words**, mechanically: `entity_upsert` refuses
+without `"operator_confirm": true` (the flag is operator-words-only, the `force`
+doctrine), refuses any content drift on the transition (approval/promotion is not an
+edit), and requires `confirmed_by` WITH the approval (attribution can never be added
+later); the server appends the typed `lesson-confirmed`/`lesson-promoted` journal event
+itself. Approved/Promoted lesson CONTENT is immutable — supersede, never edit; `pinned`,
+lifecycle transitions, and `superseded_by` stay operator-mutable. **Promoted** (v4.4) =
+distilled into a skill: Approved → Promoted only, `promoted_to` names the `SKL-` row
+(frozen once Promoted), and the lesson leaves the CLAUDE.md note render (full graduation
+— the skill file carries the content forward).
+
+**Skill statuses** (v4.4) are exactly: Approved, Superseded, Obsolete — born Approved out
+of the operator's promotion interview (the interview IS the approval; a domain lifecycle).
+A skill row is METADATA + provenance (name, trigger description, level project|user,
+target path); the BODY lives solely in the written `SKILL.md` file, operator-owned after
+creation — the server never writes or reads skill files. A re-distilled skill supersedes
+its predecessor (`superseded_by`).
 
 **Domain lifecycles** (same column name, domain vocabularies — CHECK-enforced):
 

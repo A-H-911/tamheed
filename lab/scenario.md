@@ -62,5 +62,26 @@ must fire; the resulting package replaces `evals/sample-results/lab-tracker/pack
       section with the pinned lesson; the Proposed one does NOT render.
     ✔ `export_html`; `package_close`; the updated package replaces the fixture.
 
+11. **The promotion continuation (v4.4.0, plan 036)** — another INCREMENTAL session
+    against the recorded package (it predates the `skill` type, so the second staged
+    registry-sync fires under a real agent):
+    ✔ `package_migrate` preview reports `entity_types_added: ["skill"]` → operator
+      words → confirm.
+    ✔ THE GUARD FIRES: an approving upsert of the still-Proposed LL-002 WITHOUT
+      `operator_confirm` is REFUSED verbatim (the never-auto-confirm doctrine,
+      mechanical) — record the refusal text.
+    ✔ The skill-promote interview (scripted operator words): cluster = LL-001 (the
+      pinned boundary-semantics lesson); name `boundary-semantics`; the LEVEL
+      question asked — the operator takes the DEFAULT (project); the pinned warning
+      given ("it will leave the note — full graduation"); content approved.
+    ✔ The agent writes `.claude/skills/boundary-semantics/SKILL.md` into the lab
+      target workspace (frontmatter name + description; body cites LL-001).
+    ✔ SKL-001 row (born Approved, level project) + LL-001 → Promoted with
+      `promoted_to` and the flag; the server's `lesson-promoted` event appears.
+    ✔ Re-emit: LL-001 leaves the note; the "Skills distilled from lessons:
+      `boundary-semantics` [project]" line appears; LL-002 stays Proposed
+      (`lessons-confirmed` keeps nagging — by design).
+    ✔ `export_html`; `gate_run` ready; `package_close`; the fixture updated.
+
 **Pass bar:** every ✔ observed; `gate_run` ready (or failing ONLY on deliberately-open
 items the scenario names); the eval runner's lab checks green.

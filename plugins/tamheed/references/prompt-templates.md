@@ -48,7 +48,7 @@ the quality gates against the current repo"), and PR review against acceptance c
 
 ## The stock scenario library (plan 018, grown in plan 027)
 
-Distinct from the project prompts above: sixteen files — fifteen ready-to-paste operator scenario
+Distinct from the project prompts above: seventeen files — sixteen ready-to-paste operator scenario
 prompts plus the folder README — ship in the bundle (`../prompts/`) and are emitted verbatim (only
 `{package}` substituted) into `<package>/prompts/` by `package_create`, `package_migrate`,
 `package_adopt`, and `handoff_emit`. The authoritative per-file guide is the emitted
@@ -66,6 +66,7 @@ prompts plus the folder README — ship in the bundle (`../prompts/`) and are em
 | `phase-close.md` | Phase exit: phase-scope readiness blocking-clean, milestones, human GATE- confirmations, the guarded transition |
 | `release-close-out.md` | Package-scope readiness blocking-clean, human gates recorded, export, notes, close |
 | `replan-deferred.md` | Deferred-work triggers review: SC- first, activate, wire edges, STOP on new scope |
+| `skill-promote.md` | Operator-run promotion interview: cluster Approved lessons → name/trigger/edge-cases/level → operator approves content → write the `SKILL.md` → `SKL-` row + `Promoted` flips (`operator_confirm`) |
 | `register-liveness.md` | Readiness advisories piling up — the amber-list sweep, run on a cadence |
 | `integrity-check.md` | Read-only audit: gates, counts, trace spot-checks, narrated verdicts, staleness + unbound commits |
 | `generate-report.md` | Export + how to read `review.html` (nav, folded tables, freshness) |

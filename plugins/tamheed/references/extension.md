@@ -5,7 +5,8 @@ logic**. Everything below is additive: register an entry, drop in a migration; d
 workflow. The biggest case (a whole new artifact family) starts a **new migration-chain entry** on
 the v4 baseline — `../db/migrations/002_lessons.sql` (the lessons family, plan 035) is the LIVE
 worked example of exactly this chain: table + trigger pair + immutability trigger + a relation-CHECK
-extension, registered end to end. `glossary_terms` (itself a baseline table since v4) remains the
+extension, registered end to end; `../db/migrations/003_skills.sql` (the skill family + the lesson
+`Promoted` state, plan 036) continues the same chain. `glossary_terms` (itself a baseline table since v4) remains the
 worked example of the SHAPE: the table + trigger pair + the two registry entries — the contributor
 walkthrough in the repo's contributing guide retraces it step by step.
 
@@ -24,7 +25,7 @@ governance rule.
 | New artifact family (entity type) | An append-only DDL migration (the table — TEXT PK in the governed ID scheme, `custom_attributes` + `last_referenced` columns — plus the `entity_index` trigger pair) **and the two in-code registry entries**: `ENTITY_TABLES` (tool routing) + `BASELINE_ENTITY_TYPES` (the registry row seeded at `package_create`: type id, label, ID prefix, generation class). The viewer renders the new family automatically (its Registers section iterates `ENTITY_TABLES`); `check.py`'s lint gate fails until registry ↔ table map ↔ DDL agree. Add a catalog row + a selection trigger for the prose surfaces. | `../db/migrations/NNN_*.sql`, `../server/tamheed_server.py`, `artifact-catalog.md`, `artifact-rules.md` |
 | New attribute on an existing family | Prefer `custom_attributes` (JSON) for experiments; promote to a real column via a migration once proven. | `../db/migrations/` |
 | New section template | Add a `.template.md`; reference it from the catalog. | `../templates/` |
-| New scenario prompt (emitted library) | Add a `.md` beside the existing fifteen; `{package}` is the only substitution; it is emitted into `<package>/prompts/` by migrate/adopt/handoff automatically. | `../prompts/` |
+| New scenario prompt (emitted library) | Add a `.md` beside the existing sixteen; `{package}` is the only substitution; it is emitted into `<package>/prompts/` by migrate/adopt/handoff automatically. | `../prompts/` |
 | New quality gate | Coverage tier: a SQL view (via a migration) + a `gate_run` row. Content tier: a scan/judgment rule. Referential tier: a constraint in a migration. | `../db/migrations/`, `quality-gates.md`, `../server/tamheed_server.py` |
 | New project-type profile | Add a profile that biases selection + research depth (the `packages.profile` CHECK gains the value via a migration). | `artifact-rules.md`, `research-depth.md`, `../db/migrations/` |
 | New diagram kind | Extend the `diagrams.kind` CHECK via a migration + a generation note. | `../db/migrations/`, `generated-structure.md` |

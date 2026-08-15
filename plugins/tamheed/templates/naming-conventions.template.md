@@ -51,6 +51,7 @@ owner: <name-or-role>
 | Diagram | `DIA-NNN` | DIA-001 |
 | Glossary term | `GT-NNN` | GT-001 |
 | Lesson | `LL-NNN` | LL-001 |
+| Skill | `SKL-NNN` | SKL-001 |
 
 `DEC` vs `ADR`: use `DEC-` for ANY decision; **promote** to `ADR-NNNN` when the one-way-door
 test says so (hard to reverse, broad blast radius), and record the promotion

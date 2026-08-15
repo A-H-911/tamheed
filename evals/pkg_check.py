@@ -77,6 +77,22 @@ def cmd_nonempty(args) -> int:
     return 0
 
 
+def cmd_nonempty_any(args) -> int:
+    # Plan 036 (the lab's second eval-spec catch): "the interview happened" must be
+    # assertable as EVIDENCE that survives lifecycle graduation — at least one row
+    # carries the column, regardless of state — where `nonempty` (every row) and
+    # `count --col` (exact value) both misfire on conformant fixtures.
+    rows = _rows(args.package, args.type)
+    hits = [str(r.get("id")) for r in rows
+            if str(r.get(args.column) or "").strip()]
+    if hits:
+        print(f"{len(hits)} row(s) carry a non-empty {args.column}:"
+              f" {', '.join(hits)}")
+        return 0
+    print(f"no {args.type} row carries a non-empty {args.column}")
+    return 1
+
+
 def _grep(args, want_present: bool) -> int:
     data = Path(args.package) / "data"
     if not data.is_dir():
@@ -133,10 +149,15 @@ def main(argv: list[str] | None = None) -> int:
     p.set_defaults(fn=cmd_count)
 
     p = sub.add_parser("nonempty", help="every row carries a non-empty column")
+    p.add_argument("package"); p.add_argument("type"); p.add_argument("column")
+    p.set_defaults(fn=cmd_nonempty)
+    p = sub.add_parser("nonempty-any",
+                       help=">=1 row carries a non-empty column (survives"
+                            " lifecycle graduation)")
     p.add_argument("package")
     p.add_argument("type")
     p.add_argument("column")
-    p.set_defaults(fn=cmd_nonempty)
+    p.set_defaults(fn=cmd_nonempty_any)
 
     for name, present in (("grep-absent", False), ("grep-present", True)):
         p = sub.add_parser(name, help=f"substring must be {'present' if present else 'absent'}"

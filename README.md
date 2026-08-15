@@ -11,7 +11,7 @@
 <p align="center"><strong>Turn a project description into a validated, traceable, execution-ready planning &amp; handoff package for Claude Code to implement.</strong></p>
 
 <p align="center">
-  <em>Claude Code plugin + MCP-backed agent skill &middot; v4.3.0</em> &middot;
+  <em>Claude Code plugin + MCP-backed agent skill &middot; v4.4.0</em> &middot;
   <a href="#license">MIT</a> &middot;
   <a href="docs/install.md">Install</a> &middot;
   <a href="docs/migrate-from-keystone.md">Migrate from Keystone</a> &middot;
@@ -252,16 +252,21 @@ affected rows, then — after operator approval — the agent applies the change
 also feeds a **lessons-learned register**: `LL-` rows (both polarities — *improve* and *sustain*) born
 `Proposed` by the executing agent and confirmed by the operator, with **only Approved lessons** rendered
 into the always-loaded `CLAUDE.md` note (pinned lessons first, unpinned capped, the rest one
-`entity_query` away).
+`entity_query` away). A lesson can never confirm itself: the write that lands one in Approved or
+Promoted is mechanically refused unless it carries the operator's explicit `operator_confirm` — the
+`force` doctrine applied to memory. Lessons that keep earning their keep graduate into **skills** via
+the operator's `skill-promote` interview: a written `SKILL.md` (project-level by default, or
+user-level) the executing harness auto-loads, with an `SKL-` metadata row recording the promotion.
 
 **Your package carries its own prompt library — and prompts are plain `.md` files, never database
 rows** (v3). `<package>/prompts/` is the single prompt surface, seeded at creation and refreshed by
-migration/adoption/handoff: **16 stock files (15 scenario prompts + the operator README)**
+migration/adoption/handoff: **17 stock files (16 scenario prompts + the operator README)**
 covering both operator styles —
 orientation (`orient-resume`, `package-onboarding`), execution (`slice-kickoff`, `progress-sync`,
 `defect-triage`, `drift-register`), close-outs (`slice-review`, `phase-close`,
 `release-close-out`), the advisory playbook (`register-liveness` — the amber-list
-sweep), replanning (`replan-deferred`), audit/report (`integrity-check`,
+sweep), replanning (`replan-deferred`), the promotion interview (`skill-promote` — lessons
+distilled into a skill), audit/report (`integrity-check`,
 `generate-report`), the fully-auto pair (`loop-iteration` + `loop-guard`, with a machine-parseable
 `ITERATION:` contract), and **`README.md`, the operator guide** (which prompt for which situation,
 semi-auto vs fully-auto, the single-writer-lock discipline). Your own project prompts live beside
@@ -424,7 +429,7 @@ See [`CONTRIBUTING.md`](CONTRIBUTING.md) and
 
 ## Maturity
 
-**v4.x** (currently v4.3.0). The methodology (22 stages), the re-baselined relational store (plan 031:
+**v4.x** (currently v4.4.0). The methodology (22 stages), the re-baselined relational store (plan 031:
 claimed-vs-verified `Review`, evidence-chained verdicts, `WVR-` waivers, severity-thresholded blocking,
 typed progress events, drift-delta scope changes, blocking G-REL, `[NEEDS-CLARIFICATION]` markers), the
 MCP tool surface, the canonical serialization, and the in-place migration path (v2/v3

@@ -10,7 +10,81 @@ All notable changes to Tamheed are documented here. The format is based on
 
 ## [Unreleased]
 
-## [4.3.0] - 2026-08-15
+## [4.4.0] - 2026-08-15
+
+**MINOR — the confirm guard + lesson→skill promotion + the findings_19 fixes
+(plan 036, evidence C40).** Adds migration `003_skills.sql`. Two capabilities the
+maintainer ordered after the lesson feature's first field use, plus the three
+findings_19 items — one of which ("the tool's own hollow pass": a success-shaped
+no-op with destructive advice) is the report's headline.
+
+### Added
+
+- **Never-auto-confirm, mechanically**: `entity_upsert` now REFUSES any write that
+  lands a lesson in Approved or Promoted from a different state — **including a
+  brand-new row born there** (without covering fresh inserts, the gate would be
+  trivially bypassable by inserting-as-Approved) — unless the item carries
+  `"operator_confirm": true` (operator-words-only, the `force` doctrine). The
+  transition write must keep every content column byte-identical to the stored row
+  (**this closes findings_19 §2** — the immutability trigger fired one write too
+  late, leaving the approval write itself unguarded; now approval/promotion is
+  mechanically NOT an edit, drift refused naming the columns); approval requires
+  `confirmed_by` ON that write (attribution can never be added later — previously
+  readable only out of the DDL, now enforced and stated in the refusal); the server
+  appends the typed `lesson-confirmed`/`lesson-promoted` journal event itself.
+  Loops never carry the flag — Proposed lessons accumulate, and the ITERATION
+  contract line gains a trailing `lessons_pending=<n>` field.
+- **Lesson→skill promotion** (migration `003_skills.sql`): the `skill` family
+  (SKL-, On-request) — metadata only (kebab `name`, `description` = the trigger,
+  `level` project|user **default project**, `target_path`, born Approved out of the
+  operator interview, `superseded_by` for re-distillations); the BODY lives solely
+  in the written `SKILL.md` (project: `.claude/skills/<name>/` in the target repo;
+  user: `~/.claude/skills/<name>/`), operator-owned after creation — the server
+  never writes or reads skill files (the v3 files-doctrine). `lessons.promoted_to`
+  = FK → skills (the DEC→ADR promotion idiom; many lessons → one skill); the
+  lesson lifecycle gains **Promoted** (Approved → Promoted only, guard-covered;
+  content AND `promoted_to` frozen — the immutability trigger's WHEN extends so
+  promotion cannot re-open the class §2 taught). **Full graduation**
+  (maintainer-locked): Promoted lessons leave the CLAUDE.md note; the note keeps
+  one line naming each promoted skill with its level. The new stock prompt
+  **`skill-promote.md`** (17th file) runs the interactive ceremony: cluster
+  candidates (the ECC continuous-learning idea) → the operator interview
+  (name, trigger, edge cases, THE LEVEL — asked every time, default project;
+  pinned candidates warned they will leave the note) → operator approves the
+  content → the agent writes the file → the SKL- row + guarded Promoted flips.
+  Lineage: Voyager's skill library; Soar's chunking (episodic PE- journal →
+  declarative LL- lessons → procedural skills); Claude Code native skill
+  discovery; ECC's promote-with-human-confirmation — tamheed's deliberate
+  difference: operator confirmation at entry replaces numeric confidence/decay.
+
+### Fixed
+
+- **The v1-note classifier no longer gives destructive advice** (findings_19 §1):
+  classification is marker-based, never heading-only; a heading plus an
+  `@<package>/CLAUDE.md` import line is the RECOGNIZED POINTER PATTERN — the
+  managed span is written and rebuilt in the PACKAGE's own CLAUDE.md, the root
+  file stays untouched, and the warning names both full paths (the old classifier
+  advised deleting the very section that carried the import, severing the
+  always-loaded note — and reported the un-updated file as "unchanged", a
+  success-shaped no-op). Every note-related warning now names the full path; the
+  stale "the v2 note" wording is gone.
+- **FK failures get NOT-NULL parity** (findings_19 §3): "FOREIGN KEY constraint
+  failed" now names the offending column, the value, and the referenced table —
+  "free text is never legal here" — instead of leaving the caller to try synonyms.
+
+### Changed
+
+- register-liveness step 14 teaches the enforced flag flow; loop-guard carries the
+  standing never-carry-the-flag rule; the viewer's Lessons section gains the
+  Promoted-into-skills subsection and the skills register; governance records the
+  lesson/skill status sets and the promotion doctrine.
+- **The lab caught the eval spec again — second release running**: beat 11's
+  graduation made the 4.3.0 "≥1 operator-Approved lesson" assertion impossible on
+  a conformant fixture (the only Approved lesson correctly became Promoted).
+  `pkg_check` gains the **`nonempty-any`** primitive (≥1 row carries the column —
+  evidence that survives lifecycle graduation), and the assertion now checks
+  `confirmed_by` presence instead of current state, with both catches recorded in
+  its check text.
 
 **MINOR — the lessons-learned entity family (plan 035).** Execution agents make
 mistakes and learn; the lessons now live IN the package, are confirmed by the

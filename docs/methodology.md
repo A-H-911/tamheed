@@ -245,7 +245,18 @@ taught it — a defect, decision, risk, slice, work item, or progress entry. The
 pending set (the `lessons-confirmed` advisory nags until every lesson is decided) and approves, rejects,
 or pins each one; **only operator-Approved lessons** render into the executing agent's always-loaded
 `CLAUDE.md` note. The gate is the design: an agent persisting an unvetted — possibly wrong — lesson is the
-known failure mode of agent memory, so a lesson binds future sessions only after a human says it should.
+known failure mode of agent memory, so a lesson binds future sessions only after a human says it should —
+and mechanically so: the write that lands a lesson in Approved (or Promoted) is refused without the
+operator's explicit confirmation carried on it.
+
+Lessons that keep proving themselves can graduate further, into a **skill**. The stock `skill-promote`
+interview clusters Approved lessons, asks the operator for the skill's name, trigger, edge cases, and
+level (project — the default — or user), and has the operator approve the drafted content; the agent then
+writes the `SKILL.md` file to the chosen level's skills directory, where the executing harness auto-loads
+it, and records the promotion in the package (an `SKL-` metadata row; each source lesson flips to
+Promoted with its `promoted_to` link). Graduation is full: promoted lessons leave the always-loaded note,
+which instead carries one line naming the skills distilled from lessons — the procedure now travels as a
+skill, not as note prose.
 
 ## 11. Package storage practices *(v2 — replaces v1 repository initialization)*
 

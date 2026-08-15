@@ -1,0 +1,2 @@
+id,name,title,description,level,target_path,lifecycle_status,superseded_by,custom_attributes,last_referenced
+SKL-001,boundary-semantics,Boundary semantics before comparison changes,"Use whenever you are about to change a comparison on a date or numeric boundary (<= vs <, >= vs >) — verify the intended boundary semantics against the spec BEFORE touching the operator.",project,workspace/.claude/skills/boundary-semantics/SKILL.md,Approved,,,

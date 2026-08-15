@@ -12,10 +12,11 @@ and `handoff_emit(target_dir)` wires the target project to the package (it copie
     stop/await-approval gate;
   - *follow-up* prompt(s) — one per phase gate (`PH-`), each resuming from the prior phase's exit
     criteria, plus situational prompts as needed (see `prompt-templates.md`);
-  - the **stock scenario library** (16 files: 15 scenarios + the folder README, plugin-versioned,
+  - the **stock scenario library** (17 files: 16 scenarios + the folder README, plugin-versioned,
     seeded at `package_create`): orientation (orient-resume, package-onboarding), execution
     (slice-kickoff, progress-sync, defect-triage, drift-register), close-outs (slice-review,
-    phase-close, release-close-out), replanning (replan-deferred), audit/report (integrity-check,
+    phase-close, release-close-out), replanning (replan-deferred), the promotion interview
+    (skill-promote), audit/report (integrity-check,
     register-liveness, generate-report), and the fully-auto pair (loop-iteration + loop-guard,
     with a machine-parseable `ITERATION:` contract).
 - **Executor-side wiring** (`W-V2-7`): `handoff_emit` writes `.mcp.json` into the target project
@@ -31,7 +32,11 @@ and `handoff_emit(target_dir)` wires the target project to the package (it copie
   (`LL-` rows) render pinned-first — ALL pinned lessons appear, unpinned fill is capped at 10, and
   the remainder is one `entity_query("lesson")` away. Proposed/Rejected rows never render, and the
   section is screened by the same G-INJECT patterns as emitted prompts — a finding **blocks** the
-  emit, naming the `LL-` row so the operator can supersede its wording.
+  emit, naming the `LL-` row so the operator can supersede its wording. **Promoted** lessons leave
+  the render too — full graduation (plan 036): a lesson distilled into a skill travels as the
+  auto-loaded `SKILL.md`, not as note prose; the section instead keeps one line — "Skills distilled
+  from lessons: `<name>` [<level>], … — auto-loaded where present" — naming each `SKL-` skill and
+  its level.
 - **The readiness verdict** (Stage 22) — rendered from the gate report; the go/no-go.
 - The old separate handoff manifest is gone: entry point, go/no-go, and gated items live on the
   `packages` row; artifact membership is a view.
@@ -99,9 +104,13 @@ The CLAUDE.md operating note is a **tool-owned marker span** (`<!-- tamheed:note
 /tamheed:note -->`, plan 029): rebuilt on EVERY emit — always current, no force involved. A hand
 edit inside the markers is overwritten (with a warning); operator content belongs OUTSIDE the
 markers — the AGENTS.md template (`templates/agent-control.template.md`) carries the same
-obligations table for project customization. A
-v1 note (heading, no markers) is warned and never machine-edited — delete the section once and
-re-emit. `force` means exactly one thing: overwrite ALL diverged stock prompt files (+ .mcp.json);
+obligations table for project customization. Note classification is **marker-based, never
+heading-only** (findings_19 §1): a heading accompanied by an `@<package>/CLAUDE.md` import line is
+the recognized **pointer pattern** — the note is delivered via the import, so the managed span
+lives (and is rebuilt) in the PACKAGE's own CLAUDE.md while the root file is left untouched. Only a
+heading with neither markers nor the import line is a genuine v1 note — warned, never
+machine-edited; delete the section once and re-emit. Every such warning names the full path of the
+file it is about. `force` means exactly one thing: overwrite ALL diverged stock prompt files (+ .mcp.json);
 to accept the current template for ONE file, delete it and re-emit. The stale-v1 warning block
 still retracts itself when a later emit's scan is clean. Re-running `handoff_emit` is therefore the standing cutover verifier:
 everything `unchanged`, no warnings, no `restated_content` findings = the cutover is done and

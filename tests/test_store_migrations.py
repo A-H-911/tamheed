@@ -55,7 +55,7 @@ class StoreMigrationTest(unittest.TestCase):
         table exists, and the recreated trace_edges CHECK accepts learned_from
         (and still rejects an unknown relation)."""
         conn = store.connect()
-        self.assertEqual(conn.execute("PRAGMA user_version").fetchone()[0], 2)
+        self.assertGreaterEqual(conn.execute("PRAGMA user_version").fetchone()[0], 2)
         tables = {name for (name,) in conn.execute(
             "SELECT name FROM sqlite_master WHERE type = 'table'")}
         self.assertIn("lessons", tables)
@@ -76,6 +76,34 @@ class StoreMigrationTest(unittest.TestCase):
             "SELECT name FROM sqlite_master WHERE type='index'"
             " AND tbl_name='trace_edges'")}
         self.assertIn("idx_trace_edges_to", idx)
+        conn.close()
+
+    def test_migration_003_skills_lands(self):
+        """Plan 036: head is 3; skills exists; a lesson can be Promoted with
+        promoted_to; the recreated journal CHECK accepts the lesson-guard event
+        types; Promoted content is frozen (the extended trigger)."""
+        conn = store.connect()
+        self.assertEqual(conn.execute("PRAGMA user_version").fetchone()[0], 3)
+        conn.executemany(
+            "INSERT INTO entity_types (type_id, label, id_prefix, generation_class)"
+            " VALUES (?, ?, ?, ?)",
+            [("lesson", "Lesson learned (LL-)", "LL-", "Continuous"),
+             ("skill", "Skill (SKL-)", "SKL-", "On-request"),
+             ("progress-entry", "Progress entry (PE-)", "PE-", "Continuous")])
+        conn.execute("INSERT INTO skills (id, name, title, level)"
+                     " VALUES ('SKL-1', 'boundary-checks', 'Boundary checks',"
+                     " 'project')")
+        conn.execute("INSERT INTO lessons (id, title, statement, kind,"
+                     " lifecycle_status, promoted_to) VALUES ('LL-1', 't', 's',"
+                     " 'improve', 'Promoted', 'SKL-1')")
+        conn.execute("INSERT INTO progress_entries (id, event_type, entry)"
+                     " VALUES ('PE-1', 'lesson-confirmed', 'e')")
+        conn.execute("INSERT INTO progress_entries (id, event_type, entry)"
+                     " VALUES ('PE-2', 'lesson-promoted', 'e')")
+        with self.assertRaises(Exception):   # Promoted content frozen
+            conn.execute("UPDATE lessons SET statement = 'x' WHERE id = 'LL-1'")
+        with self.assertRaises(Exception):   # promoted_to re-pointing frozen
+            conn.execute("UPDATE lessons SET promoted_to = NULL WHERE id = 'LL-1'")
         conn.close()
 
     def test_load_ignores_orphan_jsonl_of_dropped_table(self):

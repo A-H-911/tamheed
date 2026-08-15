@@ -198,7 +198,11 @@ human-intervention point.
   requirement `Met` → requirement auto-advances to Implemented; views stay current by construction.
   Decision flips, supersessions, and typed scope changes follow `modes.md` (`scope-change` row first).
   When execution teaches something durable, record a `lesson` row (born Proposed, `learned_from` edge
-  to its source) — the operator confirms later; only Approved lessons bind future sessions.
+  to its source) — the operator confirms later; only Approved lessons bind future sessions, and the
+  confirming write itself carries `"operator_confirm": true` on the operator's explicit words (the
+  guard refuses it otherwise; loops never carry the flag). Approved lessons the operator wants as a
+  durable procedure are promoted to a `skill` (`SKL-` + a written `SKILL.md`) via the `skill-promote`
+  interview — promoted lessons graduate out of the note.
   Close boundaries run `readiness_check(scope)` (plan 027): blocking rules guard the phase/slice
   `Implemented` transition — `"force": true` only on the operator's explicit words, and the server
   writes the FORCED audit row itself.
@@ -207,7 +211,8 @@ human-intervention point.
 - **Fail:** FK violation on an update = the update referenced a ghost — fix the caller. **Human:**
   approve material changes. **Writes:** progress_entries (typed events), audit_verdicts
   (evidence-chained), scope_changes (+ delta edges; Merged after the rows move), defects,
-  deferred_work, lessons (born Proposed), waivers (operator-approved only), affected rows.
+  deferred_work, lessons (born Proposed), skills (operator promotion interview only), waivers
+  (operator-approved only), affected rows.
 
 ### 22. Final readiness assessment
 - **In:** the whole package. **Do:** `gate_run` **and** `readiness_check("package")` — both mandatory;

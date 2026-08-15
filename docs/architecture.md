@@ -64,7 +64,15 @@ done?" at a close boundary — `Review` counts as open (claimed is not verified)
 block while medium/low advise, and a stubborn failure passes only through an operator-approved `WVR-`
 waiver (reported as `waived`, expiring, never silent). Alongside the blocking rules run fourteen
 package-scope liveness advisories — from overdue open questions to `lessons-confirmed`, which nags while
-any lesson recorded by the executing agent still awaits the operator's confirmation interview.
+any lesson recorded by the executing agent still awaits the operator's confirmation interview. The same
+guarded-transition doctrine that reserves `force` for the operator's explicit words also guards lesson
+binding: `entity_upsert` refuses any write landing a lesson in `Approved` or `Promoted` unless the item
+carries `"operator_confirm": true` — operator-words-only, content byte-identical to the stored row,
+attribution (`confirmed_by`) on the same write — and the server appends the typed
+`lesson-confirmed`/`lesson-promoted` journal event itself. Promotion is where the package's memory turns
+procedural: an operator interview distills Approved lessons into a **skill** (`SKL-` row + a written
+`SKILL.md` the executing harness auto-loads), completing the episodic → declarative → procedural chain
+(journal → lessons → skills).
 
 ## 3. The three actors
 

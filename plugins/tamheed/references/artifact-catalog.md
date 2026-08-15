@@ -1,4 +1,4 @@
-# Artifact Catalog — the entity families and their rules (tamheed v4.3.0)
+# Artifact Catalog — the entity families and their rules (tamheed v4.4.0)
 
 The authoritative, human-facing list of every artifact a Tamheed package carries. Since v2
 the package **is a relational store** (`data/*.jsonl`, one file per entity family — see
@@ -36,6 +36,7 @@ flowchart TB
     SC["scope-change SC-"]
     WVR["waiver WVR-"]
     LL["lesson LL-"]
+    SKL["skill SKL-"]
 
     REQ -- "derives_from" --> DEC
     DEC -- "promoted_to (column)" --> ADR
@@ -54,6 +55,7 @@ flowchart TB
     OQ -- "cited by [NEEDS-CLARIFICATION] markers" --> REQ
     LL -- "learned_from" --> DEF
     LL -- "learned_from" --> RISK
+    LL -- "promoted_to (column)" --> SKL
 ```
 
 ## The standard lifecycle
@@ -73,10 +75,14 @@ stateDiagram-v2
     state "Review — wbs-items and slices only (done-CLAIMED, counts as OPEN)" as Review
     Approved --> Review : agent claims done
     Review --> Implemented : verified (guarded)
+    state "Promoted — lessons only (distilled into a skill, graduated from the note)" as Promoted
+    Approved --> Promoted : operator promotes (guarded)
     note right of Proposed
         decisions and lessons are BORN Proposed
         (no Draft) — lessons await the operator
         interview and only Approved lessons bind
+        (landing in Approved or Promoted is
+        operator_confirm-guarded, never automatic)
     end note
 ```
 
@@ -104,7 +110,8 @@ One `data/<table>.jsonl` file per non-empty family. Class = the registry's gener
 | dependency | `DEP-` | Conditional | External parties/systems the plan waits on; `owner` |
 | open-question | `OQ-` | Always | Unresolved ambiguity; `owner` + `due_by` (open-questions-overdue advisory); citable in prose via `[NEEDS-CLARIFICATION: OQ-NNN]` markers (G-COMPLETE-validated) |
 | glossary-term | `GT-` | On-request | Domain vocabulary (also the community-extension worked example) |
-| lesson | `LL-` | Continuous | What execution taught (kind improve/sustain; statement + context + recommendation + rationale + both impacts — the LLIS shape). Born Proposed by the agent; ONLY operator-Approved lessons bind (rendered into the CLAUDE.md note, pinned first, G-INJECT-screened); Approved content immutable — supersede, never edit; `learned_from` edges name the source; the lessons-confirmed advisory nags Proposed rows |
+| lesson | `LL-` | Continuous | What execution taught (kind improve/sustain; statement + context + recommendation + rationale + both impacts — the LLIS shape). Born Proposed by the agent; **landing in Approved/Promoted needs the operator's words, mechanically** (`operator_confirm` — the guard refuses auto-confirmation, content drift on the transition, and missing attribution; the server records the typed audit event); ONLY Approved lessons render into the CLAUDE.md note (pinned first, G-INJECT-screened); Approved/Promoted content immutable — supersede, never edit; `learned_from` edges name the source; **Promoted** = distilled into a skill (`promoted_to` → the SKL- row, frozen) and graduated OUT of the note (the skill file carries it); the lessons-confirmed advisory nags Proposed rows |
+| skill | `SKL-` | On-request | Procedural memory distilled from lessons in the operator's skill-promote interview (Voyager/Soar lineage). METADATA only: kebab `name`, `description` (the trigger), `level` project\|user (default project), `target_path` — the BODY lives solely in the written `SKILL.md` (project: `.claude/skills/<name>/`; user: `~/.claude/skills/<name>/`), operator-owned; the server never writes or reads skill files. Born Approved (the interview IS the approval); a re-distillation supersedes (`superseded_by`) |
 
 ### Decisions
 

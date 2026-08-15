@@ -763,17 +763,14 @@
           "expect_exit": 0
         },
         {
-          "check": "At least one lesson is operator-Approved (the interview happened; a Proposed remainder is scenario-conformant - the advisory nags by design). First-run catch: the original nonempty-column form could never pass against a conformant fixture.",
+          "check": "The confirmation interview happened: >=1 lesson carries confirmed_by - evidence that survives graduation to Promoted. Twice lab-caught (plans 035+036): nonempty failed on the by-design Proposed remainder, then count-on-Approved failed when the only Approved lesson graduated; the nonempty-any primitive asserts the evidence, not the current state.",
           "cmd": [
             "python",
             "evals/pkg_check.py",
-            "count",
+            "nonempty-any",
             "{case_dir}/package",
             "lesson",
-            "--col",
-            "lifecycle_status=Approved",
-            "--min",
-            "1"
+            "confirmed_by"
           ],
           "expect_exit": 0
         },
@@ -785,6 +782,36 @@
             "grep-file",
             "{case_dir}/package/review.html",
             "Lessons"
+          ],
+          "expect_exit": 0
+        },
+        {
+          "check": "A skill was distilled in the promotion interview (plan 036: >=1 SKL- row at project level).",
+          "cmd": [
+            "python",
+            "evals/pkg_check.py",
+            "count",
+            "{case_dir}/package",
+            "skill",
+            "--col",
+            "level=project",
+            "--min",
+            "1"
+          ],
+          "expect_exit": 0
+        },
+        {
+          "check": "A lesson graduated (plan 036: >=1 Promoted lesson; the unpromoted remainder is scenario-conformant - the advisory nags by design).",
+          "cmd": [
+            "python",
+            "evals/pkg_check.py",
+            "count",
+            "{case_dir}/package",
+            "lesson",
+            "--col",
+            "lifecycle_status=Promoted",
+            "--min",
+            "1"
           ],
           "expect_exit": 0
         }

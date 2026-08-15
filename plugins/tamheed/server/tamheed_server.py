@@ -90,6 +90,7 @@ ENTITY_TABLES = {
     # v3→v4 migration (package_open refuses pre-v4 stores).
     "glossary-term": "glossary_terms",  # community-extension worked example
     "lesson": "lessons",           # migration 002 (plan 035): execution-taught, operator-confirmed
+    "skill": "skills",             # migration 003 (plan 036): procedural memory distilled from lessons
     "trace-edge": "trace_edges",   # composite PK; write surface for relations
     "omission": "omissions",       # G-SET recorded-omitted rows (entity_type + reason)
 }
@@ -245,6 +246,7 @@ BASELINE_ENTITY_TYPES = [
     # ("prompt", …) removed in v3.0.0 — see the ENTITY_TABLES note above.
     ("glossary-term", "Glossary term (extension example)", "GT-", "On-request"),
     ("lesson", "Lesson learned (LL-)", "LL-", "Continuous"),
+    ("skill", "Skill (SKL-, distilled from lessons)", "SKL-", "On-request"),
 ]
 
 # Taught-vocabulary rosters (plan 032): the single source the check.py teaching lint
@@ -255,7 +257,14 @@ GATE_NAMES = frozenset({"G-IDS", "G-DEC-STATUS", "G-REQ-SRC", "G-TRACE", "G-SET"
                         "G-PROGRESS", "G-COMPLETE", "G-REL"})
 PE_EVENT_TYPES = frozenset({"work-done", "verdict-recorded", "transition",
                             "forced-override", "gate-decision", "escalation",
-                            "correction", "note"})
+                            "correction", "note",
+                            "lesson-confirmed", "lesson-promoted"})
+
+# Plan 036: the columns frozen by trg_lessons_immutable and byte-checked by the
+# confirm guard on Approved/Promoted transitions (approval is not an edit).
+_LESSON_CONTENT_COLS = ("title", "statement", "context", "recommendation",
+                        "rationale", "kind", "category", "impact_if_followed",
+                        "impact_if_ignored", "recorded_at")
 
 # G-COMPLETE-style placeholder screen (content tier — stays outside the schema).
 _PLACEHOLDER_RE = re.compile(
@@ -590,7 +599,9 @@ def entity_upsert(entities: list[dict]) -> dict:
             continue
         # "force" is the transition-guard override (plan 027), never a column.
         force = bool(item.get("force"))
-        cols = {k: v for k, v in item.items() if k not in ("type", "force")}
+        operator_confirm = bool(item.get("operator_confirm"))
+        cols = {k: v for k, v in item.items()
+                if k not in ("type", "force", "operator_confirm")}
         unknown = set(cols) - set(_columns(table))
         if unknown:
             results.append({"index": i, "ok": False,
@@ -628,6 +639,62 @@ def entity_upsert(entities: list[dict]) -> dict:
                 if blockers:  # forced past blocking failures: the record is automatic
                     forced_note = "; ".join(
                         f"{r['rule']} ({len(r['entities'])})" for r in blockers)
+        # Plan 036: the lesson confirm guard — a lesson binds future sessions only
+        # on the OPERATOR's words, mechanically. Guards ANY write that LANDS a
+        # lesson in Approved/Promoted from a different state, INCLUDING a new row
+        # born there (else insert-as-Approved bypasses the whole gate). Closes
+        # findings_19 §2: the transition write may change NOTHING but the
+        # transition columns — approval/promotion is not an edit.
+        lesson_pe = None
+        if etype == "lesson" and cols.get("id"):
+            incoming = cols.get("lifecycle_status", "Proposed")
+            stored = conn.execute(
+                "SELECT lifecycle_status, " + ", ".join(_LESSON_CONTENT_COLS)
+                + ", confirmed_by, confirmed_at FROM lessons WHERE id = ?",
+                (cols["id"],)).fetchone()
+            stored_status = stored[0] if stored else None
+            if incoming in ("Approved", "Promoted") and stored_status != incoming:
+                err = None
+                if incoming == "Promoted" and stored_status != "Approved":
+                    err = (f"{cols['id']}: promotion requires prior approval —"
+                           " approve on the operator's words first, then promote")
+                elif not operator_confirm:
+                    err = (f"{cols['id']}: a lesson binds future sessions only on"
+                           " the OPERATOR's words — re-run this item with"
+                           " \"operator_confirm\": true after their explicit"
+                           " confirmation; never in unattended mode")
+                elif stored is not None:
+                    drift = [c for j, c in enumerate(_LESSON_CONTENT_COLS, 1)
+                             if cols.get(c) != stored[j]]
+                    if incoming == "Promoted":
+                        n = len(_LESSON_CONTENT_COLS)
+                        drift += [c for c, j in
+                                  (("confirmed_by", n + 1), ("confirmed_at", n + 2))
+                                  if cols.get(c) != stored[j]]
+                    if drift:
+                        err = (f"{cols['id']}: approval/promotion is not an edit —"
+                               f" content drifted on {sorted(drift)}; send the"
+                               " stored content byte-identical, or supersede first")
+                if err is None and incoming == "Approved" \
+                        and not str(cols.get("confirmed_by") or "").strip():
+                    err = (f"{cols['id']}: attribution lands WITH approval —"
+                           " confirmed_by can never be added later; set it on"
+                           " this write")
+                if err is None and incoming == "Promoted":
+                    skl = cols.get("promoted_to")
+                    if not skl or conn.execute(
+                            "SELECT 1 FROM skills WHERE id = ?",
+                            (skl,)).fetchone() is None:
+                        err = (f"{cols['id']}: promoted_to must name an existing"
+                               f" SKL- row (got {skl!r}) — record the skill row"
+                               " first")
+                if err:
+                    results.append({"index": i, "ok": False, "id": cols["id"],
+                                    "error": err})
+                    failed = True
+                    continue
+                lesson_pe = ("lesson-confirmed" if incoming == "Approved"
+                             else "lesson-promoted")
         names = list(cols)
         if etype == "trace-edge":
             # Plan 027: endpoint-type rules, HARD on new writes. Same-batch endpoints
@@ -690,6 +757,22 @@ def entity_upsert(entities: list[dict]) -> dict:
                          cols.get("id"), "system:transition-guard", _now()))
                     res["forced"] = True
                     res["forced_audit"] = pe_id
+                if lesson_pe:
+                    # The permanent record of an operator confirmation does not
+                    # depend on the agent writing one — the server appends it,
+                    # inside the same transaction (the forced-override pattern).
+                    pe_id = _next_id("PE-", "progress_entries")
+                    detail = (f"confirmed_by {cols.get('confirmed_by')}"
+                              if lesson_pe == "lesson-confirmed"
+                              else f"promoted_to {cols.get('promoted_to')}")
+                    conn.execute(
+                        "INSERT INTO progress_entries (id, event_type, entry,"
+                        " subject_id, actor, occurred_at) VALUES (?, ?, ?, ?, ?, ?)",
+                        (pe_id, lesson_pe,
+                         f"LESSON {lesson_pe.split('-')[1].upper()}:"
+                         f" {cols['id']} ({detail}) — operator_confirm attested",
+                         cols.get("id"), "system:lesson-guard", _now()))
+                    res["lesson_audit"] = pe_id
                 results.append(res)
         except Exception as exc:  # IntegrityError carries the constraint name
             conn.execute(f"ROLLBACK TO item{i}")
@@ -700,6 +783,27 @@ def entity_upsert(entities: list[dict]) -> dict:
                 if exists:  # field-evidence C11 (D2): name the actual cause
                     msg += (" — the row exists; entity_upsert requires FULL rows even for"
                             " updates (INSERT evaluates NOT NULL before conflict resolution)")
+            elif "FOREIGN KEY constraint failed" in msg:
+                # findings_19 §3 (plan 036): SQLite's FK error names nothing —
+                # parity with the NOT NULL path. Identify which FK column(s)
+                # carry a value whose referenced row does not exist.
+                culprits = []
+                for (_seq, _fkid, ref_table, from_col, to_col, *_rest
+                     ) in conn.execute(f"PRAGMA foreign_key_list({table})"):
+                    val = cols.get(from_col)
+                    if val is None:
+                        continue
+                    ref_col = to_col or "id"
+                    if conn.execute(
+                            f"SELECT 1 FROM {ref_table} WHERE {ref_col} = ?",
+                            (val,)).fetchone() is None:
+                        culprits.append(f"{from_col}={val!r} (references"
+                                        f" {ref_table}.{ref_col})")
+                if culprits:
+                    msg += (" — " + "; ".join(culprits) + " is a foreign key —"
+                            " the referenced row must exist (create it first,"
+                            " or use the correct existing id; free text is"
+                            " never legal here)")
             if (etype in ("progress-entry", "audit-verdict")
                     and "UNIQUE constraint failed" in msg):
                 msg += (" — append-only journal: append a new entry via progress_update /"
@@ -1599,7 +1703,18 @@ def _note_lessons_section() -> tuple[str, list[dict]]:
         "SELECT id, kind, statement, pinned FROM lessons"
         " WHERE lifecycle_status = 'Approved'"
         " ORDER BY pinned DESC, CAST(SUBSTR(id, 4) AS INTEGER) DESC").fetchall()
-    if not rows:
+    # Plan 036 (full graduation, maintainer-locked): Promoted lessons live on in
+    # their skill files — the note keeps one line naming each, so the pointer
+    # survives even when EVERY lesson has graduated.
+    skills = _CURRENT.conn.execute(
+        "SELECT name, level FROM skills WHERE lifecycle_status = 'Approved'"
+        " ORDER BY CAST(SUBSTR(id, 5) AS INTEGER)").fetchall()
+    skill_line = ("\nSkills distilled from lessons: "
+                  + ", ".join(f"`{n}` [{lv}]" for n, lv in skills)
+                  + " — auto-loaded where present"
+                    " (project: .claude/skills/; user: ~/.claude/skills/).\n"
+                  if skills else "")
+    if not rows and not skills:
         return "", []
     pinned = [r for r in rows if r[3]]
     shown = pinned + [r for r in rows if not r[3]][:_NOTE_LESSONS_CAP]
@@ -1616,7 +1731,7 @@ def _note_lessons_section() -> tuple[str, list[dict]]:
     more = (f"\n{rest} more Approved lesson(s): `entity_query(\"lesson\")`.\n"
             if rest else "")
     return ("\n### Lessons (operator-confirmed — these bind every session)\n\n"
-            + "".join(lines) + more), findings
+            + "".join(lines) + more + skill_line), findings
 
 
 def handoff_emit(target_dir: str, subdir: str = "handoff", force: bool = False,
@@ -1850,25 +1965,56 @@ def handoff_emit(target_dir: str, subdir: str = "handoff", force: bool = False,
     # Plan 027: the operating note is marker-managed too (v1 was append-once and could
     # never receive updates). A v1 note (heading, no markers) has no terminator to
     # bound a safe machine edit — warned, never touched; one manual deletion upgrades.
+    # findings_19 §1 (plan 036): classification is marker-based, never
+    # heading-only, every warning names the FULL path, and a heading + an
+    # @<package>/CLAUDE.md import line is the RECOGNIZED POINTER PATTERN — the
+    # note is delivered via the import, so the managed span lives (and is
+    # rebuilt) in the PACKAGE's CLAUDE.md, not the target root. The old
+    # heading-only classifier once advised deleting the import itself.
+    def _apply_note(text: str, path: Path) -> str:
+        m = _NOTE_BLOCK_RE.search(text)
+        if "## Tamheed progress tracking" not in text:
+            return text + note
+        if m is None:
+            return text  # caller classifies (pointer vs v1) and warns
+        if m.group(0) != note_block.rstrip("\n"):
+            # Plan 029 (C35/N1): the marker-delimited span is TOOL-OWNED and
+            # rebuilt on EVERY emit. A hand edit inside the markers is
+            # overwritten — warned, never silent.
+            warnings.append(
+                f"the tamheed:note span in {path.resolve()} was rebuilt — it is"
+                " tool-owned and always reflects the current emission; keep"
+                " operator content OUTSIDE the <!-- tamheed:note --> markers")
+            return text.replace(m.group(0), note_block.rstrip("\n"))
+        return text
+
     note_m = _NOTE_BLOCK_RE.search(content)
-    if "## Tamheed progress tracking" not in content:
-        content = content + note
-    elif note_m is None:
+    heading = "## Tamheed progress tracking" in content
+    import_re = re.compile(
+        rf"^@\S*{re.escape(_CURRENT_NAME)}/CLAUDE\.md\s*$", re.M)
+    if not heading or note_m is not None:
+        content = _apply_note(content, claude_md)
+    elif import_re.search(content):
+        pkg_md = PACKAGE_ROOT / _CURRENT_NAME / "CLAUDE.md"
+        pkg_existing = (pkg_md.read_text(encoding="utf-8")
+                        if pkg_md.exists() else "")
+        pkg_content = _apply_note(pkg_existing, pkg_md)
+        if _NOTE_BLOCK_RE.search(pkg_content) is None:
+            pkg_content = pkg_existing + note  # pointer repo, first emission
+        if pkg_content != pkg_existing:
+            pkg_md.write_text(pkg_content, encoding="utf-8", newline="\n")
+            emitted.append(str(pkg_md.resolve()))
         warnings.append(
-            "CLAUDE.md carries the v1 Tamheed operating note — delete the"
-            " '## Tamheed progress tracking' section and re-run handoff_emit; the v2"
-            " note is marker-managed and self-updates thereafter")
-    elif note_m.group(0) != note_block.rstrip("\n"):
-        # Plan 029 (C35/N1): the marker-delimited span is TOOL-OWNED and rebuilt on
-        # EVERY emit — the stale-warning-block precedent. The v3.1.0 divergence
-        # bookkeeping made the documented "self-updates" promise false, and applying
-        # the note then required a force that clobbered operator-owned prompt files.
-        # A hand edit inside the markers is overwritten — warned, never silent.
-        content = content.replace(note_m.group(0), note_block.rstrip("\n"))
+            f"{claude_md.resolve()} imports the package note"
+            f" (@{_CURRENT_NAME}/CLAUDE.md) — the managed span lives at"
+            f" {pkg_md.resolve()} and was updated there; the root file was"
+            " left untouched")
+    else:
         warnings.append(
-            "the tamheed:note span in CLAUDE.md was rebuilt — it is tool-owned and"
-            " always reflects the current emission; keep operator content OUTSIDE the"
-            " <!-- tamheed:note --> markers")
+            f"{claude_md.resolve()} carries a v1-era Tamheed operating note"
+            " (the heading without the managed markers) — delete its"
+            " '## Tamheed progress tracking' section and re-run handoff_emit;"
+            " the marker-managed note self-updates thereafter")
     if stale:
         content += ("\n<!-- tamheed:stale-warning -->\n"
                     "> **Stale v1 references detected** in this project's agent-control "

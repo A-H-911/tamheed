@@ -31,7 +31,14 @@ report a problem.
   (`^[a-z0-9][a-z0-9-]*$`, `.`/`..` unrepresentable) under the declared `--package-dir` (CWE-22);
   a malicious name is rejected and writes nothing.
 - **Approved-only lessons in the note** — the emitted `CLAUDE.md` note's Lessons section renders only
-  operator-Approved `LL-` rows and is screened by the same G-INJECT patterns as emitted prompts (blocking).
+  operator-Approved `LL-` rows and is screened by the same G-INJECT patterns as emitted prompts
+  (blocking); the store refuses to land a lesson in Approved/Promoted without the operator's explicit
+  `operator_confirm` on the write.
+- **Skill files** — a promoted skill's `SKILL.md` body is operator-approved interview output, written
+  by the agent on the operator's words and operator-owned from that moment; the server neither writes
+  nor reads skill files (the package row holds metadata only), and the promotion prompt instructs a
+  G-INJECT-style self-review of the draft before it is shown for approval — a skill is a standing
+  instruction surface and is treated as one.
 - **Safe-by-default store** — no raw-SQL tool; batch mutations are transactional (all-or-nothing);
   approval-bearing rows are immutable (supersede, never edit); one writer per package via a fail-loud
   lockfile; `handoff_emit` refuses emission when the injection screen finds instruction-shaped text.

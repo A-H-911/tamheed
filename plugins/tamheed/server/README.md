@@ -1,6 +1,6 @@
 # Tamheed MCP server
 
-Documents the tool surface as of **tamheed v4.3.0**.
+Documents the tool surface as of **tamheed v4.4.0**.
 
 The **only write path** into a Tamheed package (ADR-0001). Agents interact with a package
 exclusively through these MCP tools: every write passes schema validation (FKs, CHECKs,
@@ -67,7 +67,7 @@ absolute root, and `server_info` reports it on demand.
 | `package_create(name, title, profile, mode)` | mutate | Create under the package root; seeds the `entity_types` registry; takes the lock |
 | `package_open(name)` | mutate | Open an existing package (takes the lock) |
 | `package_close()` | mutate | Write back canonical JSONL, release the lock |
-| `entity_upsert(entities[])` | mutate | Batch upsert; items are `{"type": ..., <columns>}`; per-item verdicts; all-or-nothing |
+| `entity_upsert(entities[])` | mutate | Batch upsert; items are `{"type": ..., <columns>}`; per-item verdicts; all-or-nothing. The **lesson confirm guard** (plan 036): a write landing a lesson in `Approved`/`Promoted` from any other state — a new row born there included — is refused without `"operator_confirm": true` (operator-words-only, the `force` doctrine); content must be byte-identical to the stored row, approval requires non-empty `confirmed_by` on that write, promotion requires stored-`Approved` + `promoted_to` naming an existing `SKL-` row, and the server appends the typed `lesson-confirmed`/`lesson-promoted` journal event itself (actor `system:lesson-guard`) |
 | `entity_query(type, id?, status?, columns?, limit?)` | read | Targeted rows from one family — token-lean; returns `total` beside the LIMIT'd rows so truncation is never silent |
 | `trace_query(entity_id, direction?, relation?)` | read | Traverse typed `trace_edges` (in/out/both) |
 | `gate_run()` | read | Referential gates VERIFY at gate time (plan 027: `PRAGMA foreign_key_check`, entity_index consistency, real status/provenance SELECTs — whitespace-only provenance caught); coverage gates run the SQL views; content tier scans placeholders (code spans stripped per the frozen v1 contract; `custom_attributes` exempt as provenance); warns when G-TRACE passes vacuously (0 MVP rows); audit evidence split evidenced/narrated; the **blocking G-REL gate** fails on stored edges violating RELATION_RULES (migrate cleans at conversion, adopt reports, writes reject); G-PROGRESS warns on its vacuous pass; `[NEEDS-CLARIFICATION: OQ-NNN]` markers are G-COMPLETE-validated (legal only while the cited OQ is live) |
@@ -81,8 +81,9 @@ absolute root, and `server_info` reports it on demand.
 | `export_html(output?)` | export | Render the HTML review surface to `<package>/review.html` — dark maximalist identity, sticky TOC, the layered **traceability flow** (plan 027: Needs→Decisions→Work→Verification lanes, labeled clickable nodes, arrowheads, CSS-only relation filters) + the connected-only relations graph (isolated entities folded, degree-scaled radii, 12-hue palette), per-phase readiness panel (latest-verdict semantics) + declared human gates, all tables folded with per-table `csv/<table>.csv` download links (deterministic; `csv/` is DERIVED — hand edits are overwritten on re-export, while authored emissions remain protected), wrap-in-place text, honest freshness — zero JS throughout |
 
 Entity `type` values mirror the `entity_types` registry (`requirement`, `decision`, `adr`,
-`risk`, `phase`, `slice`, `acceptance-criterion`, `deferred-work`, …) plus two write-only
-surfaces: `trace-edge` (relations) and `omission` (G-SET recorded-omitted, with reason).
+`risk`, `phase`, `slice`, `acceptance-criterion`, `deferred-work`, `lesson`, `skill`, …) plus
+two write-only surfaces: `trace-edge` (relations) and `omission` (G-SET recorded-omitted,
+with reason).
 
 ## HTML review surface (plan 012)
 

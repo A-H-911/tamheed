@@ -9,3 +9,5 @@ PE-007,gate-decision,"GATE-001 (ready, SL-002) decided Go — operator: seed tes
 PE-008,gate-decision,"GATE-002 (approval) decided Go — operator approves the MVP for team rollout (SL-001 clean, SL-002 shipped under WVR-001 with AC-003 open).",GATE-002,agent:lab-exec,,,,2026-08-14T14:50:54Z,,
 PE-009,note,REGISTRY-SYNC: entity types added (lesson),,system:migrate,,,,,,
 PE-010,note,"Lessons continuation (plan 035 beat 10): registry-sync migration added the lesson type; LL-001 (improve, from DEF-001 boundary semantics) and LL-002 (sustain, evidence-chained verdicts) recorded Proposed with learned_from edges; operator approved and pinned LL-001, LL-002 left Proposed; handoff re-emitted with the Lessons section; review.html regenerated.",,agent:lab-continuation-035,,,,2026-08-15T17:36:15Z,,
+PE-011,note,REGISTRY-SYNC: entity types added (skill),,system:migrate,,,,,,
+PE-012,lesson-promoted,LESSON PROMOTED: LL-001 (promoted_to SKL-001) — operator_confirm attested,LL-001,system:lesson-guard,,,,2026-08-15T20:18:01Z,,

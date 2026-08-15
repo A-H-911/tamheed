@@ -15,7 +15,7 @@ description: >-
 
 # Tamheed
 
-This skill documents tamheed **v4.3.0** (the version travels with the bundle;
+This skill documents tamheed **v4.4.0** (the version travels with the bundle;
 check.py lint 8 keeps this line current).
 
 Tamheed turns a project description into an **execution-ready handoff package**: the planning, research,
@@ -183,7 +183,11 @@ the requirement auto-advances. Scope changes follow the D-UPDATE flow in `refere
 **a `scope-change` row is written before any requirement/phase mutation, always.** Discovered
 defects become `defect` rows BEFORE the fix; out-of-scope finds become `deferred-work` rows with
 activation triggers; durable takeaways become `lesson` rows (born Proposed, a `learned_from` edge
-to their source — only operator-Approved lessons bind future sessions). Work an agent believes done goes to **Review** (claimed); `Implemented` means VERIFIED. Close
+to their source — only operator-Approved lessons bind future sessions). Approving or promoting a
+lesson is confirm-guarded: the write is refused without `"operator_confirm": true` on the
+operator's explicit words (content byte-identical, `confirmed_by` on the same write), and the
+operator's `skill-promote` interview is how Approved lessons graduate into a `skill` (`SKL-` +
+an auto-loaded `SKILL.md`). Work an agent believes done goes to **Review** (claimed); `Implemented` means VERIFIED. Close
 boundaries run `readiness_check(scope)`: blocking rules (open critical/high defects block;
 medium/low advise) guard the phase/slice `Implemented` transition; a single stubborn failure is
 waived only by an operator-approved `WVR-` row (reported as `waived`, never silent);
@@ -198,7 +202,7 @@ ready while a critical gate fails or a blocking readiness rule does.
 
 All entities use the identifier scheme, lifecycle statuses, and cross-reference rules in
 `references/governance.md` (`FR-/NFR-/CON-/INV-/ASM-/DEP-/OQ-/DEC-/ADR-/RISK-/HYP-/EXP-/POC-/TEST-/
-KPI-/STK-/PH-/SL-/WBS-/MS-/AC-/AV-/PE-/DEF-/DW-/GATE-/EP-/CONV-/SC-/LL-/DOC-/SEC-/DIA-`; `PRM-`
+KPI-/STK-/PH-/SL-/WBS-/MS-/AC-/AV-/PE-/DEF-/DW-/GATE-/EP-/CONV-/SC-/LL-/SKL-/DOC-/SEC-/DIA-`; `PRM-`
 retired in v3 — prompts are files, not entities). Statuses are
 three-axis (ADR-0001): `lifecycle_status` (Draft → Proposed → Approved / Rejected / Deferred →
 Implemented, Superseded → Obsolete), `verdict` (Met/Partial/Not-met/Pending for audits; Validated/Invalidated/Inconclusive/Pending for experiments/POCs; Pass/Fail/Pending for tests), and `disposition`
@@ -238,7 +242,7 @@ Read the reference file when you reach the matching part of the work; do not loa
 | `references/safeguards.md` | The anti-patterns to actively prevent |
 | `references/handoff.md` | Assembling the execution-agent handoff |
 | `references/adopt.md` | Brownfield onboarding (`adopt` mode) |
-| `references/prompt-templates.md` | Writing project prompt files + the 16-file stock scenario library |
+| `references/prompt-templates.md` | Writing project prompt files + the 17-file stock scenario library |
 | `references/generated-structure.md` | The layout of a generated package |
 | `references/state.md` | State, resumption, and update cycles |
 | `references/extension.md` | Adding capabilities without touching core logic |

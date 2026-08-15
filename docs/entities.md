@@ -34,7 +34,7 @@ flowchart LR
     U["Understand<br/>stages 1-8<br/>―――<br/>packages row, brief (DOC-)<br/>FR-/NFR-, CON-, ASM-, DEP-<br/>OQ-, charter + KPI- + STK-"]
     E["Explore<br/>stages 9-15<br/>―――<br/>research + architecture DOC-, DIA-<br/>HYP-, EXP-/POC-<br/>DEC-, ADR-, RISK-"]
     P["Plan and hand off<br/>stages 16-22<br/>―――<br/>PH-, SL-, WBS-, MS-<br/>AC-, GATE-, EP-, CONV-, DW-<br/>TEST-, trace edges, prompts"]
-    X["Execution<br/>stage 21 loop<br/>―――<br/>PE-, AV-, DEF-<br/>SC-, WVR-, LL-, work_bind"]
+    X["Execution<br/>stage 21 loop<br/>―――<br/>PE-, AV-, DEF-<br/>SC-, WVR-, LL-, work_bind<br/>SKL- via the promotion interview"]
     U --> E --> P --> X
     X -. "scope changes loop back<br/>into the plan rows" .-> P
 ```
@@ -94,6 +94,7 @@ flowchart TB
     SC["scope-change SC-"]
     WVR["waiver WVR-"]
     LL["lesson LL-"]
+    SKL["skill SKL-"]
 
     REQ -- "derives_from" --> DEC
     DEC -- "promoted_to (column)" --> ADR
@@ -115,6 +116,7 @@ flowchart TB
     SC -- "scope_modifies" --> SL
     WVR -- "applies_to (column)" --> DEF
     LL -- "learned_from" --> DEF
+    LL -- "promoted_to (column)" --> SKL
 ```
 
 Two link mechanisms coexist, deliberately: **columns** (FKs) carry structural containment
@@ -184,7 +186,8 @@ Three families reuse the `lifecycle_status` column name with domain vocabularies
 | defect | `Open`, `In-progress`, `Fixed`, `Won't-fix`, `Duplicate` | open critical/high block readiness; `Won't-fix` is a decision, record why |
 | deferred-work | `Open`, `Activated`, `Scheduled`, `Done`, `Won't-do` | `Activated` = the activation trigger fired |
 | scope-change | `Proposed`, `Approved`, `Merged` | `Merged` = deltas applied to the plan rows; Approved-never-Merged trips the `scope-changes-merged` advisory |
-| lesson | `Proposed`, `Approved`, `Rejected`, `Superseded`, `Obsolete` | No Draft (born Proposed, the decisions pattern) and no Deferred — an undecided lesson keeps nagging via the `lessons-confirmed` advisory |
+| lesson | `Proposed`, `Approved`, `Promoted`, `Rejected`, `Superseded`, `Obsolete` | No Draft (born Proposed, the decisions pattern) and no Deferred — an undecided lesson keeps nagging via the `lessons-confirmed` advisory; entering `Approved` or `Promoted` is confirm-guarded (`operator_confirm`), and `Promoted` is reachable from stored-`Approved` only |
+| skill | `Approved`, `Superseded`, `Obsolete` | Born `Approved` — the promotion interview IS the approval; a re-distillation is a new `SKL-` row with `superseded_by`, never an edit |
 
 Risks add a fourth axis of their own: `risk_state` ∈ {open, mitigated, materialized,
 retired, accepted}, independent of `lifecycle_status`.
@@ -961,7 +964,7 @@ column, never edges.
 
 | Column | Constraint | Meaning |
 |---|---|---|
-| `event_type` | NOT NULL DEFAULT `note`; CHECK: `work-done` / `verdict-recorded` / `transition` / `forced-override` / `gate-decision` / `escalation` / `correction` / `note` | The typed event; `note` is the deliberate escape hatch |
+| `event_type` | NOT NULL DEFAULT `note`; CHECK: `work-done` / `verdict-recorded` / `transition` / `forced-override` / `gate-decision` / `escalation` / `correction` / `note` / `lesson-confirmed` / `lesson-promoted` | The typed event; `note` is the deliberate escape hatch; the two lesson events are server-appended only |
 | `entry` | NOT NULL | The human-readable line |
 | `subject_id` | FK → `entity_index(id)` | The entity the event is about |
 | `actor` | TEXT | Convention: `human:<name>` / `agent:<session>` / `system:<component>` |
@@ -995,10 +998,11 @@ emitted CLAUDE.md note; `forced-override` audit rows written server-side.
 | `kind` | NOT NULL; CHECK: `improve` / `sustain` | Both polarities (US Army AAR): a mistake to avoid AND a practice to repeat |
 | `category` | TEXT | Free-text retrieval key (PMI keywords) |
 | `impact_if_followed` / `impact_if_ignored` | TEXT | The stakes, both directions |
-| `lifecycle_status` | NOT NULL DEFAULT `Proposed`; CHECK: `Proposed` / `Approved` / `Rejected` / `Superseded` / `Obsolete` | No Draft, no Deferred (§4c) |
+| `lifecycle_status` | NOT NULL DEFAULT `Proposed`; CHECK: `Proposed` / `Approved` / `Promoted` / `Rejected` / `Superseded` / `Obsolete` | No Draft, no Deferred (§4c); `Promoted` = distilled into a skill |
 | `recorded_at` | TEXT | When the agent recorded it |
 | `confirmed_by` / `confirmed_at` | TEXT | Operator attribution, set at confirmation — facts about a person, never back-filled |
 | `pinned` | NOT NULL DEFAULT 0, CHECK ∈ {0,1} | Curation flag: pinned lessons always render in the note |
+| `promoted_to` | FK → `skills(id)` | The promotion link (the `decisions.promoted_to` idiom); frozen once Promoted |
 | `superseded_by` | FK → `lessons(id)` | Supersession within the family |
 
 **Purpose.** What execution taught, kept durable. An executing agent that debugs the same
@@ -1017,11 +1021,23 @@ else). The operator's confirmation interview moves each row to Approved or Rejec
 binds nothing until the operator says so. The Reflexion line of agent-memory research names
 the failure mode this gate exists for: an agent persisting a *wrong* lesson poisons every
 later session, so approval-before-binding (NASA LLIS practice: entries are reviewed before
-they enter the system) is the whole design. Approved CONTENT is immutable
-(`trg_lessons_immutable`, the `trg_adrs_immutable` shape) — revise by supersession;
-`pinned`, `lifecycle_status`, and `superseded_by` stay mutable because curation and closure
-are not content edits. `Rejected` is the decided-no, kept as evidence; there is
-deliberately no `Deferred` — an undecided lesson keeps nagging by design.
+they enter the system) is the whole design. Since v4.4 the gate is **mechanical, not
+narrated**: `entity_upsert` refuses any write that lands a lesson in `Approved` or
+`Promoted` from a different stored state — including a brand-new row born there — unless
+the item carries `"operator_confirm": true`, which follows the `force` doctrine
+(operator-words-only; loops never carry it, so Proposed lessons accumulate for the
+operator's interview). The transition write must keep every content column byte-identical
+to the stored row — approval is an act on the content, never an edit of it (findings_19 §2,
+closed mechanically); approval requires a non-empty `confirmed_by` on that same write
+(attribution can never be added later); promotion requires stored-`Approved` and a
+`promoted_to` naming an existing `SKL-` row. The server itself appends the typed
+`lesson-confirmed` / `lesson-promoted` journal event (actor `system:lesson-guard`) — the
+forced-override pattern. Approved/Promoted CONTENT is immutable (`trg_lessons_immutable`,
+the `trg_adrs_immutable` shape, covering both bound states — and a Promoted row's
+`promoted_to` freezes too) — revise by supersession; `pinned`, `lifecycle_status`, and
+`superseded_by` stay mutable because curation and closure are not content edits.
+`Rejected` is the decided-no, kept as evidence; there is deliberately no `Deferred` — an
+undecided lesson keeps nagging by design.
 
 **What you lose without it.** Every session starts amnesiac: the same defect class recurs,
 the practice that worked is forgotten, and "we learned this the hard way" lives in chat
@@ -1038,9 +1054,63 @@ at `entity_query("lesson")` for the rest); and the six-target `learned_from` edg
 
 **Related mechanics.** The `lessons-confirmed` package advisory (Proposed rows awaiting
 the operator interview); `learned_from` edges; the note-span Lessons section (Approved-only,
-pinned-first, G-INJECT-screened — a finding blocks the emit); `trg_lessons_immutable`;
-migration `002_lessons.sql` (the v4 chain's first real migration, and the live worked
-example of the extension contract).
+pinned-first, G-INJECT-screened — a finding blocks the emit); the confirm guard + the
+server-appended `lesson-confirmed`/`lesson-promoted` journal events; `trg_lessons_immutable`;
+migrations `002_lessons.sql` (the v4 chain's first real migration, and the live worked
+example of the extension contract) and `003_skills.sql` (the Promoted state + the skill
+family).
+
+#### skill (`SKL-`) — On-request
+
+| Column | Constraint | Meaning |
+|---|---|---|
+| `name` | NOT NULL | Kebab-case — the skill folder name |
+| `title` | NOT NULL | Human label |
+| `description` | TEXT | The frontmatter trigger — WHEN the skill fires |
+| `level` | NOT NULL DEFAULT `project`; CHECK: `project` / `user` | Where the file lives (asked in the interview; project is the default) |
+| `target_path` | TEXT | Where the `SKILL.md` was written |
+| `lifecycle_status` | NOT NULL DEFAULT `Approved`; CHECK: `Approved` / `Superseded` / `Obsolete` | Born Approved — the interview IS the approval |
+| `superseded_by` | FK → `skills(id)` | A re-distillation is a NEW row, never an edit |
+
+**Purpose.** Procedural memory, distilled from lessons. The package carries a
+three-generation memory: the episodic `PE-` journal (what happened), the declarative `LL-`
+register (what it taught), and skills (how to act on it, forever) — Soar's chunking made
+operational, with Voyager's skill library as the agent-side precedent. The row is
+**metadata + provenance only**: the BODY lives solely in the written `SKILL.md` file
+(project level: `<target-repo>/.claude/skills/<name>/SKILL.md`, the default; user level:
+`~/.claude/skills/<name>/SKILL.md`), which Claude Code auto-discovers natively —
+operator-owned after creation; the server never writes or reads skill files (the v3
+files-doctrine).
+
+**Lifecycle position.** Created only by the operator's promotion interview — the stock
+`skill-promote.md` prompt runs it: cluster Approved-lesson candidates, interview the
+operator (name, trigger, edge cases, level — default project), the operator approves the
+drafted content, the agent writes the file, then one batch records the `SKL-` row and flips
+each source lesson to `Promoted` (`promoted_to` set, `operator_confirm` carried).
+
+**Create / update / retire.** Never created by a loop or on the agent's initiative. Later
+revisions of the skill are the operator's hand-edits of the FILE; a re-distillation is a
+new `SKL-` row superseding the old. Rows stay mutable — metadata, not content.
+
+**What you lose without it.** Approved lessons stay declarative: every session re-reads
+the note and re-derives the same procedure, and the note's render cap squeezes out exactly
+the lessons that earned graduation. **Full graduation** closes that loop: Promoted lessons
+leave the CLAUDE.md note render entirely, and the note keeps one line — "Skills distilled
+from lessons: `<name>` [<level>], … — auto-loaded where present" — because a skill the
+harness auto-loads must not also occupy the always-loaded budget as prose.
+
+**Design decisions behind it.** Plan 036, maintainer-locked. The research lineage:
+Voyager's skill library (verified procedures accumulate as callable code), Soar's chunking
+(episodic → declarative → procedural — the three-generation arc above), Claude Code native
+skills (`.claude/skills`, auto-discovered), and ECC continuous-learning (instincts →
+cluster → promote with human confirmation). Tamheed's deliberate difference from the
+confidence-scored lineage: **operator confirmation at entry replaces numeric confidence and
+decay** — there is no score to game and nothing rots silently; a wrong skill is superseded
+by a human, not decayed by a counter.
+
+**Related mechanics.** `lessons.promoted_to` FK (the `DEC-`→`ADR-` promotion idiom);
+the confirm guard (promotion requires stored-`Approved` + an existing `SKL-` target);
+the note's skills line; migration `003_skills.sql`.
 
 ---
 
@@ -1199,6 +1269,17 @@ The research register behind the v4 model. Cited inline above; collected here.
   failure mode the operator gate screens): <https://arxiv.org/abs/2303.11366>
 - US Army After Action Review doctrine — both polarities: what to improve AND what to
   sustain.
+
+**Skills**
+- Voyager (an agent's skill library of verified, reusable procedures):
+  <https://arxiv.org/abs/2305.16291>
+- Soar's chunking — episodic to declarative to procedural memory (the three-generation
+  arc the PE-/LL-/SKL- chain mirrors).
+- Claude Code native skills (`.claude/skills/`, auto-discovered):
+  <https://code.claude.com/docs/en/skills>
+- ECC continuous-learning (instincts → cluster → promote with human confirmation) — the
+  closest sibling; tamheed deliberately replaces its numeric confidence/decay with
+  operator confirmation at entry.
 
 **Journal**
 - Event-sourcing-lite audit trails (typed past-tense events, compensating corrections):

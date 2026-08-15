@@ -352,7 +352,7 @@ _LANES = [
     ("Work", ("phase", "milestone", "slice", "wbs-item", "execution-plan",
               "defect", "deferred-work")),
     ("Verification", ("test", "acceptance-criterion", "experiment", "poc")),
-    ("Risks & measures", ("risk", "kpi", "lesson")),
+    ("Risks & measures", ("risk", "kpi", "lesson", "skill")),
 ]
 _LANE_W = 240   # px per lane
 _ROW_H = 16    # px per node row
@@ -491,6 +491,17 @@ def _lessons(conn, gates, ready):
                                    "impact if followed", "impact if ignored",
                                    "confirmed by", "confirmed at"], rows,
                                   row_ids=True), anchor="lessons-approved"))
+    promoted = conn.execute(
+        "SELECT l.id, l.kind, l.title, l.promoted_to, s.name, s.level"
+        " FROM lessons l LEFT JOIN skills s ON s.id = l.promoted_to"
+        f" WHERE l.lifecycle_status = 'Promoted' {order.replace('id', 'l.id')}"
+    ).fetchall()
+    if promoted:
+        parts.append(_fold("Promoted into skills (graduated from the note —"
+                           " the skill file carries the content)", len(promoted),
+                           _table(["id", "kind", "title", "skill", "name",
+                                   "level"], promoted, row_ids=True),
+                           anchor="lessons-promoted"))
     closed = conn.execute(
         "SELECT id, kind, lifecycle_status, title, superseded_by FROM lessons"
         f" WHERE lifecycle_status IN ('Rejected','Superseded','Obsolete') {order}"
