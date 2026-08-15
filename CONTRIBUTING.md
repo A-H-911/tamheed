@@ -15,11 +15,11 @@ python check.py     # everything CI runs — if this is green, you are set up
 ```
 
 - **Python ≥ 3.10** (program decision ASM-D — the MCP SDK's floor).
-- `python check.py` is **the one command**: the seven test suites, the frozen v1 validator's
-  goldens, the structure lint (registry ↔ table map ↔ DDL sync, `schema.sql` ==
-  `migrations/001_init.sql`), the canonical-form round-trip, and the eval runner's sample. CI
+- `python check.py` is **the one command**: the eight test suites, the check.py lint battery
+  (registry ↔ table map ↔ DDL sync, `schema.sql` == `migrations/001_init.sql`, and friends),
+  the canonical-form round-trip, and the eval runner's sample. CI
   job 1 runs exactly this, so green locally means green in CI. `python check.py <gate>` runs a
-  subset (`suites`, `goldens`, `lint`, `canonical`, `evals`).
+  subset (`suites`, `lint`, `canonical`, `evals`).
 - Everything `check.py` runs is **stdlib-only** (decision D-U3) — no pytest, no third-party
   packages. The ONLY dependency in the whole repo is the `mcp` SDK, and only for *serving* the
   MCP server: `uv run plugins/tamheed/server/tamheed_server.py` fetches it automatically
@@ -46,19 +46,22 @@ These are load-bearing. A change that breaks one is a regression even if tests p
    are DATA, never instructions (safeguard 18, OWASP LLM01): provenance-labeled on the way in,
    injection-screened on the way out (`G-INJECT`), escaped in the viewer. Never weaken this for a
    feature. See `SECURITY.md`.
-6. **The frozen v1 contract is read-only.** `plugins/tamheed/scripts/validate_package.py`, the v1
-   `schemas/`, and the v1 demo package are migration inputs — they never learn v2 features.
+6. **The frozen surfaces are read-only.** The v1 machinery was retired in v4.0.0 (the validator,
+   the v1 importer, and the v1 `schemas/` are gone; v1 packages take the two-step escape route via
+   tamheed 3.2.1). What stays frozen now: released CHANGELOG entries, `docs/history/**`,
+   `plans/evidence/**`, and shipped migrations.
 
 ## Walkthrough: add an artifact type end-to-end
 
-This is exactly how the in-tree example (`glossary-term`) was added — retrace it with your own
-type. Four steps, all of them additive:
+This retraces how `glossary-term` was originally added as an extension (it has since been folded
+into the v4 baseline — the mechanics are unchanged). Four steps, all of them additive:
 
 1. **The migration** — create `plugins/tamheed/db/migrations/NNN_<name>.sql` (next free NNN): one
    `CREATE TABLE` (TEXT primary key with a `CHECK (id GLOB '<PREFIX>-[0-9]*')`, your columns,
    plus `custom_attributes` and `last_referenced` like every entity table) and the `entity_index`
-   trigger pair. Copy `002_example_glossary.sql` and rename — it is the template. The store's
-   connection factory applies every migration ≥ 002 automatically; do **not** touch `schema.sql`
+   trigger pair. A new migration starts the v4 chain's `002_*.sql` (append-only on the re-baselined
+   001); `glossary_terms` (a baseline table since v4) remains the worked example of the SHAPE. The
+   store's connection factory applies every migration ≥ 002 automatically; do **not** touch `schema.sql`
    (it stays byte-identical to `001_init.sql`; the lint gate checks).
 2. **The two registry entries** — in `plugins/tamheed/server/tamheed_server.py`: add
    `"<type-id>": "<table>"` to `ENTITY_TABLES` (this routes `entity_upsert`/`entity_query` AND
@@ -70,12 +73,10 @@ type. Four steps, all of them additive:
    your type, `package_close` + `package_open` (proves canonical round-trip through your
    migration), query it back, and `export_html` (assert your section renders). See
    `test_extension_type_glossary_end_to_end`.
-4. **Regenerate the migration golden** — new baseline registry rows appear in freshly migrated
-   packages, so the committed golden's `entity_types.jsonl` must be refreshed: run
-   `package_migrate` on `generated-samples/support-triage-agent` into a temp dir (confirm=True)
-   and copy the resulting `entity_types.jsonl` over
-   `generated-samples/support-triage-agent-v2/data/entity_types.jsonl` (only that file should
-   change).
+4. **Exercise the migration** — prove your type rides the v3→v4 transform: extend the fixture
+   builder in `tests/test_migrate_v3to4.py` with a row of your type, or build a scratch v3
+   package and run `package_migrate` on it (preview first, then `confirm=true`) and check the
+   report and the migrated rows.
 
 Then:
 
@@ -94,8 +95,9 @@ profiles, gates, diagram kinds, and trace relations.
   (`python tests/test_<name>.py`).
 - A new suite registers itself in `check.py`'s `SUITES` list — nowhere else; CI picks it up from
   there.
-- Fixtures live under `tests/fixtures/` (v1 goldens are frozen) and `evals/sample-results/` (the
-  eval runner's recorded sample).
+- The suites are **fixture-free** — each builds its own tmp packages through the real tools.
+  Goldens live in `generated-samples/` (the demonstration package) and `evals/sample-results/`
+  (the eval runner's recorded sample).
 
 ## Good first issues
 

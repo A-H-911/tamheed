@@ -1,6 +1,6 @@
 # Clarification protocol
 
-Clarification is how Keystone avoids both **masking assumptions** and **over-asking**. The test for asking
+Clarification is how Tamheed avoids both **masking assumptions** and **over-asking**. The test for asking
 a question: *would different answers change the plan, scope, architecture, or risk?* If yes, ask. If no,
 record an assumption and move on.
 

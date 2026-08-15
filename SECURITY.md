@@ -1,6 +1,7 @@
 # Security policy
 
-Keystone is a planning/handoff **skill** (mostly Markdown + two stdlib-only Python tools). It has a small
+Tamheed is a planning/handoff **skill** (Markdown methodology + a stdlib-only relational store and
+MCP server). It has a small
 attack surface, but because it (a) ingests an untrusted project brief and (b) emits prompts that another
 agent will act on, prompt injection is its primary risk. This document states the trust model and how to
 report a problem.
@@ -23,8 +24,9 @@ report a problem.
 - **Untrusted-content handling** — operating principle 10 in `plugins/tamheed/SKILL.md`, safeguard 18 in
   `plugins/tamheed/references/safeguards.md`, and the handoff screening step in
   `plugins/tamheed/references/handoff.md`. Brief text is fenced + provenance-labeled, never an imperative.
-- **No shell injection** — both Python tools invoke `git`/`gh` with **argument lists** (`subprocess.run([...])`),
-  never `shell=True` and never string-interpolated commands (CWE-78).
+- **No VCS command execution** — the MCP server and the store execute no `git`/`gh` commands at all;
+  `scripts/scratch_diff.py` is a read-only diff tool; nothing in the bundle invokes `gh` (CWE-78
+  surface: none).
 - **No path traversal** — the MCP server validates package names as a single kebab-case segment
   (`^[a-z0-9][a-z0-9-]*$`, `.`/`..` unrepresentable) under the declared `--package-dir` (CWE-22);
   a malicious name is rejected and writes nothing.
@@ -32,7 +34,7 @@ report a problem.
   approval-bearing rows are immutable (supersede, never edit); one writer per package via a fail-loud
   lockfile; `handoff_emit` refuses emission when the injection screen finds instruction-shaped text.
 - **Minimal supply chain** — standard library only: no third-party dependencies, no network access in the
-  tools, no code executed from package content (the validator parses, it never `eval`/`exec`s input).
+  tools, no code executed from package content (the loader and gates parse, they never `eval`/`exec` input).
 
 ## Provenance fields and the content gate (plan 017)
 
@@ -51,4 +53,4 @@ repository, or a minimal issue that omits exploit detail and asks for a private 
 issue containing a working exploit. We aim to acknowledge within a few business days.
 
 When reporting, include: affected file/version, a minimal reproduction, the impact, and (if known) a
-suggested fix. Thank you for helping keep Keystone and its downstream packages safe.
+suggested fix. Thank you for helping keep Tamheed and its downstream packages safe.

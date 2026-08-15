@@ -10,8 +10,9 @@ owner: <name-or-role>
 <!-- The FIRST message for Claude Code (CLI/IDE) to start implementation. It must
      (1) ORIENT, (2) give ONE bounded task, (3) STOP at an approval gate. It NEVER authorizes building
      the whole system at once. Replace EVERY <placeholder> — a shipped prompt with an unfilled <…> is a
-     G-HANDOFF failure. Reference artifacts by real relative paths in this package. List INV- up front.
-     Generation class: Always. Lives at: handoff/initial-prompt.md. Shape: references/prompt-templates.md. -->
+     G-HANDOFF failure. Reference entities by real ids. List INV- up front.
+     Generation class: Always. A PROJECT prompt file in `<package>/prompts/` (purpose-named).
+     Shape: references/prompt-templates.md. -->
 
 ---
 
@@ -19,8 +20,8 @@ owner: <name-or-role>
 
 This repository contains the APPROVED plan for **<project-name>**. You are starting implementation.
 
-<one-paragraph orientation: what the project is, where the plan lives (e.g. `docs/plan/` or this
-package root), that the decisions in the ADRs and approved registers are FINAL, and that you must not
+<one-paragraph orientation: what the project is, where the package store lives (the `data/*.jsonl`
+directory the MCP server opens), that the decisions in the ADRs and approved registers are FINAL, and that you must not
 expand scope beyond what each step authorizes>.
 
 **Invariants you must respect at all times (do not violate, from the first commit):**
@@ -34,9 +35,9 @@ protocol below). These steps bootstrap and gate; that standing context governs e
 
 ### Step 1 — Orientation (use plan mode; NO code)
 
-Read these plan documents:
-- [Charter](../00-charter.md)
-- [Architecture](../architecture/architecture.md)
+Read the plan:
+- the charter: `entity_query("narrative-document")` (doc_kind `charter`) → its `document-section` rows
+- the architecture narrative the same way (doc_kind `architecture`)
 - `entity_query("requirement", status="Approved")` and `entity_query("invariant")`
 - `entity_query("phase")`, `entity_query("slice")`, `entity_query("acceptance-criterion")`
 - the human surface: `<package>/review.html`
@@ -44,7 +45,7 @@ Read these plan documents:
 
 Then give me:
 (a) a **<=1-page summary** of what you will build and the invariants you must respect (`INV-001..INV-00n`);
-(b) your **execution plan for Phase `PH-1`** with the file layout you propose and a **PASS/FAIL** check per task.
+(b) your **execution plan for Phase `PH-1`** with the file layout you propose and a **pass/fail** check per task.
 
 **STOP and wait for my approval.** Do not write code yet.
 
@@ -86,7 +87,7 @@ hand-maintained copy.
 - Access/accounts: <any required, or "none">
 - Setup pitfalls: <platform-specific gotchas — venv activation, OS path/encoding quirks, never rely on
   system-installed assets/fonts; pin every version you install>.
-- MVP definition: see [executive summary](../01-executive-summary.md) / manifest.
+- MVP definition: see the executive summary (doc_kind: executive-summary) / the package metadata.
 
 <!-- Executor is Claude Code (CLI/IDE). On the autonomous cloud coworker — which runs to a PR rather than
      pausing between tasks — read each "STOP and wait for my approval" as "finish the bounded task, open a

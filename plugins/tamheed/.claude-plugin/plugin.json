@@ -1,7 +1,7 @@
 {
   "name": "tamheed",
   "description": "Turn a project description into a validated, traceable, execution-ready planning & handoff package for Claude Code to implement.",
-  "version": "4.1.0",
+  "version": "4.2.0",
   "author": {
     "name": "Anas Hammo"
   },

@@ -11,6 +11,28 @@ summarizes and links — it does not re-paste the operational spec.
 > (what each stage produces), [`../plugins/tamheed/references/quality-gates.md`](../plugins/tamheed/references/quality-gates.md) (gate
 > definitions), and [`../plugins/tamheed/references/governance.md`](../plugins/tamheed/references/governance.md) (statuses and IDs).
 
+```mermaid
+flowchart TB
+    subgraph A["Understand — stages 1 to 8"]
+        direction LR
+        S1["1 Intake"] --> S2["2 Classification"] --> S3["3 Extraction"] --> S4["4 Normalization"]
+        S4 --> S5["5 Ambiguity"] --> S6["6 Contradictions"] --> S7["7 Clarification"] --> S8["8 Scope"]
+    end
+    subgraph B["Explore — stages 9 to 15"]
+        direction LR
+        S9["9 Research plan"] --> S10["10 Architecture"] --> S11["11 Options"] --> S12["12 Hypotheses"]
+        S12 --> S13["13 POCs"] --> S14["14 Decisions"] --> S15["15 Risk"]
+    end
+    subgraph C["Plan and hand off — stages 16 to 22"]
+        direction LR
+        S16["16 Execution plan"] --> S17["17 Artifacts"] --> S18["18 Package storage"] --> S19["19 Validation"]
+        S19 --> S20["20 Handoff"] --> S21["21 Update cycles"] --> S22["22 Final readiness"]
+    end
+    A --> B
+    B --> C
+    S21 -. "execution loop — diff-aware re-derivation" .-> S17
+```
+
 ## Why interactive, not a single prompt
 
 A project description is almost never complete, consistent, and unambiguous on first contact. It contains
@@ -63,7 +85,7 @@ final readiness go/no-go from the gate report.
 
 ## Document and decision lifecycle
 
-Everything Tamheed produces carries a status, so a reader always knows how much weight it bears. In v2
+Everything Tamheed produces carries a status, so a reader always knows how much weight it bears. Since v2
 the status is **three-axis** (ADR-0001): `lifecycle_status` (the flow below), `verdict` (Met/Not-met,
 Validated/Invalidated/Inconclusive for experiments, Pass/Fail for tests, Met/Partial/Not-met
 for audits — outcomes, not lifecycle), and `disposition` (superseded / accepted-with-deviation / void —
@@ -114,6 +136,25 @@ confirm research depth and experiment budgets for large efforts (stages 9, 13); 
 (stage 20); approve material changes during update cycles (stage 21); and give the final go/no-go (stage
 22). Tamheed never passes an approval gate on the user's behalf.
 
+```mermaid
+sequenceDiagram
+    actor Operator
+    participant Planner
+    participant Store
+    Planner->>Operator: confirm request scope and mode
+    Operator-->>Planner: confirmed
+    Planner->>Operator: approve the locked scope
+    Operator-->>Planner: scope approved
+    Planner->>Operator: approve key decisions
+    Operator-->>Planner: decisions approved
+    Planner->>Operator: approve the roadmap
+    Operator-->>Planner: roadmap approved
+    Planner->>Store: package_close — canonical JSONL written back
+    Operator->>Store: operator commits the package data
+    Planner->>Operator: final go or no-go
+    Operator-->>Planner: GO
+```
+
 ## Stage summary
 
 A compact index of all 22 stages. **Per-stage operational detail (In · Do · Out · Enter · Exit · Validate ·
@@ -150,11 +191,11 @@ does not replace it. Gate IDs reference [`../plugins/tamheed/references/quality-
 
 | # | Name | Purpose | Key outputs | Gate |
 |---|---|---|---|---|
-| 16 | Execution planning | Phased roadmap → slices, work breakdown, milestones, execution gates, per-slice plans, conventions | `phase`/`slice`/`wbs-item`/`milestone`/`execution-gate`/`execution-plan`/`convention` rows | G-EXEC (phases sliced; leaf items actionable+testable); approve roadmap ✅ |
+| 16 | Execution planning | Phased roadmap → slices, work breakdown, milestones (labels since v4 — no lifecycle), execution gates, per-slice plans, conventions | `phase`/`slice`/`wbs-item`/`milestone`/`execution-gate`/`execution-plan`/`convention` rows | G-EXEC (phases sliced; leaf items actionable+testable); approve roadmap ✅ |
 | 17 | Artifact generation | Populate the selected entity families + narrative sections; trace edges written live | The populated package store | G-COMPLETE, G-TRACE (no stubs; every MVP requirement linked) |
 | 18 | Package storage initialization | Materialize the store; write back canonical JSONL (`package_close`) | `data/*.jsonl` for the operator to commit | Operator commits the package data ✅ (no repo scaffolding — removed in v2, ASM-B) |
 | 19 | Quality validation | `gate_run`: coverage views + content scan (referential tier already held at write time) | Gate report; `omission` rows for absent Always families | All **Critical** gates pass; review warnings ✅ |
-| 20 | Execution-agent handoff | `prompt` rows; `handoff_emit` screens (G-INJECT), writes prompts + executor-side MCP config | `handoff/` in the target project + `.mcp.json` + `CLAUDE.md` note | G-HANDOFF + G-INJECT; approve handoff ✅ |
+| 20 | Execution-agent handoff | prompt files in `<package>/prompts/`; `handoff_emit` screens (G-INJECT), writes prompts + executor-side MCP config | `handoff/` in the target project + `.mcp.json` + `CLAUDE.md` note | G-HANDOFF + G-INJECT; approve handoff ✅ |
 | 21 | Progress & decision update cycles | `progress_update` / `audit_record` (evidence refs) / `work_bind`; typed scope changes bump the iteration | Progress entries, audit verdicts, `scope-change` rows | Cascades fire in-transaction; G-PROGRESS; approve material changes ✅ |
 | 22 | Final readiness assessment | `gate_run` again; summarize gates, open items, residual risk; state go/no-go | Readiness verdict (from the gate report; `go_no_go` on the package row) | No Critical gate failing; final go/no-go ✅ |
 

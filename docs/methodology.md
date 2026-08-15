@@ -141,7 +141,8 @@ is recorded so the trail stays intact.
 The methodology supports several **invocation modes** that change only where the workflow starts and stops,
 never the methodology itself: `full` (end to end), `intake` (understand + surface gaps), `plan` (full plan,
 no handoff emission), `resume`, `stage:<id>`, `update` (diff-aware re-derivation, execution-progress sync,
-typed scope changes — D-UPDATE), `migrate` (import a conformant v1 package), and `adopt` (brownfield
+typed scope changes — D-UPDATE), `migrate` (convert a v2/v3 store to v4 in place; v1 trees take the
+two-step escape route), and `adopt` (brownfield
 onboarding). See [`../plugins/tamheed/references/modes.md`](../plugins/tamheed/references/modes.md). There is
 no separate state file — **the package is the state**: `resume`/`update` are `package_open` + targeted
 queries; see [`../plugins/tamheed/references/state.md`](../plugins/tamheed/references/state.md).
@@ -153,7 +154,7 @@ does not repeat either.
 ## 5. Decision processes
 
 Decisions are first-class and tracked through an explicit, narrow status set: **Proposed, Approved, Rejected,
-Superseded, Deferred** (decision statuses are exactly these — never more). Anything Tamheed authors on its
+Superseded, Deferred, Implemented** (decision statuses are exactly these six — never more). Anything Tamheed authors on its
 own initiative defaults to *Proposed* and may not be rendered as *Approved* until a human or an authorized
 gate accepts it. Only Approved items constrain execution.
 
@@ -184,7 +185,8 @@ reports "ready" while a Critical gate fails.
 
 Planning produces a **phased roadmap** (`PH-`) whose phases decompose into **slices** (`SL-`) — the
 delivery-sized units that branches, PRs, and acceptance criteria bind to; a **work breakdown** (`WBS-`)
-decomposed until leaf items are independently actionable and testable; **milestones** (`MS-`); and the
+decomposed until leaf items are independently actionable and testable; **milestones** (`MS-` — roadmap
+labels since v4, with no lifecycle of their own; gates gate); and the
 execution scaffolding as data — **execution gates** (`GATE-`: ready/done/checkpoint/approval definitions),
 per-slice **execution plans** (`EP-`), and durable **conventions** (`CONV-`). The backlog is a *view* over
 work items, never a second list to reconcile. The MVP path is sequenced explicitly and gated, so the
@@ -214,6 +216,14 @@ an explicit metric + threshold and a timebox; the Validated/Invalidated/Inconclu
 `research/` and never silently become decisions — a finding becomes a decision only through an explicit
 decision row (safeguard 6). An evaluation/comparison framework with weighted criteria governs how options and
 experiment outcomes are judged.
+
+```mermaid
+flowchart LR
+    UNK["Blocking unknown"] --> HYP["HYP — falsifiable hypothesis"]
+    HYP --> EXP["EXP / POC — metric and threshold set BEFORE the run, timeboxed<br/>verdict: Validated, Invalidated, Inconclusive"]
+    EXP --> DEC["DEC — decision with rationale, losers kept"]
+    DEC -- "one-way door" --> ADR["ADR — immutable after approval, superseded never edited"]
+```
 
 ## 10. Execution-agent handoff mechanisms
 

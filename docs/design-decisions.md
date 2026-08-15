@@ -30,7 +30,9 @@ Every artifact had a dual surface: human-readable **Markdown** (what people revi
 was structured, a machine-readable **JSON Schema** (`schemas/`) that the validator and state machine relied
 on. This let humans work in prose while tools mechanically checked identifiers, statuses, and traceability.
 The templates were the single source of truth for document shape; the schemas the single source of truth
-for data shape. (The v1 schemas and templates survive in the bundle as the **frozen migration contract**.)
+for data shape. (The v1 schemas and templates survived in the bundle as the frozen migration contract
+until they were **retired in v4.0.0** — the validator and schemas are gone; v1 packages take the two-step
+escape route via tamheed 3.2.1.)
 
 ## 3. Provider-neutral repository bootstrap *(retired in v2 — ASM-B)*
 
@@ -58,7 +60,8 @@ extension pattern: add depth as a new reference file and register it, rather tha
 
 Tamheed ships as one self-contained bundle (`plugins/tamheed/`) containing everything it reads or invokes
 at runtime — references, section templates, the DDL + store, the MCP server, the artifact catalog, the
-frozen v1 contract (schemas + validator, kept for migration), and logos — with no outward references. This is required by Claude Code's plugin install semantics (the plugin directory is copied to a
+frozen v1 contract *(retired in v4.0.0 — the validator and schemas are gone; v1 packages take the
+two-step escape route)*, and logos — with no outward references. This is required by Claude Code's plugin install semantics (the plugin directory is copied to a
 cache, so files outside it would not travel) and it makes the bundle equally usable as a standalone Agent
 Skill or a manual copy. It replaces the earlier "single source at repo root + vendor step" model, which had
 no build and left runtime references dangling once installed.
@@ -116,3 +119,13 @@ it is the successor of the v1 validator — the mechanical half of the capabilit
 G-CMD-THIN protects. This is what moves the referential gates to write time (decision/gate mapping in
 [`architecture.md`](architecture.md) §2) and gives the executing agent a governed write path for progress,
 audit verdicts, and work bindings during execution.
+
+## 12. D-V4 — the v4 entity-model re-baseline (2026-08-14)
+
+v4.0.0 re-derived the entity model from first principles as one baseline schema — a systematic entity
+study whose fifteen decisions (claimed-vs-verified `Review`, evidence-chained verdicts, waivers, typed
+progress events, drift-delta scope changes, blocking G-REL, milestone demotion, and the rest) are recorded
+in [`entities.md`](entities.md) §2. The full decision record is
+[`adr/adr-0002-v4-entity-model-re-baseline.md`](adr/adr-0002-v4-entity-model-re-baseline.md). With it, the
+v1 machinery (validator, importer, schemas) was retired; v1 packages take the two-step escape route via
+tamheed 3.2.1.

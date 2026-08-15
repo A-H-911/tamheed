@@ -13,15 +13,17 @@ superseded_by: <ADR-NNNN or none>
 <!-- One Architecture Decision Record per file. ADRs capture architecturally SIGNIFICANT decisions
      (the one-way-door test: hard to reverse, broad blast radius). They are IMMUTABLE after approval: to change a decision,
      write a new ADR that supersedes this one — do not rewrite history (typo fixes excepted).
-     Filename: adr-NNNN-short-title.md. Generation class: Conditional (significant decisions).
-     Lives at: adrs/. If promoted from a DEC-, note it under Context.
+     Stored as an `adr` row (`ADR-NNNN`); this template shapes its context/decision/consequences/
+     confirmation prose. Generation class: Conditional (significant decisions).
+     If promoted from a DEC-, note it under Context.
      ADR statuses are the standard lifecycle (governance.md): Draft | Proposed | Approved |
      Rejected | Deferred | Implemented | Superseded | Obsolete — the store CHECK rejects
      'Accepted'/'Deprecated' (use Approved / Obsolete). -->
 
 ## Status
 
-<!-- One of: Proposed | Accepted | Rejected | Superseded | Deprecated. Mirror the front-matter.
+<!-- One of the standard lifecycle values (the store CHECK): Draft | Proposed | Approved | Rejected |
+     Deferred | Implemented | Superseded | Obsolete. Mirror the front-matter.
      If superseded, link the successor: "Superseded by ADR-000x". -->
 <status> — <date and one-line note; e.g. "Promoted from DEC-007">
 

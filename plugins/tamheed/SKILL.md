@@ -15,6 +15,9 @@ description: >-
 
 # Tamheed
 
+This skill documents tamheed **v4.2.0** (the version travels with the bundle;
+check.py lint 8 keeps this line current).
+
 Tamheed turns a project description into an **execution-ready handoff package**: the planning, research,
 architecture, governance, and execution artifacts Claude Code needs to implement the project with
 discipline. It is the successor of Keystone: the same 22-stage methodology, now backed by a
@@ -85,15 +88,17 @@ Default to **interactive**. Modes are defined in `references/modes.md`:
 - `plan` — produce the full plan and entity set, stopping before handoff.
 - `resume` — `package_open` an existing package and continue from the last incomplete stage.
 - `stage:<id>` — run or re-run a single stage.
-- `update` — the agile heart of v2: diff-aware re-derivation, execution-progress sync, and typed
-  scope changes (D-UPDATE; see `references/modes.md`).
-- `migrate` — convert a v2/v3 store to v4 in place (`package_migrate`, staged and
-  operator-gated; mapping contract in `references/migration-v1.md`). **Present the preview's
-  ledgers to the operator before confirming**: use `status_coerced_groups` (the grouped view
-  — one decision per original word, not per row) as a multi-select confirmation passed back
-  as `status_map={...}` on the confirm call; `zero_families`, `status_defaulted`, grouped
-  `title_fallbacks`, `partial_files` and `count_deltas` explained, never glossed. On success the package carries a ready-made
-  prompt library in `<package>/prompts/` — point the operator at it.
+- `update` — the agile heart of the store: diff-aware re-derivation, execution-progress sync,
+  and typed scope changes (D-UPDATE; see `references/modes.md`).
+- `migrate` — convert a v2/v3 store to v4 IN PLACE (`package_migrate(name)`, staged and
+  operator-gated). **Present the preview report to the operator before confirming** — it
+  lists every rewrite: `mode_coerced`, `milestone_status_dropped` (each value stashed to
+  `custom_attributes.v3_*`), `verdicts_mapped`, `risk_scale_normalized`/`risk_scale_stashed`,
+  `provenance_repaired`, `edges_retyped`/`edges_deduplicated`, `entity_types_added`/`_scrubbed`,
+  `legacy_prompts` — explained, never glossed. The operator backs up, then
+  `package_migrate(name, confirm=true)`; the old files are kept in `data-v3-backup/`. On
+  success the package carries a refreshed prompt library in `<package>/prompts/` — point the
+  operator at it (`refresh_stock=true` on the next `handoff_emit` safely updates stale stock).
 - `adopt` — onboard a project that never used Tamheed (`package_adopt`, staged): nothing inferred
   is Approved, provenance is code-shaped, the gap report is first-class (`references/adopt.md`).
 
@@ -192,7 +197,7 @@ All entities use the identifier scheme, lifecycle statuses, and cross-reference 
 KPI-/STK-/PH-/SL-/WBS-/MS-/AC-/AV-/PE-/DEF-/DW-/GATE-/EP-/CONV-/SC-/DOC-/SEC-/DIA-`; `PRM-`
 retired in v3 — prompts are files, not entities). Statuses are
 three-axis (ADR-0001): `lifecycle_status` (Draft → Proposed → Approved / Rejected / Deferred →
-Implemented, Superseded → Obsolete), `verdict` (Met/Not-met, PASS/FAIL), and `disposition`
+Implemented, Superseded → Obsolete), `verdict` (Met/Partial/Not-met/Pending for audits; Validated/Invalidated/Inconclusive/Pending for experiments/POCs; Pass/Fail/Pending for tests), and `disposition`
 (superseded / accepted-with-deviation / void — always with the deciding decision ref). A *proposed*
 decision is never rendered as *approved*. Traceability is the `trace_edges` table queried live
 (`trace_query`), and the matrix is a derived view.
@@ -222,16 +227,15 @@ Read the reference file when you reach the matching part of the work; do not loa
 | `references/clarification.md` | Detecting gaps/contradictions and asking questions |
 | `references/research-depth.md` | Deciding how much research/planning is warranted |
 | `references/artifact-rules.md` | Selecting which artifact families to populate |
-| `references/artifact-catalog.md` | The artifact catalog (v1 catalog + v2 dispositions) |
+| `references/artifact-catalog.md` | The v4 entity-family catalog: classes, purposes, the entity map + lifecycle diagrams, the four operating rules |
 | `references/traceability.md` | Building and checking traceability |
 | `references/governance.md` | Identifiers, statuses, versioning, cross-references |
 | `references/quality-gates.md` | The three-tier gate model; running `gate_run` |
 | `references/safeguards.md` | The anti-patterns to actively prevent |
 | `references/handoff.md` | Assembling the execution-agent handoff |
-| `references/migration-runbook.md` | The operator procedure: staged run, cutover, re-populate + swap |
 | `references/adopt.md` | Brownfield onboarding (`adopt` mode) |
-| `references/prompt-templates.md` | Writing project prompt files + the 14-file stock scenario library |
-| `references/generated-structure.md` | The layout of a generated v2 package |
+| `references/prompt-templates.md` | Writing project prompt files + the 16-file stock scenario library |
+| `references/generated-structure.md` | The layout of a generated package |
 | `references/state.md` | State, resumption, and update cycles |
 | `references/extension.md` | Adding capabilities without touching core logic |
 | `server/README.md` | Server install/launch; the full MCP tool reference |
@@ -240,5 +244,5 @@ Read the reference file when you reach the matching part of the work; do not loa
 This skill is **self-contained**: everything it reads or invokes at runtime lives in this directory —
 references, section templates in `templates/`, the DDL + store in `db/`, and the MCP server in
 `server/`. (The v1 validator, schemas, and importer were retired in v4 — an old Keystone
-package migrates under tamheed 3.2.1 first, then v3→v4 here; see
-`docs/migrate-from-keystone.md` in the repo.)
+package migrates under tamheed 3.2.1 first, then v3→v4 here — the escape route is
+documented in the repo's docs, not in this bundle.)

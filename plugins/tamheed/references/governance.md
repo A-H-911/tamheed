@@ -111,6 +111,9 @@ independent columns:
   not *Not-met*.
 - Risks additionally carry `risk_state` ∈ {open, mitigated, materialized, retired, accepted}
   with `discharged_by` naming the AC/test that retires the risk.
+- **The risk scale (v4, plan 033):** `probability` = the judged likelihood the risk
+  materializes; `impact` = the severity if it does — both on the `high/medium/low`
+  enum. The enum IS the scale; there is no numeric tier behind it.
 
 **Audit verdicts carry their evidence chain (v4):** `evidence` (what proves it),
 `verified_by` (human/agent/ci), `verification_method` (auto-test/manual/inspection),

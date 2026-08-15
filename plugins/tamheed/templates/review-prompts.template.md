@@ -8,8 +8,9 @@ owner: <name-or-role>
 # Review Prompts — <project-name>
 
 <!-- Prompts that make Claude Code (or a human) CHECK work against the approved plan; reference
-     real artifact paths; replace every <placeholder> (G-HANDOFF). Generation class: Conditional (handoff
-     to Claude Code). Lives at: handoff/review-prompts.md. Shape: references/prompt-templates.md. -->
+     entities by real ids; replace every <placeholder> (G-HANDOFF). Generation class: Conditional (handoff
+     to Claude Code). PROJECT prompt files in `<package>/prompts/` (purpose-named).
+     Shape: references/prompt-templates.md. -->
 
 ## Invariant audit
 
@@ -20,9 +21,10 @@ produce a report only.
 
 ## Readiness re-check
 
-Re-run the quality gates against the current repository (see [definition of done](../execution/definition-of-done.md)
-and the gate list). Report each **Critical** gate (`G-TRACE`, `G-COMPLETE`, `G-IDS`, `G-DEC-STATUS`,
-`G-EXEC`, `G-HANDOFF`, `G-OQ`, `G-CONFLICT`) as pass/fail with offending IDs/paths, then give an overall
+Re-run the quality gates against the current repository (the DoR/DoD gates:
+`entity_query("execution-gate")`). Run `gate_run()` — the full mechanical set (`G-IDS`,
+`G-DEC-STATUS`, `G-REQ-SRC`, `G-TRACE`, `G-SET`, `G-PROGRESS`, `G-COMPLETE`, `G-REL`) — plus
+`readiness_check`; report each gate as pass/fail with offending IDs, then give an overall
 **go / no-go**. Never report "ready" while a Critical gate fails.
 
 ## PR review against acceptance criteria
@@ -39,12 +41,12 @@ carried loudly — not narrated away). Also check:
 - No scope beyond the current phase (`PH-`); deviations captured as ADRs.
 - Traceability links updated.
 
-Output: a PASS/FAIL per `AC-`, a list of issues, and an approve / request-changes recommendation.
+Output: a pass/fail per `AC-`, a list of issues, and an approve / request-changes recommendation.
 
 ## Traceability audit
 
 Walk the coverage matrix in `review.html#traceability` (or `trace_query` per
 requirement). Confirm every **MVP** `FR-/NFR-`
 reaches >=1 decision, >=1 work item, and >=1 test, and that behavior-bearing ones reach an `AC-`. Report
-any `gap`/`partial` row and whether it is a real gap or a missing link. Backward check: list any `WBS-` or
+any requirement `gate_run` lists under G-TRACE and whether it is a real gap or a missing link. Backward check: list any `WBS-` or
 `TEST-` that traces to no requirement (possible gold-plating).

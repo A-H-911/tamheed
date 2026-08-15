@@ -10,7 +10,8 @@ v3 -> v4 changes applied here (see plans/031 and CHANGELOG [4.0.0]):
   packages          package_version -> 4.0.0; mode coerced to the CHECK vocabulary
   entity_types      template_ref dropped; 'prompt' row scrubbed; missing v4 baseline
                     rows (waiver) appended by the server from BASELINE_ENTITY_TYPES
-  milestones        demoted to label: lifecycle_status/disposition columns dropped
+  milestones        demoted to label: lifecycle_status/disposition columns dropped,
+                    values stashed in custom_attributes.v3_* (findings_17 A5)
   stakeholders      name -> title
   defects           status -> lifecycle_status (vocabulary unchanged)
   deferred_work     status -> lifecycle_status (vocabulary unchanged)
@@ -36,6 +37,9 @@ from typing import Any
 LEGAL_MODES = {"full", "intake", "plan", "resume", "update", "migrate", "adopt"}
 VERDICT_MAP = {"PASS": "Validated", "FAIL": "Invalidated"}
 PI_ENUM = {"high", "medium", "low"}
+# findings_17 C3 (plan 033): v2-era scales were single letters — a 1:1 mechanical
+# mapping is recovery, not invention.
+PI_LETTERS = {"h": "high", "m": "medium", "l": "low"}
 # Tables that carry nullable provenance plus the v4 span-requires-kind CHECK.
 PROV_TABLES = (
     "constraints", "invariants", "assumptions", "dependencies", "open_questions",
@@ -100,11 +104,25 @@ def transform_tables(tables: dict[str, list[dict]],
         report.setdefault("entity_types_scrubbed", []).append("prompt (omission row)")
 
     # -- structural renames / drops ------------------------------------------
+    # findings_17 A5 (plan 033): dropped milestone lifecycle columns are STASHED
+    # into custom_attributes (the risks v3_* pattern) — report + stash, never
+    # report-only loss.
+    ms_rows = {r.get("id"): r for r in tables.get("milestones") or []}
     ms_dropped = _pop_keys(tables.get("milestones") or [],
                            ("lifecycle_status", "disposition", "disposition_reason_ref"))
+    for key, entries in ms_dropped.items():
+        for mid, val in entries:
+            if val is None or mid not in ms_rows:
+                continue
+            row = ms_rows[mid]
+            extra = json.loads(row.get("custom_attributes") or "{}")
+            extra[f"v3_{key}"] = val
+            row["custom_attributes"] = json.dumps(
+                extra, ensure_ascii=False, separators=(",", ":"))
     if ms_dropped.get("lifecycle_status"):
         report["milestone_status_dropped"] = [
-            {"id": mid, "was": val} for mid, val in ms_dropped["lifecycle_status"]]
+            {"id": mid, "was": val, "stashed_as": "custom_attributes.v3_lifecycle_status"}
+            for mid, val in ms_dropped["lifecycle_status"]]
     if _rename_key(tables.get("stakeholders") or [], "name", "title"):
         report["stakeholders_renamed"] = "name -> title"
     for table in ("defects", "deferred_work"):
@@ -137,6 +155,7 @@ def transform_tables(tables: dict[str, list[dict]],
             if val is None:
                 continue
             low = str(val).strip().lower()
+            low = PI_LETTERS.get(low, low)
             if low in PI_ENUM:
                 if low != val:
                     report.setdefault("risk_scale_normalized", []).append(

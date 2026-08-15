@@ -9,8 +9,9 @@ owner: <name-or-role>
 
 <!-- The recommended architecture: context, component model, the contracts between components, and the
      decisions that shaped it. Reference ADR-/DEC- rather than re-arguing them here.
-     Generation class: Conditional (architecturally significant decisions). Lives at:
-     architecture/architecture.md. Keep diagrams in architecture/diagrams/ and embed/link them. -->
+     Generation class: Conditional (architecturally significant decisions). Stored as a
+     narrative-document (doc_kind: architecture). Diagrams are `diagram` rows (mermaid source in
+     `body`; kind context/component/…) — reference them by `DIA-` id. -->
 
 ## Context
 
@@ -18,7 +19,7 @@ owner: <name-or-role>
      systems. A context diagram belongs here. Stay vendor/provider-neutral unless a CON- mandates one. -->
 <context-overview>
 
-<!-- Optional: ![Context diagram](diagrams/context.svg) -->
+<!-- Optional: a context `diagram` row (kind: context, mermaid source in body) — reference its DIA- id here. -->
 
 ## Quality attributes driving the design
 

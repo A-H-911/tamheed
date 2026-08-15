@@ -11,6 +11,13 @@
 >
 > Everything below documents step 1 exactly as it worked in v3.2.1.
 
+```mermaid
+flowchart LR
+    V1["v1 Keystone tree — Markdown registers"] -- "tamheed 3.2.1 — staged v1 migration" --> V3["v3 store"]
+    V3 -- "tamheed v4 — package_migrate, preview then confirm" --> V4["v4 store"]
+    V4 -.- BK["old files kept in data-v3-backup"]
+```
+
 An executable checklist written **for an AI agent** operating inside a project that used old
 Keystone. Follow it top to bottom; stop at every operator gate.
 
@@ -44,7 +51,8 @@ Approve the `tamheed` MCP server when prompted (it launches via `uv run`; Python
 ## 3. Run the staged migration
 
 `package_migrate` is staged and resumable; each stage reports before the next. Mapping contract:
-`plugins/tamheed/references/migration-v1.md`.
+the migration runbook shipped inside tamheed 3.2.1 (no live link — the v1 references were removed
+in v4).
 
 1. **Pre-flight** — `package_migrate(source_dir)` runs the frozen v1 validator first.
    - Validator fails → STOP; show the operator the report. Fix under v1, or —
@@ -61,7 +69,8 @@ Approve the `tamheed` MCP server when prompted (it launches via `uv run`; Python
    `status_map={...}`.
 4. **Populate** — `package_migrate(source_dir, confirm=true, status_map={...})`: one
    transaction; a failure leaves no partial package. On success the package directory gains
-   `prompts/` (the five-scenario library) alongside `data/`.
+   `prompts/` (the 3.2.1 stock library — fifteen scenario files + the operator README) alongside
+   `data/`.
 5. **Post-flight** — the call returns the fidelity report: identifier gaps (must be empty),
    count deltas (stale-manifest divergences are *reported*, e.g. a manifest declaring fewer ADRs
    than disk holds — disk wins), and `gate_run` results.
@@ -109,7 +118,7 @@ the v1 validator — silently undoing the migration.
    block, and `unchanged` statuses make it the standing "is the cutover done?" check.
 4. **Slices need manual backfill**: v1 had no governed slice concept, so the roadmap ladder
    migrates as phases + preserved prose only. Author `slice` rows (and bind ACs to them)
-   through the normal v2 flow when execution resumes.
+   through the normal store tools when execution resumes.
 
 ## 6. Optional cleanup (operator approved)
 
@@ -119,7 +128,7 @@ the v1 validator — silently undoing the migration.
 
 ## 7. Re-populating after a parser upgrade (the no-revert repair path)
 
-When a new Tamheed release fixes migration fidelity (as v2.4.0 does), an already-migrated
+When a new Tamheed release fixes migration fidelity, an already-migrated
 package is repaired by **re-populating from the frozen v1 source** — not by hand-editing rows
 and not by reverting the repo:
 
@@ -136,18 +145,20 @@ and not by reverting the repo:
    (its damage is the reason for the exercise).
 4b. **After the swap, force-re-emit the prompt library once** (`handoff_emit(...,
    force=true)`): the library files embed the package name, so a directory rename makes all
-   five report `diverged` — this one divergence is expected and self-inflicted (C26/B5).
+   fifteen stock files (and the README) report `diverged` — this divergence is expected and
+   self-inflicted (C26/B5).
 5. Re-run `handoff_emit` — managed emissions make it the verifier: expect `unchanged`
    everywhere except deliberate changes, no stale-warning block, and review the
    `stale_references`/`restated_content` findings including the **emitted prompt bodies**.
-6. **Refresh the PRM rows**: v1-migrated prompts are governed content that aged — supersede
-   them and author current ones via `entity_upsert`, then re-emit; the emitted-prompt scan
-   stays green from then on.
+6. **Refresh the stock prompts**: prompts are plain files, and the stock library refreshes
+   at emission. Since v4.1, `handoff_emit(refresh_stock=true)` safely updates every
+   never-customised stock file to the current templates; hand-customised files are left
+   alone and reported, never overwritten.
 7. `export_html` and commit the regenerated `review.html` + `csv/`.
 
 ## The scratch-diff regression measurement (post-upgrade acceptance)
 
-Mirrors runbook §8 in the bundle (`plugins/tamheed/references/migration-runbook.md`) — the
+Mirrors §8 of the migration runbook shipped inside tamheed 3.2.1 (no live link) — the
 standard check that a parser upgrade did what it promised (C27, findings_6 §E):
 
 1. Scratch-migrate the frozen v1 source under the CURRENT parser

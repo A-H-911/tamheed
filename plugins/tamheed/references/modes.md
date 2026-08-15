@@ -11,7 +11,7 @@ before doing heavy work**. Modes change where the workflow starts/stops, not the
 | `resume` | Continue an interrupted package | last incomplete stage | as configured |
 | `stage:<id>` | Run/re-run one stage | that stage | that stage |
 | `update` | Apply new decisions/progress/scope (D-UPDATE) | Stage 21 | Stage 22 |
-| `migrate` | Convert a v2/v3 store to v4 IN PLACE | `package_migrate(name)` (staged: preview = full rewrite report, nothing written → operator backs up → `confirm=true`; old files kept in `data-v3-backup/`). v1 Keystone trees are no longer ingested — see the two-step escape route in `docs/migrate-from-keystone.md` | migration report + refreshed `<package>/prompts/` library |
+| `migrate` | Convert a v2/v3 store to v4 IN PLACE | `package_migrate(name)` (staged: preview = full rewrite report, nothing written → operator backs up → `confirm=true`; old files kept in `data-v3-backup/`). v1 Keystone trees are no longer ingested — the two-step escape route is documented in the repo's docs | migration report + refreshed `<package>/prompts/` library |
 | `adopt` | Onboard a brownfield repository | `package_adopt` (staged: scan/preview → confirm; see `adopt.md`) | gap report + gates |
 
 Parameters: `--profile enterprise|rnd|legacy|ai-agentic|unknown` (registry-backed; community profiles
@@ -24,7 +24,8 @@ roll back — nothing written).
 - Sparse / idea-level input → propose `intake` (clarify first), then offer `full`.
 - Rich, structured brief with explicit constraints → propose `full`.
 - User points at an existing package directory → propose `resume` or `update`.
-- User points at an existing v1 package → propose `migrate`; at an existing codebase → `adopt`.
+- User points at an existing v2/v3 store → propose `migrate`; a v1 Keystone tree gets the two-step
+  escape route (tamheed 3.2.1 first — not ingestible here); an existing codebase → `adopt`.
 - User asks for "just the plan" → `plan`.
 
 Always state the chosen mode and what it will and will not do, then proceed.
@@ -37,7 +38,7 @@ Always state the chosen mode and what it will and will not do, then proceed.
 - `full` and `update` honor approval gates: do not pass an approval gate on the user's behalf.
 - One package open at a time; the store's lockfile makes concurrent writers fail loud.
 
-## `update` — the agile heart of v2 (D-UPDATE)
+## `update` — the agile heart of the store (D-UPDATE)
 
 Three capabilities, each with a concrete tool sequence. All three end with `gate_run` and a write-back
 (`package_close` or continued session).
@@ -66,7 +67,7 @@ Ingest the executing agent's tracking output into the package.
 
 ### 3. Agile scope change (mid- or post-execution)
 
-The v1 rule "scope drift after lock requires a recorded decision" is now a mechanism. Scope events are
+The rule "scope drift after lock requires a recorded decision" is a mechanism, not prose. Scope events are
 **typed**: `{defer, reschedule, reclassify, cancel, expand}` — distinct from supersession ("same
 decision, changed phase" is a *reschedule*, not a reopen; a cancelled AC is *void*, not failed).
 

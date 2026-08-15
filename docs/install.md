@@ -15,7 +15,7 @@ What works depends on whether the agent can run the MCP server:
 | Tier | Environment | Planning &amp; package generation | Tamheed MCP server (the write path) |
 |---|---|---|---|
 | **Full** | Claude Code, or any MCP-capable agent with a shell/Python | ✅ | ✅ auto-starts via the bundled `.mcp.json` |
-| **No MCP host** | File read/write only (e.g. a chat-only environment) | ⚠️ planning conversation only | ❌ no package store — v2 packages need the server |
+| **No MCP host** | File read/write only (e.g. a chat-only environment) | ⚠️ planning conversation only | ❌ no package store — packages need the server |
 
 Python **≥3.10** is required for the MCP server (the `mcp` SDK's floor; ASM-D). `uv` launches it with
 zero setup (PEP 723), or `pip install mcp` as the fallback — see
@@ -72,12 +72,9 @@ is readable but packages cannot be created — see the capability tiers above.
 ## Verifying a local checkout
 
 ```bash
-# everything CI runs — 7 suites, v1 goldens, structure lint, canonical form, eval sample
+# everything CI runs — the 8 suites, the lint battery, canonical form, eval fixtures
 python check.py
 
 # the MCP server's tool surface (uv fetches the SDK via PEP 723; no install step)
 uv run plugins/tamheed/server/tamheed_server.py --selftest
-
-# the whole deterministic gate (suites + lints + canonical form + eval fixtures)
-python check.py
 ```

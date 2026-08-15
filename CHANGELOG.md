@@ -10,6 +10,95 @@ All notable changes to Tamheed are documented here. The format is based on
 
 ## [Unreleased]
 
+## [4.2.0] - 2026-08-15
+
+**MINOR — findings_17 + the documentation reckoning (plan 033).** The ACMP v4-migration
+acceptance's two behavior fixes, and the maintainer-ordered full documentation audit:
+every markdown file at every level reviewed, the stale/overlapping/dead surfaces fixed
+or removed, and four lints added so the class stays closed. No schema change.
+
+### Fixed
+
+- **`open-questions-resolved` discriminates** (findings_17 B1, evidence C38): the amber
+  now counts a row only when it has neither a non-empty `resolution` nor a
+  `resolved_by` AND its lifecycle status is non-terminal (Deferred/Rejected/Superseded/
+  Obsolete are excluded); the can't-discriminate note fires only when neither column is
+  populated anywhere. On the ACMP data the amber drops 72 → 1 (the one genuinely open
+  question). `resolved_by` is never back-filled — attribution is a fact about a person.
+- **Milestone stash parity in `package_migrate`** (findings_17 A5): the v3 milestone
+  columns dropped by the v4 demotion (`lifecycle_status`, `disposition`,
+  `disposition_reason_ref`) are now stashed into `custom_attributes` as `v3_*` — the
+  same pattern the risks got — instead of silently discarded; the preview report rows
+  gain `stashed_as`. (ACMP's six dropped statuses remain recoverable from its
+  `data-v3-backup/`.)
+- **Bare-letter risk scales map** (findings_17 C3): `H`/`M`/`L` (any case) normalize to
+  `high`/`medium`/`low` during migration, reported under `risk_scale_normalized`,
+  instead of falling through to the stash path. Scale semantics (probability = judged
+  likelihood of materializing; impact = severity if it does; the enum IS the scale) are
+  now documented in `references/governance.md`.
+- **Three sequence diagrams in `docs/entities.md`** carried `;` inside message/Note
+  text — a mermaid lexer break; all sequence text now holds to the conservative subset
+  (no `;`, no `#`).
+
+### Removed
+
+- **`plugins/tamheed/schemas/` — actually deleted this time.** The 4.0.0 entry recorded
+  this removal as part of the v1 retirement, but the execution missed it: the directory
+  (21 files) stayed on disk for two releases while the CHANGELOG, CLAUDE.md, and
+  docs/entities.md all claimed it gone. The 4.0.0 entry is append-only and stands
+  uncorrected; this entry states the miss plainly. The documentation audit caught it.
+- `references/migration-runbook.md` — wholly about the retired v1→v2 path; its one
+  living section (`scratch_diff`) folded into `server/README.md`.
+- `examples/` (41 files) — a v1-era generated package masquerading as teaching
+  material; the lab package + the demo package are the living examples.
+- `references/entity-guide.md` — overlapped the artifact catalog wholesale (the
+  maintainer's audit trigger); merged into `references/artifact-catalog.md`, which now
+  carries the per-family rules, the four operating rules (claimed-vs-verified, drift,
+  waivers, markers), the repair doctrine (repair from `data/*.jsonl`, never from
+  `entity_query` output — findings_17 C1), the entity-map and lifecycle diagrams, and
+  a version stamp.
+
+### Added
+
+- **The Mermaid delivery** (a v4.0.0 acceptance item the maintainer could not find):
+  `docs/entities.md`'s seven diagrams are now linked from README, CLAUDE.md, and the
+  docs siblings; `docs/workflow.md` gains the 22-stage phase-grouped flowchart + the
+  human-gate sequence; `docs/methodology.md` gains the HYP→EXP/POC→DEC→ADR chain;
+  `docs/migrate-from-keystone.md` gains the migration-path diagram; the artifact
+  catalog carries the entity-map + standard-lifecycle diagrams in the bundle.
+- **ADR-0002** (`docs/adr/adr-0002-v4-entity-model-re-baseline.md`) — the v4 re-baseline
+  finally has its ADR, recorded retrospectively at the audit; partially supersedes
+  ADR-0001 (the store doctrine survives; the prompts-table, milestone-lifecycle, and
+  frozen-v1 clauses do not). ADR-0001 received only its status pointer.
+- **Four lints** (the audit's root-cause fix — the unlinted zone is gone):
+  - lint 9 extended to ALL teaching surfaces (prompts + templates + references +
+    SKILL.md) with a **closed-triangle gate roster**: every gate name a surface may
+    teach must sit in exactly one tier (engine / judgment / warn) synced both
+    directions against `quality-gates.md`;
+  - lint 10 **dead-path**: every markdown link and backticked repo path in
+    references/, SKILL.md, server/README, and db/CANONICAL must resolve — relative to
+    the file, the repo root, or the bundle root (bundle-relative references are legal
+    in-bundle). templates/, prompts/, and `references/generated-structure.md` are
+    excluded: their paths describe the generated package;
+  - lint 8 extended to **five version-stamped surfaces** (root README, server README,
+    prompts README, SKILL.md, artifact-catalog.md);
+  - lint 11 **template-sync**: the governance/naming-conventions templates' copied
+    tables must match `references/governance.md` (the necessary-copy doctrine).
+- An ACMP-shaped OQ fixture and migration-stash/letter-map tests pin the findings_17
+  fixes; evidence **C38** archived
+  (`plans/evidence/acmp-field-report-17-2026-08-15.md`).
+
+### Changed
+
+- The documentation sweep: SKILL.md teaches the real v4 `package_migrate` UX (staged
+  preview, report keys, `confirm`); `references/quality-gates.md` gains G-REL (blocking
+  since v4.0.0) and the explicit Warn-tier (prose-only) label; `templates/
+  package-readme.template.md` rewritten for a v4 package; ~30 stale claims across
+  references/, templates/, docs/, and the root files corrected per the audit's
+  line-numbered lists; `plans/README.md` rewritten as the era-grouped program index
+  (alignment history condensed into a chronicle — full text in git history; evidence
+  files untouched).
+
 ## [4.1.0] - 2026-08-14
 
 **MINOR — the prompt-surface completion (plan 032).** Closes the v4.0.0 teaching gaps

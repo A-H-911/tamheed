@@ -1539,6 +1539,29 @@ class V4EngineTest(unittest.TestCase):
         self.assertEqual(gate["status"], "pass")
         self.assertIn("vacuously", gate["warning"])
 
+    def test_oq_resolved_rule_discriminates(self):
+        """findings_17 B1 (plan 033): a non-empty resolution OR a resolver resolves;
+        Deferred is the deliberate carry and never counts; whitespace-only resolution
+        doesn't resolve. The ACMP shape: answered-Approved + Deferred rows are quiet,
+        the one bare Proposed row is the amber."""
+        srv.entity_upsert([
+            {"type": "open-question", "id": "OQ-010", "title": "answered",
+             "question": "q?", "resolution": "Yes — decided with evidence.",
+             "lifecycle_status": "Approved"},
+            {"type": "open-question", "id": "OQ-011", "title": "carried",
+             "question": "later?", "lifecycle_status": "Deferred"},
+            {"type": "open-question", "id": "OQ-012", "title": "whitespace",
+             "question": "w?", "resolution": "   ",
+             "lifecycle_status": "Proposed"},
+            {"type": "open-question", "id": "OQ-013", "title": "genuinely open",
+             "question": "which?", "lifecycle_status": "Proposed"}])
+        rules = {r["rule"]: r for r in srv.readiness_check("package")["rules"]}
+        oq = rules["open-questions-resolved"]
+        self.assertEqual(sorted(oq["entities"]), ["OQ-001", "OQ-012", "OQ-013"])
+        # OQ-001 (the setUp fixture row: no resolution, Proposed-band) counts;
+        # OQ-010 answered and OQ-011 Deferred do NOT. Discrimination is real now:
+        self.assertNotIn("discriminating", oq)
+
     # ------------------------------------------------- plan 032 (teaching surface)
 
     def test_gate_names_roster_matches_gate_run(self):

@@ -1,13 +1,12 @@
 # State, resumption, and updates
 
-**The package is the state.** In v2 there is no state file: the relational store (ADR-0001) holds
+**The package is the state.** Since v2 there is no state file: the relational store (ADR-0001) holds
 every register row, narrative section, trace edge, the `packages` row (profile, mode, iteration,
 versions), and the execution-tracking tables. Canonical form is JSONL per table under `data/`,
 committed to git; SQLite is the runtime the MCP server loads it into.
 
-(`keystone-state.json` is v1's state file. It is read exactly once more — by `package_migrate`
-in plan 010 — and never written again. Its schema stays frozen in `../schemas/` as the migration
-source contract.)
+(Historical: `keystone-state.json` was v1's state file. Its ingestion path was retired with v1
+ingestion in v4.0.0 — the store IS the state, and nothing reads or writes that file anymore.)
 
 ## Resume
 

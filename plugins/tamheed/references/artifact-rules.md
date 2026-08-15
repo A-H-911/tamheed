@@ -1,11 +1,11 @@
 # Artifact-selection rules
 
 Populate artifact families by **need, not ceremony** (safeguard 11). Each family has a generation
-class; the project profile (Stage 2) and the answered questions decide which optional ones apply. In v2
-the machine mirror of these classes is the **`entity_types` registry** seeded at `package_create`
-(gate G-SET reads it); the catalog with per-artifact history is `artifact-catalog.md`, and the decided
-v2 set is `plans/deliverables-review.md` in the program repo. (`required-artifacts.json` alongside this
-file is the frozen **v1** mirror, kept for migration — the v1 validator reads it; v2 does not.)
+class; the project profile (Stage 2) and the answered questions decide which optional ones apply. The
+machine mirror of these classes is **`BASELINE_ENTITY_TYPES`**, seeded into each package's
+`entity_types` registry at `package_create` — gate G-SET enforces from the registry, and `check.py`
+lints registry ↔ catalog sync. The catalog with per-artifact history is `artifact-catalog.md`; the
+set itself was decided at the plan-006 deliverables review.
 
 ## Generation classes
 
@@ -19,14 +19,15 @@ file is the frozen **v1** mirror, kept for migration — the v1 validator reads 
 
 Charter + executive summary (narrative documents), requirements (FR/NFR), constraint register,
 assumption register, open-question register, open-decision register, risk register, phased roadmap
-(`phases`), acceptance criteria, initial handoff prompt, package README. Derived-by-construction:
-traceability, readiness, status, backlog views.
+(`phases`), acceptance criteria. Two Always deliverables are not entity families: the initial handoff
+prompt is a **file** in `<package>/prompts/`, and the package README is a narrative-document row.
+Derived-by-construction: traceability, readiness, status, backlog views.
 
 ## Conditional (trigger → families)
 
 | Trigger | Populate |
 |---|---|
-| Genuine technical uncertainty | research plan (absorbs the v1 R&D backlog), hypotheses, experiments, POCs |
+| Genuine technical uncertainty | research plan (absorbs the R&D-backlog role), hypotheses, experiments, POCs |
 | Architecturally significant decisions | ADRs, architecture narrative, diagrams |
 | ≥2 viable technology options | technology-comparison narrative |
 | Cross-team / multi-actor delivery | work breakdown, milestones |

@@ -174,11 +174,12 @@ def gate_lint() -> None:
     #    are updated with EVERY release — each must carry the current version string,
     #    so a release that skips one fails the gate (the version-sync-lint precedent).
     for rel in ("README.md", "plugins/tamheed/server/README.md",
-                "plugins/tamheed/prompts/README.md"):
+                "plugins/tamheed/prompts/README.md", "plugins/tamheed/SKILL.md",
+                "plugins/tamheed/references/artifact-catalog.md"):
         if plugin_ver not in (REPO / rel).read_text(encoding="utf-8"):
             fail(f"{rel} does not mention the current version {plugin_ver} — the"
                  " READMEs are updated with every release (plan 030)")
-    print(f"lint: all 3 READMEs carry v{plugin_ver}")
+    print(f"lint: all 5 version-stamped surfaces carry v{plugin_ver}")
 
     # 9) the teaching surface (plan 032): prompts/templates may only teach vocabulary
     #    the engine has, and the stock history must be CURRENT — a release that
@@ -195,29 +196,46 @@ def gate_lint() -> None:
     print(f"lint: stock history current ({len(history)} files,"
           f" {sum(len(v) for v in history.values())} bodies)")
 
+    # Plan 033: the teaching surface is the WHOLE bundle prose — every references
+    # file and every template, not just prompts + 4 templates (the unlinted zone is
+    # where the v4 audit found all the rot).
     teaching = {f"prompts/{p.name}": (REPO / "plugins" / "tamheed" / "prompts" / p.name)
                 .read_text(encoding="utf-8")
                 for p in sorted(prompts_dir.glob("*.md"))}
-    for tpl in ("initial-prompt", "follow-up-prompts", "review-prompts",
-                "agent-control"):
-        rel = f"templates/{tpl}.template.md"
-        teaching[rel] = (REPO / "plugins" / "tamheed" / rel).read_text(encoding="utf-8")
+    for p in sorted((REPO / "plugins" / "tamheed" / "templates").glob("*.md")):
+        teaching[f"templates/{p.name}"] = p.read_text(encoding="utf-8")
+    for p in sorted(refs.glob("*.md")):
+        teaching[f"references/{p.name}"] = p.read_text(encoding="utf-8")
+    teaching["SKILL.md"] = (REPO / "plugins" / "tamheed" / "SKILL.md")\
+        .read_text(encoding="utf-8")
     relations = set(srv.RELATION_RULES) | {"relates_to"}
-    # Judgment-tier gates have no engine constant (they are the skill's judgment, not
-    # code) — prose-defined in references/quality-gates.md; the sync check below keeps
-    # this set honest (the two-surface doctrine).
+    # The gate rosters form a CLOSED TRIANGLE with references/quality-gates.md
+    # (plan 033): mechanical (engine GATE_NAMES) + judgment + warn tiers; every
+    # roster name must appear in the doc, and every G-* token in the doc must be in
+    # a roster tier — a gate added to either side alone fails the release.
     judgment_gates = {"G-INJECT", "G-CONFLICT", "G-EXEC", "G-HANDOFF", "G-OQ"}
+    warn_gates = {"G-ASM-VISIBLE", "G-CLAIM", "G-RISK", "G-COUPLING", "G-BLOAT",
+                  "G-CMD-THIN"}
     qg = (refs / "quality-gates.md").read_text(encoding="utf-8")
-    if missing_qg := sorted(g for g in judgment_gates if g not in qg):
-        fail(f"judgment gate(s) {missing_qg} not defined in references/quality-gates.md"
-             " — the lint roster and the gate doc move together")
-    # (name, applies-to-templates-too, pattern-is-regex)
-    blacklist = [("binds_to", True), ("milestones-reached", True),
-                 ('"status":', True), ("PRM-", True), ("PASS/FAIL", False)]
+    if missing_qg := sorted(g for g in (judgment_gates | warn_gates) if g not in qg):
+        fail(f"gate(s) {missing_qg} in the lint roster but not defined in"
+             " references/quality-gates.md — the rosters and the gate doc move together")
+    allowed_gates = set(srv.GATE_NAMES) | judgment_gates | warn_gates
+    if undoc := sorted(t for t in set(re.findall(r"\bG-[A-Z][A-Z-]+\b", qg))
+                       if t.rstrip("-") not in allowed_gates):
+        fail(f"quality-gates.md defines gate(s) {undoc} that are in NO roster tier —"
+             " add to GATE_NAMES / judgment / warn deliberately, never by prose alone")
+    # (name, scope) — 'all' = every teaching file; 'prompts+templates' spares the
+    # references, which legitimately DISCUSS retirements; any line explicitly framed
+    # as retired/deleted/renamed history is exempt everywhere.
+    blacklist = [("binds_to", "all"), ("milestones-reached", "all"),
+                 ('"status":', "all"), ("PRM-", "prompts+templates"),
+                 ("PASS/FAIL", "prompts")]
+    _hist = re.compile(r"retired|deleted|renamed|blacklist|historical", re.I)
     problems = []
     for rel, text in teaching.items():
         for tok in set(re.findall(r"\bG-[A-Z][A-Z-]+\b", text)):
-            if tok.rstrip("-") not in srv.GATE_NAMES | judgment_gates:
+            if tok.rstrip("-") not in allowed_gates:
                 problems.append(f"{rel}: unknown gate {tok!r}")
         for line in text.splitlines():
             if "event_type" in line:
@@ -229,12 +247,73 @@ def gate_lint() -> None:
         for tok in set(re.findall(r"`(scope_[a-z_]+)`?", text)):
             if tok not in relations:
                 problems.append(f"{rel}: unknown relation {tok!r}")
-        for name, everywhere in blacklist:
-            if (everywhere or rel.startswith("prompts/")) and name in text:
-                problems.append(f"{rel}: retired/wrong vocabulary {name!r}")
+        for name, scope in blacklist:
+            if scope == "prompts" and not rel.startswith("prompts/"):
+                continue
+            if scope == "prompts+templates" and rel.startswith("references/"):
+                continue
+            if scope == "prompts+templates" and rel == "SKILL.md":
+                continue
+            for line in text.splitlines():
+                if name in line and not _hist.search(line):
+                    problems.append(f"{rel}: retired/wrong vocabulary {name!r}"
+                                    f" ({line.strip()[:60]!r})")
+                    break
     if problems:
-        fail("teaching-surface vocabulary drift (plan 032):\n  " + "\n  ".join(problems))
+        fail("teaching-surface vocabulary drift (plans 032-033):\n  "
+             + "\n  ".join(problems))
     print(f"lint: teaching surface ({len(teaching)} files) speaks only engine vocabulary")
+
+    # 10) dead references (plan 033): every relative markdown link and backticked
+    #     path token in the NON-TEMPLATE bundle prose must resolve. templates/ and
+    #     prompts/ are excluded — their paths describe the GENERATED package
+    #     (intentional output content, per CLAUDE.md) — and so is
+    #     references/generated-structure.md, which describes that same tree.
+    link_files = {f"references/{p.name}": p for p in sorted(refs.glob("*.md"))
+                  if p.name != "generated-structure.md"}
+    link_files["SKILL.md"] = REPO / "plugins" / "tamheed" / "SKILL.md"
+    link_files["server/README.md"] = REPO / "plugins" / "tamheed" / "server" / "README.md"
+    link_files["db/CANONICAL.md"] = REPO / "plugins" / "tamheed" / "db" / "CANONICAL.md"
+    path_token = re.compile(
+        r"\]\(([^)#\s]+?)\)|`([A-Za-z0-9_./-]+/[A-Za-z0-9_.-]+\.(?:md|json|sql|py))`")
+    dead = []
+    for rel, path in link_files.items():
+        base = path.parent
+        for m in path_token.finditer(path.read_text(encoding="utf-8")):
+            target = (m.group(1) or m.group(2) or "").split("#")[0]
+            if (not target or target.startswith(("http", "mailto:"))
+                    or "<" in target or "{" in target or "*" in target
+                    or target.startswith("data/")):
+                continue
+            bundle = REPO / "plugins" / "tamheed"  # bundle-relative refs are legal in-bundle
+            if not ((base / target).exists() or (REPO / target).exists()
+                    or (bundle / target).exists()):
+                dead.append(f"{rel}: {target}")
+    if dead:
+        fail("dead path references in bundle prose (plan 033):\n  " + "\n  ".join(dead))
+    print(f"lint: no dead path references across {len(link_files)} bundle prose files")
+
+    # 11) the necessary template copies stay synced (plan 033): generated packages
+    #     cannot link back into the bundle, so these templates CARRY governance
+    #     content — and must carry it correctly.
+    gov = (refs / "governance.md").read_text(encoding="utf-8")
+    gov_rows = {(m.group(1).strip(), m.group(2).strip()) for m in re.finditer(
+        r"^\| ([^|]+) \| (`[^`]+`[^|]*) \| [a-z_ /()+-]+ \|$", gov, re.M)}
+    naming = (REPO / "plugins" / "tamheed" / "templates" /
+              "naming-conventions.template.md").read_text(encoding="utf-8")
+    missing_rows = sorted(fmt for _e, fmt in gov_rows
+                          if fmt.split("`")[1] not in naming)
+    if missing_rows:
+        fail(f"naming-conventions.template.md is missing governance identifier"
+             f" format(s): {missing_rows} — the template is a necessary copy and"
+             " moves with references/governance.md")
+    gov_tpl = (REPO / "plugins" / "tamheed" / "templates" /
+               "governance.template.md").read_text(encoding="utf-8")
+    for needle in ("Implemented", "Review", "scope_adds", "relates_to"):
+        if needle not in gov_tpl:
+            fail(f"governance.template.md lacks {needle!r} — the template is a"
+                 " necessary copy and moves with references/governance.md")
+    print("lint: template governance copies in sync")
 
 
 def gate_canonical() -> None:

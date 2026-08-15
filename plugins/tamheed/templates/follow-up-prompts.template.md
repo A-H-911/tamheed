@@ -8,10 +8,10 @@ owner: <name-or-role>
 # Follow-up Handoff Prompts — <project-name>
 
 <!-- ONE phase-gate prompt per phase (PH-) plus situational prompts. Each phase prompt RESUMES from the
-     prior phase's exit criteria, states the phase goal, gives bounded tasks with PASS/FAIL, restates the
+     prior phase's exit criteria, states the phase goal, gives bounded tasks with pass/fail, restates the
      invariants still in force, and ends at the exit gate. Replace every <placeholder> (G-HANDOFF).
-     Reference real artifact paths. Generation class: Conditional (handoff to Claude Code).
-     Lives at: handoff/follow-up-prompts.md. Shape: references/prompt-templates.md. -->
+     Reference entities by real ids. Generation class: Conditional (handoff to Claude Code).
+     PROJECT prompt files in `<package>/prompts/` (purpose-named). Shape: references/prompt-templates.md. -->
 
 ## Phase-gate prompts
 
@@ -23,7 +23,7 @@ Phase `PH-1` is complete and approved; its exit criteria were: <restate PH-1 exi
 
 **Goal of `PH-2`:** <phase goal> (`entity_query("phase", id="PH-2")`).
 
-**Tasks (bounded; PASS/FAIL each) — work acceptance-criteria-first (failing test → implement → repeat):**
+**Tasks (bounded; pass/fail each) — work acceptance-criteria-first (failing test → implement → repeat):**
 1. <task> — PASS = <observable>; FAIL = <observable>. Traces to `WBS-2.x`, `AC-0xx`.
 2. <task> — PASS = <…>; FAIL = <…>.
 
@@ -42,7 +42,7 @@ readiness failure: ask the operator for a `WVR-` waiver — never self-authored.
 
 ### → Enter Phase `PH-3` — <phase title>
 
-<!-- Repeat the structure: resume from PH-2 exit, goal, bounded PASS/FAIL tasks, invariants, exit gate. -->
+<!-- Repeat the structure: resume from PH-2 exit, goal, bounded pass/fail tasks, invariants, exit gate. -->
 Phase `PH-2` is complete and approved; its exit criteria were: <…>.
 ...
 
@@ -75,7 +75,7 @@ baselines that legitimately change, confirm invariants still hold, and record th
 
 ### Bug triage
 Given <symptom>, reproduce it, identify the failing `INV-`/`AC-`/`TEST-`, propose the minimal fix scoped to
-the current phase, and state the PASS/FAIL that proves it fixed. Pause for approval before large changes.
+the current phase, and state the pass/fail that proves it fixed. Pause for approval before large changes.
 
 ### Release prep
 Run `readiness_check("package")` — resolve every blocking failure (pre-approval
@@ -107,8 +107,8 @@ recommendation. STOP for approval before starting the next phase.
 
 ### Spike / experiment report
 Run a planned `EXP-`/`POC-` (one at a time, timeboxed; a subagent is a good fit for an isolated experiment).
-On finish, write its result: PASS/FAIL vs the
-pre-committed criteria, measurements, surprises/caveats, and implications carried forward. Update the
+On finish, write its result: the verdict (Validated / Invalidated / Inconclusive) vs the
+pre-committed metric + threshold, measurements, surprises/caveats, and implications carried forward. Update the
 deciding `DEC-`/`HYP-`. Pause for review before acting on the result.
 
 ### Defect log

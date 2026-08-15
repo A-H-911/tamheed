@@ -1,18 +1,18 @@
 # Traceability
 
 The traceability matrix is what lets an implementing agent navigate from any need to its evidence and back.
-It is a **derived** artifact — generated from the registers, never hand-maintained — and is re-derived on
-every update cycle.
+It is **derived by construction** — views over typed `trace_edges` rows, never hand-maintained — so it
+cannot drift from the entities it links.
 
 ## The chain
 
 ```
 Requirement (FR-/NFR-)
-   → Decision (DEC-/ADR-)        why it's built this way
-   → Work item (WBS-)            where it gets built
-   → Test (TEST-)               how we know it works
-   → Risk (RISK-)               what could go wrong
-   → Acceptance criterion (AC-) when it's done / accepted
+   → Decision (DEC-/ADR-)          why it's built this way
+   → Slice / work item (SL-/WBS-)  where it gets built
+   → AC / Test (AC-/TEST-)         how we know it works
+   → Verdict (AV-)                 whether it actually does
+   → Risk (RISK-)                  what could go wrong
 ```
 
 Not every requirement touches every column, but the gate (`G-TRACE`) requires: every MVP `FR-/NFR-` links
@@ -21,22 +21,20 @@ acceptance criterion.
 
 ## Representation
 
-Markdown table for humans, mirrored by structured rows conforming to `../schemas/traceability-row.schema.json`
-for tooling. One row per requirement, with comma-separated linked IDs per column, plus a `coverage` flag
-(`full` / `partial` / `gap`).
+The matrix is read, not written: `review.html#traceability` is the human surface, `trace_query` walks
+edges per entity, and the `v_req_links` view is what `gate_run` checks. There is no matrix file to keep
+current.
 
-| Req | Decisions | Work items | Tests | Risks | Acceptance | Coverage |
-|---|---|---|---|---|---|---|
-| FR-001 | DEC-002, ADR-0001 | WBS-1.2 | TEST-004 | RISK-003 | AC-001 | full |
+## Recording & checking
 
-## Building & checking
-
-1. After Stage 16, walk each requirement and collect links from the registers (decisions cite requirements;
-   WBS items cite requirements; tests cite requirements/AC; risks cite what they threaten).
-2. Compute `coverage`; flag any `gap`.
-3. `G-TRACE` fails on any MVP requirement with a gap in a required column — fix by adding the missing
-   decision/task/test or by explicitly de-scoping the requirement (recorded).
-4. On updates (Stage 21), re-derive; a superseded item's links move to its successor.
+1. Edges are recorded **live, as typed `trace_edges` rows, at decision time** — `derives_from`,
+   `implements`, `tests`, `verifies`, `mitigates`, `discharges`, plus the scope-delta kinds
+   (`scope_adds`/`scope_modifies`/`scope_removes`); `relates_to` is the documented untyped escape
+   hatch. There is no after-the-fact "collect the links" pass.
+2. `G-TRACE` fails on any MVP requirement with a gap in a required column — fix by adding the missing
+   decision/slice/test edge or by explicitly de-scoping the requirement (recorded).
+3. On updates (Stage 21), the views stay current by construction; a superseded item's links move to its
+   successor through the supersession flow.
 
 ## Bidirectional
 

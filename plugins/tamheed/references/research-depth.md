@@ -9,7 +9,7 @@ Over-researching a simple project is as much a failure as under-researching a ri
 |---|---|---|
 | **Light** | Well-understood domain, proven stack, low risk, small scope | Confirm key facts; skip experiments; short comparison only where a real choice exists. |
 | **Standard** | Some novel elements, a few real technology choices | Targeted research on the choices; weighted comparisons; experiments only for genuine unknowns. |
-| **Deep** | High novelty, hard-to-reverse decisions, strict NFRs, regulated, or large scope | Full research plan + R&D backlog; hypotheses; timeboxed POCs with PASS/FAIL gates before committing. |
+| **Deep** | High novelty, hard-to-reverse decisions, strict NFRs, regulated, or large scope | Full research plan (it absorbs the backlog role); hypotheses; timeboxed POCs — metric + threshold decided before the run, verdicts Validated / Invalidated / Inconclusive — before committing. |
 
 The project profile (Stage 2) sets a starting tier; specific decision points can be escalated individually.
 
@@ -21,10 +21,11 @@ decide now, note it, move on.
 
 ## Timeboxing
 
-Every investigation has a timebox and an explicit PASS/FAIL or decision criterion. Research without an exit
-condition is scope drift; bound it and record what would end it.
+Every investigation has a timebox and a metric + threshold decided before the run — the verdict
+(Validated / Invalidated / Inconclusive) is judged against it. Research without an exit condition is
+scope drift; bound it and record what would end it.
 
 ## Verification standard
 
 Do not assert a tool/library/service capability without a citation or a direct check. Tag anything unverified
-as `unverified` so G-CLAIM can catch it. Prefer primary sources (docs, issue trackers, releases) over recall.
+as `unverified` so G-CLAIM (a prose-tier judgment gate) can catch it. Prefer primary sources (docs, issue trackers, releases) over recall.

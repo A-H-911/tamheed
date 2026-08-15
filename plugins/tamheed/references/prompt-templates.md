@@ -20,10 +20,10 @@ This repo contains the APPROVED plan for <project>. You are starting implementat
 
 Step 1 — Orientation (use plan mode; no code): read <list the few key plan docs>. Then give me:
 (a) a ≤1-page summary of what you'll build and the invariants you must respect [list INV- ids];
-(b) your execution plan for Phase <PH-1> with file layout and PASS/FAIL per task.
+(b) your execution plan for Phase <PH-1> with file layout and pass/fail per task.
 STOP and wait for my approval.
 
-Step 2 — <first bounded task> (after approval): <one concrete deliverable with PASS/FAIL>; track the backlog with TodoWrite. Pause for review.
+Step 2 — <first bounded task> (after approval): <one concrete deliverable with pass/fail>; track the backlog with TodoWrite. Pause for review.
 
 Rules: respect the invariants; pin versions; record deviations as ADRs; don't expand scope beyond Phase 1.
 Prerequisites: <runtimes/accounts/versions>.
@@ -35,7 +35,7 @@ authorizes building the whole system at once.
 ## Follow-up prompts — shape
 
 One per phase gate. Each: resume context ("Phase <N-1> is complete and approved; its exit criteria were
-…"), the phase goal, the bounded tasks with PASS/FAIL, the invariants still in force, and the exit gate.
+…"), the phase goal, the bounded tasks with pass/fail, the invariants still in force, and the exit gate.
 Plus situational prompts: fallback-invocation, fresh-session refresher, invariant audit, engine/dependency
 upgrade + baseline regen, bug triage, release prep, deviation ADR, status report.
 
@@ -48,9 +48,11 @@ the quality gates against the current repo"), and PR review against acceptance c
 
 ## The stock scenario library (plan 018, grown in plan 027)
 
-Distinct from the project prompts above: fourteen ready-to-paste operator prompts ship in the
-bundle (`../prompts/`) and are emitted verbatim (only `{package}` substituted) into
-`<package>/prompts/` by `package_create`, `package_migrate`, `package_adopt`, and `handoff_emit`:
+Distinct from the project prompts above: sixteen files — fifteen ready-to-paste operator scenario
+prompts plus the folder README — ship in the bundle (`../prompts/`) and are emitted verbatim (only
+`{package}` substituted) into `<package>/prompts/` by `package_create`, `package_migrate`,
+`package_adopt`, and `handoff_emit`. The authoritative per-file guide is the emitted
+`prompts/README.md`; this file teaches AUTHORING project prompts:
 
 | File | Scenario |
 |---|---|
@@ -64,6 +66,7 @@ bundle (`../prompts/`) and are emitted verbatim (only `{package}` substituted) i
 | `phase-close.md` | Phase exit: phase-scope readiness blocking-clean, milestones, human GATE- confirmations, the guarded transition |
 | `release-close-out.md` | Package-scope readiness blocking-clean, human gates recorded, export, notes, close |
 | `replan-deferred.md` | Deferred-work triggers review: SC- first, activate, wire edges, STOP on new scope |
+| `register-liveness.md` | Readiness advisories piling up — the amber-list sweep, run on a cadence |
 | `integrity-check.md` | Read-only audit: gates, counts, trace spot-checks, narrated verdicts, staleness + unbound commits |
 | `generate-report.md` | Export + how to read `review.html` (nav, folded tables, freshness) |
 | `loop-iteration.md` | Fully-auto: ONE unattended pass ending in the machine-parseable `ITERATION:` block |

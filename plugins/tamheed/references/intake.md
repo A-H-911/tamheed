@@ -3,11 +3,12 @@
 ## Accept
 
 - **Long-form prose** — a pasted brief, doc, or transcript. Most common.
-- **Structured input** — a file matching `../schemas/project-input.schema.json` (YAML/JSON).
+- **Structured input** — a structured brief file (YAML/JSON). The store's DDL (`../db/schema.sql`) is
+  the single source of data shape.
 - **Mixed / partial** — some fields plus prose. Treat the structured fields as authoritative and mine prose
   for the rest.
 
-Keystone **must support incomplete input** and normalize progressively: capture what exists, mark gaps as
+Tamheed **must support incomplete input** and normalize progressively: capture what exists, mark gaps as
 `OQ-`, and fill them through clarification rather than blocking.
 
 ## Provenance is mandatory
@@ -30,9 +31,9 @@ lets G-REQ-SRC pass and lets a reviewer audit "why is this here?". Never drop pr
    decisions, leaving the underlying need as the requirement.
 9. **Record gaps** as `OQ-`; **record inferences** as `ASM-` with `risk_if_wrong` — never as requirements.
 
-## Input field map
+## Intake field checklist
 
-The input schema covers: business objectives, problem statement, functional & non-functional requirements,
+What to extract when the input carries it: business objectives, problem statement, functional & non-functional requirements,
 technical/organizational/regulatory constraints, existing systems/environments, preferred & prohibited
 technologies, known risks, known decisions, unknowns/ambiguities, expected deliverables, target users,
 stakeholders, available infrastructure, execution-agent constraints, repository constraints, and

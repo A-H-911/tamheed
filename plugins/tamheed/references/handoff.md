@@ -12,11 +12,12 @@ and `handoff_emit(target_dir)` wires the target project to the package (it copie
     stop/await-approval gate;
   - *follow-up* prompt(s) — one per phase gate (`PH-`), each resuming from the prior phase's exit
     criteria, plus situational prompts as needed (see `prompt-templates.md`);
-  - the **stock scenario library** (14 files, plugin-versioned, seeded at `package_create`):
-    orientation (orient-resume, package-onboarding), execution (slice-kickoff, progress-sync,
-    defect-triage, drift-register), close-outs (slice-review, phase-close, release-close-out),
-    replanning (replan-deferred), audit/report (integrity-check, generate-report), and the
-    fully-auto pair (loop-iteration + loop-guard, with a machine-parseable `ITERATION:` contract).
+  - the **stock scenario library** (16 files: 15 scenarios + the folder README, plugin-versioned,
+    seeded at `package_create`): orientation (orient-resume, package-onboarding), execution
+    (slice-kickoff, progress-sync, defect-triage, drift-register), close-outs (slice-review,
+    phase-close, release-close-out), replanning (replan-deferred), audit/report (integrity-check,
+    register-liveness, generate-report), and the fully-auto pair (loop-iteration + loop-guard,
+    with a machine-parseable `ITERATION:` contract).
 - **Executor-side wiring** (`W-V2-7`): `handoff_emit` writes `.mcp.json` into the target project
   (launching the tamheed server against the package; omitted on plugin-hosted installs) and manages
   the `CLAUDE.md` operating note, so the executing agent records progress through
@@ -62,7 +63,7 @@ and `handoff_emit(target_dir)` wires the target project to the package (it copie
 1. Confirm Stage 19 gates are green (`gate_run` — especially G-TRACE, G-COMPLETE).
 2. Author the prompt **files** in `<package>/prompts/` from the templates
    (`prompt-templates.md`), wiring in real entity IDs, the invariants, and the first slice with
-   PASS/FAIL. Non-stock filenames mark them as project prompts; `handoff_emit` refuses to wire a
+   its pass/fail task checklist. Non-stock filenames mark them as project prompts; `handoff_emit` refuses to wire a
    target while none exist.
 3. `handoff_emit(target_dir)`:
    - **Injection screen (G-INJECT):** every package prompt file (project AND stock) is scanned for
@@ -80,18 +81,20 @@ Two prompt surfaces, one folder:
 
 | Surface | Source of truth | Lifecycle |
 |---|---|---|
-| `<package>/prompts/` project files | Authored at Stage 20 (any non-stock filename) | Plain files, operator-owned; G-INJECT + stale-scanned + restated-state-scanned at every `handoff_emit`; legacy `PRM-` rows were converted here once at first v3 `package_open` — converted files (provenance header) get a standing per-kind curation hint until the operator reviews them (remove the header = reviewed); the folder's `README.md` is the operator guide |
+| `<package>/prompts/` project files | Authored at Stage 20 (any non-stock filename) | Plain files, operator-owned; G-INJECT + stale-scanned + restated-state-scanned at every `handoff_emit`; legacy `PRM-` rows are converted here by `package_migrate` (v4: `package_open` refuses pre-v4 stores) — converted files (provenance header) get a standing per-kind curation hint until the operator reviews them (remove the header = reviewed); the folder's `README.md` is the operator guide |
 | `<package>/prompts/` stock library | The plugin bundle | Seeded at `package_create` and refreshed by migrate/adopt/handoff via managed emission (`emitted`/`unchanged`/`diverged`, force to overwrite a hand edit) |
 
-The v2 `prompts` table and the `<target>/handoff/*.md` copies are GONE (migration 003): opening a
-v2 package converts its `data/prompts.jsonl` once (source kept as `prompts.jsonl.converted`), and
+The v2 `prompts` table and the `<target>/handoff/*.md` copies have been GONE since v3 (the v4
+baseline never had them): `package_migrate` converts a v2 store's `data/prompts.jsonl` once
+(source kept as `prompts.jsonl.converted`), and
 `handoff_emit` warns about leftover `handoff/prm-*.md` copies — delete them; the package folder is
 the single source.
 
-The CLAUDE.md operating note is a **tool-owned marker span** (`<!-- tamheed:note v2 -->…<!--
+The CLAUDE.md operating note is a **tool-owned marker span** (`<!-- tamheed:note v3 -->…<!--
 /tamheed:note -->`, plan 029): rebuilt on EVERY emit — always current, no force involved. A hand
 edit inside the markers is overwritten (with a warning); operator content belongs OUTSIDE the
-markers — the AGENTS.md template carries the same obligations table for project customization. A
+markers — the AGENTS.md template (`templates/agent-control.template.md`) carries the same
+obligations table for project customization. A
 v1 note (heading, no markers) is warned and never machine-edited — delete the section once and
 re-emit. `force` means exactly one thing: overwrite ALL diverged stock prompt files (+ .mcp.json);
 to accept the current template for ONE file, delete it and re-emit. The stale-v1 warning block

@@ -52,12 +52,17 @@ it (full table: [`../plugins/tamheed/references/quality-gates.md`](../plugins/ta
 | Tier | Gates | Mechanism | When it fires |
 |---|---|---|---|
 | **Referential** | G-IDS, G-DEC-STATUS, G-REQ-SRC | FOREIGN KEYs + the `entity_index`; CHECK status enums; NOT NULL provenance | **At write time** — a violating `entity_upsert` fails with the constraint named; these defects are unrepresentable in a stored package |
-| **Coverage** | G-TRACE, G-SET, G-PROGRESS | SQL views (`g_trace_failures`, `g_set_failures`, `g_progress_failures`) | On `gate_run` (stages 19/22, and any time) |
+| **Coverage** | G-TRACE, G-SET, G-PROGRESS, G-REL | SQL views (`g_trace_failures`, `g_set_failures`, `g_progress_failures`) + the `RELATION_RULES` edge-typing scan (G-REL — wrong edges are also rejected at write time) | On `gate_run` (stages 19/22, and any time) |
 | **Content / judgment** | G-COMPLETE (mechanical scan), G-INJECT (emission screen), G-CONFLICT, G-EXEC, G-HANDOFF, G-OQ + the Warn gates | `gate_run`'s content scan; `handoff_emit`'s injection screen; recorded judgment | `gate_run` / `handoff_emit` / stages 19+22 |
 
 The consequence: the strongest gates stopped being *checks* and became *properties*. There is no window
 where a package can hold a dangling reference, a `Draft` decision, or an unsourced requirement — the write
 that would create one fails, and the error message is the gate report.
+
+Above the gates sits the **readiness layer**: `readiness_check(scope, id?)` answers "is this actually
+done?" at a close boundary — `Review` counts as open (claimed is not verified), open critical/high defects
+block while medium/low advise, and a stubborn failure passes only through an operator-approved `WVR-`
+waiver (reported as `waived`, expiring, never silent).
 
 ## 3. The three actors
 
@@ -102,15 +107,17 @@ Tamheed is packaged as a **Claude Code plugin**, and the repository doubles as i
 ```
 tamheed/
 ├── .claude-plugin/marketplace.json        # repo = marketplace; lists the one plugin
+├── lab/                                   # the permanent execution lab (repo-side, not in the bundle)
 └── plugins/tamheed/                       # THE PLUGIN — the self-contained skill bundle
     ├── .claude-plugin/plugin.json
     ├── .mcp.json                           # auto-starts the server when the plugin is enabled
     ├── SKILL.md                            # always-loaded front door (owns the capability)
     ├── references/                         # on-demand depth + artifact-catalog.md
     ├── templates/                          # surviving narrative section templates
-    ├── schemas/   scripts/                 # frozen v1 contract (migration inputs)
-    ├── db/                                 # v2 store: schema.sql + store.py + CANONICAL.md
+    ├── scripts/                            # scratch_diff.py (package diff utility)
+    ├── db/                                 # the store: schema.sql + migrations/ + store.py + CANONICAL.md
     ├── server/                             # Tamheed MCP server (only write path into a package)
+    ├── prompts/                            # scenario prompt library, emitted into <package>/prompts/
     └── assets/                             # logos
 ```
 

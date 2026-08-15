@@ -82,7 +82,7 @@ human-intervention point.
 
 ### 9. Research planning
 - **In:** scope + uncertainties. **Do:** size research to genuine uncertainty (`research-depth.md`);
-  write the research plan narrative (absorbs the v1 R&D backlog) targeting the riskiest unknowns.
+  write the research plan narrative (it absorbs the R&D-backlog role) targeting the riskiest unknowns.
 - **Out:** research-plan narrative. **Enter:** scope approved. **Exit:** each high-risk unknown has a
   planned investigation. **Validate:** effort proportional to risk. **Fail:** unbounded research →
   timebox. **Human:** confirm depth for large efforts. **Writes:** narrative_documents/sections.
@@ -110,9 +110,10 @@ human-intervention point.
 - **Human:** none. **Writes:** hypotheses.
 
 ### 13. POC & experiment planning
-- **In:** hypotheses. **Do:** plan minimal `experiment`/`poc` rows with explicit PASS/FAIL criteria and a
-  timebox (verdict starts `Pending`). **Out:** experiment/POC plans. **Enter:** Stage 12. **Exit:** every
-  decision-blocking hypothesis has a planned experiment. **Validate:** each has PASS/FAIL + timebox.
+- **In:** hypotheses. **Do:** plan minimal `experiment`/`poc` rows with the metric + threshold decided
+  BEFORE the run and a timebox (verdict starts `Pending`; outcomes are Validated / Invalidated /
+  Inconclusive). **Out:** experiment/POC plans. **Enter:** Stage 12. **Exit:** every
+  decision-blocking hypothesis has a planned experiment. **Validate:** each has a pre-run threshold + timebox.
 - **Fail:** vague experiment → sharpen. **Human:** approve experiment budget for costly POCs.
 - **Writes:** experiments, pocs, trace_edges (experiment → hypothesis).
 
@@ -131,7 +132,8 @@ human-intervention point.
   rows; score impact·likelihood; mitigation fields on the row; `risk_state` starts `open` and is
   discharged during execution (`discharged_by` → the AC/test that retires it).
 - **Out:** risk register. **Enter:** Stage 14. **Exit:** top risks have owners + mitigations + triggers.
-- **Validate:** G-RISK (high-impact requirements/decisions have a risk view). **Fail:** unmitigated
+- **Validate:** G-RISK (prose-tier Warn gate — judgment, not the engine roster; high-impact
+  requirements/decisions have a risk view). **Fail:** unmitigated
   critical risk → flag for readiness. **Human:** confirm risk appetite. **Writes:** risks, trace_edges
   (risk `mitigates`/`relates_to`).
 
@@ -147,7 +149,8 @@ human-intervention point.
 - **Out:** the execution plan as data. **Enter:** Stages 14–15. **Exit:** MVP path sequenced; each phase
   has exit criteria; each AC binds to a slice. **Validate:** G-EXEC (leaf items actionable+testable).
 - **Fail:** abstract phase → decompose into slices. **Human:** approve roadmap.
-- **Writes:** phases, slices, wbs_items, milestones, acceptance_criteria, execution_gates,
+- **Writes:** phases, slices, wbs_items, milestones (roadmap LABELS — no lifecycle, v4),
+  acceptance_criteria, execution_gates,
   execution_plans, conventions, deferred_work, trace_edges (slice `implements` requirement).
 
 ### 17. Artifact generation
@@ -205,7 +208,8 @@ human-intervention point.
   deferred_work, waivers (operator-approved only), affected rows.
 
 ### 22. Final readiness assessment
-- **In:** the whole package. **Do:** `gate_run`; summarize gate results, open items (accepted-open
+- **In:** the whole package. **Do:** `gate_run` **and** `readiness_check("package")` — both mandatory;
+  summarize gate results, open items (accepted-open
   `OQ-`s), residual risks (still-`open` risk_states), evidenced-vs-narrated verdict counts, and a
   go/no-go. **Out:** the readiness verdict (rendered from the gate report + `v_readiness`).
 - **Enter:** Stages 19–20 done. **Exit:** verdict stated. **Validate:** no critical gate failing; every

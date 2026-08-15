@@ -9,7 +9,8 @@ owner: <name-or-role>
 
 <!-- One page. Written last, read first. A decision-maker who reads only this should understand the
      problem, the recommended path, what it costs, what could go wrong, and what we are asking for.
-     Generation class: Always. Lives at: 01-executive-summary.md. Keep to ~1 page. -->
+     Generation class: Always. Stored as a narrative-document (doc_kind: executive-summary).
+     Keep to ~1 page. -->
 
 ## In one paragraph
 
@@ -25,13 +26,13 @@ owner: <name-or-role>
 
 <!-- The headline decision and approach. Reference the architecture doc and the key ADR(s) rather
      than restating them. -->
-<recommended-approach> — see [architecture](architecture/architecture.md), key decisions `ADR-0001`, `DEC-00x`.
+<recommended-approach> — see the architecture narrative (doc_kind: architecture), key decisions `ADR-0001`, `DEC-00x`.
 
 ## Why this over the alternatives
 
 <!-- One or two lines on what was compared and why the winner won. Link the comparison. -->
 - Considered: <option-A>, <option-B>, <option-C>. Chosen <option-X> because <one-line reason>.
-- Full comparison: [technology comparison](architecture/technology-comparison.md).
+- Full comparison: the technology-comparison narrative (doc_kind: technology-comparison).
 
 ## Scope at a glance
 
@@ -44,7 +45,7 @@ owner: <name-or-role>
 ## Plan and effort
 
 <!-- Phases at a glance; reference the roadmap. Avoid false precision on effort. -->
-- Phases: <PH-1 …> → <PH-n …>. See [roadmap](planning/roadmap.md).
+- Phases: <PH-1 …> → <PH-n …>. See the roadmap: `entity_query("phase")`.
 - Indicative effort / horizon: <e.g. N phases, rough order-of-magnitude>.
 
 ## Top risks

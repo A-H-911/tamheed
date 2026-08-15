@@ -1,4 +1,4 @@
-# Generated package structure (v3)
+# Generated package structure (v4)
 
 The layout Tamheed produces **for a target project** (distinct from the Tamheed repo itself). A
 package is a data directory plus the prompts folder plus emitted review surfaces — not a tree of
@@ -20,7 +20,7 @@ Markdown registers.
 │   └── .lock                      # single-writer lock (transient; never committed)
 ├── prompts/                       # v3 (plan 027): ALL prompts, plain .md — read the folder, pick
 │   ├── <kickoff>.md               # project-authored (Stage 20; any non-stock filename)
-│   └── <14 stock scenarios>.md    # the bundled library ({package} substituted), seeded at create
+│   └── <15 stock scenarios>.md    # + README.md — the bundled library ({package} substituted), seeded at create
 ├── review.html (+ csv/)           # the human review surface, exported on demand
 └── (target project root)          # handoff_emit writes there (wiring only, no prompt copies):
     ├── .mcp.json                  #   executor-side MCP config → the tamheed server
@@ -31,9 +31,9 @@ The operator commits `<project-package>/data/` to whichever repository they choo
 travels as data. Human review happens through rendered surfaces (the HTML viewer, plan 012), never by
 reading raw JSONL.
 
-## What replaced the v1 tree
+## Historical: what replaced the v1 tree (v2 era)
 
-| v1 (Markdown tree) | v2 |
+| v1 (Markdown tree) | the store |
 |---|---|
 | `requirements/*.md`, `decisions/*.md`, `risks/`, `planning/`, `validation/*.md` registers | Rows in the corresponding tables |
 | `00-charter.md`, `01-executive-summary.md`, `architecture/`, `research/` narratives | `narrative_documents` + `document_sections` rows |

@@ -554,7 +554,7 @@ can target hypotheses.
 **Purpose.** The minimal run that settles a hypothesis (EXP-) or proves a build approach
 (POC- — same shape, build-flavored).
 
-**Lifecycle position.** Planned in stage 13 with explicit PASS/FAIL criteria and a
+**Lifecycle position.** Planned in stage 13 with the metric and threshold decided before the run and a
 timebox; verdicts recorded during Explore; consumed by stage 14.
 
 **Design decisions behind it.** Decision 7: the v3 PASS/FAIL vocabulary was replaced with
@@ -856,10 +856,10 @@ sequenceDiagram
     Agent->>Store: entity_upsert defect DEF-004 (severity high, found_in SL-002)
     Note over Store: lifecycle_status Open — SL-002 now blocked
     Agent->>Store: progress_update (event_type work-done, subject DEF-004)
-    Agent->>Store: fix lands; audit_record AV-019 on the affected AC (evidence: test file + CI run, against_commit abc123)
+    Agent->>Store: fix lands — audit_record AV-019 on the affected AC (evidence test file + CI run, against_commit abc123)
     Agent->>Store: entity_upsert DEF-004 lifecycle_status Fixed, fixed_by AV-019
     Agent->>Ready: readiness_check(scope=slice, id=SL-002)
-    Ready-->>Agent: defects-closed pass; acs-met re-evaluated on the LATEST verdict
+    Ready-->>Agent: defects-closed pass — acs-met re-evaluated on the LATEST verdict
 ```
 
 **Related mechanics.** `defects-closed` (blocking, all scopes), `defects-minor`
@@ -917,7 +917,7 @@ sequenceDiagram
     Note over Store: scope-changes-merged advisory now flags SC-003 until the deltas land
     Agent->>Store: entity_upsert the actual row changes (FR-014 revised, SL-005 created)
     Agent->>Store: SC-003 lifecycle_status Merged
-    Note over Store: plan and reality re-converged; the drift is history, not debt
+    Note over Store: plan and reality re-converged — the drift is history, not debt
 ```
 
 **What you lose without it.** Silent drift: the package describes a project that no
@@ -1055,19 +1055,19 @@ sequenceDiagram
     participant Store as Tamheed store
     participant Ready as readiness_check
     participant Op as Operator
-    Agent->>Store: work lands; entity_upsert SL-003 lifecycle_status Review (done-CLAIMED)
+    Agent->>Store: work lands — entity_upsert SL-003 lifecycle_status Review (done-CLAIMED)
     Note over Store: Review counts as OPEN — v_backlog still lists SL-003's items
     Agent->>Store: audit_record verdicts per AC (evidence, verified_by ci, against_commit)
     Agent->>Ready: readiness_check(scope=slice, id=SL-003)
     Ready-->>Agent: blockers: acs-met fails on AC-012 (latest verdict Partial)
     alt fix the gap
-        Agent->>Store: close the gap; audit_record AC-012 Met with evidence
+        Agent->>Store: close the gap — audit_record AC-012 Met with evidence
     else operator waives
         Op->>Store: entity_upsert waiver WVR-002 (rule acs-met, applies_to AC-012, justification, approver, expires)
         Note over Ready: rule reports status waived — visible, attributed, expiring
     end
     Agent->>Store: entity_upsert SL-003 lifecycle_status Implemented
-    Note over Store: guarded transition passes — done-VERIFIED; forced closes would write a forced-override PE- event
+    Note over Store: guarded transition passes — done-VERIFIED — forced closes would write a forced-override PE- event
 ```
 
 ## 6. Sources & further reading

@@ -9,8 +9,8 @@ owner: <name-or-role>
 
 <!-- A weighted, criteria-based comparison of >=2 viable options for a technology/approach choice.
      KEEP THE LOSERS: rejected options are evidence the decision was reasoned (do not delete them).
-     Generation class: Conditional (>=2 viable technology options). Lives at:
-     architecture/technology-comparison.md. The verdict here feeds a DEC- / ADR-. Stay neutral until
+     Generation class: Conditional (>=2 viable technology options). Stored as a narrative-document
+     (doc_kind: technology-comparison). The verdict here feeds a DEC- / ADR-. Stay neutral until
      the matrix is scored. -->
 
 ## Decision being made

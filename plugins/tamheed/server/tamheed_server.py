@@ -1017,10 +1017,27 @@ def _readiness_report(conn, scope: str, scope_id: str | None) -> dict:
              ids("SELECT id FROM deferred_work"
                  " WHERE lifecycle_status IN ('Open','Activated','Scheduled')"),
              "activation triggers are prose — a human judges whether each fired")
+        # findings_17 B1 (plan 033): the old resolved_by-only predicate measured
+        # BOOKKEEPING — 70 of ACMP's 76 OQs carried evidenced resolutions yet read
+        # amber. A non-empty resolution OR a resolver resolves; Deferred IS the
+        # deliberate carry (this note's own instruction); whitespace-only resolution
+        # doesn't count (the G-REQ-SRC doctrine).
+        oq_total, oq_any = conn.execute(
+            "SELECT COUNT(*), COUNT(CASE WHEN (resolution IS NOT NULL AND"
+            " trim(resolution) <> '') OR resolved_by IS NOT NULL THEN 1 END)"
+            " FROM open_questions").fetchone()
+        oq_na = ((" — 0 of %d open_questions rows have resolution or resolved_by set;"
+                  " this rule cannot discriminate (record resolutions to make it"
+                  " meaningful)") % oq_total) if oq_total and not oq_any else None
         rule("open-questions-resolved", "advisory",
-             ids("SELECT id FROM open_questions WHERE resolved_by IS NULL"),
-             "unresolved open questions at close — resolve or carry deliberately",
-             na=na_note("open_questions", "resolved_by"))
+             ids("SELECT id FROM open_questions"
+                 " WHERE (resolution IS NULL OR trim(resolution) = '')"
+                 " AND resolved_by IS NULL"
+                 " AND lifecycle_status NOT IN"
+                 " ('Deferred','Rejected','Superseded','Obsolete')"),
+             "open questions with neither a resolution nor a resolver (Deferred ="
+             " deliberately carried, not counted) — resolve or defer deliberately",
+             na=oq_na)
         rule("execution-plans-approved", "advisory",
              ids("SELECT id FROM execution_plans WHERE lifecycle_status NOT IN"
                  " ('Approved','Implemented','Superseded','Obsolete')"),

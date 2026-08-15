@@ -1,10 +1,10 @@
-# Slice / phase completion review
+# Slice completion review
 
-Paste this when a slice or phase of `{package}` is believed complete.
+Paste this when a slice of `{package}` is believed complete.
 
 ---
 
-Review the just-completed slice/phase of the `{package}` Tamheed package:
+Review the just-completed slice of the `{package}` Tamheed package:
 
 1. `package_open("{package}")`. Identify the slice: `entity_query("slice")` and its
    bound ACs (`trace_query("<SL-x>", direction="in")`).

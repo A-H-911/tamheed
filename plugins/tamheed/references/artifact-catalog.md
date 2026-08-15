@@ -1,4 +1,4 @@
-# Artifact Catalog (v4)
+# Artifact Catalog — the entity families and their rules (tamheed v4.2.0)
 
 The authoritative, human-facing list of every artifact a Tamheed package carries. Since v2
 the package **is a relational store** (`data/*.jsonl`, one file per entity family — see
@@ -12,8 +12,65 @@ and the teaching surface move together).
 
 The **decision logic** for optional artifacts is in [`artifact-rules.md`](artifact-rules.md);
 the **package layout** in [`generated-structure.md`](generated-structure.md); **identifiers,
-statuses, versioning** in [`governance.md`](governance.md); the per-entity operator guide
-(why/when/how for every family) is [`entity-guide.md`](entity-guide.md).
+statuses, versioning** in [`governance.md`](governance.md). The full per-entity study —
+columns, design rationale, research sources, use-case diagrams — lives in the repo's
+`docs/entities.md` (not shipped in this bundle).
+
+## The entity map
+
+```mermaid
+flowchart TB
+    REQ["requirement FR-/NFR-"]
+    CON["constraint CON- / invariant INV- /<br/>assumption ASM-"]
+    OQ["open-question OQ-"]
+    DEC["decision DEC-"]
+    ADR["adr ADR-"]
+    RISK["risk RISK-"]
+    PH["phase PH-"]
+    SL["slice SL-"]
+    WBS["wbs-item WBS-"]
+    AC["acceptance-criterion AC-"]
+    TEST["test TEST-"]
+    AV["audit-verdict AV-"]
+    DEF["defect DEF-"]
+    SC["scope-change SC-"]
+    WVR["waiver WVR-"]
+
+    REQ -- "derives_from" --> DEC
+    DEC -- "promoted_to (column)" --> ADR
+    SL -- "implements" --> REQ
+    WBS -- "implements" --> REQ
+    PH --- SL
+    SL --- WBS
+    AC -- "verifies" --> REQ
+    AC -- "bound to (column)" --> SL
+    TEST -- "tests" --> REQ
+    AV -- "ac_id (column)" --> AC
+    AC -- "discharges" --> RISK
+    DEF -- "found_in (column)" --> SL
+    SC -- "scope_adds / scope_modifies /<br/>scope_removes" --> REQ
+    WVR -- "applies_to (column)" --> DEF
+    OQ -- "cited by [NEEDS-CLARIFICATION] markers" --> REQ
+```
+
+## The standard lifecycle
+
+```mermaid
+stateDiagram-v2
+    [*] --> Draft
+    Draft --> Proposed
+    Proposed --> Approved
+    Proposed --> Rejected
+    Proposed --> Deferred
+    Deferred --> Proposed : revisited
+    Approved --> Implemented
+    Approved --> Superseded
+    Implemented --> Superseded
+    Superseded --> Obsolete
+    state "Review — wbs-items and slices only (done-CLAIMED, counts as OPEN)" as Review
+    Approved --> Review : agent claims done
+    Review --> Implemented : verified (guarded)
+```
 
 ## Generation classes
 
@@ -107,3 +164,24 @@ One `data/<table>.jsonl` file per non-empty family. Class = the registry's gener
 (readiness substrates), `v_artifact_membership` (G-SET), `v_identifier_counts`,
 `g_trace_failures` / `g_set_failures` / `g_progress_failures` (gate substrates),
 `v_readiness` (gate rollup).
+
+## The four operating rules (from the retired operator card, merged here in v4.2)
+
+- **Claimed vs verified**: work an agent believes done is `Review` (claimed);
+  `Implemented` means VERIFIED — the phase/slice transition is guarded by the blocking
+  readiness rules, `force` is operator-words-only and self-audited, and every verdict
+  carries its evidence chain (`evidence`, `verified_by`, `verification_method`,
+  `against_commit`).
+- **Drift**: deviating from the approved plan starts with an `SC-` row (Proposed) plus
+  `scope_adds`/`scope_modifies`/`scope_removes` edges naming the affected rows; after
+  operator approval the agent applies the changes and sets the `SC-` to `Merged` — the
+  `scope-changes-merged` advisory flags anything approved but never reconciled.
+- **Waivers**: an operator-approved `WVR-` row (rule + entity + justification +
+  approver + expiry) satisfies a named readiness rule for a named entity, reported as
+  `waived`, never silent. Agents may ASK for one; they never author one.
+- **Markers**: genuine ambiguity is recorded in place as
+  `[NEEDS-CLARIFICATION: OQ-NNN]` citing a live open question — the full rule is in
+  `governance.md` (never restated here; one owner per fact).
+- **Repair doctrine**: when a field may be damaged, repair from `data/*.jsonl` (or the
+  backup), never from `entity_query` output — a full-row upsert rebuilt from a
+  truncated query round-trip re-commits the damage (field-evidence C38).

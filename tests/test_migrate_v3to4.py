@@ -63,7 +63,14 @@ def build_v3_fixture(root: Path, name: str = "legacy") -> Path:
                        "lifecycle_status": "Approved", "disposition": None,
                        "disposition_reason_ref": None, "source_kind": None,
                        "source_span": None, "custom_attributes": None,
-                       "last_referenced": None}])
+                       "last_referenced": None},
+                      {"id": "RISK-002", "title": "letters", "description": None,
+                       "probability": "M", "impact": "L",  # findings_17 C3: the
+                       "mitigation": None, "risk_state": "open",  # v2-era letters
+                       "discharged_by": None, "lifecycle_status": "Approved",
+                       "disposition": None, "disposition_reason_ref": None,
+                       "source_kind": None, "source_span": None,
+                       "custom_attributes": None, "last_referenced": None}])
     w("phases.jsonl", [{"id": "PH-1", "title": "one", "objective": None,
                         "exit_criteria": None, "sort_order": 0,
                         "lifecycle_status": "Approved", "disposition": None,
@@ -167,7 +174,8 @@ class MigrateV3ToV4Test(unittest.TestCase):
         self.assertEqual(rep["version_from"], "3.2.1")
         self.assertEqual(rep["mode_coerced"], {"from": "weird-mode", "to": "full"})
         self.assertEqual(rep["milestone_status_dropped"],
-                         [{"id": "MS-001", "was": "Implemented"}])
+                         [{"id": "MS-001", "was": "Implemented",
+                           "stashed_as": "custom_attributes.v3_lifecycle_status"}])
         self.assertEqual(rep["stakeholders_renamed"], "name -> title")
         self.assertEqual(rep["status_column_renamed"], ["defects"])
         self.assertEqual(rep["verdicts_mapped"],
@@ -175,7 +183,11 @@ class MigrateV3ToV4Test(unittest.TestCase):
         self.assertEqual(rep["scope_changes_marked_merged"], ["SC-001"])
         self.assertEqual(rep["risk_scale_normalized"],
                          [{"id": "RISK-001", "column": "probability",
-                           "from": "High", "to": "high"}])
+                           "from": "High", "to": "high"},
+                          {"id": "RISK-002", "column": "probability",
+                           "from": "M", "to": "medium"},
+                          {"id": "RISK-002", "column": "impact",
+                           "from": "L", "to": "low"}])
         self.assertEqual(rep["risk_scale_stashed"][0]["column"], "impact")
         self.assertEqual({e["was"] for e in rep["edges_retyped"]},
                          {"binds_to", "mitigates"})
@@ -205,11 +217,19 @@ class MigrateV3ToV4Test(unittest.TestCase):
         ms = rows(self.pkg, "milestones.jsonl")[0]
         self.assertNotIn("lifecycle_status", ms)
         self.assertNotIn("disposition", ms)
+        # findings_17 A5 (plan 033): the dropped status is STASHED, not report-only.
+        self.assertEqual(json.loads(ms["custom_attributes"])["v3_lifecycle_status"],
+                         "Implemented")
         risk = rows(self.pkg, "risks.jsonl")[0]
         self.assertEqual(risk["probability"], "high")
         self.assertIsNone(risk["impact"])
         self.assertEqual(json.loads(risk["custom_attributes"])["v3_impact"],
                          "3 (moderate)")
+        # findings_17 C3 (plan 033): single letters map mechanically, never stash.
+        letters = rows(self.pkg, "risks.jsonl")[1]
+        self.assertEqual((letters["probability"], letters["impact"]),
+                         ("medium", "low"))
+        self.assertIsNone(letters["custom_attributes"])
         self.assertEqual(rows(self.pkg, "constraints.jsonl")[0]["source_kind"],
                          "inferred")
 

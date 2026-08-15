@@ -9,7 +9,7 @@ owner: <name-or-role>
 
 <!-- The charter is the anchor for the whole package. Keep it tight: it states WHY the project
      exists, WHAT done looks like, and the boundaries everything downstream must respect.
-     Generation class: Always. Lives at: 00-charter.md -->
+     Generation class: Always. Stored as a narrative-document (doc_kind: charter). -->
 
 ## Problem statement
 
@@ -54,7 +54,7 @@ owner: <name-or-role>
 
 ## Stakeholders (STK-)
 
-<!-- Summary view; the full register lives in stakeholder-register. Reference STK- ids. -->
+<!-- Summary view; the full register: `entity_query("stakeholder")`. Reference STK- ids. -->
 
 | ID | Stakeholder / role | Interest in the project | Influence (H/M/L) |
 |---|---|---|---|
@@ -63,9 +63,9 @@ owner: <name-or-role>
 ## Constraints and assumptions (summary)
 
 <!-- Pointers, not the full registers. Link the constraint, invariant, and assumption registers. -->
-- Key constraints: see [constraint register](requirements/constraint-register.md) (`CON-`).
-- Non-negotiables: see [invariant register](requirements/invariant-register.md) (`INV-`).
-- Key assumptions: see [assumption register](decisions/assumption-register.md) (`ASM-`).
+- Key constraints: `entity_query("constraint")` (`CON-`).
+- Non-negotiables: `entity_query("invariant")` (`INV-`).
+- Key assumptions: `entity_query("assumption")` (`ASM-`).
 
 ## Approval
 

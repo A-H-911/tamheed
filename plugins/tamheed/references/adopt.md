@@ -76,7 +76,7 @@ nothing pretends to be new analysis. Original identifiers are preserved in `cust
 - trace edge `TEST-003 —tests→ FR-007`
 
 **A Proposed ADR from a code pattern.**
-All service modules import `queue/rabbit.py`; no alternative transport appears anywhere. The
+All service modules import the RabbitMQ transport module; no alternative transport appears anywhere. The
 skill records `ADR-0001` "Message transport is RabbitMQ (de-facto)" — **Proposed**, context
 citing `src/queue/rabbit.py:1` + the importing modules, consequences noting the coupling. The
 operator approves it (making the de-facto choice official) or supersedes it (making the change

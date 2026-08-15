@@ -11,7 +11,7 @@
 <p align="center"><strong>Turn a project description into a validated, traceable, execution-ready planning &amp; handoff package for Claude Code to implement.</strong></p>
 
 <p align="center">
-  <em>Claude Code plugin + MCP-backed agent skill &middot; v4.1.0</em> &middot;
+  <em>Claude Code plugin + MCP-backed agent skill &middot; v4.2.0</em> &middot;
   <a href="#license">MIT</a> &middot;
   <a href="docs/install.md">Install</a> &middot;
   <a href="docs/migrate-from-keystone.md">Migrate from Keystone</a> &middot;
@@ -69,13 +69,12 @@ Honest edition — what you actually need:
 - No specific model, vendor, or repo provider is required.
 
 **What ended with v1:** the chat-only path. Claude.ai and other environments without an MCP host can hold
-the planning *conversation*, but they cannot create or mutate a v2 package — there is no package store
+the planning *conversation*, but they cannot create or mutate a package — there is no package store
 without the server. That trade is deliberate: the store is where the integrity guarantees live.
 
 ## Install
 
-Tamheed ships as a self-contained bundle at [`plugins/tamheed/`](plugins/tamheed). See
-[`docs/install.md`](docs/install.md) for every path and the capability tiers; the essentials:
+Tamheed ships as a self-contained bundle at [`plugins/tamheed/`](plugins/tamheed).
 
 **Claude Code (plugin — recommended).** This repo is its own plugin marketplace:
 
@@ -88,14 +87,8 @@ Then invoke it as **`/tamheed:tamheed`** (plugin skills are namespaced), or just
 the skill triggers on planning/scoping/handoff intent on its own. Approve the `tamheed` MCP server when
 Claude Code asks (per-server approval); it is the package's only write path.
 
-**Claude Code (manual / standalone).** Copy the bundle into your skills directory to get the un-namespaced
-`/tamheed`:
-
-```text
-# user scope (all projects)        # or project scope
-~/.claude/skills/tamheed/          <repo>/.claude/skills/tamheed/
-   ← contents of plugins/tamheed/
-```
+Every other path — manual/standalone copies, other MCP-capable agents, and the capability tiers — is
+covered by the canonical install page: [`docs/install.md`](docs/install.md).
 
 > The old install commands (`marketplace add A-H-911/keystone`) remain valid only for **Keystone 1.0.x**
 > at the old repository.
@@ -303,9 +296,11 @@ that row-level counts cannot see.
 
 Full signatures and semantics: [`plugins/tamheed/server/README.md`](plugins/tamheed/server/README.md).
 
-Worked, end-to-end examples live in [`examples/`](examples) (input briefs + expected outlines) and
+Worked, end-to-end examples live in
 [`generated-samples/`](generated-samples) — including
-[`support-triage-agent-v2/`](generated-samples/support-triage-agent-v2), the demonstration package (migrated in place through every store generation, v1→v4).
+[`support-triage-agent-v2/`](generated-samples/support-triage-agent-v2), the demonstration package
+(migrated in place through every store generation, v1→v4) — and [`lab/`](lab), the permanent execution
+lab whose seed package a real agent drove through every v4 mechanism.
 
 ## How it works
 
@@ -370,7 +365,9 @@ coverage gates are SQL views, and `gate_run` reports it all. The bundle is **sel
 it reads or invokes at runtime lives inside `plugins/tamheed/`, so the plugin installs and runs as one
 intact unit. The three-actor interaction (planning agent · human operator · executing agent) is diagrammed
 in [`docs/architecture.md`](docs/architecture.md); design rationale in
-[`docs/design-decisions.md`](docs/design-decisions.md).
+[`docs/design-decisions.md`](docs/design-decisions.md). The entity model itself — every entity family,
+how they relate, and their lifecycles — is the entity study **[`docs/entities.md`](docs/entities.md)**,
+including the Mermaid entity/relation/lifecycle diagrams.
 
 ### Operating principles (what makes the output trustworthy)
 
@@ -400,9 +397,9 @@ tamheed/
 │   └── assets/                       # logos
 ├── docs/                             # architecture, methodology, workflow, design decisions, install
 ├── evals/                            # behavioral eval spec + deterministic eval runner
-├── examples/                         # input briefs + expected package outlines
 ├── generated-samples/                # the demonstration package (migrated in place through v2→v3→v4)
-├── tests/                            # the ten test suites + fixtures
+├── lab/                              # the permanent execution lab (brief + seed package + scenario)
+├── tests/                            # the eight test suites
 ├── check.py                          # THE one deterministic gate — CI job 1 runs exactly this
 ├── .github/workflows/                # CI (check.py + server smoke) + scheduled eval-spec lint
 └── SECURITY.md                       # trust model, untrusted-content posture, reporting
@@ -411,7 +408,7 @@ tamheed/
 ## Verifying a local checkout
 
 ```bash
-python check.py        # everything CI runs: 8 suites, 8 lints, canonical form, eval fixtures
+python check.py        # everything CI runs: 8 suites + the lint battery, canonical form, eval fixtures
 ```
 
 ## Contributing
@@ -423,12 +420,12 @@ See [`CONTRIBUTING.md`](CONTRIBUTING.md) and
 
 ## Maturity
 
-**v4.x** (currently v4.1.0). The methodology (22 stages), the re-baselined relational store (plan 031:
+**v4.x** (currently v4.2.0). The methodology (22 stages), the re-baselined relational store (plan 031:
 claimed-vs-verified `Review`, evidence-chained verdicts, `WVR-` waivers, severity-thresholded blocking,
 typed progress events, drift-delta scope changes, blocking G-REL, `[NEEDS-CLARIFICATION]` markers), the
 MCP tool surface, the canonical serialization, and the in-place migration path (v2/v3
 prompts-table packages — opening one converts it once, loudly) are defined, tested, and stable —
-hardened by fifteen field reports from sustained production use, each answered by a same-day release.
+hardened by seventeen field reports from sustained production use, each answered by a same-day release.
 Any change to the DDL, the identifier scheme, or the tool contract ships per the versioning rules in
 [`plugins/tamheed/references/governance.md`](plugins/tamheed/references/governance.md) (additive =
 MINOR, breaking = MAJOR + migration note; DDL changes are append-only `migrations/NNN_*.sql`, tracked

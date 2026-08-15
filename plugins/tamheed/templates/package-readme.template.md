@@ -5,61 +5,56 @@ updated: <YYYY-MM-DD>
 owner: <name-or-role>
 ---
 
-# <project-name> — Planning & Handoff Package
+# <project-name> — the Tamheed package
 
-<!-- The README for a GENERATED package (not for Keystone itself). It tells a reader — human or
-     execution agent — what this package is, the order to read it in, and how an execution agent should
-     consume it. Generation class: Always. Lives at: README.md (package root). -->
+<!-- The front door of a generated package. A v4 package is a RELATIONAL STORE
+     (data/*.jsonl, canonical serialization) + a prompt folder + a generated review
+     surface — never a tree of Markdown registers. Generation class: Always.
+     Stored as a narrative-document (doc_kind: readme); the on-disk README.md of the
+     package directory is generated from it. -->
 
 ## What this is
 
-This is a validated, execution-ready **planning and handoff package** for **<project-name>**, produced by
-Keystone. It contains the approved problem framing, requirements, decisions, architecture, plan, validation
-criteria, and the handoff prompts an execution agent uses to start building. The decisions recorded in the
-ADRs and Approved registers are **final** unless superseded through a recorded decision.
+The execution-ready planning and handoff package for **<project-name>**, produced by
+Tamheed: requirements, constraints, invariants, assumptions, open questions, decisions
+and ADRs, risks, a phased roadmap with slices, acceptance criteria, and full typed
+traceability — every entity a row, every write through the Tamheed MCP tools.
 
-## Status (snapshot)
-
-Regenerated from the live [status report](progress/status-report.md). Phase status: ✅ done · ◑ in
-progress · ⬜ not started.
+## Status snapshot
 
 | Phase | Scope | Status |
 |---|---|---|
-| PH-1 | <headline / MVP slice> | ⬜ not started |
-| PH-2 | <headline> | ⬜ not started |
+| `PH-1` | <one line> | <from `readiness_check("phase", "PH-1")`> |
 
-Deferred / out of current scope: <list, or "none">.
+<!-- The snapshot is a courtesy copy — the LIVE answer is always a query. -->
 
-## How to read it (suggested order)
+## How to read this package
 
-1. [Executive summary](01-executive-summary.md) — the one-page overview and recommendation.
-2. [Charter](00-charter.md) — problem, objectives, scope, success metrics (`KPI-`).
-3. [Requirements](requirements/) — functional (`FR-`), non-functional (`NFR-`), constraints (`CON-`),
-   invariants (`INV-`), dependencies (`DEP-`).
-4. [Architecture](architecture/architecture.md) and [decisions](decisions/) / [ADRs](adrs/).
-5. [Roadmap](planning/roadmap.md) and [work breakdown](planning/work-breakdown.md).
-6. [Acceptance criteria](validation/acceptance-criteria.md) and [traceability matrix](validation/traceability-matrix.md).
-7. [Risks](risks/risk-register.md).
+1. **The human surface**: open `review.html` (regenerate with `export_html` — verdict
+   and identity first, then the traceability flow, the registers, execution progress).
+2. **The data**: `data/*.jsonl` — one file per entity family, canonical and
+   diff-friendly; commit it with your code. Never hand-edit while a session is open.
+3. **The queries**: `entity_query("requirement", status="Approved")`,
+   `entity_query("invariant")`, `trace_query("<id>")`, `gate_run()`,
+   `readiness_check(scope)` — the store is the record; prose copies drift.
 
-## How an execution agent should consume this package
+## How an execution agent consumes this
 
-- **Start here:** paste [handoff/initial-prompt.md](handoff/initial-prompt.md) into the execution agent.
-- **Respect the invariants** in [requirements/invariant-register.md](requirements/invariant-register.md)
-  (`INV-`) from the first commit.
-- **Proceed phase by phase** using [handoff/follow-up-prompts.md](handoff/follow-up-prompts.md) — one prompt
-  per phase gate; stop at each exit gate for approval.
-- **Do not expand scope** beyond the current phase; record any deviation as a new ADR.
-- **Check readiness** in [handoff/execution-readiness-report.md](handoff/execution-readiness-report.md);
-  the structured contract is [handoff/handoff-manifest.(yaml|json)](handoff/).
+Start from the prompts folder: **`prompts/README.md`** is the operator guide (which
+prompt for which situation, semi-auto vs fully-auto, the single-writer lock). The
+project-authored kickoff prompt lives beside the stock scenario library. The target
+repo's `CLAUDE.md` carries the recording-obligations table (emitted by `handoff_emit`)
+— the package is the record; unrecorded work is drift.
 
 ## Conventions
 
-Identifiers, statuses, and cross-references follow [governance/governance.md](governance/governance.md) and
-[governance/naming-conventions.md](governance/naming-conventions.md). Derived artifacts (traceability,
-readiness, status report) are regenerated, not hand-edited.
+- Identifiers, statuses, and cross-references: this package follows Tamheed
+  governance (see the generated `governance`/`naming` documents if present, else the
+  identifier prefixes are self-describing: `FR-`, `AC-`, `SL-`, `DEC-`, `ADR-`, …).
+- Approved ADRs and acceptance criteria are immutable — superseded, never edited.
+- One session at a time: `data/.lock` is the single-writer guard.
 
 ## Package metadata
 
-- Package version: <semver> — see [manifest.json](manifest.json).
-- Generated: <YYYY-MM-DD> by Keystone.
-- MVP definition: see the [executive summary](01-executive-summary.md) and handoff manifest.
+- Package: `<package-name>` · store version: <from `server_info`>
+- Created: <date> · profile: <profile> · MVP: <one line or "see charter">

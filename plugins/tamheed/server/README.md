@@ -1,6 +1,6 @@
 # Tamheed MCP server
 
-Documents the tool surface as of **tamheed v4.1.0**.
+Documents the tool surface as of **tamheed v4.2.0**.
 
 The **only write path** into a Tamheed package (ADR-0001). Agents interact with a package
 exclusively through these MCP tools: every write passes schema validation (FKs, CHECKs,
@@ -102,3 +102,15 @@ timestamps, never the wall clock.
 The tool surface is a public contract: additive changes are MINOR, breaking changes are
 MAJOR + migration note (governance versioning applies to tools). Handlers are plain
 functions — `tests/test_mcp_contract.py` drives them in-process with no transport.
+
+## scratch_diff — field-level package comparison
+
+`python <plugin>/scripts/scratch_diff.py <a>/data <b>/data` (add `--json` for machine
+output) diffs two packages row-by-row with correct per-table keying (`trace_edges` on
+from/to/relation, `entity_types` on `type_id`, …) and the union of columns INCLUDING
+JSON blobs (`custom_attributes`) — a diff that skips blobs silently under-reports
+(field-evidence C28). Exit 1 (differences) is a report, not a failure; bucket every
+difference as expected or UNEXPECTED — an empty UNEXPECTED bucket is the pass
+criterion. Standard uses: comparing a package against its `data-v3-backup/`, or a
+re-recorded scratch package against the live one (delete the scratch afterwards — it
+is a measurement, never a candidate).

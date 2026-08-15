@@ -9,8 +9,8 @@ owner: <name-or-role>
 
 <!-- Plan research PROPORTIONAL to genuine uncertainty (do not research the settled). This plan frames
      the unknowns, what evidence would resolve them, and the method/effort to get it.
-     Generation class: Conditional (genuine technical uncertainty). Lives at: research/research-plan.md.
-     Feeds the hypotheses (HYP-), experiments (EXP-), and POCs (POC-). -->
+     Generation class: Conditional (genuine technical uncertainty). Stored as a narrative-document
+     (doc_kind: research-plan). Feeds the hypotheses (HYP-), experiments (EXP-), and POCs (POC-). -->
 
 ## Research objectives
 
@@ -32,7 +32,7 @@ owner: <name-or-role>
      experiment, benchmark, spike, expert input. Keep proportional. -->
 | Uncertainty | Method | Evidence sought | Effort / timebox |
 |---|---|---|---|
-| <unknown-1> | <experiment EXP-001 / POC-001 / doc review> | <PASS/FAIL signal> | <e.g. 1 day> |
+| <unknown-1> | <experiment EXP-001 / POC-001 / doc review> | <the metric + threshold decided before the run> | <e.g. 1 day> |
 | <unknown-2> | <method> | <signal> | <timebox> |
 
 ## Information sources
@@ -43,8 +43,9 @@ owner: <name-or-role>
 
 ## Deliverables
 
-- Hypotheses recorded in [hypothesis register](hypothesis-register.md) (`HYP-`).
-- Experiment plans in [experiments/](../experiments/) (`EXP-`); POC plans in [pocs/](../pocs/) (`POC-`).
+- Hypotheses recorded as `hypothesis` rows (`HYP-`) — `entity_query("hypothesis")`.
+- Experiment plans as `experiment` rows (`EXP-`), POC plans as `poc` rows (`POC-`) —
+  `entity_query("experiment")` / `entity_query("poc")`.
 - Findings folded back into decisions (`DEC-/ADR-`) and risks (`RISK-`).
 
 ## Out of scope for research

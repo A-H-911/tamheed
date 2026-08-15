@@ -8,9 +8,10 @@ owner: <name-or-role>
 # Governance — <project-name>
 
 <!-- The rules of record for THIS package: identifiers, statuses, versioning, and cross-references.
-     Derived from Keystone's governance reference; ships inside the package so it is self-documenting.
+     Derived from Tamheed's governance reference; ships inside the package so it is self-documenting.
      Generation class: Conditional (handoff to Claude Code / repo requested).
-     Lives at: governance/governance.md. Pairs with naming-conventions.md. -->
+     Stored as a narrative-document (doc_kind: governance). Pairs with the naming-conventions
+     narrative document. -->
 
 ## Identifiers
 
@@ -29,7 +30,12 @@ Draft → Proposed → Approved → Implemented
         Approved/Implemented → Superseded → Obsolete
 ```
 
-- **Decision statuses** are EXACTLY: `Proposed | Approved | Rejected | Superseded | Deferred`.
+- **Review** *(wbs-items and slices only)* — **done-claimed**: the agent asserts the work is
+  complete but verification has not confirmed it. Review counts as OPEN everywhere; only the
+  guarded transition to **Implemented** (done-verified) closes work.
+
+- **Decision statuses** are EXACTLY: `Proposed | Approved | Rejected | Superseded | Deferred |
+  Implemented`.
   Never render a Proposed decision as Approved — this is a core safeguard.
 - **Document statuses:** `Draft | Proposed | Approved | Implemented | Rejected | Deferred | Superseded |
   Obsolete`.
@@ -50,10 +56,12 @@ Draft → Proposed → Approved → Implemented
 
 - Reference entities by ID in prose ("mitigated by `RISK-012`").
 - A row that exists because of another entity records a typed link (`derives_from`, `mitigates`, `verifies`,
-  `supersedes`, `blocked_by`), not only prose.
+  `supersedes`, `blocked_by`, and the scope-delta kinds `scope_adds`/`scope_modifies`/`scope_removes`;
+  `relates_to` is the documented untyped escape hatch), not only prose.
 - Every `FR-/NFR-` must be reachable in the traceability matrix to >=1 decision, task, and test, and (if
   behavior-bearing) an acceptance criterion. Unlinked requirements are a gate failure.
-- Links between files are relative Markdown paths.
+- References are entity IDs, not file paths — the store resolves them; there are no relative links to
+  keep working.
 
 ## Supersession & deprecation
 

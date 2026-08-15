@@ -1,6 +1,10 @@
 # ADR-0001: The v2 relational package store
 
-- **Status:** Approved (maintainer, 2026-07-17 — interactive gate, plan 007 step 2)
+- **Status:** Approved (maintainer, 2026-07-17 — interactive gate, plan 007 step 2);
+  **partially superseded by [ADR-0002](adr-0002-v4-entity-model-re-baseline.md)**
+  (2026-08-14): the store doctrine survives; the prompts table, the milestone
+  lifecycle, and the frozen-v1-contract clauses are superseded. Content below is
+  frozen as approved.
 - **Date:** 2026-07-17
 - **Deciders:** maintainer (Eng. Anas Hammo)
 - **Plan:** `plans/007-b2-data-model-adr-ddl.md` (B2); input contract `plans/deliverables-review.md`

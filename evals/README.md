@@ -1,7 +1,8 @@
 # Tamheed behavioral evals
 
-`tests/` proves the **mechanical surfaces** are correct (store, server contract, migration,
-adopt, viewer, the frozen v1 validator). These evals exercise the **skill** — does Tamheed
+`tests/` proves the **mechanical surfaces** are correct (the eight suites: store, schema
+migrations, server contract, v3→v4 migration, adopt, viewer, the eval runner, the
+scratch-diff tool). These evals exercise the **skill** — does Tamheed
 actually extract requirements faithfully, surface assumptions instead of inventing
 requirements, keep proposals as proposals, resist prompt injection (in briefs *and* in
 adopted repositories), and produce a package whose gates pass? That behavior is what
@@ -16,7 +17,7 @@ This follows the Agent Skills open standard's **evaluation-driven development**
 
 | id | what it probes |
 |---|---|
-| `minimal-brief` | a small, complete brief → a full v2 package whose gates all pass |
+| `minimal-brief` | a small, complete brief → a full package (current store version) whose gates all pass |
 | `rich-brief` | genuine uncertainty → ADRs, a technology comparison, a populated risk register |
 | `contradictory-brief` | mutually exclusive requirements are surfaced, never silently reconciled |
 | `thin-brief` | a vague one-liner → open questions + explicit assumptions, no invented requirements |
@@ -37,7 +38,7 @@ judge.
 ## How to run
 
 1. Start a **fresh** session (leftover context masks gaps).
-2. Run the case `input` **with** the tamheed skill available; record the produced v2 package
+2. Run the case `input` **with** the tamheed skill available; record the produced package
    at `<results-dir>/<case-id>/package/` (its `data/*.jsonl`, plus `review.html` if
    exported) and any tool outputs the case names (e.g. `preview.json` for adopt cases).
 3. Run the same `input` in another fresh session **without** the skill; save that output for
