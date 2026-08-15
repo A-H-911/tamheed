@@ -18,7 +18,10 @@ Review the just-completed slice of the `{package}` Tamheed package:
 3. `work_bind` every commit/PR of the slice onto the entities it satisfies.
 4. `progress_update` a closing entry for the slice (phase_id + slice_id set,
    event_type "transition", subject_id "<SL-x>", actor "agent:<session>").
-5. Anything discovered-but-deferred: a `deferred-work` row (severity + activation
+5. Anything this slice TAUGHT (a mistake's root fix, a practice to repeat): a
+   `lesson` row (`LL-`, born Proposed; kind improve|sustain) + a `learned_from`
+   edge to the slice or defect — the operator confirms; only Approved binds.
+   Anything discovered-but-deferred: a `deferred-work` row (severity + activation
    trigger), via `entity_upsert` — full rows.
 6. Scope deviations found during review: typed `scope-change` row (Proposed, with
    delta edges to the rows it touches) before anything else moves; after operator

@@ -1,0 +1,4 @@
+id,title,severity,lifecycle_status,found_in,fixed_by,custom_attributes,last_referenced
+DEF-001,overdue() off-by-one: a task due TODAY is flagged OVERDUE (uses <= instead of <),high,Fixed,SL-002,,,
+DEF-002,Flaky test: test_added_timestamp_is_now compares two wall-clock now() reads (fails across a second boundary) and never exercises tracker.add() at all,low,Fixed,SL-002,,,
+DEF-003,Help text typo: 'trakcer' instead of 'tracker' in tick --help output,low,Open,SL-002,,,

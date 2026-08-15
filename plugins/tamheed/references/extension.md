@@ -2,8 +2,10 @@
 
 Tamheed is designed to grow as new projects reveal new reusable patterns — **without editing core
 logic**. Everything below is additive: register an entry, drop in a migration; don't fork the
-workflow. The biggest case (a whole new artifact family) starts a **new migration-chain entry** —
-`002_*.sql` on the v4 baseline. `glossary_terms` (itself a baseline table since v4) remains the
+workflow. The biggest case (a whole new artifact family) starts a **new migration-chain entry** on
+the v4 baseline — `../db/migrations/002_lessons.sql` (the lessons family, plan 035) is the LIVE
+worked example of exactly this chain: table + trigger pair + immutability trigger + a relation-CHECK
+extension, registered end to end. `glossary_terms` (itself a baseline table since v4) remains the
 worked example of the SHAPE: the table + trigger pair + the two registry entries — the contributor
 walkthrough in the repo's contributing guide retraces it step by step.
 
@@ -36,9 +38,11 @@ migration, `ENTITY_TABLES`, and `BASELINE_ENTITY_TYPES`; `check.py`'s sync lints
 **Existing packages and new families.** A package's own `entity_types` registry is seeded when the
 package is created (or migrated), so a package that predates an extension does not know the new
 family: writing a row of the new type into it fails loud on the registry FK. That is intentional
-fail-closed behavior — teaching an old package a new family is a deliberate operator action
-(currently: re-migrate, or a future registry-row write path), never a silent side effect of
-upgrading Tamheed.
+fail-closed behavior — teaching an old package a new family is a deliberate operator action, never a
+silent side effect of upgrading Tamheed. The action is `package_migrate`'s staged **registry-sync**
+mode: on a v4 store missing baseline entity types, the preview reports `mode: "registry-sync"` +
+`entity_types_added`, and confirm appends the registry rows — a pure append, no backup taken; an
+up-to-date v4 store still refuses.
 
 ## Entry-point contract
 

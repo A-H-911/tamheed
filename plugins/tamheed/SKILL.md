@@ -15,7 +15,7 @@ description: >-
 
 # Tamheed
 
-This skill documents tamheed **v4.2.1** (the version travels with the bundle;
+This skill documents tamheed **v4.3.0** (the version travels with the bundle;
 check.py lint 8 keeps this line current).
 
 Tamheed turns a project description into an **execution-ready handoff package**: the planning, research,
@@ -40,7 +40,7 @@ A relational package (layout: `references/generated-structure.md`) containing, a
 dependencies, open questions, decisions, ADRs, risks (with execution lifecycle), hypotheses,
 experiments, POCs, tests, KPIs, stakeholders, phases → **slices**, work items, milestones, acceptance
 criteria, audit verdicts, defects, **deferred work**, execution gates, per-slice execution plans,
-durable conventions, scope changes, and typed trace edges; **narrative documents** — charter,
+durable conventions, scope changes, operator-confirmed lessons learned, and typed trace edges; **narrative documents** — charter,
 executive summary, architecture, research plan, technology comparison, handoff prompts, package
 README, agent-control surface; and **derived views** — traceability, status, backlog, readiness,
 phase-exit — always queries, never stored snapshots. Canonical storage is JSONL per table, committed
@@ -99,6 +99,9 @@ Default to **interactive**. Modes are defined in `references/modes.md`:
   `package_migrate(name, confirm=true)`; the old files are kept in `data-v3-backup/`. On
   success the package carries a refreshed prompt library in `<package>/prompts/` — point the
   operator at it (`refresh_stock=true` on the next `handoff_emit` safely updates stale stock).
+  On a **v4** store that merely predates a newer entity family, `package_migrate` runs a staged
+  **registry-sync** instead: preview reports `entity_types_added`, confirm appends the registry
+  rows (pure append, no backup taken); an up-to-date v4 store still refuses.
 - `adopt` — onboard a project that never used Tamheed (`package_adopt`, staged): nothing inferred
   is Approved, provenance is code-shaped, the gap report is first-class (`references/adopt.md`).
 
@@ -179,7 +182,8 @@ against_commit — an evidenced verdict beats a narrated one), and `work_bind`
 the requirement auto-advances. Scope changes follow the D-UPDATE flow in `references/modes.md` —
 **a `scope-change` row is written before any requirement/phase mutation, always.** Discovered
 defects become `defect` rows BEFORE the fix; out-of-scope finds become `deferred-work` rows with
-activation triggers. Work an agent believes done goes to **Review** (claimed); `Implemented` means VERIFIED. Close
+activation triggers; durable takeaways become `lesson` rows (born Proposed, a `learned_from` edge
+to their source — only operator-Approved lessons bind future sessions). Work an agent believes done goes to **Review** (claimed); `Implemented` means VERIFIED. Close
 boundaries run `readiness_check(scope)`: blocking rules (open critical/high defects block;
 medium/low advise) guard the phase/slice `Implemented` transition; a single stubborn failure is
 waived only by an operator-approved `WVR-` row (reported as `waived`, never silent);
@@ -194,7 +198,7 @@ ready while a critical gate fails or a blocking readiness rule does.
 
 All entities use the identifier scheme, lifecycle statuses, and cross-reference rules in
 `references/governance.md` (`FR-/NFR-/CON-/INV-/ASM-/DEP-/OQ-/DEC-/ADR-/RISK-/HYP-/EXP-/POC-/TEST-/
-KPI-/STK-/PH-/SL-/WBS-/MS-/AC-/AV-/PE-/DEF-/DW-/GATE-/EP-/CONV-/SC-/DOC-/SEC-/DIA-`; `PRM-`
+KPI-/STK-/PH-/SL-/WBS-/MS-/AC-/AV-/PE-/DEF-/DW-/GATE-/EP-/CONV-/SC-/LL-/DOC-/SEC-/DIA-`; `PRM-`
 retired in v3 — prompts are files, not entities). Statuses are
 three-axis (ADR-0001): `lifecycle_status` (Draft → Proposed → Approved / Rejected / Deferred →
 Implemented, Superseded → Obsolete), `verdict` (Met/Partial/Not-met/Pending for audits; Validated/Invalidated/Inconclusive/Pending for experiments/POCs; Pass/Fail/Pending for tests), and `disposition`

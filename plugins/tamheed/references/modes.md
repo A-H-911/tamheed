@@ -11,7 +11,7 @@ before doing heavy work**. Modes change where the workflow starts/stops, not the
 | `resume` | Continue an interrupted package | last incomplete stage | as configured |
 | `stage:<id>` | Run/re-run one stage | that stage | that stage |
 | `update` | Apply new decisions/progress/scope (D-UPDATE) | Stage 21 | Stage 22 |
-| `migrate` | Convert a v2/v3 store to v4 IN PLACE | `package_migrate(name)` (staged: preview = full rewrite report, nothing written → operator backs up → `confirm=true`; old files kept in `data-v3-backup/`). v1 Keystone trees are no longer ingested — the two-step escape route is documented in the repo's docs | migration report + refreshed `<package>/prompts/` library |
+| `migrate` | Convert a v2/v3 store to v4 IN PLACE | `package_migrate(name)` (staged: preview = full rewrite report, nothing written → operator backs up → `confirm=true`; old files kept in `data-v3-backup/`). A v4 store missing newer baseline entity types takes the staged **registry-sync** path instead: preview reports `mode: "registry-sync"` + `entity_types_added`, confirm appends the registry rows (pure append — no backup taken); an up-to-date v4 store still refuses. v1 Keystone trees are no longer ingested — the two-step escape route is documented in the repo's docs | migration report + refreshed `<package>/prompts/` library |
 | `adopt` | Onboard a brownfield repository | `package_adopt` (staged: scan/preview → confirm; see `adopt.md`) | gap report + gates |
 
 Parameters: `--profile enterprise|rnd|legacy|ai-agentic|unknown` (registry-backed; community profiles

@@ -27,6 +27,11 @@ and `handoff_emit(target_dir)` wires the target project to the package (it copie
   row first; out-of-scope discovery → `DW-` row with a trigger; deviation → `SC-` row FIRST;
   progress/audit/bind per unit; `readiness_check(scope)` before declaring a slice/phase/release
   done. The same table lives verbatim in the agent-control template.
+- **The Lessons section** (plan 035): inside the same note span, the operator-**Approved** lessons
+  (`LL-` rows) render pinned-first — ALL pinned lessons appear, unpinned fill is capped at 10, and
+  the remainder is one `entity_query("lesson")` away. Proposed/Rejected rows never render, and the
+  section is screened by the same G-INJECT patterns as emitted prompts — a finding **blocks** the
+  emit, naming the `LL-` row so the operator can supersede its wording.
 - **The readiness verdict** (Stage 22) — rendered from the gate report; the go/no-go.
 - The old separate handoff manifest is gone: entry point, go/no-go, and gated items live on the
   `packages` row; artifact membership is a view.
@@ -90,7 +95,7 @@ baseline never had them): `package_migrate` converts a v2 store's `data/prompts.
 `handoff_emit` warns about leftover `handoff/prm-*.md` copies — delete them; the package folder is
 the single source.
 
-The CLAUDE.md operating note is a **tool-owned marker span** (`<!-- tamheed:note v3 -->…<!--
+The CLAUDE.md operating note is a **tool-owned marker span** (`<!-- tamheed:note v4 -->…<!--
 /tamheed:note -->`, plan 029): rebuilt on EVERY emit — always current, no force involved. A hand
 edit inside the markers is overwritten (with a warning); operator content belongs OUTSIDE the
 markers — the AGENTS.md template (`templates/agent-control.template.md`) carries the same

@@ -44,6 +44,13 @@ is first-class), the milestones file (`milestones` rows live under phases), the 
 (a view over `wbs_items`), DoR/DoD/checkpoints as documents (merged into `execution_gates` rows), and
 the separate handoff manifest (absorbed into the package manifest data).
 
+## Continuous
+
+Audit verdicts, progress entries, and scope changes accrue during Stage 21 by their own rules.
+**Lessons** (`LL-`) join them: create one whenever execution teaches something durable (kind
+`improve` or `sustain`) — born Proposed; operator confirmation gates binding (only Approved
+lessons reach the executor's always-loaded note).
+
 ## On-request
 
 Deep stakeholder analysis, cost/budget models, deployment/data-flow diagrams beyond MVP,

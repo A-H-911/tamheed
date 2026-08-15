@@ -1,0 +1,3 @@
+id,title,decision,rationale,lifecycle_status,disposition,disposition_reason_ref,promoted_to,source_kind,source_span,custom_attributes,last_referenced
+DEC-001,File storage now; revisit DB on multi-user,Ship on tasks.json; a database is reconsidered only when multi-user lands.,Choosing the ENGINE is a two-way door (stays a DEC); the record SHAPE is one-way and was promoted to ADR-0001.,Approved,,,ADR-0001,clarification,storage fork discussion,,
+DEC-002,Recurring tasks deferred behind OQ-001,FR-006 stays out of the MVP until OQ-001 is answered.,Guessing missed-occurrence semantics risks building the wrong repeat model.,Approved,,,,clarification,scope lock,,

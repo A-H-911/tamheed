@@ -1,0 +1,2 @@
+id,title,question,owner,due_by,resolution,resolved_by,lifecycle_status,disposition,disposition_reason_ref,source_kind,source_span,custom_attributes,last_referenced
+OQ-001,Missed recurrence behavior,"When a weekly task's occurrence is missed, does the next run show one combined overdue entry, or every missed occurrence?",team-lead,2026-09-01,,,Proposed,,,brief,lab/brief.md:14,,

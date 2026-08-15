@@ -1,0 +1,2 @@
+id,title,description,probability,impact,owner,response_strategy,mitigation,risk_state,discharged_by,lifecycle_status,disposition,disposition_reason_ref,source_kind,source_span,custom_attributes,last_referenced
+RISK-001,Date-boundary regressions,Overdue logic regresses at day boundaries (the team's stated history).,medium,high,executor,mitigate,Boundary tests pinned to fixed dates; AC-002 verifies due-today.,mitigated,AC-002,Approved,,,brief,lab/brief.md:17,,

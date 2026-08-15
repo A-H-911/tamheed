@@ -197,6 +197,8 @@ human-intervention point.
   ("commit X satisfies FR-x/AC-y/SL-z" — stamps `last_referenced`). Cascades are automatic: all ACs of a
   requirement `Met` → requirement auto-advances to Implemented; views stay current by construction.
   Decision flips, supersessions, and typed scope changes follow `modes.md` (`scope-change` row first).
+  When execution teaches something durable, record a `lesson` row (born Proposed, `learned_from` edge
+  to its source) — the operator confirms later; only Approved lessons bind future sessions.
   Close boundaries run `readiness_check(scope)` (plan 027): blocking rules guard the phase/slice
   `Implemented` transition — `"force": true` only on the operator's explicit words, and the server
   writes the FORCED audit row itself.
@@ -205,7 +207,7 @@ human-intervention point.
 - **Fail:** FK violation on an update = the update referenced a ghost — fix the caller. **Human:**
   approve material changes. **Writes:** progress_entries (typed events), audit_verdicts
   (evidence-chained), scope_changes (+ delta edges; Merged after the rows move), defects,
-  deferred_work, waivers (operator-approved only), affected rows.
+  deferred_work, lessons (born Proposed), waivers (operator-approved only), affected rows.
 
 ### 22. Final readiness assessment
 - **In:** the whole package. **Do:** `gate_run` **and** `readiness_check("package")` — both mandatory;

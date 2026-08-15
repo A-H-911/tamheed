@@ -28,9 +28,10 @@ current.
 ## Recording & checking
 
 1. Edges are recorded **live, as typed `trace_edges` rows, at decision time** — `derives_from`,
-   `implements`, `tests`, `verifies`, `mitigates`, `discharges`, plus the scope-delta kinds
-   (`scope_adds`/`scope_modifies`/`scope_removes`); `relates_to` is the documented untyped escape
-   hatch. There is no after-the-fact "collect the links" pass.
+   `implements`, `tests`, `verifies`, `mitigates`, `discharges`, `learned_from` (a lesson → the
+   defect / decision / risk / slice / wbs-item / progress-entry that taught it), plus the
+   scope-delta kinds (`scope_adds`/`scope_modifies`/`scope_removes`); `relates_to` is the documented
+   untyped escape hatch. There is no after-the-fact "collect the links" pass.
 2. `G-TRACE` fails on any MVP requirement with a gap in a required column — fix by adding the missing
    decision/slice/test edge or by explicitly de-scoping the requirement (recorded).
 3. On updates (Stage 21), the views stay current by construction; a superseded item's links move to its

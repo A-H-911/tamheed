@@ -37,7 +37,9 @@ commit, finished work claimed as **`Review`** (Implemented = verified, guarded),
 Any deviation: `scope-change` row FIRST (`decision_ref` → the deciding `DEC-`/`ADR-`,
 delta edges `scope_adds`/`scope_modifies`/`scope_removes` naming the affected rows;
 after approval apply the changes and set the `SC-` to Merged). Ambiguity: an `OQ-`
-(owner + due_by) + `[NEEDS-CLARIFICATION: OQ-NNN]` in place — never assume. A stubborn
+(owner + due_by) + `[NEEDS-CLARIFICATION: OQ-NNN]` in place — never assume. A durable
+lesson: an `LL-` row (born Proposed, kind improve|sustain) + a `learned_from` edge —
+the operator confirms; only Approved lessons bind. A stubborn
 readiness failure: ask the operator for a `WVR-` waiver — never self-authored.
 
 ### → Enter Phase `PH-3` — <phase title>

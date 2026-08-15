@@ -50,6 +50,34 @@ class StoreMigrationTest(unittest.TestCase):
                          store.schema_version())
         conn.close()
 
+    def test_migration_002_lessons_lands(self):
+        """Plan 035: the v4 chain's first real migration. Head is 2, the lessons
+        table exists, and the recreated trace_edges CHECK accepts learned_from
+        (and still rejects an unknown relation)."""
+        conn = store.connect()
+        self.assertEqual(conn.execute("PRAGMA user_version").fetchone()[0], 2)
+        tables = {name for (name,) in conn.execute(
+            "SELECT name FROM sqlite_master WHERE type = 'table'")}
+        self.assertIn("lessons", tables)
+        conn.executemany(  # registry rows are seeded at package_create, not in DDL
+            "INSERT INTO entity_types (type_id, label, id_prefix, generation_class)"
+            " VALUES (?, ?, ?, ?)",
+            [("lesson", "Lesson learned (LL-)", "LL-", "Continuous"),
+             ("defect", "Defect (DEF-)", "DEF-", "Conditional")])
+        conn.execute("INSERT INTO lessons (id, title, statement, kind)"
+                     " VALUES ('LL-1', 't', 's', 'improve')")
+        conn.execute("INSERT INTO defects (id, title, severity)"
+                     " VALUES ('DEF-1', 'd', 'low')")
+        conn.execute("INSERT INTO trace_edges VALUES ('LL-1', 'DEF-1', 'learned_from')")
+        with self.assertRaises(Exception):
+            conn.execute("INSERT INTO trace_edges VALUES ('LL-1', 'DEF-1', 'bogus_rel')")
+        # the index survived the recreation
+        idx = {name for (name,) in conn.execute(
+            "SELECT name FROM sqlite_master WHERE type='index'"
+            " AND tbl_name='trace_edges'")}
+        self.assertIn("idx_trace_edges_to", idx)
+        conn.close()
+
     def test_load_ignores_orphan_jsonl_of_dropped_table(self):
         """A data/ dir with a JSONL for a table the schema no longer declares loads
         without error — the contract a DROP TABLE migration (003) lands on. The orphan

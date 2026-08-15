@@ -1,0 +1,9 @@
+id,kind,title,statement,rationale,priority,verification_method,mvp,lifecycle_status,disposition,disposition_reason_ref,source_kind,source_span,introduced_in,retired_in,custom_attributes,last_referenced
+FR-001,functional,Add a task,tick add <title> [--due YYYY-MM-DD] creates a task with an optional due date.,Core capture path — the whole tool exists to catch tasks at mention time.,,Test,1,Implemented,,,brief,lab/brief.md:5,1,,,
+FR-002,functional,"List open tasks, overdue flagged",tick list shows open tasks; a task past its due date is flagged OVERDUE; a task due today is NOT overdue.,Overdue visibility is the team's stated pain; the due-today boundary has bitten them before.,,Test,1,Approved,,,brief,lab/brief.md:6,1,,,
+FR-003,functional,Mark a task done,tick done <id> completes the task and stamps the completion time.,Closing the loop; feeds the history view.,,Test,1,Approved,,,brief,lab/brief.md:7,1,,,
+FR-004,functional,Show task history,tick history <id> shows when the task was added and when it was done.,Audit request from the brief.,,Demonstration,1,Approved,,,brief,lab/brief.md:8,1,,,
+FR-005,functional,Tasks persist between runs,Task state survives process exit via an on-disk store.,Without persistence the tool is a toy.,,Test,1,Approved,,,brief,lab/brief.md:10,1,,,
+FR-006,functional,Recurring tasks,Recurring tasks (e.g. weekly stand-up) re-appear on their cadence. Missed-occurrence behavior is UNDECIDED [NEEDS-CLARIFICATION: OQ-001].,"Explicit team ask, deliberately under-specified in the brief.",,Test,0,Proposed,,,brief,lab/brief.md:13,1,,,
+FR-007,functional,CSV export,tick export --csv writes open+done tasks as CSV to stdout.,Team-lead P.S. in the brief — monthly report.,,Test,0,Approved,,,brief,lab/brief.md:20,1,,,
+NFR-001,non-functional,Stdlib only,No third-party packages; Python 3.10+ stdlib only.,Team constraint — zero install friction.,,Inspection,1,Approved,,,brief,lab/brief.md:3,1,,,

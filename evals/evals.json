@@ -607,7 +607,7 @@
     {
       "id": "lab-tracker",
       "intent": "The permanent lab fixture (plan 031): a full-lifecycle v4 package produced by the scripted lab scenario (lab/scenario.md) — planning by the release engineer, execution by a real agent. Every v4 mechanism fired at least once; these assertions pin the evidence.",
-      "input": "Re-run lab/scenario.md against the release candidate (planning phases via the MCP handlers, execution phases driven by a real agent on lab/seed). Replace this fixture's package with the run's output.",
+      "input": "Regenerate by CONTINUATION (plan 035): run lab/scenario.md's latest continuation beat as an incremental real-agent session against THIS recorded package (a pre-existing store deliberately exercises registry-sync), then replace the fixture with the session's output. A full re-run (all beats, fresh package) is only for changes that invalidate the recorded planning phases.",
       "deterministic_assertions": [
         {
           "check": "The lab package is gate-clean end-state (G-REL included).",
@@ -746,6 +746,45 @@
             "evals/pkg_check.py",
             "file-exists",
             "{case_dir}/package/review.html"
+          ],
+          "expect_exit": 0
+        },
+        {
+          "check": "Lessons were recorded by the continuation session (plan 035: >=2 rows, both polarities in play).",
+          "cmd": [
+            "python",
+            "evals/pkg_check.py",
+            "count",
+            "{case_dir}/package",
+            "lesson",
+            "--min",
+            "2"
+          ],
+          "expect_exit": 0
+        },
+        {
+          "check": "At least one lesson is operator-Approved (the interview happened; a Proposed remainder is scenario-conformant - the advisory nags by design). First-run catch: the original nonempty-column form could never pass against a conformant fixture.",
+          "cmd": [
+            "python",
+            "evals/pkg_check.py",
+            "count",
+            "{case_dir}/package",
+            "lesson",
+            "--col",
+            "lifecycle_status=Approved",
+            "--min",
+            "1"
+          ],
+          "expect_exit": 0
+        },
+        {
+          "check": "The review surface renders the Lessons section (the operator's confirmation queue).",
+          "cmd": [
+            "python",
+            "evals/pkg_check.py",
+            "grep-file",
+            "{case_dir}/package/review.html",
+            "Lessons"
           ],
           "expect_exit": 0
         }

@@ -43,6 +43,31 @@ class ExportHtmlTest(unittest.TestCase):
         self.assertTrue(result["ok"], result)
         return Path(result["path"]).read_text(encoding="utf-8")
 
+    def test_lessons_section_renders_queue_pinned_and_impacts(self):
+        """Plan 035: the dedicated Lessons section is the operator's working
+        surface — the confirmation queue (Proposed), then Approved with the
+        pinned flag and BOTH impact columns."""
+        srv.package_create("demo", "Demo", "rnd")
+        out = srv.entity_upsert([
+            {"type": "lesson", "id": "LL-001", "title": "boundary",
+             "statement": "verify boundary semantics first", "kind": "improve",
+             "lifecycle_status": "Proposed"},
+            {"type": "lesson", "id": "LL-002", "title": "evidence chain",
+             "statement": "every done-claim carries its evidence",
+             "kind": "sustain", "lifecycle_status": "Approved", "pinned": 1,
+             "confirmed_by": "operator:test",
+             "impact_if_followed": "verifiable history",
+             "impact_if_ignored": "narrated verdicts"}])
+        self.assertTrue(out["ok"], out)
+        html = self._export()
+        self.assertIn("Awaiting operator confirmation", html)   # the queue fold
+        self.assertIn("LL-001", html)
+        self.assertIn("pinned", html)                           # the flag cell
+        self.assertIn("impact if followed", html)
+        self.assertIn("impact if ignored", html)
+        self.assertIn("verifiable history", html)
+        self.assertIn("operator:test", html)
+
     # -------------------------------------------- plan 027: flow view + graph rework
 
     def test_flow_section_lanes_and_arrowheads(self):

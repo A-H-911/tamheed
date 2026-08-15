@@ -1,0 +1,4 @@
+id,ac_id,verdict,evidence,verified_by,verification_method,against_commit,iteration,recorded_at,custom_attributes,last_referenced
+AV-001,AC-002,Met,python -m unittest test_tracker: 4 tests green incl. test_due_today_is_not_overdue,agent,auto-test,lab-run,1,2026-08-14T14:41:35Z,,
+AV-002,AC-001,Met,python -m unittest test_tracker: 5 tests green incl. test_add_list_done_history_round_trip (add/list/done/history against a temp store),agent,auto-test,lab-run,1,2026-08-14T14:43:14Z,,
+AV-003,AC-003,Not-met,trakcer typo intentionally left under WVR-001,agent,inspection,lab-run,1,2026-08-14T14:49:00Z,,

@@ -89,6 +89,7 @@ ENTITY_TABLES = {
     # <package>/prompts/, not entities; a legacy prompts.jsonl is converted by the
     # v3→v4 migration (package_open refuses pre-v4 stores).
     "glossary-term": "glossary_terms",  # community-extension worked example
+    "lesson": "lessons",           # migration 002 (plan 035): execution-taught, operator-confirmed
     "trace-edge": "trace_edges",   # composite PK; write surface for relations
     "omission": "omissions",       # G-SET recorded-omitted rows (entity_type + reason)
 }
@@ -145,6 +146,11 @@ RELATION_RULES: dict = {
     "scope_adds": (frozenset({"scope-change"}), _PLAN_ROWS),
     "scope_modifies": (frozenset({"scope-change"}), _PLAN_ROWS),
     "scope_removes": (frozenset({"scope-change"}), _PLAN_ROWS),
+    # plan 035: a lesson points at what taught it. Exactly these six targets
+    # (interview-locked) — relates_to covers everything else (the binds_to lesson).
+    "learned_from": (frozenset({"lesson"}),
+                     frozenset({"defect", "decision", "risk", "slice", "wbs-item",
+                                "progress-entry"})),
 }
 
 
@@ -238,6 +244,7 @@ BASELINE_ENTITY_TYPES = [
     ("diagram", "Diagram", "DIA-", "Conditional"),
     # ("prompt", …) removed in v3.0.0 — see the ENTITY_TABLES note above.
     ("glossary-term", "Glossary term (extension example)", "GT-", "On-request"),
+    ("lesson", "Lesson learned (LL-)", "LL-", "Continuous"),
 ]
 
 # Taught-vocabulary rosters (plan 032): the single source the check.py teaching lint
@@ -1119,6 +1126,11 @@ def _readiness_report(conn, scope: str, scope_id: str | None) -> dict:
         rule("clarifications-open", "advisory", markers,
              "open [NEEDS-CLARIFICATION: OQ-…] markers in prose fields — each cites a"
              " live OQ; resolve the OQ and remove the marker")
+        rule("lessons-confirmed", "advisory",
+             ids("SELECT id FROM lessons WHERE lifecycle_status = 'Proposed'"),
+             "lessons recorded by the executing agent awaiting the operator's"
+             " interview — confirm (Approve + optionally pin), reject, or refine by"
+             " supersession; ONLY Approved lessons bind future sessions")
         gate_where, gate_params = "applies_to IS NULL", ()
     elif scope == "phase":
         rule("acs-met", "blocking",
@@ -1570,6 +1582,43 @@ _STALE_BLOCK_RE = re.compile(
 _NOTE_BLOCK_RE = re.compile(r"<!-- tamheed:note v\d+ -->.*?<!-- /tamheed:note -->", re.S)
 
 
+_NOTE_LESSONS_CAP = 10  # unpinned fill only — ALL pinned lessons render (curation
+                        # is never capped away; the operator chose them)
+
+
+def _note_lessons_section() -> tuple[str, list[dict]]:
+    """The Approved-lessons block for the CLAUDE.md note span (plan 035) — the
+    span's first data-derived content. Only operator-APPROVED rows render (the
+    confirmation interview is the first injection screen; _INJECT_RE is the
+    second — run on the RAW statement, never the truncated render). Ordering is
+    numeric via CAST (string-ordered ids are this repo's recorded bug class,
+    plans 025/027); statements flatten to one line; no timestamps (the note must
+    stay byte-stable across emits for unchanged data). Empty register -> ("", []),
+    so lesson-less packages keep a byte-identical note."""
+    rows = _CURRENT.conn.execute(
+        "SELECT id, kind, statement, pinned FROM lessons"
+        " WHERE lifecycle_status = 'Approved'"
+        " ORDER BY pinned DESC, CAST(SUBSTR(id, 4) AS INTEGER) DESC").fetchall()
+    if not rows:
+        return "", []
+    pinned = [r for r in rows if r[3]]
+    shown = pinned + [r for r in rows if not r[3]][:_NOTE_LESSONS_CAP]
+    findings, lines = [], []
+    for lid, kind, statement, pin in shown:
+        if m := _INJECT_RE.search(str(statement)):
+            findings.append({"lesson": lid, "pattern": m.group(0)[:60]})
+        flat = " ".join(str(statement).split())
+        if len(flat) > 180:
+            flat = flat[:177] + "..."
+        tag = f"{kind}, pinned" if pin else kind
+        lines.append(f"- **{lid}** [{tag}] {flat}\n")
+    rest = len(rows) - len(shown)
+    more = (f"\n{rest} more Approved lesson(s): `entity_query(\"lesson\")`.\n"
+            if rest else "")
+    return ("\n### Lessons (operator-confirmed — these bind every session)\n\n"
+            + "".join(lines) + more), findings
+
+
 def handoff_emit(target_dir: str, subdir: str = "handoff", force: bool = False,
                  refresh_stock: bool = False) -> dict:
     """Wire the target project to the package: .mcp.json (standalone installs) + the
@@ -1612,6 +1661,11 @@ def handoff_emit(target_dir: str, subdir: str = "handoff", force: bool = False,
         if m := _INJECT_RE.search(path.read_text(encoding="utf-8")):
             findings.append({"file": f"prompts/{path.name}",
                              "pattern": m.group(0)[:60]})
+    # Plan 035: the note's Lessons section is agent-authored prose entering an
+    # always-loaded surface — same screen, same blocking posture; the finding
+    # names the LL- row so the operator can supersede its wording.
+    lessons_section, lesson_findings = _note_lessons_section()
+    findings.extend(lesson_findings)
     if findings:
         return _err("G-INJECT: instruction-shaped text found — emission blocked",
                     gate="G-INJECT", findings=findings)
@@ -1726,7 +1780,7 @@ def handoff_emit(target_dir: str, subdir: str = "handoff", force: bool = False,
                    "(no project-level .mcp.json entry needed)." if plugin_hosted else
                    "The `tamheed` MCP server is registered in this project's `.mcp.json`.")
     note_block = (
-        "<!-- tamheed:note v3 -->\n\n"
+        "<!-- tamheed:note v4 -->\n\n"
         f"This project executes Tamheed package `{_CURRENT_NAME}` "
         f"(under `{PACKAGE_ROOT.resolve()}`). **The package is the record — when code and "
         "package disagree, fix the code or record a scope change; never let them drift.** "
@@ -1752,6 +1806,10 @@ def handoff_emit(target_dir: str, subdir: str = "handoff", force: bool = False,
         "| you hit genuine ambiguity | an `open-question` row (`OQ-`, with owner +"
         " due_by) and `[NEEDS-CLARIFICATION: OQ-NNN]` at the exact spot — NEVER"
         " assume |\n"
+        "| execution teaches you something durable (a mistake's fix, a practice"
+        " worth repeating) | `entity_upsert` a `lesson` row (`LL-`, born Proposed;"
+        " kind improve\\|sustain, statement + impacts) + a `learned_from` edge to"
+        " the source — the OPERATOR confirms later; only Approved lessons bind |\n"
         "| you finish a unit of work | `progress_update(...)` — event_type `work-done`,"
         " `subject_id`, your `actor` string, phase/slice ids |\n"
         "| you believe a slice/wbs-item is complete | set its `lifecycle_status` to"
@@ -1767,6 +1825,7 @@ def handoff_emit(target_dir: str, subdir: str = "handoff", force: bool = False,
         " operator's explicit words |\n"
         "\nIf you cannot record (lock held, package missing), STOP and tell the"
         " operator — do not proceed unrecorded.\n"
+        f"{lessons_section}"
         "\n### Tool cheat-sheet (execution loop)\n\n"
         "- `progress_update(entries=[{entry, event_type?, subject_id?, actor?,"
         " corrects?, phase_id?, slice_id?}])` — append TYPED progress (correct via a"
@@ -1876,8 +1935,15 @@ def package_migrate(name: str, confirm: bool = False) -> dict:
     except FileExistsError:
         return _err(f"package '{name}' is locked ({store._describe_lock(lock)})")
     try:
+        # plan 035: a v4 store never re-migrates, but it CAN learn baseline entity
+        # types added by later MINOR releases (extension.md's "registry-row write
+        # path"). Staged like everything else; pure append — no data-v3-backup taken
+        # (nothing is transformed or dropped), and an existing backup from the v3
+        # migration must not block the sync.
+        stored = _stored_package_version(pkg_dir)
+        v4_sync = stored is not None and str(stored).startswith("4.")
         conversion = None
-        if confirm:
+        if confirm and not v4_sync:
             backup = pkg_dir / "data-v3-backup"
             if backup.exists():
                 return _err("data-v3-backup/ already exists — a previous migration ran;"
@@ -1896,7 +1962,7 @@ def package_migrate(name: str, confirm: bool = False) -> dict:
         except ValueError as exc:
             return _err(str(exc))
         legacy_note = None
-        if not confirm and "prompts" in tables:
+        if not confirm and not v4_sync and "prompts" in tables:
             # Preview parity with the confirm path's converter: PRM- rows/edges leave.
             tables.pop("prompts")
             tables["trace_edges"] = [
@@ -1905,15 +1971,23 @@ def package_migrate(name: str, confirm: bool = False) -> dict:
                         or str(e.get("to_id", "")).startswith("PRM-"))]
             legacy_note = ("data/prompts.jsonl will be converted to prompts/*.md on"
                            " confirm (the v3 prompt converter, abort-on-anomaly)")
-        type_of_table = {tbl: kind for kind, tbl in ENTITY_TABLES.items()
-                         if tbl not in _NON_ID_TABLES}
-        try:
-            tables, rep = migrate_v3to4.transform_tables(tables, RELATION_RULES,
-                                                         type_of_table)
-        except ValueError as exc:
-            return _err(str(exc))
+        if v4_sync:
+            rep = {"mode": "registry-sync", "version_from": stored,
+                   "note": "v4 store: only the entity-type registry changes — no"
+                           " data transform, no backup taken (pure append)"}
+        else:
+            type_of_table = {tbl: kind for kind, tbl in ENTITY_TABLES.items()
+                             if tbl not in _NON_ID_TABLES}
+            try:
+                tables, rep = migrate_v3to4.transform_tables(tables, RELATION_RULES,
+                                                             type_of_table)
+            except ValueError as exc:
+                return _err(str(exc))
         have = {r.get("type_id") for r in tables.get("entity_types", [])}
         added = [tid for tid, _, _, _ in BASELINE_ENTITY_TYPES if tid not in have]
+        if v4_sync and not added:
+            return _err(f"package is already v{stored} and its entity-type registry"
+                        " is current — nothing to migrate")
         for tid, label, prefix, gclass in BASELINE_ENTITY_TYPES:
             if tid in added:
                 tables.setdefault("entity_types", []).append(
@@ -1924,11 +1998,15 @@ def package_migrate(name: str, confirm: bool = False) -> dict:
         pe_rows = tables.setdefault("progress_entries", [])
         nxt = max((int(str(r.get("id"))[3:]) for r in pe_rows
                    if str(r.get("id", "")).startswith("PE-")), default=0) + 1
-        rewrites = sorted(k for k in rep if k not in ("target_version", "version_from"))
+        if v4_sync:
+            entry = f"REGISTRY-SYNC: entity types added ({', '.join(added)})"
+        else:
+            rewrites = sorted(k for k in rep
+                              if k not in ("target_version", "version_from"))
+            entry = (f"MIGRATED store v{rep.get('version_from')} -> v4.0.0"
+                     f" ({', '.join(rewrites) if rewrites else 'no value rewrites'})")
         pe_rows.append({
-            "id": f"PE-{nxt:03d}", "event_type": "note",
-            "entry": (f"MIGRATED store v{rep.get('version_from')} -> v4.0.0"
-                      f" ({', '.join(rewrites) if rewrites else 'no value rewrites'})"),
+            "id": f"PE-{nxt:03d}", "event_type": "note", "entry": entry,
             "actor": "system:migrate"})
         if legacy_note:
             rep["legacy_prompts"] = legacy_note
@@ -1961,7 +2039,8 @@ def package_migrate(name: str, confirm: bool = False) -> dict:
             for f in (tmp_pkg / "data").glob("*.jsonl"):
                 shutil.copy2(f, data / f.name)
         out = {"ok": True, "stage": "migrated", "package": name, "report": rep,
-               "backup": "data-v3-backup/",
+               "backup": "none (registry-sync is a pure append)" if v4_sync
+                         else "data-v3-backup/",
                "package_root": str(Path(PACKAGE_ROOT).resolve()),
                "note": "review the report, commit the diff, then package_open"}
         if conversion:

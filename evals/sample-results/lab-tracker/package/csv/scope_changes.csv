@@ -1,0 +1,2 @@
+id,decision_ref,description,iteration,lifecycle_status,custom_attributes,last_referenced
+SC-001,DEC-001,"Add tick export --csv for the monthly report (brief P.S.) — one new command, one new FR",1,Merged,,

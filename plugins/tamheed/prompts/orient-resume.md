@@ -9,7 +9,9 @@ Orient yourself on this project's Tamheed package before doing anything else:
 1. `server_info` — confirm the server version and the resolved package root.
 2. `package_open("{package}")` — take the single-writer lock.
 3. `gate_run()` — note the verdict, any failing gate, and any G-TRACE warning.
-4. Recent state: `entity_query("progress-entry", limit=10)` and
+4. The lessons: `entity_query("lesson", status="Approved")` — confirmed lessons
+   bind this session too.
+   Recent state: `entity_query("progress-entry", limit=10)` and
    `entity_query("audit-verdict", limit=10)` — what was the last recorded activity?
 5. **Cross-check git against the package** (the package is the state; git is the
    evidence): run `git log --oneline -15` and compare against `work_bind` records

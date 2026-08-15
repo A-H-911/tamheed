@@ -1,0 +1,25 @@
+id,document_id,heading,body,sort_order,custom_attributes,last_referenced
+SEC-001,DOC-001,Brief (verbatim),"# Project brief — ""tick"", a tiny CLI task tracker
+
+We want a small command-line task tracker for our four-person team. Python, no third-party
+packages, single file if possible. It must:
+
+- add a task with a title and an optional due date (`tick add ""write report"" --due 2026-09-01`)
+- list open tasks, overdue ones flagged
+- mark a task done (`tick done 3`)
+- show a task's history (when added, when done)
+
+Tasks should survive between runs (a file on disk is fine — though someone on the team keeps
+saying ""we'll want a real database eventually"", and we haven't settled that).
+
+We also want recurring tasks to work somehow — weekly stand-up reminders, that kind of thing.
+Not sure exactly how repeats should behave when one is missed; use your judgment or ask.
+
+Quality bar: tests for the date logic (overdue calculations have bitten us before), and the
+help text should be polished — this will be shown to the whole team.
+
+P.S. — mid-project note from the team lead: if this goes well we'll also want
+`tick export --csv` for the monthly report. Not part of the original ask; treat it as a
+change if you take it on.
+",1,,
+SEC-002,DOC-002,Problem & objective,"A four-person team tracks tasks in chat and loses them. tick is a stdlib-only Python CLI that adds, lists (overdue-flagged), completes, and audits tasks, persisting between runs.",1,,

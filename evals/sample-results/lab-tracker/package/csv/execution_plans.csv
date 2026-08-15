@@ -1,0 +1,2 @@
+id,slice_id,plan,lifecycle_status,custom_attributes,last_referenced
+EP-001,SL-002,1) Reproduce the due-today failure via the seed test. 2) DEF- row BEFORE the fix. 3) Fix overdue() to strict <. 4) Triage the flaky clock test as its own defect. 5) Fix the help-text typo or waive it. 6) audit_record with the evidence chain.,Approved,,

@@ -62,7 +62,9 @@ that would create one fails, and the error message is the gate report.
 Above the gates sits the **readiness layer**: `readiness_check(scope, id?)` answers "is this actually
 done?" at a close boundary — `Review` counts as open (claimed is not verified), open critical/high defects
 block while medium/low advise, and a stubborn failure passes only through an operator-approved `WVR-`
-waiver (reported as `waived`, expiring, never silent).
+waiver (reported as `waived`, expiring, never silent). Alongside the blocking rules run fourteen
+package-scope liveness advisories — from overdue open questions to `lessons-confirmed`, which nags while
+any lesson recorded by the executing agent still awaits the operator's confirmation interview.
 
 ## 3. The three actors
 
@@ -163,7 +165,9 @@ Semver `MAJOR.MINOR.PATCH`, with the boundary defined by contract compatibility:
 
 - **MINOR (additive):** new entity types (an `entity_types` registry row + an append-only DDL migration),
   section templates, optional columns, quality gates, profiles, diagram kinds, entry points. Existing
-  packages keep working.
+  packages keep working; a v4 package whose registry predates a newer family is taught it through
+  `package_migrate`'s staged **registry-sync** mode (preview reports `entity_types_added`, confirm appends
+  the registry rows — a pure append, no backup taken).
 - **MAJOR (breaking):** a change to the DDL's existing required columns, the identifier scheme, or the
   MCP tool contract — ships with a migration note (see
   [`../plugins/tamheed/references/governance.md`](../plugins/tamheed/references/governance.md)).

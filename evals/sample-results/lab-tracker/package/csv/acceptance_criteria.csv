@@ -1,0 +1,4 @@
+id,title,statement,requirement_id,slice_id,lifecycle_status,disposition,disposition_reason_ref,superseded_by,introduced_in,retired_in,source_kind,source_span,custom_attributes,last_referenced
+AC-001,add/list/done/history round-trip,"Given a fresh store, when a task is added, listed, done, and its history shown, then each command reflects the persisted state.",FR-001,SL-001,Approved,,,,1,,,,,
+AC-002,Due today is not overdue,"Given a task due today, when listed, then it is NOT flagged OVERDUE; a task due yesterday IS.",FR-002,SL-002,Approved,,,,1,,,,,
+AC-003,Help text is polished,"Given tick --help, then the text is typo-free and lists every command.",FR-002,SL-002,Approved,,,,1,,,,,

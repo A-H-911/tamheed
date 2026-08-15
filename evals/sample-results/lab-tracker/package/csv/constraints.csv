@@ -1,0 +1,2 @@
+id,title,statement,lifecycle_status,disposition,disposition_reason_ref,source_kind,source_span,custom_attributes,last_referenced
+CON-001,Single-file preference,Keep the implementation to one file if reasonably possible.,Approved,,,brief,lab/brief.md:4,,

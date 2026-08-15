@@ -1,0 +1,2 @@
+id,title,objective,exit_criteria,sort_order,lifecycle_status,disposition,disposition_reason_ref,introduced_in,retired_in,source_kind,source_span,custom_attributes,last_referenced
+PH-1,MVP,Ship the four commands + persistence,All MVP ACs latest-Met; no open critical/high defects; gates decided.,1,Approved,,,1,,brief,lab/brief.md:5,,

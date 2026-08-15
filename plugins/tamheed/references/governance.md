@@ -44,6 +44,7 @@ reused (retire, don't recycle). Every entity lives in its `data/<table>.jsonl` f
 | Narrative document / section | `DOC-NNN` / `SEC-NNN` | narrative_documents / document_sections |
 | Diagram | `DIA-NNN` | diagrams |
 | Glossary term | `GT-NNN` | glossary_terms |
+| Lesson | `LL-NNN` | lessons |
 
 Retired prefixes: `PRM-` (v3 — prompts became files under `<package>/prompts/`; ids of that
 shape in a converted package are conversion-audit provenance, not entities).
@@ -89,6 +90,14 @@ Draft → Proposed → Approved → Implemented
 **Decision statuses** are exactly: Proposed, Approved, Rejected, Superseded, Deferred,
 Implemented — `Draft` is unrepresentable on a decision row (CHECK-enforced). Never render a
 Proposed decision as if Approved — this is a core safeguard.
+
+**Lesson statuses** (v4.3) are exactly: Proposed, Approved, Rejected, Superseded, Obsolete —
+no Draft (a lesson is born Proposed, awaiting the operator's interview) and no Deferred
+(an undecided lesson keeps nagging via the `lessons-confirmed` advisory; Rejected is the
+decided-no, kept as evidence). **Only operator-Approved lessons bind future sessions**
+(rendered into the CLAUDE.md note, pinned lessons always). Approved lesson CONTENT is
+immutable — supersede, never edit; `pinned`, the lifecycle transition, and `superseded_by`
+stay operator-mutable (curation and closure are not content edits).
 
 **Domain lifecycles** (same column name, domain vocabularies — CHECK-enforced):
 
@@ -144,7 +153,9 @@ unfinished-marker failure. The `clarifications-open` advisory counts live marker
 - Reference any entity by its ID in running text: "mitigated by `RISK-012`", "per `DEC-004`".
 - A row that exists because of another records the link as a **typed trace edge**
   (`derives_from`, `implements`, `verifies`, `tests`, `mitigates`, `discharges`,
-  `blocked_by`, `satisfies`, `supersedes`, `scope_adds`/`scope_modifies`/`scope_removes`),
+  `blocked_by`, `satisfies`, `supersedes`, `scope_adds`/`scope_modifies`/`scope_removes`,
+  `learned_from` — a lesson names what taught it: defect, decision, risk, slice,
+  wbs-item, or progress-entry),
   not only in prose. `relates_to` is the documented untyped escape hatch. Endpoint types are
   enforced at write time and by the **blocking G-REL gate**.
 - Every MVP `FR-/NFR-` must be reachable to ≥1 decision, ≥1 work item, and ≥1 test (G-TRACE);

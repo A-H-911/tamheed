@@ -1,0 +1,3 @@
+id,gate_kind,definition,applies_to,outcome,custom_attributes,last_referenced
+GATE-001,ready,Operator confirms the seed tests were triaged before SL-002 work starts.,SL-002,Go,,
+GATE-002,approval,Operator approves the MVP for team rollout.,,Go,,

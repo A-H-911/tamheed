@@ -230,7 +230,8 @@ def gate_lint() -> None:
     # as retired/deleted/renamed history is exempt everywhere.
     blacklist = [("binds_to", "all"), ("milestones-reached", "all"),
                  ('"status":', "all"), ("PRM-", "prompts+templates"),
-                 ("PASS/FAIL", "prompts")]
+                 ("PASS/FAIL", "prompts"),
+                 ("tamheed:note v3", "all")]  # marker bumped to v4 (plan 035)
     _hist = re.compile(r"retired|deleted|renamed|blacklist|historical", re.I)
     problems = []
     for rel, text in teaching.items():
@@ -309,7 +310,8 @@ def gate_lint() -> None:
              " moves with references/governance.md")
     gov_tpl = (REPO / "plugins" / "tamheed" / "templates" /
                "governance.template.md").read_text(encoding="utf-8")
-    for needle in ("Implemented", "Review", "scope_adds", "relates_to"):
+    for needle in ("Implemented", "Review", "scope_adds", "relates_to",
+                   "learned_from"):
         if needle not in gov_tpl:
             fail(f"governance.template.md lacks {needle!r} — the template is a"
                  " necessary copy and moves with references/governance.md")

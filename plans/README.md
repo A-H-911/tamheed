@@ -64,6 +64,7 @@ two-step escape route (tamheed 3.2.1, then v3->v4 via `package_migrate`).
 | 032 | The prompt-surface completion: stock-history classification + refresh_stock (findings_14 root fix), register-liveness playbook, expired-waiver sweeps, the templates' v4 sweep (a 4.0.0 miss), the teaching-surface lint | B28 | P2 | M | maintainer's prompt-impact question → verified assessment → three interview forks + DA round (content-not-hashes catch) | DONE — executed 2026-08-14, v4.1.0; lint 9 caught a live teaching defect on first run |
 | 033 | findings_17 + the documentation reckoning: the OQ-rule discrimination fix, migration stash parity + letter scale, the entity-guide merge, schemas/ deletion completed, examples/ retired, four new/extended lints (dead-path, closed-triangle teaching, 5-file stamps, template-sync), the Mermaid delivery (7 entity + 3 workflow diagrams), ADR-0002, this index rewrite | B29 | P1 | L | findings_17 (C38) + the maintainer-ordered full documentation audit (three agents, 100+ files) → two interview rounds + DA round | DONE — executed 2026-08-15, v4.2.0 |
 | 034 | findings_18: the risk-liveness hollow-pass guard (indeterminate when the scale is unpopulated — the only rule in the class, sweep-verified), customization-lag visibility (stock_last_changed + the honest-conditional warning), the repair doctrine's second and third halves (paste-don't-retype, independent post-repair verifier) | B30 | P2 | S | findings_18 (C39) → three interview forks + DA round (candidate-row scoping, consumer-list, risk_state NOT NULL catches) | DONE — executed 2026-08-15, v4.2.1 |
+| 035 | The lessons-learned entity family: migration 002 (the v4 chain's first — LLIS-shaped `lessons` table, learned_from relation, column-selective immutability), the always-loaded note section (Approved-only, pinned-first, G-INJECT-screened), the lessons-confirmed advisory, staged registry-sync for existing v4 stores, the viewer Lessons section, the lab continuation beat | B31 | P1 | L | maintainer feature ask (no field report — 4.2.1 closed clean) → internet research (PMI/LLIS/Reflexion/AAR) + 2 explorers + 8 interview forks over 2 rounds + advisor + DA round | DONE — executed 2026-08-15, v4.3.0 |
 
 Index note: plan 006's file points at `plans/deliverables-review.md` for the approved
 artifact set -- that review is the v2 input contract and remains frozen alongside it.
@@ -102,7 +103,12 @@ artifact set -- that review is the v2 input contract and remains frozen alongsid
   run: all findings_17 repairs verified closed → **v4.2.1 (034)**: the risk-liveness
   hollow-pass guard (the rule's first real firing named six exposures),
   customization-lag visibility, the repair doctrine completed (paste-don't-retype +
-  the independent verifier — the operator's own catch, adopted).
+  the independent verifier — the operator's own catch, adopted). Then **v4.3.0
+  (035)**, the maintainer's feature ask: the lessons-learned entity family — the
+  first new family since the v4 re-baseline (migration 002 validates the extension
+  recipe in-tree), operator-confirmed lessons rendered into the always-loaded
+  CLAUDE.md note, the staged registry-sync teaching existing v4 stores new types,
+  and the lab's incremental continuation beat as the real-agent proof.
 
 ## Dependency notes
 

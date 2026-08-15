@@ -42,5 +42,25 @@ must fire; the resulting package replaces `evals/sample-results/lab-tracker/pack
 9. **Wrap** — the `ready`/`approval` gates get `outcome` values + `gate-decision` events;
    `export_html`; `package_close`; the package is committed as the eval fixture.
 
+10. **The lessons continuation (v4.3.0, plan 035)** — run as an INCREMENTAL session
+    against the previously recorded package (this is deliberate: the recorded store
+    predates the `lesson` type, so the beat exercises the staged registry-sync — the
+    only real-agent path that can):
+    ✔ `package_open` refuses nothing (v4 store) but a lesson write fails the registry
+      FK → `package_migrate` preview reports `mode: "registry-sync"` +
+      `entity_types_added: ["lesson"]` → operator words → confirm → the rows append.
+    ✔ The agent records TWO lessons born Proposed: an `improve` lesson from the
+      seeded `overdue()` off-by-one (statement: verify boundary semantics against
+      the spec BEFORE fixing, with impacts) + a `sustain` lesson from the
+      evidence-chained verdict practice — each with a `learned_from` edge
+      (`DEF-`/`SL-`).
+    ✔ `readiness_check` lists both under `lessons-confirmed`; the agent STOPS.
+    ✔ The operator's scripted words: approve the improve lesson AND pin it
+      (`confirmed_by` set); reject nothing; the sustain lesson stays Proposed
+      (the advisory keeps nagging — by design).
+    ✔ `handoff_emit` re-run: the CLAUDE.md note (marker v4) carries the Lessons
+      section with the pinned lesson; the Proposed one does NOT render.
+    ✔ `export_html`; `package_close`; the updated package replaces the fixture.
+
 **Pass bar:** every ✔ observed; `gate_run` ready (or failing ONLY on deliberately-open
 items the scenario names); the eval runner's lab checks green.

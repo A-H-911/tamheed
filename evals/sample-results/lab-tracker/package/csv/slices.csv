@@ -1,0 +1,3 @@
+id,title,phase_id,objective,sort_order,lifecycle_status,disposition,disposition_reason_ref,introduced_in,retired_in,custom_attributes,last_referenced
+SL-001,Core commands (add/list/done/history),PH-1,The command surface over the persisted store,1,Implemented,,,1,,,
+SL-002,Date logic & team quality bar,PH-1,"Overdue correctness (incl. due-today), polished help",2,Implemented,,,1,,,

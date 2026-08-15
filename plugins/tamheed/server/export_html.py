@@ -352,7 +352,7 @@ _LANES = [
     ("Work", ("phase", "milestone", "slice", "wbs-item", "execution-plan",
               "defect", "deferred-work")),
     ("Verification", ("test", "acceptance-criterion", "experiment", "poc")),
-    ("Risks & measures", ("risk", "kpi")),
+    ("Risks & measures", ("risk", "kpi", "lesson")),
 ]
 _LANE_W = 240   # px per lane
 _ROW_H = 16    # px per node row
@@ -460,6 +460,49 @@ def _design_ahead(conn) -> str:
         counts.append(f"{n} {label}")
     return ('<p class="lead">Design-ahead lead (Approved, not yet Implemented — '
             "an explicit, healthy state): " + esc("; ".join(counts)) + "</p>")
+
+
+def _lessons(conn, gates, ready):
+    """The lessons working surface (plan 035): the operator's confirmation queue
+    first (Proposed rows await the interview), then the Approved register that
+    binds sessions (pinned flagged, both impact columns), then closed rows folded
+    as evidence. Numeric id ordering (CAST — never string-sort ids)."""
+    order = "ORDER BY CAST(SUBSTR(id, 4) AS INTEGER)"
+    parts = []
+    queue = conn.execute(
+        "SELECT id, kind, title, statement, context FROM lessons"
+        f" WHERE lifecycle_status = 'Proposed' {order}").fetchall()
+    if queue:
+        parts.append(_fold("Awaiting operator confirmation (only Approved lessons"
+                           " bind sessions)", len(queue),
+                           _table(["id", "kind", "title", "statement", "context"],
+                                  queue, row_ids=True), anchor="lessons-queue"))
+    approved = conn.execute(
+        "SELECT id, kind, pinned, title, statement, impact_if_followed,"
+        " impact_if_ignored, confirmed_by, confirmed_at FROM lessons"
+        f" WHERE lifecycle_status = 'Approved' {order}").fetchall()
+    if approved:
+        rows = [(lid, kind, "pinned" if pin else "", title, stmt, imf, imi,
+                 by, at) for lid, kind, pin, title, stmt, imf, imi, by, at
+                in approved]
+        parts.append(_fold("Approved (rendered into the CLAUDE.md note — pinned"
+                           " always, newest fill the cap)", len(rows),
+                           _table(["id", "kind", "pinned", "title", "statement",
+                                   "impact if followed", "impact if ignored",
+                                   "confirmed by", "confirmed at"], rows,
+                                  row_ids=True), anchor="lessons-approved"))
+    closed = conn.execute(
+        "SELECT id, kind, lifecycle_status, title, superseded_by FROM lessons"
+        f" WHERE lifecycle_status IN ('Rejected','Superseded','Obsolete') {order}"
+    ).fetchall()
+    if closed:
+        parts.append(_fold("Closed (kept as evidence)", len(closed),
+                           _table(["id", "kind", "status", "title",
+                                   "superseded by"], closed, row_ids=True)))
+    if not parts:
+        return '<p class="empty">No lessons recorded yet — execution writes them'\
+               ' (born Proposed); the operator confirms.</p>'
+    return "".join(parts)
 
 
 def _registers(conn, gates, ready):
@@ -639,6 +682,7 @@ SECTIONS = [
     ("graph", "Relations graph", _graph),
     ("traceability", "Traceability", _traceability),
     ("execution", "Execution progress", _execution),
+    ("lessons", "Lessons", _lessons),
     ("registers", "Registers", _registers),
     ("gaps", "Gap & screening notes", _gaps),
 ]

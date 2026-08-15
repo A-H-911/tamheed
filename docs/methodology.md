@@ -239,6 +239,14 @@ steps with gates, invariants and prerequisites explicit — are in
 [`../plugins/tamheed/references/prompt-templates.md`](../plugins/tamheed/references/prompt-templates.md). The handoff is what lets
 **Claude Code**, with no access to the planning conversation, start implementing with no missing context.
 
+The handoff loop also *learns*. When execution teaches something durable, the executing agent records a
+**lesson** (`LL-`, kind *improve* or *sustain*) born *Proposed*, linked via `learned_from` to whatever
+taught it — a defect, decision, risk, slice, work item, or progress entry. The operator interviews the
+pending set (the `lessons-confirmed` advisory nags until every lesson is decided) and approves, rejects,
+or pins each one; **only operator-Approved lessons** render into the executing agent's always-loaded
+`CLAUDE.md` note. The gate is the design: an agent persisting an unvetted — possibly wrong — lesson is the
+known failure mode of agent memory, so a lesson binds future sessions only after a human says it should.
+
 ## 11. Package storage practices *(v2 — replaces v1 repository initialization)*
 
 v1 bootstrapped a target repository; v2 removed that capability (ASM-B). Stage 18 is now **package

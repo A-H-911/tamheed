@@ -56,7 +56,8 @@ Draft → Proposed → Approved → Implemented
 
 - Reference entities by ID in prose ("mitigated by `RISK-012`").
 - A row that exists because of another entity records a typed link (`derives_from`, `mitigates`, `verifies`,
-  `supersedes`, `blocked_by`, and the scope-delta kinds `scope_adds`/`scope_modifies`/`scope_removes`;
+  `supersedes`, `blocked_by`, the scope-delta kinds `scope_adds`/`scope_modifies`/`scope_removes`,
+  and `learned_from` (a lesson names what taught it);
   `relates_to` is the documented untyped escape hatch), not only prose.
 - Every `FR-/NFR-` must be reachable in the traceability matrix to >=1 decision, task, and test, and (if
   behavior-bearing) an acceptance criterion. Unlinked requirements are a gate failure.

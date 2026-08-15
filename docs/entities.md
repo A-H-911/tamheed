@@ -34,7 +34,7 @@ flowchart LR
     U["Understand<br/>stages 1-8<br/>―――<br/>packages row, brief (DOC-)<br/>FR-/NFR-, CON-, ASM-, DEP-<br/>OQ-, charter + KPI- + STK-"]
     E["Explore<br/>stages 9-15<br/>―――<br/>research + architecture DOC-, DIA-<br/>HYP-, EXP-/POC-<br/>DEC-, ADR-, RISK-"]
     P["Plan and hand off<br/>stages 16-22<br/>―――<br/>PH-, SL-, WBS-, MS-<br/>AC-, GATE-, EP-, CONV-, DW-<br/>TEST-, trace edges, prompts"]
-    X["Execution<br/>stage 21 loop<br/>―――<br/>PE-, AV-, DEF-<br/>SC-, WVR-, work_bind"]
+    X["Execution<br/>stage 21 loop<br/>―――<br/>PE-, AV-, DEF-<br/>SC-, WVR-, LL-, work_bind"]
     U --> E --> P --> X
     X -. "scope changes loop back<br/>into the plan rows" .-> P
 ```
@@ -93,6 +93,7 @@ flowchart TB
     DEF["defect DEF-"]
     SC["scope-change SC-"]
     WVR["waiver WVR-"]
+    LL["lesson LL-"]
 
     REQ -- "derives_from" --> DEC
     DEC -- "promoted_to (column)" --> ADR
@@ -113,6 +114,7 @@ flowchart TB
     SC -- "scope_adds / scope_modifies / scope_removes" --> REQ
     SC -- "scope_modifies" --> SL
     WVR -- "applies_to (column)" --> DEF
+    LL -- "learned_from" --> DEF
 ```
 
 Two link mechanisms coexist, deliberately: **columns** (FKs) carry structural containment
@@ -182,6 +184,7 @@ Three families reuse the `lifecycle_status` column name with domain vocabularies
 | defect | `Open`, `In-progress`, `Fixed`, `Won't-fix`, `Duplicate` | open critical/high block readiness; `Won't-fix` is a decision, record why |
 | deferred-work | `Open`, `Activated`, `Scheduled`, `Done`, `Won't-do` | `Activated` = the activation trigger fired |
 | scope-change | `Proposed`, `Approved`, `Merged` | `Merged` = deltas applied to the plan rows; Approved-never-Merged trips the `scope-changes-merged` advisory |
+| lesson | `Proposed`, `Approved`, `Rejected`, `Superseded`, `Obsolete` | No Draft (born Proposed, the decisions pattern) and no Deferred — an undecided lesson keeps nagging via the `lessons-confirmed` advisory |
 
 Risks add a fourth axis of their own: `risk_state` ∈ {open, mitigated, materialized,
 retired, accepted}, independent of `lifecycle_status`.
@@ -981,6 +984,64 @@ no path — who forced what, when escalations happened, which agent session did 
 **Related mechanics.** `progress_update` tool; the recording-obligations table in the
 emitted CLAUDE.md note; `forced-override` audit rows written server-side.
 
+#### lesson (`LL-`) — Continuous
+
+| Column | Constraint | Meaning |
+|---|---|---|
+| `statement` | NOT NULL | The lesson itself |
+| `context` | TEXT | The driving event — what happened (the NASA LLIS triad's first leg) |
+| `recommendation` | TEXT | How to act on it |
+| `rationale` | TEXT | Why the lesson holds |
+| `kind` | NOT NULL; CHECK: `improve` / `sustain` | Both polarities (US Army AAR): a mistake to avoid AND a practice to repeat |
+| `category` | TEXT | Free-text retrieval key (PMI keywords) |
+| `impact_if_followed` / `impact_if_ignored` | TEXT | The stakes, both directions |
+| `lifecycle_status` | NOT NULL DEFAULT `Proposed`; CHECK: `Proposed` / `Approved` / `Rejected` / `Superseded` / `Obsolete` | No Draft, no Deferred (§4c) |
+| `recorded_at` | TEXT | When the agent recorded it |
+| `confirmed_by` / `confirmed_at` | TEXT | Operator attribution, set at confirmation — facts about a person, never back-filled |
+| `pinned` | NOT NULL DEFAULT 0, CHECK ∈ {0,1} | Curation flag: pinned lessons always render in the note |
+| `superseded_by` | FK → `lessons(id)` | Supersession within the family |
+
+**Purpose.** What execution taught, kept durable. An executing agent that debugs the same
+class of mistake twice has a memory problem, not a skill problem — the lessons register is
+the package's institutional memory (PMI lessons register: continuous capture, not an
+end-of-project ceremony), and the CLAUDE.md note is how that memory reaches every future
+session without being asked for.
+
+**Lifecycle position.** Born during execution (stage 21), whenever the work teaches
+something durable — a `learned_from` edge names the source (defect, decision, risk, slice,
+wbs-item, or progress-entry — exactly those six targets; `relates_to` covers everything
+else). The operator's confirmation interview moves each row to Approved or Rejected; only
+**operator-Approved** lessons render into the executing agent's always-loaded note.
+
+**Create / update / retire.** The agent creates freely — a lesson is born `Proposed` and
+binds nothing until the operator says so. The Reflexion line of agent-memory research names
+the failure mode this gate exists for: an agent persisting a *wrong* lesson poisons every
+later session, so approval-before-binding (NASA LLIS practice: entries are reviewed before
+they enter the system) is the whole design. Approved CONTENT is immutable
+(`trg_lessons_immutable`, the `trg_adrs_immutable` shape) — revise by supersession;
+`pinned`, `lifecycle_status`, and `superseded_by` stay mutable because curation and closure
+are not content edits. `Rejected` is the decided-no, kept as evidence; there is
+deliberately no `Deferred` — an undecided lesson keeps nagging by design.
+
+**What you lose without it.** Every session starts amnesiac: the same defect class recurs,
+the practice that worked is forgotten, and "we learned this the hard way" lives in chat
+scrollback. Worse, the informal substitute — agents editing their own instructions file —
+has no gate, which is precisely the Reflexion failure mode.
+
+**Design decisions behind it.** Plan 035's eight interview-locked forks: born Proposed
+with no Draft (the decisions pattern); no Deferred (nag by design); operator-only Approved
+(the Reflexion gate); both AAR polarities as `kind`; the LLIS driving-event/lesson/
+recommendation shape; content immutability at approval; `pinned` + the render cap (the
+CLAUDE.md curation ceiling — an always-loaded surface degrades past roughly 150–200
+instructions, so the note renders pinned lessons always, caps unpinned at 10, and points
+at `entity_query("lesson")` for the rest); and the six-target `learned_from` edge.
+
+**Related mechanics.** The `lessons-confirmed` package advisory (Proposed rows awaiting
+the operator interview); `learned_from` edges; the note-span Lessons section (Approved-only,
+pinned-first, G-INJECT-screened — a finding blocks the emit); `trg_lessons_immutable`;
+migration `002_lessons.sql` (the v4 chain's first real migration, and the live worked
+example of the extension contract).
+
 ---
 
 ### Prose & artifacts
@@ -1041,7 +1102,7 @@ registry: type_id, label, `id_prefix` UNIQUE, `generation_class` CHECK: Always/
 Conditional/Derived/On-request/Continuous — the machine mirror G-SET enforces, seeded from
 `BASELINE_ENTITY_TYPES` at `package_create`); and **`omissions`** (entity_type PK + NOT
 NULL non-empty `reason` — how an Always family is legally absent). **`trace_edges`**
-(from_id, to_id, relation — CHECK over the 13 relation kinds, composite PK, both ends FK
+(from_id, to_id, relation — CHECK over the 14 relation kinds, composite PK, both ends FK
 into `entity_index`) is the write-only relation surface; **`entity_index`** is derived and
 never serialized.
 
@@ -1129,6 +1190,15 @@ The research register behind the v4 model. Cited inline above; collected here.
 - OpenSpec delta/archive drift model:
   <https://github.com/Fission-AI/OpenSpec/blob/main/docs/concepts.md>
 - spec-kit `[NEEDS CLARIFICATION]` markers: <https://github.com/github/spec-kit>
+
+**Lessons**
+- PMI lessons-learned register practice (continuous capture, category/keyword retrieval).
+- NASA Lessons Learned Information System — driving event / lesson / recommendation,
+  approval-before-entry: <https://llis.nasa.gov/>
+- Reflexion (verbal reinforcement agent memory — and why a persisted *wrong* lesson is the
+  failure mode the operator gate screens): <https://arxiv.org/abs/2303.11366>
+- US Army After Action Review doctrine — both polarities: what to improve AND what to
+  sustain.
 
 **Journal**
 - Event-sourcing-lite audit trails (typed past-tense events, compensating corrections):

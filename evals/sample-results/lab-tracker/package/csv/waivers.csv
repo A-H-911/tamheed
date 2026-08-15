@@ -1,0 +1,2 @@
+id,rule,applies_to,justification,approver,expires,custom_attributes,last_referenced
+WVR-001,defects-minor,DEF-003,cosmetic; batched into the docs sweep,operator,,,

@@ -1,0 +1,4 @@
+id,title,parent_id,phase_id,slice_id,effort,lifecycle_status,disposition,disposition_reason_ref,source_kind,source_span,custom_attributes,last_referenced
+WBS-1,Fix overdue() day-boundary logic,,,SL-002,,Implemented,,,code,lab/seed/tracker.py:27,,
+WBS-2,Implement history command,,,SL-001,,Implemented,,,brief,lab/brief.md:8,,
+WBS-3,Triage the seed test suite (incl. the clock test),,,SL-002,,Implemented,,,code,lab/seed/test_tracker.py:22,,
