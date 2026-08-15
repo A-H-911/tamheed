@@ -63,6 +63,7 @@ two-step escape route (tamheed 3.2.1, then v3->v4 via `package_migrate`).
 | 031 | The v4 entity-model redesign: full entity study + external research, re-baselined store, claimed-vs-verified Review, waivers, drift deltas, typed journal, blocking G-REL, v1 retirement, the lab | B27 | P1 | XL | maintainer v4 directive (study every entity, deep research, relations/validations, migration, lab testing, Mermaid docs); 15 decisions locked over five interview rounds + a devil's-advocate round | DONE — executed 2026-08-14, v4.0.0; docs/entities.md is the rationale record; the lab package is the lab-tracker eval case |
 | 032 | The prompt-surface completion: stock-history classification + refresh_stock (findings_14 root fix), register-liveness playbook, expired-waiver sweeps, the templates' v4 sweep (a 4.0.0 miss), the teaching-surface lint | B28 | P2 | M | maintainer's prompt-impact question → verified assessment → three interview forks + DA round (content-not-hashes catch) | DONE — executed 2026-08-14, v4.1.0; lint 9 caught a live teaching defect on first run |
 | 033 | findings_17 + the documentation reckoning: the OQ-rule discrimination fix, migration stash parity + letter scale, the entity-guide merge, schemas/ deletion completed, examples/ retired, four new/extended lints (dead-path, closed-triangle teaching, 5-file stamps, template-sync), the Mermaid delivery (7 entity + 3 workflow diagrams), ADR-0002, this index rewrite | B29 | P1 | L | findings_17 (C38) + the maintainer-ordered full documentation audit (three agents, 100+ files) → two interview rounds + DA round | DONE — executed 2026-08-15, v4.2.0 |
+| 034 | findings_18: the risk-liveness hollow-pass guard (indeterminate when the scale is unpopulated — the only rule in the class, sweep-verified), customization-lag visibility (stock_last_changed + the honest-conditional warning), the repair doctrine's second and third halves (paste-don't-retype, independent post-repair verifier) | B30 | P2 | S | findings_18 (C39) → three interview forks + DA round (candidate-row scoping, consumer-list, risk_state NOT NULL catches) | DONE — executed 2026-08-15, v4.2.1 |
 
 Index note: plan 006's file points at `plans/deliverables-review.md` for the approved
 artifact set -- that review is the v2 input contract and remains frozen alongside it.
@@ -97,7 +98,11 @@ artifact set -- that review is the v2 input contract and remains frozen alongsid
   OQ-rule discrimination fix, migration stash parity + the letter scale, the
   entity-guide merge, the `schemas/` deletion completed (the 4.0.0 execution miss,
   stated in the CHANGELOG), `examples/` retired, four new/extended lints, the Mermaid
-  delivery, ADR-0002, this index rewrite.
+  delivery, ADR-0002, this index rewrite. findings_18 (C39) same day — the ACMP 4.2.0
+  run: all findings_17 repairs verified closed → **v4.2.1 (034)**: the risk-liveness
+  hollow-pass guard (the rule's first real firing named six exposures),
+  customization-lag visibility, the repair doctrine completed (paste-don't-retype +
+  the independent verifier — the operator's own catch, adopted).
 
 ## Dependency notes
 

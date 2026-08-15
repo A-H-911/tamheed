@@ -24,6 +24,11 @@ Run a read-only integrity check on the `{package}` Tamheed package:
    recommend the drift-register prompt). Do NOT invent records for them.
 7. `readiness_check("package")` — report the blocking/advisory findings as data
    (this run resolves nothing).
-8. Report: gate verdict, count anomalies, trace gaps, narrated verdicts, staleness,
-   unbound commits, readiness blockers — then `package_close()`. Change NOTHING in
-   this run.
+8. **Verify any recent repair**: if rows were repaired since the last check (a
+   scale recovery, a title restore), re-read the affected `data/*.jsonl` and
+   re-derive each expected value independently from its source (the stash, the
+   backup) — a repair whose only check is the hand that typed it is unverified.
+   Report mismatches as findings; fix nothing in this run.
+9. Report: gate verdict, count anomalies, trace gaps, narrated verdicts, staleness,
+   unbound commits, readiness blockers, repair-verification mismatches — then
+   `package_close()`. Change NOTHING in this run.

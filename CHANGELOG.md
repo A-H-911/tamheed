@@ -10,6 +10,43 @@ All notable changes to Tamheed are documented here. The format is based on
 
 ## [Unreleased]
 
+## [4.2.1] - 2026-08-15
+
+**PATCH — findings_18 (plan 034, evidence C39).** The hollow-pass fix and
+customization-lag visibility. No schema change, no migration.
+
+### Fixed
+
+- **`risk-liveness` can no longer pass hollow** (findings_18 §3): with
+  `probability`/`impact` unpopulated on every open/materialized risk the high-risk
+  predicate could never fire, and an empty result read as a clean `pass` — "a rule
+  that cannot discriminate is not a green light, and its green is the most misleading
+  state it has." The rule now reports `indeterminate` with a note naming the
+  unpopulated scale (the C35 doctrine, extended to this rule's load-bearing columns);
+  the population check is scoped to the rule's candidate rows, so retired risks
+  carrying a scale cannot mask a hollow pass over the live ones. A sweep of every
+  readiness rule confirmed this was the only rule in the hollow-pass class.
+
+### Changed
+
+- **Customized stock prompts now show how far the stock has moved under them**
+  (findings_18 §2): customizing a stock prompt opts it out of every future
+  `refresh_stock` — silently and permanently. Each `diverged_customized` entry in the
+  `handoff_emit` report now carries `stock_last_changed` (the newest release in the
+  bundled history whose stock body differs from all earlier ones; `null` when no
+  history exists), and the CUSTOMISED warning names the moved files with the honest
+  conditional — *when* the operator customized is unknowable by design (memoryless
+  emission), so the warning states the stock's last change, never the customization's
+  staleness. The reconcile path is a hand-merge; `prompts/README.md` now says so
+  explicitly, and `stock-history.json` carries every release's body to diff against.
+- **The repair doctrine gained its second and third halves** (findings_18 §1, the
+  operator's own catch): a generated repair payload is PASTED, never re-typed — the
+  hand is the untrusted transport — and every multi-row repair ends with an
+  independent verifier that re-reads the JSONL and re-derives each expected value
+  from its source. Taught in the artifact catalog, the prompts README standing rules,
+  and a new `integrity-check.md` repair-verification step; `register-liveness.md`
+  now names the scale prerequisite for `risk-liveness`.
+
 ## [4.2.0] - 2026-08-15
 
 **MINOR — findings_17 + the documentation reckoning (plan 033).** The ACMP v4-migration

@@ -1013,12 +1013,18 @@ class McpContractTest(unittest.TestCase):
             out = srv.handoff_emit(target, refresh_stock=True)
             lib = out["prompt_library"]
             self.assertIn("prompts/orient-resume.md", lib["diverged"])
-            self.assertIn("prompts/orient-resume.md", lib["diverged_customized"])
+            # plan 034 (findings_18 §2): customized entries carry the lag field
+            custom = {e["file"]: e["stock_last_changed"]
+                      for e in lib["diverged_customized"]}
+            self.assertIn("prompts/orient-resume.md", custom)
+            self.assertRegex(custom["prompts/orient-resume.md"], r"^\d+\.\d+\.\d+$")
             self.assertEqual(lib["diverged_stale_stock"], [])
             self.assertEqual(lib["refreshed"], [])
             w = next(w for w in out["warnings"] if "CUSTOMISED" in w)
             self.assertIn("delete it and re-emit", w)
             self.assertIn("force=True overwrites ALL", w)
+            self.assertIn("stock last changed: orient-resume.md", w)
+            self.assertIn("if a customization predates", w)
         self.assertEqual(stock.read_text(encoding="utf-8"), edited)  # never touched
 
     def test_stale_stock_classified_and_safely_refreshed(self):
@@ -1092,7 +1098,11 @@ class McpContractTest(unittest.TestCase):
                 lib = srv.handoff_emit(target, refresh_stock=True)["prompt_library"]
             finally:
                 srv._PROMPTS_DIR = real
-        self.assertIn("prompts/orient-resume.md", lib["diverged_customized"])
+        custom = {e["file"]: e["stock_last_changed"]
+                  for e in lib["diverged_customized"]}
+        self.assertIn("prompts/orient-resume.md", custom)
+        # no history -> no lag claim (degrades honest, plan 034)
+        self.assertIsNone(custom["prompts/orient-resume.md"])
         self.assertEqual(lib["refreshed"], [])
         self.assertEqual(stock.read_text(encoding="utf-8"), "anything\n")
 
@@ -1457,6 +1467,49 @@ class V4EngineTest(unittest.TestCase):
         self.assertEqual(pkg["clarifications-open"]["entities"],
                          ["CON-001.statement -> OQ-001"])
         self.assertEqual(pkg["acs-slice-bound"]["status"], "pass")  # AC-001 bound
+
+    def test_risk_liveness_hollow_pass_guard(self):
+        """findings_18 §3 (plan 034): with probability/impact unpopulated across the
+        open/materialized rows the high-predicate cannot fire — that is indeterminate,
+        not a pass ("a hollow pass looks like health"). Retired rows carrying a scale
+        must not mask it, and a register populated with only medium/low is a REAL
+        discriminating pass."""
+        # (1)+(4) the findings_18 shape: owners populated, scale null on every OPEN
+        # row — the fixture's scaled RISK-001 is retired, so its scale is out of scope
+        srv.entity_upsert([
+            {"type": "risk", "id": "RISK-001", "title": "r", "probability": "high",
+             "impact": "high", "risk_state": "retired"},
+            {"type": "risk", "id": "RISK-010", "title": "owned, unscaled",
+             "owner": "anas", "response_strategy": "mitigate"},
+            {"type": "risk", "id": "RISK-011", "title": "owned too",
+             "owner": "anas", "response_strategy": "accept"}])
+        rl = {r["rule"]: r
+              for r in srv.readiness_check("package")["rules"]}["risk-liveness"]
+        self.assertEqual(rl["status"], "indeterminate")
+        self.assertFalse(rl["discriminating"])
+        self.assertIn("probability or impact", rl["note"])
+        # (2) one scaled high row, ownerless -> the rule discriminates and names it
+        srv.entity_upsert([{"type": "risk", "id": "RISK-012", "title": "hot",
+                            "probability": "high"}])
+        rl = {r["rule"]: r
+              for r in srv.readiness_check("package")["rules"]}["risk-liveness"]
+        self.assertEqual(rl["status"], "fail")
+        self.assertEqual(rl["entities"], ["RISK-012"])
+        # (3) scale fully populated medium/low + owners everywhere -> clean pass
+        srv.entity_upsert([
+            {"type": "risk", "id": "RISK-010", "title": "owned, unscaled",
+             "owner": "anas", "response_strategy": "mitigate",
+             "probability": "medium", "impact": "low"},
+            {"type": "risk", "id": "RISK-011", "title": "owned too",
+             "owner": "anas", "response_strategy": "accept",
+             "probability": "low", "impact": "low"},
+            {"type": "risk", "id": "RISK-012", "title": "hot",
+             "probability": "medium", "owner": "anas",
+             "response_strategy": "avoid"}])
+        rl = {r["rule"]: r
+              for r in srv.readiness_check("package")["rules"]}["risk-liveness"]
+        self.assertEqual(rl["status"], "pass")
+        self.assertNotIn("discriminating", rl)
 
     def test_marker_validity_in_g_complete(self):
         self.assertEqual(srv.gate_run()["gates"]["G-COMPLETE"]["status"], "pass")

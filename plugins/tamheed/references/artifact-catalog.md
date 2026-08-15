@@ -1,4 +1,4 @@
-# Artifact Catalog — the entity families and their rules (tamheed v4.2.0)
+# Artifact Catalog — the entity families and their rules (tamheed v4.2.1)
 
 The authoritative, human-facing list of every artifact a Tamheed package carries. Since v2
 the package **is a relational store** (`data/*.jsonl`, one file per entity family — see
@@ -184,4 +184,10 @@ One `data/<table>.jsonl` file per non-empty family. Class = the registry's gener
   `governance.md` (never restated here; one owner per fact).
 - **Repair doctrine**: when a field may be damaged, repair from `data/*.jsonl` (or the
   backup), never from `entity_query` output — a full-row upsert rebuilt from a
-  truncated query round-trip re-commits the damage (field-evidence C38).
+  truncated query round-trip re-commits the damage (field-evidence C38). Two more
+  halves (field-evidence C39): a generated payload is PASTED into the tool call,
+  never re-typed — the hand is the untrusted transport, and re-typing correct bytes
+  reintroduces exactly the risk the generator removed; and every multi-row repair
+  ends with an independent verifier — re-read the JSONL after the write and
+  re-derive each expected value from its source, because care does not catch a
+  one-character transcription error and a re-read does.

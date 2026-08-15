@@ -1076,13 +1076,26 @@ def _readiness_report(conn, scope: str, scope_id: str | None) -> dict:
                  (today,)),
              "open questions past their due_by — answer, re-date, or escalate",
              na=na_note("open_questions", "due_by"))
+        # findings_18 §3 (plan 034): with probability/impact universally null the
+        # high-predicate can never fire — an empty result was a HOLLOW pass, not
+        # health ("a rule that cannot discriminate is not a green light"). Scoped to
+        # the rule's candidate rows: retired rows carrying a scale must not mask a
+        # hollow pass over the live ones. pi_na outranks the owner note — "the rule
+        # can never fire at all" is the more fundamental fact.
+        pi_total, pi_any = conn.execute(
+            "SELECT COUNT(*), COUNT(COALESCE(probability, impact)) FROM risks"
+            " WHERE risk_state IN ('open','materialized')").fetchone()
+        pi_na = ((" — 0 of %d open/materialized risks have probability or impact set;"
+                  " the high-risk predicate cannot fire (populate the v4 scale —"
+                  " governance.md defines it — to make this rule meaningful)")
+                 % pi_total) if pi_total and not pi_any else None
         rule("risk-liveness", "advisory",
              ids("SELECT id FROM risks WHERE risk_state IN ('open','materialized')"
                  " AND (probability = 'high' OR impact = 'high')"
                  " AND (owner IS NULL OR response_strategy IS NULL)"),
              "open high-probability/high-impact risks missing an owner or response"
              " strategy — no owner means nobody monitors (the register-rot finding)",
-             na=na_note("risks", "owner"))
+             na=pi_na or na_note("risks", "owner"))
         rule("assumptions-current", "advisory",
              ids("SELECT id FROM assumptions WHERE validation_date IS NOT NULL"
                  " AND validation_date < ? AND lifecycle_status NOT IN"
@@ -1420,7 +1433,16 @@ def _emit_prompt_library(pkg_dir: Path, name: str, force: bool = False,
             if matches is not None:
                 result["diverged_stale_stock"].append({"file": rel, "matches": matches})
             else:
-                result["diverged_customized"].append(rel)
+                # findings_18 §2 (plan 034): customizing opts a file out of every
+                # future refresh — surface how far the stock has moved underneath.
+                # stock_last_changed = the newest release in the bundled history
+                # whose stock body differs from all earlier ones (effectively when
+                # the stock last changed); None when the file has no history entry.
+                releases = sorted(history.get(src.name, {}),
+                                  key=lambda v: tuple(int(p) for p in v.split(".")))
+                result["diverged_customized"].append(
+                    {"file": rel,
+                     "stock_last_changed": releases[-1] if releases else None})
         result[status].append(rel)
     return result
 
@@ -1628,9 +1650,19 @@ def handoff_emit(target_dir: str, subdir: str = "handoff", force: bool = False,
             " release's stock, never customised: re-run with refresh_stock=true to"
             " update them safely (customised files are never touched by refresh)")
     if custom := library["diverged_customized"]:
+        # findings_18 §2 (plan 034): name how far the stock has moved under each
+        # customization. Honest conditional — WHEN the operator customized is
+        # unknowable (no sidecar, C20 memoryless emission), so this states the
+        # stock's last change, not the customization's staleness.
+        moved = ", ".join(
+            f"{e['file'].removeprefix('prompts/')} ({e['stock_last_changed']})"
+            for e in custom if e["stock_last_changed"])
+        lag = (f"; stock last changed: {moved} — if a customization predates that"
+               " release it lacks the update: hand-merge (the bundled"
+               " stock-history.json carries every release's body)" if moved else "")
         warnings.append(
-            f"{len(custom)} stock prompt(s) are CUSTOMISED — kept; to accept the"
-            " current template for ONE file, delete it and re-emit; force=True"
+            f"{len(custom)} stock prompt(s) are CUSTOMISED — kept{lag}; to accept"
+            " the current template for ONE file, delete it and re-emit; force=True"
             " overwrites ALL diverged stock files (customised included)")
     if library["refreshed"]:
         warnings.append(
