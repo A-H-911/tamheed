@@ -15,7 +15,7 @@ description: >-
 
 # Tamheed
 
-This skill documents tamheed **v4.4.0** (the version travels with the bundle;
+This skill documents tamheed **v4.4.1** (the version travels with the bundle;
 check.py lint 8 keeps this line current).
 
 Tamheed turns a project description into an **execution-ready handoff package**: the planning, research,
@@ -101,7 +101,8 @@ Default to **interactive**. Modes are defined in `references/modes.md`:
   operator at it (`refresh_stock=true` on the next `handoff_emit` safely updates stale stock).
   On a **v4** store that merely predates a newer entity family, `package_migrate` runs a staged
   **registry-sync** instead: preview reports `entity_types_added`, confirm appends the registry
-  rows (pure append, no backup taken); an up-to-date v4 store still refuses.
+  rows (pure registry append, no backup taken; `columns_added` names any files that
+  re-serialize because their tables gained columns); an up-to-date v4 store still refuses.
 - `adopt` — onboard a project that never used Tamheed (`package_adopt`, staged): nothing inferred
   is Approved, provenance is code-shaped, the gap report is first-class (`references/adopt.md`).
 

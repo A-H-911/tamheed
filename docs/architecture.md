@@ -175,7 +175,7 @@ Semver `MAJOR.MINOR.PATCH`, with the boundary defined by contract compatibility:
   section templates, optional columns, quality gates, profiles, diagram kinds, entry points. Existing
   packages keep working; a v4 package whose registry predates a newer family is taught it through
   `package_migrate`'s staged **registry-sync** mode (preview reports `entity_types_added`, confirm appends
-  the registry rows — a pure append, no backup taken).
+  the registry rows — a pure registry append, no backup taken; `columns_added` names any files that re-serialize because their tables gained columns since the store was last written).
 - **MAJOR (breaking):** a change to the DDL's existing required columns, the identifier scheme, or the
   MCP tool contract — ships with a migration note (see
   [`../plugins/tamheed/references/governance.md`](../plugins/tamheed/references/governance.md)).

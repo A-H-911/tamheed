@@ -2118,9 +2118,34 @@ def package_migrate(name: str, confirm: bool = False) -> dict:
             legacy_note = ("data/prompts.jsonl will be converted to prompts/*.md on"
                            " confirm (the v3 prompt converter, abort-on-anomaly)")
         if v4_sync:
-            rep = {"mode": "registry-sync", "version_from": stored,
-                   "note": "v4 store: only the entity-type registry changes — no"
-                           " data transform, no backup taken (pure append)"}
+            # findings_20 (plan 037): the note is computed per-run, never asserted
+            # per-mode — a later release's migration may add columns to populated
+            # tables, and the canonical write-back then re-serializes those files
+            # (every column always serializes, CANONICAL.md rule 4). columns_added
+            # names exactly which files the operator will see modified and why.
+            ddl = store.connect()
+            try:
+                added_cols = {}
+                for tname, rows in tables.items():
+                    ddl_cols = [r[1] for r in ddl.execute(
+                        f"PRAGMA table_info({tname})")]
+                    if not ddl_cols:
+                        continue  # orphan file of a dropped family — loader skips it
+                    have = set().union(*(set(r) for r in rows))
+                    new = [c for c in ddl_cols if c not in have]
+                    if new:
+                        added_cols[tname] = new
+            finally:
+                ddl.close()
+            note = ("registry rows + the audit journal row appended; no data"
+                    " transform, no backup taken")
+            if added_cols:
+                note += (" — files whose tables gained columns since this store"
+                         " was last written re-serialize to the current canonical"
+                         " form (columns_added names them)")
+            rep = {"mode": "registry-sync", "version_from": stored, "note": note}
+            if added_cols:
+                rep["columns_added"] = added_cols
         else:
             type_of_table = {tbl: kind for kind, tbl in ENTITY_TABLES.items()
                              if tbl not in _NON_ID_TABLES}

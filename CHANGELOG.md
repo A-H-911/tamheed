@@ -10,6 +10,33 @@ All notable changes to Tamheed are documented here. The format is based on
 
 ## [Unreleased]
 
+## [4.4.1] - 2026-08-16
+
+**PATCH — the honest registry-sync report (plan 037, findings_20/C41).** One
+finding: the sync's note ("only the entity-type registry changes — pure append")
+was asserted per-mode while reality varies per-release — migration 003 added a
+column to a populated table, `lessons.jsonl` re-serialized, and the operator's
+git diff contradicted the banner, costing a hand-verification cycle.
+
+### Fixed
+
+- **The registry-sync report is computed per-run, never asserted per-mode**: the
+  preview (and confirm) now carry **`columns_added`** — per-table columns present
+  in the live DDL but absent from the stored rows (diffed mechanically; sound
+  because canonical JSONL serializes every column, CANONICAL.md rule 4) — naming
+  exactly which files will re-serialize and why, before the operator sees the git
+  diff. The note is reworded: "registry rows + the audit journal row appended; no
+  data transform, no backup taken" with the re-serialize clause present only when
+  columns_added is (the old note was also silent about the `system:migrate` PE
+  row modifying progress_entries.jsonl). The six teaching surfaces carrying "pure
+  append" swept to match.
+- findings_20 also field-verified two 4.4.0 fixes by reproduction (the §1 pointer
+  pattern by re-running the original misfire; the §2 guard "more completely than
+  I proposed") and honestly recorded §3 (FK naming) as field-unverified — the
+  contract test remains its pin. The promotion ceremony was run and DECLINED
+  (the prompt stopped at the cluster pick with the pinned-lesson warning given —
+  declining is a stated outcome; the ceremony held).
+
 ## [4.4.0] - 2026-08-15
 
 **MINOR — the confirm guard + lesson→skill promotion + the findings_19 fixes

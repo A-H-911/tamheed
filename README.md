@@ -11,7 +11,7 @@
 <p align="center"><strong>Turn a project description into a validated, traceable, execution-ready planning &amp; handoff package for Claude Code to implement.</strong></p>
 
 <p align="center">
-  <em>Claude Code plugin + MCP-backed agent skill &middot; v4.4.0</em> &middot;
+  <em>Claude Code plugin + MCP-backed agent skill &middot; v4.4.1</em> &middot;
   <a href="#license">MIT</a> &middot;
   <a href="docs/install.md">Install</a> &middot;
   <a href="docs/migrate-from-keystone.md">Migrate from Keystone</a> &middot;
@@ -121,7 +121,7 @@ proposes `adopt`. It never guesses silently.
 | `resume` | `package_open` an existing package and continue from the last incomplete stage. |
 | `stage:<id>` | Run or re-run a single stage (e.g. `stage:risk-analysis`). |
 | `update` | The agile heart of v2 (D-UPDATE), three capabilities: **diff-aware re-derivation** (change an entity, regenerate only its dependents via `trace_query`), **execution-progress sync** (`progress_update` / `audit_record` with evidence / `work_bind`), and **typed scope changes** (defer / reschedule / reclassify / cancel / expand — a `scope-change` row is written before any mutation, always). |
-| `migrate` | Convert a v2/v3 store to v4 in place (`package_migrate`: staged preview → operator backup → confirm; old files kept in `data-v3-backup/`). A v4 store whose registry predates a newer entity family gets the staged **registry-sync** instead (preview reports `entity_types_added`, confirm appends the registry rows — pure append, no backup taken); an up-to-date v4 store still refuses. v1 Keystone trees migrate under tamheed 3.2.1 first (`docs/migrate-from-keystone.md`). |
+| `migrate` | Convert a v2/v3 store to v4 in place (`package_migrate`: staged preview → operator backup → confirm; old files kept in `data-v3-backup/`). A v4 store whose registry predates a newer entity family gets the staged **registry-sync** instead (preview reports `entity_types_added` + `columns_added` for files that re-serialize, confirm appends the registry rows — pure registry append, no backup taken); an up-to-date v4 store still refuses. v1 Keystone trees migrate under tamheed 3.2.1 first (`docs/migrate-from-keystone.md`). |
 | `adopt` | Onboard a brownfield project that never used Tamheed (`package_adopt`: staged scan → confirm; nothing inferred is Approved, provenance is code-shaped, the gap report is first-class). |
 
 (The v1 `--no-repo` flag is gone with the repository bootstrapper itself — ASM-B; a package is data the
@@ -429,7 +429,7 @@ See [`CONTRIBUTING.md`](CONTRIBUTING.md) and
 
 ## Maturity
 
-**v4.x** (currently v4.4.0). The methodology (22 stages), the re-baselined relational store (plan 031:
+**v4.x** (currently v4.4.1). The methodology (22 stages), the re-baselined relational store (plan 031:
 claimed-vs-verified `Review`, evidence-chained verdicts, `WVR-` waivers, severity-thresholded blocking,
 typed progress events, drift-delta scope changes, blocking G-REL, `[NEEDS-CLARIFICATION]` markers), the
 MCP tool surface, the canonical serialization, and the in-place migration path (v2/v3

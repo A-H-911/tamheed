@@ -42,7 +42,9 @@ family: writing a row of the new type into it fails loud on the registry FK. Tha
 fail-closed behavior — teaching an old package a new family is a deliberate operator action, never a
 silent side effect of upgrading Tamheed. The action is `package_migrate`'s staged **registry-sync**
 mode: on a v4 store missing baseline entity types, the preview reports `mode: "registry-sync"` +
-`entity_types_added`, and confirm appends the registry rows — a pure append, no backup taken; an
+`entity_types_added` (+ `columns_added` naming any files that will re-serialize because their
+tables gained columns since the store was last written), and confirm appends the registry rows —
+a pure registry append, no backup taken; an
 up-to-date v4 store still refuses.
 
 ## Entry-point contract

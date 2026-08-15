@@ -753,6 +753,44 @@ class McpContractTest(unittest.TestCase):
         self.assertFalse(again["ok"])
         self.assertIn("registry is current", again["error"])
 
+    def test_registry_sync_names_reserialized_columns(self):
+        """findings_20 (plan 037): the sync report is computed per-run, never
+        asserted per-mode. A store serialized before a column existed gets
+        columns_added naming exactly which files re-serialize and why; a sync
+        with no populated-table deltas omits the key (asserted by the sibling
+        test's fixture, which has no lessons.jsonl)."""
+        make_complete_package("demo")
+        srv.entity_upsert([{"type": "lesson", "id": "LL-001", "title": "t",
+                            "statement": "s", "kind": "improve"}])
+        srv.package_close()
+        data = srv.PACKAGE_ROOT / "demo" / "data"
+        et = data / "entity_types.jsonl"
+        et.write_text("".join(
+            json.dumps(r, ensure_ascii=False, separators=(",", ":")) + "\n"
+            for r in (json.loads(l) for l in
+                      et.read_text(encoding="utf-8").splitlines())
+            if r["type_id"] != "skill"), encoding="utf-8")
+        lj = data / "lessons.jsonl"
+        rows = [json.loads(l) for l in
+                lj.read_text(encoding="utf-8").splitlines()]
+        for r in rows:
+            r.pop("promoted_to", None)   # pre-4.4 serialization
+        lj.write_text("".join(
+            json.dumps(r, ensure_ascii=False, separators=(",", ":")) + "\n"
+            for r in rows), encoding="utf-8")
+        preview = srv.package_migrate("demo")
+        self.assertTrue(preview["ok"], preview)
+        rep = preview["report"]
+        self.assertEqual(rep["entity_types_added"], ["skill"])
+        self.assertEqual(rep["columns_added"], {"lessons": ["promoted_to"]})
+        self.assertIn("re-serialize", rep["note"])
+        out = srv.package_migrate("demo", confirm=True)
+        self.assertTrue(out["ok"], out)
+        srv.package_open("demo")
+        row = srv.entity_query("lesson", id="LL-001")["rows"][0]
+        self.assertIn("promoted_to", row)   # the column landed
+        srv.package_close()
+
     def test_convert_legacy_prompts_on_migrate(self):
         """The v3 prompt converter runs inside package_migrate: data/prompts.jsonl
         becomes <package>/prompts/*.md ONCE — provenance header, C27/D1 identical-H1
