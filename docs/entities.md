@@ -968,7 +968,7 @@ column, never edges.
 | `entry` | NOT NULL | The human-readable line |
 | `subject_id` | FK → `entity_index(id)` | The entity the event is about |
 | `actor` | TEXT | Convention: `human:<name>` / `agent:<session>` / `system:<component>` |
-| `corrects` | FK → `progress_entries(id)` | Compensating event — journals are never edited |
+| `corrects` | FK → `progress_entries(id)` | Compensating event — journals are never edited; the corrected entry collapses under its correction in review.html (plan 038 — the column's first consumer; findings_21 caught it written-but-never-read). Journal text (`entry`, and `audit_verdicts.evidence`) is exempt from G-COMPLETE's placeholder screen: a report of what happened is never "unfinished", and an append-only row must never fail a gate forever |
 | `phase_id` / `slice_id` | FKs | Where in the plan |
 | `occurred_at` | TEXT | When |
 

@@ -577,6 +577,9 @@ def entity_upsert(entities: list[dict]) -> dict:
     evaluates NOT NULL on omitted columns BEFORE conflict resolution, so a partial
     {'id', 'statement'} update of an existing row fails on e.g. title NOT NULL.
     Returns per-item verdicts; a violated constraint is named in the item's error.
+    Entity prose is screened by G-COMPLETE's placeholder scan (TODO/TBD/FIXME/
+    {{...}}): to QUOTE such a token in prose, wrap it in backticks — the code-span
+    exemption (findings_21: the note about the rule must not break the rule).
     JSON columns (custom_attributes) accept either a JSON string or a JSON
     object/array — objects are serialized at binding (C28: a raw dict used to fail
     the whole batch with sqlite's opaque "type 'dict' is not supported").
@@ -955,21 +958,37 @@ def gate_run() -> dict:
             f"0 audit verdicts — G-PROGRESS passed vacuously over {active_acs} active"
             " AC(s); every one of them is unverified (expected only pre-execution)")
     findings = []
+    # Column exemptions: custom_attributes everywhere (C14: provenance preserved
+    # verbatim, not authored content — grading it fails the package for being
+    # faithful), plus the append-only report columns (findings_21/C42: a journal
+    # entry is a REPORT of what happened and cannot be "unfinished" — grading it
+    # fails the package for being accurate about its own tooling, and the
+    # append-only design means one authoring slip would fail the gate FOREVER).
+    # The G-INJECT screen still applies to everything it screened at handoff_emit.
+    _EXEMPT = {"progress_entries": {"entry"}, "audit_verdicts": {"evidence"}}
     for table in ENTITY_TABLES.values():
+        skip = {"custom_attributes"} | _EXEMPT.get(table, set())
+        all_cols = {r[1] for r in conn.execute(f"PRAGMA table_info({table})")}
         text_cols = [r[1] for r in conn.execute(f"PRAGMA table_info({table})")
-                     if (r[2] or "").upper() == "TEXT" and r[1] != "custom_attributes"]
-        # custom_attributes is exempt (C14): it is provenance preserved verbatim, not
-        # authored content — grading it fails the package for being faithful. The
-        # G-INJECT screen still applies to it at handoff_emit.
+                     if (r[2] or "").upper() == "TEXT" and r[1] not in skip]
         if not text_cols:
             continue
         pk = _NON_ID_TABLES.get(table, "id")
-        for row in conn.execute(f"SELECT {pk}, {', '.join(text_cols)} FROM {table}"):
+        # Superseded/Obsolete rows are HISTORY, not the plan (plan 038, the
+        # trap-class completed): immutable-after-approval content is unreachable
+        # by edit, and supersession — the sanctioned repair — must actually
+        # repair. Live rows of every family stay fully screened.
+        where = (" WHERE lifecycle_status NOT IN ('Superseded','Obsolete')"
+                 if "lifecycle_status" in all_cols else "")
+        for row in conn.execute(
+                f"SELECT {pk}, {', '.join(text_cols)} FROM {table}{where}"):
             for col, value in zip(text_cols, row[1:]):
                 # strip_code first — parity with the retired v1 gate (D-017-4, C14):
                 # `TODO`/{{...}} inside code spans is example text, not an unfinished marker.
-                if value and _PLACEHOLDER_RE.search(_strip_code(str(value))):
-                    findings.append({"id": row[0], "column": col})
+                if value and (m := _PLACEHOLDER_RE.search(_strip_code(str(value)))):
+                    # findings_21 §3: name WHAT was found, not just where.
+                    findings.append({"id": row[0], "column": col,
+                                     "matched": m.group(0)})
     # v4 (plan 031): NEEDS-CLARIFICATION markers are legal ONLY when they cite an
     # existing unresolved OQ — a dangling/uncited/resolved-cite marker is an
     # unfinished marker like any other. Valid markers do NOT fail (they are the
@@ -1359,7 +1378,10 @@ def progress_update(entries: list[dict]) -> dict:
     write). subject_id names the entity the event is about; actor follows the
     human:<name> | agent:<session> | system:<component> convention; `corrects`
     points at an earlier PE- — journals are corrected by compensating events, never
-    edited."""
+    edited, and a corrected entry is collapsed under its correction in review.html.
+    `entry` text is EXEMPT from G-COMPLETE's placeholder screen (findings_21/C42:
+    a report of what happened is never "unfinished" — and an append-only row that
+    failed a content gate could never be repaired)."""
     if guard := _need_open():
         return guard
     if not isinstance(entries, list) or not entries:
@@ -1395,7 +1417,8 @@ def audit_record(verdicts: list[dict]) -> dict:
     (auto-test|manual|inspection), and against WHAT commit — a Met the readiness
     engine can audit is worth more than a Met it must take on faith. The requirement
     auto-advance trigger cascades in the same transaction (C4), on LATEST-verdict
-    semantics."""
+    semantics. `evidence` text is EXEMPT from G-COMPLETE's placeholder screen
+    (findings_21/C42: append-only report text, never "unfinished" plan prose)."""
     if guard := _need_open():
         return guard
     if not isinstance(verdicts, list) or not verdicts:

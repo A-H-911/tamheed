@@ -66,6 +66,7 @@ two-step escape route (tamheed 3.2.1, then v3->v4 via `package_migrate`).
 | 034 | findings_18: the risk-liveness hollow-pass guard (indeterminate when the scale is unpopulated — the only rule in the class, sweep-verified), customization-lag visibility (stock_last_changed + the honest-conditional warning), the repair doctrine's second and third halves (paste-don't-retype, independent post-repair verifier) | B30 | P2 | S | findings_18 (C39) → three interview forks + DA round (candidate-row scoping, consumer-list, risk_state NOT NULL catches) | DONE — executed 2026-08-15, v4.2.1 |
 | 035 | The lessons-learned entity family: migration 002 (the v4 chain's first — LLIS-shaped `lessons` table, learned_from relation, column-selective immutability), the always-loaded note section (Approved-only, pinned-first, G-INJECT-screened), the lessons-confirmed advisory, staged registry-sync for existing v4 stores, the viewer Lessons section, the lab continuation beat | B31 | P1 | L | maintainer feature ask (no field report — 4.2.1 closed clean) → internet research (PMI/LLIS/Reflexion/AAR) + 2 explorers + 8 interview forks over 2 rounds + advisor + DA round | DONE — executed 2026-08-15, v4.3.0 |
 | 036 | findings_19 + the confirm guard + lesson→skill promotion: the mechanical never-auto-confirm gate (operator_confirm, every landing path incl. birth — the DA bypass catch; closes §2's one-write-too-late gap), migration 003 (SKL- family, Promoted state, promoted_to), the skill-promote interview ceremony (level project\|user default project, full graduation), the pointer-pattern classifier fix (§1's destructive-advice hollow pass), FK message parity (§3) | B32 | P1 | L | findings_19 (C40) + the maintainer's capability ask → ECC/Voyager/Soar research + 2 interview rounds + a clarification + advisor + DA round | DONE — executed 2026-08-15, v4.4.0 |
+| 038 | findings_21: the append-only gate trap — G-COMPLETE exempts the journal report columns (the C14 reasoning extended; the untested evidence twin test-pinned) + skips Superseded/Obsolete rows (the DA trap-class completion: supersession must actually repair), every failure names its `matched` token, and `corrects` gains its first consumer (the review.html corrected-entries fold) | B34 | P2 | S | findings_21 (C42, the program's reproduction-quality bar) → two interview forks + DA round | DONE — executed 2026-08-20, v4.4.2 |
 | 037 | findings_20: the honest registry-sync report — `columns_added` computed per-run (stored-keys-vs-DDL, sound by CANONICAL rule 4) + the reworded note (incl. the audit-journal row the old note was silent about) + the six-surface "pure append" sweep | B33 | P3 | XS | findings_20 (C41) → one interview fork + DA round | DONE — executed 2026-08-16, v4.4.1 |
 
 Index note: plan 006's file points at `plans/deliverables-review.md` for the approved
@@ -124,6 +125,12 @@ artifact set -- that review is the v2 input contract and remains frozen alongsid
   run-and-declined recorded as the prompt working; one finding (the static
   registry-sync note vs the per-release DDL reality) → **v4.4.1 (037)**: the
   per-run `columns_added` report + the honest note.
+- **2026-08-19/20** — findings_21 (C42): the sharpest shape yet — a content gate
+  over an append-only journal with no repair path (the note about the rule became
+  the only row breaking it) and `corrects` written-but-never-read → **v4.4.2
+  (038)**: the journal exemption, the Superseded/Obsolete skip (the DA completing
+  the trap-class), `matched` in every failure, and the corrected-entries fold —
+  corrects' first consumer.
 
 ## Dependency notes
 
@@ -182,6 +189,12 @@ Markdown · ASM-D Python floor rises to the MCP SDK's (≥3.10).
   decision, 2026-07-11) — old plan 005 replaced by `005-b1-bootstrap-tamheed-repo.md`.
 
 ## Future options recorded (not planned)
+
+- **`progress_redact`** (findings_21 remedy 3, deferred 2026-08-20 on the
+  maintainer's words): a sanctioned, operator-guarded in-place journal rewrite for
+  the general secret-pasted-into-the-journal case — the first-ever journal edit,
+  doctrinally heavy, and the incident it serves also needs git-history surgery no
+  tool alone provides. Revisit on the first field need.
 
 - **D3 — GitHub Action / pre-commit hook** exposing package validation to end-user repos
   (post-v2: wrap `gate_run`).

@@ -10,6 +10,49 @@ All notable changes to Tamheed are documented here. The format is based on
 
 ## [Unreleased]
 
+## [4.4.2] - 2026-08-20
+
+**PATCH — the journal exemption + `corrects`' first consumer (plan 038,
+findings_21/C42).** The sharpest field shape yet: a content gate over an
+append-only journal had no repair path — the operator's note explaining which
+tokens G-COMPLETE screens became the only row breaking it, permanently ("the note
+about the rule became the only row breaking it"), and the suggested correction
+path turned out to be inert ("a correction is a comment, not a correction" —
+`corrects` was written and displayed but never read by anything).
+
+### Fixed
+
+- **G-COMPLETE's placeholder scan exempts the append-only report columns**
+  (`progress_entries.entry`, `audit_verdicts.evidence`) — the C14 reasoning
+  extended: a journal entry is a REPORT of what happened and cannot be
+  "unfinished"; grading it fails the package for being accurate about its own
+  tooling, and an append-only row that failed a content gate could never be
+  repaired. Both twins covered (the evidence twin was identified but untested in
+  the field — now test-pinned). Entity prose stays fully screened; G-INJECT is
+  untouched.
+- **The trap-class completed (the DA catch)**: the scan also skips
+  Superseded/Obsolete rows — immutable-after-approval content (lessons, ADRs,
+  approved ACs) was the trap's third instance, where supersession, the sanctioned
+  repair, left the OLD row failing forever. Superseded content is history, not
+  the plan. Live rows of every family stay fully screened.
+- **`corrects` gains its first consumer** (findings_21 §2): review.html's
+  execution timeline moves a corrected entry into a collapsed "Corrected entries
+  (superseded)" fold annotated with its corrector — no longer an equal peer to
+  the entry that replaced it. Correction chains compose per-row.
+- **Every placeholder failure names the `matched` token** (findings_21 §3 — the
+  first field incident's initial hypothesis was wrong because the output named
+  WHERE but not WHAT), and the screen is now documented where an agent meets it:
+  the `entity_upsert` docstring (with the backtick escape), the
+  `progress_update`/`audit_record` docstrings (the exemption), the G-COMPLETE
+  teaching row, and the prompts README standing rules.
+- **Deferred, recorded**: a sanctioned redaction tool (`progress_redact`) — the
+  only general fix for a secret pasted into the journal — waits for the first
+  field need (the incident response needs git-history surgery the tool alone
+  cannot do). Recorded in plans/README future options.
+
+The ACMP package's permanently-red gate goes green on upgrade with ZERO data
+changes — PE-469 is exempt, and PE-470's correction now visibly collapses it.
+
 ## [4.4.1] - 2026-08-16
 
 **PATCH — the honest registry-sync report (plan 037, findings_20/C41).** One

@@ -87,6 +87,45 @@ class McpContractTest(unittest.TestCase):
         self.assertNotIn("RISK-001", flagged)  # code span + provenance exempt (D-017-4)
         self.assertIn("RISK-002", flagged)     # real placeholders still fail
 
+    def test_g_complete_journal_exemption_and_matched(self):
+        """findings_21 (plan 038): journal report text is exempt from the
+        placeholder screen (an append-only row that failed a content gate could
+        never be repaired); Superseded rows are history, not the plan; and a
+        live-entity failure names WHAT matched, not just where."""
+        srv.package_create("demo", "Demo", "rnd")
+        srv.progress_update([{"entry": "the gate screens TODO and TBD and FIXME"
+                                       " tokens in prose — recorded honestly"}])
+        srv.entity_upsert([
+            {"type": "requirement", "id": "FR-001", "title": "r", "statement": "s",
+             "kind": "functional", "source_kind": "brief", "source_span": "b:1"},
+            {"type": "acceptance-criterion", "id": "AC-001", "title": "a",
+             "requirement_id": "FR-001"}])
+        srv.audit_record([{"ac_id": "AC-001", "verdict": "Pending",
+                           "evidence": "TODO rerun after the fixture lands"}])
+        gate = srv.gate_run()["gates"]["G-COMPLETE"]
+        self.assertEqual(gate["status"], "pass", gate)   # both journals exempt
+        # a LIVE entity with a marker fails, naming the token
+        srv.entity_upsert([{"type": "constraint", "id": "CON-001", "title": "c",
+                            "statement": "finish this TBD before launch",
+                            "source_kind": "brief", "source_span": "b:2"}])
+        gate = srv.gate_run()["gates"]["G-COMPLETE"]
+        self.assertEqual(gate["status"], "fail")
+        f = next(x for x in gate["failures"] if x["id"] == "CON-001")
+        self.assertEqual(f["matched"], "TBD")
+        # supersession REPAIRS: the old row (frozen history) stops failing
+        srv.entity_upsert([
+            {"type": "constraint", "id": "CON-002", "title": "c2",
+             "statement": "finish the launch checklist first",
+             "source_kind": "brief", "source_span": "b:2"},
+            {"type": "constraint", "id": "CON-001", "title": "c",
+             "statement": "finish this TBD before launch",
+             "source_kind": "brief", "source_span": "b:2",
+             "lifecycle_status": "Superseded", "disposition": "superseded",
+             "disposition_reason_ref": "CON-002"}])
+        gate = srv.gate_run()["gates"]["G-COMPLETE"]
+        self.assertEqual(gate["status"], "pass", gate)
+        srv.package_close()
+
     def test_upsert_partial_row_error_names_cause(self):
         srv.package_create("demo", "Demo", "rnd")
         srv.entity_upsert([{"type": "risk", "id": "RISK-001", "title": "full row"}])

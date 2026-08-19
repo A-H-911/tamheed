@@ -43,6 +43,22 @@ class ExportHtmlTest(unittest.TestCase):
         self.assertTrue(result["ok"], result)
         return Path(result["path"]).read_text(encoding="utf-8")
 
+    def test_corrected_entries_fold_under_their_correction(self):
+        """Plan 038 (findings_21 §2): corrects' first consumer — a corrected entry
+        leaves the main timeline into the collapsed superseded fold, annotated
+        with its corrector; the correction stays in the main table."""
+        srv.package_create("demo", "Demo", "rnd")
+        srv.progress_update([{"entry": "the wrong claim, recorded honestly"}])
+        srv.progress_update([{"entry": "the corrected record",
+                              "event_type": "correction", "corrects": "PE-001"}])
+        html = self._export()
+        self.assertIn("Corrected entries (superseded", html)
+        folded = html.split("Corrected entries (superseded")[1]
+        self.assertIn("the wrong claim", folded)          # PE-001 in the fold
+        main = html.split("Corrected entries (superseded")[0]
+        self.assertNotIn("the wrong claim", main)         # gone from the timeline
+        self.assertIn("the corrected record", main)       # the correction stays
+
     def test_lessons_section_renders_queue_pinned_and_impacts(self):
         """Plan 035: the dedicated Lessons section is the operator's working
         surface — the confirmation queue (Proposed), then Approved with the

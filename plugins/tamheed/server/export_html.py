@@ -595,11 +595,27 @@ def _execution(conn, gates, ready):
     entries = conn.execute(
         "SELECT id, occurred_at, event_type, entry, subject_id, actor, corrects,"
         " phase_id, slice_id FROM progress_entries ORDER BY id").fetchall()
-    parts.append(_fold("Progress log (typed events)", len(entries),
+    # Plan 038 (findings_21 §2): `corrects` gets read where journals are read — an
+    # entry superseded by a typed correction leaves the main timeline into a
+    # collapsed fold instead of sitting there as an equal peer. Per-row rule, so
+    # correction chains compose (a corrected correction folds too).
+    corrected_by = dict(conn.execute(
+        "SELECT corrects, id FROM progress_entries"
+        " WHERE event_type = 'correction' AND corrects IS NOT NULL"))
+    live = [e for e in entries if e[0] not in corrected_by]
+    superseded = [(corrected_by[e[0]],) + e for e in entries if e[0] in corrected_by]
+    parts.append(_fold("Progress log (typed events)", len(live),
                        _table(["id", "occurred at", "event", "entry", "subject",
-                               "actor", "corrects", "phase", "slice"], entries))
-                 if entries else
+                               "actor", "corrects", "phase", "slice"], live))
+                 if live else
                  '<h3>Progress log</h3><p class="empty">No progress entries recorded.</p>')
+    if superseded:
+        parts.append(_fold(
+            "Corrected entries (superseded — the correction is the record)",
+            len(superseded),
+            _table(["corrected by", "id", "occurred at", "event", "entry",
+                    "subject", "actor", "corrects", "phase", "slice"],
+                   superseded)))
     changes = conn.execute(
         "SELECT id, iteration, lifecycle_status, decision_ref, description"
         " FROM scope_changes ORDER BY id").fetchall()
