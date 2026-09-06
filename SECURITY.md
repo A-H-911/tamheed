@@ -45,6 +45,11 @@ report a problem.
   round-trip, and it is stated as evidence-of-verification, not tamper-evidence (no hash chain or
   signature — a hand edit followed by a tool call is rewritten canonically; git history is the
   tamper record).
+- **Nothing leaves the store silently** — entity rows are never deleted (retired, superseded, or
+  dispositioned); the one removal a caller can make is a trace EDGE via an explicit `retire: true`
+  item (v4.6), which the server journals as a `correction` row in the same transaction and reports
+  per item; the relation rule is bypassed on retire (a mistyped edge is what gets retired), and the
+  gates re-evaluate on the next run — a retire that removes traceability shows up in G-TRACE.
 - **Safe-by-default store** — no raw-SQL tool; batch mutations are transactional (all-or-nothing);
   approval-bearing rows are immutable (supersede, never edit); one writer per package via a fail-loud
   lockfile; `handoff_emit` refuses emission when the injection screen finds instruction-shaped text.

@@ -688,6 +688,15 @@ def entity_upsert(entities: list[dict]) -> dict:
     evaluates NOT NULL on omitted columns BEFORE conflict resolution, so a partial
     {'id', 'statement'} update of an existing row fails on e.g. title NOT NULL.
     Returns per-item verdicts; a violated constraint is named in the item's error.
+    Trace edges are keyed (from_id, to_id, relation), so writing a new relation
+    between a pair never replaces an old one — it sits beside it. To RETIRE an edge
+    (findings_23 §1, plan 040) send {'type': 'trace-edge', 'from_id', 'to_id',
+    'relation', 'retire': true} — exactly those keys: the triple is DELETED (the
+    relation rule is not consulted — a mistyped edge is exactly what gets retired),
+    the server appends a `correction` journal row naming it in the same transaction,
+    and an absent triple is an error (an attempt is not a write). Retype in ONE batch:
+    the retire item plus the corrected edge. Retire a WRONG edge only — never to
+    make a gate pass.
     Entity prose is screened by G-COMPLETE's placeholder scan (TODO/TBD/FIXME/
     {{...}}): to QUOTE such a token in prose, wrap it in backticks — the code-span
     exemption (findings_21: the note about the rule must not break the rule).
@@ -714,8 +723,48 @@ def entity_upsert(entities: list[dict]) -> dict:
         # "force" is the transition-guard override (plan 027), never a column.
         force = bool(item.get("force"))
         operator_confirm = bool(item.get("operator_confirm"))
+        retire = bool(item.get("retire"))
         cols = {k: v for k, v in item.items()
-                if k not in ("type", "force", "operator_confirm")}
+                if k not in ("type", "force", "operator_confirm", "retire")}
+        if retire:
+            # Plan 040 (findings_23 §1): the only agent-initiated removal of store
+            # content. Exactly the triple, no wildcard, the relation rule NOT
+            # consulted (a mistyped edge is what gets retired), journaled by the
+            # server in the same transaction (the forced-override pattern), and an
+            # absent triple is an error — an attempt is not a write (C31 A3).
+            err = None
+            if etype != "trace-edge":
+                err = f"retire applies to trace-edge items only (got {etype!r})"
+            elif set(cols) != {"from_id", "to_id", "relation"}:
+                err = ("a retire item carries exactly from_id, to_id, relation —"
+                       f" got {sorted(cols)}")
+            if err is None:
+                triple = (cols["from_id"], cols["to_id"], cols["relation"])
+                conn.execute(f"SAVEPOINT item{i}")
+                cur = conn.execute(
+                    "DELETE FROM trace_edges WHERE from_id = ? AND to_id = ?"
+                    " AND relation = ?", triple)
+                if cur.rowcount == 0:
+                    conn.execute(f"ROLLBACK TO item{i}")
+                    err = (f"no such edge {triple[0]} -{triple[2]}-> {triple[1]} —"
+                           " nothing to retire (an attempt is not a write)")
+                else:
+                    pe_id = _next_id("PE-", "progress_entries")
+                    conn.execute(
+                        "INSERT INTO progress_entries (id, event_type, entry,"
+                        " subject_id, actor, occurred_at) VALUES (?, ?, ?, ?, ?, ?)",
+                        (pe_id, "correction",
+                         f"EDGE RETIRED: {triple[0]} -{triple[2]}-> {triple[1]}"
+                         " (retire: true on the caller's write) — the corrected"
+                         " edge, if any, is written in the same batch",
+                         triple[0], "system:edge-retire", _now()))
+                    conn.execute(f"RELEASE item{i}")
+                    results.append({"index": i, "ok": True, "id": None,
+                                    "retired": True, "retire_audit": pe_id})
+                    continue
+            results.append({"index": i, "ok": False, "id": None, "error": err})
+            failed = True
+            continue
         unknown = set(cols) - set(_columns(table))
         if unknown:
             results.append({"index": i, "ok": False,
@@ -1155,20 +1204,34 @@ def gate_run() -> dict:
             findings.append({"id": marker["id"], "column": marker["column"],
                              "marker": marker["invalid"]})
     report["G-COMPLETE"] = {"status": "fail" if findings else "pass", "failures": findings}
-    evidenced, narrated = conn.execute(
-        "SELECT SUM(CASE WHEN evidence IS NOT NULL AND evidence <> '' THEN 1 ELSE 0 END),"
-        " SUM(CASE WHEN evidence IS NULL OR evidence = '' THEN 1 ELSE 0 END)"
-        " FROM audit_verdicts"
-    ).fetchone()
-    # findings_22 §3 (plan 039): the predicate was exact and the ids withheld — the
-    # one C7 signal in the report was unactionable (no evidence predicate in
-    # entity_query, and pulling every verdict overflowed the client). Name them.
-    narrated_ids = [r[0] for r in conn.execute(
-        "SELECT id FROM audit_verdicts WHERE evidence IS NULL OR evidence = ''"
-        " ORDER BY id")]
-    report["audit_evidence"] = {"evidenced": evidenced or 0, "narrated": narrated or 0,
-                                "narrated_ids": narrated_ids,
-                                "note": "narrated verdicts are the graded party grading itself (C7)"}
+    # findings_22 §3 (plan 039) named the ids; findings_23 §2 (plan 040) fixed the
+    # POPULATION: the old predicate ran over every verdict row ever appended, so it
+    # counted superseded history and untouched Pending placeholders as "the graded
+    # party grading itself". Now: each ACTIVE AC's LATEST verdict (the acs-met
+    # population — v_latest_verdicts' numeric order, inlined because the view carries
+    # no id), split three ways.
+    evidenced, narrated_ids, ungraded_ids = 0, [], []
+    for av_id, verdict, evidence in conn.execute(
+            "SELECT av.id, av.verdict, av.evidence FROM audit_verdicts av"
+            " JOIN acceptance_criteria ac ON ac.id = av.ac_id"
+            " WHERE ac.retired_in IS NULL AND av.id = ("
+            "   SELECT av2.id FROM audit_verdicts av2 WHERE av2.ac_id = av.ac_id"
+            "   ORDER BY CAST(SUBSTR(av2.id, 4) AS INTEGER) DESC LIMIT 1)"
+            " ORDER BY CAST(SUBSTR(av.id, 4) AS INTEGER)"):
+        if verdict == "Pending":
+            ungraded_ids.append(av_id)
+        elif evidence is None or evidence == "":
+            narrated_ids.append(av_id)
+        else:
+            evidenced += 1
+    report["audit_evidence"] = {
+        "evidenced": evidenced, "narrated": len(narrated_ids),
+        "ungraded": len(ungraded_ids), "narrated_ids": narrated_ids,
+        "ungraded_ids": ungraded_ids,
+        "note": "over each active AC's LATEST verdict (superseded verdicts are"
+                " history, as acs-met reads them): narrated = a graded verdict with"
+                " no evidence — the graded party grading itself (C7); ungraded = a"
+                " Pending placeholder nobody has graded"}
     # v4 (plan 031): the stored-edge sweep is a BLOCKING gate. Safe because every v4
     # package starts rule-clean — the migrate tool retypes violating edges to
     # relates_to at conversion, entity_upsert rejects them at write time, and adopt
@@ -1176,8 +1239,10 @@ def gate_run() -> dict:
     mistyped = _edge_rule_violations(conn)
     report["G-REL"] = {
         "status": "pass" if not mistyped else "fail", "mistyped": mistyped,
-        "note": "stored edges must satisfy RELATION_RULES; retype a wrong edge to"
-                " relates_to (delete + re-add) if the link itself is real"}
+        "note": "stored edges must satisfy RELATION_RULES; retype a wrong edge in ONE"
+                " entity_upsert batch: {retire: true} on the old triple + the correct"
+                " relation (relates_to only when no typed relation fits and the link"
+                " itself is real)"}
     # Plan 028 (C34 §7, the FR-156..159 class): requirements created during execution
     # never get wired — work_bind stamps commits, it does not create trace edges, and
     # G-TRACE only sees mvp=1 matrix rows. Advisory on the habitual every-session
@@ -2185,7 +2250,9 @@ def handoff_emit(target_dir: str, subdir: str = "handoff", force: bool = False,
         " — rows + total + next_after (page with after_id; quote a known set via ids;"
         " keyword-sweep via search)\n"
         "- `trace_query(entity_id, direction: out|in|both, relation?)` — typed links\n"
-        "- `entity_upsert(entities=[{type, id, ...}])` — FULL rows, even for updates\n"
+        "- `entity_upsert(entities=[{type, id, ...}])` — FULL rows, even for updates;"
+        " `{type: trace-edge, from_id, to_id, relation, retire: true}` removes that"
+        " edge (journaled — retype in ONE batch: retire + the corrected edge)\n"
         "- `gate_run()` — mechanical gate verdict · `readiness_check(scope, id?)` —"
         " is it actually DONE (waivers honored, Review counts open)\n"
         "- `export_html()` — refresh review.html · `server_info()` — version + root\n"
@@ -2331,7 +2398,11 @@ def package_migrate(name: str, confirm: bool = False) -> dict:
             # backup copy taken below is its trail, so the data/ copy is removed at
             # confirm (previewed here) — never a second run to relocate it (plan 039).
             relocate = [{"file": f"data/{f.name}",
-                         "action": "remove (copied to data-v3-backup/)"}
+                         "action": "remove (copied to data-v3-backup/, a directory"
+                                   " operators commonly gitignore; if data/ is"
+                                   " git-tracked the file also lives in history —"
+                                   f" check git log -- data/{f.name} before you"
+                                   " confirm)"}
                         for f in sorted(data.glob("*.jsonl.converted"))]
         if confirm and not v4_sync:
             backup = pkg_dir / "data-v3-backup"
@@ -2402,7 +2473,14 @@ def package_migrate(name: str, confirm: bool = False) -> dict:
                 if not twin.exists():
                     action = "move"
                 elif twin.read_bytes() == f.read_bytes():
-                    action = "remove (identical copy already in data-v3-backup/)"
+                    # findings_23 §3 (plan 040): the string an operator approves a
+                    # removal on states what was verified (the byte-identical copy)
+                    # and what was NOT (that copy's durability — the server never
+                    # calls git and cannot know whether data/ is tracked).
+                    action = ("remove (byte-identical copy verified in data-v3-backup/,"
+                              " a directory operators commonly gitignore; if data/ is"
+                              " git-tracked the file also lives in history — check"
+                              f" git log -- data/{f.name} before you confirm)")
                 else:
                     return _err(f"data/{f.name} and data-v3-backup/{f.name} both"
                                 " exist and DIFFER — resolve by hand (keep one),"
@@ -2526,7 +2604,9 @@ def package_adopt(source_dir: str, name: str | None = None, confirm: bool = Fals
                 out["relation_rule_violations"] = {
                     "mistyped": viol,
                     "note": "these edges will FAIL the blocking G-REL gate — retype"
-                            " to relates_to or fix the endpoints before handoff"}
+                            " before handoff in one entity_upsert batch ({retire:"
+                            " true} on the old triple + the correct relation, or"
+                            " relates_to when nothing typed fits)"}
         except store.StoreLockedError:
             pass  # the adoption report stands; the sweep re-runs at first gate_run
     return out

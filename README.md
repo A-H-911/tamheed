@@ -11,7 +11,7 @@
 <p align="center"><strong>Turn a project description into a validated, traceable, execution-ready planning &amp; handoff package for Claude Code to implement.</strong></p>
 
 <p align="center">
-  <em>Claude Code plugin + MCP-backed agent skill &middot; v4.5.0</em> &middot;
+  <em>Claude Code plugin + MCP-backed agent skill &middot; v4.6.0</em> &middot;
   <a href="#license">MIT</a> &middot;
   <a href="docs/install.md">Install</a> &middot;
   <a href="docs/migrate-from-keystone.md">Migrate from Keystone</a> &middot;
@@ -181,8 +181,9 @@ information lands (e.g. redo risk analysis after a dependency changed):
 ```
 
 A scope change always writes the authorizing decision and the `scope-change` row *before* any mutation,
-bumps the package iteration, and stamps new/retired rows with `introduced_in`/`retired_in` — nothing is
-ever deleted. Evidence-backed audit verdicts cascade: when every acceptance criterion of a requirement is
+bumps the package iteration, and stamps new/retired rows with `introduced_in`/`retired_in` — no entity
+row is ever deleted (the one removal a caller can make is a wrongly typed trace edge, via an explicit,
+journaled `retire` — v4.6). Evidence-backed audit verdicts cascade: when every acceptance criterion of a requirement is
 `Met`, the requirement auto-advances to `Implemented` in the same transaction.
 
 **`migrate` — bring a v2/v3 store to v4.** Staged and operator-gated: the first run is a
@@ -438,7 +439,7 @@ See [`CONTRIBUTING.md`](CONTRIBUTING.md) and
 
 ## Maturity
 
-**v4.x** (currently v4.5.0). The methodology (22 stages), the re-baselined relational store (plan 031:
+**v4.x** (currently v4.6.0). The methodology (22 stages), the re-baselined relational store (plan 031:
 claimed-vs-verified `Review`, evidence-chained verdicts, `WVR-` waivers, severity-thresholded blocking,
 typed progress events, drift-delta scope changes, blocking G-REL, `[NEEDS-CLARIFICATION]` markers), the
 MCP tool surface, the canonical serialization, and the in-place migration path (v2/v3

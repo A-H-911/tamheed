@@ -312,6 +312,12 @@ class McpContractTest(unittest.TestCase):
                                   "to_id": "FR-999", "relation": "tests"}])
         self.assertFalse(out["ok"])
         self.assertIn("FOREIGN KEY constraint failed", out["items"][0]["error"])
+        # findings_19 §3 parity for an EDGE item (pinned in plan 040 — the field had
+        # carried it unverified for four releases): the culprit column and value
+        self.assertIn("to_id='FR-999' (references entity_index.id)",
+                      out["items"][0]["error"])
+        self.assertFalse(any(e["to"] == "FR-999" for e in
+                             srv.trace_query("TEST-001", direction="out")["edges"]))
 
     def test_gate_referential_checks_run_now(self):
         """Plan 027: the three referential gates VERIFY at gate time — no hardcoded
@@ -636,7 +642,14 @@ class McpContractTest(unittest.TestCase):
         self.assertEqual(prev["stage"], "preview")
         self.assertEqual(prev["report"]["relocate"],
                          [{"file": "data/old.jsonl.converted",
-                           "action": "remove (copied to data-v3-backup/)"}])
+                           "action": prev["report"]["relocate"][0]["action"]}])
+        # plan 040 (findings_23 §3): the string an operator approves a removal on
+        # states what was verified and what was not — never only the weaker net
+        self.assertTrue(prev["report"]["relocate"][0]["action"].startswith(
+            "remove (copied to data-v3-backup/, a directory operators commonly"
+            " gitignore; if data/ is git-tracked"))
+        self.assertIn("git log -- data/old.jsonl.converted",
+                      prev["report"]["relocate"][0]["action"])
         self.assertTrue(stale.exists())                      # preview writes nothing
         done = srv.package_migrate("demo", confirm=True)
         self.assertTrue(done["ok"], done)
@@ -747,7 +760,8 @@ class McpContractTest(unittest.TestCase):
             note = (Path(target) / "CLAUDE.md").read_text(encoding="utf-8")
         for needle in ("git status --porcelain -uall", "FLUSH `data/*.jsonl` AFTER",
                        "after_id?, ids?, search?", "package_verify(name?, record?)",
-                       "`amends` for a ruling", "RE-READ them"):
+                       "`amends` for a ruling", "RE-READ them",
+                       "retire: true}` removes that edge"):     # plan 040
             self.assertIn(needle, note, needle)
         tpl = (REPO_ROOT / "plugins" / "tamheed" / "templates" /
                "agent-control.template.md").read_text(encoding="utf-8")
@@ -1977,14 +1991,101 @@ class V4EngineTest(unittest.TestCase):
             self.assertIn(needle, doc)
 
     def test_audit_evidence_names_narrated_ids(self):
-        """findings_22 §3: the count told you a C7 problem existed and refused to say
-        where — `narrated_ids` is the same predicate's SELECT id."""
-        srv.audit_record([{"ac_id": "AC-001", "verdict": "Partial", "evidence": "run 9"},
-                          {"ac_id": "AC-001", "verdict": "Met"},
-                          {"ac_id": "AC-001", "verdict": "Met", "evidence": ""}])
+        """findings_22 §3 named the ids; findings_23 §2 (plan 040) fixed the
+        POPULATION: each ACTIVE AC's LATEST verdict (the acs-met population), split
+        evidenced / narrated (graded, no evidence — C7) / ungraded (Pending).
+        Superseded history never counts; a retired AC is out of scope."""
+        ok = srv.entity_upsert([{"type": "acceptance-criterion", "id": "AC-002",
+                                 "title": "second", "slice_id": "SL-001"},
+                                {"type": "acceptance-criterion", "id": "AC-003",
+                                 "title": "retired", "slice_id": "SL-001",
+                                 "retired_in": 1}])
+        self.assertTrue(ok["ok"], ok)
+        ok = srv.audit_record([
+            {"ac_id": "AC-001", "verdict": "Met"},                        # AV-001 narrated…
+            {"ac_id": "AC-001", "verdict": "Met", "evidence": "run 9"},   # …superseded
+            {"ac_id": "AC-002", "verdict": "Pending", "verified_by": "agent",
+             "verification_method": "inspection"},                        # placeholder
+            {"ac_id": "AC-003", "verdict": "Met"}])                       # retired AC
+        self.assertTrue(ok["ok"], ok)
         ev = srv.gate_run()["gates"]["audit_evidence"]
-        self.assertEqual((ev["evidenced"], ev["narrated"]), (1, 2))
-        self.assertEqual(ev["narrated_ids"], ["AV-002", "AV-003"])
+        self.assertEqual((ev["evidenced"], ev["narrated"], ev["ungraded"]), (1, 0, 1))
+        self.assertEqual(ev["narrated_ids"], [])
+        self.assertEqual(ev["ungraded_ids"], ["AV-003"])
+        self.assertIn("LATEST verdict", ev["note"])
+        # the C7 case proper: the LATEST verdict on an active AC, graded, no evidence
+        srv.audit_record([{"ac_id": "AC-001", "verdict": "Met", "evidence": ""}])
+        ev = srv.gate_run()["gates"]["audit_evidence"]
+        self.assertEqual((ev["evidenced"], ev["narrated"], ev["ungraded"]), (0, 1, 1))
+        self.assertEqual(ev["narrated_ids"], ["AV-005"])
+
+    def test_trace_edge_retire_removes_the_triple_and_journals_it(self):
+        """findings_23 §1 (plan 040): the composite PK means a new relation sits
+        BESIDE the old one; `retire: true` on a trace-edge item deletes exactly that
+        triple, the server journals it in the same transaction, the relation rule is
+        not consulted (a mistyped edge is what gets retired), an absent triple is an
+        error, and the batch stays all-or-nothing. The G-REL note names the
+        operation — never a remedy the server cannot perform (findings_21 §1's shape,
+        which the maintainer's own 4.5.0 note repeated)."""
+        srv.entity_upsert([{"type": "decision", "id": "DEC-001", "title": "d",
+                            "lifecycle_status": "Approved"}])
+        # the ACMP shape: amends written beside the old relates_to
+        for rel in ("relates_to", "amends"):
+            self.assertTrue(srv.entity_upsert([{"type": "trace-edge", "from_id": "SC-001",
+                                                "to_id": "DEC-001", "relation": rel}])["ok"])
+        self.assertEqual({e["relation"] for e in srv.trace_query("SC-001")["edges"]
+                          if e["to"] == "DEC-001"}, {"relates_to", "amends"})
+        out = srv.entity_upsert([{"type": "trace-edge", "from_id": "SC-001",
+                                  "to_id": "DEC-001", "relation": "relates_to",
+                                  "retire": True}])
+        self.assertTrue(out["ok"], out)
+        self.assertEqual(out["applied"], 1)
+        self.assertTrue(out["items"][0]["retired"])
+        pe = out["items"][0]["retire_audit"]
+        self.assertEqual({e["relation"] for e in srv.trace_query("SC-001")["edges"]
+                          if e["to"] == "DEC-001"}, {"amends"})
+        row = srv.entity_query("progress-entry", id=pe)["rows"][0]
+        self.assertEqual((row["event_type"], row["actor"], row["subject_id"]),
+                         ("correction", "system:edge-retire", "SC-001"))
+        self.assertIn("EDGE RETIRED: SC-001 -relates_to-> DEC-001", row["entry"])
+        # absent triple: an attempt is not a write — the whole batch rolls back
+        out = srv.entity_upsert([{"type": "trace-edge", "from_id": "SC-001",
+                                  "to_id": "DEC-001", "relation": "relates_to",
+                                  "retire": True},
+                                 {"type": "trace-edge", "from_id": "SC-001",
+                                  "to_id": "AC-001", "relation": "scope_modifies"}])
+        self.assertFalse(out["ok"])
+        self.assertIn("nothing to retire (an attempt is not a write)",
+                      out["items"][0]["error"])
+        self.assertFalse(any(e["to"] == "AC-001" and e["relation"] == "scope_modifies"
+                             for e in srv.trace_query("SC-001")["edges"]))
+        # exactly the triple, trace-edge only
+        bad = srv.entity_upsert([{"type": "trace-edge", "from_id": "SC-001",
+                                  "to_id": "DEC-001", "relation": "amends",
+                                  "retire": True, "extra": 1}])
+        self.assertIn("exactly from_id, to_id, relation", bad["items"][0]["error"])
+        bad = srv.entity_upsert([{"type": "decision", "id": "DEC-001", "retire": True}])
+        self.assertIn("trace-edge items only", bad["items"][0]["error"])
+        # a MISTYPED stored edge (raw insert, as migrate/adopt can leave) retires
+        # despite the rule — G-REL goes red, then green, in one batch with the retype
+        srv._CURRENT.conn.execute(
+            "INSERT INTO trace_edges (from_id, to_id, relation)"
+            " VALUES ('WBS-1', 'RISK-001', 'verifies')")   # wbs-item may not verify
+        gate = srv.gate_run()["gates"]["G-REL"]
+        self.assertEqual(gate["status"], "fail")
+        self.assertIn("{retire: true} on the old triple", gate["note"])
+        out = srv.entity_upsert([{"type": "trace-edge", "from_id": "WBS-1",
+                                  "to_id": "RISK-001", "relation": "verifies",
+                                  "retire": True},
+                                 {"type": "trace-edge", "from_id": "WBS-1",
+                                  "to_id": "RISK-001", "relation": "mitigates"}])
+        self.assertTrue(out["ok"], out)
+        self.assertEqual(out["applied"], 2)
+        self.assertEqual(srv.gate_run()["gates"]["G-REL"]["status"], "pass")
+        # a falsy retire is an ordinary write
+        self.assertTrue(srv.entity_upsert([{"type": "trace-edge", "from_id": "SC-001",
+                                            "to_id": "OQ-001", "relation": "scope_adds",
+                                            "retire": False}])["ok"])
 
     def test_amends_edge_typed_scope_change_to_ruling(self):
         """findings_22 §2: `amends` = scope-change -> {decision, adr} only; the

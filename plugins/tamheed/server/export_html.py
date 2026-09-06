@@ -114,8 +114,10 @@ def _overview(conn, gates, ready):
     return (f'<p class="ready">Gate verdict: {"READY" if ready else "NOT READY"}</p>'
             f'<p>{"".join(chips)}</p>'
             f'<p>Audit evidence: {esc(evidence.get("evidenced", 0))} evidenced / '
-            f'{esc(evidence.get("narrated", 0))} narrated'
-            " (narrated = the graded party grading itself, C7)</p>" + identity)
+            f'{esc(evidence.get("narrated", 0))} narrated / '
+            f'{esc(evidence.get("ungraded", 0))} ungraded'
+            " (each active AC's latest verdict; narrated = the graded party grading"
+            " itself, C7; ungraded = a Pending placeholder)</p>" + identity)
 
 
 # ------------------------------------------------------------------ relations graph
@@ -575,8 +577,11 @@ def _execution(conn, gates, ready):
         " FROM acceptance_criteria ac"
         " LEFT JOIN v_latest_verdicts lv ON lv.ac_id = ac.id"
         " ORDER BY ac.id").fetchall()
+    # Plan 040 (findings_23 §2): a Pending latest verdict is UNGRADED, not narrated —
+    # nobody graded anything; an AC with no verdict at all carries no class.
     ac_rows = [[ac_id, title, lifecycle, verdict or "Pending",
-                "evidenced" if evidence else ("narrated" if verdict else ""), evidence]
+                ("ungraded" if verdict == "Pending" else
+                 "evidenced" if evidence else ("narrated" if verdict else "")), evidence]
                for ac_id, title, lifecycle, verdict, evidence in acs]
     parts = [_fold("Acceptance criteria × audit verdicts", len(ac_rows),
                    _table(["ac", "title", "lifecycle", "verdict", "evidence class",

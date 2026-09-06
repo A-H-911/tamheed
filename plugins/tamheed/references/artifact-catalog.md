@@ -1,4 +1,4 @@
-# Artifact Catalog — the entity families and their rules (tamheed v4.5.0)
+# Artifact Catalog — the entity families and their rules (tamheed v4.6.0)
 
 The authoritative, human-facing list of every artifact a Tamheed package carries. Since v2
 the package **is a relational store** (`data/*.jsonl`, one file per entity family — see
@@ -195,7 +195,9 @@ One `data/<table>.jsonl` file per non-empty family. Class = the registry's gener
   (`amends` when it carves an exception out of a `DEC-`/`ADR-` ruling: DEC- merges by
   full-row upsert, ADR- by supersession); after operator approval the agent applies the
   changes, re-reads them, and sets the `SC-` to `Merged` LAST — the
-  `scope-changes-merged` advisory flags anything approved but never reconciled.
+  `scope-changes-merged` advisory flags anything approved but never reconciled. A wrongly
+  typed edge is retired (`retire: true` on the trace-edge item — journaled) and the correct
+  one written in the same batch; a new relation never replaces an old one by itself (v4.6).
 - **Waivers**: an operator-approved `WVR-` row (rule + entity + justification +
   approver + expiry) satisfies a named readiness rule for a named entity, reported as
   `waived`, never silent. Agents may ASK for one; they never author one.

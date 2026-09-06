@@ -125,7 +125,9 @@ truth.
 **Nothing destroyed, everything previewable.** The store never deletes meaning: approval-bearing rows are
 superseded rather than edited (trigger-enforced), retired rows carry `retired_in`, scope changes are typed
 and recorded *before* their mutations, and `--dry-run` runs a stage's mutations inside a rolled-back
-transaction and reports the entity/gate deltas.
+transaction and reports the entity/gate deltas. The one removal a caller can make is a wrongly typed
+trace edge (`retire: true`, v4.6) — explicit, per triple, and journaled by the server in the same
+transaction, so even that leaves its record.
 
 ## 4. Workflows
 
@@ -266,8 +268,9 @@ skill, not as note prose.
 v1 bootstrapped a target repository; v2 removed that capability (ASM-B). Stage 18 is now **package
 storage initialization**: the package materializes as canonical JSONL under `data/` (written back on
 every mutation, single-writer locked), and the **operator** commits it to whichever repository they
-choose. Nothing is ever destroyed: approval-bearing rows are superseded rather than edited, retired
-rows carry `retired_in`, and `--dry-run` previews mutations in a rolled-back transaction
+choose. No entity row is ever destroyed: approval-bearing rows are superseded rather than edited, retired
+rows carry `retired_in`, a wrongly typed trace edge is retired only explicitly and with a journal row
+(v4.6), and `--dry-run` previews mutations in a rolled-back transaction
 (safeguard 16). Operational detail: `../plugins/tamheed/db/CANONICAL.md`.
 
 ## 12. Extraction traceability

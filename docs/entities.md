@@ -681,7 +681,11 @@ the auto-advance trigger, `v_phase_exit`/`v_slice_exit`, and every `acs-met` rul
 different actor or a mechanical check, recorded with evidence, against a specific commit
 (the Taskmaster review-state / Kiro post-task-hook / Ralph-loop / spec-kit-converge
 consensus). A Met without evidence is *narrated*, not *evidenced* — `gate_run` counts the
-split. The CHANGELOG notes the v4 trigger fix: the any-Met-ever flaw (an old Met
+split over each ACTIVE AC's LATEST verdict (the same population `acs-met` reads; superseded
+verdicts are history), in three buckets: evidenced / narrated (graded, no evidence — C7) /
+ungraded (a Pending placeholder nobody graded), naming the narrated and ungraded ids (v4.6,
+findings_23 §2: the old all-rows count reported placeholders the package had already
+replaced, so it could only grow). The CHANGELOG notes the v4 trigger fix: the any-Met-ever flaw (an old Met
 outliving a newer Not-met) that migration 004 fixed in the views was still live in the
 auto-advance trigger through v3; v4 made the trigger latest-verdict too.
 
@@ -975,7 +979,7 @@ column, never edges.
 
 | Column | Constraint | Meaning |
 |---|---|---|
-| `event_type` | NOT NULL DEFAULT `note`; CHECK: `work-done` / `verdict-recorded` / `transition` / `forced-override` / `gate-decision` / `escalation` / `correction` / `note` / `lesson-confirmed` / `lesson-promoted` / `integrity-verified` | The typed event; `note` is the deliberate escape hatch; four kinds are SERVER-appended only — `forced-override`, the two lesson events, and `integrity-verified` (from `package_verify(record=true)`) — and `progress_update` refuses them (v4.5: the field data held five agent-written `lesson-confirmed` rows; a vocabulary that never refuses a server-only type lets a narrated "confirmed" be journaled by hand) |
+| `event_type` | NOT NULL DEFAULT `note`; CHECK: `work-done` / `verdict-recorded` / `transition` / `forced-override` / `gate-decision` / `escalation` / `correction` / `note` / `lesson-confirmed` / `lesson-promoted` / `integrity-verified` | The typed event; `note` is the deliberate escape hatch; four kinds are SERVER-appended only — `forced-override`, the two lesson events, and `integrity-verified` (from `package_verify(record=true)`) — and `progress_update` refuses them; a `correction` row is ALSO server-appended in one case, the edge retire (v4.6: actor `system:edge-retire`, `corrects` null — it corrects the trace record, not a journal entry, so it folds nothing in review.html) (v4.5: the field data held five agent-written `lesson-confirmed` rows; a vocabulary that never refuses a server-only type lets a narrated "confirmed" be journaled by hand) |
 | `entry` | NOT NULL | The human-readable line |
 | `subject_id` | FK → `entity_index(id)` | The entity the event is about |
 | `actor` | TEXT | Convention: `human:<name>` / `agent:<session>` / `system:<component>` |
@@ -1197,8 +1201,11 @@ Conditional/Derived/On-request/Continuous — the machine mirror G-SET enforces,
 `BASELINE_ENTITY_TYPES` at `package_create`); and **`omissions`** (entity_type PK + NOT
 NULL non-empty `reason` — how an Always family is legally absent). **`trace_edges`**
 (from_id, to_id, relation — CHECK over the 14 relation kinds, composite PK, both ends FK
-into `entity_index`) is the write-only relation surface; **`entity_index`** is derived and
-never serialized.
+into `entity_index`) is the write-only relation surface — and the one place a caller can
+remove a row: `retire: true` on a trace-edge item deletes exactly that triple (the relation
+rule is not consulted; the server journals a `correction` row naming it in the same
+transaction — v4.6, findings_23 §1: the composite PK means a new relation sits beside the
+old one until the old one is retired); **`entity_index`** is derived and never serialized.
 
 ### The verification flow (the three mechanics together)
 

@@ -43,11 +43,16 @@ three tiers (engine / judgment / warn) synced against this file in both directio
 
 - `gate_run` (MCP tool) → the full mechanical report: referential tier verified NOW
   (foreign_key_check + consistency + real SELECTs), coverage views executed with failing IDs,
-  content scan findings, the evidenced-vs-narrated audit split (a narrated verdict is the graded
-  party grading itself — prefer evidence refs; `narrated_ids` names them, v4.5 — a count that
-  refuses to say where is unactionable), and the **blocking G-REL edge sweep** (advisory
-  through v3, blocking since v4.0.0): stored edges violating the typed endpoint rules FAIL the
-  gate — retype a wrong edge to `relates_to` (delete + re-add) if the link itself is real.
+  content scan findings, the audit split — over each ACTIVE AC's LATEST verdict (the `acs-met`
+  population; superseded verdicts are history — v4.6, findings_23 §2): *evidenced* /
+  *narrated* (graded with no evidence — the graded party grading itself; prefer evidence
+  refs) / *ungraded* (a Pending placeholder nobody graded), `narrated_ids` and `ungraded_ids`
+  naming them (a count that refuses to say where is unactionable, v4.5) — and the **blocking
+  G-REL edge sweep** (advisory through v3, blocking since v4.0.0): stored edges violating the
+  typed endpoint rules FAIL the gate — retype a wrong edge in ONE `entity_upsert` batch:
+  `retire: true` on the old triple plus the correct relation (`relates_to` only when nothing
+  typed fits and the link itself is real). Edges are keyed `(from, to, relation)`, so a new
+  relation never replaces an old one — it sits beside it until retired (v4.6, findings_23 §1).
 - **`readiness_check(scope, id?)`** (plan 027) is the semantic layer ABOVE these gates: at a
   package/phase/slice close boundary it answers "is this actually DONE?" — blocking rules
   (pre-approval decisions/ADRs, ACs not latest-Met, open critical/high defects — medium/low

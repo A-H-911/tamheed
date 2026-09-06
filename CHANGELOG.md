@@ -10,6 +10,78 @@ All notable changes to Tamheed are documented here. The format is based on
 
 ## [Unreleased]
 
+## [4.6.0] - 2026-09-06
+
+**MINOR — the edge retire, the honest audit split, and the relocate wording (plan
+040, findings_23/C44).** findings_23 came out of USING 4.5.0 for the close-out and
+verified every findings_22 section closed by observation ("four for four, and the
+two fixes I cared most about landed better than I asked"). It also found one gap
+the new `amends` relation created by arriving alone, one honesty counter pointed
+at the wrong population, and one approval string naming the weaker of two safety
+nets. Nothing here is a regression. No schema migration.
+
+### Added
+
+- **Edge retire** (§1): trace edges are keyed `(from_id, to_id, relation)`, so
+  writing `amends` beside an old `relates_to` never replaced it — and the server
+  exposed no way to remove an edge while the G-REL note, the adopt note, **and the
+  maintainer's own 4.5.0 upgrade note** told callers to "delete + re-add"
+  (findings_21 §1's shape: a remedy the server cannot perform). `entity_upsert` now
+  takes `{"type": "trace-edge", "from_id", "to_id", "relation", "retire": true}` —
+  exactly those keys: the triple is DELETED (the relation rule is not consulted — a
+  mistyped edge is exactly what gets retired), the server appends a `correction`
+  journal row naming it (actor `system:edge-retire`) in the same transaction, an
+  absent triple is an error (an attempt is not a write), and the batch stays
+  all-or-nothing. Retype in ONE batch: the retire item plus the corrected edge. The
+  first agent-initiated removal of store content — on the maintainer's words: a hard
+  delete (the `retired_in` tombstone was declined — a migration plus a filter in
+  every edge consumer), no operator gate (the journal row, the per-item report, and
+  the gates' re-evaluation are the controls), and the doctrine line: retire a WRONG
+  edge only, never to make a gate pass. Both notes now name the real operation.
+- **`audit_evidence.ungraded` + `ungraded_ids`** (§2): the counter now reads each
+  ACTIVE AC's LATEST verdict — the `acs-met` population — in three buckets:
+  `evidenced`, `narrated` (a graded verdict with no evidence — the graded party
+  grading itself, C7), `ungraded` (a Pending placeholder nobody graded). The old
+  predicate ran over every verdict row ever appended, so it counted superseded
+  history and untouched placeholders as self-grades and could only grow. `evidenced`
+  changes meaning with it (the field package: 225 → 142). review.html prints all
+  three and labels a Pending latest verdict `ungraded`; `pkg_check gates` prints the
+  split.
+
+### Changed
+
+- **The relocate action text** (§3) states what the server verified (the
+  byte-identical copy in `data-v3-backup/`) and what it did NOT (that directory's
+  durability — operators commonly gitignore it; if `data/` is git-tracked the file
+  also lives in history; check `git log -- data/<file>` before confirming). Premise
+  corrected in the record: tamheed generates no `.gitignore` — the field
+  repository's ignore rule and its comment are its own; the server never calls git.
+- Teaching: the G-REL and adopt notes, the note span's cheat-sheet line, the
+  governance/traceability/quality-gates/catalog references, the governance template
+  (lint-11 needle `retire`), SECURITY.md's trust model (nothing leaves the store
+  silently), both READMEs, SKILL.md, docs/entities + methodology, and four stock
+  prompts: `integrity-check` (the three buckets by id; the retype remedy as a
+  recommendation; a positive control chosen from OUTSIDE the swept set — the field
+  register's `LL-053`), `progress-sync`, `register-liveness`, and the prompts README
+  (the retire rule + the remedy-must-exist rule). Roster appends for all four.
+- Doctrine (plans/README): a remedy named by a gate note, an advisory, a refusal
+  text, or a release note must be an operation the server exposes; the lab beat
+  performs every named remedy end to end.
+- Lab beat 13 (a real agent): the residue written and retired, both refusals
+  verbatim, the G-REL note read, the placeholder verdict counted `ungraded` (the
+  bucket keys on the verdict, not on empty columns), the fixture re-recorded; three
+  new lab assertions. Tests: the retire battery, the three-bucket split (superseded
+  history and retired ACs excluded), the relocate strings, the export label, and
+  the findings_19 §3 culprit text now pinned for a trace-edge item (the field had
+  carried that verification unverified for four releases).
+
+### Not changed, stated
+
+- The field register's `LL-025` (a plan row faithfully quoting a clause a ruling
+  superseded) was measured: zero live hits on the field package — every such edge
+  belongs to a Merged scope change — and the lesson itself says nothing mechanical
+  can see it. No advisory (a zero-hit rule is the hollow-pass class).
+
 ## [4.5.0] - 2026-09-06
 
 **MINOR — the query surface with depth, `amends`, `package_verify`, and the note

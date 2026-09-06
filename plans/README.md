@@ -69,6 +69,7 @@ two-step escape route (tamheed 3.2.1, then v3->v4 via `package_migrate`).
 | 038 | findings_21: the append-only gate trap — G-COMPLETE exempts the journal report columns (the C14 reasoning extended; the untested evidence twin test-pinned) + skips Superseded/Obsolete rows (the DA trap-class completion: supersession must actually repair), every failure names its `matched` token, and `corrects` gains its first consumer (the review.html corrected-entries fold) | B34 | P2 | S | findings_21 (C42, the program's reproduction-quality bar) → two interview forks + DA round | DONE — executed 2026-08-20, v4.4.2 |
 | 037 | findings_20: the honest registry-sync report — `columns_added` computed per-run (stored-keys-vs-DDL, sound by CANONICAL rule 4) + the reworded note (incl. the audit-journal row the old note was silent about) + the six-surface "pure append" sweep | B33 | P3 | XS | findings_20 (C41) → one interview fork + DA round | DONE — executed 2026-08-16, v4.4.1 |
 | 039 | findings_22 + the ACMP lessons: `entity_query` depth (`after_id` keyset, `ids`, `search` — the tool no longer pushes agents onto the files), the `amends` relation (migration 004) with Merged-last merge semantics, `package_verify` + the server-only `integrity-verified` event (and all four server-witnessed kinds refused from callers — the field data held five hand-written ones), `narrated_ids`, the `.converted` leftover relocated per file on BOTH migrate paths (the DA round's identical-copy catch; the advisor's v3-confirm catch), the `lessons-note-budget` advisory (57 note lines in the field), four doctrine lines from LL-061/042/040/004, the full documentation sweep, lab beat 12 | B35 | P1 | L | findings_22 (C43) + the 62-row ACMP lessons register → three interview rounds (10 forks) + advisor + DA round | DONE — executed 2026-09-06, v4.5.0 |
+| 040 | findings_23: the edge retire (`retire: true` on the trace-edge item — the composite PK left `amends` sitting beside the `relates_to` it was meant to replace, and the G-REL note, the adopt note AND the maintainer's own 4.5.0 note named a "delete + re-add" the server could not perform; hard delete, journaled `correction` row, no operator gate — both DA forks on the maintainer's words), the honest audit split (each active AC's LATEST verdict in three buckets — the old all-rows count reported placeholders the package had replaced; the DA round corrected the plan's own "ungraded: 12" to the measured 142/0/0), the relocate wording (what was verified vs not; premise corrected — tamheed generates no gitignore), the remedy-must-exist doctrine, lab beat 13 | B36 | P2 | M | findings_23 (C44) → four interview forks + advisor + DA round (two more forks) | DONE — executed 2026-09-06, v4.6.0 |
 
 Index note: plan 006's file points at `plans/deliverables-review.md` for the approved
 artifact set -- that review is the v2 input contract and remains frozen alongside it.
@@ -144,6 +145,14 @@ artifact set -- that review is the v2 input contract and remains frozen alongsid
   the identical-copy collision and the registry-current no-op), the
   `lessons-note-budget` advisory, four doctrine lines from the field register, and
   a full documentation sweep.
+- **2026-09-06 (later)** — findings_23 (C44), written from USING 4.5.0 for the
+  close-out: every findings_22 section verified closed by observation, plus the gap
+  `amends` created by arriving alone (no edge delete — and three notes, the
+  maintainer's own included, naming one), the C7 counter pointed at every verdict
+  row ever written, and an approval string naming the weaker safety net →
+  **v4.6.0 (040)**: `retire: true` (hard delete, journaled, no gate), the
+  three-bucket audit split over each active AC's latest verdict, the honest
+  relocate wording, the remedy-must-exist doctrine below, lab beat 13.
 
 ## Dependency notes
 
@@ -185,6 +194,12 @@ Markdown · ASM-D Python floor rises to the MCP SDK's (≥3.10).
 > by the v4.0.0 v1-retirement (plan 031, ADR-0002) -- the two-step escape route via
 > tamheed 3.2.1 is the surviving promise. Nothing else in this list has been superseded.
 
+> **Doctrine added 2026-09-06 (plan 040, findings_23 §1):** a remedy named by a gate
+> note, an advisory, a refusal text, or a release note must be an operation the server
+> exposes; the lab beat performs every named remedy end to end. Recorded because the
+> maintainer's own 4.5.0 upgrade note told the field to "delete + re-add" an edge the
+> server could not delete — the findings_21 §1 shape, from the maintainer's hand.
+
 ## Findings considered and rejected (do not re-audit)
 
 - `gate_set` re-reads `manifest.json` once after `load_package` — a single small-file re-read,
@@ -202,6 +217,11 @@ Markdown · ASM-D Python floor rises to the MCP SDK's (≥3.10).
   decision, 2026-07-11) — old plan 005 replaced by `005-b1-bootstrap-tamheed-repo.md`.
 
 ## Future options recorded (not planned)
+
+- **An AC born on an already-Implemented slice** (lab beat 13's observation, 2026-09-06):
+  no guard objects today. Recorded as a question, not a defect — a closed slice
+  legitimately gains ACs through a scope change, so any guard would have to require the
+  `SC-` linkage first. Revisit if the field reports one landing without a scope change.
 
 - **`progress_redact`** (findings_21 remedy 3, deferred 2026-08-20 on the
   maintainer's words): a sanctioned, operator-guarded in-place journal rewrite for

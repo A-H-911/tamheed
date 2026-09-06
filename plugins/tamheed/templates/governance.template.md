@@ -59,7 +59,10 @@ Draft → Proposed → Approved → Implemented
   `supersedes`, `blocked_by`, the scope-delta kinds `scope_adds`/`scope_modifies`/`scope_removes`,
   `amends` (a scope change → the `DEC-`/`ADR-` ruling it carves an exception out of — a `DEC-`
   merges by full-row upsert, an `ADR-` by supersession), and `learned_from` (a lesson names what
-  taught it); `relates_to` is the documented untyped escape hatch), not only prose.
+  taught it); `relates_to` is the documented untyped escape hatch), not only prose. Edges are
+  keyed (from, to, relation): a wrong edge is retired (`retire: true` on the trace-edge item,
+  journaled by the server) and the correct one written in the same batch — a new relation
+  never replaces an old one by itself.
 - Every `FR-/NFR-` must be reachable in the traceability matrix to >=1 decision, task, and test, and (if
   behavior-bearing) an acceptance criterion. Unlinked requirements are a gate failure.
 - References are entity IDs, not file paths — the store resolves them; there are no relative links to

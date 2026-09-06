@@ -15,7 +15,7 @@ description: >-
 
 # Tamheed
 
-This skill documents tamheed **v4.5.0** (the version travels with the bundle;
+This skill documents tamheed **v4.6.0** (the version travels with the bundle;
 check.py lint 8 keeps this line current).
 
 Tamheed turns a project description into an **execution-ready handoff package**: the planning, research,
@@ -217,7 +217,9 @@ three-axis (ADR-0001): `lifecycle_status` (Draft → Proposed → Approved / Rej
 Implemented, Superseded → Obsolete), `verdict` (Met/Partial/Not-met/Pending for audits; Validated/Invalidated/Inconclusive/Pending for experiments/POCs; Pass/Fail/Pending for tests), and `disposition`
 (superseded / accepted-with-deviation / void — always with the deciding decision ref). A *proposed*
 decision is never rendered as *approved*. Traceability is the `trace_edges` table queried live
-(`trace_query`), and the matrix is a derived view.
+(`trace_query`), and the matrix is a derived view. Edges are keyed (from, to, relation): a wrong
+edge is retired (`retire: true` on the trace-edge item — deleted, journaled by the server) and
+the correct one written in the same batch; a new relation never replaces an old one by itself (v4.6).
 
 ## State, resumption, and updates
 

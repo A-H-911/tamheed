@@ -851,6 +851,43 @@
           ],
           "expect_exit": 0,
           "expect_substring": "verified=True"
+        },
+        {
+          "check": "A wrong edge was RETIRED through the typed operation and the server journaled it (plan 040: the correction row with actor system:edge-retire).",
+          "cmd": [
+            "python",
+            "evals/pkg_check.py",
+            "grep-present",
+            "{case_dir}/package",
+            "EDGE RETIRED: SC-002 -relates_to-> DEC-001",
+            "--tables",
+            "progress_entries"
+          ],
+          "expect_exit": 0
+        },
+        {
+          "check": "No relates_to residue stands beside the amends edge (plan 040: the retype completed — retire + the typed edge, one edge left).",
+          "cmd": [
+            "python",
+            "evals/pkg_check.py",
+            "grep-absent",
+            "{case_dir}/package",
+            "\"from_id\":\"SC-002\",\"to_id\":\"DEC-001\",\"relation\":\"relates_to\"",
+            "--tables",
+            "trace_edges"
+          ],
+          "expect_exit": 0
+        },
+        {
+          "check": "The audit split reads each active AC's latest verdict in three buckets (plan 040: the Pending placeholder on the export AC is ungraded, nothing is narrated).",
+          "cmd": [
+            "python",
+            "evals/pkg_check.py",
+            "gates",
+            "{case_dir}/package"
+          ],
+          "expect_exit": 0,
+          "expect_substring": "narrated:0/ungraded:1"
         }
       ],
       "rubric": [

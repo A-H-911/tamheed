@@ -222,8 +222,8 @@ human-intervention point.
 - **In:** the whole package. **Do:** `gate_run` **and** `readiness_check("package")` — both mandatory;
   `package_verify` (the canonical round-trip, per file) before the operator commits the verdict;
   summarize gate results, open items (accepted-open
-  `OQ-`s), residual risks (still-`open` risk_states), evidenced-vs-narrated verdict counts (the
-  narrated ones by id), and a go/no-go. **Out:** the readiness verdict (rendered from the gate report + `v_readiness`).
+  `OQ-`s), residual risks (still-`open` risk_states), the verdict split over each active AC's
+  latest verdict — evidenced / narrated / ungraded (the narrated and ungraded ones by id), and a go/no-go. **Out:** the readiness verdict (rendered from the gate report + `v_readiness`).
 - **Enter:** Stages 19–20 done. **Exit:** verdict stated. **Validate:** no critical gate failing; every
   `OQ-` closed or accepted-open. **Fail:** critical gap → not ready; list what's missing.
 - **Human:** ✅ final go/no-go. **Writes:** none (derived).

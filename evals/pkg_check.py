@@ -47,6 +47,9 @@ def cmd_gates(args) -> int:
     for gate, info in report["gates"].items():
         if gate.startswith("G-"):
             print(f"{gate}={info['status']}")
+    ev = report["gates"]["audit_evidence"]   # plan 040: the three-bucket audit split
+    print(f"audit_evidence=evidenced:{ev['evidenced']}/narrated:{ev['narrated']}"
+          f"/ungraded:{ev['ungraded']}")
     return 0
 
 

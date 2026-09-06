@@ -32,7 +32,12 @@ current.
    defect / decision / risk / slice / wbs-item / progress-entry that taught it), plus the
    scope-delta kinds (`scope_adds`/`scope_modifies`/`scope_removes` — plan rows only) and
    `amends` (a scope change → the `DEC-`/`ADR-` ruling it carves an exception out of or
-   re-scopes; v4.5); `relates_to` is the documented untyped escape hatch. There is no after-the-fact "collect the links" pass. Promotion links are
+   re-scopes; v4.5); `relates_to` is the documented untyped escape hatch. There is no after-the-fact "collect the links" pass.
+   Edges are keyed `(from_id, to_id, relation)`: writing a new relation between a pair never
+   replaces an old one — a wrong edge is RETIRED (`retire: true` on the trace-edge item; the
+   triple is deleted, the relation rule is not consulted, and the server journals it as a
+   `correction` row in the same transaction — v4.6, findings_23 §1) and the corrected edge is
+   written in the same batch. Retire a wrong edge only, never to make a gate pass. Promotion links are
    **columns**, not edges: `lessons.promoted_to` → the `SKL-` skill it was distilled into, the same
    idiom as `decisions.promoted_to` → the ADR.
 2. `G-TRACE` fails on any MVP requirement with a gap in a required column — fix by adding the missing

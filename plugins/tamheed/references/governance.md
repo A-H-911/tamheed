@@ -176,7 +176,11 @@ unfinished-marker failure. The `clarifications-open` advisory counts live marker
   exception out of a RULING or re-scopes one — scope-change → decision | adr only; a
   ruling is not a plan row, so the scope_* deltas never point at one),
   not only in prose. `relates_to` is the documented untyped escape hatch. Endpoint types are
-  enforced at write time and by the **blocking G-REL gate**.
+  enforced at write time and by the **blocking G-REL gate**. Edges are keyed (from, to,
+  relation), so a new relation never replaces an old one — a wrong edge is RETIRED
+  (`retire: true` on the trace-edge item: the triple is deleted, the relation rule is not
+  consulted, and the server journals a `correction` row naming it — v4.6) and the correct
+  edge written in the same batch. Retire a wrong edge only, never to make a gate pass.
 - Every MVP `FR-/NFR-` must be reachable to ≥1 decision, ≥1 work item, and ≥1 test (G-TRACE);
   a requirement with zero edges trips the `requirements-wired` advisory.
 - Waivers and gates point at entities via their own `applies_to` column, not edges.

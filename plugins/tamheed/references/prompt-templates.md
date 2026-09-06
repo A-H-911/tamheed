@@ -68,7 +68,7 @@ prompts plus the folder README — ship in the bundle (`../prompts/`) and are em
 | `replan-deferred.md` | Deferred-work triggers review: SC- first, activate, wire edges, STOP on new scope |
 | `skill-promote.md` | Operator-run promotion interview: cluster Approved lessons → name/trigger/edge-cases/level → operator approves content → write the `SKILL.md` → `SKL-` row + `Promoted` flips (`operator_confirm`) |
 | `register-liveness.md` | Readiness advisories piling up — the amber-list sweep, run on a cadence (incl. `amends` merges, Merged-last, and the note-budget promotion candidates) |
-| `integrity-check.md` | Read-only audit: `package_verify` (the canonical round-trip, foreign files, digest), gates, counts, trace spot-checks, narrated verdicts by id, rulings buried in closed rows, staleness + unbound commits — reads through the tool (`after_id`/`ids`/`search`), never the files |
+| `integrity-check.md` | Read-only audit: `package_verify` (the canonical round-trip, foreign files, digest), gates, counts, trace spot-checks, narrated + ungraded verdicts by id, rulings buried in closed rows, staleness + unbound commits — reads through the tool (`after_id`/`ids`/`search`), never the files |
 | `generate-report.md` | Export + how to read `review.html` (nav, folded tables, freshness) |
 | `loop-iteration.md` | Fully-auto: ONE unattended pass ending in the machine-parseable `ITERATION:` block |
 | `loop-guard.md` | Fully-auto: the stop conditions — scope decisions and forced transitions always need a human |

@@ -5,6 +5,7 @@ all five sections; (b) hostile content — a <script> body, an onerror= attribut
 payload, and a javascript: link — never appears unescaped in the raw HTML; (c)
 determinism — two exports of the same DB state are byte-identical.
 """
+import re
 import shutil
 import sys
 import tempfile
@@ -227,6 +228,22 @@ class ExportHtmlTest(unittest.TestCase):
         self.assertIn("latest-verdict semantics", out)
         self.assertIn("Declared human gates", out)
         self.assertIn("Operator signs off the release", out)
+
+    def test_audit_split_renders_three_buckets_and_labels_pending_ungraded(self):
+        """Plan 040 (findings_23 §2): the header prints evidenced / narrated / ungraded
+        over each active AC's LATEST verdict, and a Pending latest verdict is labelled
+        `ungraded` in the execution table — not `narrated` (nobody graded anything)."""
+        self._open_demo_copy()
+        ac = srv.entity_query("acceptance-criterion", columns=["id"], limit=1)["rows"][0]["id"]
+        ok = srv.audit_record([{"ac_id": ac, "verdict": "Pending", "verified_by": "agent",
+                                "verification_method": "inspection"}])
+        self.assertTrue(ok["ok"], ok)
+        out = self._export()
+        m = re.search(r"Audit evidence: (\d+) evidenced / (\d+) narrated / (\d+) ungraded", out)
+        self.assertIsNotNone(m, "the three-bucket header line")
+        self.assertGreaterEqual(int(m.group(3)), 1)      # the demo's Pending ACs are ungraded
+        self.assertIn("<td>ungraded</td>", out)
+        self.assertNotIn("<td>narrated</td>", out)       # a Pending is never 'narrated'
 
     # -------------------------------------------- plan 018 phase 2 (C18): navigation & scale
 
