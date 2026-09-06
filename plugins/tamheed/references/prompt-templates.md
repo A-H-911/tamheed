@@ -62,7 +62,7 @@ prompts plus the folder README — ship in the bundle (`../prompts/`) and are em
 | `progress-sync.md` | Record completed work: progress entries, bindings, evidenced verdicts, typed scope changes |
 | `defect-triage.md` | A bug surfaced: `DEF-` row BEFORE the fix, then fix/audit/bind/close the loop |
 | `drift-register.md` | Work happened unrecorded: classify everything into DEF-/DW-/SC-first + progress/bindings |
-| `slice-review.md` | Slice completion: audit ACs with evidence, bind commits, `readiness_check("slice")`, stop at the gate |
+| `slice-review.md` | Slice completion: `entity_export` the ACs first (a committed slate quotes the file), audit ACs with evidence, bind commits, `readiness_check("slice")`, stop at the gate |
 | `phase-close.md` | Phase exit: phase-scope readiness blocking-clean, milestones, human GATE- confirmations, the guarded transition |
 | `release-close-out.md` | Package-scope readiness blocking-clean, human gates recorded, export, notes, close |
 | `replan-deferred.md` | Deferred-work triggers review: SC- first, activate, wire edges, STOP on new scope |

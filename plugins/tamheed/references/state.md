@@ -22,7 +22,8 @@ ingestion in v4.0.0 — the store IS the state, and nothing reads or writes that
 3. Continue from the last incomplete stage; never re-ask settled questions.
 
 Human edits between sessions are not a reconciliation problem by construction: humans review through
-the rendered surfaces and change things through the tools. A hand-edit to `data/*.jsonl` at rest is
+the rendered surfaces and change things through the tools (a committed script that quotes the
+store reads an `entity_export` file, v4.7). A hand-edit to `data/*.jsonl` at rest is
 legal (text-canonical storage is the point) and is validated on next load — FK/CHECK violations fail
 loud, nothing is silently repaired.
 

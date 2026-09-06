@@ -11,7 +11,7 @@
 <p align="center"><strong>Turn a project description into a validated, traceable, execution-ready planning &amp; handoff package for Claude Code to implement.</strong></p>
 
 <p align="center">
-  <em>Claude Code plugin + MCP-backed agent skill &middot; v4.6.0</em> &middot;
+  <em>Claude Code plugin + MCP-backed agent skill &middot; v4.7.0</em> &middot;
   <a href="#license">MIT</a> &middot;
   <a href="docs/install.md">Install</a> &middot;
   <a href="docs/migrate-from-keystone.md">Migrate from Keystone</a> &middot;
@@ -303,7 +303,7 @@ that row-level counts cannot see.
 |---|---|
 | `server_info()` | Version + resolved package root (orientation) |
 | `package_create / package_open / package_close` | Lifecycle + single-writer lock |
-| `entity_upsert(entities[])` | Batch writes — full rows, per-item verdicts |
+| `entity_upsert(entities[])` | Batch writes — full rows, per-item verdicts; `expect_unchanged` refuses transport drift on a status flip; `retire` removes a wrong edge |
 | `entity_query(type, …)` | Targeted rows + `total`; `after_id` pages, `ids` fetches a known set, `search` sweeps by keyword |
 | `trace_query(entity_id, …)` | Typed traceability links |
 | `gate_run()` | Mechanical quality-gate verdict incl. the blocking G-REL relation gate |
@@ -311,6 +311,7 @@ that row-level counts cannot see.
 | `progress_update / audit_record / work_bind` | The execution-tracking loop |
 | `package_migrate / package_adopt` | Staged in-place v3→v4 conversion / brownfield onboarding |
 | `package_verify(name?, record?)` | The canonical round-trip as a tool — per-file byte-equality, foreign files, a citable digest |
+| `entity_export(path, tool?, args?)` | A read tool's WHOLE result as a digest-stamped JSON file under `exports/` — the sanctioned read for committed scripts that quote the store |
 | `handoff_emit / export_html` | Executor wiring + the HTML review surface |
 
 Full signatures and semantics: [`plugins/tamheed/server/README.md`](plugins/tamheed/server/README.md).
@@ -340,12 +341,12 @@ flowchart LR
 
     subgraph SRV["Tamheed MCP server"]
         direction TB
-        T["entity_upsert · entity_query · trace_query<br/>gate_run · handoff_emit · export_html"]
+        T["entity_upsert · entity_query · trace_query<br/>gate_run · handoff_emit · export_html · entity_export"]
         DB[("package store<br/>SQLite runtime ⇄ canonical JSONL")]
         T --> DB
     end
 
-    DB --> OUT["execution-ready package<br/>data/*.jsonl + prompts/ + review.html"]
+    DB --> OUT["execution-ready package<br/>data/*.jsonl + prompts/ + review.html<br/>+ exports/ for committed scripts"]
     OUT --> EXEC["Claude Code executes"]
     EXEC -- "progress_update · audit_record · work_bind" --> T
 
@@ -439,7 +440,7 @@ See [`CONTRIBUTING.md`](CONTRIBUTING.md) and
 
 ## Maturity
 
-**v4.x** (currently v4.6.0). The methodology (22 stages), the re-baselined relational store (plan 031:
+**v4.x** (currently v4.7.0). The methodology (22 stages), the re-baselined relational store (plan 031:
 claimed-vs-verified `Review`, evidence-chained verdicts, `WVR-` waivers, severity-thresholded blocking,
 typed progress events, drift-delta scope changes, blocking G-REL, `[NEEDS-CLARIFICATION]` markers), the
 MCP tool surface, the canonical serialization, and the in-place migration path (v2/v3

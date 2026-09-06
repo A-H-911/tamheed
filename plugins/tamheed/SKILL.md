@@ -15,7 +15,7 @@ description: >-
 
 # Tamheed
 
-This skill documents tamheed **v4.6.0** (the version travels with the bundle;
+This skill documents tamheed **v4.7.0** (the version travels with the bundle;
 check.py lint 8 keeps this line current).
 
 Tamheed turns a project description into an **execution-ready handoff package**: the planning, research,
@@ -130,7 +130,12 @@ Do not skip a gate to look finished. If an exit criterion fails, stay in the sta
 ## How to run each phase (MCP tools per stage)
 
 Every write goes through the `tamheed` MCP tools — never by editing package files directly.
-Batch related writes into one `entity_upsert` call (one transaction, per-item verdicts).
+Batch related writes into one `entity_upsert` call (one transaction, per-item verdicts). Reads
+go through the tools too; a committed script that must QUOTE the store byte-exact (a review
+slate, a docket) reads an `entity_export` file the tool wrote under `<package>/exports/` —
+never `data/*.jsonl`, never a pasted display (v4.7). A full-row update that only means to
+flip a status names the columns it did not mean to change (`expect_unchanged`) and the
+store refuses transport drift.
 
 **Intake & normalization (stages 1–4).** `package_create(name, title, profile, mode)` opens the store.
 Extract requirements **verbatim with source spans**; `entity_upsert` them as `requirement` rows with

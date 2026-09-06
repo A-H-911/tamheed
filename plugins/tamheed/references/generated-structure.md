@@ -22,6 +22,9 @@ Markdown registers.
 │   ├── <kickoff>.md               # project-authored (Stage 20; any non-stock filename)
 │   └── <15 stock scenarios>.md    # + README.md — the bundled library ({package} substituted), seeded at create
 ├── review.html (+ csv/)           # the human review surface, exported on demand
+├── exports/                       # v4.7: entity_export files — a read tool's whole result, digest-
+│   └── <name>.json                #   stamped, deterministic; the sanctioned read for committed scripts
+│                                  #   (derived, regenerable; commit or ignore — never under data/)
 └── (target project root)          # handoff_emit writes there (wiring only, no prompt copies):
     ├── .mcp.json                  #   executor-side MCP config → the tamheed server
     └── CLAUDE.md                  #   the marker-managed operating note (obligations table)

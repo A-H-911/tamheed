@@ -371,6 +371,24 @@ def _columns(table: str) -> list[str]:
     return [r[1] for r in _CURRENT.conn.execute(f"PRAGMA table_info({table})")]
 
 
+def _same_value(incoming, stored) -> bool:
+    """expect_unchanged's equality (plan 041): JSON columns compare as PARSED values
+    (a caller-supplied JSON string may differ in spacing from the bound form);
+    everything else by equality (SQLite affinity makes 1 / True / 1 agree; NULL = None)."""
+    if isinstance(incoming, (dict, list)):
+        try:
+            return incoming == (json.loads(stored) if isinstance(stored, str) else stored)
+        except ValueError:
+            return False
+    if isinstance(incoming, str) and isinstance(stored, str) and incoming != stored:
+        try:
+            a, b = json.loads(incoming), json.loads(stored)
+        except ValueError:
+            return False
+        return isinstance(a, (dict, list)) and a == b
+    return incoming == stored
+
+
 def _next_id(prefix: str, table: str, width: int = 3) -> str:
     # C31 (A1): MAX over the parsed NUMBER, never `ORDER BY id DESC` — text order agrees
     # with numeric order only below 1000 ("PE-999" > "PE-1000" as text), so the old form
@@ -630,9 +648,7 @@ def package_verify(name: str | None = None, record: bool = False) -> dict:
     on_disk = {p.name: p.read_bytes() for p in sorted(data.glob("*.jsonl"))}
     foreign = sorted(p.name for p in data.iterdir()
                      if p.name not in on_disk and p.name != store.LOCK_NAME)
-    digest = hashlib.sha256("\n".join(
-        f"{n} {hashlib.sha256(b).hexdigest()}" for n, b in sorted(on_disk.items())
-    ).encode("utf-8")).hexdigest()
+    digest = _canonical_digest(on_disk)
     report = {"ok": True, "package": name, "files": len(on_disk), "foreign": foreign,
               "digest": digest, "recorded": None}
     try:
@@ -651,10 +667,7 @@ def package_verify(name: str | None = None, record: bool = False) -> dict:
                    if on_disk.get(n) != dumped.get(n))
     memory_matches_disk = None
     if _CURRENT is not None:
-        with tempfile.TemporaryDirectory() as tmp:
-            store.dump(_CURRENT.conn, tmp)
-            in_memory = {p.name: p.read_bytes() for p in Path(tmp).glob("*.jsonl")}
-        memory_matches_disk = in_memory == on_disk
+        memory_matches_disk = _dump_open_connection() == on_disk
     verified = not dirty and memory_matches_disk is not False
     report.update({"verified": verified, "loadable": True, "dirty": dirty,
                    "memory_matches_disk": memory_matches_disk})
@@ -679,6 +692,119 @@ def package_verify(name: str | None = None, record: bool = False) -> dict:
     return report
 
 
+def _canonical_digest(files: dict[str, bytes]) -> str:
+    """sha256 over the sorted (file name, sha256(bytes)) pairs of canonical files — the
+    fingerprint package_verify reports and entity_export stamps (plan 041)."""
+    import hashlib
+    return hashlib.sha256("\n".join(
+        f"{n} {hashlib.sha256(b).hexdigest()}" for n, b in sorted(files.items())
+    ).encode("utf-8")).hexdigest()
+
+
+def _dump_open_connection() -> dict[str, bytes]:
+    """The OPEN connection's canonical form (dumped to a scratch dir) — the state the
+    read tools actually answer from, which is what package_verify compares to disk and
+    what entity_export digests."""
+    import tempfile
+    with tempfile.TemporaryDirectory() as tmp:
+        store.dump(_CURRENT.conn, tmp)
+        return {p.name: p.read_bytes() for p in Path(tmp).glob("*.jsonl")}
+
+
+# The read-only tool surface an export may run (plan 041, findings_24 §1): none of these
+# reaches _commit(); package_verify's one write key (record) is refused at export.
+_READ_TOOLS = ("entity_query", "trace_query", "gate_run", "readiness_check",
+               "package_verify", "server_info")
+_EXPORT_HEAD = '{"tamheed_export"'
+
+
+def entity_export(path: str, tool: str = "entity_query", args: dict | None = None) -> dict:
+    """Write a read-only tool's WHOLE result to a JSON file a committed script can quote
+    from (findings_24 §1, plan 041). A script that must quote the store byte-exact —
+    a review slate, a docket, an evidence page — reads this file: never `data/*.jsonl`
+    (the canonical form is not the read path), never a pasted display (the hand is
+    the untrusted transport). "All package reads go through the tools" stays true —
+    the tool wrote the file.
+
+    `tool` is one of entity_query, trace_query, gate_run, readiness_check,
+    package_verify, server_info (read-only; anything else is refused; package_verify
+    with record=true is refused — an export never writes into the package). `args`
+    are that tool's own arguments, validated by it: an inner error comes back
+    unchanged and NOTHING is written.
+
+    The file has NO client payload cap: to export a whole family in one file pass a
+    `limit` above `total` — the result reports `count`, `total` and `partial`
+    (count < total) so a short export is loud, and the result carries metadata only,
+    never the rows. The envelope is {"tamheed_export": {version, package, tool, args,
+    digest, memory_matches_disk}, "result": ...}: `digest` fingerprints the OPEN
+    connection's canonical form — the state the rows came from — and the file is
+    deterministic (same state + same args = byte-identical; no timestamp), so the
+    slate can cite the digest and the operator can check currency against a fresh
+    package_verify(). Export immediately before generating; never reuse across
+    sessions.
+
+    `path`: absolute, or relative to <package>/exports/ (created on demand). Refused
+    under <package>/data/ (resolved first — no traversal), for a directory, and for
+    an existing file that is not a tamheed export (a caller-named path must never
+    clobber a project file); an existing export is overwritten (derived output)."""
+    if guard := _need_open():
+        return guard
+    if tool not in _READ_TOOLS:
+        return _err(f"entity_export runs read-only tools only — one of:"
+                    f" {', '.join(_READ_TOOLS)} (got {tool!r})")
+    if args is not None and not isinstance(args, dict):
+        return _err("args must be an object of the tool's keyword arguments")
+    args = dict(args or {})
+    if tool == "package_verify" and args.get("record"):
+        return _err("an export never writes into the package — package_verify's"
+                    " record=true is refused here; verify and record in-session")
+    pkg_dir = (PACKAGE_ROOT / _CURRENT_NAME).resolve()
+    target = Path(path)
+    if not target.is_absolute():
+        target = pkg_dir / "exports" / target
+    target = target.resolve()
+    data_dir = (pkg_dir / "data").resolve()
+    if target == data_dir or data_dir in target.parents:
+        return _err(f"refusing to write inside the canonical data/ directory ({target})"
+                    " — an export is a derived file; data/ holds only the store")
+    if target.is_dir():
+        return _err(f"{target} is a directory — name the file to write")
+    if target.exists():
+        with open(target, "rb") as fh:
+            head = b"".join(fh.read(64).split())        # whitespace-insensitive head
+        if not head.startswith(_EXPORT_HEAD.encode("utf-8")):
+            return _err(f"refusing to overwrite {target}: it is not a tamheed export"
+                        " (an export only ever replaces an export)")
+    try:
+        result = TOOLS[tool][0](**args)
+    except TypeError as exc:  # a wrong keyword for that tool
+        return _err(f"{tool} rejected its arguments: {exc}")
+    if not isinstance(result, dict) or not result.get("ok", True):
+        return result if isinstance(result, dict) else _err("tool returned no result")
+    in_memory = _dump_open_connection()
+    on_disk = {p.name: p.read_bytes()
+               for p in sorted((pkg_dir / "data").glob("*.jsonl"))}
+    envelope = {"tamheed_export": {
+        "version": server_info()["version"], "package": _CURRENT_NAME, "tool": tool,
+        "args": args, "digest": _canonical_digest(in_memory),
+        "memory_matches_disk": in_memory == on_disk},
+        "result": result}
+    text = json.dumps(envelope, ensure_ascii=False, indent=1) + "\n"
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_text(text, encoding="utf-8", newline="\n")
+    out = {"ok": True, "path": str(target), "bytes": len(text.encode("utf-8")),
+           "tool": tool, "digest": envelope["tamheed_export"]["digest"],
+           "memory_matches_disk": envelope["tamheed_export"]["memory_matches_disk"]}
+    if "count" in result and "total" in result:
+        out.update({"count": result["count"], "total": result["total"],
+                    "partial": result["count"] < result["total"]})
+        if out["partial"]:
+            out["note"] = (f"PARTIAL: {result['count']} of {result['total']} rows —"
+                           " the file has no payload cap; pass a limit above total"
+                           " (or page with after_id) to export the whole family")
+    return out
+
+
 # --------------------------------------------------------------------------- entity tools
 
 def entity_upsert(entities: list[dict]) -> dict:
@@ -697,6 +823,14 @@ def entity_upsert(entities: list[dict]) -> dict:
     and an absent triple is an error (an attempt is not a write). Retype in ONE batch:
     the retire item plus the corrected edge. Retire a WRONG edge only — never to
     make a gate pass.
+    A full-row update that only means to flip a status names the columns it did NOT
+    mean to change: {'type': ..., 'id': ..., ..., 'expect_unchanged': ['title', ...]}
+    (plan 041, the field's LL-063 — a paragraph lost mid-paste with ok: true). The
+    server compares every named column to the stored row and refuses the item naming
+    any that differ; an OMITTED named column counts as changed (the guard protects a
+    FULL-row write); JSON columns compare as parsed values; id-keyed rows only, never
+    the append-only journal. It proves the write alters nothing you named — not that
+    you saw the row correctly: re-fetch through entity_query and paste that.
     Entity prose is screened by G-COMPLETE's placeholder scan (TODO/TBD/FIXME/
     {{...}}): to QUOTE such a token in prose, wrap it in backticks — the code-span
     exemption (findings_21: the note about the rule must not break the rule).
@@ -724,8 +858,50 @@ def entity_upsert(entities: list[dict]) -> dict:
         force = bool(item.get("force"))
         operator_confirm = bool(item.get("operator_confirm"))
         retire = bool(item.get("retire"))
+        expect_unchanged = item.get("expect_unchanged")
         cols = {k: v for k, v in item.items()
-                if k not in ("type", "force", "operator_confirm", "retire")}
+                if k not in ("type", "force", "operator_confirm", "retire",
+                             "expect_unchanged")}
+        if expect_unchanged is not None:
+            # Plan 041 (findings_24 / the field's LL-063): a full-row write that only
+            # means to flip a status names the columns it did NOT mean to change; the
+            # server compares them to the stored row and refuses drift — the
+            # immutability trigger's self-verifying property, opt-in, for the long-text
+            # registers that have no trigger. It proves the WRITE alters nothing named,
+            # not that the caller saw the row correctly.
+            err = None
+            if (not isinstance(expect_unchanged, list) or not expect_unchanged
+                    or not all(isinstance(c, str) for c in expect_unchanged)):
+                err = "expect_unchanged must be a non-empty list of column names"
+            elif table in _NON_ID_TABLES:
+                err = f"expect_unchanged guards id-keyed rows only (not {etype})"
+            elif etype in ("progress-entry", "audit-verdict"):
+                err = "expect_unchanged: journal rows are never updated (append-only)"
+            elif not cols.get("id"):
+                err = "expect_unchanged needs the item's id"
+            elif bad := sorted(set(expect_unchanged) - set(_columns(table))):
+                err = f"expect_unchanged names unknown columns for {etype}: {bad}"
+            else:
+                stored = conn.execute(
+                    f"SELECT {', '.join(expect_unchanged)} FROM {table} WHERE id = ?",
+                    (cols["id"],)).fetchone()
+                if stored is None:
+                    err = (f"{cols['id']}: no stored row to compare — expect_unchanged"
+                           " guards an UPDATE")
+                else:
+                    drifted = [c for c, was in zip(expect_unchanged, stored)
+                               if not _same_value(cols.get(c), was)]
+                    if drifted:
+                        err = (f"{cols['id']}: expect_unchanged — {', '.join(drifted)}"
+                               " differ(s) from the stored row (an omitted column"
+                               " counts as changed): the transport altered the"
+                               " value; re-fetch the row through entity_query and"
+                               " paste that")
+            if err:
+                results.append({"index": i, "ok": False, "id": cols.get("id"),
+                                "error": err})
+                failed = True
+                continue
         if retire:
             # Plan 040 (findings_23 §1): the only agent-initiated removal of store
             # content. Exactly the triple, no wildcard, the relation rule NOT
@@ -2197,7 +2373,10 @@ def handoff_emit(target_dir: str, subdir: str = "handoff", force: bool = False,
         "FLUSH `data/*.jsonl` AFTER the commit they record, so the tree is dirty again the "
         "moment you finish recording: run `git status --porcelain -uall` immediately "
         "before ANY branch operation — never a memory of having committed. "
-        f"{server_line} All package reads/writes go through the `tamheed` MCP tools; "
+        f"{server_line} All package reads/writes go through the `tamheed` MCP tools — a "
+        "committed script that must QUOTE the store (a review slate, a docket) reads an "
+        "`entity_export` file the tool wrote under `exports/`, never `data/*.jsonl` and "
+        "never a pasted display; "
         f"ready-made task prompts live in `{_CURRENT_NAME}/prompts/` — start with "
         f"`{_CURRENT_NAME}/prompts/README.md`, the operator guide (which prompt for "
         f"which situation, semi-auto vs fully-auto); the human review surface is "
@@ -2251,8 +2430,13 @@ def handoff_emit(target_dir: str, subdir: str = "handoff", force: bool = False,
         " keyword-sweep via search)\n"
         "- `trace_query(entity_id, direction: out|in|both, relation?)` — typed links\n"
         "- `entity_upsert(entities=[{type, id, ...}])` — FULL rows, even for updates;"
+        " `expect_unchanged: [cols]` on an item refuses the write if those columns"
+        " differ from the stored row (a long-row status flip is self-verifying);"
         " `{type: trace-edge, from_id, to_id, relation, retire: true}` removes that"
         " edge (journaled — retype in ONE batch: retire + the corrected edge)\n"
+        "- `entity_export(path, tool?, args?)` — write a read tool's WHOLE result to"
+        " `<package>/exports/<path>` (digest-stamped, deterministic) for a committed"
+        " script to quote from; pass a limit above total for a whole family\n"
         "- `gate_run()` — mechanical gate verdict · `readiness_check(scope, id?)` —"
         " is it actually DONE (waivers honored, Review counts open)\n"
         "- `export_html()` — refresh review.html · `server_info()` — version + root\n"
@@ -2695,6 +2879,9 @@ TOOLS = {
     "package_verify": (package_verify,
                        "Canonical round-trip of the on-disk store (byte-equality, foreign"
                        " files, digest); record=true journals the verified digest"),
+    "entity_export": (entity_export,
+                      "Write a read-only tool's whole result to a digest-stamped JSON"
+                      " file under <package>/exports/ for committed scripts to quote"),
 }
 
 _SDK_ERROR = ("tamheed MCP server requires the 'mcp' SDK (Python >=3.10): launch with"

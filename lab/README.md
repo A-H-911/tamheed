@@ -24,7 +24,8 @@ The scripted scenario is `scenario.md`. The resulting package lives at
 cannot be byte-deterministic, so it is validated by `gate_run` + `readiness_check` (the
 eval runner's checks), never byte-compared like the goldens. Later releases add
 **continuation beats** (10: lessons, 11: promotion, 12: paging + `amends` + `package_verify`
-+ the server-only refusal, 13: the edge retire + the three-bucket audit split) run as
++ the server-only refusal, 13: the edge retire + the three-bucket audit split, 14: the
+`entity_export` read for committed scripts + the paste guard) run as
 incremental real-agent sessions against the recorded package — the fixture is regenerated
 by continuation, not from scratch.
 

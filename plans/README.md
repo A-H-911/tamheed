@@ -70,6 +70,7 @@ two-step escape route (tamheed 3.2.1, then v3->v4 via `package_migrate`).
 | 037 | findings_20: the honest registry-sync report — `columns_added` computed per-run (stored-keys-vs-DDL, sound by CANONICAL rule 4) + the reworded note (incl. the audit-journal row the old note was silent about) + the six-surface "pure append" sweep | B33 | P3 | XS | findings_20 (C41) → one interview fork + DA round | DONE — executed 2026-08-16, v4.4.1 |
 | 039 | findings_22 + the ACMP lessons: `entity_query` depth (`after_id` keyset, `ids`, `search` — the tool no longer pushes agents onto the files), the `amends` relation (migration 004) with Merged-last merge semantics, `package_verify` + the server-only `integrity-verified` event (and all four server-witnessed kinds refused from callers — the field data held five hand-written ones), `narrated_ids`, the `.converted` leftover relocated per file on BOTH migrate paths (the DA round's identical-copy catch; the advisor's v3-confirm catch), the `lessons-note-budget` advisory (57 note lines in the field), four doctrine lines from LL-061/042/040/004, the full documentation sweep, lab beat 12 | B35 | P1 | L | findings_22 (C43) + the 62-row ACMP lessons register → three interview rounds (10 forks) + advisor + DA round | DONE — executed 2026-09-06, v4.5.0 |
 | 040 | findings_23: the edge retire (`retire: true` on the trace-edge item — the composite PK left `amends` sitting beside the `relates_to` it was meant to replace, and the G-REL note, the adopt note AND the maintainer's own 4.5.0 note named a "delete + re-add" the server could not perform; hard delete, journaled `correction` row, no operator gate — both DA forks on the maintainer's words), the honest audit split (each active AC's LATEST verdict in three buckets — the old all-rows count reported placeholders the package had replaced; the DA round corrected the plan's own "ungraded: 12" to the measured 142/0/0), the relocate wording (what was verified vs not; premise corrected — tamheed generates no gitignore), the remedy-must-exist doctrine, lab beat 13 | B36 | P2 | M | findings_23 (C44) → four interview forks + advisor + DA round (two more forks) | DONE — executed 2026-09-06, v4.6.0 |
+| 041 | findings_24: the sanctioned read for committed scripts — `entity_export` (a read-only tool's WHOLE result to a digest-stamped, deterministic JSON file under `exports/`; the field's slate generators had no route under an MCP-exclusive read rule; the CLI and the lock-free open were offered, the tool chosen so the rule stays literally true), the `expect_unchanged` paste guard (the field's LL-063: a paragraph lost mid-paste with ok:true; opt-in self-verifying full-row writes for the trigger-less registers), the DA round's determinism/overwrite/partial/digest-of-memory catches, lab beat 14 | B37 | P2 | M | findings_24 (C45) → three interview forks + advisor + DA round | DONE — executed 2026-09-06, v4.7.0 |
 
 Index note: plan 006's file points at `plans/deliverables-review.md` for the approved
 artifact set -- that review is the v2 input contract and remains frozen alongside it.
@@ -153,6 +154,13 @@ artifact set -- that review is the v2 input contract and remains frozen alongsid
   **v4.6.0 (040)**: `retire: true` (hard delete, journaled, no gate), the
   three-bucket audit split over each active AC's latest verdict, the honest
   relocate wording, the remedy-must-exist doctrine below, lab beat 13.
+- **2026-09-06 (third)** — findings_24 (C45): one GAP, no defect — under the field's
+  MCP-exclusive read rule its committed slate generators (the scripts that quote every
+  record the operator decides against, byte-exact) had no sanctioned route to the
+  store, and the two ways out were hand-transport (their measured paragraph loss) or a
+  re-implemented protocol per consumer → **v4.7.0 (041)**: `entity_export` (the tool
+  writes the file the script quotes — the rule stays literally true), the
+  `expect_unchanged` paste guard, a read-only CLI recorded as a future option.
 
 ## Dependency notes
 
@@ -217,6 +225,12 @@ Markdown · ASM-D Python floor rises to the MCP SDK's (≥3.10).
   decision, 2026-07-11) — old plan 005 replaced by `005-b1-bootstrap-tamheed-repo.md`.
 
 ## Future options recorded (not planned)
+
+- **A read-only CLI on the server script** (findings_24 §1's alternative shape, declined
+  2026-09-06 on the maintainer's words in favour of `entity_export`): `--read '<json>'`
+  running a read tool over a lock-free `store.load()` snapshot, for consumers that run
+  with NO agent session (CI, a cron). The export tool needs a session to write the
+  file; the first field need for a session-less consumer reopens this.
 
 - **An AC born on an already-Implemented slice** (lab beat 13's observation, 2026-09-06):
   no guard objects today. Recorded as a question, not a defect — a closed slice

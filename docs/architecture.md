@@ -26,7 +26,8 @@ re-implements the methodology. This is enforceable (gate **G-CMD-THIN**); the co
    MCP SERVER     the capability's MECHANICAL HALF (successor of the v1 validator)
                   entity_upsert · entity_query · trace_query · gate_run · handoff_emit ·
                   progress_update · audit_record · work_bind · package_migrate · package_adopt ·
-                  export_html · package_verify — the ONLY write path into a package
+                  export_html · package_verify · entity_export — the ONLY write path into a
+                  package (and the read path: a committed script quotes an exports/ file)
                         │  loads / writes back
                         ▼
    PACKAGE STORE  SQLite runtime (schema-enforced) ⇄ canonical JSONL (data/*.jsonl, committed)
@@ -86,7 +87,14 @@ is open, and a sha256 digest of the canonical files that `record=true` journals 
 (tamper-evidence proper — a hash chain, signatures, an external anchor — is deliberately out of scope).
 The read side matches: `entity_query` pages (`after_id`/`next_after`), fetches known sets (`ids`), and
 sweeps by keyword (`search`), so a register of any size is reachable through the tool and the files
-stay what they are — the canonical form, never the read path.
+stay what they are — the canonical form, never the read path. A committed script that must quote
+the store byte-exact — a review slate, a docket — has the same rule and its own route (v4.7,
+findings_24): **`entity_export`** writes a read tool's whole result to a deterministic,
+digest-stamped JSON file under `<package>/exports/`, and the script quotes from that file; the
+digest names the state the rows came from, so a slate's currency is one `package_verify` away.
+On the write side, `expect_unchanged` lets a full-row status flip name the columns it did not
+mean to change, and the store refuses transport drift (the field's LL-063: a paragraph lost
+mid-paste with `ok: true`).
 
 ## 3. The three actors
 
@@ -113,6 +121,8 @@ sequenceDiagram
     Server-->>Executor: handoff prompts + executor-side .mcp.json + CLAUDE.md note
     Executor->>Server: progress_update · audit_record (evidence refs) · work_bind
     Note over Server: cascade-on-transition: all ACs of a requirement Met ⇒ requirement auto-advances
+    Executor->>Server: entity_export(path, tool, args) — before a review slate is generated
+    Server-->>Executor: exports/<file>.json (whole rows, digest-stamped) — a committed script quotes from it, never from data/
     Operator->>Server: export_html
     Server-->>Operator: review.html — the committed human review surface
     Operator->>Planner: scope change (update mode)

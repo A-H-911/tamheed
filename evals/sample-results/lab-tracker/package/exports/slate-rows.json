@@ -1,0 +1,58 @@
+{
+ "tamheed_export": {
+  "version": "4.7.0",
+  "package": "package",
+  "tool": "entity_query",
+  "args": {
+   "type": "acceptance-criterion",
+   "ids": [
+    "AC-003",
+    "AC-005"
+   ]
+  },
+  "digest": "48e5d2e35cf1ff9a43340f629d07fa21ea5823eab9f3b5f547c6c4cda65a29b3",
+  "memory_matches_disk": true
+ },
+ "result": {
+  "ok": true,
+  "rows": [
+   {
+    "id": "AC-003",
+    "title": "Help text is polished",
+    "statement": "Given tick --help, then the text is typo-free and lists every command.",
+    "requirement_id": "FR-002",
+    "slice_id": "SL-002",
+    "lifecycle_status": "Approved",
+    "disposition": null,
+    "disposition_reason_ref": null,
+    "superseded_by": null,
+    "introduced_in": 1,
+    "retired_in": null,
+    "source_kind": null,
+    "source_span": null,
+    "custom_attributes": null,
+    "last_referenced": null
+   },
+   {
+    "id": "AC-005",
+    "title": "CSV export writes one row per task",
+    "statement": "Given tasks exist in tasks.json, when `export` is run, then a CSV file with one row per task (id, title, due, done) is written beside tasks.json and the command exits 0.",
+    "requirement_id": "FR-007",
+    "slice_id": "SL-002",
+    "lifecycle_status": "Approved",
+    "disposition": null,
+    "disposition_reason_ref": null,
+    "superseded_by": null,
+    "introduced_in": 1,
+    "retired_in": null,
+    "source_kind": null,
+    "source_span": null,
+    "custom_attributes": null,
+    "last_referenced": null
+   }
+  ],
+  "count": 2,
+  "total": 2,
+  "next_after": null
+ }
+}

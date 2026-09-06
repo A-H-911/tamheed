@@ -1,0 +1,67 @@
+{
+ "tamheed_export": {
+  "version": "4.7.0",
+  "package": "package",
+  "tool": "gate_run",
+  "args": {},
+  "digest": "48e5d2e35cf1ff9a43340f629d07fa21ea5823eab9f3b5f547c6c4cda65a29b3",
+  "memory_matches_disk": true
+ },
+ "result": {
+  "ok": true,
+  "ready": true,
+  "gates": {
+   "G-IDS": {
+    "status": "pass",
+    "failures": [],
+    "note": "verified now: foreign_key_check clean, entity_index consistent (67 ids)"
+   },
+   "G-DEC-STATUS": {
+    "status": "pass",
+    "failures": [],
+    "note": "verified now (also DDL CHECK-enforced at write time)"
+   },
+   "G-REQ-SRC": {
+    "status": "pass",
+    "failures": [],
+    "note": "verified now: NULL/whitespace-only provenance caught (the DDL CHECK misses whitespace-only)"
+   },
+   "G-TRACE": {
+    "status": "pass",
+    "failures": []
+   },
+   "G-SET": {
+    "status": "pass",
+    "failures": []
+   },
+   "G-PROGRESS": {
+    "status": "pass",
+    "failures": []
+   },
+   "G-COMPLETE": {
+    "status": "pass",
+    "failures": []
+   },
+   "audit_evidence": {
+    "evidenced": 3,
+    "narrated": 0,
+    "ungraded": 1,
+    "narrated_ids": [],
+    "ungraded_ids": [
+     "AV-005"
+    ],
+    "note": "over each active AC's LATEST verdict (superseded verdicts are history, as acs-met reads them): narrated = a graded verdict with no evidence — the graded party grading itself (C7); ungraded = a Pending placeholder nobody has graded"
+   },
+   "G-REL": {
+    "status": "pass",
+    "mistyped": [],
+    "note": "stored edges must satisfy RELATION_RULES; retype a wrong edge in ONE entity_upsert batch: {retire: true} on the old triple + the correct relation (relates_to only when no typed relation fits and the link itself is real)"
+   },
+   "requirements_unwired": {
+    "status": "advisory",
+    "requirements": [],
+    "note": "non-retired requirements with ZERO trace edges — wire derives_from/implements/tests in the session that creates them; never fails the gate"
+   }
+  }
+ }
+}

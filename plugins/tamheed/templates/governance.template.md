@@ -62,7 +62,8 @@ Draft → Proposed → Approved → Implemented
   taught it); `relates_to` is the documented untyped escape hatch), not only prose. Edges are
   keyed (from, to, relation): a wrong edge is retired (`retire: true` on the trace-edge item,
   journaled by the server) and the correct one written in the same batch — a new relation
-  never replaces an old one by itself.
+  never replaces an old one by itself. A full-row update that only flips a status names the
+  columns it did not mean to change (`expect_unchanged`) and the store refuses drift.
 - Every `FR-/NFR-` must be reachable in the traceability matrix to >=1 decision, task, and test, and (if
   behavior-bearing) an acceptance criterion. Unlinked requirements are a gate failure.
 - References are entity IDs, not file paths — the store resolves them; there are no relative links to

@@ -34,6 +34,10 @@ and `handoff_emit(target_dir)` wires the target project to the package (it copie
   status --porcelain -uall` before any branch operation. Its cheat-sheet teaches the read
   discipline: registers are read through `entity_query` whatever their size (`after_id` pages,
   `ids` quotes a known set, `search` sweeps), and `package_verify` proves the store canonical.
+  Since v4.7 the read rule draws one more line: a committed script that must QUOTE the store
+  (a review slate, a docket) reads an `entity_export` file the tool wrote under `exports/` —
+  never `data/*.jsonl`, never a pasted display — and a full-row status flip on a long row
+  names the columns it did not mean to change (`expect_unchanged: [cols]`).
 - **The Lessons section** (plan 035): inside the same note span, the operator-**Approved** lessons
   (`LL-` rows) render pinned-first — ALL pinned lessons appear, unpinned fill is capped at 10, and
   the remainder is one `entity_query("lesson")` away. Proposed/Rejected rows never render, and the

@@ -142,6 +142,38 @@ must fire; the resulting package replaces `evals/sample-results/lab-tracker/pack
     ✔ `export_html` (the execution table labels AC-004 `ungraded`); `gate_run` ready;
       `package_close`; the fixture updated.
 
+14. **The export continuation (v4.7.0, plan 041)** — another INCREMENTAL session against
+    the recorded package (findings_24: a committed script had no sanctioned route to whole
+    canonical rows under an MCP-exclusive read rule):
+    ✔ `package_migrate` preview REFUSED verbatim as before (record the text).
+    ✔ THE EXPORT: `entity_export("slate-rows.json", args={"type": "acceptance-criterion",
+      "ids": ["AC-003", "AC-005"]})` → the file at `<package>/exports/slate-rows.json`;
+      the result's `digest` EQUALS `package_verify()["digest"]`, `partial: false`,
+      `memory_matches_disk: true`, and the result carries no rows.
+    ✔ A COMMITTED generator in the lab workspace, `workspace/scripts/gen-slate.py`
+      (stdlib Python, ~60 lines): reads the export (path as its argument), writes
+      `workspace/slate.html` quoting each row's `statement` byte-exact (escaped for
+      HTML), headed by the export's digest; then CALIBRATES its verifier — re-reads the
+      export and compares every quoted statement to the file byte-for-byte, then
+      deliberately corrupts one character and the comparison MUST report it (the
+      ACMP pattern). The script never opens `data/`.
+    ✔ A whole-family export: `entity_export("verdicts.json", args={"type":
+      "audit-verdict", "limit": 1})` → `partial: true` with the PARTIAL note; then
+      `limit: 1000` → `partial: false`, `count == total`.
+    ✔ `entity_export("gates.json", tool="gate_run")` works; two refusals verbatim: a path
+      under `data/` (`../data/x.json`) and `tool: "entity_upsert"`.
+    ✔ THE PASTE GUARD on the unguarded-register class the field named: re-upsert `DEF-001`
+      (full row from `entity_query`) with `expect_unchanged: ["title"]` and ONE word of
+      the title altered → REFUSED naming `title` (record the text); the exact stored
+      title with only `severity` changed → accepted; restore the severity the same way.
+    ✔ `handoff_emit` re-run: the note's export sentence + the two cheat-sheet lines.
+    ✔ `export_html`; `gate_run` ready; `package_close`; the fixture updated — the export
+      files under `exports/` and the workspace script are part of it. *Recorded fixture
+      note:* the exports carry the digest of the state they quoted; the committed store
+      verifies at a LATER digest because the beat's closing journal row followed — an
+      export names the state it came from, never the head, which is exactly why a slate
+      cites its digest and the operator compares it with a fresh `package_verify()`.
+
 **Pass bar:** every ✔ observed; `gate_run` ready (or failing ONLY on deliberately-open
 items the scenario names); the eval runner's lab checks green. `readiness_check` is
 expectedly NOT ready on the scenario's deliberately-open items (AC-003 and, since beat

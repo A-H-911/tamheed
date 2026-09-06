@@ -10,6 +10,73 @@ All notable changes to Tamheed are documented here. The format is based on
 
 ## [Unreleased]
 
+## [4.7.0] - 2026-09-07
+
+**MINOR — the sanctioned read for committed scripts and the paste guard (plan 041,
+findings_24/C45).** findings_24 reported one GAP and no defect: the tool-owned note says
+all package reads go through the MCP tools, the field project made that unconditional,
+and its four committed slate generators — the scripts that discharge its rule that
+every record the operator decides against is quoted byte-exact from the store — then
+had no sanctioned route to whole canonical rows. Both ways out were bad: the agent
+hand-transports rows (their measured loss: a 4,296-character field dropped a paragraph
+mid-paste with `ok: true`), or every consumer re-implements the JSON-RPC handshake and
+the lock dance. The report also verified `entity_query` truncates nothing — correcting
+a pinned lesson of its own — and that `retire` caught a mis-typed `amends` within an
+hour of the rule that catches it being written. No schema migration.
+
+### Added
+
+- **`entity_export(path, tool?, args?)`** — 18 tools. Runs one read-only tool
+  (`entity_query` by default; `trace_query`, `gate_run`, `readiness_check`,
+  `package_verify` with `record` refused, `server_info` — an allow-list) and writes its
+  WHOLE result to `<package>/exports/<path>` (absolute paths allowed; refused under
+  `data/`, resolved first so no traversal escapes; an existing file is replaced only if
+  it is itself a tamheed export — a caller-named path must never clobber a project
+  file). The envelope stamps the `digest` of the OPEN connection's canonical form — the
+  state the rows came from — beside `memory_matches_disk`; the file is deterministic
+  (no timestamp: same state + same args = the same bytes, the `export_html` doctrine);
+  the result carries metadata only (`count`, `total`, `partial`) so a short export is
+  loud, and the docstring says what findings_22 made true: the file has no client
+  payload cap — pass a `limit` above `total` to export a whole family. A committed
+  script quotes from the file; "all reads go through the tools" stays literally true
+  because the tool wrote it. The read-only CLI shape was offered and declined on the
+  maintainer's words (it would have covered session-less consumers; recorded as a
+  future option).
+- **`expect_unchanged: [cols]`** on an `entity_upsert` item (the field's `LL-063`): a
+  full-row write that only means to flip a status names the columns it did NOT mean to
+  change, and the store refuses the item naming any that differ from the stored row —
+  an omitted named column counts as changed; JSON columns compare as parsed values;
+  id-keyed rows only, never the append-only journal. The immutability trigger's
+  self-verifying property, opt-in, for the long-text registers that have no trigger.
+  It proves the write alters nothing named, not that the caller saw the row correctly.
+
+### Changed
+
+- The note span's read rule now draws the line: `data/` is tool-owned; a committed
+  script that must quote the store reads an `exports/` file the tool wrote — never
+  `data/*.jsonl`, never a pasted display. Cheat-sheet lines for both additions.
+- Teaching: server README (the row, two rules), SKILL.md, both READMEs (+ the mermaid
+  tool node and the package layout in `generated-structure.md`: `exports/`),
+  docs/architecture (the ASCII list, the three-actor sequence diagram, the read-side
+  paragraph), CANONICAL.md, SECURITY.md (the export writes only a derived file; consumers
+  escape what they render), governance + template (lint-11 needle `expect_unchanged`),
+  state.md; five stock prompts with roster appends — `slice-review` (the verdict is taken
+  against an export made immediately before the review; cite its digest),
+  `progress-sync` and `register-liveness` (`expect_unchanged` on long-row flips),
+  `package-onboarding`, and the prompts README (the export rule, the guard, and
+  `LL-063`'s producer-source rule: before recording a premise as untestable, list the
+  instruments — the source that produces an output is one).
+- Lab beat 14 (a real agent): the export, a committed stdlib generator in the lab
+  workspace with a calibrated verifier, the partial/whole-family pair, both refusals,
+  the guard refusing a one-word drift on a defect title; four new lab assertions.
+- `package_verify` shares `_canonical_digest` and `_dump_open_connection` with the new
+  tool (refactor, no behaviour change).
+
+### Not changed, stated
+
+- A generator run with no agent session (CI, a cron) still has no route; the CLI shape
+  would cover it and waits for the first field need.
+
 ## [4.6.0] - 2026-09-06
 
 **MINOR — the edge retire, the honest audit split, and the relocate wording (plan

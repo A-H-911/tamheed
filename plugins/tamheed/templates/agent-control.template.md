@@ -77,7 +77,11 @@ proceed unrecorded.
 - **Read registers through the tools, never the files**: large families page with
   `entity_query(..., after_id=<next_after>)`, a known set is quoted verbatim via `ids=[...]`,
   keyword sweeps use `search=`; `package_verify()` proves the on-disk store is canonical
-  (`record=true` journals the digest on the operator's words).
+  (`record=true` journals the digest on the operator's words). A committed script that must
+  QUOTE the store (a review slate, a docket) reads an `entity_export` file the tool wrote under
+  `exports/` — never `data/*.jsonl`, never a pasted display; export immediately before
+  generating. A full-row status flip on a long row carries `expect_unchanged: [cols]` so the
+  store refuses transport drift.
 
 ## Kickoff
 

@@ -761,7 +761,9 @@ class McpContractTest(unittest.TestCase):
         for needle in ("git status --porcelain -uall", "FLUSH `data/*.jsonl` AFTER",
                        "after_id?, ids?, search?", "package_verify(name?, record?)",
                        "`amends` for a ruling", "RE-READ them",
-                       "retire: true}` removes that edge"):     # plan 040
+                       "retire: true}` removes that edge",      # plan 040
+                       "entity_export(path, tool?, args?)", "expect_unchanged: [cols]",
+                       "reads an `entity_export` file the tool wrote"):   # plan 041
             self.assertIn(needle, note, needle)
         tpl = (REPO_ROOT / "plugins" / "tamheed" / "templates" /
                "agent-control.template.md").read_text(encoding="utf-8")
@@ -2018,6 +2020,123 @@ class V4EngineTest(unittest.TestCase):
         ev = srv.gate_run()["gates"]["audit_evidence"]
         self.assertEqual((ev["evidenced"], ev["narrated"], ev["ungraded"]), (0, 1, 1))
         self.assertEqual(ev["narrated_ids"], ["AV-005"])
+
+    def test_entity_export_writes_whole_rows_deterministically(self):
+        """findings_24 §1 (plan 041): a committed script quotes the store from a file
+        the tool wrote — whole rows (no field touched between the SELECT and the
+        file), a digest of the state the rows came from, deterministic bytes, and a
+        LOUD partial export (the file has no payload cap)."""
+        long = "x" * 3000 + " middle é ✓ \"quoted\" " + "y" * 3000
+        self.assertTrue(srv.entity_upsert([{"type": "defect", "id": "DEF-009",
+                                            "title": long, "severity": "low"}])["ok"])
+        out = srv.entity_export("slate.json",
+                                args={"type": "defect", "ids": ["DEF-001", "DEF-009"]})
+        self.assertTrue(out["ok"], out)
+        path = Path(out["path"])
+        self.assertEqual(path.parent.name, "exports")
+        self.assertEqual((out["count"], out["total"], out["partial"]), (2, 2, False))
+        self.assertNotIn("result", out)                      # metadata only
+        data = json.loads(path.read_text(encoding="utf-8"))
+        env = data["tamheed_export"]
+        self.assertEqual((env["tool"], env["package"]), ("entity_query", "demo"))
+        self.assertEqual(env["args"], {"type": "defect", "ids": ["DEF-001", "DEF-009"]})
+        self.assertNotIn("exported_at", env)                 # deterministic
+        row = next(r for r in data["result"]["rows"] if r["id"] == "DEF-009")
+        self.assertEqual(row["title"], long)                 # byte-exact through the file
+        self.assertEqual(env["digest"], srv.package_verify()["digest"])
+        self.assertTrue(env["memory_matches_disk"])
+        first = path.read_bytes()
+        again = srv.entity_export("slate.json",
+                                  args={"type": "defect", "ids": ["DEF-001", "DEF-009"]})
+        self.assertTrue(again["ok"])
+        self.assertEqual(path.read_bytes(), first)           # same state + args = same bytes
+        part = srv.entity_export("part.json", args={"type": "defect", "limit": 1})
+        self.assertEqual((part["count"], part["total"], part["partial"]), (1, 3, True))
+        self.assertIn("PARTIAL", part["note"])
+        full = srv.entity_export("all.json", args={"type": "defect", "limit": 1000})
+        self.assertFalse(full["partial"])
+        for tool, args in (("gate_run", {}), ("readiness_check", {"scope": "package"}),
+                           ("package_verify", {}), ("trace_query", {"entity_id": "SC-001"}),
+                           ("server_info", {})):
+            res = srv.entity_export(f"{tool}.json", tool=tool, args=args)
+            self.assertTrue(res["ok"], (tool, res))
+            saved = json.loads(Path(res["path"]).read_text(encoding="utf-8"))
+            self.assertEqual(saved["tamheed_export"]["tool"], tool)
+
+    def test_entity_export_refusals(self):
+        """The export is a WRITE to a caller-named path: never inside data/ (resolved
+        first — no traversal), never over a directory or a non-export file, never a
+        non-read tool or a writing argument; an inner error writes nothing."""
+        pkg = srv.PACKAGE_ROOT / "demo"
+        for p in (str(pkg / "data" / "x.json"), "../data/x.json"):
+            out = srv.entity_export(p)
+            self.assertFalse(out["ok"], p)
+            self.assertIn("canonical data/", out["error"])
+        self.assertFalse((pkg / "data" / "x.json").exists())
+        self.assertIn("is a directory", srv.entity_export(str(pkg))["error"])
+        (pkg / "exports").mkdir(exist_ok=True)
+        (pkg / "exports" / "notes.txt").write_text("hello", encoding="utf-8")
+        out = srv.entity_export("notes.txt")
+        self.assertIn("not a tamheed export", out["error"])
+        self.assertEqual((pkg / "exports" / "notes.txt").read_text(encoding="utf-8"),
+                         "hello")
+        out = srv.entity_export("w.json", tool="entity_upsert", args={"entities": []})
+        self.assertIn("read-only tools only", out["error"])
+        out = srv.entity_export("v.json", tool="package_verify", args={"record": True})
+        self.assertIn("never writes into the package", out["error"])
+        out = srv.entity_export("bad.json", args={"type": "nope"})
+        self.assertFalse(out["ok"])
+        self.assertIn("unknown entity type", out["error"])   # the inner error, unchanged
+        self.assertFalse((pkg / "exports" / "bad.json").exists())
+        out = srv.entity_export("kw.json", args={"bogus": 1})
+        self.assertIn("rejected its arguments", out["error"])
+        self.assertFalse((pkg / "exports" / "kw.json").exists())
+        srv.package_close()
+        self.assertIn("no package open", srv.entity_export("x.json")["error"])
+
+    def test_expect_unchanged_guard_refuses_transport_drift(self):
+        """The field's LL-063 (plan 041): a full-row write that only means to flip a
+        status names the columns it did NOT mean to change; the server refuses drift
+        naming the column — the immutability trigger's property, opt-in, for the
+        long-text registers with no trigger."""
+        long = "The " + "very " * 400 + "long title"
+        self.assertTrue(srv.entity_upsert([{"type": "defect", "id": "DEF-001",
+                                            "title": long, "severity": "low",
+                                            "custom_attributes": {"a": 1}}])["ok"])
+        drift = long.replace("very very", "very  very", 1)         # one space
+        out = srv.entity_upsert([{"type": "defect", "id": "DEF-001", "title": drift,
+                                  "severity": "medium", "expect_unchanged": ["title"]},
+                                 {"type": "defect", "id": "DEF-002", "title": "bad",
+                                  "severity": "low"}])
+        self.assertFalse(out["ok"])
+        self.assertIn("expect_unchanged — title differ", out["items"][0]["error"])
+        row = srv.entity_query("defect", id="DEF-002", columns=["severity"])["rows"][0]
+        self.assertEqual(row["severity"], "critical")             # batch rolled back
+        ok = srv.entity_upsert([{"type": "defect", "id": "DEF-001", "title": long,
+                                 "severity": "medium", "expect_unchanged": ["title"],
+                                 "custom_attributes": '{"a": 1}'}])   # spacing differs
+        self.assertTrue(ok["ok"], ok)
+        ok = srv.entity_upsert([{"type": "defect", "id": "DEF-001", "title": long,
+                                 "severity": "high",
+                                 "expect_unchanged": ["title", "custom_attributes"],
+                                 "custom_attributes": {"a": 1}}])
+        self.assertTrue(ok["ok"], ok)
+        out = srv.entity_upsert([{"type": "defect", "id": "DEF-001", "severity": "low",
+                                  "expect_unchanged": ["title"]}])   # omitted = changed
+        self.assertIn("title differ", out["items"][0]["error"])
+        out = srv.entity_upsert([{"type": "defect", "id": "DEF-777", "title": "t",
+                                  "severity": "low", "expect_unchanged": ["title"]}])
+        self.assertIn("no stored row to compare", out["items"][0]["error"])
+        out = srv.entity_upsert([{"type": "defect", "id": "DEF-001", "title": long,
+                                  "severity": "low", "expect_unchanged": ["nope"]}])
+        self.assertIn("unknown columns", out["items"][0]["error"])
+        out = srv.entity_upsert([{"type": "trace-edge", "from_id": "SC-001",
+                                  "to_id": "OQ-001", "relation": "scope_adds",
+                                  "expect_unchanged": ["relation"]}])
+        self.assertIn("id-keyed rows only", out["items"][0]["error"])
+        out = srv.entity_upsert([{"type": "progress-entry", "id": "PE-001",
+                                  "entry": "x", "expect_unchanged": ["entry"]}])
+        self.assertIn("never updated", out["items"][0]["error"])
 
     def test_trace_edge_retire_removes_the_triple_and_journals_it(self):
         """findings_23 §1 (plan 040): the composite PK means a new relation sits

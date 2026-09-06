@@ -888,6 +888,51 @@
           ],
           "expect_exit": 0,
           "expect_substring": "narrated:0/ungraded:1"
+        },
+        {
+          "check": "A committed script's read path exists: the entity_export file the tool wrote (plan 041, findings_24 §1).",
+          "cmd": [
+            "python",
+            "evals/pkg_check.py",
+            "file-exists",
+            "{case_dir}/package/exports/slate-rows.json"
+          ],
+          "expect_exit": 0
+        },
+        {
+          "check": "The export carries the tamheed envelope with the digest of the state the rows came from (plan 041).",
+          "cmd": [
+            "python",
+            "evals/pkg_check.py",
+            "grep-file",
+            "{case_dir}/package/exports/slate-rows.json",
+            "\"tamheed_export\""
+          ],
+          "expect_exit": 0
+        },
+        {
+          "check": "The export holds the criterion's OWN text, whole — what the slate quotes (plan 041: LL-011's chain through the file).",
+          "cmd": [
+            "python",
+            "evals/pkg_check.py",
+            "grep-file",
+            "{case_dir}/package/exports/slate-rows.json",
+            "Given tick --help"
+          ],
+          "expect_exit": 0
+        },
+        {
+          "check": "The paste guard was exercised by the beat and journaled in its closing note (plan 041: expect_unchanged refused a one-word transport drift).",
+          "cmd": [
+            "python",
+            "evals/pkg_check.py",
+            "grep-present",
+            "{case_dir}/package",
+            "expect_unchanged",
+            "--tables",
+            "progress_entries"
+          ],
+          "expect_exit": 0
         }
       ],
       "rubric": [

@@ -17,7 +17,9 @@ implementation; on any disagreement, `store.py`'s output is canonical.
   leave a `prompts.jsonl.converted` beside the canonical files (findings_22 §4: the one object
   the engine did not own, weakening "`git status` on `data/` is the integrity question");
   since v4.5 it never does, and `package_migrate` relocates an old one (staged, per file).
-  `package_verify` reports any remaining foreign file by name.
+  `package_verify` reports any remaining foreign file by name. `entity_export` files (v4.7)
+  are derived, digest-stamped renders of a read tool's result for committed scripts to quote
+  from — they live under `<package>/exports/`, never in `data/` (the tool refuses that path).
 
 ## Determinism rules
 

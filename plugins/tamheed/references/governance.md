@@ -181,6 +181,11 @@ unfinished-marker failure. The `clarifications-open` advisory counts live marker
   (`retire: true` on the trace-edge item: the triple is deleted, the relation rule is not
   consulted, and the server journals a `correction` row naming it — v4.6) and the correct
   edge written in the same batch. Retire a wrong edge only, never to make a gate pass.
+- A full-row update that only means to flip a status names the columns it did NOT mean to
+  change — `expect_unchanged: ["title", ...]` on the item — and the store refuses the write
+  if any of them differs from the stored row (v4.7; the field's LL-063: a paragraph lost
+  mid-paste with `ok: true`). Opt-in; the immutability trigger's self-verifying property
+  for the long-text registers that have no trigger.
 - Every MVP `FR-/NFR-` must be reachable to ≥1 decision, ≥1 work item, and ≥1 test (G-TRACE);
   a requirement with zero edges trips the `requirements-wired` advisory.
 - Waivers and gates point at entities via their own `applies_to` column, not edges.
