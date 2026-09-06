@@ -1,9 +1,9 @@
-# How to use this folder — the `package` prompt guide (tamheed v4.3.0)
+# How to use this folder — the `package` prompt guide (tamheed v4.5.0)
 
 This folder is the **single prompt surface** for the `package` Tamheed package. Every
 file is a paste-ready prompt for a Claude Code session. Two kinds live here:
 
-- **Stock scenarios** (this file and the 15 named below) — shipped by tamheed, refreshed
+- **Stock scenarios** (this file and the 16 named below) — shipped by tamheed, refreshed
   on upgrade; if you hand-edit one, later refreshes report it `diverged` and never
   overwrite without `force`. Since v4.1 the tool tells the two divergence kinds
   apart against its shipped stock history: a file byte-equal to an OLDER release's
@@ -37,6 +37,7 @@ file is a paste-ready prompt for a Claude Code session. Two kinds live here:
 | Closing out a release | `release-close-out.md` |
 | Deferred-work triggers may have fired | `replan-deferred.md` |
 | Readiness advisories piling up (the amber list) | `register-liveness.md` — run it on a cadence, not only at close |
+| Distilling confirmed lessons into a reusable skill | `skill-promote.md` — the operator-interview ceremony (project or user level) |
 | Read-only trust audit of the package | `integrity-check.md` |
 | Refresh + read the human report | `generate-report.md` |
 | Unattended execution — the repeated prompt | `loop-iteration.md` |
@@ -61,8 +62,8 @@ conditions — read it before starting any loop). Drive it either way:
 
 - an **in-session loop** (e.g. Claude Code `/loop`) re-pasting loop-iteration;
 - an **external harness** starting a fresh session per iteration and parsing the final
-  `ITERATION: wbs=… slice=… acs_moved=… gate=… ready=… stop=…` line to decide
-  continue/stop.
+  `ITERATION: wbs=… slice=… acs_moved=… gate=… ready=… stop=… lessons_pending=…`
+  line to decide continue/stop (and to watch the operator-interview queue grow).
 
 The loop halts itself — never restarts itself — on any guard condition: a degraded gate,
 non-convergence, a needed scope change, a blocking readiness failure at a close, a
@@ -93,5 +94,27 @@ every multi-row repair with an independent verifier: re-read the JSONL and re-de
 expected value from its source before calling the repair done. When execution teaches
 something durable, record a `lesson` row (`LL-`, born Proposed) — only lessons the
 OPERATOR approves bind future sessions (rendered into the CLAUDE.md note, pinned first);
-the agent never approves its own lesson. The package is the record — when code and package disagree, fix the code
-or record the change; never let them drift.
+the agent never approves its own lesson — the store REFUSES an approving or promoting
+upsert without `"operator_confirm": true`, your words, in every mode. Entity prose is
+screened for placeholder tokens (G-COMPLETE): to QUOTE a token like `TODO` in prose,
+wrap it in backticks; journal text (progress entries, verdict evidence) is exempt —
+reports are never "unfinished" — and a `correction` entry collapses its target under
+itself in review.html. The journal's server-appended kinds (`forced-override`,
+`lesson-confirmed`, `lesson-promoted`, `integrity-verified`) are REFUSED from
+`progress_update` — the server records those facts itself. Approved lessons
+with a shared theme can be distilled into a SKILL (`skill-promote.md`) that Claude Code
+loads natively — promoted lessons graduate out of the note, the skill file carries them;
+past the note's curation ceiling the `lessons-note-budget` advisory names the
+promotion candidates. Registers are read THROUGH the tools, whatever their size:
+`entity_query` cuts rows never fields, `total` is exact, `after_id` pages (the result's
+`next_after`), `ids=[...]` quotes a known set verbatim, `search=` sweeps by keyword —
+reading `data/*.jsonl` to dodge a payload cap is drift. A scope change that touches a
+RULING carries an `amends` edge (DEC-: merged by full-row upsert; ADR-: by
+supersession); `Merged` is set LAST, after every delta row is applied and re-read.
+`package_verify()` proves the on-disk store is canonical (per-file byte-equality, foreign
+files, a citable digest; `record=true` journals it on the operator's words). Recording
+FLUSHES `data/*.jsonl` after the commit it records (`work_bind`, the closing
+`progress_update`, `export_html`, `handoff_emit`) — `git status --porcelain -uall`
+before any branch operation, never a memory of having committed. The package is the
+record — when code and package disagree, fix the code or record the change; never let
+them drift.

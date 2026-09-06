@@ -15,7 +15,7 @@ description: >-
 
 # Tamheed
 
-This skill documents tamheed **v4.4.2** (the version travels with the bundle;
+This skill documents tamheed **v4.5.0** (the version travels with the bundle;
 check.py lint 8 keeps this line current).
 
 Tamheed turns a project description into an **execution-ready handoff package**: the planning, research,
@@ -183,7 +183,15 @@ against_commit — an evidenced verdict beats a narrated one), and `work_bind`
 the requirement auto-advances. Scope changes follow the D-UPDATE flow in `references/modes.md` —
 **a `scope-change` row is written before any requirement/phase mutation, always.** Discovered
 defects become `defect` rows BEFORE the fix; out-of-scope finds become `deferred-work` rows with
-activation triggers; durable takeaways become `lesson` rows (born Proposed, a `learned_from` edge
+activation triggers; a scope change that touches a RULING carries an `amends` edge (a `DEC-` merges
+by full-row upsert, an `ADR-` by supersession) and `Merged` is set LAST, after every target row is
+applied and re-read. Registers are read through `entity_query` whatever their size — `limit` cuts
+rows never fields, `total` is exact, `after_id` pages (the result's `next_after`), `ids` quotes a
+known set verbatim, `search` sweeps by keyword; never `data/*.jsonl` to dodge a payload cap.
+`package_verify` proves the on-disk store canonical (per file, foreign files, a citable digest;
+`record=true` journals it as the server-appended `integrity-verified` event — the four
+server-witnessed journal kinds are refused from `progress_update`). Durable takeaways become
+`lesson` rows (born Proposed, a `learned_from` edge
 to their source — only operator-Approved lessons bind future sessions). Approving or promoting a
 lesson is confirm-guarded: the write is refused without `"operator_confirm": true` on the
 operator's explicit words (content byte-identical, `confirmed_by` on the same write), and the

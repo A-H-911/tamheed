@@ -12,6 +12,12 @@ implementation; on any disagreement, `store.py`'s output is canonical.
   **no file** (a stale file for a now-empty table is deleted on write-back).
 - `entity_index` is derived (trigger-maintained) and is **never serialized**.
 - File names are the table names from `schema.sql`, verbatim.
+- Nothing else lives in `data/` but the lock (`.lock`, transient). Audit-trail copies of
+  converted or migrated sources live in `data-v3-backup/` — the v3 prompt converter used to
+  leave a `prompts.jsonl.converted` beside the canonical files (findings_22 §4: the one object
+  the engine did not own, weakening "`git status` on `data/` is the integrity question");
+  since v4.5 it never does, and `package_migrate` relocates an old one (staged, per file).
+  `package_verify` reports any remaining foreign file by name.
 
 ## Determinism rules
 
@@ -52,4 +58,31 @@ An idle `package_open` → `package_close` round-trip on a committed store produ
 git diff** — canonical text is byte-stable across open/close cycles (LF, no BOM, PK-ordered,
 minimal separators, load+dump idempotent; `check.py`'s canonical gate enforces it on the
 demo golden every run). Operators can and should lean on this: **"did anything change?" is a
-`git status` question.** Verified in production during the ACMP migration (evidence C20).
+`git status` question.** Verified in production during the ACMP migration (evidence C20), and
+again by the operator-commissioned integrity audit of 2026-09-06 (evidence C43): `load()` →
+`dump()` reproduced all 29 register files byte-identically — 40 tables, 7,819 rows — after a
+deliberate attempt to falsify it.
+
+## Verifying on demand — `package_verify` (v4.5)
+
+The guarantee above used to be a property you had to know to exercise. `package_verify(name?,
+record?)` exercises it and reports:
+
+- **`dirty`** — every canonical file whose committed bytes differ from its own `load()` →
+  `dump()` form (a hand edit that is semantically equal but not canonical lands here);
+- **`foreign`** — files in `data/` that are neither canonical `*.jsonl` nor `.lock`;
+- **`loadable`** — an FK/CHECK/JSON failure is reported as a finding with the file and line,
+  never raised;
+- **`memory_matches_disk`** — when the package is open, the open connection's dump compared
+  to disk (a refused flush — the stale-tree case — is exactly when the two diverge);
+- **`digest`** — sha256 over the sorted `(file name, sha256(bytes))` pairs of the canonical
+  files: a fingerprint of the state as committed.
+
+Read-only by default (no lock taken, nothing written). `record=true`, on an open package and
+only when the verification passed, appends ONE `integrity-verified` journal row (actor
+`system:package-verify`) naming the digest — a citable fact. **That row rewrites
+`progress_entries.jsonl`, so the recorded digest describes the state BEFORE the row, and the
+next verify's digest differs by construction**; the entry says so. This is evidence that a
+state WAS verified, not tamper-evidence: a hand edit followed by any tool call is rewritten
+into perfect canonical form with a journal entry naming the row, and nothing here (no hash
+chain, no signature, no external anchor) would show it — that remains git's job.

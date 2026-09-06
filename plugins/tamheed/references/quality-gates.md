@@ -44,7 +44,8 @@ three tiers (engine / judgment / warn) synced against this file in both directio
 - `gate_run` (MCP tool) → the full mechanical report: referential tier verified NOW
   (foreign_key_check + consistency + real SELECTs), coverage views executed with failing IDs,
   content scan findings, the evidenced-vs-narrated audit split (a narrated verdict is the graded
-  party grading itself — prefer evidence refs), and the **blocking G-REL edge sweep** (advisory
+  party grading itself — prefer evidence refs; `narrated_ids` names them, v4.5 — a count that
+  refuses to say where is unactionable), and the **blocking G-REL edge sweep** (advisory
   through v3, blocking since v4.0.0): stored edges violating the typed endpoint rules FAIL the
   gate — retype a wrong edge to `relates_to` (delete + re-add) if the link itself is real.
 - **`readiness_check(scope, id?)`** (plan 027) is the semantic layer ABOVE these gates: at a
@@ -52,7 +53,10 @@ three tiers (engine / judgment / warn) synced against this file in both directio
   (pre-approval decisions/ADRs, ACs not latest-Met, open critical/high defects — medium/low
   advise, undischarged risks, open work incl. the claimed-done `Review` state), waivers
   (operator-approved `WVR-` rows reported `waived`, never silent; expiring), advisory liveness
-  rules, and the `human_required` checklist from declared `execution_gates` rows. The same
+  rules (fifteen at package scope — from overdue open questions through `lessons-confirmed` to
+  `lessons-note-budget`, which names the lessons rendering past the always-loaded note's
+  curation ceiling as promotion candidates), and the `human_required` checklist from declared
+  `execution_gates` rows. The same
   blocking rules guard the phase/slice `Implemented` transition. Rule statuses (plans 028-029):
   `pass` / `fail` / **`indeterminate`** — a rule whose keyed column is unpopulated for every row
   of its type carries `discriminating: false`, and when its query finds nothing it reads
@@ -60,6 +64,11 @@ three tiers (engine / judgment / warn) synced against this file in both directio
 - Judgment gates: perform the check and record the verdict (a `progress-entry` note with the evidence).
 - Stage 19 runs everything; Stage 22 re-confirms criticals + `readiness_check("package")` for the
   readiness verdict.
+- **`package_verify(name?, record?)`** (v4.5) sits beside the gates as the STORE's integrity
+  instrument: the canonical round-trip reported per file (`dirty`), foreign files in `data/`,
+  an unloadable store as a finding (file:line), memory-vs-disk when the package is open, and a
+  sha256 `digest` of the canonical files; `record=true` journals a passing verification as the
+  server-appended `integrity-verified` event — a citable fact, not tamper-evidence.
 
 ## Readiness rule
 

@@ -83,5 +83,35 @@ must fire; the resulting package replaces `evals/sample-results/lab-tracker/pack
       (`lessons-confirmed` keeps nagging — by design).
     ✔ `export_html`; `gate_run` ready; `package_close`; the fixture updated.
 
+12. **The depth continuation (v4.5.0, plan 039)** — another INCREMENTAL session against
+    the recorded package (its registry is current and its `data/` holds no foreign file,
+    so the staged sync has nothing to do — that refusal is itself an expectation):
+    ✔ `package_migrate` preview is REFUSED verbatim: "package is already v4.0.0, its
+      entity-type registry is current, and data/ holds no foreign audit-trail file —
+      nothing to migrate" (record the text).
+    ✔ `package_verify()` on the open package: `verified: true`, `dirty: []`, `foreign: []`,
+      `memory_matches_disk: true`; then, on the operator's scripted words,
+      `package_verify(record=true)` → the server's own `integrity-verified` row (actor
+      `system:package-verify`) naming the digest; a second `package_verify()` reports a
+      DIFFERENT digest (the row rewrote the journal file — by construction, not tampering).
+    ✔ Paging: walk `entity_query("acceptance-criterion", limit=1)` with `after_id` until
+      `next_after` is null — every id seen once, `total` constant; quote two rows verbatim
+      via `ids=[...]`; one keyword `search` (e.g. "overdue") returns the rows that carry it.
+    ✔ `amends`: the operator's scripted ruling narrows `DEC-001` (the storage decision)
+      for the export path — an `SC-` row Proposed, an `amends` edge to `DEC-001`, and the
+      guard REFUSING `amends` to `SL-001` verbatim (rulings only); after approval the DEC-
+      row is upserted with the narrowed rationale, RE-READ, and only then the SC- set
+      Merged (`scope-changes-merged` clean after).
+    ✔ THE REFUSAL FIRES: a caller-written `progress_update` with `event_type:
+      "lesson-confirmed"` is REFUSED naming the appending tool — record the text.
+    ✔ `readiness_check("package")`: `lessons-note-budget` passes (well under the ceiling);
+      `lessons-confirmed` still nags on LL-002 (by design).
+    ✔ `handoff_emit` re-run: the note carries the flush rule (`git status --porcelain
+      -uall`), the widened `entity_query` cheat-sheet line, and `package_verify`.
+    ✔ `export_html`; `gate_run` ready; `package_close`; the fixture updated.
+
 **Pass bar:** every ✔ observed; `gate_run` ready (or failing ONLY on deliberately-open
-items the scenario names); the eval runner's lab checks green.
+items the scenario names); the eval runner's lab checks green. `readiness_check` is
+expectedly NOT ready on the scenario's deliberately-open items (AC-003, LL-002, OQ-001 —
+whose `due_by` also trips `open-questions-overdue` by calendar; the waived DEF-003) —
+anything else failing there is a finding.

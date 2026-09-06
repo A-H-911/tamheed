@@ -196,7 +196,7 @@ does not replace it. Gate IDs reference [`../plugins/tamheed/references/quality-
 | 18 | Package storage initialization | Materialize the store; write back canonical JSONL (`package_close`) | `data/*.jsonl` for the operator to commit | Operator commits the package data ✅ (no repo scaffolding — removed in v2, ASM-B) |
 | 19 | Quality validation | `gate_run`: coverage views + content scan (referential tier already held at write time) | Gate report; `omission` rows for absent Always families | All **Critical** gates pass; review warnings ✅ |
 | 20 | Execution-agent handoff | prompt files in `<package>/prompts/`; `handoff_emit` screens (G-INJECT), writes prompts + executor-side MCP config | `handoff/` in the target project + `.mcp.json` + `CLAUDE.md` note | G-HANDOFF + G-INJECT; approve handoff ✅ |
-| 21 | Progress & decision update cycles | `progress_update` / `audit_record` (evidence refs) / `work_bind`; typed scope changes bump the iteration | Progress entries, audit verdicts, `scope-change` rows | Cascades fire in-transaction; G-PROGRESS; approve material changes ✅ |
+| 21 | Progress & decision update cycles | `progress_update` / `audit_record` (evidence refs) / `work_bind`; typed scope changes bump the iteration (`amends` edges for rulings; Merged set last); registers read through `entity_query` paging, never the files | Progress entries, audit verdicts, `scope-change` rows | Cascades fire in-transaction; G-PROGRESS; approve material changes ✅ |
 | 22 | Final readiness assessment | `gate_run` again; summarize gates, open items, residual risk; state go/no-go | Readiness verdict (from the gate report; `go_no_go` on the package row) | No Critical gate failing; final go/no-go ✅ |
 
 ## Where this document stops

@@ -59,8 +59,11 @@ into the v4 baseline — the mechanics are unchanged). Four steps, all of them a
 1. **The migration** — create `plugins/tamheed/db/migrations/NNN_<name>.sql` (next free NNN): one
    `CREATE TABLE` (TEXT primary key with a `CHECK (id GLOB '<PREFIX>-[0-9]*')`, your columns,
    plus `custom_attributes` and `last_referenced` like every entity table) and the `entity_index`
-   trigger pair. A new migration starts the v4 chain's `002_*.sql` (append-only on the re-baselined
-   001); `glossary_terms` (a baseline table since v4) remains the worked example of the SHAPE. The
+   trigger pair. New migrations continue the v4 chain (append-only on the re-baselined 001 —
+   `002_lessons.sql` is the live worked example of a whole family, `003_skills.sql` a second
+   family plus a state, `004_amends_verify.sql` the small cases: a new trace relation and a new
+   journal event kind, each a CHECK recreation on an empty-at-connect table); `glossary_terms`
+   (a baseline table since v4) remains the worked example of the SHAPE. The
    store's connection factory applies every migration ≥ 002 automatically; do **not** touch `schema.sql`
    (it stays byte-identical to `001_init.sql`; the lint gate checks).
 2. **The two registry entries** — in `plugins/tamheed/server/tamheed_server.py`: add

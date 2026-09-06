@@ -247,7 +247,10 @@ or pins each one; **only operator-Approved lessons** render into the executing a
 `CLAUDE.md` note. The gate is the design: an agent persisting an unvetted — possibly wrong — lesson is the
 known failure mode of agent memory, so a lesson binds future sessions only after a human says it should —
 and mechanically so: the write that lands a lesson in Approved (or Promoted) is refused without the
-operator's explicit confirmation carried on it.
+operator's explicit confirmation carried on it. The always-loaded note is a scarce surface, so the
+register's growth is watched too: past a curation ceiling the `lessons-note-budget` advisory names the
+lessons rendering beyond it as candidates for the `skill-promote` interview — the point at which a
+declarative lesson becomes a procedural skill the harness loads natively, and leaves the note.
 
 Lessons that keep proving themselves can graduate further, into a **skill**. The stock `skill-promote`
 interview clusters Approved lessons, asks the operator for the skill's name, trigger, edge cases, and

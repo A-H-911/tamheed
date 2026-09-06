@@ -52,7 +52,7 @@ generation: derived      # regenerated from the package each update cycle
 |---|---|
 | you find a defect | `entity_upsert` a `defect` row (`DEF-`, honest severity — open critical/high BLOCK readiness) — then fix it |
 | you find needed work that is out of scope | `entity_upsert` a `deferred-work` row (`DW-`) with an activation trigger |
-| you deviate from the approved plan in any way | a `scope-change` row (`SC-`) FIRST, `decision_ref` naming the deciding `DEC-`/`ADR-`, delta edges (`scope_adds`/`scope_modifies`/`scope_removes`) naming the affected rows — after approval, apply the row changes and set the `SC-` to Merged |
+| you deviate from the approved plan in any way | a `scope-change` row (`SC-`) FIRST, `decision_ref` naming the deciding `DEC-`/`ADR-`, delta edges (`scope_adds`/`scope_modifies`/`scope_removes` for plan rows; `amends` for a ruling — DEC-: full-row upsert, ADR-: supersede) naming the affected rows — after approval, apply the row changes, RE-READ them, and only then set the `SC-` to Merged |
 | you hit genuine ambiguity | an `open-question` row (`OQ-`, with owner + due_by) and `[NEEDS-CLARIFICATION: OQ-NNN]` at the exact spot — NEVER assume |
 | execution teaches you something durable (a mistake's fix, a practice worth repeating) | `entity_upsert` a `lesson` row (`LL-`, born Proposed; kind improve\|sustain, statement + impacts) + a `learned_from` edge to the source — the OPERATOR confirms later; only Approved lessons bind |
 | you finish a unit of work | `progress_update(...)` — event_type `work-done`, `subject_id`, your `actor` string, phase/slice ids |
@@ -70,7 +70,14 @@ proceed unrecorded.
   `audit_record` with evidence, repeat.
 - No phase starts with red CI; keep changes small and reviewable.
 - **Commit the package `data/` before branch operations** — package writes live in the
-  git working tree like any uncommitted change.
+  git working tree like any uncommitted change. `work_bind`, the closing `progress_update`,
+  `export_html` and `handoff_emit` all FLUSH `data/*.jsonl` AFTER the commit they record, so
+  the tree is dirty again the moment you finish recording: run `git status --porcelain -uall`
+  immediately before ANY branch operation — never a memory of having committed.
+- **Read registers through the tools, never the files**: large families page with
+  `entity_query(..., after_id=<next_after>)`, a known set is quoted verbatim via `ids=[...]`,
+  keyword sweeps use `search=`; `package_verify()` proves the on-disk store is canonical
+  (`record=true` journals the digest on the operator's words).
 
 ## Kickoff
 

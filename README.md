@@ -11,7 +11,7 @@
 <p align="center"><strong>Turn a project description into a validated, traceable, execution-ready planning &amp; handoff package for Claude Code to implement.</strong></p>
 
 <p align="center">
-  <em>Claude Code plugin + MCP-backed agent skill &middot; v4.4.2</em> &middot;
+  <em>Claude Code plugin + MCP-backed agent skill &middot; v4.5.0</em> &middot;
   <a href="#license">MIT</a> &middot;
   <a href="docs/install.md">Install</a> &middot;
   <a href="docs/migrate-from-keystone.md">Migrate from Keystone</a> &middot;
@@ -247,12 +247,20 @@ relations are validated at write time too: a semantically wrong edge (say `TEST 
 rejected with both endpoint types named, stored violations FAIL the blocking **G-REL** gate, and
 `relates_to` stays the untyped escape hatch. Scope deviations follow the drift-delta lifecycle:
 an `SC-` row FIRST (Proposed), typed `scope_adds`/`scope_modifies`/`scope_removes` edges naming the
-affected rows, then — after operator approval — the agent applies the changes and sets the row to
-`Merged` (the `scope-changes-merged` advisory flags anything approved but never reconciled). Execution
+affected rows (and an `amends` edge to any ruling it carves an exception out of — a `DEC-` merges
+by full-row upsert, an `ADR-` by supersession), then — after operator approval — the agent applies
+the changes, re-reads every target, and only then sets the row to `Merged` (the
+`scope-changes-merged` advisory flags anything approved but never reconciled). Registers are read
+through the tool whatever their size: `entity_query` cuts rows never fields, `total` is exact,
+`after_id` pages, `ids` quotes a known set verbatim, `search` sweeps by keyword; `package_verify`
+proves the on-disk store canonical, per file, with a citable digest (journaled as a server-appended
+`integrity-verified` event on the operator's words — the four server-witnessed journal kinds are
+refused from `progress_update`). Execution
 also feeds a **lessons-learned register**: `LL-` rows (both polarities — *improve* and *sustain*) born
 `Proposed` by the executing agent and confirmed by the operator, with **only Approved lessons** rendered
 into the always-loaded `CLAUDE.md` note (pinned lessons first, unpinned capped, the rest one
-`entity_query` away). A lesson can never confirm itself: the write that lands one in Approved or
+`entity_query` away; past the note's curation ceiling the `lessons-note-budget` advisory names the
+promotion candidates). A lesson can never confirm itself: the write that lands one in Approved or
 Promoted is mechanically refused unless it carries the operator's explicit `operator_confirm` — the
 `force` doctrine applied to memory. Lessons that keep earning their keep graduate into **skills** via
 the operator's `skill-promote` interview: a written `SKILL.md` (project-level by default, or
@@ -295,12 +303,13 @@ that row-level counts cannot see.
 | `server_info()` | Version + resolved package root (orientation) |
 | `package_create / package_open / package_close` | Lifecycle + single-writer lock |
 | `entity_upsert(entities[])` | Batch writes — full rows, per-item verdicts |
-| `entity_query(type, …)` | Targeted rows + `total` |
+| `entity_query(type, …)` | Targeted rows + `total`; `after_id` pages, `ids` fetches a known set, `search` sweeps by keyword |
 | `trace_query(entity_id, …)` | Typed traceability links |
 | `gate_run()` | Mechanical quality-gate verdict incl. the blocking G-REL relation gate |
 | `readiness_check(scope, id?)` | Deep lifecycle readiness at a close boundary — "is this actually DONE?" |
 | `progress_update / audit_record / work_bind` | The execution-tracking loop |
 | `package_migrate / package_adopt` | Staged in-place v3→v4 conversion / brownfield onboarding |
+| `package_verify(name?, record?)` | The canonical round-trip as a tool — per-file byte-equality, foreign files, a citable digest |
 | `handoff_emit / export_html` | Executor wiring + the HTML review surface |
 
 Full signatures and semantics: [`plugins/tamheed/server/README.md`](plugins/tamheed/server/README.md).
@@ -429,12 +438,12 @@ See [`CONTRIBUTING.md`](CONTRIBUTING.md) and
 
 ## Maturity
 
-**v4.x** (currently v4.4.2). The methodology (22 stages), the re-baselined relational store (plan 031:
+**v4.x** (currently v4.5.0). The methodology (22 stages), the re-baselined relational store (plan 031:
 claimed-vs-verified `Review`, evidence-chained verdicts, `WVR-` waivers, severity-thresholded blocking,
 typed progress events, drift-delta scope changes, blocking G-REL, `[NEEDS-CLARIFICATION]` markers), the
 MCP tool surface, the canonical serialization, and the in-place migration path (v2/v3
 prompts-table packages — opening one converts it once, loudly) are defined, tested, and stable —
-hardened by seventeen field reports from sustained production use, each answered by a same-day release.
+hardened by twenty-two field reports from sustained production use, each answered by a same-day release.
 Any change to the DDL, the identifier scheme, or the tool contract ships per the versioning rules in
 [`plugins/tamheed/references/governance.md`](plugins/tamheed/references/governance.md) (additive =
 MINOR, breaking = MAJOR + migration note; DDL changes are append-only `migrations/NNN_*.sql`, tracked

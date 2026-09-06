@@ -83,7 +83,7 @@ class StoreMigrationTest(unittest.TestCase):
         promoted_to; the recreated journal CHECK accepts the lesson-guard event
         types; Promoted content is frozen (the extended trigger)."""
         conn = store.connect()
-        self.assertEqual(conn.execute("PRAGMA user_version").fetchone()[0], 3)
+        self.assertGreaterEqual(conn.execute("PRAGMA user_version").fetchone()[0], 3)
         conn.executemany(
             "INSERT INTO entity_types (type_id, label, id_prefix, generation_class)"
             " VALUES (?, ?, ?, ?)",
@@ -104,6 +104,39 @@ class StoreMigrationTest(unittest.TestCase):
             conn.execute("UPDATE lessons SET statement = 'x' WHERE id = 'LL-1'")
         with self.assertRaises(Exception):   # promoted_to re-pointing frozen
             conn.execute("UPDATE lessons SET promoted_to = NULL WHERE id = 'LL-1'")
+        conn.close()
+
+    def test_migration_004_amends_and_verify_land(self):
+        """Plan 039 (findings_22 §2/§5): head is 4; the recreated trace_edges CHECK
+        accepts `amends` (and still rejects an unknown relation); the recreated
+        journal CHECK accepts `integrity-verified`; both indexes/triggers survive."""
+        conn = store.connect()
+        self.assertEqual(conn.execute("PRAGMA user_version").fetchone()[0], 4)
+        conn.executemany(
+            "INSERT INTO entity_types (type_id, label, id_prefix, generation_class)"
+            " VALUES (?, ?, ?, ?)",
+            [("scope-change", "Scope change (SC-)", "SC-", "Continuous"),
+             ("decision", "Decision (DEC-)", "DEC-", "Always"),
+             ("progress-entry", "Progress entry (PE-)", "PE-", "Continuous")])
+        conn.execute("INSERT INTO decisions (id, title, lifecycle_status)"
+                     " VALUES ('DEC-1', 'd', 'Approved')")
+        conn.execute("INSERT INTO scope_changes (id, decision_ref, description,"
+                     " iteration) VALUES ('SC-1', 'DEC-1', 'x', 1)")
+        conn.execute("INSERT INTO trace_edges VALUES ('SC-1', 'DEC-1', 'amends')")
+        with self.assertRaises(Exception):
+            conn.execute("INSERT INTO trace_edges VALUES ('SC-1', 'DEC-1', 'bogus')")
+        conn.execute("INSERT INTO progress_entries (id, event_type, entry)"
+                     " VALUES ('PE-1', 'integrity-verified', 'e')")
+        with self.assertRaises(Exception):
+            conn.execute("INSERT INTO progress_entries (id, event_type, entry)"
+                         " VALUES ('PE-2', 'bogus-event', 'e')")
+        idx = {name for (name,) in conn.execute(
+            "SELECT name FROM sqlite_master WHERE type='index'"
+            " AND tbl_name='trace_edges'")}
+        self.assertIn("idx_trace_edges_to", idx)
+        self.assertEqual(conn.execute(
+            "SELECT entity_type FROM entity_index WHERE id='PE-1'").fetchone()[0],
+            "progress-entry")  # the trigger pair was recreated
         conn.close()
 
     def test_load_ignores_orphan_jsonl_of_dropped_table(self):

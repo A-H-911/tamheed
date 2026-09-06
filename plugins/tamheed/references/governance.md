@@ -122,7 +122,7 @@ its predecessor (`superseded_by`).
 |---|---|
 | defect | Open, In-progress, Fixed, Won't-fix, Duplicate |
 | deferred-work | Open, Activated, Scheduled, Done, Won't-do |
-| scope-change | Proposed, Approved, **Merged** (deltas applied to the plan rows) |
+| scope-change | Proposed, Approved, **Merged** (deltas applied to the plan rows; an `amends` target merges by full-row upsert of a `DEC-` or by SUPERSESSION of an `ADR-`; Merged is set LAST, after every target row is applied and re-read — nothing mechanical checks the assertion it makes) |
 
 **Three-axis status (ADR-0001, revised plan 031).** Lifecycle, verdict, and disposition are
 independent columns:
@@ -172,7 +172,9 @@ unfinished-marker failure. The `clarifications-open` advisory counts live marker
   (`derives_from`, `implements`, `verifies`, `tests`, `mitigates`, `discharges`,
   `blocked_by`, `satisfies`, `supersedes`, `scope_adds`/`scope_modifies`/`scope_removes`,
   `learned_from` — a lesson names what taught it: defect, decision, risk, slice,
-  wbs-item, or progress-entry),
+  wbs-item, or progress-entry — and `amends` (v4.5): a scope change that carves an
+  exception out of a RULING or re-scopes one — scope-change → decision | adr only; a
+  ruling is not a plan row, so the scope_* deltas never point at one),
   not only in prose. `relates_to` is the documented untyped escape hatch. Endpoint types are
   enforced at write time and by the **blocking G-REL gate**.
 - Every MVP `FR-/NFR-` must be reachable to ≥1 decision, ≥1 work item, and ≥1 test (G-TRACE);

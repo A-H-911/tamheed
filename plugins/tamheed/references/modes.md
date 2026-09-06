@@ -75,14 +75,18 @@ decision, changed phase" is a *reschedule*, not a reopen; a cancelled AC is *voi
 
 1. `entity_upsert` a `decision` row authorizing the change (or reference an existing one).
 2. `entity_upsert` a `scope-change` row: `decision_ref`, typed description ("expand: add offline
-   mode"), `iteration` = current package iteration + 1.
+   mode"), `iteration` = current package iteration + 1 — plus its delta edges: `scope_adds` /
+   `scope_modifies` / `scope_removes` to the plan rows it moves, and `amends` to any RULING it
+   carves an exception out of (a `DEC-` merges by full-row upsert; an `ADR-` by supersession).
 3. Bump the package iteration (packages row).
 4. Apply the mutations: new/changed `requirement`/`phase`/`slice`/`acceptance-criterion` rows carry
    `introduced_in` = the new iteration; retired ones get `retired_in` (never deleted). Cancelled
    criteria get `disposition='void'` + `disposition_reason_ref` → the authorizing decision — the
    verdict axis stays clean.
 5. Impact pass: capability 1 (trace_query → preview → targeted re-derivation) over the touched set.
-6. `gate_run`; report the scope delta to the operator.
+6. `gate_run`; report the scope delta to the operator. After approval, apply every row the edges
+   name, RE-READ them, and only then set the `SC-` to `Merged` — Merged is the LAST step;
+   nothing mechanical checks the assertion it makes.
 
 Phases are appendable after scope lock only through this flow.
 

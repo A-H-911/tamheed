@@ -10,6 +10,7 @@ LL-001,DEF-001,learned_from
 LL-002,SL-001,learned_from
 NFR-001,DEC-001,derives_from
 SC-001,FR-007,scope_adds
+SC-002,DEC-001,amends
 SL-001,FR-001,implements
 SL-001,FR-003,implements
 SL-001,FR-004,implements

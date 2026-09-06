@@ -25,9 +25,15 @@ and `handoff_emit(target_dir)` wires the target project to the package (it copie
   `progress_update` / `audit_record` / `work_bind` — the execution-tracking loop is wired at
   handoff, not hoped for.
 - **The recording obligations** (plan 027): the note carries a mandatory table — defect → `DEF-`
-  row first; out-of-scope discovery → `DW-` row with a trigger; deviation → `SC-` row FIRST;
+  row first; out-of-scope discovery → `DW-` row with a trigger; deviation → `SC-` row FIRST
+  (`amends` for a ruling; Merged set LAST after the targets are applied and re-read);
   progress/audit/bind per unit; `readiness_check(scope)` before declaring a slice/phase/release
-  done. The same table lives verbatim in the agent-control template.
+  done. The same table lives verbatim in the agent-control template. The note's C31 paragraph
+  also carries the flush rule (v4.5): recording (`work_bind`, the closing `progress_update`,
+  `export_html`, `handoff_emit`) rewrites `data/*.jsonl` AFTER the commit it records — `git
+  status --porcelain -uall` before any branch operation. Its cheat-sheet teaches the read
+  discipline: registers are read through `entity_query` whatever their size (`after_id` pages,
+  `ids` quotes a known set, `search` sweeps), and `package_verify` proves the store canonical.
 - **The Lessons section** (plan 035): inside the same note span, the operator-**Approved** lessons
   (`LL-` rows) render pinned-first — ALL pinned lessons appear, unpinned fill is capped at 10, and
   the remainder is one `entity_query("lesson")` away. Proposed/Rejected rows never render, and the
@@ -96,7 +102,8 @@ Two prompt surfaces, one folder:
 
 The v2 `prompts` table and the `<target>/handoff/*.md` copies have been GONE since v3 (the v4
 baseline never had them): `package_migrate` converts a v2 store's `data/prompts.jsonl` once
-(source kept as `prompts.jsonl.converted`), and
+(the source survives only as the `data-v3-backup/` copy — v4.5 stopped leaving a
+`prompts.jsonl.converted` in the canonical `data/`, and `package_migrate` relocates an old one), and
 `handoff_emit` warns about leftover `handoff/prm-*.md` copies — delete them; the package folder is
 the single source.
 

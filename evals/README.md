@@ -25,12 +25,13 @@ This follows the Agent Skills open standard's **evaluation-driven development**
 | `adopt-injection-laced-repo` | adopt mode fences injection-shaped repo content as data (adopt rule 4) |
 | `migrate-dialect-fixture` | HISTORICAL (v1 ingestion retired in v4, plan 031): the v1 ACMP-dialect migration spec, kept as the record of that contract |
 | `execution-loop` | the recording obligations under execution: a surfaced defect becomes a DEF- row, drift becomes a typed SC-, verdicts are evidenced (plan 027) |
-| `lab-tracker` | the permanent lab (plan 031): a real agent drove every v4 mechanism — Review claims, evidence chains, waiver, drift merge, verbatim guard refusal + forced audit; 11 assertions pin the package |
+| `lab-tracker` | the permanent lab (plan 031): a real agent drove every v4 mechanism — Review claims, evidence chains, waiver, drift merge, verbatim guard refusal + forced audit; continuation beats add lessons/promotion (035/036) and paging + `amends` + `package_verify` (039); the assertions pin the package |
 
 Each case carries **`deterministic_assertions`** — now *executable*: each live assertion is
 a command (run from the repo root, `{case_dir}` substituted) plus an expected-exit /
 expected-substring contract, speaking the `evals/pkg_check.py` vocabulary (`gates`, `count`,
-`nonempty`, `grep-absent`/`grep-present`, `file-exists`, `grep-file`). Assertions with no
+`nonempty`, `nonempty-any`, `grep-absent`/`grep-present`, `file-exists`, `grep-file`, and
+`verify` — the package's own canonical round-trip via `package_verify`, plan 039). Assertions with no
 mechanical v2 equivalent are kept with a `"retired": "<why>"` note instead of being silently
 dropped. Judgment dimensions live in each case's **`rubric`**, scored by review or an LLM
 judge.

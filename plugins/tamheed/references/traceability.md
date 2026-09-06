@@ -30,8 +30,9 @@ current.
 1. Edges are recorded **live, as typed `trace_edges` rows, at decision time** — `derives_from`,
    `implements`, `tests`, `verifies`, `mitigates`, `discharges`, `learned_from` (a lesson → the
    defect / decision / risk / slice / wbs-item / progress-entry that taught it), plus the
-   scope-delta kinds (`scope_adds`/`scope_modifies`/`scope_removes`); `relates_to` is the documented
-   untyped escape hatch. There is no after-the-fact "collect the links" pass. Promotion links are
+   scope-delta kinds (`scope_adds`/`scope_modifies`/`scope_removes` — plan rows only) and
+   `amends` (a scope change → the `DEC-`/`ADR-` ruling it carves an exception out of or
+   re-scopes; v4.5); `relates_to` is the documented untyped escape hatch. There is no after-the-fact "collect the links" pass. Promotion links are
    **columns**, not edges: `lessons.promoted_to` → the `SKL-` skill it was distilled into, the same
    idiom as `decisions.promoted_to` → the ADR.
 2. `G-TRACE` fails on any MVP requirement with a gap in a required column — fix by adding the missing

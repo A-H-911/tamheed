@@ -1,4 +1,4 @@
-# Artifact Catalog — the entity families and their rules (tamheed v4.4.2)
+# Artifact Catalog — the entity families and their rules (tamheed v4.5.0)
 
 The authoritative, human-facing list of every artifact a Tamheed package carries. Since v2
 the package **is a relational store** (`data/*.jsonl`, one file per entity family — see
@@ -51,6 +51,8 @@ flowchart TB
     AC -- "discharges" --> RISK
     DEF -- "found_in (column)" --> SL
     SC -- "scope_adds / scope_modifies /<br/>scope_removes" --> REQ
+    SC -- "amends" --> DEC
+    SC -- "amends" --> ADR
     WVR -- "applies_to (column)" --> DEF
     OQ -- "cited by [NEEDS-CLARIFICATION] markers" --> REQ
     LL -- "learned_from" --> DEF
@@ -152,9 +154,9 @@ One `data/<table>.jsonl` file per non-empty family. Class = the registry's gener
 | convention | `CONV-` | Conditional | Durable conventions the executor must honor |
 | defect | `DEF-` | Conditional | Found bugs; severity critical/high/medium/low — **open critical/high block readiness, medium/low advise**; `found_in` locates it |
 | deferred-work | `DW-` | Conditional | Postponed work with severity + activation trigger + invariant at stake |
-| scope-change | `SC-` | Continuous | Drift record: Proposed → Approved → **Merged** (deltas applied to plan rows via scope_adds/scope_modifies/scope_removes edges; scope-changes-merged advisory flags Approved-never-Merged) |
+| scope-change | `SC-` | Continuous | Drift record: Proposed → Approved → **Merged** (deltas applied to plan rows via scope_adds/scope_modifies/scope_removes edges; a RULING it touches via an `amends` edge — a `DEC-` merges by full-row upsert, an `ADR-` by supersession; Merged is set LAST, after every target is applied and re-read; scope-changes-merged advisory flags Approved-never-Merged) |
 | waiver | `WVR-` | Conditional | A named readiness rule satisfied for a named entity: justification + approver + expiry; reported as `waived`, never silent (v4 — the alternative is informal bypass) |
-| progress-entry | `PE-` | Continuous | Append-only TYPED journal: event_type (work-done/verdict-recorded/transition/forced-override/gate-decision/escalation/correction/note) + subject + actor + `corrects` compensation pointer |
+| progress-entry | `PE-` | Continuous | Append-only TYPED journal: event_type (work-done/verdict-recorded/transition/gate-decision/escalation/correction/note from callers; forced-override/lesson-confirmed/lesson-promoted/integrity-verified are SERVER-appended only and refused from `progress_update`) + subject + actor + `corrects` compensation pointer |
 
 ### Prose & artifacts
 
@@ -189,8 +191,10 @@ One `data/<table>.jsonl` file per non-empty family. Class = the registry's gener
   carries its evidence chain (`evidence`, `verified_by`, `verification_method`,
   `against_commit`).
 - **Drift**: deviating from the approved plan starts with an `SC-` row (Proposed) plus
-  `scope_adds`/`scope_modifies`/`scope_removes` edges naming the affected rows; after
-  operator approval the agent applies the changes and sets the `SC-` to `Merged` — the
+  `scope_adds`/`scope_modifies`/`scope_removes` edges naming the affected plan rows
+  (`amends` when it carves an exception out of a `DEC-`/`ADR-` ruling: DEC- merges by
+  full-row upsert, ADR- by supersession); after operator approval the agent applies the
+  changes, re-reads them, and sets the `SC-` to `Merged` LAST — the
   `scope-changes-merged` advisory flags anything approved but never reconciled.
 - **Waivers**: an operator-approved `WVR-` row (rule + entity + justification +
   approver + expiry) satisfies a named readiness rule for a named entity, reported as

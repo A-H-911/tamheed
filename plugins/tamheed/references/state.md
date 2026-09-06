@@ -13,6 +13,10 @@ ingestion in v4.0.0 — the store IS the state, and nothing reads or writes that
 `resume` = `package_open(name)` + orient:
 
 1. `entity_query` the working families (requirements by status, open questions, decisions Proposed).
+   Registers are read through the tool whatever their size: `limit` cuts rows (never fields),
+   `total` is exact, the result's `next_after` pages the rest (`after_id`), `ids=[...]` fetches a
+   known set in one call, `search=` sweeps by keyword — never `data/*.jsonl` to dodge a client's
+   payload cap.
 2. `gate_run` — the gate report tells you which stage the package is effectively in (missing
    families → Understand/Explore; trace gaps → Stage 17; no prompts → Stage 20).
 3. Continue from the last incomplete stage; never re-ask settled questions.
@@ -40,5 +44,7 @@ that make them safe live in the schema:
 - Derived data (traceability, status, backlog, readiness, identifier counts) is **views only** — it
   cannot drift from the rows because it *is* the rows.
 - Every mutation ends with canonical write-back; `data/` in git is always loadable to an identical
-  store (round-trip byte identity, `../db/CANONICAL.md`).
+  store (round-trip byte identity, `../db/CANONICAL.md`) — exercised on demand by
+  `package_verify` (per-file byte-equality, foreign files, a citable digest; `record=true`
+  journals it as a server-appended `integrity-verified` event).
 - One writer per package (`data/.lock`); a second opener fails loud, never waits, never steals.

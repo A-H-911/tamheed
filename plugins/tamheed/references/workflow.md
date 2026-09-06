@@ -196,7 +196,11 @@ human-intervention point.
   `audit_record` (AC verdicts **with evidence refs** — test file, CI run id), and `work_bind`
   ("commit X satisfies FR-x/AC-y/SL-z" — stamps `last_referenced`). Cascades are automatic: all ACs of a
   requirement `Met` → requirement auto-advances to Implemented; views stay current by construction.
-  Decision flips, supersessions, and typed scope changes follow `modes.md` (`scope-change` row first).
+  Decision flips, supersessions, and typed scope changes follow `modes.md` (`scope-change` row first;
+  a change that touches a RULING carries an `amends` edge — a `DEC-` merges by full-row upsert, an
+  `ADR-` by supersession — and `Merged` is set LAST, after every target row is applied and re-read).
+  Journal kinds the server witnesses (`forced-override`, `lesson-confirmed`, `lesson-promoted`,
+  `integrity-verified`) are appended by the server alone — `progress_update` refuses them.
   When execution teaches something durable, record a `lesson` row (born Proposed, `learned_from` edge
   to its source) — the operator confirms later; only Approved lessons bind future sessions, and the
   confirming write itself carries `"operator_confirm": true` on the operator's explicit words (the
@@ -216,9 +220,10 @@ human-intervention point.
 
 ### 22. Final readiness assessment
 - **In:** the whole package. **Do:** `gate_run` **and** `readiness_check("package")` — both mandatory;
+  `package_verify` (the canonical round-trip, per file) before the operator commits the verdict;
   summarize gate results, open items (accepted-open
-  `OQ-`s), residual risks (still-`open` risk_states), evidenced-vs-narrated verdict counts, and a
-  go/no-go. **Out:** the readiness verdict (rendered from the gate report + `v_readiness`).
+  `OQ-`s), residual risks (still-`open` risk_states), evidenced-vs-narrated verdict counts (the
+  narrated ones by id), and a go/no-go. **Out:** the readiness verdict (rendered from the gate report + `v_readiness`).
 - **Enter:** Stages 19–20 done. **Exit:** verdict stated. **Validate:** no critical gate failing; every
   `OQ-` closed or accepted-open. **Fail:** critical gap → not ready; list what's missing.
 - **Human:** ✅ final go/no-go. **Writes:** none (derived).

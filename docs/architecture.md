@@ -26,7 +26,7 @@ re-implements the methodology. This is enforceable (gate **G-CMD-THIN**); the co
    MCP SERVER     the capability's MECHANICAL HALF (successor of the v1 validator)
                   entity_upsert · entity_query · trace_query · gate_run · handoff_emit ·
                   progress_update · audit_record · work_bind · package_migrate · package_adopt ·
-                  export_html — the ONLY write path into a package
+                  export_html · package_verify — the ONLY write path into a package
                         │  loads / writes back
                         ▼
    PACKAGE STORE  SQLite runtime (schema-enforced) ⇄ canonical JSONL (data/*.jsonl, committed)
@@ -62,9 +62,11 @@ that would create one fails, and the error message is the gate report.
 Above the gates sits the **readiness layer**: `readiness_check(scope, id?)` answers "is this actually
 done?" at a close boundary — `Review` counts as open (claimed is not verified), open critical/high defects
 block while medium/low advise, and a stubborn failure passes only through an operator-approved `WVR-`
-waiver (reported as `waived`, expiring, never silent). Alongside the blocking rules run fourteen
+waiver (reported as `waived`, expiring, never silent). Alongside the blocking rules run fifteen
 package-scope liveness advisories — from overdue open questions to `lessons-confirmed`, which nags while
-any lesson recorded by the executing agent still awaits the operator's confirmation interview. The same
+any lesson recorded by the executing agent still awaits the operator's confirmation interview, and
+`lessons-note-budget`, which names the lessons rendering past the always-loaded note's curation
+ceiling as promotion candidates (pinning stays the operator's choice; its cost stops being invisible). The same
 guarded-transition doctrine that reserves `force` for the operator's explicit words also guards lesson
 binding: `entity_upsert` refuses any write landing a lesson in `Approved` or `Promoted` unless the item
 carries `"operator_confirm": true` — operator-words-only, content byte-identical to the stored row,
@@ -73,6 +75,18 @@ attribution (`confirmed_by`) on the same write — and the server appends the ty
 procedural: an operator interview distills Approved lessons into a **skill** (`SKL-` row + a written
 `SKILL.md` the executing harness auto-loads), completing the episodic → declarative → procedural chain
 (journal → lessons → skills).
+
+The journal itself distinguishes what a caller reports from what the server witnessed: the four
+server-appended kinds (`forced-override`, `lesson-confirmed`, `lesson-promoted`, `integrity-verified`)
+are refused from `progress_update` (v4.5), so a narrated "confirmed" or "verified" can never be
+journaled by hand. And the store's byte-stability guarantee — an idle open→close is a zero-diff — is
+exercised on demand by **`package_verify`**: the canonical round-trip reported per file, foreign files
+in `data/` named, an unloadable store reported as a finding, memory compared to disk when the package
+is open, and a sha256 digest of the canonical files that `record=true` journals as a citable fact
+(tamper-evidence proper — a hash chain, signatures, an external anchor — is deliberately out of scope).
+The read side matches: `entity_query` pages (`after_id`/`next_after`), fetches known sets (`ids`), and
+sweeps by keyword (`search`), so a register of any size is reachable through the tool and the files
+stay what they are — the canonical form, never the read path.
 
 ## 3. The three actors
 
@@ -175,7 +189,7 @@ Semver `MAJOR.MINOR.PATCH`, with the boundary defined by contract compatibility:
   section templates, optional columns, quality gates, profiles, diagram kinds, entry points. Existing
   packages keep working; a v4 package whose registry predates a newer family is taught it through
   `package_migrate`'s staged **registry-sync** mode (preview reports `entity_types_added`, confirm appends
-  the registry rows — a pure registry append, no backup taken; `columns_added` names any files that re-serialize because their tables gained columns since the store was last written).
+  the registry rows — a pure registry append, no backup taken; `columns_added` names any files that re-serialize because their tables gained columns since the store was last written; since v4.5 the same staged sync also relocates a foreign `*.jsonl.converted` audit-trail file out of the canonical `data/` into `data-v3-backup/`). New trace relations and journal event kinds are MINOR too (a CHECK recreation on an empty-at-connect table — `004_amends_verify.sql`).
 - **MAJOR (breaking):** a change to the DDL's existing required columns, the identifier scheme, or the
   MCP tool contract — ships with a migration note (see
   [`../plugins/tamheed/references/governance.md`](../plugins/tamheed/references/governance.md)).

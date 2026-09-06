@@ -10,6 +10,114 @@ All notable changes to Tamheed are documented here. The format is based on
 
 ## [Unreleased]
 
+## [4.5.0] - 2026-09-06
+
+**MINOR — the query surface with depth, `amends`, `package_verify`, and the note
+budget (plan 039, findings_22/C43 + the ACMP lessons register).** An
+operator-commissioned integrity audit — begun after the operator caught an agent
+reading `data/*.jsonl` instead of using the tools — found one design gap that had
+caused an incident (a query surface with no paging pushed agents onto the files,
+and a false sentence about the cause then recruited every later session), two
+smaller gaps, one migration leftover, and a strong positive: the byte-stability
+guarantee held over all 29 files, 40 tables, 7,819 rows, and 488 commits of
+history ("survived a deliberate attempt to falsify it"). Reading the field
+register's 62 operator-confirmed lessons alongside the report turned six of them
+into engine and doctrine changes.
+
+### Added
+
+- **`entity_query` gains depth** (findings_22 §1): `after_id` (keyset paging — the
+  cut and the order share one byte collation, so a walk is complete over
+  mixed-width ids; the result's `next_after` is the cursor, exact via a one-row
+  look-ahead, null on the last page; `total` counts the filtered set and stays
+  constant across the walk), `ids` (a known set in one call, in id order — the
+  slate-generator shape the register's `LL-011` demands: full text of every cited
+  record), and `search` (case-insensitive substring over the family's TEXT
+  columns, `%`/`_` escaped — the keyword sweep `LL-008` requires, now possible
+  under MCP-exclusive access). The docstring now says what its silence used to
+  hide: `limit` cuts ROWS, never fields; there is no field truncation in the
+  query path; a payload cap is the client's.
+- **`amends`** — a new typed relation, scope-change → decision | adr (§2), via
+  **migration `004_amends_verify.sql`** (the 002/003 recreation pattern). A scope
+  change that carves an exception out of a ruling no longer collapses into
+  `relates_to` (the field package carried three such edges). Merge semantics
+  taught everywhere the delta lifecycle is: a `DEC-` target merges by full-row
+  upsert, an `ADR-` target by supersession; `Merged` is the LAST step, after every
+  target row is applied and re-read (`LL-042`: nothing mechanical checks the
+  assertion `Merged` makes).
+- **`package_verify(name?, record?)`** — the integrity instrument as a tool (§5):
+  the canonical round-trip reported per file (`dirty`), foreign files in `data/`
+  listed, an unloadable store reported as a finding (with file:line — `store.load`
+  now locates bad JSON), memory-vs-disk compared when the package is open (a
+  refused flush is exactly when a disk-only round-trip would lie), and a sha256
+  `digest` over the canonical files. `record=true` appends ONE typed
+  **`integrity-verified`** journal row (actor `system:package-verify`; only on a
+  passing verification) naming the digest — a citable fact; the entry states that
+  recording rewrites the journal file, so the next digest differs by construction.
+  Read-only by default: no lock, nothing written. 17 tools.
+- **`audit_evidence.narrated_ids`** (§3): the count told you a C7 problem existed
+  and refused to say where — findings_21 §3's shape again; the ids are now named.
+- **`lessons-note-budget`** package advisory: the field register renders 57
+  lesson lines into the always-loaded note (48 pinned, 0 promoted). Pinning
+  bypasses the cap by design, so its cost is made visible instead — past the
+  curation ceiling (20 rendered lines) the rule names the rows rendering beyond it
+  in the note's own order: a deterministic promotion-candidate list, pointing at
+  `skill-promote.md` or unpinning. The note and the rule share one row helper.
+- **Server-only journal events are refused from `progress_update`**
+  (`forced-override`, `lesson-confirmed`, `lesson-promoted`, `integrity-verified`):
+  the field data held five agent-written `lesson-confirmed` rows beside the 58
+  server-appended ones — a vocabulary that never refused a server-only type let a
+  narrated "confirmed" be journaled by hand. The refusal names the appending tool;
+  existing rows are untouched (data is never rewritten).
+
+### Changed
+
+- **The `.jsonl.converted` leftover leaves the canonical directory** (§4): the v3
+  prompt converter no longer renames its source into `data/` (the backup copy
+  `package_migrate` takes moments earlier is the audit trail — `source_kept`), and
+  `package_migrate` on a v4 store gains a third staged-sync reason: a foreign
+  `*.jsonl.converted` in `data/` is previewed as `relocate` and, on confirm, moved
+  into `data-v3-backup/` — or REMOVED when the backup already holds a byte-identical
+  copy (the field package's exact case: the v4 migrate had copied every `data/`
+  file there), or REFUSED naming both paths when they differ. The
+  "registry current — nothing to migrate" refusal fires only when there is also
+  nothing to relocate (the remedy would otherwise have been a no-op — the
+  hollow-pass class). The v3→v4 confirm path removes a stale `.converted` in the
+  same run (its backup copy is taken first) — one migration, never two.
+- **The note's C31 sentence carries `LL-061`**: `work_bind`, the closing
+  `progress_update`, `export_html` and `handoff_emit` all FLUSH `data/*.jsonl`
+  AFTER the commit they record — `git status --porcelain -uall` immediately before
+  any branch operation, never a memory of having committed. The cheat-sheet teaches
+  the widened `entity_query` and `package_verify`; the SC obligation row teaches
+  `amends` + re-read-then-Merged; the agent-control template mirrors all of it.
+- Stock prompts (six, roster-appended under 4.5.0): `orient-resume` classifies
+  unreferenced commits by `git show --name-only` — package-only writes are
+  self-referentially unbindable (`LL-004`: the old wording invited 18 false alarms
+  per window); `register-liveness` step 8 (Merged last, `amends`) + a new
+  note-budget step; `defect-triage` — a ruling made while closing a defect is a
+  `DEC-` row, never prose inside the Fixed row (`LL-040`), and closed rows are
+  re-read on status flips; `integrity-check` opens with `package_verify`, reads
+  `narrated_ids`, sweeps closed rows for buried rulings, and verifies repairs
+  through `ids=` instead of the files; `package-onboarding`/`slice-kickoff` teach
+  paging and `ids`; the prompts README's standing rules gain all of it.
+- References/docs swept for the new relation, event, tool, and paging surface
+  (governance, traceability, artifact catalog incl. the entity map, handoff, state,
+  workflow, quality-gates, extension — migration 004 as the second worked example
+  — CANONICAL.md's verify section, both READMEs, SKILL.md, docs/architecture,
+  docs/entities, docs/methodology, the lab scenario's beat 12, the eval fixture).
+
+### Fixed
+
+- `store.load()` names the file and line of unparseable JSON (a bare decoder
+  message located nothing).
+
+### Deferred (recorded)
+
+- Tamper-evidence proper (a row hash chain, signatures, an external anchor —
+  findings_22 §5's second half) — a future option in plans/README; a clean
+  `package_verify` is a citable fact, not durable evidence against a determined
+  hand-edit-then-tool-call rewrite.
+
 ## [4.4.2] - 2026-08-20
 
 **PATCH — the journal exemption + `corrects`' first consumer (plan 038,

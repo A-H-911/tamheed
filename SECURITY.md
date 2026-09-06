@@ -39,6 +39,12 @@ report a problem.
   nor reads skill files (the package row holds metadata only), and the promotion prompt instructs a
   G-INJECT-style self-review of the draft before it is shown for approval — a skill is a standing
   instruction surface and is treated as one.
+- **Server-witnessed journal facts cannot be narrated** — the four journal kinds the server appends
+  (`forced-override`, `lesson-confirmed`, `lesson-promoted`, `integrity-verified`) are refused from
+  `progress_update`; `package_verify` is read-only by default and journals a digest only on a passing
+  round-trip, and it is stated as evidence-of-verification, not tamper-evidence (no hash chain or
+  signature — a hand edit followed by a tool call is rewritten canonically; git history is the
+  tamper record).
 - **Safe-by-default store** — no raw-SQL tool; batch mutations are transactional (all-or-nothing);
   approval-bearing rows are immutable (supersede, never edit); one writer per package via a fail-loud
   lockfile; `handoff_emit` refuses emission when the injection screen finds instruction-shaped text.

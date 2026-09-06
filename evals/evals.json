@@ -814,6 +814,43 @@
             "1"
           ],
           "expect_exit": 0
+        },
+        {
+          "check": "The store was verified on the operator's words (plan 039: the server-appended integrity-verified row names a digest).",
+          "cmd": [
+            "python",
+            "evals/pkg_check.py",
+            "grep-present",
+            "{case_dir}/package",
+            "INTEGRITY-VERIFIED",
+            "--tables",
+            "progress_entries"
+          ],
+          "expect_exit": 0
+        },
+        {
+          "check": "A scope change amended a ruling through the typed relation (plan 039: >=1 amends edge, never relates_to for an SC->DEC).",
+          "cmd": [
+            "python",
+            "evals/pkg_check.py",
+            "grep-present",
+            "{case_dir}/package",
+            "\"amends\"",
+            "--tables",
+            "trace_edges"
+          ],
+          "expect_exit": 0
+        },
+        {
+          "check": "The fixture is byte-canonical (plan 039: the eval fixture passes its own round-trip — no dirty file, no foreign file).",
+          "cmd": [
+            "python",
+            "evals/pkg_check.py",
+            "verify",
+            "{case_dir}/package"
+          ],
+          "expect_exit": 0,
+          "expect_substring": "verified=True"
         }
       ],
       "rubric": [

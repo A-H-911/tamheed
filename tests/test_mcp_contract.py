@@ -621,6 +621,32 @@ class McpContractTest(unittest.TestCase):
                             encoding="utf-8")
         return srv.PACKAGE_ROOT / name
 
+    def test_v3_confirm_removes_stale_converted_file(self):
+        """The advisor's catch on plan 039: a v3 store converted at 3.0.0 carries the
+        old `.converted` rename; the v3→v4 confirm copies every data/ file into the
+        backup, so the data/ copy is removed in the SAME run — never a second
+        `package_migrate` to relocate it."""
+        pkg = self._seed_legacy_prompts("demo", [
+            {"id": "PRM-001", "prompt_kind": "initial", "title": "Kickoff",
+             "body": "Start.", "phase_id": None, "custom_attributes": None,
+             "last_referenced": None}])
+        stale = pkg / "data" / "old.jsonl.converted"
+        stale.write_text('{"id":"PRM-000"}\n', encoding="utf-8")
+        prev = srv.package_migrate("demo")
+        self.assertEqual(prev["stage"], "preview")
+        self.assertEqual(prev["report"]["relocate"],
+                         [{"file": "data/old.jsonl.converted",
+                           "action": "remove (copied to data-v3-backup/)"}])
+        self.assertTrue(stale.exists())                      # preview writes nothing
+        done = srv.package_migrate("demo", confirm=True)
+        self.assertTrue(done["ok"], done)
+        self.assertFalse(stale.exists())
+        self.assertEqual((pkg / "data-v3-backup" / "old.jsonl.converted"
+                          ).read_text(encoding="utf-8"), '{"id":"PRM-000"}\n')
+        srv.package_open("demo")
+        self.assertEqual(srv.package_verify()["foreign"], [])
+        srv.package_close()
+
     def test_note_lessons_section_renders_approved_only(self):
         """Plan 035: the note span's first data-derived content. Approved-only;
         ALL pinned render; the cap of 10 covers the unpinned fill; ordering is
@@ -708,6 +734,25 @@ class McpContractTest(unittest.TestCase):
         self.assertGreaterEqual(len(cells), 9)
         for cell in cells:
             self.assertIn(cell, tpl, f"obligation row missing from template: {cell}")
+
+    def test_note_teaches_paging_verify_amends_and_the_flush_rule(self):
+        """Plan 039: the note carries LL-061's refinement of C31 (recording FLUSHES
+        after the commit it records — the porcelain check, never a memory), the
+        widened entity_query cheat-sheet line, package_verify, and the `amends`
+        merge semantics in the SC obligation row; the agent-control template
+        carries the same commit rule."""
+        self._emit_ready()
+        with tempfile.TemporaryDirectory() as target:
+            srv.handoff_emit(target)
+            note = (Path(target) / "CLAUDE.md").read_text(encoding="utf-8")
+        for needle in ("git status --porcelain -uall", "FLUSH `data/*.jsonl` AFTER",
+                       "after_id?, ids?, search?", "package_verify(name?, record?)",
+                       "`amends` for a ruling", "RE-READ them"):
+            self.assertIn(needle, note, needle)
+        tpl = (REPO_ROOT / "plugins" / "tamheed" / "templates" /
+               "agent-control.template.md").read_text(encoding="utf-8")
+        self.assertIn("git status --porcelain -uall", tpl)
+        self.assertIn("package_verify", tpl)
 
     def test_note_pointer_pattern_recognized(self):
         """findings_19 §1 (plan 036): a target CLAUDE.md whose heading section is
@@ -846,14 +891,16 @@ class McpContractTest(unittest.TestCase):
         conv = out["legacy_prompts"]
         self.assertEqual(conv["prompts_converted"],
                          ["prompts/prm-001-initial.md", "prompts/prm-002-review.md"])
-        self.assertEqual(conv["source_renamed"], "data/prompts.jsonl.converted")
+        # plan 039 (findings_22 §4): no `.converted` foreign object in canonical
+        # data/ any more — the backup copy taken moments earlier is the audit trail
+        self.assertEqual(conv["source_kept"], "data-v3-backup/prompts.jsonl")
         # plan 028: per-kind curation hints ship at conversion time too
         kinds = {c["file"]: c["kind"] for c in conv["curation"]}
         self.assertEqual(kinds, {"prompts/prm-001-initial.md": "initial",
                                  "prompts/prm-002-review.md": "review"})
         self.assertIn("package-onboarding", conv["curation"][0]["hint"])
         self.assertFalse((pkg / "data" / "prompts.jsonl").exists())
-        self.assertTrue((pkg / "data" / "prompts.jsonl.converted").exists())
+        self.assertFalse((pkg / "data" / "prompts.jsonl.converted").exists())
         self.assertTrue((pkg / "data-v3-backup" / "prompts.jsonl").exists())
         one = (pkg / "prompts" / "prm-001-initial.md").read_text(encoding="utf-8")
         self.assertIn("converted from data/prompts.jsonl PRM-001", one)
@@ -1855,6 +1902,249 @@ class V4EngineTest(unittest.TestCase):
                                         "relation": "learned_from"}])
         self.assertFalse(wrong_end["ok"])
 
+    # ------------------------------------------------- plan 039 (findings_22 / C43)
+
+    def test_entity_query_keyset_paging_over_mixed_width_ids(self):
+        """findings_22 §1: `after_id` pages in the SAME byte order as ORDER BY id, so
+        a walk at limit=1 over mixed-width ids (RISK-999 sorts AFTER RISK-1001 as
+        text) is complete — union == all, zero duplicates, `total` constant,
+        `next_after` null only on the last page."""
+        srv.entity_upsert([{"type": "risk", "id": i, "title": "t"}
+                           for i in ("RISK-002", "RISK-999", "RISK-1000", "RISK-1001")])
+        seen, cursor, pages = [], None, 0
+        while True:
+            out = srv.entity_query("risk", columns=["id", "title"], limit=1,
+                                   after_id=cursor)
+            self.assertTrue(out["ok"], out)
+            self.assertEqual(out["total"], 5)              # constant across the walk
+            self.assertEqual(out["count"], 1)
+            seen.append(out["rows"][0]["id"])
+            pages += 1
+            cursor = out["next_after"]
+            if cursor is None:
+                break
+            self.assertEqual(cursor, seen[-1])             # the cursor IS the last id
+        self.assertEqual(pages, 5)
+        self.assertEqual(seen, ["RISK-001", "RISK-002", "RISK-1000", "RISK-1001",
+                                "RISK-999"])               # byte order, no gaps/dupes
+        # a page that exactly exhausts the set still says "last" (no phantom page)
+        out = srv.entity_query("risk", limit=5)
+        self.assertEqual((out["count"], out["next_after"]), (5, None))
+        out = srv.entity_query("risk", limit=4)
+        self.assertEqual((out["count"], out["next_after"]), (4, "RISK-1001"))
+        # paging without `id` in the selected columns still yields a cursor
+        out = srv.entity_query("risk", columns=["title"], limit=2)
+        self.assertEqual(out["next_after"], "RISK-002")
+
+    def test_entity_query_ids_search_and_refusals(self):
+        """findings_22 §1 + the ACMP register's LL-008/LL-011: a known set comes back
+        in id order (absent ids simply missing, `total` honest); `search` is a
+        case-insensitive substring over the family's TEXT columns with `%`/`_`
+        escaped; the nonsensical combinations are refused, not guessed."""
+        srv.entity_upsert([
+            {"type": "risk", "id": "RISK-002", "title": "Alpha loses 100% of cache"},
+            {"type": "risk", "id": "RISK-003", "title": "beta_under score"},
+            # the negative controls for the escape: unescaped `%`/`_` would match these
+            {"type": "risk", "id": "RISK-004", "title": "loses 100 percent of cache"},
+            {"type": "risk", "id": "RISK-005", "title": "beta-under score"}])
+        out = srv.entity_query("risk", ids=["RISK-003", "RISK-001", "RISK-404"],
+                               columns=["id"])
+        self.assertEqual([r["id"] for r in out["rows"]], ["RISK-001", "RISK-003"])
+        self.assertEqual(out["total"], 2)
+        self.assertIsNone(out["next_after"])
+        self.assertEqual([r["id"] for r in srv.entity_query(
+            "risk", search="ALPHA", columns=["id"])["rows"]], ["RISK-002"])
+        self.assertEqual([r["id"] for r in srv.entity_query(
+            "risk", search="100%", columns=["id"])["rows"]], ["RISK-002"])
+        self.assertEqual([r["id"] for r in srv.entity_query(
+            "risk", search="a_under", columns=["id"])["rows"]], ["RISK-003"])
+        self.assertEqual(srv.entity_query("risk", search="nowhere")["total"], 0)
+        # search composes with status + paging
+        srv.entity_upsert([{"type": "decision", "id": f"DEC-00{i}", "title": f"gate {i}",
+                            "lifecycle_status": "Approved"} for i in (1, 2, 3)])
+        out = srv.entity_query("decision", status="Approved", search="gate", limit=2,
+                               columns=["id"])
+        self.assertEqual((out["count"], out["total"], out["next_after"]),
+                         (2, 3, "DEC-002"))
+        for bad in (dict(id="RISK-001", ids=["RISK-001"]),
+                    dict(id="RISK-001", after_id="RISK-000"),
+                    dict(ids=[]), dict(ids="RISK-001")):
+            self.assertFalse(srv.entity_query("risk", **bad)["ok"], bad)
+        # remedy 4: the docstring says what the silence used to hide
+        doc = srv.entity_query.__doc__
+        for needle in ("NO field truncation", "after_id", "`ids`", "search",
+                       "`total` is the exact"):
+            self.assertIn(needle, doc)
+
+    def test_audit_evidence_names_narrated_ids(self):
+        """findings_22 §3: the count told you a C7 problem existed and refused to say
+        where — `narrated_ids` is the same predicate's SELECT id."""
+        srv.audit_record([{"ac_id": "AC-001", "verdict": "Partial", "evidence": "run 9"},
+                          {"ac_id": "AC-001", "verdict": "Met"},
+                          {"ac_id": "AC-001", "verdict": "Met", "evidence": ""}])
+        ev = srv.gate_run()["gates"]["audit_evidence"]
+        self.assertEqual((ev["evidenced"], ev["narrated"]), (1, 2))
+        self.assertEqual(ev["narrated_ids"], ["AV-002", "AV-003"])
+
+    def test_amends_edge_typed_scope_change_to_ruling(self):
+        """findings_22 §2: `amends` = scope-change -> {decision, adr} only; the
+        scope_* deltas stay plan-only, so an SC touching a ruling no longer collapses
+        into relates_to (ACMP carried three such edges)."""
+        srv.entity_upsert([{"type": "decision", "id": "DEC-001", "title": "d",
+                            "lifecycle_status": "Approved"},
+                           {"type": "adr", "id": "ADR-0001", "title": "a",
+                            "lifecycle_status": "Approved", "confirmation": "ok"}])
+        for to in ("DEC-001", "ADR-0001"):
+            out = srv.entity_upsert([{"type": "trace-edge", "from_id": "SC-001",
+                                      "to_id": to, "relation": "amends"}])
+            self.assertTrue(out["ok"], out)
+        for frm, to in (("SC-001", "SL-001"), ("DEC-001", "SC-001"),
+                        ("WBS-1", "DEC-001")):
+            out = srv.entity_upsert([{"type": "trace-edge", "from_id": frm,
+                                      "to_id": to, "relation": "amends"}])
+            self.assertFalse(out["ok"], (frm, to))
+        # a ruling is still not a plan row for the scope_* deltas
+        self.assertFalse(srv.entity_upsert([{"type": "trace-edge", "from_id": "SC-001",
+                                             "to_id": "DEC-001",
+                                             "relation": "scope_modifies"}])["ok"])
+        self.assertEqual(srv.gate_run()["gates"]["G-REL"]["status"], "pass")
+        note = next(r for r in srv.readiness_check("package")["rules"]
+                    if r["rule"] == "scope-changes-merged")["note"]
+        self.assertIn("`amends` edge merges its ruling", note)
+        self.assertIn("Merged is the LAST step", note)
+
+    def test_package_verify_round_trip_report_and_record(self):
+        """findings_22 §5: the integrity instrument as a tool — per-file
+        byte-equality, foreign files, loadable-as-finding, memory-vs-disk when
+        open, the typed server-only journal row on record=true, and the honest
+        "the recorded digest changes the next digest" rule."""
+        pkg = srv.PACKAGE_ROOT / "demo"
+        out = srv.package_verify()
+        self.assertTrue(out["ok"] and out["verified"], out)
+        self.assertEqual((out["package"], out["foreign"], out["dirty"],
+                          out["memory_matches_disk"], out["recorded"]),
+                         ("demo", [], [], True, None))
+        self.assertEqual(len(out["digest"]), 64)
+        self.assertGreater(out["files"], 5)
+        # a different name while open is refused; the open one needs no name
+        self.assertFalse(srv.package_verify("other")["ok"])
+        # record=true: the server's own typed row, then the digest moves — by design
+        rec = srv.package_verify(record=True)
+        self.assertTrue(rec["verified"], rec)
+        self.assertEqual(rec["digest"], out["digest"])          # nothing changed yet
+        pe = srv.entity_query("progress-entry", id=rec["recorded"])["rows"][0]
+        self.assertEqual((pe["event_type"], pe["actor"]),
+                         ("integrity-verified", "system:package-verify"))
+        self.assertIn(out["digest"], pe["entry"])
+        self.assertIn("BEFORE this row", pe["entry"])
+        again = srv.package_verify()
+        self.assertTrue(again["verified"])
+        self.assertNotEqual(again["digest"], out["digest"])     # the row was appended
+        # a foreign file is listed, never counted against verification
+        (pkg / "data" / "prompts.jsonl.converted").write_text("{}\n", encoding="utf-8")
+        out = srv.package_verify()
+        self.assertEqual(out["foreign"], ["prompts.jsonl.converted"])
+        self.assertTrue(out["verified"])
+        # a hand-edit that is semantically equal but NOT canonical: dirty names it,
+        # memory disagrees with disk, and record=true refuses to journal it
+        risks = pkg / "data" / "risks.jsonl"
+        rows = [json.loads(ln) for ln in risks.read_text(encoding="utf-8").splitlines()]
+        risks.write_text("".join(json.dumps(r) + "\n" for r in rows),  # ", " / ": "
+                         encoding="utf-8")
+        out = srv.package_verify(record=True)
+        self.assertFalse(out["verified"])
+        self.assertEqual(out["dirty"], ["risks.jsonl"])
+        self.assertFalse(out["memory_matches_disk"])
+        self.assertIsNone(out["recorded"])
+        self.assertIn("NOT recorded", out["note"])
+        canonical = "\n".join(json.dumps(r, ensure_ascii=False, separators=(",", ":"))
+                              for r in rows) + "\n"
+        risks.write_text(canonical, encoding="utf-8", newline="\n")
+        srv.package_close()
+        # closed: name required, read-only, record refused, not-found named
+        self.assertFalse(srv.package_verify()["ok"])
+        self.assertFalse(srv.package_verify("nope")["ok"])
+        self.assertIn("OPEN", srv.package_verify("demo", record=True)["error"])
+        out = srv.package_verify("demo")
+        self.assertTrue(out["verified"], out)
+        self.assertIsNone(out["memory_matches_disk"])
+        self.assertFalse((pkg / "data" / ".lock").exists())    # lock-free, nothing written
+        # an unloadable store is a FINDING, not an exception
+        risks.write_text(canonical + "{not json\n", encoding="utf-8", newline="\n")
+        out = srv.package_verify("demo")
+        self.assertTrue(out["ok"])
+        self.assertEqual((out["verified"], out["loadable"]), (False, False))
+        self.assertIn("risks.jsonl", out["error"])
+
+    def test_lessons_note_budget_advisory_names_promotion_candidates(self):
+        """The ACMP register (57 Approved, 48 pinned, 0 promoted -> 57 note lines):
+        the advisory fires past the ceiling and its entities are the rows that render
+        PAST position 20 in the note's own order — deterministic promotion
+        candidates, never "all pinned"."""
+        def lesson(n, pinned):
+            return {"type": "lesson", "id": f"LL-{n:03d}", "title": "t",
+                    "statement": f"s{n}", "kind": "improve", "pinned": pinned,
+                    "lifecycle_status": "Approved", "confirmed_by": "op",
+                    "operator_confirm": True}
+        srv.entity_upsert([lesson(n, 1) for n in range(1, 21)])
+        rule = next(r for r in srv.readiness_check("package")["rules"]
+                    if r["rule"] == "lessons-note-budget")
+        self.assertEqual((rule["status"], rule["entities"]), ("pass", []))
+        srv.entity_upsert([lesson(n, 1) for n in range(21, 26)]
+                          + [lesson(n, 0) for n in range(26, 29)])
+        rule = next(r for r in srv.readiness_check("package")["rules"]
+                    if r["rule"] == "lessons-note-budget")
+        self.assertEqual(rule["status"], "fail")
+        self.assertEqual(rule["entities"], ["LL-005", "LL-004", "LL-003", "LL-002",
+                                            "LL-001", "LL-028", "LL-027", "LL-026"])
+        self.assertIn("28 lesson line(s)", rule["note"])
+        self.assertIn("skill-promote.md", rule["note"])
+        self.assertEqual(srv._NOTE_LESSONS_CEILING, 20)
+
+    def test_migrate_relocates_converted_file_out_of_data(self):
+        """findings_22 §4: a `*.jsonl.converted` audit-trail file in the canonical
+        data/ directory is a third staged-sync reason on a registry-current v4 store
+        (the refusal used to make the remedy a no-op) — moved when the backup lacks
+        it, removed when the backup holds a byte-identical copy (ACMP's exact
+        case), refused when the two differ."""
+        srv.package_close()
+        pkg = srv.PACKAGE_ROOT / "demo"
+        self.assertIn("nothing to migrate", srv.package_migrate("demo")["error"])
+        conv = pkg / "data" / "prompts.jsonl.converted"
+        conv.write_text('{"id":"PRM-001"}\n', encoding="utf-8")
+        prev = srv.package_migrate("demo")
+        self.assertEqual(prev["stage"], "preview")
+        self.assertEqual(prev["report"]["mode"], "registry-sync")
+        self.assertEqual(prev["report"]["relocate"],
+                         [{"file": "data/prompts.jsonl.converted", "action": "move"}])
+        self.assertNotIn("entity_types_added", prev["report"])
+        self.assertTrue(conv.exists())                       # preview writes nothing
+        done = srv.package_migrate("demo", confirm=True)
+        self.assertTrue(done["ok"], done)
+        self.assertFalse(conv.exists())
+        self.assertEqual((pkg / "data-v3-backup" / "prompts.jsonl.converted"
+                          ).read_text(encoding="utf-8"), '{"id":"PRM-001"}\n')
+        srv.package_open("demo")
+        journal = srv.entity_query("progress-entry", search="REGISTRY-SYNC")["rows"]
+        self.assertEqual(len(journal), 1)
+        self.assertIn("relocated to data-v3-backup/: data/prompts.jsonl.converted"
+                      " [move]", journal[0]["entry"])
+        self.assertEqual(srv.package_verify()["foreign"], [])
+        srv.package_close()
+        # the identical-twin case: the data/ copy is removed, the backup kept
+        conv.write_text('{"id":"PRM-001"}\n', encoding="utf-8")
+        prev = srv.package_migrate("demo")
+        self.assertTrue(prev["report"]["relocate"][0]["action"].startswith("remove"))
+        self.assertTrue(srv.package_migrate("demo", confirm=True)["ok"])
+        self.assertFalse(conv.exists())
+        self.assertTrue((pkg / "data-v3-backup" / "prompts.jsonl.converted").exists())
+        # the differing-twin case: refused naming both, nothing written
+        conv.write_text('{"id":"PRM-002"}\n', encoding="utf-8")
+        out = srv.package_migrate("demo")
+        self.assertFalse(out["ok"])
+        self.assertIn("DIFFER", out["error"])
+        self.assertTrue(conv.exists())
+
     def test_risk_liveness_hollow_pass_guard(self):
         """findings_18 §3 (plan 034): with probability/impact unpopulated across the
         open/materialized rows the high-predicate cannot fire — that is indeterminate,
@@ -2013,12 +2303,25 @@ class V4EngineTest(unittest.TestCase):
     def test_pe_event_types_roster_matches_ddl(self):
         """Every PE_EVENT_TYPES value writes through the DDL CHECK; a bogus one is
         rejected — the roster and the schema move together."""
-        for etype in sorted(srv.PE_EVENT_TYPES):
+        for n, etype in enumerate(sorted(srv.PE_EVENT_TYPES)):
+            if etype in srv._SERVER_ONLY_EVENTS:
+                # plan 039: server-appended kinds are refused at the tool but must
+                # still write through the DDL the way the server writes them
+                out = srv.progress_update([{"entry": "x", "event_type": etype}])
+                self.assertFalse(out["ok"], etype)
+                self.assertIn("appended by the server only", out["error"])
+                self.assertIn(srv._SERVER_ONLY_EVENTS[etype].split(" ")[0],
+                              out["error"])  # names the appending tool
+                srv._CURRENT.conn.execute(
+                    "INSERT INTO progress_entries (id, event_type, entry)"
+                    " VALUES (?, ?, 'tie-test')", (f"PE-9{n:02d}", etype))
+                continue
             out = srv.progress_update([{"entry": f"tie-test {etype}",
                                         "event_type": etype}])
             self.assertTrue(out["ok"], (etype, out))
         bad = srv.progress_update([{"entry": "x", "event_type": "not-a-type"}])
         self.assertFalse(bad["ok"])
+        self.assertEqual(set(srv._SERVER_ONLY_EVENTS) - srv.PE_EVENT_TYPES, set())
 
     def test_register_liveness_prompt_teaches_the_amber_families(self):
         """The liveness playbook names every package-scope advisory rule the engine
@@ -2032,7 +2335,8 @@ class V4EngineTest(unittest.TestCase):
                           "decisions-look-architectural", "scope-changes-merged",
                           "acs-slice-bound", "defects-minor",
                           "deferred-work-reviewed", "execution-plans-approved",
-                          "requirements-wired", "lessons-confirmed"):
+                          "requirements-wired", "lessons-confirmed",
+                          "lessons-note-budget"):
             self.assertIn(rule_name, text, rule_name)
         self.assertIn("STOP for operator approval", text)
         self.assertIn("you NEVER author a `WVR-` row", text)

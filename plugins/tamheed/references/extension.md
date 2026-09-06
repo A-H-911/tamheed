@@ -6,7 +6,10 @@ workflow. The biggest case (a whole new artifact family) starts a **new migratio
 the v4 baseline — `../db/migrations/002_lessons.sql` (the lessons family, plan 035) is the LIVE
 worked example of exactly this chain: table + trigger pair + immutability trigger + a relation-CHECK
 extension, registered end to end; `../db/migrations/003_skills.sql` (the skill family + the lesson
-`Promoted` state, plan 036) continues the same chain. `glossary_terms` (itself a baseline table since v4) remains the
+`Promoted` state, plan 036) continues the same chain, and `../db/migrations/004_amends_verify.sql`
+(plan 039) is the worked example of the two SMALLER extensions — a new trace relation (`amends`)
+and a new journal event kind (`integrity-verified`), each a CHECK recreation on an empty-at-connect
+table. `glossary_terms` (itself a baseline table since v4) remains the
 worked example of the SHAPE: the table + trigger pair + the two registry entries — the contributor
 walkthrough in the repo's contributing guide retraces it step by step.
 
@@ -29,7 +32,8 @@ governance rule.
 | New quality gate | Coverage tier: a SQL view (via a migration) + a `gate_run` row. Content tier: a scan/judgment rule. Referential tier: a constraint in a migration. | `../db/migrations/`, `quality-gates.md`, `../server/tamheed_server.py` |
 | New project-type profile | Add a profile that biases selection + research depth (the `packages.profile` CHECK gains the value via a migration). | `artifact-rules.md`, `research-depth.md`, `../db/migrations/` |
 | New diagram kind | Extend the `diagrams.kind` CHECK via a migration + a generation note. | `../db/migrations/`, `generated-structure.md` |
-| New trace relation | Extend the `trace_edges.relation` CHECK via a migration. | `../db/migrations/` |
+| New trace relation | Extend the `trace_edges.relation` CHECK via a migration (recreate the table — it is empty at connect time) AND add the endpoint rule to `RELATION_RULES` (the write-time + G-REL enforcement); teach it in `governance.md`/`traceability.md` and the governance template (lint 11 needle). `004_amends_verify.sql` + `amends` is the worked example. | `../db/migrations/`, `../server/tamheed_server.py` |
+| New journal event kind | Extend the `progress_entries.event_type` CHECK via a migration and add the name to `PE_EVENT_TYPES` (the teaching-lint roster, DDL-tied by test); a kind the SERVER witnesses joins `_SERVER_ONLY_EVENTS` so callers cannot narrate it. `integrity-verified` (004) is the worked example. | `../db/migrations/`, `../server/tamheed_server.py` |
 | New entry point | Build a thin wrapper that normalizes input and routes output to THIS skill. | a CLI / API / UI wrapper (in Claude Code the skill itself is the entry point) |
 
 New identifier prefixes live **on the registry row** (`id_prefix`) and in the new table's CHECK —

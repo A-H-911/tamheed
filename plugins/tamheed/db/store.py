@@ -136,7 +136,12 @@ def load(data_dir: str | os.PathLike) -> sqlite3.Connection:
             for lineno, line in enumerate(fh, 1):
                 if not line.strip():
                     continue
-                row = json.loads(line)
+                try:
+                    row = json.loads(line)
+                except ValueError as exc:
+                    # plan 039: a bare JSON error names neither file nor line —
+                    # package_verify reports this as a finding, so it must locate.
+                    raise ValueError(f"{path.name}:{lineno}: {exc}") from None
                 unknown = set(row) - set(cols)
                 if unknown:
                     raise ValueError(

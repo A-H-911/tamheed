@@ -152,6 +152,11 @@ RELATION_RULES: dict = {
     "learned_from": (frozenset({"lesson"}),
                      frozenset({"defect", "decision", "risk", "slice", "wbs-item",
                                 "progress-entry"})),
+    # plan 039 (findings_22 §2): a scope change that amends a RULING — an exception
+    # carved out, a rule narrowed, applicability re-scoped. Deliberately not folded
+    # into _PLAN_ROWS: a ruling is not a plan row, and the merge differs (DEC-:
+    # full-row upsert; ADR-: supersession, the immutable family's only edit).
+    "amends": (frozenset({"scope-change"}), _DECISION),
 }
 
 
@@ -258,7 +263,18 @@ GATE_NAMES = frozenset({"G-IDS", "G-DEC-STATUS", "G-REQ-SRC", "G-TRACE", "G-SET"
 PE_EVENT_TYPES = frozenset({"work-done", "verdict-recorded", "transition",
                             "forced-override", "gate-decision", "escalation",
                             "correction", "note",
-                            "lesson-confirmed", "lesson-promoted"})
+                            "lesson-confirmed", "lesson-promoted",
+                            "integrity-verified"})
+# Plan 039 (findings_22, C43): events the SERVER appends — progress_update refuses
+# them from callers. The field data had five agent-written `lesson-confirmed` rows
+# beside the 58 server-appended ones: a vocabulary that never refuses a server-only
+# type lets a narrated "confirmed"/"verified" be journaled by hand (C7, new column).
+_SERVER_ONLY_EVENTS = {
+    "forced-override": "entity_upsert (the forced Implemented transition)",
+    "lesson-confirmed": "entity_upsert (the lesson confirm guard)",
+    "lesson-promoted": "entity_upsert (the lesson confirm guard)",
+    "integrity-verified": "package_verify(record=true)",
+}
 
 # Plan 036: the columns frozen by trg_lessons_immutable and byte-checked by the
 # confirm guard on Approved/Promoted transitions (approval is not an edit).
@@ -438,11 +454,14 @@ def _filter_jsonl(path: Path, keep) -> list[str]:
 def _convert_legacy_prompts(pkg_dir: Path) -> dict | None:
     """v3.0.0 (plan 027, migration 003): turn a legacy data/prompts.jsonl into
     <package>/prompts/*.md files, ONCE, loudly — or abort the open on ANY anomaly
-    (parse error, content collision) with the package untouched. The source is renamed
-    to prompts.jsonl.converted (audit trail; escapes the *.jsonl fingerprint/dump
-    globs), PRM- trace edges and the 'prompt' registry/omission rows are scrubbed
-    (they would FK-fail against a schema without the table). Raises ValueError with
-    the operator-facing message on refusal."""
+    (parse error, content collision) with the package untouched. The source file is
+    DELETED after conversion — the caller (package_migrate) copied every data/ file
+    into data-v3-backup/ moments earlier, and that copy is the audit trail (plan
+    039, findings_22 §4: the old `.jsonl.converted` rename left a foreign object in
+    the canonical data/ directory for the life of the package). PRM- trace edges and
+    the 'prompt' registry/omission rows are scrubbed (they would FK-fail against a
+    schema without the table). Raises ValueError with the operator-facing message on
+    refusal."""
     legacy = pkg_dir / "data" / "prompts.jsonl"
     if not legacy.exists():
         return None
@@ -502,9 +521,9 @@ def _convert_legacy_prompts(pkg_dir: Path) -> dict | None:
         path = pkg_dir / "data" / fname
         if path.exists():
             _filter_jsonl(path, lambda r, k=key: r.get(k) != "prompt")
-    legacy.rename(legacy.with_suffix(".jsonl.converted"))
+    legacy.unlink()
     return {"prompts_converted": converted, "curation": curation,
-            "source_renamed": "data/prompts.jsonl.converted",
+            "source_kept": "data-v3-backup/prompts.jsonl",
             "trace_edges_removed": [
                 [e.get("from_id"), e.get("to_id"), e.get("relation")]
                 for e in removed_edges],
@@ -566,6 +585,98 @@ def package_close() -> dict:
         return {"ok": True, "package": name, "flushed": False,
                 "warning": f"closed WITHOUT the final flush — {err['error']}"}
     return {"ok": True, "package": name}
+
+
+def package_verify(name: str | None = None, record: bool = False) -> dict:
+    """The integrity instrument, made a tool (findings_22 §5, plan 039): the canonical
+    round-trip (CANONICAL.md — an idle open→close produces zero diff) is exercised
+    ON DEMAND and reported per file, instead of being a property the operator must
+    know to test.
+
+    Verifies the ON-DISK store: `store.load(data/)` (lock-free, standalone) →
+    `store.dump()` into a scratch dir → per-file byte-equality (`dirty` names any
+    file whose canonical form differs from what is committed), `foreign` (files in
+    data/ that are neither canonical `*.jsonl` nor the lock — the engine does not
+    own them), `loadable` (an FK/CHECK/JSON failure is a FINDING here, never an
+    exception), and `digest` = sha256 over the sorted (name, sha256(bytes)) pairs of
+    the canonical files. With the package OPEN the open connection's dump is ALSO
+    compared to disk (`memory_matches_disk`) — a refused flush is exactly when the
+    two diverge and a disk-only round-trip would say "clean". With no package open,
+    `name` is required and nothing is written.
+
+    `record=true` (open package only, and only when verification PASSED) appends ONE
+    `integrity-verified` journal row (actor system:package-verify) naming the digest
+    — a citable fact. The row rewrites progress_entries.jsonl, so the digest is of
+    the state BEFORE the row and the NEXT verify's digest differs by construction
+    (the entry says so; that is not tampering). Tamper-evidence proper (a hash
+    chain, signatures, an external anchor) is deliberately out of scope."""
+    import hashlib
+    import tempfile
+
+    if _CURRENT is not None:
+        if name is not None and name != _CURRENT_NAME:
+            return _err(f"package '{_CURRENT_NAME}' is open — package_close it to verify"
+                        f" '{name}' (or omit name to verify the open package)")
+        name = _CURRENT_NAME
+    elif name is None:
+        return _err("no package open — pass name=… to verify a closed package"
+                    " (read-only; record=true needs the package open)")
+    elif record:
+        return _err("record=true needs the package OPEN (the journal row is a package"
+                    " write) — package_open it first, or verify read-only")
+    data = PACKAGE_ROOT / name / "data"
+    if not data.exists():
+        return _err(f"package '{name}' not found under {PACKAGE_ROOT}")
+    on_disk = {p.name: p.read_bytes() for p in sorted(data.glob("*.jsonl"))}
+    foreign = sorted(p.name for p in data.iterdir()
+                     if p.name not in on_disk and p.name != store.LOCK_NAME)
+    digest = hashlib.sha256("\n".join(
+        f"{n} {hashlib.sha256(b).hexdigest()}" for n, b in sorted(on_disk.items())
+    ).encode("utf-8")).hexdigest()
+    report = {"ok": True, "package": name, "files": len(on_disk), "foreign": foreign,
+              "digest": digest, "recorded": None}
+    try:
+        conn = store.load(data)
+    except Exception as exc:  # the finding IS the report
+        report.update({"verified": False, "loadable": False, "error": str(exc),
+                       "dirty": [], "memory_matches_disk": None})
+        return report
+    try:
+        with tempfile.TemporaryDirectory() as tmp:
+            store.dump(conn, tmp)
+            dumped = {p.name: p.read_bytes() for p in Path(tmp).glob("*.jsonl")}
+    finally:
+        conn.close()
+    dirty = sorted(n for n in set(on_disk) | set(dumped)
+                   if on_disk.get(n) != dumped.get(n))
+    memory_matches_disk = None
+    if _CURRENT is not None:
+        with tempfile.TemporaryDirectory() as tmp:
+            store.dump(_CURRENT.conn, tmp)
+            in_memory = {p.name: p.read_bytes() for p in Path(tmp).glob("*.jsonl")}
+        memory_matches_disk = in_memory == on_disk
+    verified = not dirty and memory_matches_disk is not False
+    report.update({"verified": verified, "loadable": True, "dirty": dirty,
+                   "memory_matches_disk": memory_matches_disk})
+    if record:
+        if not verified:
+            report["note"] = ("NOT recorded — verification failed; integrity-verified"
+                              " is appended only for a passing round-trip")
+            return report
+        pe_id = _next_id("PE-", "progress_entries")
+        entry = (f"INTEGRITY-VERIFIED: canonical round-trip byte-identical over"
+                 f" {len(on_disk)} file(s); digest sha256:{digest} — of the store"
+                 " state BEFORE this row (recording rewrites progress_entries.jsonl,"
+                 " so the next verify's digest differs by construction); foreign"
+                 f" files in data/: {', '.join(foreign) if foreign else 'none'}")
+        _CURRENT.conn.execute(
+            "INSERT INTO progress_entries (id, event_type, entry, actor, occurred_at)"
+            " VALUES (?, 'integrity-verified', ?, 'system:package-verify', ?)",
+            (pe_id, entry, _now()))
+        if err := _commit():
+            return err
+        report["recorded"] = pe_id
+    return report
 
 
 # --------------------------------------------------------------------------- entity tools
@@ -831,8 +942,22 @@ def entity_upsert(entities: list[dict]) -> dict:
 
 
 def entity_query(type: str, id: str | None = None, status: str | None = None,
-                 columns: list[str] | None = None, limit: int = 100) -> dict:
-    """Query one entity family with targeted columns — rows, not documents."""
+                 columns: list[str] | None = None, limit: int = 100,
+                 after_id: str | None = None, ids: list[str] | None = None,
+                 search: str | None = None) -> dict:
+    """Query one entity family with targeted columns — rows, not documents.
+
+    `limit` truncates ROWS (never fields — there is NO field truncation anywhere in
+    the query path; a payload cap is the CLIENT's, and a family of long-text rows
+    will hit it); `total` is the exact size of the filtered set, so truncation is
+    never silent. To reach past a cut (findings_22 §1, plan 039): page with
+    `after_id` (keyset — rows with id > after_id in the same byte order as the
+    result; the result's `next_after` is the cursor for the next page, null on the
+    last page); fetch a known set with `ids` (in id order, not request order —
+    absent ids are simply missing, `total` tells); narrow with `columns`, `status`,
+    or `search` (case-insensitive substring over the family's TEXT columns — the
+    keyword sweep). `id` is the single-row form and combines with none of
+    `after_id`/`ids`."""
     if guard := _need_open():
         return guard
     table = ENTITY_TABLES.get(type)
@@ -848,23 +973,54 @@ def entity_query(type: str, id: str | None = None, status: str | None = None,
     cols = columns or all_cols
     if bad := set(cols) - set(all_cols):
         return _err(f"unknown columns: {sorted(bad)}")
+    if id is not None and (after_id is not None or ids is not None):
+        return _err("`id` selects one row — it combines with neither `after_id` nor `ids`")
+    if ids is not None and (not isinstance(ids, list) or not ids
+                            or not all(isinstance(i, str) for i in ids)):
+        return _err("`ids` must be a non-empty list of id strings")
     where, params = [], []
     if id is not None:
         where.append("id = ?"); params.append(id)
+    if ids is not None:
+        where.append(f"id IN ({', '.join('?' for _ in ids)})"); params.extend(ids)
     if status is not None:
         status_col = ("lifecycle_status" if "lifecycle_status" in all_cols
                       else "status" if "status" in all_cols else None)
         if status_col is None:
             return _err(f"{type} has no status column")
         where.append(f"{status_col} = ?"); params.append(status)
+    if search is not None:
+        text_cols = [r[1] for r in _CURRENT.conn.execute(f"PRAGMA table_info({table})")
+                     if str(r[2]).upper() == "TEXT"]
+        needle = "%" + re.sub(r"([\\%_])", r"\\\1", str(search)) + "%"
+        where.append("(" + " OR ".join(f"{c} LIKE ? ESCAPE '\\'" for c in text_cols)
+                     + ")")
+        params.extend([needle] * len(text_cols))
     where_sql = (" WHERE " + " AND ".join(where)) if where else ""
     # `total` alongside the LIMIT'd rows (field-evidence C17: limit=100 silently
-    # truncated a 218-row family and the caller had no way to know).
+    # truncated a 218-row family and the caller had no way to know). It counts the
+    # FILTERED set without the after_id cut — constant across a paged walk.
     total = _CURRENT.conn.execute(
         f"SELECT COUNT(*) FROM {table}{where_sql}", params).fetchone()[0]
-    sql = f"SELECT {', '.join(cols)} FROM {table}{where_sql} ORDER BY id LIMIT {int(limit)}"
-    rows = [dict(zip(cols, r)) for r in _CURRENT.conn.execute(sql, params)]
-    return {"ok": True, "rows": rows, "count": len(rows), "total": total}
+    page_params = list(params)
+    if after_id is not None:
+        # Same BINARY collation as ORDER BY id (no COLLATE anywhere in the DDL) —
+        # paging is complete iff the cut and the order agree; never CAST here.
+        where_sql += (" AND " if where_sql else " WHERE ") + "id > ?"
+        page_params.append(after_id)
+    limit = max(int(limit), 0)
+    sql = (f"SELECT {', '.join(cols)} FROM {table}{where_sql} ORDER BY id"
+           f" LIMIT {limit + 1}")  # one extra row decides next_after exactly
+    fetched = _CURRENT.conn.execute(sql, page_params).fetchall()
+    rows = [dict(zip(cols, r)) for r in fetched[:limit]]
+    next_after = None
+    if len(fetched) > limit and rows:
+        last = fetched[limit - 1]
+        next_after = last[cols.index("id")] if "id" in cols else _CURRENT.conn.execute(
+            f"SELECT id FROM {table}{where_sql} ORDER BY id LIMIT 1 OFFSET {limit - 1}",
+            page_params).fetchone()[0]
+    return {"ok": True, "rows": rows, "count": len(rows), "total": total,
+            "next_after": next_after}
 
 
 def trace_query(entity_id: str, direction: str = "both", relation: str | None = None) -> dict:
@@ -1004,7 +1160,14 @@ def gate_run() -> dict:
         " SUM(CASE WHEN evidence IS NULL OR evidence = '' THEN 1 ELSE 0 END)"
         " FROM audit_verdicts"
     ).fetchone()
+    # findings_22 §3 (plan 039): the predicate was exact and the ids withheld — the
+    # one C7 signal in the report was unactionable (no evidence predicate in
+    # entity_query, and pulling every verdict overflowed the client). Name them.
+    narrated_ids = [r[0] for r in conn.execute(
+        "SELECT id FROM audit_verdicts WHERE evidence IS NULL OR evidence = ''"
+        " ORDER BY id")]
     report["audit_evidence"] = {"evidenced": evidenced or 0, "narrated": narrated or 0,
+                                "narrated_ids": narrated_ids,
                                 "note": "narrated verdicts are the graded party grading itself (C7)"}
     # v4 (plan 031): the stored-edge sweep is a BLOCKING gate. Safe because every v4
     # package starts rule-clean — the migrate tool retypes violating edges to
@@ -1199,7 +1362,9 @@ def _readiness_report(conn, scope: str, scope_id: str | None) -> dict:
              ids("SELECT id FROM scope_changes WHERE lifecycle_status = 'Approved'"),
              "approved scope changes whose deltas never merged into the plan rows —"
              " apply the scope_adds/scope_modifies/scope_removes edges' intent via"
-             " entity_upsert, then set the SC- row to Merged")
+             " entity_upsert (an `amends` edge merges its ruling: DEC- by full-row"
+             " upsert, ADR- by supersession), RE-READ every target row, then set the"
+             " SC- row to Merged — Merged is the LAST step")
         rule("open-questions-overdue", "advisory",
              ids("SELECT id FROM open_questions WHERE resolved_by IS NULL"
                  " AND resolution IS NULL AND due_by IS NOT NULL AND due_by < ?",
@@ -1254,6 +1419,20 @@ def _readiness_report(conn, scope: str, scope_id: str | None) -> dict:
              "lessons recorded by the executing agent awaiting the operator's"
              " interview — confirm (Approve + optionally pin), reject, or refine by"
              " supersession; ONLY Approved lessons bind future sessions")
+        # Plan 039 (the ACMP register: 57 Approved lessons, 48 pinned, 0 promoted —
+        # 57 lines in the always-loaded note): pinning bypasses the cap by design,
+        # so the cost of a pin is made visible instead. Entities = the rows that
+        # render PAST the ceiling in the note's own order — a promotion-candidate
+        # list, not "all pinned".
+        rendered = _note_lesson_rows(conn)
+        over = rendered[_NOTE_LESSONS_CEILING:]
+        rule("lessons-note-budget", "advisory", [r[0] for r in over],
+             f"the always-loaded CLAUDE.md note renders {len(rendered)} lesson"
+             f" line(s) against a curation ceiling of {_NOTE_LESSONS_CEILING}"
+             + (" — past it (an always-loaded surface degrades as instructions"
+                " pile up): distil shared themes into a skill (skill-promote.md —"
+                " promoted lessons graduate out of the note) or unpin what no"
+                " longer needs to bind every session" if over else ""))
         gate_where, gate_params = "applies_to IS NULL", ()
     elif scope == "phase":
         rule("acs-met", "blocking",
@@ -1373,9 +1552,11 @@ def progress_update(entries: list[dict]) -> dict:
     'subject_id'?, 'actor'?, 'corrects'?, 'phase_id'?, 'slice_id'?}.
 
     v4 (plan 031): events are TYPED — event_type from {work-done, verdict-recorded,
-    transition, forced-override, gate-decision, escalation, correction, note}
-    (default 'note', the deliberate escape hatch: the vocabulary never blocks a
-    write). subject_id names the entity the event is about; actor follows the
+    transition, gate-decision, escalation, correction, note} (default 'note', the
+    deliberate escape hatch). The server-appended kinds — forced-override,
+    lesson-confirmed, lesson-promoted, integrity-verified — are REFUSED here (plan
+    039): they record mechanical facts the server witnessed, never a caller's
+    narration. subject_id names the entity the event is about; actor follows the
     human:<name> | agent:<session> | system:<component> convention; `corrects`
     points at an earlier PE- — journals are corrected by compensating events, never
     edited, and a corrected entry is collapsed under its correction in review.html.
@@ -1386,6 +1567,15 @@ def progress_update(entries: list[dict]) -> dict:
         return guard
     if not isinstance(entries, list) or not entries:
         return _err("entries must be a non-empty array")
+    # Plan 039 (findings_22, C43): server-only events are refused from callers —
+    # the batch is one transaction, so one offending item refuses the whole batch.
+    for i, e in enumerate(entries):
+        et = (e or {}).get("event_type", "note") if isinstance(e, dict) else "note"
+        if et in _SERVER_ONLY_EVENTS:
+            return _err(f"entries[{i}]: event_type {et!r} is appended by the server"
+                        f" only — via {_SERVER_ONLY_EVENTS[et]}; a caller-written"
+                        " one would be a narrated record of a mechanical fact."
+                        " Batch NOT applied.")
     conn = _CURRENT.conn
     ids = []
     try:
@@ -1711,6 +1901,22 @@ _NOTE_BLOCK_RE = re.compile(r"<!-- tamheed:note v\d+ -->.*?<!-- /tamheed:note --
 
 _NOTE_LESSONS_CAP = 10  # unpinned fill only — ALL pinned lessons render (curation
                         # is never capped away; the operator chose them)
+# Plan 039: the curation ceiling the lessons-note-budget advisory measures against —
+# rendered lines past this position are named as promotion candidates. Advisory
+# only: the pin stays the operator's choice; its cost stops being invisible.
+_NOTE_LESSONS_CEILING = 20
+
+
+def _note_lesson_rows(conn) -> list[tuple]:
+    """The lesson rows the note RENDERS, in render order (pinned first, then numeric
+    id descending, unpinned fill capped at _NOTE_LESSONS_CAP) — one helper so the
+    note and the note-budget advisory can never disagree about what renders."""
+    rows = conn.execute(
+        "SELECT id, kind, statement, pinned FROM lessons"
+        " WHERE lifecycle_status = 'Approved'"
+        " ORDER BY pinned DESC, CAST(SUBSTR(id, 4) AS INTEGER) DESC").fetchall()
+    pinned = [r for r in rows if r[3]]
+    return pinned + [r for r in rows if not r[3]][:_NOTE_LESSONS_CAP]
 
 
 def _note_lessons_section() -> tuple[str, list[dict]]:
@@ -1722,10 +1928,9 @@ def _note_lessons_section() -> tuple[str, list[dict]]:
     plans 025/027); statements flatten to one line; no timestamps (the note must
     stay byte-stable across emits for unchanged data). Empty register -> ("", []),
     so lesson-less packages keep a byte-identical note."""
-    rows = _CURRENT.conn.execute(
-        "SELECT id, kind, statement, pinned FROM lessons"
-        " WHERE lifecycle_status = 'Approved'"
-        " ORDER BY pinned DESC, CAST(SUBSTR(id, 4) AS INTEGER) DESC").fetchall()
+    (approved,) = _CURRENT.conn.execute(
+        "SELECT COUNT(*) FROM lessons WHERE lifecycle_status = 'Approved'").fetchone()
+    shown = _note_lesson_rows(_CURRENT.conn)
     # Plan 036 (full graduation, maintainer-locked): Promoted lessons live on in
     # their skill files — the note keeps one line naming each, so the pointer
     # survives even when EVERY lesson has graduated.
@@ -1737,10 +1942,8 @@ def _note_lessons_section() -> tuple[str, list[dict]]:
                   + " — auto-loaded where present"
                     " (project: .claude/skills/; user: ~/.claude/skills/).\n"
                   if skills else "")
-    if not rows and not skills:
+    if not approved and not skills:
         return "", []
-    pinned = [r for r in rows if r[3]]
-    shown = pinned + [r for r in rows if not r[3]][:_NOTE_LESSONS_CAP]
     findings, lines = [], []
     for lid, kind, statement, pin in shown:
         if m := _INJECT_RE.search(str(statement)):
@@ -1750,7 +1953,7 @@ def _note_lessons_section() -> tuple[str, list[dict]]:
             flat = flat[:177] + "..."
         tag = f"{kind}, pinned" if pin else kind
         lines.append(f"- **{lid}** [{tag}] {flat}\n")
-    rest = len(rows) - len(shown)
+    rest = approved - len(shown)
     more = (f"\n{rest} more Approved lesson(s): `entity_query(\"lesson\")`.\n"
             if rest else "")
     return ("\n### Lessons (operator-confirmed — these bind every session)\n\n"
@@ -1925,6 +2128,10 @@ def handoff_emit(target_dir: str, subdir: str = "handoff", force: bool = False,
         "**Package data lives in the git working tree** (C31): uncommitted package writes "
         "are destroyed by `git reset --hard` / `git checkout` / `git stash` exactly like "
         "uncommitted source — commit the package `data/` before branch operations. "
+        "`work_bind`, the closing `progress_update`, `export_html` and `handoff_emit` all "
+        "FLUSH `data/*.jsonl` AFTER the commit they record, so the tree is dirty again the "
+        "moment you finish recording: run `git status --porcelain -uall` immediately "
+        "before ANY branch operation — never a memory of having committed. "
         f"{server_line} All package reads/writes go through the `tamheed` MCP tools; "
         f"ready-made task prompts live in `{_CURRENT_NAME}/prompts/` — start with "
         f"`{_CURRENT_NAME}/prompts/README.md`, the operator guide (which prompt for "
@@ -1939,8 +2146,10 @@ def handoff_emit(target_dir: str, subdir: str = "handoff", force: bool = False,
         " row (`DW-`) with an activation trigger |\n"
         "| you deviate from the approved plan in any way | a `scope-change` row (`SC-`)"
         " FIRST, `decision_ref` naming the deciding `DEC-`/`ADR-`, delta edges"
-        " (`scope_adds`/`scope_modifies`/`scope_removes`) naming the affected rows —"
-        " after approval, apply the row changes and set the `SC-` to Merged |\n"
+        " (`scope_adds`/`scope_modifies`/`scope_removes` for plan rows; `amends` for a"
+        " ruling — DEC-: full-row upsert, ADR-: supersede) naming the affected rows —"
+        " after approval, apply the row changes, RE-READ them, and only then set the"
+        " `SC-` to Merged |\n"
         "| you hit genuine ambiguity | an `open-question` row (`OQ-`, with owner +"
         " due_by) and `[NEEDS-CLARIFICATION: OQ-NNN]` at the exact spot — NEVER"
         " assume |\n"
@@ -1972,12 +2181,16 @@ def handoff_emit(target_dir: str, subdir: str = "handoff", force: bool = False,
         " evidence?, verified_by?, verification_method?, against_commit?}])` —"
         " evidence ref = evidenced, not narrated\n"
         "- `work_bind(ref, entity_ids=[...], note?)` — stamp a commit/PR onto entities\n"
-        "- `entity_query(type, id?, status?, columns?, limit?)` — rows + total\n"
+        "- `entity_query(type, id?, status?, columns?, limit?, after_id?, ids?, search?)`"
+        " — rows + total + next_after (page with after_id; quote a known set via ids;"
+        " keyword-sweep via search)\n"
         "- `trace_query(entity_id, direction: out|in|both, relation?)` — typed links\n"
         "- `entity_upsert(entities=[{type, id, ...}])` — FULL rows, even for updates\n"
         "- `gate_run()` — mechanical gate verdict · `readiness_check(scope, id?)` —"
         " is it actually DONE (waivers honored, Review counts open)\n"
         "- `export_html()` — refresh review.html · `server_info()` — version + root\n"
+        "- `package_verify(name?, record?)` — canonical round-trip of the on-disk store"
+        " (per-file byte-equality, foreign files, digest); `record=true` journals it\n"
         "<!-- /tamheed:note -->\n")
     note = "\n## Tamheed progress tracking\n" + note_block
     claude_md = target / "CLAUDE.md"
@@ -2112,6 +2325,14 @@ def package_migrate(name: str, confirm: bool = False) -> dict:
         stored = _stored_package_version(pkg_dir)
         v4_sync = stored is not None and str(stored).startswith("4.")
         conversion = None
+        relocate: list[dict] = []
+        if not v4_sync:
+            # A v3 store converted at 3.0.0 carries the old `.converted` rename; the
+            # backup copy taken below is its trail, so the data/ copy is removed at
+            # confirm (previewed here) — never a second run to relocate it (plan 039).
+            relocate = [{"file": f"data/{f.name}",
+                         "action": "remove (copied to data-v3-backup/)"}
+                        for f in sorted(data.glob("*.jsonl.converted"))]
         if confirm and not v4_sync:
             backup = pkg_dir / "data-v3-backup"
             if backup.exists():
@@ -2169,6 +2390,29 @@ def package_migrate(name: str, confirm: bool = False) -> dict:
             rep = {"mode": "registry-sync", "version_from": stored, "note": note}
             if added_cols:
                 rep["columns_added"] = added_cols
+            # findings_22 §4 (plan 039): a `*.jsonl.converted` audit-trail file left
+            # in the CANONICAL directory by the v3 prompt converter is relocated to
+            # data-v3-backup/ — per file: move when the backup lacks it, remove the
+            # data/ copy when the backup already holds a byte-identical one (the v4
+            # migrate copied every data/ file there — ACMP's case, DA-verified), and
+            # REFUSE naming both paths when they differ (nothing is ever overwritten).
+            backup = pkg_dir / "data-v3-backup"
+            for f in sorted(data.glob("*.jsonl.converted")):
+                twin = backup / f.name
+                if not twin.exists():
+                    action = "move"
+                elif twin.read_bytes() == f.read_bytes():
+                    action = "remove (identical copy already in data-v3-backup/)"
+                else:
+                    return _err(f"data/{f.name} and data-v3-backup/{f.name} both"
+                                " exist and DIFFER — resolve by hand (keep one),"
+                                " then re-run; nothing was written")
+                relocate.append({"file": f"data/{f.name}", "action": action})
+            if relocate:
+                rep["relocate"] = relocate
+                rep["note"] += (" — foreign audit-trail file(s) leave the canonical"
+                                " data/ directory for data-v3-backup/ (relocate"
+                                " names each action)")
         else:
             type_of_table = {tbl: kind for kind, tbl in ENTITY_TABLES.items()
                              if tbl not in _NON_ID_TABLES}
@@ -2177,11 +2421,14 @@ def package_migrate(name: str, confirm: bool = False) -> dict:
                                                              type_of_table)
             except ValueError as exc:
                 return _err(str(exc))
+            if relocate:
+                rep["relocate"] = relocate
         have = {r.get("type_id") for r in tables.get("entity_types", [])}
         added = [tid for tid, _, _, _ in BASELINE_ENTITY_TYPES if tid not in have]
-        if v4_sync and not added:
-            return _err(f"package is already v{stored} and its entity-type registry"
-                        " is current — nothing to migrate")
+        if v4_sync and not added and not relocate:
+            return _err(f"package is already v{stored}, its entity-type registry"
+                        " is current, and data/ holds no foreign audit-trail file"
+                        " — nothing to migrate")
         for tid, label, prefix, gclass in BASELINE_ENTITY_TYPES:
             if tid in added:
                 tables.setdefault("entity_types", []).append(
@@ -2193,7 +2440,13 @@ def package_migrate(name: str, confirm: bool = False) -> dict:
         nxt = max((int(str(r.get("id"))[3:]) for r in pe_rows
                    if str(r.get("id", "")).startswith("PE-")), default=0) + 1
         if v4_sync:
-            entry = f"REGISTRY-SYNC: entity types added ({', '.join(added)})"
+            parts = []
+            if added:
+                parts.append(f"entity types added ({', '.join(added)})")
+            if relocate:
+                parts.append("relocated to data-v3-backup/: " + ", ".join(
+                    f"{r['file']} [{r['action'].split(' ')[0]}]" for r in relocate))
+            entry = "REGISTRY-SYNC: " + "; ".join(parts)
         else:
             rewrites = sorted(k for k in rep
                               if k not in ("target_version", "version_from"))
@@ -2232,6 +2485,13 @@ def package_migrate(name: str, confirm: bool = False) -> dict:
                 (data / f"{tname}.jsonl").unlink(missing_ok=True)
             for f in (tmp_pkg / "data").glob("*.jsonl"):
                 shutil.copy2(f, data / f.name)
+        for r in relocate:  # the previewed actions, verbatim (plan 039)
+            src = pkg_dir / r["file"]
+            if r["action"] == "move":
+                (pkg_dir / "data-v3-backup").mkdir(exist_ok=True)
+                src.rename(pkg_dir / "data-v3-backup" / src.name)
+            else:
+                src.unlink()
         out = {"ok": True, "stage": "migrated", "package": name, "report": rep,
                "backup": "none (registry-sync is a pure append)" if v4_sync
                          else "data-v3-backup/",
@@ -2352,6 +2612,9 @@ TOOLS = {
     "package_migrate": (package_migrate, "Migrate a v2/v3 package in place to the v4 store (staged: preview, then confirm)"),
     "package_adopt": (package_adopt, "Adopt a brownfield repo (staged: scan/preview, then confirm)"),
     "export_html": (export_html, "Export the HTML review surface to <package>/review.html"),
+    "package_verify": (package_verify,
+                       "Canonical round-trip of the on-disk store (byte-equality, foreign"
+                       " files, digest); record=true journals the verified digest"),
 }
 
 _SDK_ERROR = ("tamheed MCP server requires the 'mcp' SDK (Python >=3.10): launch with"

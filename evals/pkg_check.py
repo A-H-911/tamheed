@@ -115,6 +115,20 @@ def _grep(args, want_present: bool) -> int:
     return 1 if hits else 0
 
 
+def cmd_verify(args) -> int:
+    """Plan 039: the recorded package passes its own canonical round-trip — prints
+    verified=True/False plus the dirty/foreign lists (assert by substring)."""
+    pkg = Path(args.package).resolve()
+    srv.PACKAGE_ROOT = pkg.parent
+    out = srv.package_verify(pkg.name)
+    if not out.get("ok"):
+        print(out.get("error"))
+        return 2
+    print(f"verified={out['verified']} files={out['files']} dirty={out['dirty']}"
+          f" foreign={out['foreign']} loadable={out['loadable']}")
+    return 0 if out["verified"] else 1
+
+
 def cmd_file_exists(args) -> int:
     ok = Path(args.path).is_file()
     print(f"{args.path}: {'exists' if ok else 'MISSING'}")
@@ -166,6 +180,11 @@ def main(argv: list[str] | None = None) -> int:
         p.add_argument("needle")
         p.add_argument("--tables", help="comma-separated table names (default: all)")
         p.set_defaults(fn=lambda a, _p=present: _grep(a, _p))
+
+    p = sub.add_parser("verify", help="the package passes its canonical round-trip"
+                                      " (package_verify; read-only)")
+    p.add_argument("package")
+    p.set_defaults(fn=cmd_verify)
 
     p = sub.add_parser("file-exists", help="a recorded file exists")
     p.add_argument("path")

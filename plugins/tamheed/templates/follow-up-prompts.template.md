@@ -35,8 +35,9 @@ commit, finished work claimed as **`Review`** (Implemented = verified, guarded),
 
 **Exit gate:** <the PH-2 exit criteria>. When met, **STOP** and request review before `PH-3`.
 Any deviation: `scope-change` row FIRST (`decision_ref` → the deciding `DEC-`/`ADR-`,
-delta edges `scope_adds`/`scope_modifies`/`scope_removes` naming the affected rows;
-after approval apply the changes and set the `SC-` to Merged). Ambiguity: an `OQ-`
+delta edges `scope_adds`/`scope_modifies`/`scope_removes` naming the affected plan
+rows, `amends` for a ruling — DEC-: full-row upsert, ADR-: supersede; after approval
+apply the changes, RE-READ them, and set the `SC-` to Merged LAST). Ambiguity: an `OQ-`
 (owner + due_by) + `[NEEDS-CLARIFICATION: OQ-NNN]` in place — never assume. A durable
 lesson: an `LL-` row (born Proposed, kind improve|sustain) + a `learned_from` edge —
 the operator confirms; only Approved lessons bind. A stubborn
@@ -61,9 +62,11 @@ the affected decision (`DEC-/ADR-`) and risk status, then continue Phase `PH-x`.
 You are resuming **<project-name>** in a new session (or after a context clear/compaction).
 Orient through the package, not from memory: `package_open("<package>")`, `gate_run()`, then
 `entity_query("progress-entry", limit=10)` and `entity_query("audit-verdict", limit=10)` for
-the last recorded activity. **Cross-check git**: `git log --oneline -15` against the recorded
-`work_bind` refs — list any package-relevant commits with no recorded binding and flag them;
-do not invent verdicts for them. Summarize current phase/slice, last completed `WBS-`, the
+the last recorded activity (a longer read pages: pass the result's `next_after` back as
+`after_id`; never read `data/*.jsonl` to dodge a payload cap). **Cross-check git**: `git log
+--oneline -15` against the recorded `work_bind` refs — classify each unreferenced commit by
+`git show --name-only` (package-only writes cannot cite their own sha; only source-touching
+commits are candidates), flag those, and do not invent verdicts for them. Summarize current phase/slice, last completed `WBS-`, the
 invariants in force (`entity_query("invariant")`), and any unrecorded work. Then await the
 next task. (The emitted `<package>/prompts/orient-resume.md` is the full version of this.)
 

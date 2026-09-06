@@ -68,6 +68,7 @@ two-step escape route (tamheed 3.2.1, then v3->v4 via `package_migrate`).
 | 036 | findings_19 + the confirm guard + lesson→skill promotion: the mechanical never-auto-confirm gate (operator_confirm, every landing path incl. birth — the DA bypass catch; closes §2's one-write-too-late gap), migration 003 (SKL- family, Promoted state, promoted_to), the skill-promote interview ceremony (level project\|user default project, full graduation), the pointer-pattern classifier fix (§1's destructive-advice hollow pass), FK message parity (§3) | B32 | P1 | L | findings_19 (C40) + the maintainer's capability ask → ECC/Voyager/Soar research + 2 interview rounds + a clarification + advisor + DA round | DONE — executed 2026-08-15, v4.4.0 |
 | 038 | findings_21: the append-only gate trap — G-COMPLETE exempts the journal report columns (the C14 reasoning extended; the untested evidence twin test-pinned) + skips Superseded/Obsolete rows (the DA trap-class completion: supersession must actually repair), every failure names its `matched` token, and `corrects` gains its first consumer (the review.html corrected-entries fold) | B34 | P2 | S | findings_21 (C42, the program's reproduction-quality bar) → two interview forks + DA round | DONE — executed 2026-08-20, v4.4.2 |
 | 037 | findings_20: the honest registry-sync report — `columns_added` computed per-run (stored-keys-vs-DDL, sound by CANONICAL rule 4) + the reworded note (incl. the audit-journal row the old note was silent about) + the six-surface "pure append" sweep | B33 | P3 | XS | findings_20 (C41) → one interview fork + DA round | DONE — executed 2026-08-16, v4.4.1 |
+| 039 | findings_22 + the ACMP lessons: `entity_query` depth (`after_id` keyset, `ids`, `search` — the tool no longer pushes agents onto the files), the `amends` relation (migration 004) with Merged-last merge semantics, `package_verify` + the server-only `integrity-verified` event (and all four server-witnessed kinds refused from callers — the field data held five hand-written ones), `narrated_ids`, the `.converted` leftover relocated per file on BOTH migrate paths (the DA round's identical-copy catch; the advisor's v3-confirm catch), the `lessons-note-budget` advisory (57 note lines in the field), four doctrine lines from LL-061/042/040/004, the full documentation sweep, lab beat 12 | B35 | P1 | L | findings_22 (C43) + the 62-row ACMP lessons register → three interview rounds (10 forks) + advisor + DA round | DONE — executed 2026-09-06, v4.5.0 |
 
 Index note: plan 006's file points at `plans/deliverables-review.md` for the approved
 artifact set -- that review is the v2 input contract and remains frozen alongside it.
@@ -131,6 +132,18 @@ artifact set -- that review is the v2 input contract and remains frozen alongsid
   (038)**: the journal exemption, the Superseded/Obsolete skip (the DA completing
   the trap-class), `matched` in every failure, and the corrected-entries fold —
   corrects' first consumer.
+- **2026-09-06** — findings_22 (C43): an operator-commissioned integrity audit — the
+  query surface had no depth, so agents read the files and a false sentence about
+  why recruited every later session; plus `amends`-less scope changes, withheld
+  narrated ids, a `.converted` leftover, and an uncitable byte-stability guarantee
+  (which held over 488 commits). The maintainer also had the 62-row ACMP lessons
+  register read for tamheed's own gaps → **v4.5.0 (039)**: `after_id`/`ids`/`search`,
+  the `amends` relation (migration 004), `package_verify` + the server-only
+  `integrity-verified` event (all four server-witnessed kinds now refused from
+  callers), `narrated_ids`, per-file relocation of the leftover (the DA round caught
+  the identical-copy collision and the registry-current no-op), the
+  `lessons-note-budget` advisory, four doctrine lines from the field register, and
+  a full documentation sweep.
 
 ## Dependency notes
 
@@ -195,6 +208,15 @@ Markdown · ASM-D Python floor rises to the MCP SDK's (≥3.10).
   the general secret-pasted-into-the-journal case — the first-ever journal edit,
   doctrinally heavy, and the incident it serves also needs git-history surgery no
   tool alone provides. Revisit on the first field need.
+
+- **Tamper-evidence for the store** (findings_22 §5's second half, deferred
+  2026-09-06 on the maintainer's words): a row hash chain, signatures, or an
+  external anchor so that a clean `package_verify` is durable evidence rather than
+  a citable moment. The report itself states why the audit could not detect a
+  determined tamper — a hand edit followed by any tool call is rewritten into
+  perfect canonical form with a journal entry naming the row — and git history
+  remains the tamper record. Revisit if a governance need for in-store
+  tamper-evidence arrives.
 
 - **D3 — GitHub Action / pre-commit hook** exposing package validation to end-user repos
   (post-v2: wrap `gate_run`).

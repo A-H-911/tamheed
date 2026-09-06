@@ -61,7 +61,7 @@ rationale also lives in the `[4.0.0]` CHANGELOG entry.
 | 7 | Vocabulary normalized with domain sets kept; lifecycle column name unified to `lifecycle_status` everywhere | A hypothesis verdict is not a test verdict — merging vocabularies loses meaning; but the lifecycle *axis* deserves one name (three-axis doctrine) | experiments, pocs, tests, audit_verdicts, defects, deferred_work |
 | 8 | Milestones demoted to labels: no lifecycle, no disposition, never gate | A milestone that gates is an execution gate wearing a costume; keeping both roles on one row made neither trustworthy | milestones, execution_gates |
 | 9 | Gate hardening: severity-thresholded blocking (open critical/high defects block; medium/low advise) + `WVR-` waivers + Go/Hold/Redirect/Kill outcomes | Every real gate regime severity-thresholds (Google PRR, AWS ORR), and a gate with no waiver path gets bypassed informally; stage-gate practice says a gate decision is richer than pass/fail | defects, waivers, execution_gates |
-| 10 | Scope-change drift-delta lifecycle: Proposed → Approved → **Merged**, with typed delta edges (`scope_adds`/`scope_modifies`/`scope_removes`) | OpenSpec's delta/archive model: drift approved but never merged into the plan rows is a second, silent plan; Merged closes the loop | scope_changes, trace_edges |
+| 10 | Scope-change drift-delta lifecycle: Proposed → Approved → **Merged**, with typed delta edges (`scope_adds`/`scope_modifies`/`scope_removes`; since v4.5 also `amends` → a `DEC-`/`ADR-` ruling, merged by upsert or supersession respectively) | OpenSpec's delta/archive model: drift approved but never merged into the plan rows is a second, silent plan; Merged closes the loop — and is set LAST, after every target row is applied and re-read | scope_changes, trace_edges |
 | 11 | Typed progress events with compensating corrections (`event_type`, `subject_id`, `actor`, `corrects`) | Event-sourcing-lite: a journal you can query needs typed past-tense events, and journals are never edited — a wrong entry is corrected by a new entry that points at it | progress_entries |
 | 12 | Deletions: `binds_to` (zero usage ever), `entity_types.template_ref` (never read), per-row `diagrams.generation_class`, `schemas/` | A surface nobody uses is maintenance debt and false authority; guessed semantics cause false rejections (the `binds_to` lesson) | trace_edges, entity_types, diagrams |
 | 13 | `[NEEDS-CLARIFICATION: OQ-NNN]` markers must cite a live OQ (G-COMPLETE validates) | spec-kit's forbidden-to-assume idea, made accountable: an ambiguity marker with no owner and no due date is just a shrug in brackets | open_questions + every prose field |
@@ -114,6 +114,8 @@ flowchart TB
     OQ -- "derives_from" --> REQ
     SC -- "scope_adds / scope_modifies / scope_removes" --> REQ
     SC -- "scope_modifies" --> SL
+    SC -- "amends" --> DEC
+    SC -- "amends" --> ADR
     WVR -- "applies_to (column)" --> DEF
     LL -- "learned_from" --> DEF
     LL -- "promoted_to (column)" --> SKL
@@ -910,7 +912,15 @@ back — or whether the store and reality quietly fork.
 **Lifecycle position.** Any time after scope approval (stage 8 locks scope; changes
 thereafter require the `update` flow — SC- row first). Typed delta edges
 (`scope_adds` / `scope_modifies` / `scope_removes`, from scope-change only, to the plan
-rows: requirement-like rows, work rows, ACs, risks, KPIs, OQs) name exactly what moves.
+rows: requirement-like rows, work rows, ACs, risks, KPIs, OQs) name exactly what moves. A
+scope change that touches a RULING — an exception carved out of a decision, a standing rule
+narrowed, an ADR's applicability re-scoped — carries an **`amends`** edge to the `DEC-`/`ADR-`
+(v4.5, findings_22 §2: the field package had three such edges collapsed into `relates_to`,
+invisible to every delta consumer). The merge differs by target: a `DEC-` merges by full-row
+upsert of the ruling; an `ADR-` merges by supersession, because ADRs are immutable — the
+successor ADR is the merge. `Merged` is set LAST, after every target row is applied and
+re-read: nothing mechanical checks the assertion `Merged` makes (the field register's
+`LL-042`).
 
 ```mermaid
 sequenceDiagram
@@ -919,10 +929,11 @@ sequenceDiagram
     participant Op as Operator
     Agent->>Store: reality diverges — entity_upsert scope-change SC-003 (Proposed, decision_ref DEC-021)
     Agent->>Store: trace edges SC-003 scope_modifies FR-014, SC-003 scope_adds SL-005
+    Agent->>Store: trace edge SC-003 amends DEC-021 (the ruling itself is narrowed — v4.5)
     Op->>Store: approves — SC-003 lifecycle_status Approved
     Note over Store: scope-changes-merged advisory now flags SC-003 until the deltas land
-    Agent->>Store: entity_upsert the actual row changes (FR-014 revised, SL-005 created)
-    Agent->>Store: SC-003 lifecycle_status Merged
+    Agent->>Store: entity_upsert the actual row changes (FR-014 revised, SL-005 created, DEC-021 upserted)
+    Agent->>Store: re-reads every row the edges name — then SC-003 lifecycle_status Merged (LAST)
     Note over Store: plan and reality re-converged — the drift is history, not debt
 ```
 
@@ -964,7 +975,7 @@ column, never edges.
 
 | Column | Constraint | Meaning |
 |---|---|---|
-| `event_type` | NOT NULL DEFAULT `note`; CHECK: `work-done` / `verdict-recorded` / `transition` / `forced-override` / `gate-decision` / `escalation` / `correction` / `note` / `lesson-confirmed` / `lesson-promoted` | The typed event; `note` is the deliberate escape hatch; the two lesson events are server-appended only |
+| `event_type` | NOT NULL DEFAULT `note`; CHECK: `work-done` / `verdict-recorded` / `transition` / `forced-override` / `gate-decision` / `escalation` / `correction` / `note` / `lesson-confirmed` / `lesson-promoted` / `integrity-verified` | The typed event; `note` is the deliberate escape hatch; four kinds are SERVER-appended only — `forced-override`, the two lesson events, and `integrity-verified` (from `package_verify(record=true)`) — and `progress_update` refuses them (v4.5: the field data held five agent-written `lesson-confirmed` rows; a vocabulary that never refuses a server-only type lets a narrated "confirmed" be journaled by hand) |
 | `entry` | NOT NULL | The human-readable line |
 | `subject_id` | FK → `entity_index(id)` | The entity the event is about |
 | `actor` | TEXT | Convention: `human:<name>` / `agent:<session>` / `system:<component>` |
@@ -978,14 +989,20 @@ forced-override"); a wrong entry is corrected by a new `correction` entry pointi
 via `corrects`, never by editing history.
 
 **Lifecycle position.** Stage 21, via `progress_update`. Some events are written by the
-server itself: a forced phase/slice close writes the `forced-override` row (the operator
-cannot launder a force into silence); gate decisions land as `gate-decision` events.
+server itself and ONLY by it: a forced phase/slice close writes the `forced-override` row
+(the operator cannot launder a force into silence), the lesson confirm guard writes
+`lesson-confirmed`/`lesson-promoted`, and a passing `package_verify(record=true)` writes
+`integrity-verified` naming the canonical digest (of the state BEFORE that row — recording
+rewrites `progress_entries.jsonl`, so the next digest differs by construction); gate
+decisions land as `gate-decision` events from callers.
 
 **What you lose without it.** No narrative of execution: the store shows end states with
 no path — who forced what, when escalations happened, which agent session did the work.
 
-**Related mechanics.** `progress_update` tool; the recording-obligations table in the
-emitted CLAUDE.md note; `forced-override` audit rows written server-side.
+**Related mechanics.** `progress_update` tool (refusing the four server-only kinds); the
+recording-obligations table in the emitted CLAUDE.md note; `forced-override` audit rows
+written server-side; `package_verify` and its `integrity-verified` row; migration
+`004_amends_verify.sql` (the event kind's CHECK entry).
 
 #### lesson (`LL-`) — Continuous
 
@@ -1050,10 +1067,17 @@ with no Draft (the decisions pattern); no Deferred (nag by design); operator-onl
 recommendation shape; content immutability at approval; `pinned` + the render cap (the
 CLAUDE.md curation ceiling — an always-loaded surface degrades past roughly 150–200
 instructions, so the note renders pinned lessons always, caps unpinned at 10, and points
-at `entity_query("lesson")` for the rest); and the six-target `learned_from` edge.
+at `entity_query("lesson")` for the rest); and the six-target `learned_from` edge. Since
+v4.5 the ceiling has a nag: the field register grew to 57 Approved lessons with 48 pinned
+and none promoted — 57 lines in the always-loaded note — so the `lessons-note-budget`
+advisory names, in the note's own render order, every lesson rendering past position 20 as
+a promotion candidate (`skill-promote.md`, or unpin). Pinning stays the operator's choice;
+its cost stops being invisible.
 
 **Related mechanics.** The `lessons-confirmed` package advisory (Proposed rows awaiting
-the operator interview); `learned_from` edges; the note-span Lessons section (Approved-only,
+the operator interview) and `lessons-note-budget` (the curation-ceiling nag; the note and
+the rule share one row helper so they can never disagree about what renders);
+`learned_from` edges; the note-span Lessons section (Approved-only,
 pinned-first, G-INJECT-screened — a finding blocks the emit); the confirm guard + the
 server-appended `lesson-confirmed`/`lesson-promoted` journal events; `trg_lessons_immutable`;
 migrations `002_lessons.sql` (the v4 chain's first real migration, and the live worked
