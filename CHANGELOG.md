@@ -36,6 +36,11 @@ All notable changes to Tamheed are documented here. The format is based on
   not only on `package_create` — SECURITY.md's traversal claim is now true of every tool
   that resolves a name; `export_html(output=…)` refuses to overwrite a file it did not emit
   and requires a `.html` path (advisor plan 044).
+- `package_migrate(confirm=true)` is fail-safe: inputs are parsed before anything is
+  written, new files land beside the old ones and are swapped in last (the registry-sync
+  path had no backup and deleted before it copied), and any failure restores `data/` from
+  `data-v3-backup/` and removes it so the retry is not refused; a corrupt
+  `data/packages.jsonl` is an error naming the file, not a traceback (advisor plan 045).
 
 ### Changed
 

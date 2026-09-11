@@ -471,8 +471,15 @@ def _filter_jsonl(path: Path, keep) -> list[str]:
     lines (raw)."""
     lines = path.read_text(encoding="utf-8").splitlines(keepends=True)
     kept, dropped = [], []
-    for line in lines:
-        if line.strip() and not keep(json.loads(line)):
+    for lineno, line in enumerate(lines, 1):
+        if not line.strip():
+            kept.append(line)
+            continue
+        try:
+            row = json.loads(line)
+        except ValueError:
+            raise ValueError(f"data/{path.name}:{lineno} unparseable JSON") from None
+        if not keep(row):
             dropped.append(line)
         else:
             kept.append(line)
@@ -565,16 +572,20 @@ def _convert_legacy_prompts(pkg_dir: Path) -> dict | None:
 
 
 def _stored_package_version(pkg_dir: Path) -> str | None:
-    """Read package_version straight from data/packages.jsonl (no store open)."""
+    """Read package_version straight from data/packages.jsonl (no store open).
+    Raises ValueError on a corrupt file (plan 045: None used to mean both 'no row'
+    and 'unreadable', and the unreadable case then escaped as a raw exception)."""
     path = pkg_dir / "data" / "packages.jsonl"
     if not path.exists():
         return None
-    for line in path.read_text(encoding="utf-8").splitlines():
+    for lineno, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
         if line.strip():
             try:
                 return str(json.loads(line).get("package_version"))
             except ValueError:
-                return None
+                raise ValueError(f"data/packages.jsonl:{lineno} is not valid JSON — the"
+                                 " package row is unreadable; repair it (git) before"
+                                 " opening or migrating") from None
     return None
 
 
@@ -589,7 +600,10 @@ def package_open(name: str) -> dict:
     pkg_dir = PACKAGE_ROOT / name
     if not (pkg_dir / "data").exists():
         return _err(f"package '{name}' not found under {PACKAGE_ROOT}")
-    stored = _stored_package_version(pkg_dir)
+    try:
+        stored = _stored_package_version(pkg_dir)
+    except ValueError as exc:
+        return _err(str(exc))
     if stored is not None and not stored.startswith("4."):
         return _err(
             f"package '{name}' is a v{stored} store — this server is v4 and does not"
@@ -2589,7 +2603,7 @@ def _read_jsonl_tables(data_dir: Path) -> dict[str, list[dict]]:
     tables: dict[str, list[dict]] = {}
     for path in sorted(data_dir.glob("*.jsonl")):
         if not re.fullmatch(r"[a-z][a-z0-9_]*", path.stem):
-            raise ValueError(f"{path.name}: not a canonical table file (data/ holds only"
+            raise ValueError(f"data/{path.name}: not a canonical table file (data/ holds only"
                              " <table>.jsonl — move or delete it)")
         rows = []
         for lineno, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
@@ -2598,9 +2612,27 @@ def _read_jsonl_tables(data_dir: Path) -> dict[str, list[dict]]:
             try:
                 rows.append(json.loads(line))
             except ValueError:
-                raise ValueError(f"{path.name}:{lineno} unparseable JSON") from None
+                raise ValueError(f"data/{path.name}:{lineno} unparseable JSON") from None
         tables[path.stem] = rows
     return tables
+
+
+def _restore_from_backup(data: Path, backup: Path, conversion: dict | None) -> None:
+    """plan 045: undo a partial confirm — copy every backed-up file back, drop files the
+    conversion wrote, delete the backup so the operator can retry."""
+    import shutil
+    for f in data.glob("*.jsonl"):
+        f.unlink()
+    for f in data.glob("*.tmp"):
+        f.unlink()
+    for f in backup.iterdir():
+        shutil.copy2(f, data / f.name)
+    for rel in (conversion or {}).get("prompts_converted", []):
+        (data.parent / rel).unlink(missing_ok=True)
+    prompts = data.parent / "prompts"
+    if prompts.is_dir() and not any(prompts.iterdir()):
+        prompts.rmdir()                      # the converter created it; leave no husk
+    shutil.rmtree(backup)
 
 
 def package_migrate(name: str, confirm: bool = False) -> dict:
@@ -2640,7 +2672,10 @@ def package_migrate(name: str, confirm: bool = False) -> dict:
         # path"). Staged like everything else; pure append — no data-v3-backup taken
         # (nothing is transformed or dropped), and an existing backup from the v3
         # migration must not block the sync.
-        stored = _stored_package_version(pkg_dir)
+        try:
+            stored = _stored_package_version(pkg_dir)
+        except ValueError as exc:
+            return _err(str(exc))
         v4_sync = stored is not None and str(stored).startswith("4.")
         conversion = None
         relocate: list[dict] = []
@@ -2655,23 +2690,32 @@ def package_migrate(name: str, confirm: bool = False) -> dict:
                                    f" check git log -- data/{f.name} before you"
                                    " confirm)"}
                         for f in sorted(data.glob("*.jsonl.converted"))]
+        try:
+            _read_jsonl_tables(data)   # plan 045: every input parses BEFORE any write
+        except ValueError as exc:
+            return _err(str(exc))
         if confirm and not v4_sync:
             backup = pkg_dir / "data-v3-backup"
             if backup.exists():
                 return _err("data-v3-backup/ already exists — a previous migration ran;"
                             " remove or rename it before migrating again")
             backup.mkdir()
-            for f in data.iterdir():
-                if f.name != store.LOCK_NAME:
-                    shutil.copy2(f, backup / f.name)
             try:
+                for f in data.iterdir():
+                    if f.name != store.LOCK_NAME:
+                        shutil.copy2(f, backup / f.name)
                 conversion = _convert_legacy_prompts(pkg_dir)
-            except ValueError as exc:
-                shutil.rmtree(backup)
-                return _err(str(exc))
+            except Exception as exc:
+                _restore_from_backup(data, backup, conversion)
+                return _err(f"migration failed — package UNCHANGED (restored from"
+                            f" data-v3-backup/, now removed): {exc}")
         try:
             tables = _read_jsonl_tables(data)
         except ValueError as exc:
+            if confirm and not v4_sync:
+                _restore_from_backup(data, backup, conversion)
+                return _err(f"migration failed — package UNCHANGED (restored from"
+                            f" data-v3-backup/, now removed): {exc}")
             return _err(str(exc))
         legacy_note = None
         if not confirm and not v4_sync and "prompts" in tables:
@@ -2803,17 +2847,74 @@ def package_migrate(name: str, confirm: bool = False) -> dict:
             try:
                 ts = store.PackageStore(tmp_pkg).__enter__()
             except Exception as exc:
+                if v4_sync:
+                    return _err(f"migration validation failed — package UNCHANGED"
+                                f" (nothing written; registry-sync takes no backup):"
+                                f" {exc}")
+                _restore_from_backup(data, backup, conversion)
                 return _err(f"migration validation failed — package UNCHANGED"
-                            f" (old files intact, backup at data-v3-backup/): {exc}")
+                            f" (restored from data-v3-backup/, now removed): {exc}")
             try:
                 ts.commit()
             finally:
                 ts.__exit__(None, None, None)
-            stale = set(tables) | {p.stem for p in data.glob("*.jsonl")}
-            for tname in stale:
-                (data / f"{tname}.jsonl").unlink(missing_ok=True)
-            for f in (tmp_pkg / "data").glob("*.jsonl"):
-                shutil.copy2(f, data / f.name)
+            # plan 045: write every new file beside the old ones first, THEN retire
+            # the stale files, THEN swap names in — nothing is deleted until every
+            # new byte is on disk (this also covers the v4 registry-sync path, which
+            # has no backup to fall back on). The residual non-atomic window is the
+            # rename loop itself (step 3) — rare on the same filesystem; not a
+            # journal, see plan 045's maintenance notes.
+            new_files = sorted((tmp_pkg / "data").glob("*.jsonl"))
+            staged = []
+            retired = False
+            try:
+                for f in new_files:                      # 1) every new byte on disk
+                    dst = data / (f.name + ".tmp")
+                    shutil.copy2(f, dst)
+                    staged.append(dst)
+                stale = set(tables) | {p.stem for p in data.glob("*.jsonl")}
+                for tname in stale:                      # 2) then retire the old
+                    (data / f"{tname}.jsonl").unlink(missing_ok=True)
+                retired = True
+                for dst in staged:                        # 3) then swap names
+                    os.replace(dst, data / dst.name[:-4])
+            except Exception as exc:
+                # plan 045 review: once step 2 has run, the .tmp files are the ONLY
+                # copy of the not-yet-renamed tables — deleting them here would be
+                # data loss on the v4 registry-sync path, which has no backup to
+                # fall back on (the v3 path's restore always wins those tables back
+                # from data-v3-backup/, so it can still discard the .tmp files).
+                if not retired:
+                    for dst in staged:
+                        dst.unlink(missing_ok=True)
+                    if v4_sync:
+                        return _err(f"registry sync failed — package UNCHANGED"
+                                    f" (nothing was deleted; staged .tmp files"
+                                    f" removed): {exc}")
+                    _restore_from_backup(data, backup, conversion)
+                    return _err(f"migration failed — package UNCHANGED (restored"
+                                f" from data-v3-backup/, now removed): {exc}")
+                if not v4_sync:
+                    _restore_from_backup(data, backup, conversion)
+                    return _err(f"migration failed — package UNCHANGED (restored"
+                                f" from data-v3-backup/, now removed): {exc}")
+                # v4 registry-sync, no backup: best-effort finish the swap rather
+                # than strand the only copy of a table in a .tmp file.
+                finished, left = 0, []
+                for dst in staged:
+                    final = data / dst.name[:-4]
+                    if final.exists():
+                        finished += 1
+                        continue
+                    try:
+                        os.replace(dst, final)
+                        finished += 1
+                    except Exception:
+                        left.append(dst.name)
+                return _err(f"registry sync was interrupted during the file swap:"
+                            f" {exc} — {finished} file(s) completed, {len(left)} left"
+                            f" as data/<table>.jsonl.tmp: {left}; rename them to"
+                            f" finish, then package_open")
         for r in relocate:  # the previewed actions, verbatim (plan 039)
             src = pkg_dir / r["file"]
             if r["action"] == "move":
