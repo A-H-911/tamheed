@@ -298,12 +298,17 @@ def _scan_markers(conn) -> list[dict]:
     legal marker (cites an existing unresolved OQ), else the operator-facing reason."""
     found = []
     for table in ENTITY_TABLES.values():
+        all_cols = {r[1] for r in conn.execute(f"PRAGMA table_info({table})")}
         text_cols = [r[1] for r in conn.execute(f"PRAGMA table_info({table})")
                      if (r[2] or "").upper() == "TEXT" and r[1] != "custom_attributes"]
         if not text_cols:
             continue
         pk = _NON_ID_TABLES.get(table, "id")
-        for row in conn.execute(f"SELECT {pk}, {', '.join(text_cols)} FROM {table}"):
+        # Plan 046: parity with the placeholder scan (plan 038) — Superseded/Obsolete
+        # rows are history; an immutable row's stale marker is repaired by supersession.
+        where = (" WHERE lifecycle_status NOT IN ('Superseded','Obsolete')"
+                 if "lifecycle_status" in all_cols else "")
+        for row in conn.execute(f"SELECT {pk}, {', '.join(text_cols)} FROM {table}{where}"):
             for col, value in zip(text_cols, row[1:]):
                 if not value:
                     continue
