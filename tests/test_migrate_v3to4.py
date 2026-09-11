@@ -307,5 +307,88 @@ class MigrateDeterminismTest(unittest.TestCase):
                              f"{name} differs between identical migrations")
 
 
+class MigrateFailurePathTest(unittest.TestCase):
+    """Plan 045: confirm=true must leave the package untouched on ANY failure."""
+
+    def setUp(self):
+        self._tmp = tempfile.TemporaryDirectory()
+        srv.PACKAGE_ROOT = Path(self._tmp.name)
+        srv._CURRENT = srv._CURRENT_NAME = None
+
+    def tearDown(self):
+        if srv._CURRENT is not None:
+            srv.package_close()
+        self._tmp.cleanup()
+
+    @staticmethod
+    def _snapshot(pkg: Path) -> dict:
+        return {p.relative_to(pkg).as_posix(): p.read_bytes()
+                for p in pkg.rglob("*") if p.is_file() and p.name != ".lock"}
+
+    def test_unparseable_table_leaves_package_untouched(self):
+        pkg = build_v3_fixture(srv.PACKAGE_ROOT)
+        (pkg / "data" / "risks.jsonl").write_bytes(b'{"id": "RISK-001", broken\n')
+        before = self._snapshot(pkg)
+        res = srv.package_migrate("legacy", confirm=True)
+        self.assertFalse(res.get("ok"))
+        self.assertIn("risks.jsonl", res["error"])
+        self.assertEqual(self._snapshot(pkg), before)          # bytes identical
+        self.assertFalse((pkg / "data-v3-backup").exists())    # no leftover backup
+        self.assertFalse((pkg / "prompts").exists())           # no converted prompts
+        again = srv.package_migrate("legacy")                  # a retry is not refused
+        self.assertNotIn("previous migration ran", str(again.get("error", "")))
+
+    def test_unparseable_trace_edge_during_prompt_conversion(self):
+        pkg = build_v3_fixture(srv.PACKAGE_ROOT)
+        with (pkg / "data" / "trace_edges.jsonl").open("ab") as fh:
+            fh.write(b"not json\n")
+        before = self._snapshot(pkg)
+        res = srv.package_migrate("legacy", confirm=True)      # today: raises
+        self.assertFalse(res.get("ok"))
+        self.assertEqual(self._snapshot(pkg), before)
+        self.assertFalse((pkg / "data-v3-backup").exists())
+
+    def test_store_validation_failure_restores_everything(self):
+        from unittest import mock
+        pkg = build_v3_fixture(srv.PACKAGE_ROOT)
+        before = self._snapshot(pkg)
+        with mock.patch.object(srv.store, "PackageStore",
+                               side_effect=RuntimeError("simulated integrity failure")):
+            res = srv.package_migrate("legacy", confirm=True)
+        self.assertFalse(res.get("ok"))
+        self.assertIn("UNCHANGED", res["error"])
+        self.assertEqual(self._snapshot(pkg), before)          # the claim must be true
+        self.assertFalse((pkg / "data-v3-backup").exists())
+        self.assertFalse((pkg / "prompts").exists())
+
+    def test_write_back_failure_keeps_old_files(self):
+        """Nothing is deleted until every new file is on disk (also the v4 sync path)."""
+        import os
+        from unittest import mock
+        pkg = build_v3_fixture(srv.PACKAGE_ROOT)
+        before = self._snapshot(pkg)
+        real_replace = os.replace
+        def boom(src, dst, *a, **k):
+            if str(dst).endswith("requirements.jsonl"):
+                raise OSError("simulated rename failure")
+            return real_replace(src, dst, *a, **k)
+        with mock.patch.object(srv.os, "replace", boom):
+            res = srv.package_migrate("legacy", confirm=True)
+        self.assertFalse(res.get("ok"))
+        self.assertEqual(self._snapshot(pkg), before)
+        self.assertEqual(list(pkg.glob("data/*.tmp")), [])
+
+    def test_corrupt_packages_jsonl_is_an_error_not_an_exception(self):
+        pkg = build_v3_fixture(srv.PACKAGE_ROOT)
+        (pkg / "data" / "packages.jsonl").write_bytes(b"{not json\n")
+        res = srv.package_open("legacy")
+        self.assertFalse(res.get("ok"))
+        self.assertIn("packages.jsonl", res["error"])
+        self.assertIsNone(srv._CURRENT)
+        res = srv.package_migrate("legacy")
+        self.assertFalse(res.get("ok"))
+        self.assertIn("packages.jsonl", res["error"])
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)
