@@ -21,6 +21,12 @@ All notable changes to Tamheed are documented here. The format is based on
   was a permanent blocking failure whose only named remedy — edit the row — the store
   forbids (advisor plan 046).
 
+### Changed
+
+- `--selftest` now registers the whole tool surface with FastMCP when the SDK is present
+  and exits 1 if any tool fails to register — the one step no check exercised (C33's
+  class); SDK-free runs stay informational (advisor plan 047).
+
 ## [4.7.0] - 2026-09-07
 
 **MINOR — the sanctioned read for committed scripts and the paste guard (plan 041,

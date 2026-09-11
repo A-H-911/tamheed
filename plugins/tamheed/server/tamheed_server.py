@@ -2905,6 +2905,17 @@ def _mcp_version() -> str:
         return "unknown"
 
 
+def _build_app():
+    """The FastMCP app with every TOOLS entry registered — shared by serve() and
+    --selftest (plan 047: registration is where the SDK validates signatures, and it
+    was the one step no check exercised)."""
+    from mcp.server.fastmcp import FastMCP
+    app = FastMCP("tamheed")
+    for name, (func, desc) in TOOLS.items():
+        app.tool(name=name, description=desc)(func)
+    return app
+
+
 def selftest() -> int:
     print(f"tamheed MCP server — {len(TOOLS)} tools")
     for name, (_, desc) in TOOLS.items():
@@ -2913,16 +2924,25 @@ def selftest() -> int:
     # report SDK availability without failing (the contract tests run SDK-free by
     # design, and the tool surface itself needs no SDK).
     try:
-        from mcp.server.fastmcp import FastMCP  # noqa: F401
-        print(f"mcp sdk: ok ({_mcp_version()})")
+        import asyncio
+        app = _build_app()
+        registered = [t.name for t in asyncio.run(app.list_tools())]
+        missing = sorted(set(TOOLS) - set(registered))
+        print(f"mcp sdk: ok ({_mcp_version()}) — {len(registered)}/{len(TOOLS)} tools registered")
+        if missing:
+            print(f"  NOT registered: {', '.join(missing)}")
+            return 1
     except ImportError as exc:
         print(f"mcp sdk: UNAVAILABLE for serving ({exc})")
+    except Exception as exc:  # a signature the SDK rejects — the C33 class, made visible
+        print(f"mcp sdk: registration FAILED ({type(exc).__name__}: {exc})")
+        return 1
     return 0
 
 
 def serve() -> int:
     try:
-        from mcp.server.fastmcp import FastMCP
+        from mcp.server.fastmcp import FastMCP  # noqa: F401
     except ImportError as exc:
         # C33 (A2): print the CAUGHT exception and distinguish absent from
         # incompatible — the old hint told the operator to install a package that
@@ -2938,9 +2958,7 @@ def serve() -> int:
         except ImportError:
             print(f"{_SDK_ERROR} (import failed: {exc})", file=sys.stderr)
         return 1
-    app = FastMCP("tamheed")
-    for name, (func, desc) in TOOLS.items():
-        app.tool(name=name, description=desc)(func)
+    app = _build_app()
     app.run()  # stdio transport
     return 0
 
@@ -2954,7 +2972,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--package-dir", default=None,
                         help="root directory packages live under (default:"
                              " $CLAUDE_PROJECT_DIR, else cwd)")
-    parser.add_argument("--selftest", action="store_true", help="list tools and exit")
+    parser.add_argument("--selftest", action="store_true",
+                        help="list tools, register them with the SDK if present, and exit")
     args = parser.parse_args(argv)
     # Layered resolution (field-evidence C11): explicit flag > CLAUDE_PROJECT_DIR (the
     # documented stable project root — a stdio server's cwd is NOT guaranteed) > cwd.
