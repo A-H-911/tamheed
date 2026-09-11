@@ -608,6 +608,25 @@ class McpContractTest(unittest.TestCase):
         self.assertIn("WITHOUT the final flush", closed["warning"])
         self.assertEqual(path.read_text(encoding="utf-8"), moved)   # still preserved
 
+    def test_stale_tree_refusal_rolls_back_the_upsert_batch(self):
+        """Plan 043: `RELEASE batch` before `_commit()` committed the batch in memory,
+        so a refused upsert still answered every later read. The refusal must leave
+        the in-memory store exactly as it was."""
+        make_complete_package("demo")
+        path = srv._CURRENT.data_dir / "risks.jsonl"
+        moved = path.read_text(encoding="utf-8").replace("PII leak", "Edited outside")
+        path.write_text(moved, encoding="utf-8")
+        out = srv.entity_upsert([{"type": "risk", "id": "RISK-002", "title": "phantom"}])
+        self.assertFalse(out["ok"])
+        self.assertIn("NOT applied", out["error"])
+        self.assertFalse(srv._CURRENT.conn.in_transaction)      # nothing left dangling
+        ids = [r["id"] for r in srv.entity_query("risk", columns=["id"])["rows"]]
+        self.assertEqual(ids, ["RISK-001"])                       # RISK-002 never landed
+        self.assertEqual(path.read_text(encoding="utf-8"), moved)  # disk preserved
+        closed = srv.package_close()
+        self.assertTrue(closed["ok"])
+        self.assertIn("WITHOUT the final flush", closed["warning"])
+
     def _seed_legacy_prompts(self, name: str, rows: list[dict]) -> Path:
         """A closed V3 package with a hand-planted data/prompts.jsonl — the
         converter's input fixture. v4 (plan 031): the converter runs inside
