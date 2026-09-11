@@ -378,6 +378,39 @@ class MigrateFailurePathTest(unittest.TestCase):
         self.assertEqual(self._snapshot(pkg), before)
         self.assertEqual(list(pkg.glob("data/*.tmp")), [])
 
+    def test_registry_sync_swap_failure_does_not_lose_the_only_copy(self):
+        """plan 045 review: the v4 registry-sync path has no backup — once step 2
+        (retiring the old files) has run, a .tmp file is the ONLY copy of that
+        table. A mid-swap os.replace failure must finish the swap (or clearly
+        report what's left), never unlink the .tmp files out from under it."""
+        import os
+        from unittest import mock
+        srv.package_create("v4pkg", "V4", "rnd")
+        srv.package_close()
+        pkg = srv.PACKAGE_ROOT / "v4pkg"
+        et = pkg / "data" / "entity_types.jsonl"
+        rows = [json.loads(l) for l in et.read_text(encoding="utf-8").splitlines()]
+        et.write_text("".join(
+            json.dumps(r, ensure_ascii=False, separators=(",", ":")) + "\n"
+            for r in rows if r["type_id"] != "lesson"), encoding="utf-8")
+        before_names = {p.name for p in pkg.glob("data/*.jsonl")}
+        real_replace = os.replace
+        state = {"called": False}
+        def boom(src, dst, *a, **k):
+            if not state["called"]:
+                state["called"] = True
+                raise OSError("simulated rename failure (first call)")
+            return real_replace(src, dst, *a, **k)
+        with mock.patch.object(srv.os, "replace", boom):
+            res = srv.package_migrate("v4pkg", confirm=True)
+        self.assertFalse(res.get("ok"))
+        self.assertEqual(list(pkg.glob("data/*.tmp")), [])   # no stranded copies
+        after_names = {p.name for p in pkg.glob("data/*.jsonl")}
+        self.assertTrue(before_names <= after_names)         # nothing went missing
+        opened = srv.package_open("v4pkg")
+        self.assertTrue(opened.get("ok"), opened)
+        srv.package_close()
+
     def test_corrupt_packages_jsonl_is_an_error_not_an_exception(self):
         pkg = build_v3_fixture(srv.PACKAGE_ROOT)
         (pkg / "data" / "packages.jsonl").write_bytes(b"{not json\n")

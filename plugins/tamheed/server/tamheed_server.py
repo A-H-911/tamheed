@@ -2799,6 +2799,7 @@ def package_migrate(name: str, confirm: bool = False) -> dict:
             # journal, see plan 045's maintenance notes.
             new_files = sorted((tmp_pkg / "data").glob("*.jsonl"))
             staged = []
+            retired = False
             try:
                 for f in new_files:                      # 1) every new byte on disk
                     dst = data / (f.name + ".tmp")
@@ -2807,17 +2808,46 @@ def package_migrate(name: str, confirm: bool = False) -> dict:
                 stale = set(tables) | {p.stem for p in data.glob("*.jsonl")}
                 for tname in stale:                      # 2) then retire the old
                     (data / f"{tname}.jsonl").unlink(missing_ok=True)
+                retired = True
                 for dst in staged:                        # 3) then swap names
                     os.replace(dst, data / dst.name[:-4])
             except Exception as exc:
+                # plan 045 review: once step 2 has run, the .tmp files are the ONLY
+                # copy of the not-yet-renamed tables — deleting them here would be
+                # data loss on the v4 registry-sync path, which has no backup to
+                # fall back on (the v3 path's restore always wins those tables back
+                # from data-v3-backup/, so it can still discard the .tmp files).
+                if not retired:
+                    for dst in staged:
+                        dst.unlink(missing_ok=True)
+                    if v4_sync:
+                        return _err(f"registry sync failed — package UNCHANGED"
+                                    f" (nothing was deleted; staged .tmp files"
+                                    f" removed): {exc}")
+                    _restore_from_backup(data, backup, conversion)
+                    return _err(f"migration failed — package UNCHANGED (restored"
+                                f" from data-v3-backup/, now removed): {exc}")
+                if not v4_sync:
+                    _restore_from_backup(data, backup, conversion)
+                    return _err(f"migration failed — package UNCHANGED (restored"
+                                f" from data-v3-backup/, now removed): {exc}")
+                # v4 registry-sync, no backup: best-effort finish the swap rather
+                # than strand the only copy of a table in a .tmp file.
+                finished, left = 0, []
                 for dst in staged:
-                    dst.unlink(missing_ok=True)
-                if v4_sync:
-                    return _err(f"registry sync failed — package UNCHANGED (nothing"
-                                f" was deleted; staged .tmp files removed): {exc}")
-                _restore_from_backup(data, backup, conversion)
-                return _err(f"migration failed — package UNCHANGED (restored from"
-                            f" data-v3-backup/, now removed): {exc}")
+                    final = data / dst.name[:-4]
+                    if final.exists():
+                        finished += 1
+                        continue
+                    try:
+                        os.replace(dst, final)
+                        finished += 1
+                    except Exception:
+                        left.append(dst.name)
+                return _err(f"registry sync was interrupted during the file swap:"
+                            f" {exc} — {finished} file(s) completed, {len(left)} left"
+                            f" as data/<table>.jsonl.tmp: {left}; rename them to"
+                            f" finish, then package_open")
         for r in relocate:  # the previewed actions, verbatim (plan 039)
             src = pkg_dir / r["file"]
             if r["action"] == "move":
