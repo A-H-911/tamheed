@@ -1042,7 +1042,7 @@ def entity_upsert(entities: list[dict]) -> dict:
                 results.append({"index": i, "ok": False, "id": None, "error": msg})
                 failed = True
                 continue
-        if etype in ("trace-edge", "omission"):
+        if etype == "trace-edge":
             sql = (f"INSERT OR IGNORE INTO {table} ({', '.join(names)})"
                    f" VALUES ({', '.join('?' for _ in names)})")
         elif etype in ("progress-entry", "audit-verdict"):
@@ -1051,22 +1051,24 @@ def entity_upsert(entities: list[dict]) -> dict:
             sql = (f"INSERT INTO {table} ({', '.join(names)})"
                    f" VALUES ({', '.join('?' for _ in names)})")
         else:
-            updates = ", ".join(f"{c} = excluded.{c}" for c in names if c != "id")
+            # Plan 051: omissions are keyed by entity_type and their reason is content —
+            # a revised reason must land, never report `unchanged`.
+            key = "entity_type" if etype == "omission" else "id"
+            updates = ", ".join(f"{c} = excluded.{c}" for c in names if c != key)
             sql = (f"INSERT INTO {table} ({', '.join(names)})"
                    f" VALUES ({', '.join('?' for _ in names)})"
-                   + (f" ON CONFLICT(id) DO UPDATE SET {updates}" if updates else ""))
+                   + (f" ON CONFLICT({key}) DO UPDATE SET {updates}" if updates else ""))
         conn.execute(f"SAVEPOINT item{i}")
         try:
             cur = conn.execute(sql, [json.dumps(v, ensure_ascii=False)
                                      if isinstance(v, (dict, list)) else v
                                      for v in (cols[c] for c in names)])
             conn.execute(f"RELEASE item{i}")
-            if etype in ("trace-edge", "omission") and cur.rowcount == 0:
+            if etype == "trace-edge" and cur.rowcount == 0:
                 # C31 (A3): IGNORE dropped the row — distinguish the idempotent
                 # duplicate (fine, the reason IGNORE exists) from a constraint
                 # rejection (an attempt is not a write and must not count as one).
-                pk = (("from_id", "to_id", "relation") if etype == "trace-edge"
-                      else ("entity_type",))
+                pk = ("from_id", "to_id", "relation")
                 exists = conn.execute(
                     f"SELECT 1 FROM {table} WHERE "
                     + " AND ".join(f"{c} = ?" for c in pk),

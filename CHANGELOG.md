@@ -10,6 +10,13 @@ All notable changes to Tamheed are documented here. The format is based on
 
 ## [Unreleased]
 
+### Fixed
+
+- `entity_upsert` on an `omission` whose `reason` changed now updates the row; it used to
+  `INSERT OR IGNORE` and report `ok: true, unchanged: true` with the old reason left on disk.
+  `scripts/scratch_diff.py` keys omissions by `entity_type` (the table's primary key), so a
+  reason change diffs as a change (advisor plan 051).
+
 ## [4.7.0] - 2026-09-07
 
 **MINOR — the sanctioned read for committed scripts and the paste guard (plan 041,

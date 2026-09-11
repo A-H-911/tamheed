@@ -84,6 +84,22 @@ class ScratchDiffTest(unittest.TestCase):
                          ["SL-001/FR-002/implements"])
         self.assertEqual(report["tables"]["trace_edges"]["changed"], {})
 
+    def test_omissions_keyed_on_entity_type_not_reason(self):
+        """Plan 051: reason is content, not part of the key — a changed reason for the
+        same entity_type must diff as one CHANGED row, never a removed + added pair."""
+        rows_a = {"omissions": [{"entity_type": "risk", "reason": "not needed at this size"}]}
+        rows_b = {"omissions": [{"entity_type": "risk",
+                                 "reason": "deferred to phase 2 per DEC-004"}]}
+        a = write_pkg(self.base / "a", rows_a)
+        b = write_pkg(self.base / "b", rows_b)
+        code, out = run_tool(a, b, "--json")
+        self.assertEqual(code, 1)
+        report = json.loads(out)
+        self.assertEqual(report["tables"]["omissions"]["only_live"], [])
+        self.assertEqual(report["tables"]["omissions"]["only_scratch"], [])
+        [diff] = report["tables"]["omissions"]["changed"]["risk"]
+        self.assertEqual(diff["field"], "reason")
+
     def test_entity_types_keyed_on_type_id(self):
         rows_a = {"entity_types": [{"type_id": "requirement", "label": "Req"}]}
         rows_b = {"entity_types": [{"type_id": "requirement", "label": "Requirement"}]}
