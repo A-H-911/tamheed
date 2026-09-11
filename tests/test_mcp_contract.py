@@ -2453,6 +2453,31 @@ class V4EngineTest(unittest.TestCase):
         self.assertEqual(row["subject_id"], "SL-001")
         self.assertEqual(row["actor"], "system:transition-guard")
 
+    def test_phase_or_slice_born_implemented_is_refused_unless_forced(self):
+        """Plan 053: readiness measures nothing for an id that does not exist yet."""
+        for etype, row in (("phase", {"id": "PH-9", "title": "done on arrival"}),
+                           ("slice", {"id": "SL-009", "title": "done on arrival",
+                                      "phase_id": "PH-1"})):
+            refused = srv.entity_upsert([dict(row, type=etype,
+                                              lifecycle_status="Implemented")])
+            self.assertFalse(refused["ok"], refused)
+            self.assertIn("cannot be created as Implemented", refused["items"][0]["error"])
+            self.assertEqual(srv.entity_query(etype, id=row["id"])["rows"], [])  # nothing landed
+            forced = srv.entity_upsert([dict(row, type=etype,
+                                             lifecycle_status="Implemented", force=True)])
+            self.assertTrue(forced["ok"], forced)
+            pe_id = forced["items"][0]["forced_audit"]
+            pe = [r for r in srv.entity_query("progress-entry")["rows"] if r["id"] == pe_id][0]
+            self.assertEqual(pe["event_type"], "forced-override")
+            self.assertEqual(pe["subject_id"], row["id"])
+            self.assertIn("born-Implemented", pe["entry"])
+        # unguarded shapes stay legal: Approved on arrival, Rejected on arrival, wbs-items
+        ok = srv.entity_upsert([{"type": "slice", "id": "SL-010", "title": "s",
+                                 "phase_id": "PH-1", "lifecycle_status": "Approved"},
+                                {"type": "wbs-item", "id": "WBS-9", "title": "w",
+                                 "slice_id": "SL-001", "lifecycle_status": "Implemented"}])
+        self.assertTrue(ok["ok"], ok)
+
     def test_typed_events_evidence_chain_and_gate_outcome(self):
         pe = srv.progress_update([{"entry": "done", "event_type": "work-done",
                                    "subject_id": "SL-001", "actor": "agent:test",

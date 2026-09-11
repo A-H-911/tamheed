@@ -10,6 +10,13 @@ All notable changes to Tamheed are documented here. The format is based on
 
 ## [Unreleased]
 
+### Changed
+
+- `entity_upsert` refuses a phase or slice created directly as `Implemented` — the
+  transition guard ran readiness for an id with nothing bound and passed vacuously;
+  `"force": true` (operator-confirmed, journaled as `forced-override`) remains the route
+  for done-on-arrival rows (advisor plan 053; maintainer decision 2026-09-10).
+
 ## [4.7.0] - 2026-09-07
 
 **MINOR — the sanctioned read for committed scripts and the paste guard (plan 041,
