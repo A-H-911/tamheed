@@ -185,8 +185,10 @@ Replace the `server-smoke` job body with:
         run: uv run plugins/tamheed/server/tamheed_server.py --selftest
 ```
 
-where `<MAJOR>` is the major tag of the latest `astral-sh/setup-uv` release
-(`gh api repos/astral-sh/setup-uv/releases/latest --jq .tag_name` → e.g. `v6.1.0` → use `v6`).
+where `<MAJOR>` is the **exact** tag of the latest `astral-sh/setup-uv` release
+(`gh api repos/astral-sh/setup-uv/releases/latest --jq .tag_name` → e.g. `v10.1.0` → use
+`v10.1.0`). Executor finding 2026-09-11: upstream stopped publishing floating major tags after
+`v7` (`v10` does not resolve), so a bare `vN` would fail at action resolution; pin the full tag.
 Drop the `|| true` / notice branch entirely — an unavailable `uv` is now a failing step, which
 is the point.
 
