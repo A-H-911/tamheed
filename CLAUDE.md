@@ -10,8 +10,7 @@ handoff package for *another* agent to implement. The "product" is a methodology
 stdlib-only relational package store and MCP server. There is no build step.
 
 This repo is the home of the *capability*, not of any project Tamheed plans. Generated output only
-ever lives under `examples/`, `generated-samples/`, and `evals/sample-results/` (curated) — never
-elsewhere.
+ever lives under `generated-samples/` and `evals/sample-results/` (curated) — never elsewhere.
 
 ## Layout (v4)
 
@@ -22,7 +21,7 @@ The repository is its own **plugin marketplace**, and the skill is one **self-co
 plugins/tamheed/                     # THE installable bundle — self-contained, copied intact on install
 ├── .claude-plugin/plugin.json
 ├── SKILL.md                          # always-loaded front door (owns the capability)
-├── references/                       # on-demand depth: artifact-catalog, governance, workflow, entity-guide
+├── references/                       # on-demand depth: artifact-catalog, governance, workflow, extension, adopt
 ├── templates/                        # section templates for narrative prose + prompt patterns
 ├── db/                               # the store: schema.sql (v4 DDL), migrations/, store.py, CANONICAL.md
 ├── server/                           # Tamheed MCP server + migrate_v3to4 + adopt + export_html + viewer.css
@@ -31,7 +30,7 @@ plugins/tamheed/                     # THE installable bundle — self-contained
 docs/                                 # architecture, methodology, workflow, entities (the v4 study), install
 evals/                                # behavioral eval scenarios (skill-level, model-in-the-loop)
 lab/                                  # the permanent mock lab project (v4 acceptance harness)
-examples/  generated-samples/  tests/ # teaching material, demo package, test suites
+generated-samples/  tests/            # demo package, test suites
 .github/workflows/                    # CI (runs exactly `python check.py`) + scheduled eval-spec lint
 SECURITY.md                           # trust model, untrusted-content posture, reporting
 ```
@@ -42,7 +41,7 @@ tamheed 3.2.1 first, then v3→v4 (`docs/migrate-from-keystone.md`).
 
 ## Commands
 
-Python 3.9+ for the store/tests (stdlib only); the MCP server needs 3.10+ (ASM-D).
+Python 3.10+ (ASM-D — the MCP SDK's floor and the CI matrix floor); stdlib only.
 
 ```bash
 # THE gate — suites + lints + canonical round-trip + evals (CI runs exactly this)

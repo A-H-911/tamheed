@@ -24,9 +24,10 @@ report a problem.
 - **Untrusted-content handling** — operating principle 10 in `plugins/tamheed/SKILL.md`, safeguard 18 in
   `plugins/tamheed/references/safeguards.md`, and the handoff screening step in
   `plugins/tamheed/references/handoff.md`. Brief text is fenced + provenance-labeled, never an imperative.
-- **No VCS command execution** — the MCP server and the store execute no `git`/`gh` commands at all;
-  `scripts/scratch_diff.py` is a read-only diff tool; nothing in the bundle invokes `gh` (CWE-78
-  surface: none).
+- **No VCS command execution** — the store and the package tools execute no VCS commands; the sole
+  exception is adopt mode's read-only `git log` (list-argument subprocess, no shell —
+  `plugins/tamheed/server/adopt.py`); `plugins/tamheed/scripts/scratch_diff.py` is a read-only diff
+  tool; nothing in the bundle invokes `gh` (CWE-78 surface: none).
 - **No path traversal** — the MCP server validates package names as a single kebab-case segment
   (`^[a-z0-9][a-z0-9-]{0,63}$`, applied by every tool that resolves a name — create, open, verify,
   migrate; `.`/`..` unrepresentable) under the declared `--package-dir` (CWE-22); a malicious name

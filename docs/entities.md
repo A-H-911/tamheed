@@ -1,8 +1,9 @@
 # The Tamheed v4 Entity Study
 
-*The rationale record for the v4 entity model (plan 031). The compact in-bundle companion is
-`plugins/tamheed/references/entity-guide.md`; this document is the full study: what every
-entity family is, why it has the shape it has, and what breaks when you skip it.*
+*The rationale record for the v4 entity model (plan 031). The compact in-bundle companions are
+`plugins/tamheed/references/artifact-catalog.md` (the families) and
+`plugins/tamheed/references/governance.md` (identifiers, statuses); this document is the full
+study: what every entity family is, why it has the shape it has, and what breaks when you skip it.*
 
 ## 1. How to read this document
 

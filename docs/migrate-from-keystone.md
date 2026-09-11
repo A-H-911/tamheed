@@ -50,6 +50,14 @@ Approve the `tamheed` MCP server when prompted (it launches via `uv run`; Python
 
 ## 3. Run the staged migration
 
+> **Run §§3–7 with tamheed 3.2.1, not the current plugin.** The tool signatures below
+> (`package_migrate(source_dir, …)`, `status_map`, `patch`, `allow_zero`) are 3.2.1's; the v4
+> server's `package_migrate(name, confirm)` refuses v1 input. Check out the tag and launch that
+> server against your package root: `git -C <tamheed-checkout> checkout v3.2.1`, then
+> `uv run <tamheed-checkout>/plugins/tamheed/server/tamheed_server.py --package-dir <root>`
+> (or point `.mcp.json` at it). When §7 is done, return to the current plugin and run the
+> v3→v4 `package_migrate(name)` preview + `confirm=true`.
+
 `package_migrate` is staged and resumable; each stage reports before the next. Mapping contract:
 the migration runbook shipped inside tamheed 3.2.1 (no live link — the v1 references were removed
 in v4).

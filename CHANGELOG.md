@@ -51,6 +51,13 @@ All notable changes to Tamheed are documented here. The format is based on
   transition guard ran readiness for an id with nothing bound and passed vacuously;
   `"force": true` (operator-confirmed, journaled as `forced-override`) remains the route
   for done-on-arrival rows (advisor plan 053; maintainer decision 2026-09-10).
+- Docs: removed the `--dry-run` flag from every surface that described it (never implemented;
+  decided 2026-09-10 to drop rather than build); README's migrate example now shows the v4
+  `package_migrate(name)` preview/confirm flow; `CLAUDE.md` no longer names `examples/` or
+  `references/entity-guide.md`; stage 20 no longer claims a `handoff/` directory; the stock
+  prompt count is 16; `SECURITY.md` names adopt's read-only `git log` and the bundled
+  `scripts/scratch_diff.py` path; `adopt.md` no longer documents a `sources` parameter; the
+  Keystone runbook says which steps run under tamheed 3.2.1 (advisor plan 048).
 
 ## [4.7.0] - 2026-09-07
 

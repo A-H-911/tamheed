@@ -105,7 +105,6 @@ Options:
   --mode <m>          full (default) | intake | plan | resume | stage:<id> | update | migrate | adopt
   --profile <type>    hint the project type (enterprise, rnd, legacy, ai-agentic, unknown)
   --package-dir <dir> where the package store lives (created if absent; never inside the plugin)
-  --dry-run           transactional preview: report entity/gate deltas, then roll back
 ```
 
 Omit `--mode` and the skill infers one from the input and **confirms it before doing heavy work** —
@@ -195,13 +194,14 @@ refuses pre-v4 stores by version, so migration is never silent. (v1 Keystone Mar
 two-step escape route via tamheed 3.2.1 — `docs/migrate-from-keystone.md`.)
 
 ```text
-/tamheed:tamheed ./old-project/planning-package --mode migrate --package-dir ./planning
+/tamheed:tamheed ./planning/my-package --mode migrate --package-dir ./planning
 ```
 
-The preview reports every judgment call before anything is written — including `status_coerced`
-(v1 status words like `Open`/`Resolved` with their proposed lifecycle mappings, which you confirm
-or override before populate), zero-family tripwires, and per-file coverage ledgers. Full runbook:
-[`docs/migrate-from-keystone.md`](docs/migrate-from-keystone.md).
+`package_open` refuses a pre-v4 store by version and names the tool; `package_migrate(name)`
+previews every transform (value coercions, edge retypes, dropped columns) and writes nothing;
+`package_migrate(name, confirm=true)` converts in place with the old files kept in
+`data-v3-backup/`. v1 Keystone Markdown packages take the two-step route — migrate under
+tamheed 3.2.1 first, then v3→v4 here: [`docs/migrate-from-keystone.md`](docs/migrate-from-keystone.md).
 
 **`adopt` — onboard a brownfield project that never used Tamheed.** Staged scan → preview → confirm.
 Four rules are enforced mechanically: nothing inferred is ever `Approved` (everything lands `Proposed`),
@@ -210,13 +210,6 @@ first-class output, and injection-shaped repository content is fenced as data, n
 
 ```text
 /tamheed:tamheed ./legacy-service --mode adopt --package-dir ./planning
-```
-
-**`--dry-run` — preview any mutating run.** The stage's writes execute inside a SAVEPOINT, you get the
-entity counts and gate deltas, then everything rolls back — nothing is written:
-
-```text
-/tamheed:tamheed "expand: add SSO as a new requirement" --mode update --package-dir ./planning --dry-run
 ```
 
 ### During and after execution

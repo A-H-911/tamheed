@@ -107,9 +107,7 @@ Default to **interactive**. Modes are defined in `references/modes.md`:
   is Approved, provenance is code-shaped, the gap report is first-class (`references/adopt.md`).
 
 Parameters: `--profile <type>` (registry-backed: enterprise | rnd | legacy | ai-agentic | unknown);
-`--package-dir <dir>` (explicit, validated, created if absent — never inside the plugin);
-`--dry-run` (transactional preview: run the stage's mutations in a SAVEPOINT, report entity counts
-and gate deltas, roll back).
+`--package-dir <dir>` (explicit, validated, created if absent — never inside the plugin).
 
 ## The workflow
 
