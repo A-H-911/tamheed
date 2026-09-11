@@ -43,8 +43,8 @@ had the discipline. Distinct from `migrate` (which converts conformant *v1 Keyst
 | TODO/FIXME comments | `DW-` deferred-work rows (marker stripped from the title — the marker becomes the tracked row, per the writing discipline) |
 | git history (churn, big merges) | de-facto decision candidates; absence is a recorded gap |
 
-**Opt-IN** (`sources=["+issues"]`; requires `gh` + network): GitHub issues/PRs → `OQ-`/backlog
-candidates. Never scanned by default.
+**Not scanned:** GitHub issues/PRs. Adopt reads the working tree only; an opt-in issues source
+is a recorded future option, not a parameter.
 
 **Keystone-lineage inputs** (e.g. a design-mission-era package with hand-coined ID namespaces —
 `F#`, `A#`, `TD-` — and no manifest/state): a richer starting point than raw code. The skill maps

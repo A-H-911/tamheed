@@ -16,8 +16,7 @@ before doing heavy work**. Modes change where the workflow starts/stops, not the
 
 Parameters: `--profile enterprise|rnd|legacy|ai-agentic|unknown` (registry-backed; community profiles
 via the extension registry), `--package-dir <dir>` (validated; created if absent; never inside the
-plugin), `--dry-run` (run the stage's mutations inside a SAVEPOINT, report entity counts + gate deltas,
-roll back — nothing written).
+plugin).
 
 ## Inference when no mode is given
 
@@ -48,8 +47,7 @@ Three capabilities, each with a concrete tool sequence. All three end with `gate
 A change to an entity regenerates its dependents — and only its dependents.
 
 1. `trace_query(entity_id, direction="in")` (repeat transitively as needed) → the impact set.
-2. Preview to the operator: the impact set + what would be regenerated. With `--dry-run`, apply inside
-   the SAVEPOINT and report gate deltas instead.
+2. Preview to the operator: the impact set + what would be regenerated.
 3. On approval: `entity_upsert` the changed row; regenerate ONLY dependent narrative sections/prompts;
    derived views need nothing (they are queries).
 4. `gate_run` to confirm no new gaps.

@@ -18,9 +18,10 @@ Markdown registers.
 │   ├── narrative_documents.jsonl  # document_sections, diagrams, omissions
 │   ├── …
 │   └── .lock                      # single-writer lock (transient; never committed)
+├── data-v3-backup/                # only after a v3→v4 package_migrate: the pre-migration data/ files
 ├── prompts/                       # v3 (plan 027): ALL prompts, plain .md — read the folder, pick
 │   ├── <kickoff>.md               # project-authored (Stage 20; any non-stock filename)
-│   └── <15 stock scenarios>.md    # + README.md — the bundled library ({package} substituted), seeded at create
+│   └── <16 stock scenarios>.md    # + README.md — the bundled library ({package} substituted), seeded at create
 ├── review.html (+ csv/)           # the human review surface, exported on demand
 ├── exports/                       # v4.7: entity_export files — a read tool's whole result, digest-
 │   └── <name>.json                #   stamped, deterministic; the sanctioned read for committed scripts

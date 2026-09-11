@@ -168,7 +168,7 @@ validation (is this a real, coherent project?) is the skill's job.
 
 **Input contract** — whatever the user gave is mapped to one shape the skill understands: a description (or
 brief path), an optional mode (`full | intake | plan | resume | stage:<id> | update | migrate | adopt`), an
-optional `--profile` hint, `--package-dir`, and `--dry-run`. If the mode is omitted, the skill infers and
+optional `--profile` hint, and `--package-dir`. If the mode is omitted, the skill infers and
 **confirms** it — never guesses silently
 ([`../plugins/tamheed/references/modes.md`](../plugins/tamheed/references/modes.md)).
 
