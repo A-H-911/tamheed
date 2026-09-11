@@ -494,6 +494,27 @@ class McpContractTest(unittest.TestCase):
         pkg = {r["rule"]: r for r in srv.readiness_check("package")["rules"]}
         self.assertEqual(pkg["risks-discharged"]["status"], "fail")
 
+    def test_scoped_readiness_reads_indeterminate_when_scope_is_empty(self):
+        """Plan 049: a slice/phase with no ACs, work items, or slices measured nothing —
+        loud amber, never a green; `ready` is untouched (indeterminate never blocks)."""
+        make_complete_package("demo")
+        out = srv.entity_upsert([{"type": "phase", "id": "PH-2", "title": "later"},
+                                 {"type": "slice", "id": "SL-002", "title": "empty",
+                                  "phase_id": "PH-2"}])
+        self.assertTrue(out["ok"], out)
+        sl = {r["rule"]: r for r in srv.readiness_check("slice", id="SL-002")["rules"]}
+        for name in ("acs-met", "wbs-done"):
+            self.assertEqual(sl[name]["status"], "indeterminate", (name, sl[name]))
+            self.assertIs(sl[name]["discriminating"], False)
+            self.assertEqual(sl[name]["entities"], [])
+        ph = {r["rule"]: r for r in srv.readiness_check("phase", id="PH-2")["rules"]}
+        for name in ("acs-met", "wbs-done"):
+            self.assertEqual(ph[name]["status"], "indeterminate", (name, ph[name]))
+        self.assertEqual(ph["slices-closed"]["status"], "fail")     # SL-002 is open: real
+        # populated scope is unaffected
+        live = {r["rule"]: r for r in srv.readiness_check("slice", id="SL-001")["rules"]}
+        self.assertNotEqual(live["acs-met"]["status"], "indeterminate")
+
     def test_readiness_scope_validation(self):
         make_complete_package("demo")
         self.assertIn("unknown scope", srv.readiness_check("release")["error"])

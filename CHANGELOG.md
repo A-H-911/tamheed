@@ -10,6 +10,14 @@ All notable changes to Tamheed are documented here. The format is based on
 
 ## [Unreleased]
 
+### Fixed
+
+- Phase/slice readiness: `acs-met`, `wbs-done` and `slices-closed` now report
+  `indeterminate` (discriminating: false) when the scope holds no candidate rows, instead
+  of a silent pass — the C35/N3 hollow-pass doctrine applied to the rules that carry the
+  transition; `ready` and the transition guard are unchanged (indeterminate never blocks)
+  (advisor plan 049).
+
 ## [4.7.0] - 2026-09-07
 
 **MINOR — the sanctioned read for committed scripts and the paste guard (plan 041,
