@@ -75,6 +75,73 @@ two-step escape route (tamheed 3.2.1, then v3->v4 via `package_migrate`).
 Index note: plan 006's file points at `plans/deliverables-review.md` for the approved
 artifact set -- that review is the v2 input contract and remains frozen alongside it.
 
+### Advisor audit 2026-09-10 -- plans 042-053 (improve skill, deep; advisor, not maintainer)
+
+Written against commit `7e3a92b` (v4.7.0) by the `/improve deep` audit: 8 read-only category
+sweeps, every finding re-read or reproduced before it was planned. The plans follow the
+improve template (self-contained; an executor with zero context runs them top to bottom)
+rather than the findings-file/interview shape of 005-041. Recommended order = table order;
+dependencies are hard where marked. Status values: TODO | IN PROGRESS | DONE | BLOCKED
+(reason) | REJECTED (rationale). Executors update their row.
+
+**Integration branch (2026-09-11):** all ten APPROVED branches below plus plan 042's line were
+merged by an integration-only executor onto `worktree-agent-a9e0797e07858539d` (HEAD
+`976ee6a`, descends from `7e3a92b`; `python check.py` → ALL CHECKS PASSED on the combined
+state; the only edits beyond the union of the branch diffs are the CHANGELOG `[Unreleased]`
+consolidation into one `### Fixed` + one `### Changed` and a `data/` prefix on plan 044's
+stem-check message). Operator: `git merge --ff-only worktree-agent-a9e0797e07858539d`
+on `main`, commit `plans/`, push; then `git worktree prune` after deleting the eleven
+`.claude/worktrees/agent-*` directories and their branches.
+
+| Plan | Title | Priority | Effort | Depends on | Status |
+|---|---|---|---|---|---|
+| 042 | [CI has never run](042-ci-has-never-run.md) -- 0 workflow runs on a public repo with two active workflows; add `workflow_dispatch`, investigate, get one green run | P1 | S | -- | IN PROGRESS — executor APPROVED 2026-09-11 (commit `f4413aa` on branch `worktree-agent-afc454927cb3f5519`; Actions IS enabled at repo level, `total_count` still 0); operator push + first run pending |
+| 043 | [Stale-tree refusal must roll back](043-stale-tree-refusal-must-roll-back.md) -- `RELEASE batch` before `_commit()` committed the batch in memory; refused writes answered every later read (reproduced; one-line deletion, suite green on a scratch copy) | P1 | S | -- | DONE — APPROVED 2026-09-11, commit `8eef6e2` on branch `worktree-agent-a8e1a43b9c5cb62c6` (unmerged; operator merges) |
+| 044 | [Package-name + output-path hygiene](044-package-name-and-output-path-hygiene.md) -- `_NAME_RE` applied only on create; open/verify/migrate resolve `PACKAGE_ROOT / name` raw (SECURITY.md claims otherwise); `export_html(output)` unguarded | P1 | S | -- | DONE — APPROVED 2026-09-11, commit `920c326` on branch `worktree-agent-aa9df8e9aa6b74a92` (unmerged; operator merges; `package_verify` validates the name before the already-open check — deliberate) |
+| 045 | [`package_migrate` fail-atomic](045-package-migrate-fail-atomic.md) -- characterization tests first; parse before write, write-beside-then-swap (the v4 registry-sync path deleted before it copied, with no backup), restore-from-backup on any failure, corrupt `packages.jsonl` is an error not a traceback | P1 | M | (044 first if both) | DONE — APPROVED 2026-09-11 after one revision round (the plan's own swap sketch deleted the only copy on the v4 path; fixed + tested), commits `3037e57`/`e333b61`/`dd5a3e3` on branch `worktree-agent-a5276e0675981a0d6` (unmerged; operator merges) |
+| 046 | [`_scan_markers` skips Superseded/Obsolete](046-scan-markers-skips-superseded-rows.md) -- parity with the placeholder scan (plan 038); a stale marker on an immutable superseded row was a permanent G-COMPLETE fail with an impossible remedy | P1 | S | -- | DONE — APPROVED 2026-09-11, commit `33e38ea` on branch `worktree-agent-a259d4a161f30b496` (unmerged; operator merges; the readiness advisory is named `clarifications-open`, not `open-markers`) |
+| 047 | [`--selftest` registers with FastMCP](047-selftest-registers-with-fastmcp.md) -- the one step no check exercised (C33's class); 18/18 today, made a tripwire | P2 | S | -- | DONE — APPROVED 2026-09-11, commit `24ed879` on branch `worktree-agent-a56417be4cb278726` (unmerged; operator merges) |
+| 048 | [Docs drift sweep](048-docs-drift-sweep.md) -- `--dry-run` removed from every surface (maintainer decision: docs, not code), v4 migrate example, `examples/`/`entity-guide.md`/`handoff/`/`sources=` ghosts, 15->16 prompts, SECURITY.md path + git-log wording, Keystone runbook says which steps run under 3.2.1 | P2 | S | (044 first) | DONE — APPROVED 2026-09-11, commit `207e085` on branch `worktree-agent-abc93ed074b21bb02` (unmerged; operator merges; cosmetic leftovers: `docs/methodology.md:273` "(v4.6) (safeguard 16)", and the "everything previewable" heading at :125) |
+| 049 | [Scoped readiness indeterminate at zero](049-scoped-readiness-indeterminate-at-zero.md) -- `acs-met`/`wbs-done`/`slices-closed` passed silently for an empty phase/slice; C35/N3 doctrine applied (never blocks) | P2 | S | -- | DONE — APPROVED 2026-09-11, commit `06e4d83` on branch `worktree-agent-abe3772ef3f3535d6` (unmerged; operator merges) |
+| 050 | [CSV formula-injection guard](050-csv-formula-injection-guard.md) -- CWE-1236 on the exported `csv/`; lab-tracker `csv/` goldens regenerated by tool | P2 | S | (044 first) | DONE — APPROVED 2026-09-11, commit `0987e73` on branch `worktree-agent-aecfa031d782d8870` (unmerged; operator merges; regeneration was a no-op — no fixture cell actually starts with a trigger character) |
+| 051 | [Omission reason not silently dropped](051-omission-reason-is-not-silently-dropped.md) -- `INSERT OR IGNORE` reported a revised reason as `unchanged`; `scratch_diff` keyed omissions on the wrong tuple | P2 | S | 043 | DONE — APPROVED 2026-09-11, commit `d1ec480` on branch `worktree-agent-a24c2b4e5fced8269` (unmerged; operator merges) |
+| 052 | [CI: real `uv` step, py3.13 leg, bounded `pip install`](052-ci-matrix-uv-step-and-bounded-pip-install.md) -- the documented fallback reproduced the C33 incident the pin prevents | P2 | S | 042, 047, (048 first) | TODO |
+| 053 | [Refuse phase/slice born Implemented](053-refuse-phase-or-slice-born-implemented.md) -- the guard measured an id with nothing bound and passed; `force` stays the route (maintainer decision 2026-09-10; tool-contract change) | P3 | S | 049, 043 | DONE — APPROVED 2026-09-11, commit `e3b44bc` on branch `worktree-agent-ae8c6bf7a6f44cd77` (unmerged; operator merges) |
+
+**Dependency notes (advisor plans).** 042 before 052 (a red matrix leg is unattributable
+until CI has run once). 043 before 051/053 (they edit the same function; 043 settles its
+transaction tail). 045's tests land before its refactor (same plan, red then green). 050 and
+any later plan that changes emitted bytes share the "regenerate goldens by tool" step. 049
+before 053: the first makes an empty scope visible, the second makes a brand-new row refusable
+-- two questions, deliberately separate.
+
+**Findings audited and NOT planned (still open, recorded so they are not re-audited from
+scratch).** Inconsistent id ordering (`_emit_prompt_library` sorts version strings lexically
+then numerically; `SUBSTR(id,4)` literals; `export_html._execution` orders the progress log by
+string id) -- one helper, wrong order only past ID-010, LOW. Readiness/gate test gaps: the
+whole-rule waiver branch is untested (the only WVR test's WVR-002 is expired),
+`decisions-approved`/`decisions-look-architectural` have zero tests, `check.py` lints are
+untested, eval `injection-brief` assertion 3 greps the `prompts` table retired in v3 (vacuous),
+`evals/pkg_check.py` leaks the lock on exception. `skills.name` is rendered into the CLAUDE.md
+note without the `_INJECT_RE` screen (the confirm-guard half relitigates migration 003 -- a
+question). `adopt` rglob follows symlinks with no size cap. Small debt: `record.py:22-26`
+`except ImportError` -> silent empty registry; `adopt.py:240-248` `ALWAYS_TYPES` hand-copied
+with no sync lint; dead v1 scaffolding in `record.py:53-101`; `work_bind` journal insert
+without `event_type`. Eval harness spawns a process per assertion (62% of `check.py` wall time)
+and read-only assertions rewrite fixtures via `package_close`. LOW-confidence, investigate
+before planning: the marker literal truncating the tool-owned note span; adopt post-flight
+`ok` without an `error` key; `MigrateV3ToV4Test` shared fixture makes test order load-bearing;
+string-compared dates in `_readiness_report`; PRAGMA introspection re-run per open.
+
+**Direction (options, not defects).** The next release is another field-report cycle: adopt
+mode is the least-exercised surface and its doc has drifted -- a one-day spike on one real
+non-Tamheed repo, doc fixed to match. An eval rubric ledger (9 cases, 3 recorded, 6 skipped
+every run -- make the gap visible in `evals/README.md`). Stages 9-13 (Explore) have no liveness
+advisory the way registers do. README promises host-agnostic; the note is CLAUDE.md-only.
+
+**Not audited.** `plans/evidence/`, `docs/history/`, bodies of `generated-samples/` and
+`evals/sample-results/`, `lab/seed`, `__pycache__`. Coverage numbers were not measured.
+
 ## Program chronicle (the alignment records, condensed -- full text in git history)
 
 - **2026-07-17** -- the v2 artifact set locked (`deliverables-review.md` APPROVED);
@@ -224,6 +291,26 @@ Markdown · ASM-D Python floor rises to the MCP SDK's (≥3.10).
 - **In-place rename of this repo to Tamheed**: superseded by the new-repo strategy (user
   decision, 2026-07-11) — old plan 005 replaced by `005-b1-bootstrap-tamheed-repo.md`.
 
+*Advisor audit 2026-09-10 (plans 042–053) — rejected:*
+
+- **Whole-store rewrite per mutation** (`store.commit()` dumps every table on every commit;
+  ~34% of suite time): sub-100 ms on real field packages (the C31 measurement: 29 files /
+  3.1 MB ≈ 0.02 s per guard); an incremental dump is a MED-risk change to the byte-canonical
+  invariant for no field-visible gain.
+- **Parallel test suites / `check.py -j`**: the gate is ~seconds-to-a-minute; the eval
+  harness's per-assertion process spawn is the real cost and is recorded above as open.
+- **Bumping `actions/checkout@v4` / `setup-python@v5`**: current majors; a diff for its own sake.
+- **SHA-pinning GitHub Actions**: read-only `permissions: contents: read`, no secrets, no
+  publish step — the threat the pin defends against has no target here.
+- **A `pyproject.toml`**: no build step, stdlib only, PEP 723 carries the one dependency
+  (locked: D-U3, ASM-C).
+- **`.vscode/` tracked in git**: false premise — `git ls-files .vscode` is empty.
+- **`migrate-dialect-fixture` eval case "stale"**: documented HISTORICAL in `evals/README.md`.
+- **Implementing `--dry-run`**: decided 2026-09-10 to remove the docs claim instead (plan 048);
+  the wording is preserved in that commit's diff if it is ever built.
+- **Raising the `mcp` floor above `>=1.2`** as part of plan 052: a floor change needs the lowest
+  working version verified first; recorded as a future option, not bundled.
+
 ## Future options recorded (not planned)
 
 - **A read-only CLI on the server script** (findings_24 §1's alternative shape, declined
@@ -258,3 +345,21 @@ Markdown · ASM-D Python floor rises to the MCP SDK's (≥3.10).
   mechanism).
 - ~~Retiring the frozen v1 contract (validator + schemas)~~ — DONE in plan 031 (v4.0.0): the
   two-step escape route via tamheed 3.2.1 replaces in-repo v1 ingestion.
+
+*Advisor audit 2026-09-10 — recorded, not planned:*
+
+- **`--dry-run` as a real SAVEPOINT-backed preview** (removed from the docs by plan 048 on the
+  maintainer's 2026-09-10 decision): if built, it lives in `entity_upsert` beside plan 043's
+  rollback test; the spec wording is in plan 048's diff.
+- **A confirm guard on `skills.name` in the CLAUDE.md note** (the `_INJECT_RE` screen half is
+  a small fix, unplanned; the guard half relitigates migration 003's "the interview IS the
+  approval" — a maintainer question).
+- **Raising the `mcp` floor** (PEP 723 `>=1.2`): verify the lowest working SDK version, then
+  raise the floor and the seven `pip install` sites together (plan 052 bounds them at `<2` only).
+- **Python 3.14 CI leg**: add once `python check.py` passes locally on 3.14 under
+  `PYTHONWARNINGS=error::DeprecationWarning` (3.13 was verified that way on 2026-09-10).
+- **An opt-in GitHub issues source for adopt mode** (`adopt.md` documented a `sources`
+  parameter that never existed; plan 048 removes the claim): the first field need reopens it.
+- **Eval rubric ledger + recording one more case per release** (direction finding; 9 cases,
+  3 recorded).
+- **An `experiments-settled`-style liveness advisory for stages 9–13** (direction finding).
