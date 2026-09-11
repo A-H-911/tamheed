@@ -23,7 +23,7 @@ python check.py     # everything CI runs — if this is green, you are set up
 - Everything `check.py` runs is **stdlib-only** (decision D-U3) — no pytest, no third-party
   packages. The ONLY dependency in the whole repo is the `mcp` SDK, and only for *serving* the
   MCP server: `uv run plugins/tamheed/server/tamheed_server.py` fetches it automatically
-  (PEP 723), or `pip install mcp`. The in-process test suites don't need it.
+  (PEP 723), or `pip install "mcp<2"`. The in-process test suites don't need it.
 
 ## Invariants you must preserve
 

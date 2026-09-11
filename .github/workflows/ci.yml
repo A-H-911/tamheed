@@ -25,7 +25,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest]
-        python: ['3.10', '3.11', '3.12']
+        python: ['3.10', '3.11', '3.12', '3.13']
     steps:
       - uses: actions/checkout@v4
 
@@ -38,23 +38,13 @@ jobs:
         run: python check.py
 
   server-smoke:
-    # The uv/PEP 723 launch path is the documented install story — smoke it.
-    # Infra-tolerant: if uv cannot be provisioned, SKIP with a visible notice;
-    # never fail the pipeline on runner infrastructure.
+    # The uv/PEP 723 launch path is the documented install story — smoke it for real:
+    # --selftest registers every tool with the SDK (plan 047) and exits 1 on failure.
     name: MCP server smoke (uv / PEP 723)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
+      - uses: astral-sh/setup-uv@v10.1.0
       - name: Server selftest via uv
         shell: bash
-        run: |
-          if ! command -v uv >/dev/null 2>&1; then
-            curl -LsSf https://astral.sh/uv/install.sh | sh || true
-            export PATH="$HOME/.local/bin:$PATH"
-          fi
-          if command -v uv >/dev/null 2>&1; then
-            uv run plugins/tamheed/server/tamheed_server.py --selftest
-          else
-            echo "::notice::uv unavailable on this runner — server smoke SKIPPED (infra, not a failure)"
-          fi
+        run: uv run plugins/tamheed/server/tamheed_server.py --selftest

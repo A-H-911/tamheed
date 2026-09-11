@@ -18,8 +18,10 @@ What works depends on whether the agent can run the MCP server:
 | **No MCP host** | File read/write only (e.g. a chat-only environment) | ⚠️ planning conversation only | ❌ no package store — packages need the server |
 
 Python **≥3.10** is required for the MCP server (the `mcp` SDK's floor; ASM-D). `uv` launches it with
-zero setup (PEP 723), or `pip install mcp` as the fallback — see
+zero setup (PEP 723), or `pip install "mcp<2"` as the fallback — see
 [`../plugins/tamheed/server/README.md`](../plugins/tamheed/server/README.md).
+Install `uv` once per machine: <https://docs.astral.sh/uv/getting-started/installation/> (`pipx install uv`,
+`winget install astral-sh.uv`, or the one-line installer).
 No specific model, vendor, or repo provider is required. (The v1 repository bootstrapper was removed in
 v2 — ASM-B; the chat-only generation path ended with v1.)
 

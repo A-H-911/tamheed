@@ -46,7 +46,7 @@ Tell the operator what you found and where. Then **stop and wait** (consent rule
 ```
 
 Approve the `tamheed` MCP server when prompted (it launches via `uv run`; Python ≥3.10 —
-`pip install mcp` is the fallback, see `plugins/tamheed/server/README.md`).
+`pip install "mcp<2"` is the fallback, see `plugins/tamheed/server/README.md`).
 
 ## 3. Run the staged migration
 

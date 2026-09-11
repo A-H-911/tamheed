@@ -64,7 +64,7 @@ Honest edition — what you actually need:
 - **An MCP-capable host.** Claude Code is the designed-for host: the bundled `.mcp.json` auto-starts the
   server when the plugin is enabled. Any other agent that can run MCP servers and read files works too.
 - **Python ≥ 3.10** for the MCP server (the official `mcp` SDK's floor; program decision ASM-D). `uv`
-  launches it with zero setup (the server carries PEP 723 inline metadata), or `pip install mcp` as the
+  launches it with zero setup (the server carries PEP 723 inline metadata), or `pip install "mcp<2"` as the
   fallback. See [`plugins/tamheed/server/README.md`](plugins/tamheed/server/README.md).
 - No specific model, vendor, or repo provider is required.
 

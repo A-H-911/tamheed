@@ -1732,7 +1732,7 @@ class McpContractTest(unittest.TestCase):
         self.assertEqual(code, 1)
         message = stderr.getvalue()
         self.assertIn("uv run", message)
-        self.assertIn("pip install mcp", message)
+        self.assertIn("pip install 'mcp<2'", message)
         self.assertIn("import failed:", message)   # C33 (A2): the caught exception shows
 
     def test_incompatible_sdk_names_version_and_pin(self):

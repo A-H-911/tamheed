@@ -19,7 +19,7 @@ Plugin installs copy files only — they do not install Python packages. Two lau
    `uv run tamheed_server.py` fetches the SDK automatically. The bundled `.mcp.json` at the
    plugin root uses this path (`${CLAUDE_PLUGIN_ROOT}`-relative) and auto-starts the server
    when the plugin is enabled.
-2. **pip fallback:** `pip install mcp`, then `python tamheed_server.py --package-dir <root>`.
+2. **pip fallback:** `pip install "mcp<2"`, then `python tamheed_server.py --package-dir <root>`.
 
 If the SDK is missing the server exits with a one-line error naming both options — never a
 silent dead server.

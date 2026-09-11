@@ -3077,7 +3077,7 @@ TOOLS = {
 }
 
 _SDK_ERROR = ("tamheed MCP server requires the 'mcp' SDK (Python >=3.10): launch with"
-              " 'uv run tamheed_server.py' (PEP 723 fetches it) or 'pip install mcp'.")
+              " 'uv run tamheed_server.py' (PEP 723 fetches it) or pip install 'mcp<2'.")
 
 
 def _mcp_version() -> str:

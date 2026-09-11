@@ -25,7 +25,7 @@ discipline. It is the successor of Keystone: the same 22-stage methodology, now 
 
 **Requirements.** An MCP-capable host (Claude Code loads the bundled server via `.mcp.json`
 automatically). The server needs **Python ≥3.10** and the official `mcp` SDK — `uv` runs it with zero
-setup (PEP 723), or `pip install mcp` as the fallback. See `server/README.md`.
+setup (PEP 723), or `pip install "mcp<2"` as the fallback. See `server/README.md`.
 
 **One principle governs the whole design: the skill owns the capability.** Every entry point is a thin
 wrapper that normalizes input and routes output; none re-implements the methodology. The MCP server is

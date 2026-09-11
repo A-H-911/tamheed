@@ -58,6 +58,10 @@ All notable changes to Tamheed are documented here. The format is based on
   prompt count is 16; `SECURITY.md` names adopt's read-only `git log` and the bundled
   `scripts/scratch_diff.py` path; `adopt.md` no longer documents a `sources` parameter; the
   Keystone runbook says which steps run under tamheed 3.2.1 (advisor plan 048).
+- CI: the MCP server smoke job installs `uv` with `astral-sh/setup-uv` and fails on a failed
+  `--selftest` (it used to skip); Python 3.13 joins the matrix. Docs and the server's error
+  text now say `pip install "mcp<2"` — the unbounded fallback reproduced the C33 incident the
+  PEP 723 pin prevents (advisor plan 052).
 
 ## [4.7.0] - 2026-09-07
 
