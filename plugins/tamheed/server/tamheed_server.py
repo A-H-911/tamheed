@@ -1512,6 +1512,14 @@ def _readiness_report(conn, scope: str, scope_id: str | None) -> dict:
                     f"cannot discriminate (populate {column} to make it meaningful)")
         return None
 
+    def empty_note(sql: str, params: tuple, what: str, how: str) -> str | None:
+        """Plan 049: a scoped rule with NO candidate rows measured nothing — the
+        C35/N3 hollow-pass doctrine, applied to phase/slice scope."""
+        (n,) = conn.execute(sql, params).fetchone()
+        if n == 0:
+            return f" — no {what} in this scope; this rule cannot discriminate ({how})"
+        return None
+
     def unlocated_defects_note(scope_name: str) -> str | None:
         (n,) = conn.execute(
             "SELECT COUNT(*) FROM defects"
@@ -1686,12 +1694,20 @@ def _readiness_report(conn, scope: str, scope_id: str | None) -> dict:
                  " LEFT JOIN v_latest_verdicts lv ON lv.ac_id = ac.id"
                  " WHERE s.phase_id = ? AND ac.retired_in IS NULL"
                  " AND (lv.verdict IS NULL OR lv.verdict <> 'Met')", (scope_id,)),
-             "ACs of this phase's slices whose latest verdict is not Met")
+             "ACs of this phase's slices whose latest verdict is not Met",
+             na=empty_note("SELECT COUNT(*) FROM acceptance_criteria ac JOIN slices s"
+                           " ON ac.slice_id = s.id WHERE s.phase_id = ?"
+                           " AND ac.retired_in IS NULL", (scope_id,),
+                           "active acceptance criteria",
+                           "bind ACs to this phase's slices via slice_id"))
         rule("slices-closed", "blocking",
              ids("SELECT id FROM slices WHERE phase_id = ? AND retired_in IS NULL"
                  " AND lifecycle_status NOT IN"
                  " ('Implemented','Superseded','Obsolete','Rejected')", (scope_id,)),
-             "slices of this phase not closed")
+             "slices of this phase not closed",
+             na=empty_note("SELECT COUNT(*) FROM slices WHERE phase_id = ?"
+                           " AND retired_in IS NULL", (scope_id,),
+                           "slices", "create SL- rows with phase_id"))
         rule("wbs-done", "blocking",
              ids("SELECT w.id FROM wbs_items w"
                  " LEFT JOIN slices s ON w.slice_id = s.id"
@@ -1699,7 +1715,11 @@ def _readiness_report(conn, scope: str, scope_id: str | None) -> dict:
                  " AND w.lifecycle_status NOT IN"
                  " ('Implemented','Superseded','Obsolete','Rejected')",
                  (scope_id, scope_id)),
-             "open work items in this phase")
+             "open work items in this phase",
+             na=empty_note("SELECT COUNT(*) FROM wbs_items w LEFT JOIN slices s"
+                           " ON w.slice_id = s.id WHERE w.phase_id = ? OR s.phase_id = ?",
+                           (scope_id, scope_id),
+                           "work items", "create WBS- rows with phase_id or slice_id"))
         found_na = na_note("defects", "found_in")
         rule("defects-closed", "blocking",
              ids("SELECT d.id FROM defects d"
@@ -1725,12 +1745,17 @@ def _readiness_report(conn, scope: str, scope_id: str | None) -> dict:
                  " LEFT JOIN v_latest_verdicts lv ON lv.ac_id = ac.id"
                  " WHERE ac.slice_id = ? AND ac.retired_in IS NULL"
                  " AND (lv.verdict IS NULL OR lv.verdict <> 'Met')", (scope_id,)),
-             "ACs bound to this slice whose latest verdict is not Met")
+             "ACs bound to this slice whose latest verdict is not Met",
+             na=empty_note("SELECT COUNT(*) FROM acceptance_criteria WHERE slice_id = ?"
+                           " AND retired_in IS NULL", (scope_id,),
+                           "active acceptance criteria", "bind ACs to this slice via slice_id"))
         rule("wbs-done", "blocking",
              ids("SELECT id FROM wbs_items WHERE slice_id = ?"
                  " AND lifecycle_status NOT IN"
                  " ('Implemented','Superseded','Obsolete','Rejected')", (scope_id,)),
-             "open work items in this slice")
+             "open work items in this slice",
+             na=empty_note("SELECT COUNT(*) FROM wbs_items WHERE slice_id = ?", (scope_id,),
+                           "work items", "create WBS- rows with slice_id"))
         found_na = na_note("defects", "found_in")
         rule("defects-closed", "blocking",
              ids("SELECT id FROM defects WHERE found_in = ?"

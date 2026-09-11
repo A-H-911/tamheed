@@ -20,6 +20,11 @@ All notable changes to Tamheed are documented here. The format is based on
   matching the placeholder scan (plan 038): a stale marker on an immutable, superseded row
   was a permanent blocking failure whose only named remedy — edit the row — the store
   forbids (advisor plan 046).
+- Phase/slice readiness: `acs-met`, `wbs-done` and `slices-closed` now report
+  `indeterminate` (discriminating: false) when the scope holds no candidate rows, instead
+  of a silent pass — the C35/N3 hollow-pass doctrine applied to the rules that carry the
+  transition; `ready` and the transition guard are unchanged (indeterminate never blocks)
+  (advisor plan 049).
 
 ### Changed
 
