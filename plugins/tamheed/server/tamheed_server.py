@@ -2825,6 +2825,17 @@ def package_adopt(source_dir: str, name: str | None = None, confirm: bool = Fals
     return out
 
 
+_CSV_TRIGGERS = ("=", "+", "-", "@", "\t", "\r")
+
+
+def _csv_safe(value):
+    """Plan 050 (CWE-1236): a text cell that a spreadsheet would evaluate as a formula is
+    prefixed with a quote — the standard neutralization. Numbers/NULLs pass through."""
+    if isinstance(value, str) and value.startswith(_CSV_TRIGGERS):
+        return "'" + value
+    return value
+
+
 def export_html(output: str | None = None) -> dict:
     """Export the self-contained static HTML review surface (the human review view).
 
@@ -2858,7 +2869,7 @@ def export_html(output: str | None = None) -> dict:
         buf = io.StringIO()
         writer = _csv.writer(buf, lineterminator="\n")
         writer.writerow(cols)
-        writer.writerows(rows)
+        writer.writerows([tuple(_csv_safe(v) for v in row) for row in rows])
         status = _managed_emit(csv_dir / f"{table}.csv", buf.getvalue(), force=True)
         csv_out[status].append(f"csv/{table}.csv")
     return {"ok": True, "path": str(path), "bytes": len(text.encode("utf-8")),
