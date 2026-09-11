@@ -10,6 +10,13 @@ All notable changes to Tamheed are documented here. The format is based on
 
 ## [Unreleased]
 
+### Fixed
+
+- Package names are validated on `package_open`, `package_verify` and `package_migrate`,
+  not only on `package_create` — SECURITY.md's traversal claim is now true of every tool
+  that resolves a name; `export_html(output=…)` refuses to overwrite a file it did not emit
+  and requires a `.html` path (advisor plan 044).
+
 ## [4.7.0] - 2026-09-07
 
 **MINOR — the sanctioned read for committed scripts and the paste guard (plan 041,

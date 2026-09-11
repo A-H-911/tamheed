@@ -516,6 +516,21 @@ class ExportHtmlTest(unittest.TestCase):
         self.assertEqual(Path(first["path"]).read_bytes(),
                          Path(second["path"]).read_bytes())
 
+    # -------------------------------------------------------- output-path guard
+
+    def test_export_output_guard(self):
+        """Plan 044: `output` may only replace a review surface Tamheed emitted."""
+        self._open_demo_copy()
+        foreign = Path(self._tmp.name) / "notes.html"
+        foreign.write_text("<p>mine</p>", encoding="utf-8")
+        out = srv.export_html(output=str(foreign))
+        self.assertFalse(out["ok"]); self.assertIn("not a Tamheed review surface", out["error"])
+        self.assertEqual(foreign.read_text(encoding="utf-8"), "<p>mine</p>")
+        self.assertFalse(srv.export_html(output=str(Path(self._tmp.name) / "x.txt"))["ok"])
+        ok_path = Path(self._tmp.name) / "out" / "review.html"
+        self.assertTrue(srv.export_html(output=str(ok_path))["ok"])   # fresh path: fine
+        self.assertTrue(srv.export_html(output=str(ok_path))["ok"])   # our own file: fine
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)

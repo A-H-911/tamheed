@@ -1720,6 +1720,18 @@ class McpContractTest(unittest.TestCase):
         for tool in srv.TOOLS:
             self.assertIn(tool, output)
 
+    def test_package_name_validated_on_every_resolving_tool(self):
+        """Plan 044: SECURITY.md's traversal claim covered package_create only."""
+        make_complete_package("demo")
+        srv.package_close()
+        for bad in ("../demo", "demo/../demo", "..", "DEMO", "a b", ""):
+            for tool in (srv.package_open, srv.package_migrate, srv.package_verify):
+                out = tool(bad)
+                self.assertFalse(out.get("ok"), (tool.__name__, bad, out))
+                self.assertIn("invalid package name", out["error"], (tool.__name__, bad))
+        self.assertIsNone(srv._CURRENT)                    # nothing was opened
+        self.assertTrue(srv.package_open("demo")["ok"])   # the good name still opens
+
 
 class V4EngineTest(unittest.TestCase):
     """The plan-031 mechanisms: Review-as-open, severity-thresholded blocking,
