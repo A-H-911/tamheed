@@ -85,6 +85,8 @@ Draft → Proposed → Approved → Implemented
 - **Implemented** — done-VERIFIED: realized in the execution repo and past the readiness
   rules (phase/slice transitions to Implemented are guarded; `force` requires the operator's
   explicit words and leaves a forced-override audit event).
+  A phase or slice cannot be created already Implemented — the rules have nothing to
+  measure for a new id; `force` (operator words, self-audited) is the only route.
 - **Superseded** — replaced; row points to its successor (`superseded_by`).
 - **Obsolete** — retained for history, excluded from active views.
 

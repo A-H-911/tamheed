@@ -38,6 +38,10 @@ All notable changes to Tamheed are documented here. The format is based on
 - `--selftest` now registers the whole tool surface with FastMCP when the SDK is present
   and exits 1 if any tool fails to register — the one step no check exercised (C33's
   class); SDK-free runs stay informational (advisor plan 047).
+- `entity_upsert` refuses a phase or slice created directly as `Implemented` — the
+  transition guard ran readiness for an id with nothing bound and passed vacuously;
+  `"force": true` (operator-confirmed, journaled as `forced-override`) remains the route
+  for done-on-arrival rows (advisor plan 053; maintainer decision 2026-09-10).
 
 ## [4.7.0] - 2026-09-07
 

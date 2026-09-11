@@ -962,7 +962,21 @@ def entity_upsert(entities: list[dict]) -> dict:
             # guarded — only the success-terminal status is a claim of completion.
             current = conn.execute(f"SELECT lifecycle_status FROM {table} WHERE id = ?",
                                    (cols["id"],)).fetchone()
-            if current is None or current[0] != "Implemented":
+            if current is None:
+                # Plan 053 (maintainer decision 2026-09-10): a row cannot be BORN done —
+                # the readiness rules have nothing to measure for an id that does not
+                # exist yet, so the guard was bypassed by exactly this write shape.
+                if not force:
+                    results.append({
+                        "index": i, "ok": False, "id": cols["id"],
+                        "error": f"readiness: {cols['id']} cannot be created as Implemented"
+                                 " — create it (Proposed/Approved), bind its work, then"
+                                 " transition; or re-run this item with \"force\": true"
+                                 " after EXPLICIT operator confirmation"})
+                    failed = True
+                    continue
+                forced_note = "born-Implemented (no readiness measured)"
+            elif current[0] != "Implemented":
                 rep = _readiness_report(conn, etype, cols["id"])
                 blockers = [r for r in rep["rules"]
                             if r["severity"] == "blocking" and r["status"] == "fail"]
