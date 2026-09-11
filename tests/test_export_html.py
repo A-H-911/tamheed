@@ -291,6 +291,20 @@ class ExportHtmlTest(unittest.TestCase):
         self.assertEqual(again["csv"]["diverged"], [])
         self.assertIn("csv/requirements.csv", again["csv"]["unchanged"])
 
+    def test_csv_formula_cells_are_neutralized(self):
+        """Plan 050: CWE-1236 — a title like =HYPERLINK(...) must not open as a formula."""
+        self._open_demo_copy()
+        hostile = ["=HYPERLINK(A1)", "+1+1", "-1-1", "@SUM(A1)"]   # no '"' — csv doubles them
+        out = srv.entity_upsert([{"type": "risk", "id": f"RISK-9{i}", "title": t}
+                                 for i, t in enumerate(hostile)])
+        self.assertTrue(out["ok"], out)
+        result = srv.export_html()
+        text = (Path(result["path"]).parent / "csv" / "risks.csv").read_text(encoding="utf-8")
+        for t in hostile:
+            self.assertIn("'" + t, text)          # prefixed
+            self.assertNotIn("," + t + ",", text)  # never raw at a cell boundary
+        self.assertNotIn("'RISK-9", text)         # ids untouched
+
     def test_csv_hand_edit_overwritten_as_derived(self):
         """Plan 022 (C27/D2): CSVs are derived outputs — a hand edit is overwritten
         (reported emitted), never stuck diverged with no in-tool recovery."""
