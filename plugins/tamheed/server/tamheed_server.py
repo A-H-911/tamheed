@@ -51,6 +51,17 @@ _CURRENT_NAME: str | None = None
 
 _NAME_RE = re.compile(r"^[a-z0-9][a-z0-9-]{0,63}$")
 
+
+def _bad_name(name) -> dict | None:
+    """Every tool that turns a name into PACKAGE_ROOT / name goes through here (plan 044:
+    SECURITY.md's traversal claim was true of package_create only)."""
+    if not isinstance(name, str) or not _NAME_RE.match(name):
+        return _err(f"invalid package name {name!r} (kebab-case, [a-z0-9-], one segment)")
+    return None
+
+
+_HTML_PROLOGUE = "<!doctype html>"
+
 # entity type -> table. The registry rows seeded at package_create mirror this.
 ENTITY_TABLES = {
     "requirement": "requirements",
@@ -414,8 +425,8 @@ def package_create(name: str, title: str, profile: str, mode: str = "full") -> d
     global _CURRENT, _CURRENT_NAME
     if _CURRENT is not None:
         return _err(f"package '{_CURRENT_NAME}' is already open — package_close it first")
-    if not _NAME_RE.match(name):
-        return _err(f"invalid package name {name!r} (kebab-case, [a-z0-9-])")
+    if err := _bad_name(name):
+        return err
     pkg_dir = PACKAGE_ROOT / name
     if (pkg_dir / "data").exists():
         return _err(f"package '{name}' already exists — use package_open")
@@ -573,6 +584,8 @@ def package_open(name: str) -> dict:
     global _CURRENT, _CURRENT_NAME
     if _CURRENT is not None:
         return _err(f"package '{_CURRENT_NAME}' is already open — package_close it first")
+    if err := _bad_name(name):
+        return err
     pkg_dir = PACKAGE_ROOT / name
     if not (pkg_dir / "data").exists():
         return _err(f"package '{name}' not found under {PACKAGE_ROOT}")
@@ -635,6 +648,10 @@ def package_verify(name: str | None = None, record: bool = False) -> dict:
     chain, signatures, an external anchor) is deliberately out of scope."""
     import hashlib
     import tempfile
+
+    if name is not None:
+        if err := _bad_name(name):
+            return err
 
     if _CURRENT is not None:
         if name is not None and name != _CURRENT_NAME:
@@ -2571,6 +2588,9 @@ def _read_jsonl_tables(data_dir: Path) -> dict[str, list[dict]]:
     """Parse every data/<table>.jsonl into rows, keyed by table name (file stem)."""
     tables: dict[str, list[dict]] = {}
     for path in sorted(data_dir.glob("*.jsonl")):
+        if not re.fullmatch(r"[a-z][a-z0-9_]*", path.stem):
+            raise ValueError(f"{path.name}: not a canonical table file (data/ holds only"
+                             " <table>.jsonl — move or delete it)")
         rows = []
         for lineno, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
             if not line.strip():
@@ -2603,6 +2623,8 @@ def package_migrate(name: str, confirm: bool = False) -> dict:
 
     if _CURRENT is not None:
         return _err(f"package '{_CURRENT_NAME}' is open — package_close it first")
+    if err := _bad_name(name):
+        return err
     pkg_dir = PACKAGE_ROOT / name
     data = pkg_dir / "data"
     if not data.exists():
@@ -2863,6 +2885,19 @@ def export_html(output: str | None = None) -> dict:
     report = gate_run()
     text = viewer.render(_CURRENT.conn, report["gates"], report["ready"])
     path = Path(output) if output else PACKAGE_ROOT / _CURRENT_NAME / "review.html"
+    if output:
+        # plan 044: `output` is a free path from an agent; the only files this tool may
+        # replace are review surfaces it emitted. Same memoryless rule as _managed_emit.
+        if path.suffix.lower() != ".html":
+            return _err(f"output must be a .html path (got {output!r})")
+        if path.exists():
+            existing = path.read_text(encoding="utf-8", errors="replace")
+            if not (existing.startswith(_HTML_PROLOGUE)
+                    and "tamheed" in existing[:300].lower()):
+                return _err(f"{output} exists and is not a Tamheed review surface —"
+                            " refusing to overwrite; choose another path or delete it"
+                            " first")
+    path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(text, encoding="utf-8", newline="\n")
     # C25 (maintainer req 3): per-table CSV beside the report — the viewer's summary
     # links point at csv/<table>.csv relative to review.html. Deterministic (same
