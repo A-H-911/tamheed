@@ -24,7 +24,8 @@ Plugin installs copy files only — they do not install Python packages. Two lau
 If the SDK is missing the server exits with a one-line error naming both options — never a
 silent dead server.
 
-`--selftest` prints the tool surface and exits 0 (no SDK needed).
+`--selftest` lists the tools and, when the `mcp` SDK is importable, registers every tool
+with FastMCP and reports `N/N tools registered` (exit 1 on any registration failure).
 `--package-dir <root>` sets the directory packages live under. Resolution is layered
 (field-evidence C11 — a stdio server's cwd is not guaranteed): explicit flag >
 `CLAUDE_PROJECT_DIR` (exported by Claude Code to plugin server processes) > cwd; an

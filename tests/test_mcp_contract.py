@@ -1704,12 +1704,29 @@ class McpContractTest(unittest.TestCase):
 
     def test_selftest_reports_sdk_availability(self):
         """Plan 026 (C33 ask 4): selftest names SDK serving status without failing —
-        'selftest passes' must never again be mistaken for 'serving works'."""
+        'selftest passes' must never again be mistaken for 'serving works'. Plan 047:
+        when the SDK is present, selftest also registers every tool with FastMCP and
+        counts it — the one step no check exercised."""
         stdout = io.StringIO()
         with contextlib.redirect_stdout(stdout):
             code = srv.main(["--selftest"])
-        self.assertEqual(code, 0)                  # informational, never fatal
-        self.assertIn("mcp sdk:", stdout.getvalue())
+        out = stdout.getvalue()
+        self.assertIn("mcp sdk:", out)
+        if "UNAVAILABLE" in out:
+            self.assertEqual(code, 0)                       # SDK-free run stays informational
+        else:                                               # SDK present: registration counted
+            self.assertEqual(code, 0, out)
+            self.assertIn(f"{len(srv.TOOLS)}/{len(srv.TOOLS)} tools registered", out)
+
+    def test_selftest_fails_when_a_tool_does_not_register(self):
+        """Plan 047: registration is where the SDK validates signatures."""
+        from unittest import mock
+        with mock.patch.object(srv, "_build_app", side_effect=TypeError("bad signature")):
+            stdout = io.StringIO()
+            with contextlib.redirect_stdout(stdout):
+                code = srv.main(["--selftest"])
+        self.assertEqual(code, 1)
+        self.assertIn("registration FAILED", stdout.getvalue())
 
     def test_selftest_lists_full_tool_surface(self):
         stdout = io.StringIO()
