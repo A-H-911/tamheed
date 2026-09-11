@@ -10,6 +10,14 @@ All notable changes to Tamheed are documented here. The format is based on
 
 ## [Unreleased]
 
+### Fixed
+
+- `package_migrate(confirm=true)` is fail-safe: inputs are parsed before anything is
+  written, new files land beside the old ones and are swapped in last (the registry-sync
+  path had no backup and deleted before it copied), and any failure restores `data/` from
+  `data-v3-backup/` and removes it so the retry is not refused; a corrupt
+  `data/packages.jsonl` is an error naming the file, not a traceback (advisor plan 045).
+
 ## [4.7.0] - 2026-09-07
 
 **MINOR — the sanctioned read for committed scripts and the paste guard (plan 041,
