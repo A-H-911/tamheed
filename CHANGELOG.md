@@ -10,6 +10,13 @@ All notable changes to Tamheed are documented here. The format is based on
 
 ## [Unreleased]
 
+### Fixed
+
+- `entity_upsert` released its `batch` savepoint before the stale-tree check, so a refused
+  write (data/ moved underneath the session) stayed applied in memory and answered every
+  later read in that session; the refusal now rolls the batch back as its message always
+  claimed (advisor plan 043).
+
 ## [4.7.0] - 2026-09-07
 
 **MINOR — the sanctioned read for committed scripts and the paste guard (plan 041,

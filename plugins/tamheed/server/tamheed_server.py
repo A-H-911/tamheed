@@ -1156,7 +1156,6 @@ def entity_upsert(entities: list[dict]) -> dict:
         return {"ok": False, "applied": 0,
                 "error": "batch rolled back — one or more items violated constraints",
                 "items": results}
-    conn.execute("RELEASE batch")
     if err := _commit():
         return err
     # C31 (A3): `applied` counts WRITES, not attempts — ignored duplicates are ok
