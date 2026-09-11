@@ -10,6 +10,13 @@ All notable changes to Tamheed are documented here. The format is based on
 
 ## [Unreleased]
 
+### Fixed
+
+- G-COMPLETE's `[NEEDS-CLARIFICATION]` marker scan now skips `Superseded`/`Obsolete` rows,
+  matching the placeholder scan (plan 038): a stale marker on an immutable, superseded row
+  was a permanent blocking failure whose only named remedy — edit the row — the store
+  forbids (advisor plan 046).
+
 ## [4.7.0] - 2026-09-07
 
 **MINOR — the sanctioned read for committed scripts and the paste guard (plan 041,

@@ -2418,6 +2418,25 @@ class V4EngineTest(unittest.TestCase):
         self.assertTrue(any("OQ-099 does not exist" in str(f.get("marker"))
                             for f in gate["failures"]))
 
+    def test_marker_on_superseded_row_is_history_not_a_failure(self):
+        """Plan 046: parity with the placeholder scan — a stale marker on an
+        immutable, superseded row cannot be edited away; supersession must repair."""
+        live = {"type": "constraint", "id": "CON-010", "title": "c10",
+                "statement": "see [NEEDS-CLARIFICATION: OQ-099]",
+                "source_kind": "brief", "source_span": "b:10"}
+        out = srv.entity_upsert([dict(live, lifecycle_status="Superseded")])
+        self.assertTrue(out["ok"], out)
+        gate = srv.gate_run()["gates"]["G-COMPLETE"]
+        self.assertEqual(gate["status"], "pass", gate)          # history is not the plan
+        adv = {r["rule"]: r for r in srv.readiness_check("package")["rules"]}
+        self.assertFalse(any(e.startswith("CON-010.")
+                             for e in adv.get("clarifications-open", {}).get("entities", [])))
+        out = srv.entity_upsert([dict(live, id="CON-011", lifecycle_status="Approved")])
+        self.assertTrue(out["ok"], out)
+        gate = srv.gate_run()["gates"]["G-COMPLETE"]
+        self.assertEqual(gate["status"], "fail")                # live rows stay screened
+        self.assertTrue(any(f.get("id") == "CON-011" for f in gate["failures"]))
+
     def test_waiver_satisfies_rule_and_expiry_is_honored(self):
         srv.entity_upsert([{"type": "waiver", "id": "WVR-001",
                             "rule": "defects-closed", "applies_to": "DEF-002",
