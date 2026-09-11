@@ -26,7 +26,7 @@ from pathlib import Path
 # These are exactly the keyings ad-hoc scripts get wrong (C29 §E1).
 KEYS = {
     "trace_edges": ("from_id", "to_id", "relation"),
-    "omissions": ("entity_type", "reason"),
+    "omissions": ("entity_type",),
     "entity_types": ("type_id",),
     "packages": ("name",),  # singleton in practice — see diff_table
 }

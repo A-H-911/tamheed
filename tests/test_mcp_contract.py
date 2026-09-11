@@ -1576,6 +1576,22 @@ class McpContractTest(unittest.TestCase):
         self.assertTrue(result["ok"], result)
         self.assertEqual(srv.gate_run()["gates"]["G-SET"]["status"], "pass")
 
+    def test_omission_reason_revision_lands(self):
+        """Plan 051: INSERT OR IGNORE dropped a revised reason and said ok/unchanged."""
+        srv.package_create("demo", "Demo", "unknown")
+        first = srv.entity_upsert([{"type": "omission", "entity_type": "risk",
+                                    "reason": "not needed at this size"}])
+        self.assertTrue(first["ok"], first)
+        second = srv.entity_upsert([{"type": "omission", "entity_type": "risk",
+                                     "reason": "deferred to phase 2 per DEC-004"}])
+        self.assertTrue(second["ok"], second)
+        self.assertNotIn("unchanged", second["items"][0])
+        reason = srv._CURRENT.conn.execute(
+            "SELECT reason FROM omissions WHERE entity_type = 'risk'").fetchone()[0]
+        self.assertEqual(reason, "deferred to phase 2 per DEC-004")
+        bad = srv.entity_upsert([{"type": "omission", "entity_type": "risk", "reason": ""}])
+        self.assertFalse(bad["ok"])                       # CHECK (reason <> '') still bites
+
     def test_gate_complete_flags_placeholders(self):
         srv.package_create("demo", "Demo", "rnd")
         srv.entity_upsert([{"type": "risk", "id": "RISK-001", "title": "TODO fill this in"}])
