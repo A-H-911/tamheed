@@ -158,6 +158,6 @@ and `lint: CHANGELOG N releases strictly newest-first`, no `FAIL`.
 ## Maintenance notes
 
 - Reviewer's post-merge steps: `git tag -a v4.8.0 -m "v4.8.0 — the advisor audit"`,
-  `git push origin main --tags`, `gh workflow run CI --ref main`, then update the index
+  `git push origin main --tags`, `gh workflow run ci.yaml --ref main` (filename form since the 2026-09-12 rename), then update the index
   and the memory of the release date.
 - Next release: beat 16; the `[Unreleased]` heading is empty again.

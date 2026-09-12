@@ -69,9 +69,9 @@ itself is testable — CI exercises it through `python check.py` (gate `evals`),
 ## Why this isn't in the PR gate
 
 Behavioral evals are probabilistic and need a model in the loop, so they run on a
-**scheduled, non-blocking** workflow (`.github/workflows/eval.yml` — it lints the spec's
+**scheduled, non-blocking** workflow (`.github/workflows/eval.yaml` — it lints the spec's
 shape, including the executable-assertion contract). The deterministic PR gate is
-`python check.py` (`.github/workflows/ci.yml`).
+`python check.py` (`.github/workflows/ci.yaml`).
 
 ## Extending
 
