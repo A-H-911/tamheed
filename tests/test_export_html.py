@@ -530,6 +530,26 @@ class ExportHtmlTest(unittest.TestCase):
         self.assertEqual(Path(first["path"]).read_bytes(),
                          Path(second["path"]).read_bytes())
 
+    def test_ids_render_in_numeric_order(self):
+        """Plan 057: PH-5 before PH-9 before PH-10 everywhere in the document (never a
+        string compare — demo already has PH-1..3, so use unused numbers). These new
+        phases carry no trace edges, so they also surface in the Graph section's
+        isolated-entities fold (a pure-Python sort, `_id_key`) ahead of the SQL-ordered
+        Phases register (`_by_id`) — the whole-document check (first occurrence of
+        each id) exercises both fixes at once. A second assertion stays scoped to
+        the register fold (`id="reg-phases"` onward) for a direct check of the SQL side
+        alone."""
+        self._open_demo_copy()
+        out = srv.entity_upsert([{"type": "phase", "id": f"PH-{n}", "title": f"p{n}"}
+                                 for n in (10, 5, 9)])
+        self.assertTrue(out["ok"], out)
+        html = self._export()
+        self.assertLess(html.index("PH-5<"), html.index("PH-9<"))
+        self.assertLess(html.index("PH-9<"), html.index("PH-10<"))
+        register = html[html.index('id="reg-phases"'):]
+        self.assertLess(register.index("PH-5<"), register.index("PH-9<"))
+        self.assertLess(register.index("PH-9<"), register.index("PH-10<"))
+
     # -------------------------------------------------------- output-path guard
 
     def test_export_output_guard(self):

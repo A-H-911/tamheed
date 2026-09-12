@@ -1446,6 +1446,26 @@ class McpContractTest(unittest.TestCase):
         self.assertEqual(stock.read_text(encoding="utf-8"),
                          current.replace("{package}", "demo"))
 
+    def test_stock_history_versions_sort_numerically(self):
+        """Plan 057: '4.10.0' is newer than '4.9.0' — the release a stale file
+        'matches' must come from a numeric compare, never lexical (lexical ranks
+        the string '4.9.0' above '4.10.0'). Two fake releases carry the SAME body
+        so only sort order — not content — decides which `matches`; the buggy
+        lexical `reverse=True` sort would report the older '4.9.0' first."""
+        self._emit_ready()
+        fname = "orient-resume.md"
+        stock = srv.PACKAGE_ROOT / "demo" / "prompts" / fname
+        old_body = stock.read_text(encoding="utf-8") + "\n<!-- old -->\n"
+        stock.write_text(old_body, encoding="utf-8", newline="\n")
+        from unittest import mock
+        with mock.patch.object(
+                srv, "_load_stock_history",
+                return_value={fname: {"4.9.0": old_body, "4.10.0": old_body}}):
+            out = srv._emit_prompt_library(srv.PACKAGE_ROOT / "demo", "demo")
+        stale = [d for d in out["diverged_stale_stock"] if d["file"].endswith(fname)]
+        self.assertTrue(stale, out)
+        self.assertEqual(stale[0]["matches"], "4.10.0")
+
     def test_refresh_then_force_precedence(self):
         """Plan 032: refresh handles stale-stock; force covers the customized
         remainder — composable in one call, refresh never widening force's blast."""

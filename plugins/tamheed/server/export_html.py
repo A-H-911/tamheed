@@ -38,6 +38,23 @@ def _cols(conn: sqlite3.Connection, table: str) -> list[str]:
     return [row[1] for row in conn.execute(f"PRAGMA table_info({table})")]
 
 
+# Plan 057: ids order by (prefix, number) — string order breaks at PH-10 and PE-1000 (this
+# repo's recorded bug class, plans 025/027). CAST of a non-numeric tail is 0, then `id`
+# breaks the tie deterministically.
+def _by_id(col: str = "id") -> str:
+    return (f"SUBSTR({col}, 1, INSTR({col}, '-')), "
+            f"CAST(SUBSTR({col}, INSTR({col}, '-') + 1) AS INTEGER), {col}")
+
+
+def _id_key(nid: str) -> tuple:
+    """Python-side twin of _by_id(): (prefix, number, id). The graph section sorts
+    node/id tuples in pure Python (never touches SQL), so it needs its own numeric
+    key — a plain string sort has the same PH-10-before-PH-2 bug (plan 057)."""
+    prefix, _, tail = str(nid).partition("-")
+    digits = tail[:len(tail) - len(tail.lstrip("0123456789"))] if tail else ""
+    return (prefix, int(digits) if digits else 0, str(nid))
+
+
 def _fold(title: str, count: int, inner: str, anchor: str | None = None,
           csv: str | None = None) -> str:
     """C21 (plan 019, maintainer decision): EVERY table folds closed — one consistent
@@ -132,7 +149,7 @@ _G_AGG_LIMIT = 4000  # ponytail: family-aggregate view above this; full graph pr
 
 def _grouped_nodes(nodes):
     order = {t: i for i, t in enumerate(ENTITY_TABLES)}
-    nodes = sorted(nodes, key=lambda n: (order.get(n[1], 99), n[1], n[0]))
+    nodes = sorted(nodes, key=lambda n: (order.get(n[1], 99), n[1], _id_key(n[0])))
     fams: list[tuple[str, list[str]]] = []
     for nid, fam in nodes:
         if not fams or fams[-1][0] != fam:
@@ -287,7 +304,7 @@ def _graph_agg(nodes, edges) -> str:
 
 def _graph(conn, gates, ready):
     nodes = conn.execute(
-        "SELECT id, entity_type FROM entity_index ORDER BY id").fetchall()
+        f"SELECT id, entity_type FROM entity_index ORDER BY {_by_id()}").fetchall()
     edges = conn.execute("SELECT from_id, to_id, relation FROM trace_edges"
                          " ORDER BY from_id, to_id, relation").fetchall()
     if not nodes:
@@ -337,7 +354,8 @@ def _graph(conn, gates, ready):
         req_n = counts.get("requirement", 0)
         warn = f"⚠ {req_n} requirement(s) — " if req_n else ""
         iso_sorted = sorted(isolated, key=lambda n: (n[1] != "requirement",
-                                                     order.get(n[1], 99), n[1], n[0]))
+                                                     order.get(n[1], 99), n[1],
+                                                     _id_key(n[0])))
         parts.append(_fold(
             f"Isolated entities (no trace edges) — {warn}{breakdown}",
             len(isolated), _table(["id", "family"], iso_sorted)))
@@ -362,7 +380,7 @@ _ROW_H = 16    # px per node row
 
 def _flow(conn, gates, ready):
     nodes = conn.execute(
-        "SELECT id, entity_type FROM entity_index ORDER BY id").fetchall()
+        f"SELECT id, entity_type FROM entity_index ORDER BY {_by_id()}").fetchall()
     edges = conn.execute("SELECT from_id, to_id, relation FROM trace_edges"
                          " ORDER BY from_id, to_id, relation").fetchall()
     linked = {f for f, _t, _r in edges} | {t for _f, t, _r in edges}
@@ -376,7 +394,7 @@ def _flow(conn, gates, ready):
     order = {t: i for i, t in enumerate(ENTITY_TABLES)}
     lanes: list[list[tuple[str, str]]] = [[] for _ in range(len(_LANES) + 1)]
     for nid, fam in sorted(connected,
-                           key=lambda n: (order.get(n[1], 99), n[1], n[0])):
+                           key=lambda n: (order.get(n[1], 99), n[1], _id_key(n[0]))):
         lanes[lane_of.get(fam, len(_LANES))].append((nid, fam))
     titles = [t for t, _f in _LANES] + ["Other"]
     live = [(titles[i], lane) for i, lane in enumerate(lanes) if lane]
@@ -469,7 +487,7 @@ def _lessons(conn, gates, ready):
     first (Proposed rows await the interview), then the Approved register that
     binds sessions (pinned flagged, both impact columns), then closed rows folded
     as evidence. Numeric id ordering (CAST — never string-sort ids)."""
-    order = "ORDER BY CAST(SUBSTR(id, 4) AS INTEGER)"
+    order = f"ORDER BY {_by_id()}"
     parts = []
     queue = conn.execute(
         "SELECT id, kind, title, statement, context FROM lessons"
@@ -524,8 +542,9 @@ def _registers(conn, gates, ready):
         if table == "trace_edges":
             continue  # rendered in Traceability
         cols = [c for c in _cols(conn, table) if c != "custom_attributes"]
+        order = _by_id(cols[0]) if cols[0] == "id" else cols[0]
         rows = conn.execute(
-            f"SELECT {', '.join(cols)} FROM {table} ORDER BY {cols[0]}").fetchall()
+            f"SELECT {', '.join(cols)} FROM {table} ORDER BY {order}").fetchall()
         label = table.replace("_", " ").capitalize()
         if not rows:
             empty.append(label)
@@ -550,9 +569,10 @@ def _traceability(conn, gates, ready):
                 links.setdefault(req, {}).setdefault(bucket, set()).add(other)
     for ac_id, req_id in conn.execute(
             "SELECT id, requirement_id FROM acceptance_criteria"
-            " WHERE requirement_id IS NOT NULL ORDER BY id"):
+            f" WHERE requirement_id IS NOT NULL ORDER BY {_by_id()}"):
         links.setdefault(req_id, {}).setdefault("Acceptance criteria", set()).add(ac_id)
-    reqs = conn.execute("SELECT id, title, mvp FROM requirements ORDER BY id").fetchall()
+    reqs = conn.execute(
+        f"SELECT id, title, mvp FROM requirements ORDER BY {_by_id()}").fetchall()
     if not reqs and not edges:
         return '<p class="empty">No requirements or trace edges recorded.</p>'
     rows = [[rid, title, "MVP" if mvp else "",
@@ -576,7 +596,7 @@ def _execution(conn, gates, ready):
         "SELECT ac.id, ac.title, ac.lifecycle_status, lv.verdict, lv.evidence"
         " FROM acceptance_criteria ac"
         " LEFT JOIN v_latest_verdicts lv ON lv.ac_id = ac.id"
-        " ORDER BY ac.id").fetchall()
+        f" ORDER BY {_by_id('ac.id')}").fetchall()
     # Plan 040 (findings_23 §2): a Pending latest verdict is UNGRADED, not narrated —
     # nobody graded anything; an AC with no verdict at all carries no class.
     ac_rows = [[ac_id, title, lifecycle, verdict or "Pending",
@@ -599,7 +619,7 @@ def _execution(conn, gates, ready):
                      'table shows each criterion&#8217;s latest).</p>')
     entries = conn.execute(
         "SELECT id, occurred_at, event_type, entry, subject_id, actor, corrects,"
-        " phase_id, slice_id FROM progress_entries ORDER BY id").fetchall()
+        f" phase_id, slice_id FROM progress_entries ORDER BY {_by_id()}").fetchall()
     # Plan 038 (findings_21 §2): `corrects` gets read where journals are read — an
     # entry superseded by a typed correction leaves the main timeline into a
     # collapsed fold instead of sitting there as an equal peer. Per-row rule, so
@@ -623,7 +643,7 @@ def _execution(conn, gates, ready):
                    superseded)))
     changes = conn.execute(
         "SELECT id, iteration, lifecycle_status, decision_ref, description"
-        " FROM scope_changes ORDER BY id").fetchall()
+        f" FROM scope_changes ORDER BY {_by_id()}").fetchall()
     parts.append(_fold("Scope changes (Proposed → Approved → Merged)", len(changes),
                        _table(["id", "iteration", "lifecycle", "authorized by",
                                "description"], changes))
@@ -631,7 +651,7 @@ def _execution(conn, gates, ready):
                  '<h3>Scope changes</h3><p class="empty">No scope changes recorded.</p>')
     waivers = conn.execute(
         "SELECT id, rule, applies_to, justification, approver, expires FROM waivers"
-        " ORDER BY id").fetchall()
+        f" ORDER BY {_by_id()}").fetchall()
     if waivers:
         parts.append(_fold("Readiness waivers (operator-approved; expiring)",
                            len(waivers),
@@ -671,7 +691,7 @@ def _execution(conn, gates, ready):
     # the latest Go/Hold/Redirect/Kill outcome.
     gates_h = conn.execute(
         "SELECT id, gate_kind, applies_to, definition, outcome FROM execution_gates"
-        " ORDER BY id").fetchall()
+        f" ORDER BY {_by_id()}").fetchall()
     if gates_h:
         parts.append(_fold("Declared human gates (confirm + record via "
                            "progress_update)", len(gates_h),
@@ -687,7 +707,7 @@ def _gaps(conn, gates, ready):
     rows = conn.execute(
         "SELECT id, title, question, source_span, custom_attributes FROM open_questions"
         " WHERE source_span = 'adopt:gap-report'"
-        " OR title LIKE 'Injection-shaped text found at%' ORDER BY id").fetchall()
+        f" OR title LIKE 'Injection-shaped text found at%' ORDER BY {_by_id()}").fetchall()
     if not rows:
         return '<p class="empty">No gap-report or injection-screen notes recorded.</p>'
     cards = []
