@@ -530,6 +530,21 @@ class ExportHtmlTest(unittest.TestCase):
         self.assertEqual(Path(first["path"]).read_bytes(),
                          Path(second["path"]).read_bytes())
 
+    def test_ids_render_in_numeric_order(self):
+        """Plan 057: the Phases register orders PH-5 before PH-9 before PH-10 (never a
+        string compare — demo already has PH-1..3, so use unused numbers). Scoped to
+        the register fold (`id="reg-phases"` onward) — the separate, out-of-scope
+        Python-sorted isolated-entities breakdown in the Graph section still string-
+        sorts and would otherwise give a false failure."""
+        self._open_demo_copy()
+        out = srv.entity_upsert([{"type": "phase", "id": f"PH-{n}", "title": f"p{n}"}
+                                 for n in (10, 5, 9)])
+        self.assertTrue(out["ok"], out)
+        html = self._export()
+        register = html[html.index('id="reg-phases"'):]
+        self.assertLess(register.index("PH-5<"), register.index("PH-9<"))
+        self.assertLess(register.index("PH-9<"), register.index("PH-10<"))
+
     # -------------------------------------------------------- output-path guard
 
     def test_export_output_guard(self):

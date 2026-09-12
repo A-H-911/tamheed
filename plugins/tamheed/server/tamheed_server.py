@@ -2061,6 +2061,9 @@ def _emit_prompt_library(pkg_dir: Path, name: str, force: bool = False,
                                "diverged_stale_stock": [], "diverged_customized": [],
                                "refreshed": []}
     history = _load_stock_history()
+    # Plan 057: version strings compare numerically — "4.10.0" is newer than "4.9.0",
+    # never a lexical compare (lexical would rank 4.10.0 below 4.9.0).
+    _vkey = lambda v: tuple(int(p) for p in v.split("."))
     for src in sorted(_PROMPTS_DIR.glob("*.md")):
         text = src.read_text(encoding="utf-8").replace("{package}", name)
         path = out_dir / src.name
@@ -2070,7 +2073,8 @@ def _emit_prompt_library(pkg_dir: Path, name: str, force: bool = False,
             on_disk = path.read_text(encoding="utf-8")
             matches = next(
                 (release for release, body in
-                 sorted(history.get(src.name, {}).items(), reverse=True)
+                 sorted(history.get(src.name, {}).items(),
+                        key=lambda kv: _vkey(kv[0]), reverse=True)
                  if body.replace("{package}", name) == on_disk), None)
             if matches is not None and refresh_stock:
                 path.write_text(text, encoding="utf-8", newline="\n")
@@ -2084,8 +2088,7 @@ def _emit_prompt_library(pkg_dir: Path, name: str, force: bool = False,
                 # stock_last_changed = the newest release in the bundled history
                 # whose stock body differs from all earlier ones (effectively when
                 # the stock last changed); None when the file has no history entry.
-                releases = sorted(history.get(src.name, {}),
-                                  key=lambda v: tuple(int(p) for p in v.split(".")))
+                releases = sorted(history.get(src.name, {}), key=_vkey)
                 result["diverged_customized"].append(
                     {"file": rel,
                      "stock_last_changed": releases[-1] if releases else None})

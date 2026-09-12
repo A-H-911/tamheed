@@ -12,6 +12,9 @@ All notable changes to Tamheed are documented here. The format is based on
 
 ### Fixed
 
+- The review surface orders ids by (prefix, number) instead of as strings (`PH-10` sorted
+  before `PH-2`, `PE-1000` before `PE-999`), and the prompt library's stale-stock
+  classification compares release versions numerically (advisor plan 057).
 - `entity_upsert` released its `batch` savepoint before the stale-tree check, so a refused
   write (data/ moved underneath the session) stayed applied in memory and answered every
   later read in that session; the refusal now rolls the batch back as its message always
