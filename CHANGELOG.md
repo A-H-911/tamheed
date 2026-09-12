@@ -17,6 +17,11 @@ All notable changes to Tamheed are documented here. The format is based on
   the whole-rule one is the fallback (previously the whole-rule waiver shadowed every
   citation — verdict unaffected, audit trail less specific; lab beat 15's observation,
   plan 060).
+- CI fires on push again: the two workflow objects registered at the repository's first
+  push never delivered `push` or `schedule` events (4.8.0's "account-side setting" was an
+  overstatement — every setting was normal; probes on a throwaway branch fired within
+  seconds). Renaming the files to `ci.yaml` / `eval.yaml` re-registered them; the first
+  push-triggered run followed 5 s later (post-release review, 2026-09-12).
 
 ## [4.8.0] - 2026-09-12
 
