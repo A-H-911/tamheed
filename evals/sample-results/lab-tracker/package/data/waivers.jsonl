@@ -1,1 +1,2 @@
 {"id":"WVR-001","rule":"defects-minor","applies_to":"DEF-003","justification":"cosmetic; batched into the docs sweep","approver":"operator","expires":null,"custom_attributes":null,"last_referenced":null}
+{"id":"WVR-002","rule":"defects-minor","applies_to":null,"justification":"cosmetic backlog carried to the docs sweep; operator-approved","approver":"operator","expires":null,"custom_attributes":null,"last_referenced":null}

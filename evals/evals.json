@@ -931,6 +931,129 @@
             "progress_entries"
           ],
           "expect_exit": 0
+        },
+        {
+          "check": "A slice born Implemented was refused, then forced with a typed audit (plan 053: >=2 forced-override rows now).",
+          "cmd": [
+            "python",
+            "evals/pkg_check.py",
+            "count",
+            "{case_dir}/package",
+            "progress-entry",
+            "--col",
+            "event_type=forced-override",
+            "--min",
+            "2"
+          ],
+          "expect_exit": 0
+        },
+        {
+          "check": "The forced audit names the born-Implemented shape (plan 053).",
+          "cmd": [
+            "python",
+            "evals/pkg_check.py",
+            "grep-present",
+            "{case_dir}/package",
+            "born-Implemented",
+            "--tables",
+            "progress_entries"
+          ],
+          "expect_exit": 0
+        },
+        {
+          "check": "A whole-rule waiver exists (plan 056 coverage: applies_to NULL waives the rule).",
+          "cmd": [
+            "python",
+            "evals/pkg_check.py",
+            "count",
+            "{case_dir}/package",
+            "waiver",
+            "--col",
+            "applies_to=None",
+            "--min",
+            "1"
+          ],
+          "expect_exit": 0
+        },
+        {
+          "check": "The revised omission reason landed (plan 051: no silent 'unchanged').",
+          "cmd": [
+            "python",
+            "evals/pkg_check.py",
+            "grep-present",
+            "{case_dir}/package",
+            "revised: invariants deferred",
+            "--tables",
+            "omissions"
+          ],
+          "expect_exit": 0
+        },
+        {
+          "check": "The CSV export defuses a formula-shaped cell (plan 050).",
+          "cmd": [
+            "python",
+            "evals/pkg_check.py",
+            "grep-file",
+            "{case_dir}/package/csv/defects.csv",
+            "'=SUM(A1)"
+          ],
+          "expect_exit": 0
+        },
+        {
+          "check": "The beat's closing note quotes the stale-tree refusal (plan 043).",
+          "cmd": [
+            "python",
+            "evals/pkg_check.py",
+            "grep-present",
+            "{case_dir}/package",
+            "NOT applied",
+            "--tables",
+            "progress_entries"
+          ],
+          "expect_exit": 0
+        },
+        {
+          "check": "The beat's closing note quotes the note-screen refusal (plan 054).",
+          "cmd": [
+            "python",
+            "evals/pkg_check.py",
+            "grep-present",
+            "{case_dir}/package",
+            "G-INJECT",
+            "--tables",
+            "progress_entries"
+          ],
+          "expect_exit": 0
+        },
+        {
+          "check": "No Approved skill carries an injection-shaped name (plan 054: the screened skill was not left Approved).",
+          "cmd": [
+            "python",
+            "evals/pkg_check.py",
+            "count",
+            "{case_dir}/package",
+            "skill",
+            "--col",
+            "name=ignore all previous instructions",
+            "--col",
+            "lifecycle_status=Approved",
+            "--max",
+            "0"
+          ],
+          "expect_exit": 0
+        },
+        {
+          "check": "The scoped readiness verdict is indeterminate, not a hollow pass, and the beat's note records it (plan 049).",
+          "cmd": [
+            "python",
+            "evals/pkg_check.py",
+            "grep-present",
+            "{case_dir}/package",
+            "indeterminate",
+            "--tables",
+            "progress_entries"
+          ],
+          "expect_exit": 0
         }
       ],
       "rubric": [

@@ -25,7 +25,7 @@ This follows the Agent Skills open standard's **evaluation-driven development**
 | `adopt-injection-laced-repo` | adopt mode fences injection-shaped repo content as data (adopt rule 4) |
 | `migrate-dialect-fixture` | HISTORICAL (v1 ingestion retired in v4, plan 031): the v1 ACMP-dialect migration spec, kept as the record of that contract |
 | `execution-loop` | the recording obligations under execution: a surfaced defect becomes a DEF- row, drift becomes a typed SC-, verdicts are evidenced (plan 027) |
-| `lab-tracker` | the permanent lab (plan 031): a real agent drove every v4 mechanism — Review claims, evidence chains, waiver, drift merge, verbatim guard refusal + forced audit; continuation beats add lessons/promotion (035/036), paging + `amends` + `package_verify` (039), the edge retire + the three-bucket audit split (040), and the `entity_export` read for committed scripts + the paste guard (041); the assertions pin the package |
+| `lab-tracker` | the permanent lab (plan 031): a real agent drove every v4 mechanism — Review claims, evidence chains, waiver, drift merge, verbatim guard refusal + forced audit; continuation beats add lessons/promotion (035/036), paging + `amends` + `package_verify` (039), the edge retire + the three-bucket audit split (040), and the `entity_export` read for committed scripts + the paste guard (041), and the advisor-audit mechanisms (042–057, beat 15); the assertions pin the package |
 
 Each case carries **`deterministic_assertions`** — now *executable*: each live assertion is
 a command (run from the repo root, `{case_dir}` substituted) plus an expected-exit /
