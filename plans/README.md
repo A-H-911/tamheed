@@ -107,6 +107,13 @@ on `main`, commit `plans/`, push; then `git worktree prune` after deleting the e
 | 051 | [Omission reason not silently dropped](051-omission-reason-is-not-silently-dropped.md) -- `INSERT OR IGNORE` reported a revised reason as `unchanged`; `scratch_diff` keyed omissions on the wrong tuple | P2 | S | 043 | DONE — APPROVED 2026-09-11, commit `d1ec480` on branch `worktree-agent-a24c2b4e5fced8269` (unmerged; operator merges) |
 | 052 | [CI: real `uv` step, py3.13 leg, bounded `pip install`](052-ci-matrix-uv-step-and-bounded-pip-install.md) -- the documented fallback reproduced the C33 incident the pin prevents | P2 | S | 042, 047, (048 first) | DONE — APPROVED 2026-09-11 after one STOP (upstream publishes no floating `vN` tag past `v7`; pinned `astral-sh/setup-uv@v10.1.0` instead), commit `e2a8374`; CI https://github.com/A-H-911/tamheed/actions/runs/34609940476 — 9/9 green (8 `check` legs incl. py3.13 × 2 OS, smoke `18/18 tools registered`) |
 | 053 | [Refuse phase/slice born Implemented](053-refuse-phase-or-slice-born-implemented.md) -- the guard measured an id with nothing bound and passed; `force` stays the route (maintainer decision 2026-09-10; tool-contract change) | P3 | S | 049, 043 | DONE — APPROVED 2026-09-11, commit `e3b44bc` on branch `worktree-agent-ae8c6bf7a6f44cd77` (unmerged; operator merges) |
+| 054 | [Note: skills screened + marker literals defused](054-note-skills-screen-and-marker-defuse.md) -- `skills.name`/`level` rendered into the CLAUDE.md note without the `_INJECT_RE` screen; an HTML-comment literal inside rendered text could truncate the tool-owned span | P2 | S | -- | DONE — APPROVED 2026-09-12, commit `5a90707` on branch `worktree-agent-ae0def22b2ddc31ce` (merged via integration branch `df99524`, 2026-09-12) |
+| 055 | [record/adopt debt](055-record-and-adopt-debt.md) -- silent `ImportError` fallback, dead v1 ledgers (`count_deltas` could never fire), adopt's hand-copied Always roster derived from the registry, 2 MB file cap with `scan.skipped_large`, post-flight `error` key (the "follows symlinks" claim was false -- `rglob` does not descend symlinked dirs) | P3 | S | -- | DONE — APPROVED 2026-09-12, commit `606715a` on branch `worktree-agent-a01926acc416d38bb` (merged via integration branch `df99524`, 2026-09-12) |
+| 056 | [Test gaps](056-readiness-eval-and-lint-test-gaps.md) -- whole-rule waiver, `decisions-approved`, `decisions-look-architectural`; `pkg_check` lock leak + loud missing table + `grep-tree-*`; `injection-brief` assertion off the retired `prompts` table; `check.py` lints under their own suite | P2 | M | -- | DONE — APPROVED 2026-09-12, commits `d16488d`/`a3b7c88` on branch `worktree-agent-abfd9ac964dfa26db` (unmerged; integration pending; nine suites now) |
+| 057 | [Numeric id ordering in the viewer](057-numeric-id-ordering-in-the-viewer.md) -- eleven string `ORDER BY id` sites in `export_html.py`; lexical version sort in `_emit_prompt_library` (`4.10.0` < `4.9.0`) | P3 | S | (054 first) | DONE — APPROVED 2026-09-12 after one revision (the Graph section's three Python-side id sorts — the executor found them), commits `5a6e935`/`e34d4dd` on branch `worktree-agent-aa04fac9fd4e29d5d` (merged via integration branch `df99524`, 2026-09-12) |
+
+(Rows 054–057 added 2026-09-12: the maintainer asked for every audited finding to be planned
+and executed before any release is cut.)
 
 **Dependency notes (advisor plans).** 042 before 052 (a red matrix leg is unattributable
 until CI has run once). 043 before 051/053 (they edit the same function; 043 settles its
@@ -310,6 +317,21 @@ Markdown · ASM-D Python floor rises to the MCP SDK's (≥3.10).
   the wording is preserved in that commit's diff if it is ever built.
 - **Raising the `mcp` floor above `>=1.2`** as part of plan 052: a floor change needs the lowest
   working version verified first; recorded as a future option, not bundled.
+- **Eval harness: one process per assertion** (~60% of `check.py` wall time): a per-case
+  process needs the runner to know the primitives' state, and the read-only assertions'
+  `package_close` rewrites are byte-identical on canonical fixtures — cost is CI seconds,
+  risk is a harness rewrite; not worth it. (2026-09-12)
+- **`work_bind` journal row without `event_type`**: the DDL defaults `event_type` to `'note'`
+  and names it "the deliberate escape hatch"; a shared insert helper for two INSERTs with
+  different column sets is an abstraction with one and a half callers. (2026-09-12)
+- **Memoizing PRAGMA introspection per open**: unmeasured; the open→close cycle is dominated
+  by the canonical dump. (2026-09-12)
+- **String-compared waiver `expires` dates**: the column is documented ISO (`YYYY-MM-DD`) and
+  `_now()` writes ISO; string order is date order for that shape. (2026-09-12)
+- **`MigrateV3ToV4Test` shared fixture order**: the one mutating test restores in `finally`;
+  `MigrateFailurePathTest` (plan 045) is per-test. (2026-09-12)
+- **adopt `rglob` follows symlinked directories**: false — `Path.rglob("*")` does not expand
+  `**` through directory symlinks; symlinked *files* are covered by plan 055's size cap. (2026-09-12)
 
 ## Future options recorded (not planned)
 
