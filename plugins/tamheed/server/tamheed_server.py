@@ -2236,6 +2236,13 @@ def _note_lesson_rows(conn) -> list[tuple]:
     return pinned + [r for r in rows if not r[3]][:_NOTE_LESSONS_CAP]
 
 
+def _defuse_note_text(text: str) -> str:
+    """Plan 054: rendered text must never contain an HTML-comment delimiter — the
+    note span is located by its <!-- tamheed:note --> markers and a literal inside
+    the span would truncate what the tool believes it owns."""
+    return text.replace("<!--", "<!- -").replace("-->", "- ->")
+
+
 def _note_lessons_section() -> tuple[str, list[dict]]:
     """The Approved-lessons block for the CLAUDE.md note span (plan 035) — the
     span's first data-derived content. Only operator-APPROVED rows render (the
@@ -2254,18 +2261,27 @@ def _note_lessons_section() -> tuple[str, list[dict]]:
     skills = _CURRENT.conn.execute(
         "SELECT name, level FROM skills WHERE lifecycle_status = 'Approved'"
         " ORDER BY CAST(SUBSTR(id, 5) AS INTEGER)").fetchall()
+    # Plan 054: skills are operator-approved too but rendered unscreened — give
+    # them the same second screen the lessons get, and defuse marker literals
+    # (both fields are free text).
+    skill_findings = [{"skill": n, "pattern": m.group(0)[:60]}
+                      for n, lv in skills
+                      if (m := _INJECT_RE.search(f"{n} {lv}"))]
     skill_line = ("\nSkills distilled from lessons: "
-                  + ", ".join(f"`{n}` [{lv}]" for n, lv in skills)
+                  + ", ".join(f"`{_defuse_note_text(str(n))}`"
+                              f" [{_defuse_note_text(str(lv))}]"
+                              for n, lv in skills)
                   + " — auto-loaded where present"
                     " (project: .claude/skills/; user: ~/.claude/skills/).\n"
                   if skills else "")
     if not approved and not skills:
         return "", []
-    findings, lines = [], []
+    findings, lines = list(skill_findings), []
     for lid, kind, statement, pin in shown:
         if m := _INJECT_RE.search(str(statement)):
             findings.append({"lesson": lid, "pattern": m.group(0)[:60]})
         flat = " ".join(str(statement).split())
+        flat = _defuse_note_text(flat)
         if len(flat) > 180:
             flat = flat[:177] + "..."
         tag = f"{kind}, pinned" if pin else kind
