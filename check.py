@@ -40,6 +40,7 @@ SUITES = [
     "tests/test_export_html.py",
     "tests/test_eval_runner.py",
     "tests/test_scratch_diff.py",
+    "tests/test_check_lints.py",
 ]
 
 V4_DEMO_DATA = REPO / "generated-samples" / "support-triage-agent-v2" / "data"

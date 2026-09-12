@@ -30,8 +30,10 @@ def _open(package_dir: str) -> Path:
 
 def _rows(package_dir: str, etype: str) -> list[dict]:
     _open(package_dir)
-    result = srv.entity_query(etype, limit=100000)
-    srv.package_close()
+    try:
+        result = srv.entity_query(etype, limit=100000)
+    finally:
+        srv.package_close()
     if not result["ok"]:
         print(result["error"])
         sys.exit(2)
@@ -41,8 +43,10 @@ def _rows(package_dir: str, etype: str) -> list[dict]:
 def cmd_gates(args) -> int:
     """Print ready=True/False + one G-<gate>=pass/fail line per gate (assert by substring)."""
     _open(args.package)
-    report = srv.gate_run()
-    srv.package_close()
+    try:
+        report = srv.gate_run()
+    finally:
+        srv.package_close()
     print(f"ready={report['ready']}")
     for gate, info in report["gates"].items():
         if gate.startswith("G-"):
@@ -101,16 +105,34 @@ def _grep(args, want_present: bool) -> int:
     if not data.is_dir():
         print(f"no data/ directory under {args.package}")
         return 2
-    tables = (args.tables.split(",") if args.tables
+    named = bool(args.tables)
+    tables = (args.tables.split(",") if named
               else sorted(p.stem for p in data.glob("*.jsonl")))
     hits = []
     for table in tables:
         path = data / f"{table}.jsonl"
         if not path.exists():
+            if named:
+                print(f"no such table file: {table}.jsonl")
+                return 2
             continue
         for lineno, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
             if args.needle in line:
                 hits.append(f"{table}.jsonl:{lineno}")
+    if want_present:
+        print(f"found in: {', '.join(hits)}" if hits else f"{args.needle!r} not found")
+        return 0 if hits else 1
+    print(f"present (should be absent) in: {', '.join(hits)}" if hits else "absent")
+    return 1 if hits else 0
+
+
+def _grep_tree(args, want_present: bool) -> int:
+    root = Path(args.path)
+    if not root.is_dir():
+        print(f"{args.path}: not a directory")
+        return 2
+    hits = [str(p.relative_to(root)) for p in sorted(root.rglob("*"))
+            if p.is_file() and args.needle in p.read_text(encoding="utf-8", errors="replace")]
     if want_present:
         print(f"found in: {', '.join(hits)}" if hits else f"{args.needle!r} not found")
         return 0 if hits else 1
@@ -183,6 +205,14 @@ def main(argv: list[str] | None = None) -> int:
         p.add_argument("needle")
         p.add_argument("--tables", help="comma-separated table names (default: all)")
         p.set_defaults(fn=lambda a, _p=present: _grep(a, _p))
+
+    for name, present in (("grep-tree-absent", False), ("grep-tree-present", True)):
+        p = sub.add_parser(name, help=f"substring must be {'present' if present else 'absent'}"
+                                      " somewhere under a directory tree (files, not JSONL"
+                                      " tables — e.g. generated prompts/)")
+        p.add_argument("path")
+        p.add_argument("needle")
+        p.set_defaults(fn=lambda a, _p=present: _grep_tree(a, _p))
 
     p = sub.add_parser("verify", help="the package passes its canonical round-trip"
                                       " (package_verify; read-only)")

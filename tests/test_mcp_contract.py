@@ -1839,6 +1839,37 @@ class McpContractTest(unittest.TestCase):
         self.assertIsNone(srv._CURRENT)                    # nothing was opened
         self.assertTrue(srv.package_open("demo")["ok"])   # the good name still opens
 
+    def test_decisions_approved_rule_blocks_on_proposed(self):
+        """Plan 056: decisions-approved (package scope, blocking) has zero coverage."""
+        make_complete_package("demo")
+        rules = {r["rule"]: r for r in srv.readiness_check("package")["rules"]}
+        self.assertEqual(rules["decisions-approved"]["status"], "pass")
+        srv.entity_upsert([{"type": "decision", "id": "DEC-009", "title": "pending",
+                            "lifecycle_status": "Proposed"}])
+        out = srv.readiness_check("package")
+        rules = {r["rule"]: r for r in out["rules"]}
+        self.assertEqual(rules["decisions-approved"]["status"], "fail")
+        self.assertIn("DEC-009", rules["decisions-approved"]["entities"])
+        self.assertFalse(out["ready"])
+
+    def test_decisions_look_architectural_advisory(self):
+        """Plan 056: decisions-look-architectural (package scope, advisory) has zero
+        coverage — an Approved decision with an implementing edge that was never
+        promoted to an ADR should fire."""
+        make_complete_package("demo")
+        rules = {r["rule"]: r for r in srv.readiness_check("package")["rules"]}
+        self.assertEqual(rules["decisions-look-architectural"]["status"], "pass")
+        out = srv.entity_upsert([{"type": "decision", "id": "DEC-009", "title": "db choice",
+                                  "lifecycle_status": "Approved"},
+                                 {"type": "trace-edge", "from_id": "SL-001",
+                                  "to_id": "DEC-009", "relation": "implements"}])
+        self.assertTrue(out["ok"], out)
+        out = srv.readiness_check("package")
+        rules = {r["rule"]: r for r in out["rules"]}
+        self.assertEqual(rules["decisions-look-architectural"]["status"], "fail")
+        self.assertIn("DEC-009", rules["decisions-look-architectural"]["entities"])
+        self.assertEqual(rules["decisions-look-architectural"]["severity"], "advisory")
+
 
 class V4EngineTest(unittest.TestCase):
     """The plan-031 mechanisms: Review-as-open, severity-thresholded blocking,
@@ -2573,6 +2604,25 @@ class V4EngineTest(unittest.TestCase):
                             for w in pkg.get("expired_waivers", [])))
         prules = {r["rule"]: r for r in pkg["rules"]}
         self.assertEqual(prules["defects-minor"]["status"], "fail")  # expired ≠ waived
+
+    def test_whole_rule_waiver_waives_every_entity(self):
+        """Plan 056: a WVR- row with applies_to NULL covers the rule, not one id."""
+        srv.entity_upsert([{"type": "defect", "id": "DEF-010", "title": "a",
+                            "severity": "high", "lifecycle_status": "Open",
+                            "found_in": "SL-001"},
+                           {"type": "defect", "id": "DEF-011", "title": "b",
+                            "severity": "critical", "lifecycle_status": "Open",
+                            "found_in": "SL-001"}])
+        srv.entity_upsert([{"type": "waiver", "id": "WVR-010", "rule": "defects-closed",
+                            "justification": "release train; fixes scheduled",
+                            "approver": "anas"}])                       # no applies_to
+        for scope, sid in (("slice", "SL-001"), ("package", None)):
+            out = srv.readiness_check(scope, id=sid) if sid else srv.readiness_check(scope)
+            rule = {r["rule"]: r for r in out["rules"]}["defects-closed"]
+            self.assertEqual(rule["status"], "waived", (scope, rule))
+            self.assertEqual(rule["entities"], [])
+            self.assertEqual({w["waiver"] for w in rule["waived"]}, {"WVR-010"})
+            self.assertTrue({w["entity"] for w in rule["waived"]} >= {"DEF-010", "DEF-011"})
 
     def test_forced_transition_records_typed_audit(self):
         refused = srv.entity_upsert([{"type": "slice", "id": "SL-001", "title": "s",

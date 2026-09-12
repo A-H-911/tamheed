@@ -69,6 +69,12 @@ All notable changes to Tamheed are documented here. The format is based on
   the v1 migration ledgers nothing populated are gone, adopt derives its Always roster from
   the registry instead of a hand copy, files over 2 MB are skipped and listed under
   `scan.skipped_large`, and a failed post-flight now carries an `error` (advisor plan 055).
+- Tests: whole-rule waivers, `decisions-approved` and `decisions-look-architectural` are
+  covered; `check.py`'s lints run under their own suite against a repo copy (pass, version
+  mismatch, dead path, widened pin); `evals/pkg_check.py` releases the package lock on any
+  exception, refuses a named table that has no file (exit 2), and gains
+  `grep-tree-present/absent` for file trees — the `injection-brief` prompt assertion, which
+  grepped the table retired in v3 and could never fail, now reads `prompts/` (advisor plan 056).
 
 ## [4.7.0] - 2026-09-07
 
