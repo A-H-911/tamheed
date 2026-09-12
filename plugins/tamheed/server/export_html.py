@@ -46,6 +46,15 @@ def _by_id(col: str = "id") -> str:
             f"CAST(SUBSTR({col}, INSTR({col}, '-') + 1) AS INTEGER), {col}")
 
 
+def _id_key(nid: str) -> tuple:
+    """Python-side twin of _by_id(): (prefix, number, id). The graph section sorts
+    node/id tuples in pure Python (never touches SQL), so it needs its own numeric
+    key — a plain string sort has the same PH-10-before-PH-2 bug (plan 057)."""
+    prefix, _, tail = str(nid).partition("-")
+    digits = tail[:len(tail) - len(tail.lstrip("0123456789"))] if tail else ""
+    return (prefix, int(digits) if digits else 0, str(nid))
+
+
 def _fold(title: str, count: int, inner: str, anchor: str | None = None,
           csv: str | None = None) -> str:
     """C21 (plan 019, maintainer decision): EVERY table folds closed — one consistent
@@ -140,7 +149,7 @@ _G_AGG_LIMIT = 4000  # ponytail: family-aggregate view above this; full graph pr
 
 def _grouped_nodes(nodes):
     order = {t: i for i, t in enumerate(ENTITY_TABLES)}
-    nodes = sorted(nodes, key=lambda n: (order.get(n[1], 99), n[1], n[0]))
+    nodes = sorted(nodes, key=lambda n: (order.get(n[1], 99), n[1], _id_key(n[0])))
     fams: list[tuple[str, list[str]]] = []
     for nid, fam in nodes:
         if not fams or fams[-1][0] != fam:
@@ -345,7 +354,8 @@ def _graph(conn, gates, ready):
         req_n = counts.get("requirement", 0)
         warn = f"⚠ {req_n} requirement(s) — " if req_n else ""
         iso_sorted = sorted(isolated, key=lambda n: (n[1] != "requirement",
-                                                     order.get(n[1], 99), n[1], n[0]))
+                                                     order.get(n[1], 99), n[1],
+                                                     _id_key(n[0])))
         parts.append(_fold(
             f"Isolated entities (no trace edges) — {warn}{breakdown}",
             len(isolated), _table(["id", "family"], iso_sorted)))
@@ -384,7 +394,7 @@ def _flow(conn, gates, ready):
     order = {t: i for i, t in enumerate(ENTITY_TABLES)}
     lanes: list[list[tuple[str, str]]] = [[] for _ in range(len(_LANES) + 1)]
     for nid, fam in sorted(connected,
-                           key=lambda n: (order.get(n[1], 99), n[1], n[0])):
+                           key=lambda n: (order.get(n[1], 99), n[1], _id_key(n[0]))):
         lanes[lane_of.get(fam, len(_LANES))].append((nid, fam))
     titles = [t for t, _f in _LANES] + ["Other"]
     live = [(titles[i], lane) for i, lane in enumerate(lanes) if lane]
