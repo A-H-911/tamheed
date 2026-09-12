@@ -19,7 +19,7 @@ _HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(_HERE))
 
 import record  # the shared Plan/populate/fidelity recording pipeline (plan 031)  # noqa: E402
-from tamheed_server import _INJECT_RE  # the same untrusted-content screen  # noqa: E402
+from tamheed_server import _INJECT_RE, BASELINE_ENTITY_TYPES, ENTITY_TABLES  # noqa: E402
 
 README_NAMES = ("README.md", "README.rst", "README.txt", "readme.md")
 TEST_FILE_RE = re.compile(r"(^|[/\\])(test_[^/\\]+|[^/\\]+_test\.[a-z]+|[^/\\]+\.test\.[a-z]+)$")
@@ -30,10 +30,18 @@ SKIP_DIRS = {".git", "node_modules", "__pycache__", ".venv", "venv", "dist", "bu
 FORBIDDEN_STATUSES = {"Approved", "Implemented"}  # rule 1, enforced mechanically
 
 
-def _walk(root: Path):
+MAX_FILE_BYTES = 2_000_000  # plan 055: adopt reads files whole; a stray archive/log must not
+
+
+def _walk(root: Path, skipped: list[str] | None = None):
     for p in sorted(root.rglob("*")):
-        if p.is_file() and not (set(p.relative_to(root).parts[:-1]) & SKIP_DIRS):
-            yield p
+        if not p.is_file() or (set(p.relative_to(root).parts[:-1]) & SKIP_DIRS):
+            continue
+        if p.stat().st_size > MAX_FILE_BYTES:
+            if skipped is not None:
+                skipped.append(str(p.relative_to(root)).replace("\\", "/"))
+            continue
+        yield p
 
 
 def _humanize(name: str) -> str:
@@ -48,7 +56,8 @@ def _screen(text: str, span: str, findings: list) -> None:
 
 def scan(source: Path) -> dict:
     readmes, configs, tests, code_files, modules = [], [], [], [], set()
-    for p in _walk(source):
+    skipped_large: list[str] = []
+    for p in _walk(source, skipped_large):
         rel = str(p.relative_to(source)).replace("\\", "/")
         if p.name in README_NAMES:
             readmes.append(rel)
@@ -62,6 +71,7 @@ def scan(source: Path) -> dict:
                 modules.add(rel.split("/")[0])
     return {"readmes": readmes, "configs": configs, "test_files": tests,
             "code_files": len(code_files), "modules": sorted(modules),
+            "skipped_large": skipped_large,
             "git_history": (source / ".git").exists(), "_code_list": code_files}
 
 
@@ -237,15 +247,10 @@ def extract(source: Path, inventory: dict) -> tuple[record.Plan, list, list]:
     return plan, gaps, injections
 
 
-ALWAYS_TYPES = ("requirement", "constraint", "assumption", "open-question", "decision",
-                "risk", "phase", "acceptance-criterion", "narrative-document",
-                "document-section")
-_TYPE_TABLE = {"requirement": "requirements", "constraint": "constraints",
-               "assumption": "assumptions", "open-question": "open_questions",
-               "decision": "decisions", "risk": "risks", "phase": "phases",
-               "acceptance-criterion": "acceptance_criteria",
-               "narrative-document": "narrative_documents",
-               "document-section": "document_sections"}
+# Plan 055: the Always class comes from the registry (lint-guarded against the catalog),
+# never a hand copy. Order = registry order.
+ALWAYS_TYPES = tuple(t for t, _label, _prefix, cls in BASELINE_ENTITY_TYPES if cls == "Always")
+_TYPE_TABLE = {t: ENTITY_TABLES[t] for t in ALWAYS_TYPES}
 
 
 def run_adoption(source_dir: str, dest_root: str | Path, name: str | None = None,
@@ -294,7 +299,12 @@ def run_adoption(source_dir: str, dest_root: str | Path, name: str | None = None
     if not pop["ok"]:
         return pop
     fid = record.fidelity(plan, Path(dest_root) / name)
-    return {"ok": fid["ok"], "stage": "post-flight", "preview": preview,
+    ok = fid["ok"]
+    return {"ok": ok, "stage": "post-flight", "preview": preview,
             "package_dir": pop["package_dir"], "gap_report": gaps,
             "gate_failures": fid["gate_failures"], "unmapped": fid["unmapped"],
-            "next": record._CUTOVER_NEXT if fid["ok"] else None}
+            "error": None if ok else ("post-flight: gate failures "
+                                       + ", ".join(sorted(fid["gate_failures"]))
+                                       + (f"; unmapped ids: {len(fid['unmapped'])}"
+                                          if fid["unmapped"] else "")),
+            "next": record._CUTOVER_NEXT if ok else None}

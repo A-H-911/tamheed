@@ -62,6 +62,10 @@ All notable changes to Tamheed are documented here. The format is based on
   `--selftest` (it used to skip); Python 3.13 joins the matrix. Docs and the server's error
   text now say `pip install "mcp<2"` — the unbounded fallback reproduced the C33 incident the
   PEP 723 pin prevents (advisor plan 052).
+- Adopt/record hygiene: the registry import is no longer wrapped in a silent fallback,
+  the v1 migration ledgers nothing populated are gone, adopt derives its Always roster from
+  the registry instead of a hand copy, files over 2 MB are skipped and listed under
+  `scan.skipped_large`, and a failed post-flight now carries an `error` (advisor plan 055).
 
 ## [4.7.0] - 2026-09-07
 

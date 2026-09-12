@@ -19,11 +19,7 @@ sys.path.insert(0, str(_HERE.parent / "db"))
 
 import store  # noqa: E402
 
-try:  # no import cycle: tamheed_server imports this lazily inside handlers
-    from tamheed_server import BASELINE_ENTITY_TYPES, ENTITY_TABLES  # noqa: E402
-except ImportError:  # pragma: no cover
-    BASELINE_ENTITY_TYPES = []
-    ENTITY_TABLES = {}
+from tamheed_server import BASELINE_ENTITY_TYPES, ENTITY_TABLES  # noqa: E402
 
 
 def _kebab(name: str) -> str:
@@ -50,18 +46,6 @@ def _sections(text: str) -> list[tuple[str, str]]:
     return parts
 
 
-_PIPE_SENTINEL = "\x00"
-
-_TITLE_ALIASES = frozenset({
-    "title", "statement", "given / when / then", "criterion", "requirement",
-    "constraint", "assumption", "question", "decision", "risk", "invariant",
-    "dependency", "hypothesis", "milestone", "metric", "test", "work item", "epic",
-    "phase", "name", "stakeholder / role", "stakeholder"})
-
-_LONGFORM_ALIASES = frozenset({"statement", "given / when / then", "criterion",
-                               "description"})
-
-
 class Plan:
     """The stage-2 parse result: everything needed to populate, plus the dry report."""
 
@@ -72,22 +56,10 @@ class Plan:
         self.omissions: list[tuple[str, str]] = []
         self.unmapped: list[str] = []
         self.defined: set[str] = set()
-        self.manifest_counts: dict[str, int] = {}
         self.package: dict = {}
-        # File-level loss accounting (field-evidence C13): unmapped is id-granular, so
-        # whole-file outcomes get their own ledgers, surfaced in the preview.
-        self.partial_files: dict[str, int] = {}  # rows migrated per file; prose not (C17)
-        self.skipped_files: list[str] = []   # skipped by design (derived views)
         # v3.0.0 (plan 027): v1 prompt files become <package>/prompts/*.md files, never
         # rows — (v1_rel, out_name, text), written by populate after the store commit.
         self.prompt_files: list[tuple[str, str, str]] = []
-        # Preview-honesty ledgers (field-evidence C17): every judgment call reported.
-        self.status_coerced: list[dict] = []   # [{id, original, coerced}]
-        self.title_fallbacks: list[dict] = []  # [{id, family}] — title fell back to row[1]
-        self.status_map: dict[str, str] = {}   # operator overrides, normalized keys
-        # C21 (B1): registers with NO status column, per (file, family) -> row count.
-        self.status_defaulted: dict[tuple[str, str], int] = {}
-        self.dw_crosswalk: dict[str, str] = {}  # C24/D-4: legacy D-nn -> DW-NNN
 
     def add(self, table: str, row: dict):
         self.rows.setdefault(table, []).append(row)
@@ -197,26 +169,6 @@ def fidelity(plan: Plan, pkg_dir: Path) -> dict:
     conn = store.load(pkg_dir / "data")
     ids = {r[0] for r in conn.execute("SELECT id FROM entity_index")}
     missing = sorted(plan.defined - ids)
-    prefix_tables = {"FR": ("requirements", "kind='functional'"),
-                     "NFR": ("requirements", "kind='non-functional'"),
-                     "CON": ("constraints", None), "INV": ("invariants", None),
-                     "ASM": ("assumptions", None), "DEP": ("dependencies", None),
-                     "OQ": ("open_questions", None), "DEC": ("decisions", None),
-                     "ADR": ("adrs", None), "RISK": ("risks", None),
-                     "HYP": ("hypotheses", None), "EXP": ("experiments", None),
-                     "POC": ("pocs", None), "KPI": ("kpis", None),
-                     "STK": ("stakeholders", None), "PH": ("phases", None),
-                     "MS": ("milestones", None), "WBS": ("wbs_items", None),
-                     "AC": ("acceptance_criteria", None), "TEST": ("tests", None)}
-    deltas = {}
-    for prefix, expected in plan.manifest_counts.items():
-        table, where = prefix_tables.get(prefix, (None, None))
-        if table is None:
-            continue
-        sql = f"SELECT COUNT(*) FROM {table}" + (f" WHERE {where}" if where else "")
-        actual = conn.execute(sql).fetchone()[0]
-        if actual != expected:
-            deltas[prefix] = {"manifest": expected, "migrated": actual}
     gates = {}
     for gate, view in (("G-TRACE", "g_trace_failures"), ("G-SET", "g_set_failures"),
                        ("G-PROGRESS", "g_progress_failures")):
@@ -280,7 +232,7 @@ def fidelity(plan: Plan, pkg_dir: Path) -> dict:
     (open_wbs,) = conn.execute("SELECT COUNT(*) FROM v_backlog").fetchone()
     conn.close()
     ok = not missing and all(not f for f in gates.values())
-    return {"ok": ok, "identifier_gaps": missing, "count_deltas": deltas,
+    return {"ok": ok, "identifier_gaps": missing,
             "gate_failures": {g: f for g, f in gates.items() if f},
             "fidelity_ledgers": {"truncations": truncations,
                                  "column_starvation": starvation,

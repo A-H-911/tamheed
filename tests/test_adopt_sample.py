@@ -9,6 +9,7 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO_ROOT / "plugins" / "tamheed" / "server"))
@@ -16,6 +17,7 @@ sys.path.insert(0, str(REPO_ROOT / "plugins" / "tamheed" / "db"))
 
 import adopt  # noqa: E402
 import store  # noqa: E402
+import tamheed_server as srv  # noqa: E402
 
 SAMPLE = {
     "README.md": "# Widgetizer\n\nA tool for widgets.\n\n## Features\n\n"
@@ -164,6 +166,30 @@ class AdoptFidelityTest(unittest.TestCase):
         out = adopt.run_adoption(str(self.src), self._dest.name, name="w", confirm=True)
         self.assertTrue(out["ok"], out)
         self.assertIn("handoff_emit", out["next"])
+
+    def test_always_roster_is_the_registry(self):
+        # Plan 055: adopt's Always roster is derived from the registry, never a hand
+        # copy — a mismatch here means the two have drifted.
+        expected = tuple(t for t, _label, _prefix, cls in srv.BASELINE_ENTITY_TYPES
+                         if cls == "Always")
+        self.assertEqual(adopt.ALWAYS_TYPES, expected)
+        for etype in adopt.ALWAYS_TYPES:
+            self.assertEqual(adopt._TYPE_TABLE[etype], srv.ENTITY_TABLES[etype])
+
+    def test_large_files_are_skipped_and_reported(self):
+        baseline = adopt.run_adoption(str(self.src), self._dest.name, name="w")
+        (self.src / "src" / "big.py").write_text("x = 1\n" + "x" * 2_500_000,
+                                                  encoding="utf-8")
+        out = adopt.run_adoption(str(self.src), self._dest.name, name="w2")
+        self.assertEqual(out["scan"]["skipped_large"], ["src/big.py"])
+        self.assertEqual(out["scan"]["code_files"], baseline["scan"]["code_files"])
+
+    def test_post_flight_failure_carries_error(self):
+        with patch.object(adopt.record, "fidelity", return_value={
+                "ok": False, "gate_failures": {"G-SET": ["x"]}, "unmapped": []}):
+            out = adopt.run_adoption(str(self.src), self._dest.name, name="w", confirm=True)
+        self.assertFalse(out["ok"])
+        self.assertIn("G-SET", out["error"])
 
 
 if __name__ == "__main__":
