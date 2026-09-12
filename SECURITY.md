@@ -32,6 +32,11 @@ report a problem.
   (`^[a-z0-9][a-z0-9-]{0,63}$`, applied by every tool that resolves a name — create, open, verify,
   migrate; `.`/`..` unrepresentable) under the declared `--package-dir` (CWE-22); a malicious name
   is rejected and writes nothing.
+- **No CSV formula injection** — the `csv/<table>.csv` files `export_html` emits beside
+  `review.html` are opened in spreadsheets; a text cell that a spreadsheet would evaluate as a
+  formula (leading `=`, `+`, `-`, `@`, tab or carriage return) is written quote-prefixed, the
+  standard neutralization (CWE-1236; plan 050). The HTML surface renders the same cell
+  unchanged — the guard lives in the CSV writer only.
 - **Approved-only lessons in the note** — the emitted `CLAUDE.md` note's Lessons section renders only
   operator-Approved `LL-` rows and is screened by the same G-INJECT patterns as emitted prompts
   (blocking); the store refuses to land a lesson in Approved/Promoted without the operator's explicit

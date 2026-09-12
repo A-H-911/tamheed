@@ -15,10 +15,12 @@ python check.py     # everything CI runs — if this is green, you are set up
 ```
 
 - **Python ≥ 3.10** (program decision ASM-D — the MCP SDK's floor).
-- `python check.py` is **the one command**: the eight test suites, the check.py lint battery
+- `python check.py` is **the one command**: the nine test suites, the check.py lint battery
   (registry ↔ table map ↔ DDL sync, `schema.sql` == `migrations/001_init.sql`, and friends),
   the canonical-form round-trip, and the eval runner's sample. CI
-  job 1 runs exactly this, so green locally means green in CI. `python check.py <gate>` runs a
+  job 1 runs exactly this, so green locally means green in CI — on Python 3.10, 3.11, 3.12 and
+  3.13 × Ubuntu and Windows, plus a `uv`-driven server smoke job (`.github/workflows/ci.yaml`,
+  triggered by push to `main`, pull requests, and manual dispatch). `python check.py <gate>` runs a
   subset (`suites`, `lint`, `canonical`, `evals`).
 - Everything `check.py` runs is **stdlib-only** (decision D-U3) — no pytest, no third-party
   packages. The ONLY dependency in the whole repo is the `mcp` SDK, and only for *serving* the

@@ -8,7 +8,7 @@ Everything here is **stdlib-only** (`unittest`, no pytest, no third-party packag
 python tests/test_<name>.py
 ```
 
-## The eight suites
+## The nine suites
 
 | Suite | What it pins |
 |---|---|
@@ -20,15 +20,16 @@ python tests/test_<name>.py
 | `test_export_html.py` | The HTML review surface: all sections render for a real package, hostile content (`<script>`, `onerror=`, `javascript:` links) never appears unescaped, and two exports of the same DB state are byte-identical. |
 | `test_eval_runner.py` | The deterministic eval runner + `pkg_check.py` assertion primitives, driven as subprocesses (their real contract is exit codes + printed output): PASS on the shipped sample, FAIL on a broken copy, visible SKIP on unrecorded cases, non-zero when nothing was checked. |
 | `test_scratch_diff.py` | The runbook-§8 scratch-diff tool: correct per-table keying (the historical mis-keyings are regression cases), union-of-columns comparison **including JSON blobs**, report-never-clobber duplicates, and the 0/1/2 exit-code contract (exit 1 is the normal mid-life outcome). |
+| `test_check_lints.py` | `check.py`'s own lint battery under test (plan 056): each release-contract lint (version ↔ CHANGELOG, newest-first headings, the five stamps, stock-history currency, teaching needles, …) is driven against a mutated copy of the repo and must fail loudly — the gate is verified, not trusted. |
 
 ## How check.py routes them
 
 `check.py` at the repo root is THE deterministic gate — its `SUITES` list is the single
-registry of these eight files, and CI job 1 runs exactly:
+registry of these nine files, and CI job 1 runs exactly:
 
 ```
 python check.py            # all suites + the lint battery + canonical form + eval fixtures
-python check.py suites     # just the eight suites
+python check.py suites     # just the nine suites
 ```
 
 A new suite registers itself in `check.py`'s `SUITES` list — nowhere else; CI picks it up

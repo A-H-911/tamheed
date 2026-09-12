@@ -23,6 +23,14 @@ All notable changes to Tamheed are documented here. The format is based on
   seconds). Renaming the files to `ci.yaml` / `eval.yaml` re-registered them; the first
   push-triggered run followed 5 s later (post-release review, 2026-09-12).
 
+### Changed
+
+- Documentation sweep for the advisor batch (plan 061): SECURITY.md records the CSV
+  formula-injection guard (050); `handoff.md` the note's skill screen and marker defusing
+  (054); `quality-gates.md` scoped readiness at zero rows (049); CONTRIBUTING, the README
+  tree and `tests/README.md` the ninth suite (056) and the CI matrix (052); the server README
+  the viewer's numeric id order (057) and the waiver citation rule (060).
+
 ## [4.8.0] - 2026-09-12
 
 **MINOR — the advisor audit: sixteen plans, the lab beat, the first CI runs (plans

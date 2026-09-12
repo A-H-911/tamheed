@@ -66,6 +66,9 @@ three tiers (engine / judgment / warn) synced against this file in both directio
   `pass` / `fail` / **`indeterminate`** — a rule whose keyed column is unpopulated for every row
   of its type carries `discriminating: false`, and when its query finds nothing it reads
   `indeterminate`, never `pass` ("cannot measure" ≠ "verified clean"); only real `fail` blocks.
+  The same holds at phase/slice scope: `acs-met`, `wbs-done` and `slices-closed` on a scope
+  that holds no rows of that kind read `indeterminate` with `discriminating: false` — an
+  empty slice is not a ready slice, and the `Implemented` guard still trips only on `fail`.
 - Judgment gates: perform the check and record the verdict (a `progress-entry` note with the evidence).
 - Stage 19 runs everything; Stage 22 re-confirms criticals + `readiness_check("package")` for the
   readiness verdict.

@@ -412,7 +412,7 @@ tamheed/
 ├── evals/                            # behavioral eval spec + deterministic eval runner
 ├── generated-samples/                # the demonstration package (migrated in place through v2→v3→v4)
 ├── lab/                              # the permanent execution lab (brief + seed package + scenario)
-├── tests/                            # the eight test suites
+├── tests/                            # the nine test suites
 ├── check.py                          # THE one deterministic gate — CI job 1 runs exactly this
 ├── .github/workflows/                # CI (check.py + server smoke) + scheduled eval-spec lint
 └── SECURITY.md                       # trust model, untrusted-content posture, reporting

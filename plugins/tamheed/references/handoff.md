@@ -46,7 +46,9 @@ and `handoff_emit(target_dir)` wires the target project to the package (it copie
   the render too — full graduation (plan 036): a lesson distilled into a skill travels as the
   auto-loaded `SKILL.md`, not as note prose; the section instead keeps one line — "Skills distilled
   from lessons: `<name>` [<level>], … — auto-loaded where present" — naming each `SKL-` skill and
-  its level.
+  its level. Skill names and levels pass the same G-INJECT screen as the lessons (a finding
+  blocks the emit, naming the `SKL-` row), and a note-marker literal inside any rendered lesson
+  or skill text is defused so the tool-owned span can never be truncated by its own content.
 - **The readiness verdict** (Stage 22) — rendered from the gate report; the go/no-go.
 - The old separate handoff manifest is gone: entry point, go/no-go, and gated items live on the
   `packages` row; artifact membership is a view.
