@@ -41,6 +41,9 @@ All notable changes to Tamheed are documented here. The format is based on
   path had no backup and deleted before it copied), and any failure restores `data/` from
   `data-v3-backup/` and removes it so the retry is not refused; a corrupt
   `data/packages.jsonl` is an error naming the file, not a traceback (advisor plan 045).
+- The CLAUDE.md note's "Skills distilled from lessons" line is screened by `_INJECT_RE`
+  like the lessons are, and HTML-comment delimiters inside rendered lesson/skill text are
+  defused so a marker literal can no longer truncate the tool-owned span (advisor plan 054).
 
 ### Changed
 
