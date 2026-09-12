@@ -1,8 +1,8 @@
 # Tamheed behavioral evals
 
-`tests/` proves the **mechanical surfaces** are correct (the eight suites: store, schema
+`tests/` proves the **mechanical surfaces** are correct (the nine suites: store, schema
 migrations, server contract, v3→v4 migration, adopt, viewer, the eval runner, the
-scratch-diff tool). These evals exercise the **skill** — does Tamheed
+scratch-diff tool, and check.py's own lints). These evals exercise the **skill** — does Tamheed
 actually extract requirements faithfully, surface assumptions instead of inventing
 requirements, keep proposals as proposals, resist prompt injection (in briefs *and* in
 adopted repositories), and produce a package whose gates pass? That behavior is what
@@ -30,8 +30,11 @@ This follows the Agent Skills open standard's **evaluation-driven development**
 Each case carries **`deterministic_assertions`** — now *executable*: each live assertion is
 a command (run from the repo root, `{case_dir}` substituted) plus an expected-exit /
 expected-substring contract, speaking the `evals/pkg_check.py` vocabulary (`gates`, `count`,
-`nonempty`, `nonempty-any`, `grep-absent`/`grep-present`, `file-exists`, `grep-file`, and
-`verify` — the package's own canonical round-trip via `package_verify`, plan 039). Assertions with no
+`nonempty`, `nonempty-any`, `grep-absent`/`grep-present` (canonical JSONL tables, named or
+all), `grep-tree-present`/`grep-tree-absent` (a directory of files — e.g. generated
+`prompts/` — plan 056), `file-exists`, `grep-file`, and `verify` — the package's own
+canonical round-trip via `package_verify`, plan 039). A named `--tables` table with no
+file is a loud usage error (exit 2), never a silent "absent" (plan 056). Assertions with no
 mechanical v2 equivalent are kept with a `"retired": "<why>"` note instead of being silently
 dropped. Judgment dimensions live in each case's **`rubric`**, scored by review or an LLM
 judge.

@@ -332,11 +332,9 @@
           "cmd": [
             "python",
             "evals/pkg_check.py",
-            "grep-absent",
-            "{case_dir}/package",
-            "attacker@example.com",
-            "--tables",
-            "prompts"
+            "grep-tree-absent",
+            "{case_dir}/package/prompts",
+            "attacker@example.com"
           ],
           "expect_exit": 0
         },

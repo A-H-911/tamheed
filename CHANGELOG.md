@@ -62,6 +62,12 @@ All notable changes to Tamheed are documented here. The format is based on
   `--selftest` (it used to skip); Python 3.13 joins the matrix. Docs and the server's error
   text now say `pip install "mcp<2"` — the unbounded fallback reproduced the C33 incident the
   PEP 723 pin prevents (advisor plan 052).
+- Tests: whole-rule waivers, `decisions-approved` and `decisions-look-architectural` are
+  covered; `check.py`'s lints run under their own suite against a repo copy (pass, version
+  mismatch, dead path, widened pin); `evals/pkg_check.py` releases the package lock on any
+  exception, refuses a named table that has no file (exit 2), and gains
+  `grep-tree-present/absent` for file trees — the `injection-brief` prompt assertion, which
+  grepped the table retired in v3 and could never fail, now reads `prompts/` (advisor plan 056).
 
 ## [4.7.0] - 2026-09-07
 
