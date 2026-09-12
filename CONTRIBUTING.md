@@ -24,6 +24,11 @@ python check.py     # everything CI runs — if this is green, you are set up
   packages. The ONLY dependency in the whole repo is the `mcp` SDK, and only for *serving* the
   MCP server: `uv run plugins/tamheed/server/tamheed_server.py` fetches it automatically
   (PEP 723), or `pip install "mcp<2"`. The in-process test suites don't need it.
+- **CI trigger note (2026-09-12).** Push-triggered runs do not fire on this repository
+  (cause unknown, GitHub-side — every readable setting is normal; a Support ticket is
+  pending). `workflow_dispatch` works, so after every push run
+  `gh workflow run ci.yml --ref main` and watch it with `gh run watch`. Remove this note
+  when push runs appear on their own.
 
 ## Invariants you must preserve
 

@@ -38,3 +38,10 @@ The lab proves that every v4 mechanism **fires** under a real agent. It cannot p
 permission modes block the MCP tool path (the findings_15/16 instrument lesson). The
 only valid instrument for that remains an interactive fresh session driven by a human
 operator on a real repo.
+
+A second, smaller limit: `handoff_emit` writes machine-specific absolute paths (the
+resolved server script and package root in `.mcp.json` for standalone installs, the
+package root in the `CLAUDE.md` note) — by design, so the executor host can find the
+server. An emitted target is therefore never committed as a fixture: beats emit to a
+scratch target and **quote the note verbatim in their evidence report** (beats 14 and 15
+did), which is the durable record of what was emitted.

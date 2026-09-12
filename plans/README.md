@@ -95,7 +95,7 @@ on `main`, commit `plans/`, push; then `git worktree prune` after deleting the e
 
 | Plan | Title | Priority | Effort | Depends on | Status |
 |---|---|---|---|---|---|
-| 042 | [CI has never run](042-ci-has-never-run.md) -- 0 workflow runs on a public repo with two active workflows; add `workflow_dispatch`, investigate, get one green run | P1 | S | -- | DONE — 2026-09-11: first run ever, https://github.com/A-H-911/tamheed/actions/runs/34606957426, 7/7 jobs green (6 `check` legs + smoke). **Finding:** push events never trigger on this repo (the push of `c9ef603` registered `pushed_at` but fired nothing; `workflow_dispatch` ran immediately) — Actions is enabled and the workflows were indexed at the first push, so this is an account/repo policy on push-triggered workflows, not a workflow-file problem. Until it is found, dispatch CI manually after each push: `gh workflow run CI --ref main` |
+| 042 | [CI has never run](042-ci-has-never-run.md) -- 0 workflow runs on a public repo with two active workflows; add `workflow_dispatch`, investigate, get one green run | P1 | S | -- | DONE — 2026-09-11: first run ever, https://github.com/A-H-911/tamheed/actions/runs/34606957426, 7/7 jobs green (6 `check` legs + smoke). **Finding:** push events never trigger on this repo (the push of `c9ef603` registered `pushed_at` but fired nothing; `workflow_dispatch` ran immediately) — Actions is enabled, the repo is not a fork, no rulesets or protection, the push actor is the maintainer — every readable setting is normal, so the cause is unknown and GitHub-side (the v4.8.0 CHANGELOG's "account-side setting" wording overstated this; corrected here 2026-09-12, releases stay frozen). Until it is found, dispatch CI manually after each push: `gh workflow run ci.yml --ref main` |
 | 043 | [Stale-tree refusal must roll back](043-stale-tree-refusal-must-roll-back.md) -- `RELEASE batch` before `_commit()` committed the batch in memory; refused writes answered every later read (reproduced; one-line deletion, suite green on a scratch copy) | P1 | S | -- | DONE — APPROVED 2026-09-11, commit `8eef6e2` on branch `worktree-agent-a8e1a43b9c5cb62c6` (unmerged; operator merges) |
 | 044 | [Package-name + output-path hygiene](044-package-name-and-output-path-hygiene.md) -- `_NAME_RE` applied only on create; open/verify/migrate resolve `PACKAGE_ROOT / name` raw (SECURITY.md claims otherwise); `export_html(output)` unguarded | P1 | S | -- | DONE — APPROVED 2026-09-11, commit `920c326` on branch `worktree-agent-aa9df8e9aa6b74a92` (unmerged; operator merges; `package_verify` validates the name before the already-open check — deliberate) |
 | 045 | [`package_migrate` fail-atomic](045-package-migrate-fail-atomic.md) -- characterization tests first; parse before write, write-beside-then-swap (the v4 registry-sync path deleted before it copied, with no backup), restore-from-backup on any failure, corrupt `packages.jsonl` is an error not a traceback | P1 | M | (044 first if both) | DONE — APPROVED 2026-09-11 after one revision round (the plan's own swap sketch deleted the only copy on the v4 path; fixed + tested), commits `3037e57`/`e333b61`/`dd5a3e3` on branch `worktree-agent-a5276e0675981a0d6` (unmerged; operator merges) |
@@ -114,7 +114,7 @@ on `main`, commit `plans/`, push; then `git worktree prune` after deleting the e
 
 | 058 | [Release v4.8.0](058-release-v4-8-0.md) -- bump, dated CHANGELOG heading with the narrative lead-in, the five stamps, the README prompt body under `stock-history.json["README.md"]["4.8.0"]`; MINOR (053 is a contract change) | P1 | S | 042–057, 059 | DONE — 2026-09-12, release commit `96e4ed9`, tag `v4.8.0`, CI https://github.com/A-H-911/tamheed/actions/runs/34695497486 9/9 green |
 | 059 | [Lab beat 15](059-lab-beat-15-advisor-audit.md) -- the advisor-audit continuation against the recorded lab package, agent-driven in-process through the working-tree server (the beat-14 procedure); nine new `evals.json` assertions; evidence report under `plans/evidence/` | P1 | M | 042–057 | DONE — 2026-09-12, commit `9759bce` (lab-tracker 26→35 assertions, ready, verified, 27 files; `plans/evidence/lab-continuation-report-059-2026-09-12.md`). Beat finding, recorded not fixed: a whole-rule waiver shadows a narrower per-entity waiver in the `waived` citation (`rule()` cites `whole_rule[0]` for every entity) — verdict unaffected, audit trail less specific |
-| 060 | [Waiver citation prefers the specific waiver](060-waiver-citation-prefers-specific.md) -- `rule()` cites a per-entity `WVR-` before a whole-rule one (beat 15's observation); verdict unchanged, audit trail specific | P3 | XS | 056, 059 | DONE — 2026-09-12, executed directly by the reviewer (maintainer-delegated); test RED→GREEN, `check.py` green, lab golden byte-identical on re-export |
+| 060 | [Waiver citation prefers the specific waiver](060-waiver-citation-prefers-specific.md) -- `rule()` cites a per-entity `WVR-` before a whole-rule one (beat 15's observation); verdict unchanged, audit trail specific | P3 | XS | 056, 059 | DONE — 2026-09-12, commit `1d38a5f`, executed directly by the reviewer (maintainer-delegated); test RED→GREEN, `check.py` green, lab golden byte-identical on re-export |
 
 (Rows 054–057 added 2026-09-12: the maintainer asked for every audited finding to be planned
 and executed before any release is cut. Rows 058–059 added the same day after the batch-2
@@ -368,6 +368,14 @@ Markdown · ASM-D Python floor rises to the MCP SDK's (≥3.10).
   perfect canonical form with a journal entry naming the row — and git history
   remains the tamper record. Revisit if a governance need for in-store
   tamper-evidence arrives.
+
+- **Relativize `handoff_emit`'s emitted paths** (post-v4.8.0 review, 2026-09-12, on the
+  maintainer's words: document, do not change): `.mcp.json` (standalone installs) and the
+  `CLAUDE.md` note carry the resolved server script and package root as absolute paths —
+  plan 041's stance, because the executor host must find the server without guessing. The
+  cost is that an emitted target is a workspace, not a committable fixture (lab beats quote
+  the note in their evidence report instead). Revisit if a field need for a portable emitted
+  target arrives; the shape would be paths relative to the target plus a resolver at open.
 
 - **D3 — GitHub Action / pre-commit hook** exposing package validation to end-user repos
   (post-v2: wrap `gate_run`).

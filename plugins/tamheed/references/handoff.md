@@ -92,6 +92,11 @@ and `handoff_emit(target_dir)` wires the target project to the package (it copie
    - **Stale scan (C24/D-8):** v1-protocol instructions and dead relative links inside the prompt
      files surface as `stale_references` — reported, never rewritten.
    - On a clean screen: `.mcp.json` + the `CLAUDE.md` note are written/updated in the target.
+     Both carry **machine-specific absolute paths** by design (`.mcp.json` — standalone installs
+     only — names the resolved server script and package root; the note names the package
+     root): the executor host must find the server without guessing. An emitted target is
+     therefore a *workspace*, not a committable fixture — re-emit on another machine rather
+     than copying the files.
 4. Emit the readiness verdict; if any critical gate fails, mark **not ready** and list the gaps instead
    of shipping prompts that assume readiness.
 
