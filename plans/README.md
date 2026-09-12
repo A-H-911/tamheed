@@ -112,8 +112,13 @@ on `main`, commit `plans/`, push; then `git worktree prune` after deleting the e
 | 056 | [Test gaps](056-readiness-eval-and-lint-test-gaps.md) -- whole-rule waiver, `decisions-approved`, `decisions-look-architectural`; `pkg_check` lock leak + loud missing table + `grep-tree-*`; `injection-brief` assertion off the retired `prompts` table; `check.py` lints under their own suite | P2 | M | -- | DONE — APPROVED 2026-09-12, commits `d16488d`/`a3b7c88` on branch `worktree-agent-abfd9ac964dfa26db` (unmerged; integration pending; nine suites now) |
 | 057 | [Numeric id ordering in the viewer](057-numeric-id-ordering-in-the-viewer.md) -- eleven string `ORDER BY id` sites in `export_html.py`; lexical version sort in `_emit_prompt_library` (`4.10.0` < `4.9.0`) | P3 | S | (054 first) | DONE — APPROVED 2026-09-12 after one revision (the Graph section's three Python-side id sorts — the executor found them), commits `5a6e935`/`e34d4dd` on branch `worktree-agent-aa04fac9fd4e29d5d` (merged via integration branch `df99524`, 2026-09-12) |
 
+| 058 | [Release v4.8.0](058-release-v4-8-0.md) -- bump, dated CHANGELOG heading with the narrative lead-in, the five stamps, the README prompt body under `stock-history.json["README.md"]["4.8.0"]`; MINOR (053 is a contract change) | P1 | S | 042–057, 059 | DONE — 2026-09-12, release commit `96e4ed9`, tag `v4.8.0` |
+| 059 | [Lab beat 15](059-lab-beat-15-advisor-audit.md) -- the advisor-audit continuation against the recorded lab package, agent-driven in-process through the working-tree server (the beat-14 procedure); nine new `evals.json` assertions; evidence report under `plans/evidence/` | P1 | M | 042–057 | DONE — 2026-09-12, commit `9759bce` (lab-tracker 26→35 assertions, ready, verified, 27 files; `plans/evidence/lab-continuation-report-059-2026-09-12.md`). Beat finding, recorded not fixed: a whole-rule waiver shadows a narrower per-entity waiver in the `waived` citation (`rule()` cites `whole_rule[0]` for every entity) — verdict unaffected, audit trail less specific |
+
 (Rows 054–057 added 2026-09-12: the maintainer asked for every audited finding to be planned
-and executed before any release is cut.)
+and executed before any release is cut. Rows 058–059 added the same day after the batch-2
+acceptance: release on the maintainer's words, lab beat first so its fixture and assertions
+land in the release commit as beats 10–14 did.)
 
 **Batch 2 acceptance (2026-09-12):** integration branch `df99524` → `main` `c52ca04`; nine suites + `check.py` green (also under `PYTHONWARNINGS=error::DeprecationWarning`); a 37-check black-box acceptance run through the real tool handlers (one section per plan, each check shown to fail on the pre-fix code) 37/37; `uv run … --selftest` 18/18; CI https://github.com/A-H-911/tamheed/actions/runs/34669537392 9/9 green. All sixteen advisor plans (042–057) DONE; nothing released yet.
 
