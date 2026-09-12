@@ -10,6 +10,20 @@ All notable changes to Tamheed are documented here. The format is based on
 
 ## [Unreleased]
 
+## [4.8.1] - 2026-09-12
+
+**PATCH — the post-release review: the specific waiver, CI on push, the docs sweep (plans
+060–061).** A devil's-advocate review of the v4.8.0 loose ends, executed directly by the
+reviewer under the maintainer's delegation. One engine fix: a whole-rule waiver no longer
+shadows a per-entity one in the readiness citation (060; verdicts unchanged; test written RED
+first). The CI mystery closed: the two workflow objects registered at the repository's first
+push never delivered `push`, `schedule` or `pull_request` events — probes on a throwaway branch
+fired within seconds — and renaming the files re-registered them; the first push-triggered run
+in the repository's history followed 5 s later, and a throwaway PR fired CI in 7 s. The
+"account-side setting" wording in 4.8.0 was unsupported and is corrected here. A documentation
+sweep closed seven surfaces that had stayed silent on behavior the advisor batch shipped (061).
+No schema change; the lab fixture is byte-identical on re-export.
+
 ### Fixed
 
 - `readiness_check` cites the **most specific** waiver: when a per-entity `WVR-` row and a
