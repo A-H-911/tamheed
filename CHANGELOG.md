@@ -10,6 +10,14 @@ All notable changes to Tamheed are documented here. The format is based on
 
 ## [Unreleased]
 
+### Fixed
+
+- `readiness_check` cites the **most specific** waiver: when a per-entity `WVR-` row and a
+  whole-rule `WVR-` row both cover a rule, each waived entity now cites its own waiver and
+  the whole-rule one is the fallback (previously the whole-rule waiver shadowed every
+  citation — verdict unaffected, audit trail less specific; lab beat 15's observation,
+  plan 060).
+
 ## [4.8.0] - 2026-09-12
 
 **MINOR — the advisor audit: sixteen plans, the lab beat, the first CI runs (plans

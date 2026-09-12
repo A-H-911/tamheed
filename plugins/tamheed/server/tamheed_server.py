@@ -1523,10 +1523,12 @@ def _readiness_report(conn, scope: str, scope_id: str | None) -> dict:
             per_entity = {applies: wid for wid, applies in waivers[name]
                           if applies is not None}
             for ent in entities:
-                if whole_rule:
-                    waived.append({"entity": ent, "waiver": whole_rule[0]})
-                elif ent in per_entity:
+                # Plan 060: cite the operator's words about the named entity first;
+                # a whole-rule waiver is the fallback, never the shadow.
+                if ent in per_entity:
                     waived.append({"entity": ent, "waiver": per_entity[ent]})
+                elif whole_rule:
+                    waived.append({"entity": ent, "waiver": whole_rule[0]})
                 else:
                     remaining.append(ent)
             if waived:

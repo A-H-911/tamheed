@@ -2644,6 +2644,24 @@ class V4EngineTest(unittest.TestCase):
             self.assertEqual({w["waiver"] for w in rule["waived"]}, {"WVR-010"})
             self.assertTrue({w["entity"] for w in rule["waived"]} >= {"DEF-010", "DEF-011"})
 
+    def test_waiver_citation_prefers_the_specific_waiver(self):
+        """Plan 060 (beat 15's observation): when a per-entity WVR- and a whole-rule WVR-
+        both cover a rule, each waived entity cites the most specific one."""
+        srv.entity_upsert([{"type": "defect", "id": "DEF-012", "title": "typo",
+                            "severity": "low", "lifecycle_status": "Open",
+                            "found_in": "SL-001"}])
+        srv.entity_upsert([{"type": "waiver", "id": "WVR-020", "rule": "defects-minor",
+                            "applies_to": "DEF-012", "justification": "cosmetic, backlog",
+                            "approver": "anas"},
+                           {"type": "waiver", "id": "WVR-021", "rule": "defects-minor",
+                            "justification": "release train", "approver": "anas"}])
+        rule = {r["rule"]: r for r in srv.readiness_check("package")["rules"]}["defects-minor"]
+        self.assertEqual(rule["status"], "waived", rule)
+        self.assertEqual(rule["entities"], [])
+        cited = {w["entity"]: w["waiver"] for w in rule["waived"]}
+        self.assertEqual(cited["DEF-012"], "WVR-020")   # its own waiver, not the whole-rule one
+        self.assertEqual(cited["DEF-001"], "WVR-021")   # setUp's minor defect: whole-rule fallback
+
     def test_forced_transition_records_typed_audit(self):
         refused = srv.entity_upsert([{"type": "slice", "id": "SL-001", "title": "s",
                                       "phase_id": "PH-1",
