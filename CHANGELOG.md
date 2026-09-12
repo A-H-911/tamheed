@@ -10,6 +10,25 @@ All notable changes to Tamheed are documented here. The format is based on
 
 ## [Unreleased]
 
+## [4.8.0] - 2026-09-12
+
+**MINOR — the advisor audit: sixteen plans, the lab beat, the first CI runs (plans
+042–059; `/improve deep`, 2026-09-10).** An external advisor audit of v4.7.0 — eight
+read-only sweeps, every finding re-read or reproduced before it was planned — produced
+sixteen self-contained plans, each executed by an isolated executor, reviewed against its
+own done criteria, and integrated on one branch before merge. Two findings were
+silent-corruption class: `entity_upsert` released its savepoint before the stale-tree
+check, so a refused write stayed applied in memory (043); and `package_migrate` deleted
+`data/` before it copied, on the registry-sync path that has no backup (045). One is a
+tool-contract change: a phase or slice can no longer be created already `Implemented`
+without `force` (053). The rest are hygiene the engine's own doctrine already implied
+(name validation on every tool, the marker scan's history filter, hollow scoped readiness,
+CSV defusing, the note's skill screen, numeric id order). CI, which had never run on this
+repository, ran for the first time on 2026-09-11 (manual dispatch; push events still do
+not fire — an account-side setting) and is green on eight legs plus the smoke job. Lab
+beat 15 exercised the mechanisms a lab can reach and pinned them with nine assertions.
+No schema migration.
+
 ### Fixed
 
 - The review surface orders ids by (prefix, number) instead of as strings (`PH-10` sorted
