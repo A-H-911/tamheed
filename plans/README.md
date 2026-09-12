@@ -115,6 +115,8 @@ on `main`, commit `plans/`, push; then `git worktree prune` after deleting the e
 (Rows 054–057 added 2026-09-12: the maintainer asked for every audited finding to be planned
 and executed before any release is cut.)
 
+**Batch 2 acceptance (2026-09-12):** integration branch `df99524` → `main` `c52ca04`; nine suites + `check.py` green (also under `PYTHONWARNINGS=error::DeprecationWarning`); a 37-check black-box acceptance run through the real tool handlers (one section per plan, each check shown to fail on the pre-fix code) 37/37; `uv run … --selftest` 18/18; CI https://github.com/A-H-911/tamheed/actions/runs/34669537392 9/9 green. All sixteen advisor plans (042–057) DONE; nothing released yet.
+
 **Dependency notes (advisor plans).** 042 before 052 (a red matrix leg is unattributable
 until CI has run once). 043 before 051/053 (they edit the same function; 043 settles its
 transaction tail). 045's tests land before its refactor (same plan, red then green). 050 and
