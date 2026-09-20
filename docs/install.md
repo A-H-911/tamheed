@@ -37,13 +37,47 @@ This repository is its own plugin marketplace (see [`../.claude-plugin/marketpla
 Invoke it as **`/tamheed:tamheed`** — plugin skills are namespaced by the plugin name. Or just describe a
 planning task; the skill's description triggers it automatically. When Claude Code asks to approve the
 `tamheed` MCP server (per-server approval), say yes — it is the only write path into a package. To update
-later: `/plugin marketplace update tamheed`.
+later, see [Upgrading](#upgrading-an-installed-plugin) — refreshing the marketplace alone does not update the plugin.
 
 To try it before installing (no marketplace needed):
 
 ```text
 claude --plugin-dir ./plugins/tamheed
 ```
+
+## Upgrading an installed plugin
+
+Refreshing the marketplace only refreshes the catalog; the installed plugin is a second step, and
+the running MCP server keeps the old code until Claude Code restarts.
+
+```text
+claude plugin marketplace update tamheed
+claude plugin update tamheed@tamheed      # "restart required to apply"
+```
+
+(In a session: `/plugin marketplace update tamheed`, then `/plugin` → Installed → tamheed → update.)
+Restart Claude Code, then check `~/.claude/plugins/cache/tamheed/tamheed/<version>/` exists. If the
+tools are unreachable after the restart, run the self-test before diagnosing anything else — it
+registers the whole tool surface and exits 1 on failure:
+`uv run <that cache dir>/server/tamheed_server.py --selftest`.
+
+**Around the upgrade, in a repo that carries a package** (all through the MCP tools):
+
+1. *Before:* commit the package (that commit is the rollback), `package_close()` in whichever
+   session holds the lock — the store never guesses that a `data/.lock` is stale — and keep a
+   baseline of `gate_run()`, `readiness_check("package")` and `package_verify()`.
+2. *After:* `server_info()` names the new version. With no package open,
+   `package_migrate(name)` previews any registry sync or relocate; on a current store it answers
+   "nothing to migrate", which is the happy path. A MAJOR release says so in the CHANGELOG and
+   `package_open` refuses until the staged migration runs.
+3. `package_open(name)`, then `gate_run()` / `readiness_check("package")` — compare with the baseline.
+4. `handoff_emit(target_dir, refresh_stock=true)` — refreshes only the stock prompts you never
+   customised and re-renders the tool-owned note; customised prompts are listed with the release
+   their stock last changed, for a hand-merge. Never reach for `force` to get there.
+5. `export_html()` — `review.html` and `csv/` are derived and deterministic, so a release that
+   changes rendering shows up as a one-time diff if you track them (4.8.0: formula-shaped CSV
+   cells are quote-prefixed, ids order numerically). `data/*.jsonl` must not change from an idle
+   open and close; `package_verify()` confirms it.
 
 ## Claude Code — manual / standalone
 

@@ -10,6 +10,14 @@ All notable changes to Tamheed are documented here. The format is based on
 
 ## [Unreleased]
 
+### Changed
+
+- `docs/install.md` gains an **Upgrading** section: the marketplace refresh does not update the
+  installed plugin (`claude plugin update tamheed@tamheed` + restart does), and the sequence
+  around an upgrade in a repo that carries a package — close the lock holder, baseline, preview,
+  `handoff_emit(refresh_stock=true)`, the one-time churn to expect in tracked derived files
+  (written while preparing the ACMP 4.7.0 → 4.8.1 upgrade, 2026-09-20).
+
 ## [4.8.1] - 2026-09-12
 
 **PATCH — the post-release review: the specific waiver, CI on push, the docs sweep (plans
