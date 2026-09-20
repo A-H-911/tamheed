@@ -864,7 +864,9 @@ class McpContractTest(unittest.TestCase):
                           pkg_md.read_text(encoding="utf-8"))
             w = next(w for w in out["warnings"] if "imports the package note" in w)
             self.assertIn(str(pkg_md.resolve()), w)
-            self.assertNotIn("v1", w)
+            # "v1-era" is the v1 warning's own wording; a bare "v1" also matches random
+            # temp-dir names inside the full paths this warning prints (CI run 35537117338).
+            self.assertNotIn("v1-era", w)
             # a TRUE v1 note (heading, no markers, no import) still warns —
             # with the full path and without the stale "v2" wording
             root_md.write_text("# P\n\n## Tamheed progress tracking\n\nold table\n",

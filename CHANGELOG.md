@@ -10,6 +10,13 @@ All notable changes to Tamheed are documented here. The format is based on
 
 ## [Unreleased]
 
+### Fixed
+
+- A flaky assertion in `test_note_pointer_pattern_recognized`: it refused the substring `v1`
+  anywhere in a warning that prints full paths, so a random temp directory named
+  `tmpv174recz` failed one CI leg on a docs-only commit. It now refuses the v1 warning's own
+  wording (`v1-era`), which a temp name cannot contain.
+
 ### Changed
 
 - `docs/install.md` gains an **Upgrading** section: the marketplace refresh does not update the
