@@ -2685,6 +2685,31 @@ class V4EngineTest(unittest.TestCase):
         self.assertIsNone(srv.server_info()["package"])            # nothing open: null
         srv.package_open("demo")
 
+    def test_export_file_describes_itself_and_verify_answers_currency(self):
+        """Plan 067 (the field's export reader): `partial` lived on the tool's RETURN only,
+        so every consumer of the FILE re-derived it from count/total/next_after; and "is
+        this slate still current" was a human comparing two hex strings."""
+        short = srv.entity_export("defects.json", args={"type": "defect", "limit": 1})
+        env = json.loads(Path(short["path"]).read_text(encoding="utf-8"))["tamheed_export"]
+        self.assertEqual((env["count"], env["total"], env["partial"]), (1, 2, True))
+        full = srv.entity_export("defects.json", args={"type": "defect", "limit": 50})
+        first = Path(full["path"]).read_bytes()
+        env = json.loads(first)["tamheed_export"]
+        self.assertEqual((env["count"], env["total"], env["partial"]), (2, 2, False))
+        srv.entity_export("defects.json", args={"type": "defect", "limit": 50})
+        self.assertEqual(Path(full["path"]).read_bytes(), first)      # still deterministic
+        gates = srv.entity_export("gates.json", tool="gate_run")
+        genv = json.loads(Path(gates["path"]).read_text(encoding="utf-8"))["tamheed_export"]
+        self.assertNotIn("partial", genv)                              # not a row result
+        digest = env["digest"]
+        self.assertNotIn("matches_expected", srv.package_verify())     # only when asked
+        self.assertTrue(srv.package_verify(expect=digest)["matches_expected"])
+        self.assertTrue(srv.entity_upsert([{"type": "defect", "id": "DEF-090", "title": "x",
+                                            "severity": "low"}])["ok"])
+        stale = srv.package_verify(expect=digest)
+        self.assertFalse(stale["matches_expected"])                    # ANY write moves it
+        self.assertTrue(stale["verified"])                             # stale != damaged
+
     def test_package_unlock_reports_by_default_and_writes_nothing(self):
         """Plan 064 (findings_25 s1): the sanctioned route out of a dead holder's lock.
         The default call only REPORTS - the lock, what was observed, what confirm would do."""

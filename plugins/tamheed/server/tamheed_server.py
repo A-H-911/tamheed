@@ -638,7 +638,8 @@ def package_close() -> dict:
     return {"ok": True, "package": name}
 
 
-def package_verify(name: str | None = None, record: bool = False) -> dict:
+def package_verify(name: str | None = None, record: bool = False,
+                   expect: str | None = None) -> dict:
     """The integrity instrument, made a tool (findings_22 §5, plan 039): the canonical
     round-trip (CANONICAL.md — an idle open→close produces zero diff) is exercised
     ON DEMAND and reported per file, instead of being a property the operator must
@@ -688,6 +689,10 @@ def package_verify(name: str | None = None, record: bool = False) -> dict:
     digest = _canonical_digest(on_disk)
     report = {"ok": True, "package": name, "files": len(on_disk), "foreign": foreign,
               "digest": digest, "recorded": None}
+    if expect is not None:
+        # plan 067: "is this export/slate still current?" as a boolean. The digest is
+        # PACKAGE-wide, so ANY write since the export moves it - stale, not damaged.
+        report["matches_expected"] = digest == str(expect).strip()
     try:
         conn = store.load(data)
     except Exception as exc:  # the finding IS the report
@@ -826,6 +831,12 @@ def entity_export(path: str, tool: str = "entity_query", args: dict | None = Non
         "args": args, "digest": _canonical_digest(in_memory),
         "memory_matches_disk": in_memory == on_disk},
         "result": result}
+    if "count" in result and "total" in result:
+        # plan 067: the FILE says whether it is short - a reader should not have to
+        # re-derive it from count/total/next_after (still deterministic: no clock)
+        envelope["tamheed_export"].update({
+            "count": result["count"], "total": result["total"],
+            "partial": result["count"] < result["total"]})
     text = json.dumps(envelope, ensure_ascii=False, indent=1) + "\n"
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_text(text, encoding="utf-8", newline="\n")

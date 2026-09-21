@@ -30,6 +30,11 @@ All notable changes to Tamheed are documented here. The format is based on
   go/no-go ...), which no tool could read before; `server_info(detail=true)` adds
   `entity_types` (type, table, id prefix) and `relation_rules` (allowed endpoint types), so
   neither has to be learned from a refusal (findings_25 s3, plan 066).
+- An export FILE says whether it is short: the `tamheed_export` envelope carries `count`,
+  `total` and `partial` for row results (it was on the tool's return only, so every reader
+  re-derived it); still deterministic. `package_verify(expect=<digest>)` returns
+  `matches_expected`, so "is this slate still current" is a boolean, not two hex strings
+  compared by eye - a mismatch means stale, not damaged (plan 067).
 
 ### Fixed
 
