@@ -2646,6 +2646,106 @@ class V4EngineTest(unittest.TestCase):
             self.assertEqual({w["waiver"] for w in rule["waived"]}, {"WVR-010"})
             self.assertTrue({w["entity"] for w in rule["waived"]} >= {"DEF-010", "DEF-011"})
 
+    def _plant_lock(self, outcome, evidence="planted by the test"):
+        """A lock on `demo` plus a fixed observation (a real pid would flake)."""
+        srv.package_close()
+        lock = srv.PACKAGE_ROOT / "demo" / "data" / ".lock"
+        lock.write_text(json.dumps({"pid": 4242, "host": "test-host",
+                                    "taken_at": "2026-09-19T20:13:02+00:00"}),
+                        encoding="utf-8")
+        srv._observe_lock = lambda path: {"outcome": outcome, "evidence": evidence,
+                                          "pid": 4242, "host": "test-host",
+                                          "taken_at": "2026-09-19T20:13:02+00:00"}
+        self.addCleanup(setattr, srv, "_observe_lock", srv.store.observe_lock)
+        self.addCleanup(lambda: lock.exists() and lock.unlink())
+        return lock
+
+    def test_package_unlock_reports_by_default_and_writes_nothing(self):
+        """Plan 064 (findings_25 s1): the sanctioned route out of a dead holder's lock.
+        The default call only REPORTS - the lock, what was observed, what confirm would do."""
+        lock = self._plant_lock("not-running")
+        before = lock.read_bytes()
+        out = srv.package_unlock("demo")
+        self.assertTrue(out["ok"], out)
+        self.assertEqual(out["stage"], "report")
+        self.assertEqual(out["observed"], "not-running")
+        self.assertTrue(out["would_unlock"])
+        self.assertEqual(lock.read_bytes(), before)                 # nothing written
+        self.assertIsNone(srv.server_info()["open_package"])
+
+    def test_package_unlock_refuses_a_holder_it_cannot_prove_dead(self):
+        """`alive` AND `unobservable` both refuse: a lock the tool merely could not see
+        is exactly the guess the doctrine forbids. The manual path stays documented."""
+        for outcome in ("alive", "unobservable"):
+            lock = self._plant_lock(outcome)
+            self.assertFalse(srv.package_unlock("demo")["would_unlock"])
+            out = srv.package_unlock("demo", confirm=True)
+            self.assertFalse(out["ok"], out)
+            self.assertIn(outcome, out["error"])
+            self.assertTrue(lock.exists())                           # untouched
+
+    def test_package_unlock_removes_a_dead_holders_lock_and_journals_it(self):
+        for outcome in ("not-running", "reused"):
+            lock = self._plant_lock(outcome, evidence=f"evidence for {outcome}")
+            out = srv.package_unlock("demo", confirm=True)
+            self.assertTrue(out["ok"], out)
+            self.assertEqual(out["stage"], "unlocked")
+            self.assertFalse(lock.exists())
+            self.assertIsNone(srv.server_info()["open_package"])    # it closed itself
+            self.assertTrue(out["journaled"], out)
+            self.assertTrue(srv.package_open("demo")["ok"])
+            row = srv.entity_query("progress-entry", id=out["journal_id"])["rows"][0]
+            self.assertEqual(row["event_type"], "forced-override")
+            self.assertEqual(row["actor"], "system:package-unlock")
+            self.assertIn("4242", row["entry"])
+            self.assertIn(f"evidence for {outcome}", row["entry"])
+            self.assertTrue(srv.package_verify()["verified"])
+
+    def test_package_unlock_refuses_a_store_that_does_not_load(self):
+        """A writer that died mid-flush leaves data/ unloadable: unlocking would open a
+        broken store. Refuse, leave the lock, point at git."""
+        lock = self._plant_lock("not-running")
+        victim = srv.PACKAGE_ROOT / "demo" / "data" / "defects.jsonl"   # seeded by setUp
+        good = victim.read_bytes()
+        victim.write_bytes(good + b"{ this is not json\n")
+        try:
+            out = srv.package_unlock("demo", confirm=True)
+            self.assertFalse(out["ok"], out)
+            self.assertIn("does not load", out["error"])
+            self.assertTrue(lock.exists())
+        finally:
+            victim.write_bytes(good)
+
+    def test_package_unlock_never_removes_a_lock_it_did_not_observe(self):
+        """Between the observation and the removal a live writer may take the lock: the
+        tool removes only the exact bytes it judged."""
+        lock = self._plant_lock("not-running")
+        real_load = srv.store.load
+        def load_then_swap(path):                       # a writer arrives mid-check
+            lock.write_text('{"pid": 1, "host": "a-live-writer"}', encoding="utf-8")
+            return real_load(path)
+        srv.store.load = load_then_swap
+        self.addCleanup(setattr, srv.store, "load", real_load)
+        out = srv.package_unlock("demo", confirm=True)
+        self.assertFalse(out["ok"], out)
+        self.assertIn("changed while", out["error"])
+        self.assertIn("a-live-writer", lock.read_text(encoding="utf-8"))   # untouched
+
+    def test_package_unlock_edges(self):
+        self.assertFalse(srv.package_unlock("demo", confirm=True)["ok"])       # open HERE
+        srv.package_close()
+        out = srv.package_unlock("demo")
+        self.assertTrue(out["ok"]); self.assertFalse(out["locked"])            # no lock
+        self.assertFalse(srv.package_unlock("../demo")["ok"])                  # name guard
+        self.assertIn("package_unlock", srv.TOOLS)
+        refusal = srv.package_open("demo"); srv.package_close()
+        self.assertTrue(refusal["ok"])
+
+    def test_lock_refusals_name_the_sanctioned_route(self):
+        lock = self._plant_lock("not-running")
+        self.assertIn("package_unlock", srv.package_open("demo")["error"])
+        self.assertIn("package_unlock", srv.package_migrate("demo", confirm=True)["error"])
+
     def test_migrate_preview_runs_under_a_held_lock_and_confirm_still_refuses(self):
         """Plan 063 (findings_25 §1): the read-only preview mutates nothing, so it does
         not need the writer lock — the first tool a post-upgrade operator reaches for

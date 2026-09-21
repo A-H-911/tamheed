@@ -405,8 +405,9 @@ class PackageStore:
         except FileExistsError:
             raise StoreLockedError(
                 f"{lock_path} exists — another writer owns this package "
-                f"({_describe_lock(lock_path)}; remove the stale lock deliberately "
-                "if the writer crashed)"
+                f"({_describe_lock(lock_path)}). If the writer is gone, the server's "
+                "package_unlock(name) reports the holder and removes the lock only "
+                "on the operator's word"
             ) from None
         os.write(self._lock_fd, json.dumps({
             "pid": os.getpid(), "host": socket.gethostname(),

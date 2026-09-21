@@ -281,7 +281,8 @@ PE_EVENT_TYPES = frozenset({"work-done", "verdict-recorded", "transition",
 # beside the 58 server-appended ones: a vocabulary that never refuses a server-only
 # type lets a narrated "confirmed"/"verified" be journaled by hand (C7, new column).
 _SERVER_ONLY_EVENTS = {
-    "forced-override": "entity_upsert (the forced Implemented transition)",
+    "forced-override": "entity_upsert (the forced Implemented transition) and"
+                       " package_unlock (the forced lock removal)",
     "lesson-confirmed": "entity_upsert (the lesson confirm guard)",
     "lesson-promoted": "entity_upsert (the lesson confirm guard)",
     "integrity-verified": "package_verify(record=true)",
@@ -2692,7 +2693,9 @@ def package_migrate(name: str, confirm: bool = False) -> dict:
         try:
             fd = os.open(lock, os.O_CREAT | os.O_EXCL | os.O_WRONLY)
         except FileExistsError:
-            return _err(f"package '{name}' is locked ({store._describe_lock(lock)})")
+            return _err(f"package '{name}' is locked ({store._describe_lock(lock)})"
+                        " - package_unlock(name) reports the holder and is the"
+                        " sanctioned removal")
     try:
         # plan 035: a v4 store never re-migrates, but it CAN learn baseline entity
         # types added by later MINOR releases (extension.md's "registry-row write
@@ -2965,6 +2968,128 @@ def package_migrate(name: str, confirm: bool = False) -> dict:
             lock.unlink()
 
 
+# Plan 064: a seam, so a test (and the lab) can fix the observation - a real pid flakes.
+_observe_lock = store.observe_lock
+_UNLOCKABLE = ("not-running", "reused")
+
+
+def package_unlock(name: str, confirm: bool = False) -> dict:
+    """The sanctioned route out of a lock whose holder is gone (findings_25 s1, plan 064).
+
+    Default = REPORT: the lock's content, what the store OBSERVED about its holder
+    (`not-running` / `reused` / `alive` / `unobservable`, with the evidence), and
+    whether confirm would proceed. Nothing is written.
+
+    confirm=True is OPERATOR-WORDS-ONLY, like `force`: never call it on your own
+    judgment. It proceeds ONLY when the holder was observed `not-running` or `reused`;
+    `alive` and `unobservable` (another host or pid namespace, access denied, a legacy
+    or garbled lock, a platform that cannot report a start time) are REFUSED - a lock
+    the tool could not see is not a lock it may remove; that case stays a deliberate
+    manual removal. Before removing anything it proves the on-disk store LOADS (a
+    writer that died mid-flush leaves data/ broken: reconcile via git first). Then:
+    remove the lock, open the package, append ONE `forced-override` journal row
+    (actor system:package-unlock) naming the pid, host, taken_at and the observation,
+    close, and report the row id. A pre-v4 store cannot be opened, so its lock is
+    removed unjournaled and the result says so."""
+    if _CURRENT is not None:
+        return _err(f"package '{_CURRENT_NAME}' is open in THIS session -"
+                    " package_close releases its lock; package_unlock is for a lock"
+                    " whose holder is gone")
+    if err := _bad_name(name):
+        return err
+    pkg_dir = PACKAGE_ROOT / name
+    data = pkg_dir / "data"
+    if not data.exists():
+        return _err(f"package '{name}' not found under {PACKAGE_ROOT}")
+    lock = data / store.LOCK_NAME
+    if not lock.exists():
+        return {"ok": True, "package": name, "locked": False,
+                "note": "no lock - nothing to do"}
+    try:
+        snapshot = lock.read_bytes()      # the EXACT lock this verdict is about
+    except OSError as exc:
+        return _err(f"package '{name}': the lock could not be read ({exc}) - its"
+                    " holder may have it open; nothing was removed")
+    seen = _observe_lock(lock)
+    report = {"ok": True, "stage": "report", "package": name, "locked": True,
+              "lock": {k: seen.get(k) for k in ("pid", "host", "taken_at")},
+              "observed": seen["outcome"], "evidence": seen["evidence"],
+              "would_unlock": seen["outcome"] in _UNLOCKABLE}
+    if not confirm:
+        report["note"] = (
+            "nothing written. confirm=true removes the lock and journals it - on the"
+            " OPERATOR's word only." if report["would_unlock"] else
+            "nothing written. confirm=true would be REFUSED: the holder was not"
+            " observed dead. If you KNOW the writer is gone (another host, a container),"
+            " removing data/.lock by hand remains the deliberate manual path.")
+        return report
+    if not report["would_unlock"]:
+        return _err(f"package '{name}': the lock's holder was observed"
+                    f" `{seen['outcome']}` ({seen['evidence']}) - not removed. Only a"
+                    " holder observed not-running or reused is unlocked by this tool;"
+                    " a manual removal of data/.lock stays the deliberate path when YOU"
+                    " know what this host cannot see")
+    try:
+        stored = _stored_package_version(pkg_dir)
+    except ValueError as exc:
+        return _err(f"{exc} - the lock was left in place")
+    pre_v4 = stored is not None and not str(stored).startswith("4.")
+    if not pre_v4:
+        try:
+            store.load(data).close()
+        except Exception as exc:  # noqa: BLE001 - the finding IS the refusal
+            return _err(f"package '{name}' does not load ({exc}) - the lock was left in"
+                        " place. A writer that died mid-write leaves data/ broken:"
+                        " reconcile data/ via git first, then unlock")
+    # Remove ONLY the lock that was observed: if a live writer replaced it while the
+    # store was being checked, that lock is not ours to touch.
+    try:
+        if lock.read_bytes() != snapshot:
+            return _err(f"package '{name}': the lock changed while it was being"
+                        " examined - another writer took it; nothing was removed")
+        lock.unlink()
+    except OSError as exc:
+        return _err(f"package '{name}': the lock could not be removed ({exc}) -"
+                    " nothing else was changed")
+    out = {"ok": True, "stage": "unlocked", "package": name, "observed": seen["outcome"],
+           "evidence": seen["evidence"], "journaled": False, "journal_id": None}
+    if pre_v4:
+        out["note"] = (f"a v{stored} store cannot be opened by this server, so the removal"
+                       " is NOT journaled - run package_migrate next")
+        return out
+    opened = package_open(name)
+    if not opened.get("ok"):
+        out["note"] = f"lock removed, but the package did not open: {opened.get('error')}"
+        return out
+    try:
+        pe_id = _next_id("PE-", "progress_entries")
+        _CURRENT.conn.execute(
+            "INSERT INTO progress_entries (id, event_type, entry, actor, occurred_at)"
+            " VALUES (?, 'forced-override', ?, 'system:package-unlock', ?)",
+            # lock content is a file anyone with write access could garble: cap it
+            (pe_id, f"FORCED lock removal: data/.lock held by pid"
+                    f" {str(seen.get('pid'))[:40]} on {str(seen.get('host'))[:80]}"
+                    f" since {str(seen.get('taken_at'))[:40]} was observed"
+                    f" `{seen['outcome']}` - {str(seen['evidence'])[:300]} - and removed on the"
+                    " operator's word (package_unlock confirm=true)", _now()))
+        if (err := _commit()) is not None:
+            out["note"] = f"lock removed; the journal row was NOT written: {err['error']}"
+        else:
+            out.update({"journaled": True, "journal_id": pe_id})
+    finally:
+        try:                       # a failing close must not mask what already happened
+            closed = package_close()
+            if not closed.get("ok", True):
+                out["close_error"] = closed.get("error")
+        except Exception as exc:  # noqa: BLE001
+            out["close_error"] = str(exc)
+        if out.get("close_error"):
+            out["note"] = ("the lock was removed and journaled, but closing FAILED - this"
+                           " session may still hold the package open (and a fresh lock):"
+                           " run package_close() before anything else")
+    return out
+
+
 def package_adopt(source_dir: str, name: str | None = None, confirm: bool = False) -> dict:
     """Adopt a brownfield repository (staged: scan + dry report by default; confirm=True
     records — Proposed-only, code-provenanced, gap report first-class). See
@@ -3083,6 +3208,9 @@ TOOLS = {
     "server_info": (server_info, "Report server version, resolved package root, store state"),
     "package_create": (package_create, "Create a package under the package root (takes the lock)"),
     "package_open": (package_open, "Open an existing package (takes the single-writer lock)"),
+    "package_unlock": (package_unlock,
+                       "Report a lock's holder; confirm=true (operator words only) removes"
+                       " a lock whose holder was observed dead, and journals it"),
     "package_close": (package_close, "Write back canonical text and release the lock"),
     "entity_upsert": (entity_upsert, "Batch upsert entities in one transaction; per-item verdicts"),
     "entity_query": (entity_query, "Query one entity family with targeted columns"),

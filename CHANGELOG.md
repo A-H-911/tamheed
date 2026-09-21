@@ -18,6 +18,14 @@ All notable changes to Tamheed are documented here. The format is based on
   by identity, not by a bare liveness check; another host, a legacy lock or a process that
   cannot be inspected is `unobservable`, never assumed dead. Stdlib only; the server
   spawns nothing and signals nothing.
+- `package_unlock(name, confirm=false)` - the sanctioned route out of a dead holder's lock
+  (findings_25 s1, plan 064; 19 tools). The default call reports the lock and the
+  observation. `confirm=true` is operator-words-only, like `force`: it proceeds only when
+  the holder was observed `not-running` or `reused`, refuses on `alive` and `unobservable`,
+  proves the store loads first, removes only the exact lock it judged, and appends one
+  `forced-override` journal row. Lock refusals name the tool. The doctrine moves from "the
+  store never removes a lock" to "it observes, reports, and removes one only on the
+  operator's word, journaled".
 
 ### Fixed
 
