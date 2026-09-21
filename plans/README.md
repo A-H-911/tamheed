@@ -159,8 +159,8 @@ execution order is the row order below). Status values: PLANNED / IN PROGRESS / 
 | 081 | [A digest stamp makes a stale review page detectable](081-a-stale-review-page-is-detectable.md) | the field's "git clean ≠ artifacts current" | DONE — 2026-09-21, commit `6d877cf` |
 | 078 | [A completed hand-merge of a customised prompt is visible (declared marker)](078-a-completed-hand-merge-is-visible.md) | findings_26 | DONE `8cf9491` |
 | 082 | [Docs + diagrams sweep after code lands](082-docs-and-diagrams-sweep-findings-26.md) | 075–081 | DONE |
-| 083 | [Lab beat 17](083-lab-beat-17-findings-26.md) | 075–082 + acceptance (20/20 vs 0/20 on `v4.9.0`) | IN PROGRESS |
-| 084 | Release v4.10.0 | 083 | PLANNED |
+| 083 | [Lab beat 17](083-lab-beat-17-findings-26.md) | 075–082 + acceptance (20/20 vs 0/20 on `v4.9.0`) | DONE `4a0bbb9` — 12 new assertions, each failing on the pre-beat fixture; finding F-1 |
+| 084 | [Release v4.10.0](084-release-v4100.md) — plan-058 recipe + the fixture follows the stamp (F-1) | 083 | DONE — 2026-09-21, tag `v4.10.0` (SHA in the tag) |
 
 **Dependency notes (advisor plans).** 042 before 052 (a red matrix leg is unattributable
 until CI has run once). 043 before 051/053 (they edit the same function; 043 settles its

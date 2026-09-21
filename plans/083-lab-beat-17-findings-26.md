@@ -251,13 +251,13 @@ the tree while it runs). Then commit.
 
 ## Done criteria
 
-- [ ] `python evals/run_evals.py --results-dir evals/sample-results --case lab-tracker` → all pass
+- [x] `python evals/run_evals.py --results-dir evals/sample-results --case lab-tracker` → all pass
       (44 existing + the new assertions)
-- [ ] every new assertion exits non-zero against the Step 1 backup
-- [ ] `python check.py` → `ALL CHECKS PASSED`
-- [ ] `git status --short` shows only in-scope paths; no `data/.lock`
-- [ ] the fixture's `prompts/` holds no customised file (Step 8 ran on a copy)
-- [ ] the evidence report exists and every mechanism row says `observed` or states why not
+- [x] every new assertion exits non-zero against the Step 1 backup
+- [x] `python check.py` → `ALL CHECKS PASSED`
+- [x] `git status --short` shows only in-scope paths; no `data/.lock`
+- [x] the fixture's `prompts/` holds no customised file (Step 8 ran on a copy)
+- [x] the evidence report exists and every mechanism row says `observed` or states why not
 
 ## STOP conditions
 

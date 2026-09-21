@@ -10,6 +10,39 @@ All notable changes to Tamheed are documented here. The format is based on
 
 ## [Unreleased]
 
+## [4.10.0] - 2026-09-21
+
+**MINOR — the findings_26 batch: a supersession that completes itself, rules that never pass
+over nothing, writes that say what they changed (plans 075–083; field report findings_26 plus
+three plans held for it).** ACMP's upgrade to 4.9.0 came back with a lesson that kept binding
+every session after it had been "superseded". The batch plan's first answer — filter the note —
+was wrong, and a devil's-advocate review said so before any code: the sanctioned exit
+(`Approved → Superseded`) already worked; the field had set only the `superseded_by` pointer,
+the engine had accepted that half-finished state silently, and no document said the STATUS must
+change. **Lessons**: status stays the single truth for what binds. When the operator approves a
+lesson, the engine retires every binding lesson that points at it, in the same write, journaled
+and named in the result; the half-state gets a truthful hint, a tag in the always-loaded note
+and an advisory. And a hole nobody had reported is closed: binding a lesson needed the
+operator's word, unbinding one needed nothing. Now any move off a binding status, and any change
+to the pointer, is refused without `operator_confirm` — two reviewers found the two unattended
+routes (`Proposed`; a pre-set pointer) before commit. **Readiness**: by maintainer ruling no
+query-built rule passes over zero rows — it reads `indeterminate` — except where the family's
+omission is recorded, a deliberate zero that reads `pass` and says so; measured first at 17 of
+21 rules on a fresh package, and `ready` never moves. `prose-ids-resolve` reports what it
+skipped (`in_code_spans`) and what is not an id at all (`not_well_formed`) instead of going
+quiet; `waivers-open-ended` names blanket waivers with no expiry. **Writes and pages**: an
+update reports `changed_columns` with before/after text lengths, so a re-sent field that lost a
+paragraph is a number on the screen; `export_html` stamps the digest of the state it rendered
+and `package_verify` reports `review_current`. **Prompts**: a hand-merged customised prompt can
+declare its merge (`<!-- tamheed:stock-merged X.Y.Z -->`), reported as a claim, and stops
+lagging — the containment heuristic first designed was measured to fail on the field's own
+merged file. Dropped as speculative after review: `if_match` and row hashes (the store has a
+single-writer lock; there is no concurrent writer to be stale against). An acceptance script of
+twenty checks passes on this tree and fails, each for its own reason, on an extracted `v4.9.0`
+tree. Lab beat 17 fired the mechanisms against the recorded package, and every assertion it
+added was shown to fail against the pre-beat fixture. No schema migration, no new event type,
+19 tools.
+
 ### Added
 
 - A lesson supersession completes itself (findings_26 §3, plan 075): when the operator approves
@@ -67,6 +100,12 @@ All notable changes to Tamheed are documented here. The format is based on
   diagram in `docs/entities.md` with the automatic supersession edge. Corrected: the advisory
   count (eighteen at package scope, not sixteen), and 4.9.0's description of `search` as an
   "exact substring" — it is SQLite's default `LIKE`, case-insensitive for ASCII.
+- **The lab fixture follows the release stamp (finding F-1, plan 084).** A beat refreshes the
+  fixture's prompt guide before the release moves that file's version line and re-sets its
+  history key, which left the fixture holding a body NO key records — classified `customised`,
+  so `refresh_stock` would never touch it again. Lab-only (a field package refreshes after a
+  release). The release recipe now re-emits the fixture's guide by tool after the stamp,
+  refusing unless it is the only diverged file and differs by the version line alone.
 
 ## [4.9.0] - 2026-09-21
 

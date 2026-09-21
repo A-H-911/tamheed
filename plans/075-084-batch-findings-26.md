@@ -3,8 +3,8 @@
 > The approved batch plan, verbatim, after a devil's-advocate review. Each numbered plan gets
 > its own record before its code is written; this file is the map and the resume point.
 
-Status: **APPROVED by the maintainer 2026-09-21; executing** (per-plan status lives in the
-index rows). Produced from a full read of ACMP's
+Status: **EXECUTED 2026-09-21 — released as v4.10.0** (approved by the maintainer the same
+day; per-plan status lives in the index rows). Produced from a full read of ACMP's
 `findings_26.md`, read-only source inspection at `v4.9.0`, three read-only measurement scripts
 (writing only to temp directories), and two advisor passes. Both repos are untouched.
 
