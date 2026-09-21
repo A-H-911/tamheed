@@ -53,6 +53,12 @@ All notable changes to Tamheed are documented here. The format is based on
 
 ### Fixed
 
+- `export_html` leaves no orphan in `csv/` (findings_25 s2, plan 065): a CSV for a table
+  that became empty, or that a migration retired (the field carried `csv/prompts.csv` for
+  two months), is removed and reported under `csv.removed`. Only a regular file in the
+  PACKAGE's own `csv/` whose header proves the exporter wrote it is removed; anything else -
+  an operator's file, any file in a caller-chosen `output` directory, a symlink - is
+  reported under `csv.unowned` and never touched. `package_verify` gains `foreign_csv`.
 - A flaky assertion in `test_note_pointer_pattern_recognized`: it refused the substring `v1`
   anywhere in a warning that prints full paths, so a random temp directory named
   `tmpv174recz` failed one CI leg on a docs-only commit. It now refuses the v1 warning's own

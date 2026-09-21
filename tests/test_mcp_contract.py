@@ -2826,6 +2826,59 @@ class V4EngineTest(unittest.TestCase):
         for needle in ("Search finds candidates", "package_unlock", "omitted_columns"):
             self.assertIn(needle, orient, needle)
 
+    def test_csv_dir_is_exactly_what_export_html_emits(self):
+        """Plan 065 (findings_25 s2): a CSV for a table that no longer exists sat in a
+        tool-owned directory for two months, and `package_verify` could not see it. The
+        empty-table `continue` also meant ANY table that became empty kept a stale CSV
+        forever. The export removes only files its own header proves it wrote."""
+        self.assertTrue(srv.export_html()["ok"])
+        csv_dir = srv.PACKAGE_ROOT / "demo" / "csv"
+        self.assertTrue((csv_dir / "defects.csv").exists())
+        waiver_cols = [r[1] for r in srv._CURRENT.conn.execute("PRAGMA table_info(waivers)")]
+        (csv_dir / "waivers.csv").write_text(",".join(waiver_cols) + "\nWVR-001,x\n",
+                                             encoding="utf-8")     # its table is empty now
+        (csv_dir / "prompts.csv").write_text(
+            "id,prompt_kind,title,body,phase_id,custom_attributes,last_referenced\nPRM-1,k\n",
+            encoding="utf-8")                                       # a table that is gone
+        (csv_dir / "notes.csv").write_text("my,own\n1,2\n", encoding="utf-8")
+        conn = srv._CURRENT.conn
+        empty = next(t for t in sorted(set(srv.ENTITY_TABLES.values())) if t != "waivers"
+                     and conn.execute(f"SELECT COUNT(*) FROM {t}").fetchone()[0] == 0
+                     and "id" in [r[1] for r in conn.execute(f"PRAGMA table_info({t})")])
+        (csv_dir / f"{empty}.csv").write_text("my,own,columns\n1,2,3\n",
+                                              encoding="utf-8")    # OUR name, THEIR file
+        seen = srv.package_verify()
+        self.assertEqual(seen["foreign_csv"], ["notes.csv", "prompts.csv"])
+        self.assertTrue(seen["verified"])                           # reported, never flips it
+        out = srv.export_html()["csv"]
+        self.assertEqual(out["removed"], ["csv/prompts.csv", "csv/waivers.csv"])
+        self.assertEqual(out["unowned"], sorted([f"csv/{empty}.csv", "csv/notes.csv"]))
+        self.assertFalse((csv_dir / "waivers.csv").exists())
+        self.assertFalse((csv_dir / "prompts.csv").exists())
+        self.assertTrue((csv_dir / "notes.csv").exists())           # never touched
+        self.assertTrue((csv_dir / f"{empty}.csv").exists())
+        self.assertTrue((csv_dir / "defects.csv").exists())
+        again = srv.export_html()["csv"]
+        self.assertEqual((again["removed"], again["emitted"]), ([], []))   # settles
+        # a case-variant of a LIVE table's file is never the exporter's prey: on a
+        # case-insensitive filesystem it IS the file just emitted
+        (csv_dir / "defects.csv").rename(csv_dir / "Defects.CSV")
+        cased = srv.export_html()["csv"]
+        self.assertNotIn("csv/Defects.CSV", cased["removed"])
+        survivors = [q for q in csv_dir.iterdir() if q.name.lower() == "defects.csv"]
+        self.assertTrue(survivors and all(q.stat().st_size > 0 for q in survivors))
+        # a caller-chosen output directory is not the engine's: report, never delete
+        with tempfile.TemporaryDirectory() as elsewhere:
+            other = Path(elsewhere) / "csv"
+            other.mkdir()
+            (other / "waivers.csv").write_text(",".join(waiver_cols) + "\n",
+                                               encoding="utf-8")   # OUR header, THEIR dir
+            far = srv.export_html(output=str(Path(elsewhere) / "review.html"))
+            self.assertTrue(far["ok"], far)
+            self.assertEqual(far["csv"]["removed"], [])
+            self.assertIn("csv/waivers.csv", far["csv"]["unowned"])
+            self.assertTrue((other / "waivers.csv").exists())
+
     def test_package_unlock_reports_by_default_and_writes_nothing(self):
         """Plan 064 (findings_25 s1): the sanctioned route out of a dead holder's lock.
         The default call only REPORTS - the lock, what was observed, what confirm would do."""

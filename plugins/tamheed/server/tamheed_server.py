@@ -750,8 +750,14 @@ def package_verify(name: str | None = None, record: bool = False,
     foreign = sorted(p.name for p in data.iterdir()
                      if p.name not in on_disk and p.name != store.LOCK_NAME)
     digest = _canonical_digest(on_disk)
+    # Plan 065: csv/ is tool-owned and derived too - name what the exporter does not
+    # own there (reported like `foreign`; it never flips `verified`).
+    csv_dir = data.parent / "csv"
+    own_csv = {f"{t}.csv" for t in set(ENTITY_TABLES.values())}
+    foreign_csv = (sorted(p.name for p in csv_dir.iterdir() if p.name not in own_csv)
+                   if csv_dir.is_dir() else [])
     report = {"ok": True, "package": name, "files": len(on_disk), "foreign": foreign,
-              "digest": digest, "recorded": None}
+              "foreign_csv": foreign_csv, "digest": digest, "recorded": None}
     if expect is not None:
         # plan 067: "is this export/slate still current?" as a boolean. The digest is
         # PACKAGE-wide, so ANY write since the export moves it - stale, not damaged.
@@ -3257,6 +3263,13 @@ def package_adopt(source_dir: str, name: str | None = None, confirm: bool = Fals
 _CSV_TRIGGERS = ("=", "+", "-", "@", "\t", "\r")
 
 
+# Plan 065: tables past migrations converted away, whose derived CSV may survive in a
+# package (the field carried csv/prompts.csv for two months after 3.0.0).
+_RETIRED_CSV_HEADERS = {
+    "prompts.csv": "id,prompt_kind,title,body,phase_id,custom_attributes,last_referenced",
+}
+
+
 def _csv_safe(value):
     """Plan 050 (CWE-1236): a text cell that a spreadsheet would evaluate as a formula is
     prefixed with a quote — the standard neutralization. Numbers/NULLs pass through."""
@@ -3299,6 +3312,8 @@ def export_html(output: str | None = None) -> dict:
     conn = _CURRENT.conn
     csv_dir = path.parent / "csv"
     csv_out: dict[str, list[str]] = {"emitted": [], "unchanged": [], "diverged": []}
+    kept: set[str] = set()
+    headers: dict[str, str] = dict(_RETIRED_CSV_HEADERS)
     for table in sorted(set(ENTITY_TABLES.values())):
         cols = [r[1] for r in conn.execute(f"PRAGMA table_info({table})")]
         order = ("from_id, to_id, relation" if table == "trace_edges"
@@ -3306,14 +3321,54 @@ def export_html(output: str | None = None) -> dict:
                  else _NON_ID_TABLES.get(table, "id"))
         rows = conn.execute(
             f"SELECT {', '.join(cols)} FROM {table} ORDER BY {order}").fetchall()
+        head = io.StringIO()     # through the SAME writer that emits it: never a parallel join
+        _csv.writer(head, lineterminator="\n").writerow(cols)
+        headers[f"{table}.csv"] = head.getvalue().rstrip("\n")
         if not rows:
             continue
+        kept.add(f"{table}.csv")
         buf = io.StringIO()
         writer = _csv.writer(buf, lineterminator="\n")
         writer.writerow(cols)
         writer.writerows([tuple(_csv_safe(v) for v in row) for row in rows])
         status = _managed_emit(csv_dir / f"{table}.csv", buf.getvalue(), force=True)
         csv_out[status].append(f"csv/{table}.csv")
+    # Plan 065 (findings_25 s2): csv/ is DERIVED, so it must equal what was just
+    # emitted - a table that became empty, or that a migration retired, used to keep
+    # its CSV forever. Remove ONLY a file whose header proves this exporter wrote it;
+    # anything else is the operator's, reported and never touched.
+    csv_out.update({"removed": [], "unowned": []})
+    # Deletion is confined to the PACKAGE's own csv/: with a caller-chosen `output` the
+    # directory is not the engine's, so everything there is only reported.
+    own_dir = csv_dir.resolve() == (PACKAGE_ROOT / _CURRENT_NAME / "csv").resolve()
+    try:
+        present = (sorted(csv_dir.glob("*.csv"), key=lambda q: q.name)
+                   if csv_dir.is_dir() else [])
+    except OSError as exc:       # the export itself succeeded - never raise over cleanup
+        present = []
+        csv_out["cleanup_error"] = str(exc)
+    for stale in present:
+        # case-FOLDED: on a case-insensitive filesystem a pre-existing `Defects.CSV` is
+        # the very file just emitted as `defects.csv` - an exact-name test would miss it
+        # and the header match below would delete what was just written
+        if stale.name.lower() in kept:
+            continue
+        if not own_dir or stale.is_symlink() or not stale.is_file():
+            csv_out["unowned"].append(f"csv/{stale.name}")
+            continue
+        try:
+            with stale.open(encoding="utf-8", newline="") as fh:
+                first = fh.readline().rstrip("\r\n")
+        except (OSError, UnicodeDecodeError):
+            first = None
+        if first is not None and first == headers.get(stale.name.lower()):
+            try:
+                stale.unlink()
+                csv_out["removed"].append(f"csv/{stale.name}")
+                continue
+            except OSError:
+                pass
+        csv_out["unowned"].append(f"csv/{stale.name}")
     return {"ok": True, "path": str(path), "bytes": len(text.encode("utf-8")),
             "csv": csv_out}
 
