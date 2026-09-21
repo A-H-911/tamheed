@@ -61,6 +61,12 @@ All notable changes to Tamheed are documented here. The format is based on
   binding status, and any change to `superseded_by`, is refused without
   `"operator_confirm": true`. A Proposed lesson binds nothing and is still rejected freely; an
   upsert that omits those columns is never refused (plan 075).
+- **Docs and diagrams sweep (plan 082).** Every behavior of this batch is documented outside
+  its plan record: the server README rows, quality-gates, governance, handoff, SKILL,
+  SECURITY, the prompt guide (the `stock-merged` marker), and a new lesson-lifecycle state
+  diagram in `docs/entities.md` with the automatic supersession edge. Corrected: the advisory
+  count (eighteen at package scope, not sixteen), and 4.9.0's description of `search` as an
+  "exact substring" — it is SQLite's default `LIKE`, case-insensitive for ASCII.
 
 ## [4.9.0] - 2026-09-21
 

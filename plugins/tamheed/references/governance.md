@@ -106,7 +106,12 @@ doctrine), refuses any content drift on the transition (approval/promotion is no
 edit), and requires `confirmed_by` WITH the approval (attribution can never be added
 later); the server appends the typed `lesson-confirmed`/`lesson-promoted` journal event
 itself. Approved/Promoted lesson CONTENT is immutable — supersede, never edit; `pinned`,
-lifecycle transitions, and `superseded_by` stay operator-mutable. **Promoted** (v4.4) =
+lifecycle transitions, and `superseded_by` stay mutable ON THE OPERATOR'S WORD: STATUS is the
+single truth for what binds (the note and the `status="Approved"` query both read it), so a
+lesson is retired by its status becoming `Superseded` — `superseded_by` is only a pointer.
+The engine does that itself when the operator approves the successor; by hand, any move off a
+binding status and any change to the pointer needs `"operator_confirm": true` (v4.10).
+**Promoted** (v4.4) =
 distilled into a skill: Approved → Promoted only, `promoted_to` names the `SKL-` row
 (frozen once Promoted), and the lesson leaves the CLAUDE.md note render (full graduation
 — the skill file carries the content forward).

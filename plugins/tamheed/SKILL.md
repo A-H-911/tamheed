@@ -194,6 +194,9 @@ known set verbatim, `search` sweeps by keyword (the result says which column `ma
 `columns` projection says what it `omitted_columns`); never `data/*.jsonl` to dodge a payload cap.
 A refused `package_open` reports what the store observed about the lock's holder;
 `package_unlock` reports it on demand, and its `confirm=true` is the OPERATOR's word, never yours.
+After re-sending a long field, read the item's `changed_columns`: a length you did not intend
+is a lost paragraph. A lesson stops binding only when its STATUS leaves Approved/Promoted —
+on the operator's word, or by the engine when they approve its successor.
 `package_verify` proves the on-disk store canonical (per file, foreign files, a citable digest;
 `record=true` journals it as the server-appended `integrity-verified` event — the four
 server-witnessed journal kinds are refused from `progress_update`). Durable takeaways become

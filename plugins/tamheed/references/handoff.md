@@ -49,6 +49,10 @@ and `handoff_emit(target_dir)` wires the target project to the package (it copie
   its level. Skill names and levels pass the same G-INJECT screen as the lessons (a finding
   blocks the emit, naming the `SKL-` row), and a note-marker literal inside any rendered lesson
   or skill text is defused so the tool-owned span can never be truncated by its own content.
+  A lesson that is still Approved but points at a successor renders TAGGED — `superseded by
+  LL-NNN - pending its approval`, or `- RETIRE THIS ROW (operator)` once that successor is
+  approved — because a correct supersession keeps the old opening and the 180-character
+  window would otherwise show two identical lines.
 - **The readiness verdict** (Stage 22) — rendered from the gate report; the go/no-go.
 - The old separate handoff manifest is gone: entry point, go/no-go, and gated items live on the
   `packages` row; artifact membership is a view.

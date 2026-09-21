@@ -52,6 +52,11 @@ report a problem.
   and `unobservable`, proves the store loads first, removes only the exact bytes it judged,
   and journals the removal. "Operator's words only" is a convention, as with `force`: nothing
   mechanical tells an operator's word from an agent's (plan 064).
+- **What binds every session is retired on the operator's word too** — on an Approved or
+  Promoted lesson, any move off a binding status and any change to `superseded_by` is refused
+  without `operator_confirm`; the engine retires a lesson only inside the write where the
+  operator approves its successor, journaled. Two reviewers found the two ways an agent could
+  have unbound a lesson unattended (`Proposed`; a pre-set pointer); both are closed (plan 075).
 - **Approved-only lessons in the note** — the emitted `CLAUDE.md` note's Lessons section renders only
   operator-Approved `LL-` rows and is screened by the same G-INJECT patterns as emitted prompts
   (blocking); the store refuses to land a lesson in Approved/Promoted without the operator's explicit

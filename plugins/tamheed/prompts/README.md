@@ -14,7 +14,10 @@ file is a paste-ready prompt for a Claude Code session. Two kinds live here:
   refresh, silently and permanently — the emission warning names how far the stock
   has since moved (`stock_last_changed`); to carry a release's improvements into a
   customized copy, hand-merge: the bundled `stock-history.json` holds every
-  release's body, so extract the current one and diff against your copy.
+  release's body, so extract the current one and diff against your copy. When the merge
+  is done, say so IN the file — a line `<!-- tamheed:stock-merged X.Y.Z -->` naming the
+  release you merged — and the lag warning stops for that file (reported as your
+  declaration, never verified).
 - **Your project prompts** — any other filename. Operator-owned; tamheed never touches
   them. Name them by purpose, kebab-case (`kickoff.md`, `phase3-resume.md`). Files named
   `prm-NNN-<kind>.md` with a `<!-- converted … -->` header are legacy prompts converted

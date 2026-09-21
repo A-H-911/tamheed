@@ -58,7 +58,7 @@ three tiers (engine / judgment / warn) synced against this file in both directio
   (pre-approval decisions/ADRs, ACs not latest-Met, open critical/high defects — medium/low
   advise, undischarged risks, open work incl. the claimed-done `Review` state), waivers
   (operator-approved `WVR-` rows reported `waived`, never silent; expiring), advisory liveness
-  rules (sixteen at package scope — from overdue open questions through `lessons-confirmed` and
+  rules (eighteen at package scope, one of them only when the package has waivers — from overdue open questions through `lessons-confirmed` and
   `prose-ids-resolve`, the identifiers written in prose that resolve to no entity, to
   `lessons-note-budget`, which names the lessons rendering past the always-loaded note's
   curation ceiling as promotion candidates), and the `human_required` checklist from declared
@@ -71,8 +71,12 @@ three tiers (engine / judgment / warn) synced against this file in both directio
   that holds no rows of that kind read `indeterminate` with `discriminating: false` — an
   empty slice is not a ready slice, and the `Implemented` guard still trips only on `fail`.
   Every query-built rule also reports the `population` it measured (`table`, `rows`,
-  `scoped`): read it before trusting a green — `lessons-confirmed` on a package with no
-  lessons at all is `indeterminate`, not a pass.
+  `scoped`): read it before trusting a green. **No rule passes over nothing**: a rule whose
+  family holds zero rows reads `indeterminate` — unless the family's omission is RECORDED,
+  which makes the zero deliberate: the rule reads `pass` and carries `omitted`. So an empty
+  family is either explained or amber, never silently green. `prose-ids-resolve` fails only
+  on bare, well-formed phantoms; `in_code_spans` and `not_well_formed` are informational
+  lists beside it — its entity list is a floor, not a census.
 - Judgment gates: perform the check and record the verdict (a `progress-entry` note with the evidence).
 - Stage 19 runs everything; Stage 22 re-confirms criticals + `readiness_check("package")` for the
   readiness verdict.

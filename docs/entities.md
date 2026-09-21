@@ -1011,6 +1011,23 @@ written server-side; `package_verify` and its `integrity-verified` row; migratio
 
 #### lesson (`LL-`) — Continuous
 
+What BINDS is the status, never a pointer (v4.10): the always-loaded note and the
+`status="Approved"` query both read `lifecycle_status`, so a lesson stops binding only when it
+leaves `Approved`/`Promoted` — on the operator's word, or by the engine when the operator
+approves the lesson that supersedes it.
+
+```mermaid
+stateDiagram-v2
+    [*] --> Proposed : recorded by the agent - binds nothing
+    Proposed --> Approved : operator_confirm - binds every session
+    Proposed --> Rejected : free - it never bound
+    Approved --> Promoted : operator_confirm - distilled into a skill
+    Approved --> Superseded : the successor it points at is approved - engine, journaled
+    Approved --> Superseded : by hand - operator_confirm
+    Promoted --> Superseded : operator_confirm
+    Superseded --> Obsolete
+```
+
 | Column | Constraint | Meaning |
 |---|---|---|
 | `statement` | NOT NULL | The lesson itself |
