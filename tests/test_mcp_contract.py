@@ -1396,7 +1396,10 @@ class McpContractTest(unittest.TestCase):
         names the per-file acceptance path + force; refresh never touches it."""
         self._emit_ready()
         stock = srv.PACKAGE_ROOT / "demo" / "prompts" / "orient-resume.md"
-        edited = stock.read_text(encoding="utf-8") + "\ncustomised\n"
+        # plan 078: the customisation REWRITES a stock line - a file that merely appends
+        # to the current stock contains it whole and is, correctly, no longer "lagging"
+        lines = stock.read_text(encoding="utf-8").splitlines(keepends=True)
+        edited = "# our own orient-resume\n" + "".join(lines[1:]) + "\ncustomised\n"
         stock.write_text(edited, encoding="utf-8")
         with tempfile.TemporaryDirectory() as target:
             out = srv.handoff_emit(target, refresh_stock=True)
@@ -1514,6 +1517,41 @@ class McpContractTest(unittest.TestCase):
         self.assertIsNone(custom["prompts/orient-resume.md"])
         self.assertEqual(lib["refreshed"], [])
         self.assertEqual(stock.read_text(encoding="utf-8"), "anything\n")
+
+    def test_a_completed_hand_merge_is_visible(self):
+        """Plan 078 (findings_26): a customised prompt hand-merged to the current stock
+        still came back in `diverged_customized` with an unchanged warning - "nothing
+        records WHEN we merged". Two honest signals: the operator's DECLARED marker (a
+        claim, reported as one) and mechanical line-containment of the current stock. The
+        heuristic alone was measured to fail on the field's own merged file, whose
+        customisation rewrote stock lines; the marker covers exactly that case."""
+        self._emit_ready()
+        lib_dir = srv.PACKAGE_ROOT / "demo" / "prompts"
+        newest = sorted(json.loads((srv._PROMPTS_DIR / "stock-history.json")
+                                   .read_text(encoding="utf-8"))["integrity-check.md"],
+                        key=lambda v: tuple(int(x) for x in v.split(".")))[-1]
+        rewritten = lib_dir / "integrity-check.md"          # stock lines REWRITTEN + a marker
+        rewritten.write_text(f"# our own integrity check\n\n<!-- tamheed:stock-merged {newest} -->"
+                             "\n\nproject steps only\n", encoding="utf-8")
+        superset = lib_dir / "slice-review.md"              # stock kept whole + local lines
+        superset.write_text(superset.read_text(encoding="utf-8") + "\n## Ours\n\nlocal step\n",
+                            encoding="utf-8")
+        lagging = lib_dir / "orient-resume.md"              # rewritten, marker names an OLD release
+        lagging.write_text("# ours\n\n<!-- tamheed:stock-merged 3.0.0 -->\n\nsteps\n",
+                           encoding="utf-8")
+        with tempfile.TemporaryDirectory() as target:
+            out = srv.handoff_emit(target)
+        self.assertTrue(out["ok"], out)                     # the marker trips no screen
+        by = {e["file"]: e for e in out["prompt_library"]["diverged_customized"]}
+        self.assertEqual(by["prompts/integrity-check.md"]["stock_merged"], f"declared {newest}")
+        self.assertFalse(by["prompts/integrity-check.md"]["contains_current_stock"])
+        self.assertTrue(by["prompts/slice-review.md"]["contains_current_stock"])
+        self.assertIsNone(by["prompts/slice-review.md"]["stock_merged"])
+        self.assertEqual(by["prompts/orient-resume.md"]["stock_merged"], "declared 3.0.0")
+        lag = next(w for w in out["warnings"] if "CUSTOMISED" in w)
+        self.assertIn("orient-resume.md", lag)              # the only one still lagging
+        self.assertNotIn("integrity-check.md (", lag)
+        self.assertNotIn("slice-review.md (", lag)
 
     def test_stale_reference_report_is_precise(self):
         self._emit_ready()

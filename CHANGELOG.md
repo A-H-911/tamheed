@@ -20,6 +20,11 @@ All notable changes to Tamheed are documented here. The format is based on
   because only the pointer had been set, and nothing said so. New advisory
   `lessons-superseded-binding`; the note tags a still-binding row that points at a successor.
 
+- A completed hand-merge of a customised prompt is visible (findings_26, plan 078): each
+  `diverged_customized` entry reports `stock_merged` — `"declared X.Y.Z"` when the file carries
+  `<!-- tamheed:stock-merged X.Y.Z -->`, the operator's claim, reported as a claim — and
+  `contains_current_stock`. A file leaves the lag warning when either holds. Containment alone
+  was measured to fail on the field's own merged file, whose customisation rewrites stock lines.
 - A stale review page is detectable (plan 081): `export_html` stamps the package digest into
   `review.html`, and `package_verify` reports `review_current` — `true` / `false`, or `null`
   for a page with no stamp. The field's rule was "git clean ≠ package artifacts current", and a

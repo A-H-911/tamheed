@@ -2370,6 +2370,11 @@ def _load_stock_history() -> dict:
     return json.loads(path.read_text(encoding="utf-8"))
 
 
+# Plan 078: the line an operator adds to a customised stock prompt after hand-merging a
+# release's stock body into it. A CLAIM, reported as one - never a verification.
+_STOCK_MERGED_RE = re.compile(r"<!--\s*tamheed:stock-merged\s+(\d+\.\d+\.\d+)\s*-->")
+
+
 def _emit_prompt_library(pkg_dir: Path, name: str, force: bool = False,
                          refresh_stock: bool = False) -> dict:
     """Copy the bundled scenario prompts into <package>/prompts/ (C19; the library lives
@@ -2416,9 +2421,21 @@ def _emit_prompt_library(pkg_dir: Path, name: str, force: bool = False,
                 # whose stock body differs from all earlier ones (effectively when
                 # the stock last changed); None when the file has no history entry.
                 releases = sorted(history.get(src.name, {}), key=_vkey)
+                # Plan 078 (findings_26): a completed hand-merge warned exactly like a
+                # pending one. Two honest signals, neither a verification of the other:
+                # the operator's DECLARED marker (a claim, reported as one), and whether
+                # the file holds every line of the current stock in order. Measured: the
+                # containment test alone fails on a customisation that REWRITES stock
+                # lines, which is what the marker is for.
+                declared = _STOCK_MERGED_RE.search(on_disk)
+                rest = iter(on_disk.splitlines())
                 result["diverged_customized"].append(
                     {"file": rel,
-                     "stock_last_changed": releases[-1] if releases else None})
+                     "stock_last_changed": releases[-1] if releases else None,
+                     "stock_merged": f"declared {declared.group(1)}" if declared else None,
+                     "contains_current_stock": all(
+                         any(line == other for other in rest)
+                         for line in text.splitlines())})
         result[status].append(rel)
     return result
 
@@ -2725,9 +2742,13 @@ def handoff_emit(target_dir: str, subdir: str = "handoff", force: bool = False,
         # customization. Honest conditional — WHEN the operator customized is
         # unknowable (no sidecar, C20 memoryless emission), so this states the
         # stock's last change, not the customization's staleness.
+        # Plan 078: a file that DECLARES the current release merged, or that contains
+        # the current stock whole, is not lagging - it leaves the lag list.
         moved = ", ".join(
             f"{e['file'].removeprefix('prompts/')} ({e['stock_last_changed']})"
-            for e in custom if e["stock_last_changed"])
+            for e in custom if e["stock_last_changed"]
+            and not e.get("contains_current_stock")
+            and e.get("stock_merged") != f"declared {e['stock_last_changed']}")
         lag = (f"; stock last changed: {moved} — if a customization predates that"
                " release it lacks the update: hand-merge (the bundled"
                " stock-history.json carries every release's body)" if moved else "")
