@@ -53,5 +53,5 @@ and sort numerically; an in-between body is not a release).
 
 - [x] lints 4, 5, 8, 9 green inside `python check.py` -> `ALL CHECKS PASSED`
 - [x] the fixture's `prompts/README.md` byte-equals the released stock body; `diverged: []`
-- [ ] tag `v4.10.0` on the release commit; CI green on it
-- [ ] master record status -> EXECUTED; index rows 083, 084 DONE; memory updated
+- [x] tag `v4.10.0` on the release commit `4d08d74`; CI green on it (push run, 2026-09-21)
+- [x] master record status -> EXECUTED; index rows 083, 084 DONE; memory updated
