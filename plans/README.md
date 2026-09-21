@@ -140,8 +140,8 @@ Master record: [063-074-batch-findings-25.md](063-074-batch-findings-25.md) (the
 | 070 | [`prose-ids-resolve` advisory (measured false-positive gate)](070-prose-ids-resolve-advisory.md) | 069; phantom DEF-082 | DONE — 2026-09-21, commit `0a27713`; measured first: both field phantoms found, ~1 false hit per 1,000 rows |
 | 071 | [Stock prompts adopt the portable field rules (needle-pinned)](071-stock-prompts-adopt-field-rules.md) | 064, 066, 067 | DONE — 2026-09-21, commit `2e2d9e5`; two stale teachings removed from the prompt guide |
 | 065 | [`csv/` equals what `export_html` emits; `package_verify.foreign_csv`](065-csv-dir-equals-what-was-emitted.md) | findings_25 §2 | DONE — 2026-09-21, commit `a5d08d8`; security + Python reviewers before commit; lab fixture byte-identical on re-export |
-| 072 | [Docs + diagrams sweep after code lands](072-docs-and-diagrams-sweep.md) | 063–071 | IN PROGRESS |
-| 073 | Lab beat 16 | 063–072 + acceptance | PLANNED |
+| 072 | [Docs + diagrams sweep after code lands](072-docs-and-diagrams-sweep.md) | 063–071 | DONE — 2026-09-21, commit `b18fcee`; one wrong sequence diagram corrected, a lock-lifecycle state diagram added |
+| 073 | [Lab beat 16](073-lab-beat-16-findings-25.md) | 063–072 + acceptance | IN PROGRESS — acceptance pass 2026-09-21: a 20-check black-box script, 20/20 on the batch tree and 0/20 on the pre-batch tree (`dc4c5eb`), each pre-batch failure for its own reason; suites green under `PYTHONWARNINGS=error::DeprecationWarning`; `--selftest` 19/19; CI 9/9 through `b18fcee` |
 | 074 | Release v4.9.0 | 073 | PLANNED |
 
 **Dependency notes (advisor plans).** 042 before 052 (a red matrix leg is unattributable
