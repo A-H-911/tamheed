@@ -264,6 +264,58 @@ must fire; the resulting package replaces `evals/sample-results/lab-tracker/pack
       digest>)` → `matches_expected: false` — ANY write moves the package digest;
       `export_html`; `gate_run` ready; `package_verify()` green (`foreign_csv: []`);
       `package_close`; no `data/.lock` remains.
+17. **The findings_26 continuation (v4.10.0, plans 075–081)** — another INCREMENTAL
+    session against the recorded package. A lesson turns out false. Its correction is
+    recorded and the false lesson is pointed at it — and the engine SAYS the pointer
+    retires nothing: the false lesson still binds. The agent tries to retire it unattended
+    and is refused: what binds on the operator's word stops binding on it too. The
+    operator approves the correction, and the engine retires the false lesson in that same
+    write, journaled. Along the way a re-sent statement that lost its second paragraph
+    shows up as a number; a backticked phantom id is reported as inert rather than hidden;
+    the open-ended blanket waiver is named; a rule over an empty family reads
+    `indeterminate` until the omission is recorded, then `pass`; the review page says
+    whether it is current; and on a scratch copy a hand-merged prompt declares its merge
+    and stops lagging.
+    ✔ THE LOST PARAGRAPH (plan 080): a new `LL-` correction re-sent with its last
+      paragraph dropped → the item's `changed_columns` names `statement` with
+      `old_len` > `new_len`; re-sent in full it reverses, re-sent unchanged it is `[]`.
+    ✔ THE HALF-FINISHED SUPERSESSION (plan 075): the false lesson is Approved on the
+      operator's word; pointing it at its successor UNATTENDED is REFUSED for `pointing a
+      BINDING lesson at a successor`; with `operator_confirm` the pointer lands and the
+      `next` hint says the row `is still Approved, so it KEEPS BINDING`; the emitted
+      always-loaded note reads `superseded by <LL-NNN> - pending its approval`.
+    ✔ THE OPERATOR'S WORD, BOTH WAYS (plan 075): retiring the binding lesson UNATTENDED —
+      to `Superseded`, then to `Proposed` — is REFUSED both times for `retiring a lesson
+      that BINDS future sessions` (record the text); approving the successor on the
+      operator's word retires it in that same write (`superseded: [<LL-NNN>]`), journaled
+      as a `transition` by actor `system:lesson-supersession`.
+    ✔ THE BACKTICKED PHANTOM (plan 076): the beat-16 defect's title re-sent citing a
+      phantom id inside a code span → `prose-ids-resolve` lists it under `in_code_spans`
+      as `<id>.title -> RISK-808` while `entities` stays empty, the note saying the entity
+      list is a FLOOR. The title is LEFT as it is: the inert report is the point.
+    ✔ THE OPEN-ENDED WAIVER (plan 079): `waivers-open-ended` fails, advisory, naming
+      `WVR-002` — the whole-rule waiver with no expiry. It stays open-ended on purpose: a
+      dated expiry would become a time bomb in a fixture replayed for years.
+    ✔ NO RULE PASSES OVER NOTHING (plan 077): `deferred-work-reviewed` reads
+      `indeterminate`, `discriminating: false`, `population.rows: 0`, `measured nothing`;
+      recording the family's omission turns it `pass` carrying `omitted` with the reason,
+      and neither `gate_run`'s nor `readiness_check`'s `ready` moves. `hypotheses-measurable`
+      is LEFT `indeterminate` — one explained zero beside one amber zero is the contrast.
+    ✔ THE STALE REVIEW PAGE (plan 081): `package_verify()["review_current"]` is `null` on
+      the recorded page (it predates the stamp) and `true` after `export_html()`, whose
+      `review.html` carries `<meta name="tamheed-digest" …>`.
+    ✔ THE COMPLETED HAND-MERGE (plan 078) — on a SCRATCH COPY, never the fixture: two
+      prompts rewritten by hand, one declaring `<!-- tamheed:stock-merged <current> -->`
+      and one declaring `3.0.0` → both are `diverged_customized` with
+      `contains_current_stock: false`, and the `CUSTOMISED` warning's lag list names the
+      stale declaration only. The fixture's own prompts stay stock.
+    ✔ Close the beat with ONE `progress_update` note (actor `agent:lab-beat-17`,
+      `event_type: "note"`) quoting verbatim the `retiring a lesson that BINDS future
+      sessions` refusal, the `KEEPS BINDING` hint, the `changed_columns` length drop, the
+      `in_code_spans` entity string, `waivers-open-ended` naming `WVR-002`, `measured
+      nothing` and `omitted`, and the `review_current` values; then `export_html`;
+      `gate_run` ready; `package_verify()` green (`review_current: true`,
+      `foreign_csv: []`); `package_close`; no `data/.lock` remains.
 
 **Pass bar:** every ✔ observed; `gate_run` ready (or failing ONLY on deliberately-open
 items the scenario names); the eval runner's lab checks green. `readiness_check` is

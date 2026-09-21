@@ -1167,6 +1167,162 @@
             "prompt_kind"
           ],
           "expect_exit": 0
+        },
+        {
+          "check": "Approving the successor retired the false lesson (plan 075).",
+          "cmd": [
+            "python",
+            "evals/pkg_check.py",
+            "count",
+            "{case_dir}/package",
+            "lesson",
+            "--col",
+            "lifecycle_status=Superseded",
+            "--min",
+            "1"
+          ],
+          "expect_exit": 0
+        },
+        {
+          "check": "The engine journaled that retirement as its own transition (plan 075).",
+          "cmd": [
+            "python",
+            "evals/pkg_check.py",
+            "count",
+            "{case_dir}/package",
+            "progress-entry",
+            "--col",
+            "actor=system:lesson-supersession",
+            "--min",
+            "1"
+          ],
+          "expect_exit": 0
+        },
+        {
+          "check": "An unattended retirement was refused, and the note quotes the refusal (plan 075).",
+          "cmd": [
+            "python",
+            "evals/pkg_check.py",
+            "grep-present",
+            "{case_dir}/package",
+            "retiring a lesson that BINDS future sessions",
+            "--tables",
+            "progress_entries"
+          ],
+          "expect_exit": 0
+        },
+        {
+          "check": "The half-state hint said the pointer retires nothing (plan 075).",
+          "cmd": [
+            "python",
+            "evals/pkg_check.py",
+            "grep-present",
+            "{case_dir}/package",
+            "KEEPS BINDING",
+            "--tables",
+            "progress_entries"
+          ],
+          "expect_exit": 0
+        },
+        {
+          "check": "A lost paragraph was a number on the screen (plan 080).",
+          "cmd": [
+            "python",
+            "evals/pkg_check.py",
+            "grep-present",
+            "{case_dir}/package",
+            "changed_columns",
+            "--tables",
+            "progress_entries"
+          ],
+          "expect_exit": 0
+        },
+        {
+          "check": "The backticked phantom stays in the defect's prose, inert (plan 076).",
+          "cmd": [
+            "python",
+            "evals/pkg_check.py",
+            "grep-present",
+            "{case_dir}/package",
+            "`RISK-808`",
+            "--tables",
+            "defects"
+          ],
+          "expect_exit": 0
+        },
+        {
+          "check": "The note names it under in_code_spans (plan 076).",
+          "cmd": [
+            "python",
+            "evals/pkg_check.py",
+            "grep-present",
+            "{case_dir}/package",
+            "in_code_spans",
+            "--tables",
+            "progress_entries"
+          ],
+          "expect_exit": 0
+        },
+        {
+          "check": "The open-ended blanket waiver was named (plan 079).",
+          "cmd": [
+            "python",
+            "evals/pkg_check.py",
+            "grep-present",
+            "{case_dir}/package",
+            "waivers-open-ended",
+            "--tables",
+            "progress_entries"
+          ],
+          "expect_exit": 0
+        },
+        {
+          "check": "A rule over an empty family measured nothing, until the omission was recorded (plan 077).",
+          "cmd": [
+            "python",
+            "evals/pkg_check.py",
+            "grep-present",
+            "{case_dir}/package",
+            "measured nothing",
+            "--tables",
+            "progress_entries"
+          ],
+          "expect_exit": 0
+        },
+        {
+          "check": "The deliberate zero is a recorded omission (plan 077).",
+          "cmd": [
+            "python",
+            "evals/pkg_check.py",
+            "grep-present",
+            "{case_dir}/package",
+            "The lab tracker defers no work",
+            "--tables",
+            "omissions"
+          ],
+          "expect_exit": 0
+        },
+        {
+          "check": "The recorded review page carries the digest of the state it rendered (plan 081).",
+          "cmd": [
+            "python",
+            "evals/pkg_check.py",
+            "grep-file",
+            "{case_dir}/package/review.html",
+            "tamheed-digest"
+          ],
+          "expect_exit": 0
+        },
+        {
+          "check": "The fixture's prompt guide carries the 4.10.0 stock body (plan 078).",
+          "cmd": [
+            "python",
+            "evals/pkg_check.py",
+            "grep-file",
+            "{case_dir}/package/prompts/README.md",
+            "tamheed:stock-merged"
+          ],
+          "expect_exit": 0
         }
       ],
       "rubric": [

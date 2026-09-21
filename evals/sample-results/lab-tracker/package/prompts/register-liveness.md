@@ -59,7 +59,10 @@ is the only wrong answer.
     flow: fix, evidence-chained `audit_record`, status flip, `work_bind`). For ones
     worth carrying, propose a waiver to the operator — **waivers are operator-only:
     you NEVER author a `WVR-` row without their words** — or convert to
-    `deferred-work` with a trigger.
+    `deferred-work` with a trigger. If `waivers-open-ended` fires, it names whole-rule
+    waivers with no expiry: each keeps waiving rows written long after it was approved.
+    Show the operator what it absorbs today and ask for an `expires` date or a narrower
+    `applies_to` — their decision, never yours.
 11. **Deferred work** (`deferred-work-reviewed`): read each open `DW-`'s activation
     trigger against current reality. Fired → say so and point the operator at the
     replan-deferred prompt (activation is a scope decision, not yours). Not fired →
@@ -80,8 +83,13 @@ is the only wrong answer.
     (their attribution — it lands WITH the approval, never later), the pin decision,
     and `"operator_confirm": true` (their words are the flag; the server records the
     typed audit event itself); **Reject** (kept as evidence); or **refine** (upsert a
-    successor `LL-`, supersede the old — the transition write may change NOTHING
-    else, the guard refuses content drift). When several Approved lessons share a
+    successor `LL-` and point the old row at it with `superseded_by` — the transition
+    write may change NOTHING else, the guard refuses content drift). **The pointer
+    alone retires nothing: an Approved lesson keeps binding until its STATUS is
+    `Superseded`.** The engine sets that itself the moment the operator approves the
+    successor; retiring a binding lesson by hand is their word too
+    (`"operator_confirm": true`). `lessons-superseded-binding` names any Approved
+    lesson still binding beside an approved successor. When several Approved lessons share a
     theme, offer PROMOTION: point the operator at `skill-promote.md` — the
     distillation ceremony is its own interview. **STOP for the operator's words on
     every lesson — you never self-approve, mechanically.**

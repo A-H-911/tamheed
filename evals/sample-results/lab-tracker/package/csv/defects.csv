@@ -3,4 +3,4 @@ DEF-001,overdue() off-by-one: a task due TODAY is flagged OVERDUE (uses <= inste
 DEF-002,Flaky test: test_added_timestamp_is_now compares two wall-clock now() reads (fails across a second boundary) and never exercises tracker.add() at all,low,Fixed,SL-002,,,
 DEF-003,Help text typo: 'trakcer' instead of 'tracker' in tick --help output,low,Open,SL-002,,,
 DEF-004,'=SUM(A1) in the CSV header looks like a formula,low,Open,SL-002,,,
-DEF-005,export header drifts (see DEF-001),low,Open,SL-002,,,
+DEF-005,export header drifts (see DEF-001; mock id `RISK-808`),low,Open,SL-002,,,

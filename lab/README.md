@@ -31,8 +31,13 @@ whole-rule waiver, omission revision, CSV defusing, the note's skill screen; 16:
 findings_25 mechanisms — the dead holder's lock observed and unlocked, the live holder's
 refused, the legible reads (`server_info(detail)`, `omitted_columns`/`matched`, rule
 `population`), the phantom id caught by `prose-ids-resolve`, the partial export and its
-digest, the retired CSV removed, the stock prompts refreshed) run as
-incremental real-agent sessions against the recorded package — the fixture is regenerated
+digest, the retired CSV removed, the stock prompts refreshed; 17: the findings_26
+mechanisms — the lost paragraph reported as a length drop, the half-finished supersession
+that keeps binding, the two refused unattended retirements and the engine's own retirement
+on the operator's word, the backticked phantom reported inert, the open-ended blanket
+waiver named, the empty family that measured nothing until its omission was recorded, the
+review page that says whether it is current, the completed hand-merge that stops lagging)
+run as incremental real-agent sessions against the recorded package — the fixture is regenerated
 by continuation, not from scratch.
 
 ## The honesty limit (read this before citing the lab as proof)

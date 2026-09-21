@@ -1,1 +1,2 @@
+{"entity_type":"deferred-work","reason":"The lab tracker defers no work: every slice is in scope for its phase."}
 {"entity_type":"invariant","reason":"revised: invariants deferred to the export slice per DEC-002"}
