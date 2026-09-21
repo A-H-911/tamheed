@@ -305,6 +305,69 @@ _MARKER_RE = re.compile(r"\[NEEDS-CLARIFICATION(?::\s*([A-Za-z]+-\d+))?[^\]]*\]"
                         re.IGNORECASE)
 
 
+# Plan 070: identifiers written in PROSE. G-IDS checks foreign keys and the entity index;
+# nothing read a sentence that cites `DEF-082` when no such row exists (the field's phantom,
+# cited by three rows for weeks). Tables whose rows are append-only are exempt: a reference
+# nobody can repair must never hold a rule amber forever (the findings_21 trap).
+_PROSE_ID_EXEMPT_TABLES = frozenset({"progress_entries", "audit_verdicts"})
+_PROSE_ID_CAP = 50
+
+
+def _prose_id_pattern(conn) -> "re.Pattern[str]":
+    prefixes = {p for _, _, p, _ in BASELINE_ENTITY_TYPES if p} | {"NFR-", "SEC-"}
+    prefixes |= {r[0] for r in conn.execute(
+        "SELECT id_prefix FROM entity_types WHERE id_prefix IS NOT NULL") if r[0]}
+    alternation = "|".join(re.escape(p) for p in sorted(prefixes, key=len, reverse=True))
+    # a whole token: not the tail of a longer word, not the head of a longer number
+    return re.compile(r"(?<![A-Za-z0-9-])(?:" + alternation + r")\d+(?:\.\d+)*(?![A-Za-z0-9])")
+
+
+def _json_values(value):
+    """Scan VALUES, never keys: a custom_attributes key is a label, not a claim."""
+    if isinstance(value, dict):
+        for v in value.values():
+            yield from _json_values(v)
+    elif isinstance(value, list):
+        for v in value:
+            yield from _json_values(v)
+    elif isinstance(value, str):
+        yield value
+
+
+def _scan_prose_ids(conn) -> list[str]:
+    """`<row>.<column> -> <id>` for every identifier-shaped token in a live row's prose
+    that resolves to no entity. Code spans are example text; Superseded/Obsolete rows are
+    history; a row's own id is not a reference."""
+    known = {r[0] for r in conn.execute("SELECT id FROM entity_index")}
+    pattern = _prose_id_pattern(conn)
+    dangling = set()
+    for table in sorted(set(ENTITY_TABLES.values()) - _PROSE_ID_EXEMPT_TABLES):
+        info = list(conn.execute(f"PRAGMA table_info({table})"))
+        names = {r[1] for r in info}
+        if "id" not in names:
+            continue
+        text_cols = [r[1] for r in info if (r[2] or "").upper() == "TEXT" and r[1] != "id"]
+        if not text_cols:
+            continue
+        where = (" WHERE lifecycle_status NOT IN ('Superseded','Obsolete')"
+                 if "lifecycle_status" in names else "")
+        for row in conn.execute(f"SELECT id, {', '.join(text_cols)} FROM {table}{where}"):
+            for col, value in zip(text_cols, row[1:]):
+                if not value:
+                    continue
+                texts = [str(value)]
+                if col == "custom_attributes":
+                    try:
+                        texts = list(_json_values(json.loads(value)))
+                    except (TypeError, ValueError):
+                        pass
+                for text in texts:
+                    for m in pattern.finditer(_strip_code(text)):
+                        if m.group(0) not in known and m.group(0) != row[0]:
+                            dangling.add(f"{row[0]}.{col} -> {m.group(0)}")
+    return sorted(dangling)
+
+
 def _scan_markers(conn) -> list[dict]:
     """Every [NEEDS-CLARIFICATION…] marker in prose columns; `invalid` is None for a
     legal marker (cites an existing unresolved OQ), else the operator-facing reason."""
@@ -1778,6 +1841,15 @@ def _readiness_report(conn, scope: str, scope_id: str | None) -> dict:
         rule("clarifications-open", "advisory", markers,
              "open [NEEDS-CLARIFICATION: OQ-…] markers in prose fields — each cites a"
              " live OQ; resolve the OQ and remove the marker")
+        dangling = _scan_prose_ids(conn)
+        rule("prose-ids-resolve", "advisory", dangling[:_PROSE_ID_CAP],
+             "identifiers written in prose that resolve to NO entity (G-IDS checks"
+             " foreign keys and the index, never a sentence): correct the id, or"
+             " record the missing row; an immutable row is repaired by supersession."
+             " Code spans, the append-only journal and Superseded/Obsolete rows are"
+             " not scanned"
+             + (f" — showing {_PROSE_ID_CAP} of {len(dangling)}"
+                if len(dangling) > _PROSE_ID_CAP else ""))
         rule("lessons-confirmed", "advisory",
              ids("SELECT id FROM lessons WHERE lifecycle_status = 'Proposed'"),
              "lessons recorded by the executing agent awaiting the operator's"

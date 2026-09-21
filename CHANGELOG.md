@@ -44,6 +44,12 @@ All notable changes to Tamheed are documented here. The format is based on
 - Every readiness rule built from a query reports the `population` it measured (family,
   rows, and whether the count is scoped to the phase/slice) - a verdict without its
   denominator cannot be told from a rule that had no subject (plan 069).
+- `prose-ids-resolve`, a package-scope advisory (plan 070): identifiers written in PROSE
+  that resolve to no entity. `G-IDS` checks foreign keys and the index, never a sentence -
+  the field carried a phantom `DEF-082` cited by three rows for weeks. Measured before it
+  was built: it found both phantoms the field had documented by hand, at about one false
+  hit per 1,000 rows. Code spans, JSON keys, Superseded/Obsolete rows and the append-only
+  journal are not scanned. `register-liveness.md` teaches it (step 16).
 
 ### Fixed
 

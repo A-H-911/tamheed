@@ -2759,7 +2759,8 @@ class V4EngineTest(unittest.TestCase):
         self.assertEqual(rules["defects-closed"]["population"],
                          {"table": "defects", "rows": 2, "scoped": False})
         for name, entry in rules.items():
-            if name not in ("clarifications-open", "lessons-note-budget"):   # not query-built
+            if name not in ("clarifications-open", "lessons-note-budget",
+                            "prose-ids-resolve"):                        # not query-built
                 self.assertIn("population", entry, name)
                 self.assertIsInstance(entry["population"]["rows"], int, name)
         hollow = rules["lessons-confirmed"]
@@ -2775,6 +2776,34 @@ class V4EngineTest(unittest.TestCase):
         self.assertEqual(before["ready"], after["ready"])          # advisory: never blocks
         scoped = {r["rule"]: r for r in srv.readiness_check("slice", "SL-001")["rules"]}
         self.assertTrue(scoped["acs-met"]["population"]["scoped"])  # THIS slice's rows
+
+    def test_prose_ids_resolve_names_references_that_resolve_to_nothing(self):
+        """Plan 070 (the field's phantom DEF-082, cited by three rows while G-IDS stayed
+        green): G-IDS checks foreign keys and the index, never an identifier written in
+        PROSE. Advisory only. Code spans, the append-only journal and superseded rows are
+        exempt - a row nobody can fix must never hold a rule amber forever."""
+        def rule():
+            out = srv.readiness_check("package")
+            return out["ready"], {r["rule"]: r for r in out["rules"]}["prose-ids-resolve"]
+        ready_before, clean = rule()
+        self.assertEqual((clean["status"], clean["severity"], clean["entities"]),
+                         ("pass", "advisory", []))
+        self.assertTrue(srv.entity_upsert([{
+            "type": "defect", "id": "DEF-093", "severity": "low",
+            "title": "regressed by DEF-777 (see DEF-002; example id `DEF-888`)",
+            "custom_attributes": {"related": ["RISK-404"], "DEF-555": "a KEY is not a claim"},
+        }])["ok"])
+        srv.progress_update([{"entry": "history may cite a refused row like DEF-999",
+                              "event_type": "note", "actor": "agent:test"}])
+        ready_after, amber = rule()
+        self.assertEqual(amber["status"], "fail")
+        self.assertEqual(amber["entities"], ["DEF-093.custom_attributes -> RISK-404",
+                                             "DEF-093.title -> DEF-777"])
+        self.assertEqual(ready_before, ready_after)                 # advisory: never blocks
+        self.assertTrue(srv.entity_upsert([{
+            "type": "defect", "id": "DEF-093", "severity": "low",
+            "title": "regressed by DEF-002", "custom_attributes": {"related": []}}])["ok"])
+        self.assertEqual(rule()[1]["status"], "pass")               # fixing the text clears it
 
     def test_package_unlock_reports_by_default_and_writes_nothing(self):
         """Plan 064 (findings_25 s1): the sanctioned route out of a dead holder's lock.
@@ -3046,7 +3075,7 @@ class V4EngineTest(unittest.TestCase):
                           "acs-slice-bound", "defects-minor",
                           "deferred-work-reviewed", "execution-plans-approved",
                           "requirements-wired", "lessons-confirmed",
-                          "lessons-note-budget"):
+                          "lessons-note-budget", "prose-ids-resolve"):
             self.assertIn(rule_name, text, rule_name)
         self.assertIn("STOP for operator approval", text)
         self.assertIn("you NEVER author a `WVR-` row", text)
