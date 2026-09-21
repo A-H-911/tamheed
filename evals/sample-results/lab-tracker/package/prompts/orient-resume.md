@@ -7,11 +7,17 @@ Paste this to re-orient an agent on the `package` Tamheed package before any new
 Orient yourself on this project's Tamheed package before doing anything else:
 
 1. `server_info` — confirm the server version and the resolved package root.
-2. `package_open("package")` — take the single-writer lock.
+2. `package_open("package")` — take the single-writer lock. If it refuses, the refusal
+   says what the store observed about the holder; `package_unlock("package")` reports
+   it. Removing a dead holder's lock (`confirm=true`) is the OPERATOR's word, never yours.
 3. `gate_run()` — note the verdict, any failing gate, and any G-TRACE warning.
 4. The lessons: `entity_query("lesson", status="Approved")` — confirmed lessons
    bind this session too (a large register pages: pass the result's `next_after`
    back as `after_id`; never read `data/*.jsonl` to get around a payload cap).
+   **Search finds candidates; an exact read decides**: `search` matches every text
+   column (the result's `matched` says which), and a `columns` projection hides the
+   rest (`omitted_columns`) — project to enumerate, never to answer *what is the state
+   of X*.
    Recent state: `entity_query("progress-entry", limit=10)` and
    `entity_query("audit-verdict", limit=10)` — what was the last recorded activity?
 5. **Cross-check git against the package** (the package is the state; git is the

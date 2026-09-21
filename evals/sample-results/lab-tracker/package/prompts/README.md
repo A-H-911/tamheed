@@ -1,4 +1,4 @@
-# How to use this folder — the `package` prompt guide (tamheed v4.7.0)
+# How to use this folder — the `package` prompt guide (tamheed v4.8.1)
 
 This folder is the **single prompt surface** for the `package` Tamheed package. Every
 file is a paste-ready prompt for a Claude Code session. Two kinds live here:
@@ -73,12 +73,28 @@ defect spike, empty iterations, or any store error. You resolve, you restart.
 
 The package has a **single-writer lock** (`data/.lock`). Two sessions pasting prompts
 concurrently will collide: the second `package_open` refuses, naming the holder (pid,
-host, taken_at). After a crash or a plugin reload the refusal may be a **stale lock** —
-verify before clearing, with two discriminators: delete `data/.lock` when EITHER
-proves staleness — an **identity failure** (the named pid is not plausibly an agent
-session: pid reuse) or an **ordering failure** (the process started *after* the lock's
-`taken_at` — a process younger than the lock cannot hold it). Keep the lock only when
-BOTH checks pass. Never auto-clear; when unsure, ask the other session's operator.
+host, taken_at) **and what the store observed about it** — `not-running`, `reused`
+(the pid now belongs to another process), `alive`, or `unobservable`. After a crash or
+a plugin reload the holder is usually gone: `package_unlock("package")` reports the
+lock and the observation, and `confirm=true` removes it and journals the removal —
+**on the operator's words only**, and only for a holder observed dead. It refuses on
+`alive` and on `unobservable` (another host, a container, access denied): deleting
+`data/.lock` by hand stays the deliberate path for what this host cannot see.
+Never auto-clear; when unsure, ask the other session's operator.
+
+## Asking the operator
+
+When a decision is the operator's — a verdict, a waiver, `force`, `package_unlock`, a
+scope change, a lesson — START THE INTERVIEW; do not report a blocker and wait.
+
+1. **Do the homework first.** Never ask what the package or the repository already
+   answers: the operator should be deciding, not researching.
+2. **One decision per question**, in plain words, with a concrete example of what each
+   option means in practice.
+3. **Show the record with its id.** Quote what the row says — its text, severity,
+   status — beside its identifier. An id alone makes them fetch the record; content
+   alone makes the claim uncheckable. Every family: `DEF-`, `DEC-`, `ADR-`, `AC-`, `DW-`…
+4. **Ask every time.** An earlier answer is evidence about then, never consent for now.
 
 ## The standing rules
 
@@ -87,10 +103,12 @@ session, prompted or not: defects, deferred work, and scope changes are register
 BEFORE moving on; verdicts carry evidence and its chain (`verified_by`,
 `verification_method`, `against_commit`); done-claimed is `Review`, verified is
 `Implemented`; `readiness_check` runs before anything is declared done. Repairing a damaged
-field? Repair from `data/*.jsonl` (or the backup), never from `entity_query` output — a
-full-row upsert rebuilt from a truncated query round-trip re-commits the damage. PASTE a
+field? Build the payload from a read made FOR transmission — `entity_export` to a file,
+or an `entity_query` result taken whole (no field is ever truncated: `total` tells you
+about rows, `omitted_columns` about a projection) — never from a display, an excerpt or
+a summary: text that passed through a display is suspect wherever it came from. PASTE a
 generated repair payload, never re-type it (the hand is the untrusted transport), and end
-every multi-row repair with an independent verifier: re-read the JSONL and re-derive each
+every multi-row repair with an independent verifier: re-read through the tools and re-derive each
 expected value from its source before calling the repair done. When execution teaches
 something durable, record a `lesson` row (`LL-`, born Proposed) — only lessons the
 OPERATOR approves bind future sessions (rendered into the CLAUDE.md note, pinned first);

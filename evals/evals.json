@@ -1054,6 +1054,119 @@
             "progress_entries"
           ],
           "expect_exit": 0
+        },
+        {
+          "check": "A dead holder's lock was removed through the sanctioned tool and journaled (plan 064).",
+          "cmd": [
+            "python",
+            "evals/pkg_check.py",
+            "count",
+            "{case_dir}/package",
+            "progress-entry",
+            "--col",
+            "actor=system:package-unlock",
+            "--min",
+            "1"
+          ],
+          "expect_exit": 0
+        },
+        {
+          "check": "The unlock journal row is a typed forced-override naming the observation (plans 063-064).",
+          "cmd": [
+            "python",
+            "evals/pkg_check.py",
+            "grep-present",
+            "{case_dir}/package",
+            "FORCED lock removal",
+            "--tables",
+            "progress_entries"
+          ],
+          "expect_exit": 0
+        },
+        {
+          "check": "The beat's note quotes what the store OBSERVED about the dead holder (plan 063).",
+          "cmd": [
+            "python",
+            "evals/pkg_check.py",
+            "grep-present",
+            "{case_dir}/package",
+            "observed: ",
+            "--tables",
+            "progress_entries"
+          ],
+          "expect_exit": 0
+        },
+        {
+          "check": "A live holder's lock was refused, and the note says so (plan 064).",
+          "cmd": [
+            "python",
+            "evals/pkg_check.py",
+            "grep-present",
+            "{case_dir}/package",
+            "alive",
+            "--tables",
+            "progress_entries"
+          ],
+          "expect_exit": 0
+        },
+        {
+          "check": "The phantom id was caught and then corrected out of the defect's prose (plan 070).",
+          "cmd": [
+            "python",
+            "evals/pkg_check.py",
+            "grep-absent",
+            "{case_dir}/package",
+            "RISK-909",
+            "--tables",
+            "defects"
+          ],
+          "expect_exit": 0
+        },
+        {
+          "check": "The beat's note names the prose-ids-resolve finding (plan 070).",
+          "cmd": [
+            "python",
+            "evals/pkg_check.py",
+            "grep-present",
+            "{case_dir}/package",
+            "RISK-909",
+            "--tables",
+            "progress_entries"
+          ],
+          "expect_exit": 0
+        },
+        {
+          "check": "The export FILE says it is partial (plan 067).",
+          "cmd": [
+            "python",
+            "evals/pkg_check.py",
+            "grep-file",
+            "{case_dir}/package/exports/beat16-defects.json",
+            "\"partial\": true"
+          ],
+          "expect_exit": 0
+        },
+        {
+          "check": "The fixture's prompt guide carries the 4.9.0 stock body (plans 064, 071).",
+          "cmd": [
+            "python",
+            "evals/pkg_check.py",
+            "grep-file",
+            "{case_dir}/package/prompts/README.md",
+            "Show the record with its id"
+          ],
+          "expect_exit": 0
+        },
+        {
+          "check": "No orphan CSV survives in the fixture (plan 065).",
+          "cmd": [
+            "python",
+            "evals/pkg_check.py",
+            "grep-tree-absent",
+            "{case_dir}/package/csv",
+            "prompt_kind"
+          ],
+          "expect_exit": 0
         }
       ],
       "rubric": [

@@ -27,7 +27,11 @@ eval runner's checks), never byte-compared like the goldens. Later releases add
 + the server-only refusal, 13: the edge retire + the three-bucket audit split, 14: the
 `entity_export` read for committed scripts + the paste guard, 15: the advisor-audit
 mechanisms — stale-tree rollback, born-Implemented refusal + force, scoped indeterminate,
-whole-rule waiver, omission revision, CSV defusing, the note's skill screen) run as
+whole-rule waiver, omission revision, CSV defusing, the note's skill screen; 16: the
+findings_25 mechanisms — the dead holder's lock observed and unlocked, the live holder's
+refused, the legible reads (`server_info(detail)`, `omitted_columns`/`matched`, rule
+`population`), the phantom id caught by `prose-ids-resolve`, the partial export and its
+digest, the retired CSV removed, the stock prompts refreshed) run as
 incremental real-agent sessions against the recorded package — the fixture is regenerated
 by continuation, not from scratch.
 

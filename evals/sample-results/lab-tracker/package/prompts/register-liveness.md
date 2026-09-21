@@ -91,7 +91,14 @@ is the only wrong answer.
     operator: distil the shared themes into a skill (`skill-promote.md` — promoted
     lessons graduate out of the note) or unpin what no longer needs to bind every
     session. Pinning stays their choice; the rule only makes its cost visible.
-16. Close the sweep: `progress_update([{"entry": "liveness sweep: <per-family tally —
+16. **Dangling references** (`prose-ids-resolve`): identifiers written in PROSE that
+    resolve to no entity — `G-IDS` checks foreign keys and the index, never a sentence,
+    so a row can cite a `DEF-` that was never recorded and every gate stays green. For
+    each `<row>.<column> -> <id>`: correct the id if it is a slip, or record the missing
+    row if the reference is real. An immutable row (approved AC, ADR, lesson) is
+    repaired by supersession, never by an edit. Code spans, the append-only journal and
+    Superseded/Obsolete rows are not scanned — history may name what was refused.
+17. Close the sweep: `progress_update([{"entry": "liveness sweep: <per-family tally —
     resolved / carried / escalated / awaiting operator>", "event_type": "note",
     "actor": "agent:<session>"}])`, then `readiness_check("package")` again and report
     the advisory delta plus everything now awaiting operator words (promotions,

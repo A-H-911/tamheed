@@ -55,3 +55,14 @@ Run a read-only integrity check on the `package` Tamheed package:
    edge residue, narrated and ungraded verdicts, buried rulings, staleness, unbound
    commits, readiness blockers, repair-verification mismatches — then
    `package_close()`. Change NOTHING in this run.
+
+## What a green run does not prove
+
+**Every gate is row-level**: a row exists, its id is well-formed, its text is not a
+placeholder. None can see a column left empty, a field cut at a fixed length, or a
+value written into the wrong column of the right row — and `package_verify` proves the
+store is canonical, not that its content is true. So report, beside the verdicts: each
+readiness rule's `population` (a pass over zero rows measured nothing) and every
+`discriminating: false`; the `narrated` verdicts from `gate_run` (the graded party
+grading itself — list them); and `prose-ids-resolve`, the references that resolve to
+no row. **A vacuous pass is a finding, not a pass.**

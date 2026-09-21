@@ -223,12 +223,55 @@ must fire; the resulting package replaces `evals/sample-results/lab-tracker/pack
       fixture updated (data/ — now 27 files, the new `omissions.jsonl` among them —
       csv/, review.html); `package_verify()` green.
 
+16. **The findings_25 continuation (v4.9.0, plans 063–071)** — another INCREMENTAL
+    session against the recorded package, firing the nine new behaviors a lab can reach:
+    ✔ THE DEAD HOLDER (plans 063–064): with the package CLOSED, a CHILD process writes
+      `data/.lock` naming itself (`pid`, `host`, `taken_at`, `started`, `identity`) and
+      exits → `package_open` REFUSED and SAYS what it saw, `observed: not-running` (record
+      the text), naming `package_unlock`; the read-only `package_migrate("package")`
+      preview ANSWERS anyway, its "nothing to migrate" text carrying `read while locked`.
+    ✔ THE SANCTIONED ROUTE OUT (plan 064): `package_unlock("package")` → `stage: report`,
+      `would_unlock: true`, nothing written (the lock byte-unchanged); then, on the
+      operator's word, `confirm=True` → `stage: unlocked`, `journaled: true` and a
+      `forced-override` journal row (actor `system:package-unlock`) whose entry opens
+      `FORCED lock removal:` and names the pid, host, `taken_at` and the observation.
+    ✔ THE LIVE HOLDER (plan 064): a lock naming a RUNNING process → `confirm=True` REFUSED
+      naming `alive` (record the text); that lock is removed BY HAND — the deliberate path
+      the refusal itself points at.
+    ✔ THE LEGIBLE READS (plans 066, 068, 069): `server_info()` carries a `package` block;
+      `server_info(detail=True)` names every entity type and each relation's endpoints; a
+      `defect` query projected to `id`+`title` reports `omitted_columns`, and a `search`
+      reports `matched` — WHICH column each row matched in, `found_in` here, a column the
+      projection never returned; `readiness_check("package")` rules carry their
+      `population` (table, rows, scoped), so a pass over nothing is visible as such.
+    ✔ THE PHANTOM ID (plan 070): a new `DEF-` row whose title cites a `RISK-` that does not
+      exist → `readiness_check` advisory `prose-ids-resolve` names `<id>.title -> RISK-909`
+      and NOT the real `DEF-001` beside it; correcting the title clears the rule.
+    ✔ THE PARTIAL EXPORT (plan 067): `entity_export` of one row of a five-row family → the
+      FILE's `tamheed_export` envelope carries `count`, `total` and `"partial": true`; the
+      digest it cites, fed back as `package_verify(expect=…)`, reads `matches_expected: true`.
+    ✔ `csv/` (plan 065): a retired table's `csv/prompts.csv` and an operator's
+      `csv/operator-notes.csv`, both planted BY HAND → `package_verify()` names both under
+      `foreign_csv`; `export_html()` REMOVES the retired one and leaves the operator's file
+      alone as `unowned`.
+    ✔ THE STOCK PROMPTS (plan 071): `handoff_emit(refresh_stock=True)` into a SCRATCH
+      directory → `prompt_library.refreshed` names the five changed bodies
+      (`README.md`, `integrity-check.md`, `orient-resume.md`, `register-liveness.md`,
+      `replan-deferred.md`), with nothing `diverged`/customized to preserve.
+    ✔ Close the beat with ONE `progress_update` note (actor `agent:lab-beat-16`,
+      `event_type: "note"`) quoting verbatim the `observed: …` clause, the `alive` refusal
+      and the `prose-ids-resolve` entity string; then `package_verify(expect=<the export's
+      digest>)` → `matches_expected: false` — ANY write moves the package digest;
+      `export_html`; `gate_run` ready; `package_verify()` green (`foreign_csv: []`);
+      `package_close`; no `data/.lock` remains.
+
 **Pass bar:** every ✔ observed; `gate_run` ready (or failing ONLY on deliberately-open
 items the scenario names); the eval runner's lab checks green. `readiness_check` is
 expectedly NOT ready on the scenario's deliberately-open items (AC-003 and, since beat
 13, the ungraded export AC — AC-005 in the recorded fixture; LL-002; OQ-001 — whose
 `due_by` also trips `open-questions-overdue` by calendar and the `open-questions-resolved`
 / `clarifications-open` pair; the waived DEF-003 and, since beat 15, DEF-004 — the CSV-guard
-defect, open low, waived by `WVR-002`; `SL-003` is Implemented-by-force and deliberately empty,
+defect, open low, waived by `WVR-002`, which, being a WHOLE-rule waiver, also sweeps up beat
+16's DEF-005 — the phantom-id defect, open low; `SL-003` is Implemented-by-force and deliberately empty,
 so its scoped `acs-met`/`wbs-done` read `indeterminate` by design) — anything else failing
 there is a finding.
