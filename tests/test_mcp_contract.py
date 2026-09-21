@@ -2862,6 +2862,31 @@ class V4EngineTest(unittest.TestCase):
         for needle in ("Search finds candidates", "package_unlock", "omitted_columns"):
             self.assertIn(needle, orient, needle)
 
+    def test_a_write_says_what_it_changed(self):
+        """Plan 080 (the field's sharpest pain): upserts replace whole rows, so appending
+        one block to a long field meant re-sending all of it - and a re-send that silently
+        lost a paragraph returned `ok: true, applied: 1`. "Nothing in the result could have
+        revealed it." Now the result names every column the write changed, with the
+        before and after length of text, so a lost paragraph is a number on the screen."""
+        long = "paragraph one. " * 40 + "PARAGRAPH TWO. " * 40
+        base = {"type": "defect", "id": "DEF-095", "severity": "low", "title": long}
+        created = srv.entity_upsert([base])["items"][0]
+        self.assertTrue(created["ok"], created)
+        self.assertNotIn("changed_columns", created)                 # an insert changes nothing
+        flip = srv.entity_upsert([dict(base, lifecycle_status="In-progress")])["items"][0]
+        self.assertEqual(flip["changed_columns"],
+                         [{"column": "lifecycle_status", "old_len": 4, "new_len": 11}])
+        lossy = srv.entity_upsert([dict(base, lifecycle_status="In-progress",
+                                        title=long[:600])])["items"][0]
+        self.assertEqual(lossy["changed_columns"],
+                         [{"column": "title", "old_len": len(long), "new_len": 600}])
+        same = srv.entity_upsert([dict(base, lifecycle_status="In-progress",
+                                       title=long[:600])])["items"][0]
+        self.assertEqual(same["changed_columns"], [])                # identical re-send
+        blob = srv.entity_upsert([dict(base, lifecycle_status="In-progress", title=long[:600],
+                                       custom_attributes={"k": "v"})])["items"][0]
+        self.assertEqual([c["column"] for c in blob["changed_columns"]], ["custom_attributes"])
+
     def test_open_ended_blanket_waivers_are_named(self):
         """Plan 079 (lab beat 16's observation): a whole-rule waiver with no expiry keeps
         absorbing rows written long after the operator approved it. The advisory names

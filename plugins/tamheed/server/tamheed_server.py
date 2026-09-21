@@ -475,6 +475,27 @@ def _columns(table: str) -> list[str]:
     return [r[1] for r in _CURRENT.conn.execute(f"PRAGMA table_info({table})")]
 
 
+def _changed_columns(names: list, cols: dict, before: dict, key: str) -> list[dict]:
+    """Plan 080: what an UPDATE actually changed, with the before/after length of text.
+    Upserts replace whole rows, so a re-sent long field that silently lost a paragraph
+    used to return `ok` with nothing to reveal it; a length drop on the screen does.
+    JSON columns compare as PARSED values, exactly as `expect_unchanged` does: a blob
+    re-sent with different key order or spacing is "unchanged" here although its stored
+    text is rewritten in canonical form - a change of meaning is what is reported."""
+    changed = []
+    for c in names:
+        if c == key or _same_value(cols[c], before.get(c)):
+            continue
+        item: dict = {"column": c}
+        old, new = before.get(c), cols[c]
+        if isinstance(new, (dict, list)):
+            new = json.dumps(new, ensure_ascii=False)
+        if (old is None or isinstance(old, str)) and (new is None or isinstance(new, str)):
+            item.update({"old_len": len(old or ""), "new_len": len(new or "")})
+        changed.append(item)
+    return changed
+
+
 def _same_value(incoming, stored) -> bool:
     """expect_unchanged's equality (plan 041): JSON columns compare as PARSED values
     (a caller-supplied JSON string may differ in spacing from the bound form);
@@ -1226,6 +1247,7 @@ def entity_upsert(entities: list[dict]) -> dict:
                 results.append({"index": i, "ok": False, "id": None, "error": msg})
                 failed = True
                 continue
+        before_row = None
         if etype == "trace-edge":
             sql = (f"INSERT OR IGNORE INTO {table} ({', '.join(names)})"
                    f" VALUES ({', '.join('?' for _ in names)})")
@@ -1242,6 +1264,10 @@ def entity_upsert(entities: list[dict]) -> dict:
             sql = (f"INSERT INTO {table} ({', '.join(names)})"
                    f" VALUES ({', '.join('?' for _ in names)})"
                    + (f" ON CONFLICT({key}) DO UPDATE SET {updates}" if updates else ""))
+            if cols.get(key) is not None:           # plan 080: the pre-image of an UPDATE
+                got = conn.execute(f"SELECT {', '.join(names)} FROM {table}"
+                                   f" WHERE {key} = ?", (cols[key],)).fetchone()
+                before_row = dict(zip(names, got)) if got else None
         conn.execute(f"SAVEPOINT item{i}")
         try:
             cur = conn.execute(sql, [json.dumps(v, ensure_ascii=False)
@@ -1267,6 +1293,8 @@ def entity_upsert(entities: list[dict]) -> dict:
                     failed = True
             else:
                 res = {"index": i, "ok": True, "id": cols.get("id")}
+                if before_row is not None:
+                    res["changed_columns"] = _changed_columns(names, cols, before_row, key)
                 if etype == "lesson" and (
                         cols.get("lifecycle_status") in ("Approved", "Promoted")):
                     # Plan 068 (the field's DEF-107): binding is not rendering

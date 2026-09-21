@@ -20,6 +20,11 @@ All notable changes to Tamheed are documented here. The format is based on
   because only the pointer had been set, and nothing said so. New advisory
   `lessons-superseded-binding`; the note tags a still-binding row that points at a successor.
 
+- A write says what it changed (plan 080): an UPDATE's per-item result carries
+  `changed_columns`, each with `old_len` / `new_len` for text. Upserts replace whole rows, and
+  the field once re-sent a 4,296-character field missing a paragraph and got `ok` back with
+  nothing to reveal it; a length drop on the screen does. An insert carries no list, an
+  identical re-send `[]`. JSON columns compare as parsed values, as `expect_unchanged` does.
 - `waivers-open-ended`, a package advisory (lab beat 16's observation, plan 079): whole-rule
   waivers with no expiry, which keep waiving rows written long after the operator approved
   them. Emitted only when the package has waivers at all — "no waivers" is the healthy state,
