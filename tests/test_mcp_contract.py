@@ -2748,6 +2748,34 @@ class V4EngineTest(unittest.TestCase):
                                     "severity": "low"}])
         self.assertNotIn("next", other["items"][0])                # lessons only
 
+    def test_every_readiness_rule_reports_the_population_it_measured(self):
+        """Plan 069 (the field's "a green lessons-confirmed can mean NOTHING WAS
+        RECORDED"): a verdict without its denominator cannot be told from a rule that had
+        no subject. Every query-built rule reports the family it measured and how many
+        rows that was; `lessons-confirmed` on a package with no lessons at all reads
+        `indeterminate`, never a hollow pass. `ready` is untouched (never blocks)."""
+        before = srv.readiness_check("package")
+        rules = {r["rule"]: r for r in before["rules"]}
+        self.assertEqual(rules["defects-closed"]["population"],
+                         {"table": "defects", "rows": 2, "scoped": False})
+        for name, entry in rules.items():
+            if name not in ("clarifications-open", "lessons-note-budget"):   # not query-built
+                self.assertIn("population", entry, name)
+                self.assertIsInstance(entry["population"]["rows"], int, name)
+        hollow = rules["lessons-confirmed"]
+        self.assertEqual(hollow["population"]["rows"], 0)
+        self.assertEqual(hollow["status"], "indeterminate")
+        self.assertFalse(hollow["discriminating"])
+        self.assertIn("no lesson", hollow["note"])
+        srv.entity_upsert([{"type": "lesson", "id": "LL-001", "title": "t",
+                            "statement": "s", "kind": "improve"}])
+        after = srv.readiness_check("package")
+        real = {r["rule"]: r for r in after["rules"]}["lessons-confirmed"]
+        self.assertEqual((real["status"], real["population"]["rows"]), ("fail", 1))
+        self.assertEqual(before["ready"], after["ready"])          # advisory: never blocks
+        scoped = {r["rule"]: r for r in srv.readiness_check("slice", "SL-001")["rules"]}
+        self.assertTrue(scoped["acs-met"]["population"]["scoped"])  # THIS slice's rows
+
     def test_package_unlock_reports_by_default_and_writes_nothing(self):
         """Plan 064 (findings_25 s1): the sanctioned route out of a dead holder's lock.
         The default call only REPORTS - the lock, what was observed, what confirm would do."""

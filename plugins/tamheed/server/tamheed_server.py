@@ -1548,11 +1548,32 @@ def _readiness_report(conn, scope: str, scope_id: str | None) -> dict:
         else:
             waivers.setdefault(wrule, []).append((wid, applies))
 
+    # Plan 069: what the last ids() query measured - the family, and (when a scoped
+    # empty_note ran) the candidate rows in THIS scope. rule() reports it as the
+    # denominator only when its entities ARE that query's result.
+    measured: dict = {"list": None, "table": None, "rows": None}
+
     def rule(name: str, severity: str, entities: list, note: str,
-             na: str | None = None, extra: str | None = None) -> None:
+             na: str | None = None, extra: str | None = None,
+             empty_is_indeterminate: str | None = None) -> None:
         entry = {"rule": name, "severity": severity,
                  "status": "fail" if entities else "pass",
                  "entities": entities, "note": note + (na or "") + (extra or "")}
+        if entities is measured["list"] and measured["table"]:
+            rows_n = measured["rows"]
+            scoped = rows_n is not None
+            if not scoped:
+                (rows_n,) = conn.execute(
+                    f"SELECT COUNT(*) FROM {measured['table']}").fetchone()
+            entry["population"] = {"table": measured["table"], "rows": rows_n,
+                                   "scoped": scoped}
+            if empty_is_indeterminate and rows_n == 0 and not entities:
+                # C35/N3: nothing was recorded, so nothing was adjudicated - the
+                # pass bit cannot tell the two apart; the denominator can.
+                entry["status"] = "indeterminate"
+                entry["discriminating"] = False
+                entry["note"] += empty_is_indeterminate
+        measured.update({"list": None, "table": None, "rows": None})
         if entities and name in waivers:
             waived, remaining = [], []
             whole_rule = [wid for wid, applies in waivers[name] if applies is None]
@@ -1587,7 +1608,11 @@ def _readiness_report(conn, scope: str, scope_id: str | None) -> dict:
         rules.append(entry)
 
     def ids(sql: str, params: tuple = ()) -> list:
-        return [r[0] for r in conn.execute(sql, params)]
+        found = [r[0] for r in conn.execute(sql, params)]
+        table = re.search(r"\bFROM\s+([a-z_]+)", sql)   # our own literal SQL
+        measured.update({"list": found, "table": table.group(1) if table else None,
+                         "rows": None})
+        return found
 
     def na_note(table: str, column: str) -> str | None:
         total, populated = conn.execute(
@@ -1601,6 +1626,7 @@ def _readiness_report(conn, scope: str, scope_id: str | None) -> dict:
         """Plan 049: a scoped rule with NO candidate rows measured nothing — the
         C35/N3 hollow-pass doctrine, applied to phase/slice scope."""
         (n,) = conn.execute(sql, params).fetchone()
+        measured["rows"] = n      # plan 069: the scoped denominator for this rule
         if n == 0:
             return f" — no {what} in this scope; this rule cannot discriminate ({how})"
         return None
@@ -1756,7 +1782,10 @@ def _readiness_report(conn, scope: str, scope_id: str | None) -> dict:
              ids("SELECT id FROM lessons WHERE lifecycle_status = 'Proposed'"),
              "lessons recorded by the executing agent awaiting the operator's"
              " interview — confirm (Approve + optionally pin), reject, or refine by"
-             " supersession; ONLY Approved lessons bind future sessions")
+             " supersession; ONLY Approved lessons bind future sessions",
+             empty_is_indeterminate=" — no lesson has been recorded at all, so this"
+             " rule adjudicated nothing (a session that learned nothing and one that"
+             " recorded nothing look the same here)")
         # Plan 039 (the ACMP register: 57 Approved lessons, 48 pinned, 0 promoted —
         # 57 lines in the always-loaded note): pinning bypasses the cap by design,
         # so the cost of a pin is made visible instead. Entities = the rows that

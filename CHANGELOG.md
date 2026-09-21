@@ -41,6 +41,9 @@ All notable changes to Tamheed are documented here. The format is based on
   a hit in an unprojected column used to read as a fuzzy match). A lesson landing
   `Approved`/`Promoted` carries a `next` hint: the always-loaded note is rebuilt only by
   `handoff_emit`. Top-level keys only; row dicts are unchanged.
+- Every readiness rule built from a query reports the `population` it measured (family,
+  rows, and whether the count is scoped to the phase/slice) - a verdict without its
+  denominator cannot be told from a rule that had no subject (plan 069).
 
 ### Fixed
 
@@ -51,6 +54,9 @@ All notable changes to Tamheed are documented here. The format is based on
 
 ### Changed
 
+- `lessons-confirmed` reads `indeterminate` (never a hollow pass) on a package that holds no
+  lesson at all: a session that learned nothing and one that recorded nothing looked the
+  same. Advisory, so `ready` is unchanged (plan 069).
 - `package_migrate`'s read-only preview no longer takes the writer lock: it diagnoses
   before it refuses, and says when it read under a held lock; `confirm=true` still needs
   the lock (findings_25 s1, plan 063).
