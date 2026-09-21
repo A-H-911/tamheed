@@ -2660,6 +2660,31 @@ class V4EngineTest(unittest.TestCase):
         self.addCleanup(lambda: lock.exists() and lock.unlink())
         return lock
 
+    def test_server_info_reports_the_package_row_and_detail_lists_the_vocabulary(self):
+        """Plan 066 (findings_25 s3): the stored package row was reachable through NO tool
+        - `packages` is not an entity family - so under an MCP-exclusive read rule the
+        stored name was unverifiable. `detail=true` adds the vocabulary a client otherwise
+        learns only from an error message: the entity types and the relation rules."""
+        info = srv.server_info()
+        self.assertEqual(info["package"]["name"], "demo")
+        for key in ("title", "profile", "mode", "iteration", "package_version", "go_no_go"):
+            self.assertIn(key, info["package"])
+        self.assertNotIn("entity_types", info)                     # lean by default
+        self.assertNotIn("relation_rules", info)
+        detail = srv.server_info(detail=True)
+        types = {t["type"]: t for t in detail["entity_types"]}
+        self.assertEqual(set(types), set(srv.ENTITY_TABLES))       # every queryable family
+        self.assertEqual(types["defect"]["table"], "defects")
+        self.assertEqual(types["defect"]["id_prefix"], "DEF-")
+        rules = detail["relation_rules"]
+        self.assertEqual(set(rules), set(srv.RELATION_RULES))
+        self.assertIn("risk", rules["mitigates"]["to"])
+        self.assertEqual(rules["supersedes"], {"from": "SAME_TYPE", "to": "SAME_TYPE"})
+        self.assertEqual(json.loads(json.dumps(detail)), detail)   # plain JSON, no sets
+        srv.package_close()
+        self.assertIsNone(srv.server_info()["package"])            # nothing open: null
+        srv.package_open("demo")
+
     def test_package_unlock_reports_by_default_and_writes_nothing(self):
         """Plan 064 (findings_25 s1): the sanctioned route out of a dead holder's lock.
         The default call only REPORTS - the lock, what was observed, what confirm would do."""

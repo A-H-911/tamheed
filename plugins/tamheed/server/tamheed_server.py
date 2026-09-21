@@ -3182,8 +3182,20 @@ def export_html(output: str | None = None) -> dict:
             "csv": csv_out}
 
 
-def server_info() -> dict:
+_PACKAGE_ROW = ("name", "title", "profile", "mode", "iteration", "package_version",
+                "go_no_go", "entry_point")
+
+
+def server_info(detail: bool = False) -> dict:
     """Report server version, resolved package root, and store state.
+
+    With a package open, `package` is its stored row (findings_25 s3, plan 066:
+    `packages` is not an entity family, so no other tool can read it - note the
+    stored `name` is descriptive only; a package is resolved by its DIRECTORY).
+    `detail=true` adds the vocabulary: `entity_types` (type, table, id prefix - the
+    `type` values entity_query/entity_export accept) and `relation_rules` (the
+    endpoint types each trace relation allows), so neither has to be learned from
+    a refusal.
 
     Makes startup diagnosable (field-evidence C11: a wedged call and a slow cold start
     were indistinguishable) and gives field reports a citable version anchor (C16)."""
@@ -3194,12 +3206,28 @@ def server_info() -> dict:
         version = "unknown"  # standalone copy without the plugin manifest
     migrations = sorted(p.name for p in
                         (_SERVER_DIR.parent / "db" / "migrations").glob("[0-9]*.sql"))
-    return {"ok": True, "version": version,
-            "package_root": str(Path(PACKAGE_ROOT).resolve()),
-            "open_package": _CURRENT_NAME,
-            "migrations_head": migrations[-1] if migrations else None,
-            # plan 027 (B23): the numeric schema head (PRAGMA user_version contract)
-            "schema_version": store.schema_version()}
+    package = None
+    if _CURRENT is not None:
+        row = _CURRENT.conn.execute(
+            f"SELECT {', '.join(_PACKAGE_ROW)} FROM packages LIMIT 1").fetchone()
+        package = dict(zip(_PACKAGE_ROW, row)) if row else None
+    out = {"ok": True, "version": version,
+           "package_root": str(Path(PACKAGE_ROOT).resolve()),
+           "open_package": _CURRENT_NAME,
+           "package": package,
+           "migrations_head": migrations[-1] if migrations else None,
+           # plan 027 (B23): the numeric schema head (PRAGMA user_version contract)
+           "schema_version": store.schema_version()}
+    if detail:
+        prefixes = {tid: prefix for tid, _, prefix, _ in BASELINE_ENTITY_TYPES}
+        out["entity_types"] = [
+            {"type": t, "table": table, "id_prefix": prefixes.get(t)}
+            for t, table in sorted(ENTITY_TABLES.items())]
+        out["relation_rules"] = {
+            rel: ({"from": rule, "to": rule} if isinstance(rule, str) else
+                  {"from": sorted(rule[0]), "to": sorted(rule[1])})
+            for rel, rule in sorted(RELATION_RULES.items())}
+    return out
 
 
 # --------------------------------------------------------------------------- server plumbing

@@ -26,6 +26,10 @@ All notable changes to Tamheed are documented here. The format is based on
   `forced-override` journal row. Lock refusals name the tool. The doctrine moves from "the
   store never removes a lock" to "it observes, reports, and removes one only on the
   operator's word, journaled".
+- `server_info()` carries `package`, the stored package row (name, version, iteration,
+  go/no-go ...), which no tool could read before; `server_info(detail=true)` adds
+  `entity_types` (type, table, id prefix) and `relation_rules` (allowed endpoint types), so
+  neither has to be learned from a refusal (findings_25 s3, plan 066).
 
 ### Fixed
 
