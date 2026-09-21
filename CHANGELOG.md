@@ -10,6 +10,36 @@ All notable changes to Tamheed are documented here. The format is based on
 
 ## [Unreleased]
 
+## [4.9.0] - 2026-09-21
+
+**MINOR — the findings_25 batch: the observed lock, the legible reads, the honest denominators
+(plans 063–073; field report findings_25 + the field's lessons register).** ACMP's upgrade to
+4.8.1 came back clean with three narrow findings, and its lessons register held rules that are
+true of any package. Twelve plans followed, executed directly by the reviewer under the
+maintainer's delegation after a devil's-advocate review of the batch plan; the three that touch
+the lock or delete files (063, 064, 065) went through a security and a Python reviewer before
+commit. **The
+lock**: every refusal now reports what the store OBSERVED about the holder — `not-running`,
+`reused`, `alive`, `unobservable` — decided by the process start identity the lock records,
+never by a bare pid check; the read-only migrate preview no longer needs the lock; and
+`package_unlock` is the one sanctioned, journaled way to remove a dead holder's lock, on the
+operator's word, refusing anything it could not see (19 tools). A probe taken before the design
+found that on Windows an exited process still opens while anyone holds a handle to it — the
+naive check would have called a dead holder alive. **The reads**: `server_info` carries the
+stored package row and, on request, the vocabulary; a projection names what it omitted and a
+search names where it matched; an export file says when it is short; `package_verify(expect=)`
+turns "is this slate current" into a boolean. **The denominators**: every readiness rule reports
+the population it measured, `lessons-confirmed` no longer passes hollow, and `prose-ids-resolve`
+names identifiers written in prose that resolve to nothing — measured before it was built, it
+found both phantoms the field had found by hand, at about one false hit per thousand rows.
+`export_html` leaves no orphan in `csv/`. Five stock prompts adopt the field's portable rules
+and drop two stale teachings, one of which — that a query round-trip truncates fields — had
+cost a field repo three weeks. `docs/workflow.md`'s sequence diagram was wrong about when data
+reaches disk and is corrected; `docs/architecture.md` gains the lock's state diagram. An
+acceptance script of twenty checks passes on this tree and fails, each for its own reason, on
+the pre-batch tree. Lab beat 16 fired the mechanisms against the recorded package. No schema
+migration.
+
 ### Added
 
 - The store OBSERVES a lock's holder and reports it (findings_25 s1, plan 063): every

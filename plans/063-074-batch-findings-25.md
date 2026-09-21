@@ -4,7 +4,8 @@
 > gets its own record before its code is written; this file is the map and the resume point.
 
 
-Status: **APPROVED by the maintainer 2026-09-21; executing.** Everything here came from read-only
+Status: **EXECUTED 2026-09-21 and released as v4.9.0** (approved by the maintainer the same
+day; per-plan status, SHAs and evidence are in the index rows and the numbered plan records). Everything here came from read-only
 inspection, one read-only process probe on this Windows host, one web search, and two advisor
 passes. Both repos are untouched since `dc4c5eb` (tamheed) and `9b8b4048` (ACMP).
 

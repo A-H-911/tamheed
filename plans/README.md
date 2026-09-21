@@ -141,8 +141,8 @@ Master record: [063-074-batch-findings-25.md](063-074-batch-findings-25.md) (the
 | 071 | [Stock prompts adopt the portable field rules (needle-pinned)](071-stock-prompts-adopt-field-rules.md) | 064, 066, 067 | DONE — 2026-09-21, commit `2e2d9e5`; two stale teachings removed from the prompt guide |
 | 065 | [`csv/` equals what `export_html` emits; `package_verify.foreign_csv`](065-csv-dir-equals-what-was-emitted.md) | findings_25 §2 | DONE — 2026-09-21, commit `a5d08d8`; security + Python reviewers before commit; lab fixture byte-identical on re-export |
 | 072 | [Docs + diagrams sweep after code lands](072-docs-and-diagrams-sweep.md) | 063–071 | DONE — 2026-09-21, commit `b18fcee`; one wrong sequence diagram corrected, a lock-lifecycle state diagram added |
-| 073 | [Lab beat 16](073-lab-beat-16-findings-25.md) | 063–072 + acceptance | IN PROGRESS — acceptance pass 2026-09-21: a 20-check black-box script, 20/20 on the batch tree and 0/20 on the pre-batch tree (`dc4c5eb`), each pre-batch failure for its own reason; suites green under `PYTHONWARNINGS=error::DeprecationWarning`; `--selftest` 19/19; CI 9/9 through `b18fcee` |
-| 074 | Release v4.9.0 | 073 | PLANNED |
+| 073 | [Lab beat 16](073-lab-beat-16-findings-25.md) | 063–072 + acceptance | DONE — 2026-09-21, commit `234bd13` (agent-driven in-process, reviewed by rerunning its done criteria): lab-tracker 35→44 assertions, ready, verified; `plans/evidence/lab-continuation-report-073-2026-09-21.md`. Acceptance pass before it: a 20-check black-box script, 20/20 on the batch tree and 0/20 on the pre-batch tree, each failure for its own reason. Beat observation, recorded not fixed: a whole-rule waiver absorbed a defect written after it was approved |
+| 074 | [Release v4.9.0](074-release-v4-9-0.md) | 073 | DONE — 2026-09-21, tag `v4.9.0`; `check.py` green; CI green on push |
 
 **Dependency notes (advisor plans).** 042 before 052 (a red matrix leg is unattributable
 until CI has run once). 043 before 051/053 (they edit the same function; 043 settles its
@@ -389,6 +389,20 @@ Markdown · ASM-D Python floor rises to the MCP SDK's (≥3.10).
   perfect canonical form with a journal entry naming the row — and git history
   remains the tamper record. Revisit if a governance need for in-store
   tamper-evidence arrives.
+
+- **A whole-rule waiver keeps absorbing new rows** (lab beat 16's observation, 2026-09-21): `WVR-002`
+  (no `applies_to`) waived a defect written long after the operator approved it. Documented
+  behavior, reported never silent; options if the field asks: an expiry by default, or a nudge
+  when a whole-rule waiver absorbs a row newer than itself.
+
+- **From the findings_25 batch, audited and not built** (2026-09-21, one reason each): a patch/append
+  mode and an implicit `if_match` on every upsert (a write-contract redesign; `expect_unchanged` is
+  the shipped answer); column-fidelity profiling in `package_verify`; flagging stale derived
+  artifacts (it would mean rendering the review page on every gate run); `acs-met` respecting
+  `Deferred` ACs (doctrine - the maintainer's call); reading `diverged_customized` without an
+  emit; a multi-family atomic export (the digest already detects a mixed snapshot); "zero rows
+  in the family => indeterminate" for every rule (arguable doctrine; the `population` is visible
+  either way); claim-versus-store checks on commit messages and prose (no mechanical subject).
 
 - **Relativize `handoff_emit`'s emitted paths** (post-v4.8.0 review, 2026-09-12, on the
   maintainer's words: document, do not change): `.mcp.json` (standalone installs) and the
