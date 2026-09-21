@@ -59,7 +59,10 @@ is the only wrong answer.
     flow: fix, evidence-chained `audit_record`, status flip, `work_bind`). For ones
     worth carrying, propose a waiver to the operator — **waivers are operator-only:
     you NEVER author a `WVR-` row without their words** — or convert to
-    `deferred-work` with a trigger.
+    `deferred-work` with a trigger. If `waivers-open-ended` fires, it names whole-rule
+    waivers with no expiry: each keeps waiving rows written long after it was approved.
+    Show the operator what it absorbs today and ask for an `expires` date or a narrower
+    `applies_to` — their decision, never yours.
 11. **Deferred work** (`deferred-work-reviewed`): read each open `DW-`'s activation
     trigger against current reality. Fired → say so and point the operator at the
     replan-deferred prompt (activation is a scope decision, not yours). Not fired →

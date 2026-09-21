@@ -20,6 +20,10 @@ All notable changes to Tamheed are documented here. The format is based on
   because only the pointer had been set, and nothing said so. New advisory
   `lessons-superseded-binding`; the note tags a still-binding row that points at a successor.
 
+- `waivers-open-ended`, a package advisory (lab beat 16's observation, plan 079): whole-rule
+  waivers with no expiry, which keep waiving rows written long after the operator approved
+  them. Emitted only when the package has waivers at all — "no waivers" is the healthy state,
+  not a question. `register-liveness.md` teaches it.
 - `prose-ids-resolve` says what it skipped (findings_26 §1–§2, plan 076). Two informational
   lists join the entity list: `in_code_spans` (a phantom cited only inside a code span — still
   not a failure, but now visible, so backticks cannot silence a broken citation and a clean

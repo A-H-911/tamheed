@@ -1992,6 +1992,20 @@ def _readiness_report(conn, scope: str, scope_id: str | None) -> dict:
              " STILL BIND (the pointer alone retires nothing). Retire each by setting"
              " lifecycle_status to Superseded on the operator's word (operator_confirm);"
              " approving a successor retires the lessons pointing at it automatically")
+        # Plan 079 (lab beat 16's observation): a whole-rule waiver with no expiry keeps
+        # absorbing rows written long after the operator approved it. Emitted only when
+        # the package HAS waivers: a permanent amber about a family nobody uses would
+        # teach readers to ignore ambers (the plan-077 zero-row rule is for families
+        # whose emptiness is a question; "no waivers" is simply the healthy state).
+        if conn.execute("SELECT 1 FROM waivers LIMIT 1").fetchone():
+            rule("waivers-open-ended", "advisory",
+                 ids("SELECT id FROM waivers WHERE applies_to IS NULL"
+                     " AND expires IS NULL ORDER BY id"),
+                 "whole-rule waivers with no expiry: each waives EVERY entity the rule"
+                 " names, including rows written long after it was approved. Put each"
+                 " to the operator - set `expires`, or narrow it to the entities it"
+                 " was approved for (`applies_to`). You never author or edit a waiver"
+                 " on your own judgment")
         # Plan 039 (the ACMP register: 57 Approved lessons, 48 pinned, 0 promoted —
         # 57 lines in the always-loaded note): pinning bypasses the cap by design,
         # so the cost of a pin is made visible instead. Entities = the rows that

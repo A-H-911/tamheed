@@ -2862,6 +2862,29 @@ class V4EngineTest(unittest.TestCase):
         for needle in ("Search finds candidates", "package_unlock", "omitted_columns"):
             self.assertIn(needle, orient, needle)
 
+    def test_open_ended_blanket_waivers_are_named(self):
+        """Plan 079 (lab beat 16's observation): a whole-rule waiver with no expiry keeps
+        absorbing rows written long after the operator approved it. The advisory names
+        exactly those. A per-entity waiver is scoped by construction, and a package that
+        never authored a waiver has no such rule at all - a permanent amber about a
+        family nobody uses would only teach readers to ignore ambers."""
+        names = lambda: {r["rule"]: r for r in srv.readiness_check("package")["rules"]}
+        self.assertNotIn("waivers-open-ended", names())               # no waivers, no rule
+        self.assertTrue(srv.entity_upsert([
+            {"type": "waiver", "id": "WVR-030", "rule": "defects-minor",
+             "justification": "release train", "approver": "anas"},            # blanket, open
+            {"type": "waiver", "id": "WVR-031", "rule": "defects-closed",
+             "applies_to": "DEF-002", "justification": "behind a flag",
+             "approver": "anas"}])["ok"])                                       # scoped
+        rule = names()["waivers-open-ended"]
+        self.assertEqual((rule["status"], rule["severity"], rule["entities"]),
+                         ("fail", "advisory", ["WVR-030"]))
+        self.assertTrue(srv.entity_upsert([
+            {"type": "waiver", "id": "WVR-030", "rule": "defects-minor",
+             "justification": "release train", "approver": "anas",
+             "expires": "2099-12-31"}])["ok"])
+        self.assertEqual(names()["waivers-open-ended"]["status"], "pass")     # bounded now
+
     def test_prose_id_rule_says_what_it_skipped_and_what_is_not_an_id(self):
         """Plan 076 (findings_26 s1-s2). The rule skips code spans - rightly, that is what
         kept design sample data out - but then a clean result could not say which kind of
@@ -3303,7 +3326,7 @@ class V4EngineTest(unittest.TestCase):
                           "deferred-work-reviewed", "execution-plans-approved",
                           "requirements-wired", "lessons-confirmed",
                           "lessons-note-budget", "prose-ids-resolve",
-                          "lessons-superseded-binding"):
+                          "lessons-superseded-binding", "waivers-open-ended"):
             self.assertIn(rule_name, text, rule_name)
         self.assertIn("STOP for operator approval", text)
         self.assertIn("you NEVER author a `WVR-` row", text)
