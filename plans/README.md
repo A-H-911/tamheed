@@ -399,7 +399,9 @@ Markdown · ASM-D Python floor rises to the MCP SDK's (≥3.10).
   mode and an implicit `if_match` on every upsert (a write-contract redesign; `expect_unchanged` is
   the shipped answer); column-fidelity profiling in `package_verify`; flagging stale derived
   artifacts (it would mean rendering the review page on every gate run); `acs-met` respecting
-  `Deferred` ACs (doctrine - the maintainer's call); reading `diverged_customized` without an
+  `Deferred` ACs (**RULED 2026-09-21, maintainer: keep as is** - a deferred criterion still counts;
+  postponed work is closed by retiring the criterion through a scope change or by an operator
+  waiver, both of which leave a record; do not re-raise); reading `diverged_customized` without an
   emit; a multi-family atomic export (the digest already detects a mixed snapshot); "zero rows
   in the family => indeterminate" for every rule (arguable doctrine; the `population` is visible
   either way); claim-versus-store checks on commit messages and prose (no mechanical subject).
