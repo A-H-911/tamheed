@@ -125,6 +125,25 @@ land in the release commit as beats 10–14 did.)
 
 **Batch 2 acceptance (2026-09-12):** integration branch `df99524` → `main` `c52ca04`; nine suites + `check.py` green (also under `PYTHONWARNINGS=error::DeprecationWarning`); a 37-check black-box acceptance run through the real tool handlers (one section per plan, each check shown to fail on the pre-fix code) 37/37; `uv run … --selftest` 18/18; CI https://github.com/A-H-911/tamheed/actions/runs/34669537392 9/9 green. All sixteen advisor plans (042–057) DONE; nothing released yet.
 
+### Field cycle findings_25 -- plans 063-074 -> v4.9.0 (2026-09-21; reviewer-executed)
+
+Master record: [063-074-batch-findings-25.md](063-074-batch-findings-25.md) (the approved plan; execution order is the row order below). Status values: PLANNED / IN PROGRESS / DONE.
+
+| # | Plan | Depends on | Status |
+|---|---|---|---|
+| 063 | The lock can be observed; the migrate preview runs without it | findings_25 §1 | PLANNED |
+| 064 | `package_unlock` — the sanctioned, journaled route out of a dead holder's lock | 063 | PLANNED |
+| 066 | `server_info` package block + `detail=true` (entity types, relation rules) | findings_25 §3 | PLANNED |
+| 067 | Export envelope carries `partial`; `package_verify(expect=)` | ACMP export consumers | PLANNED |
+| 068 | `entity_query` announces projections and search hits; lesson approve/pin nudge | LL-077, LL-094, DEF-107 | PLANNED |
+| 069 | `population` on every readiness rule; `lessons-confirmed` indeterminate at zero | hollow-pass lessons | PLANNED |
+| 070 | `prose-ids-resolve` advisory (measured false-positive gate) | 069; phantom DEF-082 | PLANNED |
+| 071 | Stock prompts adopt the portable field rules (needle-pinned) | 064, 066, 067 | PLANNED |
+| 065 | `csv/` equals what `export_html` emits; `package_verify.foreign_csv` | findings_25 §2 | PLANNED |
+| 072 | Docs + diagrams sweep after code lands | 063–071 | PLANNED |
+| 073 | Lab beat 16 | 063–072 + acceptance | PLANNED |
+| 074 | Release v4.9.0 | 073 | PLANNED |
+
 **Dependency notes (advisor plans).** 042 before 052 (a red matrix leg is unattributable
 until CI has run once). 043 before 051/053 (they edit the same function; 043 settles its
 transaction tail). 045's tests land before its refactor (same plan, red then green). 050 and
