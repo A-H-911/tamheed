@@ -20,6 +20,11 @@ All notable changes to Tamheed are documented here. The format is based on
   because only the pointer had been set, and nothing said so. New advisory
   `lessons-superseded-binding`; the note tags a still-binding row that points at a successor.
 
+- A stale review page is detectable (plan 081): `export_html` stamps the package digest into
+  `review.html`, and `package_verify` reports `review_current` — `true` / `false`, or `null`
+  for a page with no stamp. The field's rule was "git clean ≠ package artifacts current", and a
+  stale page once sat on origin unnoticed. Every tracked `review.html` changes by one line on
+  its next export; two exports of one state stay byte-identical.
 - A write says what it changed (plan 080): an UPDATE's per-item result carries
   `changed_columns`, each with `old_len` / `new_len` for text. Upserts replace whole rows, and
   the field once re-sent a 4,296-character field missing a paragraph and got `ok` back with

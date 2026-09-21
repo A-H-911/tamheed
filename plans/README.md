@@ -155,8 +155,8 @@ execution order is the row order below). Status values: PLANNED / IN PROGRESS / 
 | 077 | [No rule passes over nothing; a recorded omission reads `pass`](077-no-rule-passes-over-nothing.md) | maintainer ruling; plan 069 | DONE — 2026-09-21, commit `cedb443`; measured first (17 of 21 rules on a fresh package); none of the 18 existing `pass` assertions flipped |
 | 076 | [Prose-id refinements: `in_code_spans`, `not_well_formed`, the list is a floor](076-prose-id-rule-says-what-it-skipped.md) | findings_26 §1–§2; 077 | DONE — 2026-09-21, commit `ea2a2cf`; measured on ACMP's exports: nothing fails, `DEC-208` visible under `in_code_spans`, the `ADR-2026` false positive gone |
 | 079 | [`waivers-open-ended` advisory](079-waivers-open-ended-advisory.md) | beat 16's observation; 077 | DONE — 2026-09-21, commit `f82310a`; emitted only when the package has waivers (a recorded deviation); the lab's `WVR-002` is named |
-| 080 | [Upsert results carry `changed_columns` with before/after lengths](080-a-write-says-what-it-changed.md) | the field's silent-loss lessons | IN PROGRESS |
-| 081 | A digest stamp makes a stale review page detectable | the field's "git clean ≠ artifacts current" | PLANNED |
+| 080 | [Upsert results carry `changed_columns` with before/after lengths](080-a-write-says-what-it-changed.md) | the field's silent-loss lessons | DONE — 2026-09-21, commit `31637a8`; reviewed before commit, no critical or high finding; `if_match` dropped as speculative |
+| 081 | [A digest stamp makes a stale review page detectable](081-a-stale-review-page-is-detectable.md) | the field's "git clean ≠ artifacts current" | IN PROGRESS |
 | 078 | A completed hand-merge of a customised prompt is visible (declared marker) | findings_26 | PLANNED |
 | 082 | Docs + diagrams sweep after code lands | 075–081 | PLANNED |
 | 083 | Lab beat 17 | 075–082 + acceptance | PLANNED |

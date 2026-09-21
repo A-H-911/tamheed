@@ -2862,6 +2862,30 @@ class V4EngineTest(unittest.TestCase):
         for needle in ("Search finds candidates", "package_unlock", "omitted_columns"):
             self.assertIn(needle, orient, needle)
 
+    def test_a_stale_review_page_is_detectable(self):
+        """Plan 081 (the field's "GIT CLEAN != PACKAGE ARTIFACTS CURRENT": review.html and
+        csv/ regenerate ONLY on export_html, and a stale page once sat on origin while git
+        was clean). The export stamps the package digest into the page, so currency is a
+        string comparison - no render needed to ask the question."""
+        self.assertIsNone(srv.package_verify()["review_current"])       # no page yet
+        out = srv.export_html()
+        self.assertTrue(out["ok"], out)
+        page = Path(out["path"])
+        self.assertIn('<meta name="tamheed-digest" content="', page.read_text(encoding="utf-8"))
+        self.assertTrue(srv.package_verify()["review_current"])         # fresh
+        first = page.read_bytes()
+        srv.export_html()
+        self.assertEqual(page.read_bytes(), first)                      # still deterministic
+        srv.entity_upsert([{"type": "defect", "id": "DEF-096", "title": "x",
+                            "severity": "low"}])
+        stale = srv.package_verify()
+        self.assertFalse(stale["review_current"])                       # ANY write stales it
+        self.assertTrue(stale["verified"])                              # stale != damaged
+        srv.export_html()
+        self.assertTrue(srv.package_verify()["review_current"])
+        page.write_text("<html><title>demo - Tamheed review</title></html>", encoding="utf-8")
+        self.assertIsNone(srv.package_verify()["review_current"])       # a pre-4.10.0 page
+
     def test_a_write_says_what_it_changed(self):
         """Plan 080 (the field's sharpest pain): upserts replace whole rows, so appending
         one block to a long field meant re-sending all of it - and a re-send that silently

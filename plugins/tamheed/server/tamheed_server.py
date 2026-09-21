@@ -801,8 +801,20 @@ def package_verify(name: str | None = None, record: bool = False,
     own_csv = {f"{t}.csv" for t in set(ENTITY_TABLES.values())}
     foreign_csv = (sorted(p.name for p in csv_dir.iterdir() if p.name not in own_csv)
                    if csv_dir.is_dir() else [])
+    # Plan 081: is the review page current? True/False against the digest export_html
+    # stamped into it; None when there is no page, or no stamp (exported before 4.10.0).
+    review_current = None
+    try:
+        with (data.parent / "review.html").open(encoding="utf-8",
+                                                errors="replace") as fh:
+            head = fh.read(4096)          # the stamp sits in <head>; never the whole page
+        if m := re.search(r'<meta name="tamheed-digest" content="([0-9a-f]{64})">', head):
+            review_current = m.group(1) == digest
+    except OSError:
+        pass
     report = {"ok": True, "package": name, "files": len(on_disk), "foreign": foreign,
-              "foreign_csv": foreign_csv, "digest": digest, "recorded": None}
+              "foreign_csv": foreign_csv, "review_current": review_current,
+              "digest": digest, "recorded": None}
     if expect is not None:
         # plan 067: "is this export/slate still current?" as a boolean. The digest is
         # PACKAGE-wide, so ANY write since the export moves it - stale, not damaged.
@@ -3471,6 +3483,12 @@ def export_html(output: str | None = None) -> dict:
     import export_html as viewer
     report = gate_run()
     text = viewer.render(_CURRENT.conn, report["gates"], report["ready"])
+    # Plan 081: stamp the package digest, so "is this page current?" is a string
+    # comparison package_verify can answer without rendering anything. Deterministic:
+    # the same state gives the same digest, so two exports stay byte-identical.
+    stamp = (f'<meta name="tamheed-digest" content="'
+             f'{_canonical_digest(_dump_open_connection())}">\n')
+    text = text.replace("<title>", stamp + "<title>", 1)
     path = Path(output) if output else PACKAGE_ROOT / _CURRENT_NAME / "review.html"
     if output:
         # plan 044: `output` is a free path from an agent; the only files this tool may
