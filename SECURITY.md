@@ -37,6 +37,21 @@ report a problem.
   formula (leading `=`, `+`, `-`, `@`, tab or carriage return) is written quote-prefixed, the
   standard neutralization (CWE-1236; plan 050). The HTML surface renders the same cell
   unchanged — the guard lives in the CSV writer only.
+- **The exporter deletes only what it provably wrote** — `export_html` removes a stale
+  `csv/<table>.csv` only when it is a regular file in the PACKAGE's own `csv/` whose header is
+  the one the exporter writes for that table; an operator's file, anything in a caller-chosen
+  `output` directory, and symlinks are reported, never touched (plan 065).
+- **Lock observation reads process metadata and nothing else** — to tell a dead lock holder
+  from a recycled pid the server queries process existence and start time (Windows
+  `OpenProcess`/`GetProcessTimes` with query-limited access; Linux `/proc/<pid>/stat`). It
+  spawns no process and sends no signal (`os.kill(pid, 0)` never runs on Windows, where it
+  terminates the target). A pid from the lock file is probed only if it is a real, bounded
+  integer; the lock's strings are length-capped before they reach the journal (plans 063–064).
+- **One destructive lifecycle tool, operator-only** — `package_unlock(confirm=true)` removes
+  `data/.lock` only for a holder OBSERVED dead (`not-running` / `reused`), refuses on `alive`
+  and `unobservable`, proves the store loads first, removes only the exact bytes it judged,
+  and journals the removal. "Operator's words only" is a convention, as with `force`: nothing
+  mechanical tells an operator's word from an agent's (plan 064).
 - **Approved-only lessons in the note** — the emitted `CLAUDE.md` note's Lessons section renders only
   operator-Approved `LL-` rows and is screened by the same G-INJECT patterns as emitted prompts
   (blocking); the store refuses to land a lesson in Approved/Promoted without the operator's explicit

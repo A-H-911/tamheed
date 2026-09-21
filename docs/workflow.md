@@ -149,7 +149,8 @@ sequenceDiagram
     Operator-->>Planner: decisions approved
     Planner->>Operator: approve the roadmap
     Operator-->>Planner: roadmap approved
-    Planner->>Store: package_close — canonical JSONL written back
+    Note over Store: every write already flushed canonical JSONL
+    Planner->>Store: package_close — releases the single-writer lock
     Operator->>Store: operator commits the package data
     Planner->>Operator: final go or no-go
     Operator-->>Planner: GO

@@ -294,16 +294,17 @@ that row-level counts cannot see.
 
 | Tool | Use |
 |---|---|
-| `server_info()` | Version + resolved package root (orientation) |
-| `package_create / package_open / package_close` | Lifecycle + single-writer lock |
+| `server_info(detail?)` | Version, resolved package root, the stored package row; `detail=true` adds the entity types + relation rules |
+| `package_create / package_open / package_close` | Lifecycle + single-writer lock (a refusal reports what was observed about the holder) |
+| `package_unlock(name, confirm?)` | Report a lock's holder; `confirm=true` (operator's words) removes a dead holder's lock, journaled |
 | `entity_upsert(entities[])` | Batch writes — full rows, per-item verdicts; `expect_unchanged` refuses transport drift on a status flip; `retire` removes a wrong edge |
-| `entity_query(type, …)` | Targeted rows + `total`; `after_id` pages, `ids` fetches a known set, `search` sweeps by keyword |
+| `entity_query(type, …)` | Targeted rows + `total`; `after_id` pages, `ids` fetches a known set, `search` sweeps by keyword; a projection reports `omitted_columns`, a search reports which column `matched` |
 | `trace_query(entity_id, …)` | Typed traceability links |
 | `gate_run()` | Mechanical quality-gate verdict incl. the blocking G-REL relation gate |
 | `readiness_check(scope, id?)` | Deep lifecycle readiness at a close boundary — "is this actually DONE?" |
 | `progress_update / audit_record / work_bind` | The execution-tracking loop |
 | `package_migrate / package_adopt` | Staged in-place v3→v4 conversion / brownfield onboarding |
-| `package_verify(name?, record?)` | The canonical round-trip as a tool — per-file byte-equality, foreign files, a citable digest |
+| `package_verify(name?, record?, expect?)` | The canonical round-trip as a tool — per-file byte-equality, foreign files, a citable digest; `expect=` answers "is this slate still current" |
 | `entity_export(path, tool?, args?)` | A read tool's WHOLE result as a digest-stamped JSON file under `exports/` — the sanctioned read for committed scripts that quote the store |
 | `handoff_emit / export_html` | Executor wiring + the HTML review surface |
 

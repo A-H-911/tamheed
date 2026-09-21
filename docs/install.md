@@ -48,7 +48,8 @@ claude --plugin-dir ./plugins/tamheed
 ## Upgrading an installed plugin
 
 Refreshing the marketplace only refreshes the catalog; the installed plugin is a second step, and
-the running MCP server keeps the old code until Claude Code restarts.
+the running MCP server keeps the old code until the plugin is reloaded (`/reload-plugins` —
+observed sufficient in the field for the MCP server — or a full Claude Code restart).
 
 ```text
 claude plugin marketplace update tamheed
@@ -56,20 +57,28 @@ claude plugin update tamheed@tamheed      # "restart required to apply"
 ```
 
 (In a session: `/plugin marketplace update tamheed`, then `/plugin` → Installed → tamheed → update.)
-Restart Claude Code, then check `~/.claude/plugins/cache/tamheed/tamheed/<version>/` exists. If the
-tools are unreachable after the restart, run the self-test before diagnosing anything else — it
+Reload or restart, then check `~/.claude/plugins/cache/tamheed/tamheed/<version>/` exists. If the
+tools are unreachable afterwards, run the self-test before diagnosing anything else — it
 registers the whole tool surface and exits 1 on failure:
-`uv run <that cache dir>/server/tamheed_server.py --selftest`.
+`uv run <that cache dir>/server/tamheed_server.py --selftest`. Prefer the interpreter the LIVE
+server uses: a bare `uv run` may resolve a fresh environment and describe a configuration
+that is not the one in service.
 
 **Around the upgrade, in a repo that carries a package** (all through the MCP tools):
 
 1. *Before:* commit the package (that commit is the rollback), `package_close()` in whichever
-   session holds the lock — the store never guesses that a `data/.lock` is stale — and keep a
+   session holds the lock, and keep a
    baseline of `gate_run()`, `readiness_check("package")` and `package_verify()`.
 2. *After:* `server_info()` names the new version. With no package open,
    `package_migrate(name)` previews any registry sync or relocate; on a current store it answers
    "nothing to migrate", which is the happy path. A MAJOR release says so in the CHANGELOG and
    `package_open` refuses until the staged migration runs.
+   **If the holder is already gone** (the usual state after an upgrade: reloading ends the
+   session that held the lock) there is nothing to `package_close()`. The refusal itself says
+   what the store observed about the holder; `package_unlock(name)` reports it on demand, and
+   `package_unlock(name, confirm=true)` — the operator's words — removes a lock whose holder was
+   observed `not-running` or `reused`, journaled. It refuses on `alive` and `unobservable`
+   (another host, a container): there, removing `data/.lock` by hand stays the deliberate path.
 3. `package_open(name)`, then `gate_run()` / `readiness_check("package")` — compare with the baseline.
 4. `handoff_emit(target_dir, refresh_stock=true)` — refreshes only the stock prompts you never
    customised and re-renders the tool-owned note; customised prompts are listed with the release

@@ -139,8 +139,8 @@ Master record: [063-074-batch-findings-25.md](063-074-batch-findings-25.md) (the
 | 069 | [`population` on every readiness rule; `lessons-confirmed` indeterminate at zero](069-readiness-rules-report-their-population.md) | hollow-pass lessons | DONE — 2026-09-21, commit `f90d06b` |
 | 070 | [`prose-ids-resolve` advisory (measured false-positive gate)](070-prose-ids-resolve-advisory.md) | 069; phantom DEF-082 | DONE — 2026-09-21, commit `0a27713`; measured first: both field phantoms found, ~1 false hit per 1,000 rows |
 | 071 | [Stock prompts adopt the portable field rules (needle-pinned)](071-stock-prompts-adopt-field-rules.md) | 064, 066, 067 | DONE — 2026-09-21, commit `2e2d9e5`; two stale teachings removed from the prompt guide |
-| 065 | [`csv/` equals what `export_html` emits; `package_verify.foreign_csv`](065-csv-dir-equals-what-was-emitted.md) | findings_25 §2 | IN PROGRESS |
-| 072 | Docs + diagrams sweep after code lands | 063–071 | PLANNED |
+| 065 | [`csv/` equals what `export_html` emits; `package_verify.foreign_csv`](065-csv-dir-equals-what-was-emitted.md) | findings_25 §2 | DONE — 2026-09-21, commit `a5d08d8`; security + Python reviewers before commit; lab fixture byte-identical on re-export |
+| 072 | [Docs + diagrams sweep after code lands](072-docs-and-diagrams-sweep.md) | 063–071 | IN PROGRESS |
 | 073 | Lab beat 16 | 063–072 + acceptance | PLANNED |
 | 074 | Release v4.9.0 | 073 | PLANNED |
 

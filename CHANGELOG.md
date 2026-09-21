@@ -66,6 +66,12 @@ All notable changes to Tamheed are documented here. The format is based on
 
 ### Changed
 
+- Docs and diagrams follow the batch (plan 072): `docs/workflow.md`'s sequence diagram no
+  longer draws canonical JSONL being written back at `package_close` (every write flushes;
+  close releases the lock); `docs/architecture.md` gains section 8 and a state diagram for
+  the observed single-writer lock; the server README lists 19 tools; SECURITY.md states the
+  new process-metadata capability, the exporter's deletion rule and the operator-only unlock;
+  the install guide's Upgrading section gains the dead-holder branch and "reload or restart".
 - Stock prompts adopt portable field rules and drop two stale teachings (plan 071):
   `prompts/README.md` teaches the lock observation and `package_unlock` instead of a
   hand-deleted lock, gains **Asking the operator** (homework first, one decision per

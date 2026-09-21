@@ -63,7 +63,7 @@ that would create one fails, and the error message is the gate report.
 Above the gates sits the **readiness layer**: `readiness_check(scope, id?)` answers "is this actually
 done?" at a close boundary — `Review` counts as open (claimed is not verified), open critical/high defects
 block while medium/low advise, and a stubborn failure passes only through an operator-approved `WVR-`
-waiver (reported as `waived`, expiring, never silent). Alongside the blocking rules run fifteen
+waiver (reported as `waived`, expiring, never silent). Alongside the blocking rules run sixteen
 package-scope liveness advisories — from overdue open questions to `lessons-confirmed`, which nags while
 any lesson recorded by the executing agent still awaits the operator's confirmation interview, and
 `lessons-note-budget`, which names the lessons rendering past the always-loaded note's curation
@@ -209,3 +209,32 @@ Immutable-after-approval rows (ADRs, approved acceptance criteria) are supersede
 the schema enforces it with triggers. The plugin's own version lives in
 `plugins/tamheed/.claude-plugin/plugin.json` and the marketplace entry; notable changes are recorded in
 [`../CHANGELOG.md`](../CHANGELOG.md).
+
+## 8. The single-writer lock, observed
+
+One writer per package, guarded by `data/.lock` (`O_EXCL`). The lock records who took it — pid,
+host, `taken_at`, and the writer's **process start identity** — so that the question "is the
+holder still there?" is an observation, not a guess (plans 063–064, findings_25 §1). A bare pid
+check is unsound: the OS recycles pids, and the field once found a dead writer's pid owned by an
+editor started hours later.
+
+```mermaid
+stateDiagram-v2
+    [*] --> Free
+    Free --> Held : package_open or package_create takes the lock
+    Held --> Free : package_close
+    Held --> Orphaned : the writer dies - crash, closed terminal, plugin reload
+    Orphaned --> Observed : any refusal reports the holder, package_unlock reports it on demand
+    Observed --> Free : package_unlock confirm=true - holder not-running or reused - journaled
+    Observed --> Orphaned : alive or unobservable - refused, manual removal stays deliberate
+```
+
+The observation has four outcomes. `not-running`: no such process. `reused`: the pid belongs to
+a different process (its start identity differs from the one recorded; for an older lock that
+recorded none, it started after the lock was taken). `alive`: the recorded process is running.
+`unobservable`: another host or pid namespace, access denied, a legacy lock, or a platform that
+cannot report a start time. `package_unlock(confirm=true)` — the operator's words, like `force` —
+proceeds only on the first two; a lock the server could not see is not a lock it may remove.
+The server reads process metadata to do this (Windows process query, Linux `/proc`); it spawns
+nothing and signals nothing. Canonical JSONL reaches disk on **every write**, not at close:
+`package_close` only releases the lock.

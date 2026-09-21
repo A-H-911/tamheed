@@ -58,7 +58,8 @@ three tiers (engine / judgment / warn) synced against this file in both directio
   (pre-approval decisions/ADRs, ACs not latest-Met, open critical/high defects — medium/low
   advise, undischarged risks, open work incl. the claimed-done `Review` state), waivers
   (operator-approved `WVR-` rows reported `waived`, never silent; expiring), advisory liveness
-  rules (fifteen at package scope — from overdue open questions through `lessons-confirmed` to
+  rules (sixteen at package scope — from overdue open questions through `lessons-confirmed` and
+  `prose-ids-resolve`, the identifiers written in prose that resolve to no entity, to
   `lessons-note-budget`, which names the lessons rendering past the always-loaded note's
   curation ceiling as promotion candidates), and the `human_required` checklist from declared
   `execution_gates` rows. The same
@@ -69,6 +70,9 @@ three tiers (engine / judgment / warn) synced against this file in both directio
   The same holds at phase/slice scope: `acs-met`, `wbs-done` and `slices-closed` on a scope
   that holds no rows of that kind read `indeterminate` with `discriminating: false` — an
   empty slice is not a ready slice, and the `Implemented` guard still trips only on `fail`.
+  Every query-built rule also reports the `population` it measured (`table`, `rows`,
+  `scoped`): read it before trusting a green — `lessons-confirmed` on a package with no
+  lessons at all is `indeterminate`, not a pass.
 - Judgment gates: perform the check and record the verdict (a `progress-entry` note with the evidence).
 - Stage 19 runs everything; Stage 22 re-confirms criticals + `readiness_check("package")` for the
   readiness verdict.

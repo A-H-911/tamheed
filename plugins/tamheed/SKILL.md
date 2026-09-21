@@ -190,7 +190,10 @@ activation triggers; a scope change that touches a RULING carries an `amends` ed
 by full-row upsert, an `ADR-` by supersession) and `Merged` is set LAST, after every target row is
 applied and re-read. Registers are read through `entity_query` whatever their size — `limit` cuts
 rows never fields, `total` is exact, `after_id` pages (the result's `next_after`), `ids` quotes a
-known set verbatim, `search` sweeps by keyword; never `data/*.jsonl` to dodge a payload cap.
+known set verbatim, `search` sweeps by keyword (the result says which column `matched`; a
+`columns` projection says what it `omitted_columns`); never `data/*.jsonl` to dodge a payload cap.
+A refused `package_open` reports what the store observed about the lock's holder;
+`package_unlock` reports it on demand, and its `confirm=true` is the OPERATOR's word, never yours.
 `package_verify` proves the on-disk store canonical (per file, foreign files, a citable digest;
 `record=true` journals it as the server-appended `integrity-verified` event — the four
 server-witnessed journal kinds are refused from `progress_update`). Durable takeaways become
