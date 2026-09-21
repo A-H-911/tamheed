@@ -144,6 +144,24 @@ Master record: [063-074-batch-findings-25.md](063-074-batch-findings-25.md) (the
 | 073 | [Lab beat 16](073-lab-beat-16-findings-25.md) | 063–072 + acceptance | DONE — 2026-09-21, commit `234bd13` (agent-driven in-process, reviewed by rerunning its done criteria): lab-tracker 35→44 assertions, ready, verified; `plans/evidence/lab-continuation-report-073-2026-09-21.md`. Acceptance pass before it: a 20-check black-box script, 20/20 on the batch tree and 0/20 on the pre-batch tree, each failure for its own reason. Beat observation, recorded not fixed: a whole-rule waiver absorbed a defect written after it was approved |
 | 074 | [Release v4.9.0](074-release-v4-9-0.md) | 073 | DONE — 2026-09-21, tag `v4.9.0`; `check.py` green; CI green on push |
 
+### Field cycle findings_26 -- plans 075-084 -> v4.10.0 (2026-09-21; reviewer-executed)
+
+Master record: [075-084-batch-findings-26.md](075-084-batch-findings-26.md) (the approved plan;
+execution order is the row order below). Status values: PLANNED / IN PROGRESS / DONE.
+
+| # | Plan | Depends on | Status |
+|---|---|---|---|
+| 075 | Supersession completes itself; retiring a binding lesson needs the operator | findings_26 §3 | PLANNED |
+| 077 | No rule passes over nothing; a recorded omission reads `pass` | maintainer ruling; plan 069 | PLANNED |
+| 076 | Prose-id refinements: `in_code_spans`, `not_well_formed`, the list is a floor | findings_26 §1–§2; 077 | PLANNED |
+| 079 | `waivers-open-ended` advisory | beat 16's observation; 077 | PLANNED |
+| 080 | Upsert results carry `changed_columns` with before/after lengths | the field's silent-loss lessons | PLANNED |
+| 081 | A digest stamp makes a stale review page detectable | the field's "git clean ≠ artifacts current" | PLANNED |
+| 078 | A completed hand-merge of a customised prompt is visible (declared marker) | findings_26 | PLANNED |
+| 082 | Docs + diagrams sweep after code lands | 075–081 | PLANNED |
+| 083 | Lab beat 17 | 075–082 + acceptance | PLANNED |
+| 084 | Release v4.10.0 | 083 | PLANNED |
+
 **Dependency notes (advisor plans).** 042 before 052 (a red matrix leg is unattributable
 until CI has run once). 043 before 051/053 (they edit the same function; 043 settles its
 transaction tail). 045's tests land before its refactor (same plan, red then green). 050 and
