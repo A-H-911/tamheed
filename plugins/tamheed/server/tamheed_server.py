@@ -318,8 +318,11 @@ def _prose_id_pattern(conn) -> "re.Pattern[str]":
     prefixes |= {r[0] for r in conn.execute(
         "SELECT id_prefix FROM entity_types WHERE id_prefix IS NOT NULL") if r[0]}
     alternation = "|".join(re.escape(p) for p in sorted(prefixes, key=len, reverse=True))
-    # a whole token: not the tail of a longer word, not the head of a longer number
-    return re.compile(r"(?<![A-Za-z0-9-])(?:" + alternation + r")\d+(?:\.\d+)*(?![A-Za-z0-9])")
+    # a whole token: not the tail of a longer word, not the head of a longer number, and
+    # (plan 076) not followed by `-<digit>` - `ADR-2026-001` is someone else's numbering.
+    # The stated cost: a range written `PE-1300-1310` is not scanned. Groups: prefix, digits.
+    return re.compile(r"(?<![A-Za-z0-9-])(" + alternation
+                      + r")(\d+)(?:\.\d+)*(?![A-Za-z0-9])(?!-\d)")
 
 
 def _json_values(value):
@@ -334,13 +337,24 @@ def _json_values(value):
         yield value
 
 
-def _scan_prose_ids(conn) -> list[str]:
+def _scan_prose_ids(conn) -> dict[str, list[str]]:
     """`<row>.<column> -> <id>` for every identifier-shaped token in a live row's prose
-    that resolves to no entity. Code spans are example text; Superseded/Obsolete rows are
-    history; a row's own id is not a reference."""
+    that resolves to no entity, in three lists (plan 076). `dangling`: bare and
+    well-formed - these fail the rule. `in_code_spans`: the same, but only inside a code
+    span - skipped on purpose (example text), REPORTED so a clean result says which kind
+    of clean it is and backticks cannot silence a broken citation. `not_well_formed`:
+    the numeric part is narrower than any id the family holds (`SEC-8` against
+    `SEC-001`...) - more likely someone else's numbering than a reference, but a slip
+    like `DEF-82` for `DEF-082` lands here too, so it is reported, never dropped.
+    Superseded/Obsolete rows are history; a row's own id is not a reference."""
     known = {r[0] for r in conn.execute("SELECT id FROM entity_index")}
     pattern = _prose_id_pattern(conn)
-    dangling = set()
+    min_width: dict[str, int] = {}
+    for kid in known:
+        if m := pattern.fullmatch(kid):
+            min_width[m.group(1)] = min(min_width.get(m.group(1), 99), len(m.group(2)))
+    found: dict[str, set] = {"dangling": set(), "in_code_spans": set(),
+                             "not_well_formed": set()}
     for table in sorted(set(ENTITY_TABLES.values()) - _PROSE_ID_EXEMPT_TABLES):
         info = list(conn.execute(f"PRAGMA table_info({table})"))
         names = {r[1] for r in info}
@@ -362,10 +376,20 @@ def _scan_prose_ids(conn) -> list[str]:
                     except (TypeError, ValueError):
                         pass
                 for text in texts:
-                    for m in pattern.finditer(_strip_code(text)):
-                        if m.group(0) not in known and m.group(0) != row[0]:
-                            dangling.add(f"{row[0]}.{col} -> {m.group(0)}")
-    return sorted(dangling)
+                    bare = {m.group(0) for m in pattern.finditer(_strip_code(text))}
+                    for m in pattern.finditer(text):
+                        ref = m.group(0)
+                        if ref in known or ref == row[0]:
+                            continue
+                        hit = f"{row[0]}.{col} -> {ref}"
+                        if len(m.group(2)) < min_width.get(m.group(1), 0):
+                            found["not_well_formed"].add(hit)
+                        elif ref in bare:
+                            found["dangling"].add(hit)
+                        else:
+                            found["in_code_spans"].add(hit)
+    found["in_code_spans"] -= found["dangling"]      # bare somewhere in the column wins
+    return {k: sorted(v) for k, v in found.items()}
 
 
 def _scan_markers(conn) -> list[dict]:
@@ -1937,15 +1961,21 @@ def _readiness_report(conn, scope: str, scope_id: str | None) -> dict:
         rule("clarifications-open", "advisory", markers,
              "open [NEEDS-CLARIFICATION: OQ-…] markers in prose fields — each cites a"
              " live OQ; resolve the OQ and remove the marker")
-        dangling = _scan_prose_ids(conn)
+        prose = _scan_prose_ids(conn)
+        dangling = prose["dangling"]
         rule("prose-ids-resolve", "advisory", dangling[:_PROSE_ID_CAP],
              "identifiers written in prose that resolve to NO entity (G-IDS checks"
              " foreign keys and the index, never a sentence): correct the id, or"
              " record the missing row; an immutable row is repaired by supersession."
-             " Code spans, the append-only journal and Superseded/Obsolete rows are"
-             " not scanned"
+             " THE ENTITY LIST IS A FLOOR, not a census: hits inside code spans are"
+             " listed under `in_code_spans` and tokens too narrow to be this family's"
+             " ids under `not_well_formed` - both informational, neither fails the"
+             " rule, so backticks hide nothing. The append-only journal and"
+             " Superseded/Obsolete rows are not scanned"
              + (f" — showing {_PROSE_ID_CAP} of {len(dangling)}"
                 if len(dangling) > _PROSE_ID_CAP else ""))
+        rules[-1].update({k: prose[k][:_PROSE_ID_CAP]
+                          for k in ("in_code_spans", "not_well_formed")})
         rule("lessons-confirmed", "advisory",
              ids("SELECT id FROM lessons WHERE lifecycle_status = 'Proposed'"),
              "lessons recorded by the executing agent awaiting the operator's"

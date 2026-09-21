@@ -2862,6 +2862,35 @@ class V4EngineTest(unittest.TestCase):
         for needle in ("Search finds candidates", "package_unlock", "omitted_columns"):
             self.assertIn(needle, orient, needle)
 
+    def test_prose_id_rule_says_what_it_skipped_and_what_is_not_an_id(self):
+        """Plan 076 (findings_26 s1-s2). The rule skips code spans - rightly, that is what
+        kept design sample data out - but then a clean result could not say which kind of
+        clean it was, and a broken citation could be silenced with backticks. And `SEC-8`
+        is not even well-formed for a family of three zero-padded digits. Both are now
+        REPORTED, separately and informationally; only a bare, well-formed phantom fails."""
+        for n in ("001", "002", "003"):                       # a family that pads to three
+            srv.entity_upsert([{"type": "risk", "id": f"RISK-{n}", "title": f"risk {n}",
+                                "probability": "low", "impact": "low"}])
+        self.assertTrue(srv.entity_upsert([{
+            "type": "defect", "id": "DEF-094", "severity": "low",
+            "title": ("cites `RISK-404` in a code span, RISK-8 from a mockup heading,"
+                      " sample data ADR-2026-001, and the bare phantom RISK-777")}])["ok"])
+        out = srv.readiness_check("package")
+        rule = {r["rule"]: r for r in out["rules"]}["prose-ids-resolve"]
+        self.assertEqual(rule["entities"], ["DEF-094.title -> RISK-777"])        # fails on this
+        self.assertEqual(rule["in_code_spans"], ["DEF-094.title -> RISK-404"])   # visible, inert
+        self.assertEqual(rule["not_well_formed"], ["DEF-094.title -> RISK-8"])   # not dropped
+        listed = " ".join(rule["entities"] + rule["in_code_spans"] + rule["not_well_formed"])
+        self.assertNotIn("ADR-2026", listed)                  # `-001` follows: not an id
+        self.assertIn("A FLOOR", rule["note"])
+        fixed = srv.entity_upsert([{"type": "defect", "id": "DEF-094", "severity": "low",
+                                    "title": "cites `RISK-404` in a code span only"}])
+        self.assertTrue(fixed["ok"])
+        rule = {r["rule"]: r for r in srv.readiness_check("package")["rules"]}[
+            "prose-ids-resolve"]
+        self.assertEqual((rule["status"], rule["entities"]), ("pass", []))       # backticks do
+        self.assertEqual(rule["in_code_spans"], ["DEF-094.title -> RISK-404"])   # not hide it
+
     def test_csv_dir_is_exactly_what_export_html_emits(self):
         """Plan 065 (findings_25 s2): a CSV for a table that no longer exists sat in a
         tool-owned directory for two months, and `package_verify` could not see it. The

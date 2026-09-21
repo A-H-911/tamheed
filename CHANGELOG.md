@@ -20,6 +20,14 @@ All notable changes to Tamheed are documented here. The format is based on
   because only the pointer had been set, and nothing said so. New advisory
   `lessons-superseded-binding`; the note tags a still-binding row that points at a successor.
 
+- `prose-ids-resolve` says what it skipped (findings_26 §1–§2, plan 076). Two informational
+  lists join the entity list: `in_code_spans` (a phantom cited only inside a code span — still
+  not a failure, but now visible, so backticks cannot silence a broken citation and a clean
+  result says which kind of clean it is) and `not_well_formed` (a token narrower than any id its
+  family holds, like `SEC-8` against `SEC-001`… — reported, never dropped, because `DEF-82`
+  typed for `DEF-082` lands there too). A token followed by `-<digit>` is not an id
+  (`ADR-2026-001`). The note says the entity list is a floor, not a census.
+
 ### Changed
 
 - **No readiness rule passes over nothing (maintainer ruling 2026-09-21, plan 077).** A
