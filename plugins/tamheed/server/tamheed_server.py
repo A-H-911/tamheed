@@ -1145,6 +1145,12 @@ def entity_upsert(entities: list[dict]) -> dict:
                     failed = True
             else:
                 res = {"index": i, "ok": True, "id": cols.get("id")}
+                if etype == "lesson" and (
+                        cols.get("lifecycle_status") in ("Approved", "Promoted")):
+                    # Plan 068 (the field's DEF-107): binding is not rendering
+                    res["next"] = ("this lesson BINDS only once the always-loaded note"
+                                   " is rebuilt - run handoff_emit in this same batch"
+                                   " (the note is rebuilt by nothing else)")
                 if forced_note:
                     # The permanent record of a forced close does not depend on the
                     # agent remembering to write one — the server appends it, inside
@@ -1307,8 +1313,26 @@ def entity_query(type: str, id: str | None = None, status: str | None = None,
         next_after = last[cols.index("id")] if "id" in cols else _CURRENT.conn.execute(
             f"SELECT id FROM {table}{where_sql} ORDER BY id LIMIT 1 OFFSET {limit - 1}",
             page_params).fetchone()[0]
-    return {"ok": True, "rows": rows, "count": len(rows), "total": total,
-            "next_after": next_after}
+    out = {"ok": True, "rows": rows, "count": len(rows), "total": total,
+           "next_after": next_after}
+    # Plan 068: a row cut announces itself through `total`; a projection announced
+    # nothing, and `search` never said WHERE it matched (it reads every TEXT column,
+    # custom_attributes included). Top-level siblings of `rows`, never per-row keys.
+    if columns:
+        out["omitted_columns"] = [c for c in _columns(table) if c not in cols]
+    if search is not None and rows and "id" in _columns(table):
+        ids_now = [r["id"] for r in rows] if "id" in cols else [
+            r[0] for r in _CURRENT.conn.execute(
+                f"SELECT id FROM {table}{where_sql} ORDER BY id LIMIT {limit}",
+                page_params)]
+        marks = ", ".join(f"({c} LIKE ? ESCAPE '\\')" for c in text_cols)
+        hits = _CURRENT.conn.execute(
+            f"SELECT id, {marks} FROM {table} WHERE id IN"
+            f" ({', '.join('?' * len(ids_now))})",
+            [needle] * len(text_cols) + ids_now).fetchall()
+        out["matched"] = {h[0]: [c for c, hit in zip(text_cols, h[1:]) if hit]
+                          for h in sorted(hits)}
+    return out
 
 
 def trace_query(entity_id: str, direction: str = "both", relation: str | None = None) -> dict:

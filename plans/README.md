@@ -134,8 +134,8 @@ Master record: [063-074-batch-findings-25.md](063-074-batch-findings-25.md) (the
 | 063 | [The lock can be observed; the migrate preview runs without it](063-lock-observation-and-lock-free-preview.md) | findings_25 §1 | DONE — 2026-09-21, commit `79e8c5b`; reviewed by a security and a Python reviewer before commit; CI 9/9 on Ubuntu + Windows (run 35554874507) |
 | 064 | [`package_unlock` — the sanctioned, journaled route out of a dead holder's lock](064-package-unlock.md) | 063 | DONE — 2026-09-21, commit `d54b989`; security + Python reviewers before commit (a racing-unlock CRITICAL closed by a byte-compare before removal); `--selftest` 19/19; CI 9/9 (run 35556634557) |
 | 066 | [`server_info` package block + `detail=true` (entity types, relation rules)](066-server-info-package-row-and-detail.md) | findings_25 §3 | DONE — 2026-09-21, commit `6e319ed` |
-| 067 | [Export envelope carries `partial`; `package_verify(expect=)`](067-export-self-describing-and-verify-expect.md) | ACMP export consumers | IN PROGRESS |
-| 068 | `entity_query` announces projections and search hits; lesson approve/pin nudge | LL-077, LL-094, DEF-107 | PLANNED |
+| 067 | [Export envelope carries `partial`; `package_verify(expect=)`](067-export-self-describing-and-verify-expect.md) | ACMP export consumers | DONE — 2026-09-21, commit `3f53c0b` |
+| 068 | [`entity_query` announces projections and search hits; lesson approval nudge](068-reads-announce-what-they-hid.md) | LL-077, LL-094, DEF-107 | IN PROGRESS |
 | 069 | `population` on every readiness rule; `lessons-confirmed` indeterminate at zero | hollow-pass lessons | PLANNED |
 | 070 | `prose-ids-resolve` advisory (measured false-positive gate) | 069; phantom DEF-082 | PLANNED |
 | 071 | Stock prompts adopt the portable field rules (needle-pinned) | 064, 066, 067 | PLANNED |

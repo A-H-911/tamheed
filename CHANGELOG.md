@@ -35,6 +35,12 @@ All notable changes to Tamheed are documented here. The format is based on
   re-derived it); still deterministic. `package_verify(expect=<digest>)` returns
   `matches_expected`, so "is this slate still current" is a boolean, not two hex strings
   compared by eye - a mismatch means stale, not damaged (plan 067).
+- Reads announce what they hid (plan 068): `entity_query` with `columns` returns
+  `omitted_columns`, and with `search` returns `matched` (which TEXT column matched, per
+  row - `search` is an exact substring over every TEXT column incl. `custom_attributes`, so
+  a hit in an unprojected column used to read as a fuzzy match). A lesson landing
+  `Approved`/`Promoted` carries a `next` hint: the always-loaded note is rebuilt only by
+  `handoff_emit`. Top-level keys only; row dicts are unchanged.
 
 ### Fixed
 

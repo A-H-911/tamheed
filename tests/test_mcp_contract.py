@@ -2710,6 +2710,44 @@ class V4EngineTest(unittest.TestCase):
         self.assertFalse(stale["matches_expected"])                    # ANY write moves it
         self.assertTrue(stale["verified"])                             # stale != damaged
 
+    def test_reads_announce_what_they_hid_and_where_they_matched(self):
+        """Plan 068 (field lessons LL-077, LL-094): a row cut announces itself through
+        `total`; a column PROJECTION announced nothing, and `search` never said WHICH
+        column matched - so a hit in an unprojected `custom_attributes` read as a fuzzy
+        match. Both are top-level siblings of `rows`; row dicts are unchanged."""
+        srv.entity_upsert([{"type": "defect", "id": "DEF-091", "title": "plain title",
+                            "severity": "low",
+                            "custom_attributes": {"note": "see NEEDLE-208 here"}}])
+        plain = srv.entity_query("defect", id="DEF-091")
+        self.assertNotIn("omitted_columns", plain)                   # nothing was hidden
+        self.assertNotIn("matched", plain)
+        proj = srv.entity_query("defect", columns=["id", "title"], search="needle-208")
+        self.assertEqual(proj["rows"], [{"id": "DEF-091", "title": "plain title"}])
+        self.assertIn("custom_attributes", proj["omitted_columns"])
+        self.assertNotIn("title", proj["omitted_columns"])
+        self.assertEqual(proj["matched"], {"DEF-091": ["custom_attributes"]})
+        both = srv.entity_query("defect", search="plain")
+        self.assertEqual(both["matched"]["DEF-091"], ["title"])
+        none = srv.entity_query("defect", search="zzz-no-such")
+        self.assertEqual((none["rows"], none.get("matched")), ([], None))  # no rows: no map
+
+    def test_lesson_approval_says_the_note_is_rebuilt_only_by_handoff_emit(self):
+        """Plan 068 (the field's DEF-107): an Approved+pinned lesson sat absent from the
+        always-loaded note for two days - nothing said the note is rebuilt ONLY by
+        handoff_emit. The write that makes a lesson bind now says so."""
+        lesson = {"type": "lesson", "id": "LL-001", "title": "t", "statement": "s",
+                  "kind": "improve"}
+        first = srv.entity_upsert([lesson])
+        self.assertTrue(first["ok"], first)
+        self.assertNotIn("next", first["items"][0])                # Proposed: binds nothing
+        out = srv.entity_upsert([dict(lesson, lifecycle_status="Approved", pinned=1,
+                                      operator_confirm=True, confirmed_by="anas")])
+        self.assertTrue(out["ok"], out)
+        self.assertIn("handoff_emit", out["items"][0]["next"])
+        other = srv.entity_upsert([{"type": "defect", "id": "DEF-092", "title": "d",
+                                    "severity": "low"}])
+        self.assertNotIn("next", other["items"][0])                # lessons only
+
     def test_package_unlock_reports_by_default_and_writes_nothing(self):
         """Plan 064 (findings_25 s1): the sanctioned route out of a dead holder's lock.
         The default call only REPORTS - the lock, what was observed, what confirm would do."""
