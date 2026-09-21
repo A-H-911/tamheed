@@ -2805,6 +2805,27 @@ class V4EngineTest(unittest.TestCase):
             "title": "regressed by DEF-002", "custom_attributes": {"related": []}}])["ok"])
         self.assertEqual(rule()[1]["status"], "pass")               # fixing the text clears it
 
+    def test_stock_prompts_teach_the_field_rules(self):
+        """Plan 071: portable rules the field paid for, pinned by needle so they cannot
+        rot - and two stale teachings removed (the hand-deleted lock; the claim that a
+        query round-trip truncates, which pushed a field repo onto the JSONL for weeks)."""
+        lib = REPO_ROOT / "plugins" / "tamheed" / "prompts"
+        read = lambda name: (lib / name).read_text(encoding="utf-8")
+        guide = read("README.md")
+        for needle in ("Show the record with its id", "Ask every time", "package_unlock",
+                       "Never auto-clear", "read made FOR transmission"):
+            self.assertIn(needle, guide, needle)
+        for stale in ("re-commits the damage", "Repair from `data/*.jsonl`",
+                      "delete `data/.lock` when EITHER"):
+            self.assertNotIn(stale, guide, stale)
+        check = read("integrity-check.md")
+        for needle in ("Every gate is row-level", "`population`", "prose-ids-resolve"):
+            self.assertIn(needle, check, needle)
+        self.assertIn("which words of the trigger", read("replan-deferred.md"))
+        orient = read("orient-resume.md")
+        for needle in ("Search finds candidates", "package_unlock", "omitted_columns"):
+            self.assertIn(needle, orient, needle)
+
     def test_package_unlock_reports_by_default_and_writes_nothing(self):
         """Plan 064 (findings_25 s1): the sanctioned route out of a dead holder's lock.
         The default call only REPORTS - the lock, what was observed, what confirm would do."""

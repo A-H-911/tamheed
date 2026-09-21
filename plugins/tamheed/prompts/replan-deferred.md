@@ -10,7 +10,10 @@ Review and activate deferred work in the `{package}` Tamheed package:
 1. `package_open("{package}")` if not already open.
 2. `entity_query("deferred-work")` — for each Open/Scheduled row, judge its
    `activation_trigger` against current state (the triggers are prose — that judgment
-   is the point of this prompt). Report: fired / not fired / unclear, with reasons.
+   is the point of this prompt). Report: fired / not fired / unclear, with reasons —
+   and for every FIRED, say **which words of the trigger** you are matching and what in
+   the current state matches them. A row with no progress entries because it was never
+   started is not a gap to fill.
 3. For each item to activate: the `scope-change` row FIRST (status Proposed,
    `decision_ref` naming the deciding `DEC-`/`ADR-` — upsert a Proposed decision if
    none exists) with `scope_adds`/`scope_modifies` delta edges to the rows the

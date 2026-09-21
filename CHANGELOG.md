@@ -60,6 +60,15 @@ All notable changes to Tamheed are documented here. The format is based on
 
 ### Changed
 
+- Stock prompts adopt portable field rules and drop two stale teachings (plan 071):
+  `prompts/README.md` teaches the lock observation and `package_unlock` instead of a
+  hand-deleted lock, gains **Asking the operator** (homework first, one decision per
+  question, show the record with its id, ask every time), and no longer says to repair from
+  `data/*.jsonl` because a query round-trip "truncates" - no field is ever truncated, and
+  that claim cost a field repo three weeks on the JSONL. `integrity-check.md` says what a
+  green run does not prove (every gate is row-level; read `population`);
+  `replan-deferred.md` asks which words of a trigger fired; `orient-resume.md` teaches
+  "search finds candidates, an exact read decides". Needle-pinned; `4.9.0` history keys.
 - `lessons-confirmed` reads `indeterminate` (never a hollow pass) on a package that holds no
   lesson at all: a session that learned nothing and one that recorded nothing looked the
   same. Advisory, so `ready` is unchanged (plan 069).

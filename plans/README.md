@@ -137,8 +137,8 @@ Master record: [063-074-batch-findings-25.md](063-074-batch-findings-25.md) (the
 | 067 | [Export envelope carries `partial`; `package_verify(expect=)`](067-export-self-describing-and-verify-expect.md) | ACMP export consumers | DONE — 2026-09-21, commit `3f53c0b` |
 | 068 | [`entity_query` announces projections and search hits; lesson approval nudge](068-reads-announce-what-they-hid.md) | LL-077, LL-094, DEF-107 | DONE — 2026-09-21, commit `cf71a56` |
 | 069 | [`population` on every readiness rule; `lessons-confirmed` indeterminate at zero](069-readiness-rules-report-their-population.md) | hollow-pass lessons | DONE — 2026-09-21, commit `f90d06b` |
-| 070 | [`prose-ids-resolve` advisory (measured false-positive gate)](070-prose-ids-resolve-advisory.md) | 069; phantom DEF-082 | IN PROGRESS |
-| 071 | Stock prompts adopt the portable field rules (needle-pinned) | 064, 066, 067 | PLANNED |
+| 070 | [`prose-ids-resolve` advisory (measured false-positive gate)](070-prose-ids-resolve-advisory.md) | 069; phantom DEF-082 | DONE — 2026-09-21, commit `0a27713`; measured first: both field phantoms found, ~1 false hit per 1,000 rows |
+| 071 | [Stock prompts adopt the portable field rules (needle-pinned)](071-stock-prompts-adopt-field-rules.md) | 064, 066, 067 | IN PROGRESS |
 | 065 | `csv/` equals what `export_html` emits; `package_verify.foreign_csv` | findings_25 §2 | PLANNED |
 | 072 | Docs + diagrams sweep after code lands | 063–071 | PLANNED |
 | 073 | Lab beat 16 | 063–072 + acceptance | PLANNED |
