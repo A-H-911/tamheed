@@ -151,7 +151,7 @@ execution order is the row order below). Status values: PLANNED / IN PROGRESS / 
 
 | # | Plan | Depends on | Status |
 |---|---|---|---|
-| 075 | Supersession completes itself; retiring a binding lesson needs the operator | findings_26 §3 | PLANNED |
+| 075 | [Supersession completes itself; retiring a binding lesson needs the operator](075-lesson-supersession-completes-itself.md) | findings_26 §3 | IN PROGRESS |
 | 077 | No rule passes over nothing; a recorded omission reads `pass` | maintainer ruling; plan 069 | PLANNED |
 | 076 | Prose-id refinements: `in_code_spans`, `not_well_formed`, the list is a floor | findings_26 §1–§2; 077 | PLANNED |
 | 079 | `waivers-open-ended` advisory | beat 16's observation; 077 | PLANNED |

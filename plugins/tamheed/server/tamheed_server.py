@@ -1123,6 +1123,35 @@ def entity_upsert(entities: list[dict]) -> dict:
                 + ", confirmed_by, confirmed_at FROM lessons WHERE id = ?",
                 (cols["id"],)).fetchone()
             stored_status = stored[0] if stored else None
+            # Plan 075 (maintainer ruling 2026-09-21): what BINDS every session on the
+            # operator's word stops binding on the operator's word too. A Proposed
+            # lesson binds nothing and may still be rejected freely. Two routes unbind,
+            # and BOTH are guarded (security review): ANY move off a binding status -
+            # not a list of named targets, `Proposed` unbinds as surely as `Rejected` -
+            # and any change to `superseded_by`, because approving the lesson it names
+            # retires this one. Presence-checked: an omitted column is preserved, so it
+            # is never a change.
+            if stored_status in ("Approved", "Promoted") and not operator_confirm:
+                unbinds = ("lifecycle_status" in cols
+                           and cols["lifecycle_status"] not in ("Approved", "Promoted"))
+                repoints = False
+                if "superseded_by" in cols:
+                    (old_ptr,) = conn.execute(
+                        "SELECT superseded_by FROM lessons WHERE id = ?",
+                        (cols["id"],)).fetchone()
+                    repoints = cols["superseded_by"] != old_ptr
+                if unbinds or repoints:
+                    what = ("retiring a lesson that BINDS future sessions" if unbinds else
+                            "pointing a BINDING lesson at a successor (approving that"
+                            " successor retires this one)")
+                    results.append({
+                        "index": i, "ok": False, "id": cols["id"],
+                        "error": (f"{cols['id']}: {what} is the OPERATOR's word, like"
+                                  " approving it — re-run this item with"
+                                  " \"operator_confirm\": true after their explicit"
+                                  " confirmation; never in unattended mode")})
+                    failed = True
+                    continue
             if incoming in ("Approved", "Promoted") and stored_status != incoming:
                 err = None
                 if incoming == "Promoted" and stored_status != "Approved":
@@ -1220,6 +1249,50 @@ def entity_upsert(entities: list[dict]) -> dict:
                     res["next"] = ("this lesson BINDS only once the always-loaded note"
                                    " is rebuilt - run handoff_emit in this same batch"
                                    " (the note is rebuilt by nothing else)")
+                    if cols.get("superseded_by"):       # Approved AND Promoted both bind
+                        # Plan 075 (findings_26 s3): the pointer alone retires nothing
+                        res["next"] = (
+                            f"{cols['id']} is still Approved, so it KEEPS BINDING:"
+                            " `superseded_by` is only a pointer. It is retired when its"
+                            f" successor {cols['superseded_by']} is approved (the engine"
+                            " then sets it Superseded), or by setting lifecycle_status"
+                            " to Superseded on the operator's word (operator_confirm)")
+                if lesson_pe:
+                    # Plan 075: STATUS is the single truth for what binds (the note and
+                    # the Approved query both read it), so the engine finishes a
+                    # supersession at the moment the OPERATOR approves the successor.
+                    retired = [r[0] for r in conn.execute(
+                        "SELECT id FROM lessons WHERE superseded_by = ? AND id <> ?"
+                        " AND lifecycle_status IN ('Approved', 'Promoted') ORDER BY id",
+                        (cols["id"], cols["id"]))]
+                    # its own savepoint: the item's was already released, and a failure
+                    # half-way through several lessons must leave NONE of them retired
+                    conn.execute(f"SAVEPOINT lsup{i}")
+                    try:
+                        for old_id in retired:
+                            conn.execute("UPDATE lessons SET lifecycle_status ="
+                                         " 'Superseded' WHERE id = ?", (old_id,))
+                            conn.execute(
+                                "INSERT INTO progress_entries (id, event_type, entry,"
+                                " subject_id, actor, occurred_at)"
+                                " VALUES (?, ?, ?, ?, ?, ?)",
+                                (_next_id("PE-", "progress_entries"), "transition",
+                                 f"LESSON {old_id} -> Superseded: its successor"
+                                 f" {cols['id']} was approved on the operator's word"
+                                 " (operator_confirm attested on that write)",
+                                 old_id, "system:lesson-supersession", _now()))
+                        conn.execute(f"RELEASE lsup{i}")
+                    except Exception as exc:  # noqa: BLE001 - fail the item, cleanly
+                        conn.execute(f"ROLLBACK TO lsup{i}")
+                        conn.execute(f"RELEASE lsup{i}")
+                        results.append({
+                            "index": i, "ok": False, "id": cols["id"],
+                            "error": (f"{cols['id']}: approved, but retiring the lessons"
+                                      f" it supersedes failed ({exc}) — nothing applied")})
+                        failed = True
+                        continue
+                    if retired:
+                        res["superseded"] = retired
                 if forced_note:
                     # The permanent record of a forced close does not depend on the
                     # agent remembering to write one — the server appends it, inside
@@ -1864,6 +1937,17 @@ def _readiness_report(conn, scope: str, scope_id: str | None) -> dict:
              empty_is_indeterminate=" — no lesson has been recorded at all, so this"
              " rule adjudicated nothing (a session that learned nothing and one that"
              " recorded nothing look the same here)")
+        # Plan 075 (findings_26 s3): a lesson pointing at an APPROVED successor while
+        # itself still Approved is a half-finished supersession - it keeps binding,
+        # beside the lesson that corrects it, and the two can render identically.
+        rule("lessons-superseded-binding", "advisory",
+             ids("SELECT l.id FROM lessons l JOIN lessons s ON s.id = l.superseded_by"
+                 " WHERE l.lifecycle_status IN ('Approved', 'Promoted')"
+                 " AND s.lifecycle_status IN ('Approved', 'Promoted') ORDER BY l.id"),
+             "Approved lessons whose `superseded_by` names an approved successor: they"
+             " STILL BIND (the pointer alone retires nothing). Retire each by setting"
+             " lifecycle_status to Superseded on the operator's word (operator_confirm);"
+             " approving a successor retires the lessons pointing at it automatically")
         # Plan 039 (the ACMP register: 57 Approved lessons, 48 pinned, 0 promoted —
         # 57 lines in the always-loaded note): pinning bypasses the cap by design,
         # so the cost of a pin is made visible instead. Entities = the rows that
@@ -2375,11 +2459,15 @@ _NOTE_LESSONS_CEILING = 20
 def _note_lesson_rows(conn) -> list[tuple]:
     """The lesson rows the note RENDERS, in render order (pinned first, then numeric
     id descending, unpinned fill capped at _NOTE_LESSONS_CAP) — one helper so the
-    note and the note-budget advisory can never disagree about what renders."""
+    note and the note-budget advisory can never disagree about what renders. The fifth
+    column (plan 075) is the successor a still-Approved row points at and the sixth that
+    successor's status: the row binds until it is retired, and the note says which
+    of the two half-states it is in."""
     rows = conn.execute(
-        "SELECT id, kind, statement, pinned FROM lessons"
-        " WHERE lifecycle_status = 'Approved'"
-        " ORDER BY pinned DESC, CAST(SUBSTR(id, 4) AS INTEGER) DESC").fetchall()
+        "SELECT l.id, l.kind, l.statement, l.pinned, l.superseded_by,"
+        " (SELECT s.lifecycle_status FROM lessons s WHERE s.id = l.superseded_by)"
+        " FROM lessons l WHERE l.lifecycle_status = 'Approved'"
+        " ORDER BY l.pinned DESC, CAST(SUBSTR(l.id, 4) AS INTEGER) DESC").fetchall()
     pinned = [r for r in rows if r[3]]
     return pinned + [r for r in rows if not r[3]][:_NOTE_LESSONS_CAP]
 
@@ -2425,7 +2513,7 @@ def _note_lessons_section() -> tuple[str, list[dict]]:
     if not approved and not skills:
         return "", []
     findings, lines = list(skill_findings), []
-    for lid, kind, statement, pin in shown:
+    for lid, kind, statement, pin, pending, successor_status in shown:
         if m := _INJECT_RE.search(str(statement)):
             findings.append({"lesson": lid, "pattern": m.group(0)[:60]})
         flat = " ".join(str(statement).split())
@@ -2433,6 +2521,15 @@ def _note_lessons_section() -> tuple[str, list[dict]]:
         if len(flat) > 180:
             flat = flat[:177] + "..."
         tag = f"{kind}, pinned" if pin else kind
+        if pending:
+            # Plan 075: a correct supersession keeps the old opening, so two lines can
+            # be identical inside the 180-character window - the tag is what survives.
+            # The id reaches an ALWAYS-LOADED surface: print it only if it is id-shaped
+            # (the DDL's GLOB admits free text after the first digit).
+            shown_id = pending if re.fullmatch(r"LL-\d+", str(pending)) else "another lesson"
+            tag += (f", superseded by {shown_id} - RETIRE THIS ROW (operator)"
+                    if successor_status in ("Approved", "Promoted") else
+                    f", superseded by {shown_id} - pending its approval")
         lines.append(f"- **{lid}** [{tag}] {flat}\n")
     rest = approved - len(shown)
     more = (f"\n{rest} more Approved lesson(s): `entity_query(\"lesson\")`.\n"

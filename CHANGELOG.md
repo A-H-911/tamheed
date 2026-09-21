@@ -10,6 +10,24 @@ All notable changes to Tamheed are documented here. The format is based on
 
 ## [Unreleased]
 
+### Added
+
+- A lesson supersession completes itself (findings_26 §3, plan 075): when the operator approves
+  or promotes a lesson, every binding lesson whose `superseded_by` names it becomes `Superseded`
+  in the same write, with one `transition` journal row each and the ids returned as `superseded`.
+  STATUS stays the single truth for what binds — the always-loaded note and
+  `entity_query("lesson", status="Approved")` both read it; the field's lesson kept binding
+  because only the pointer had been set, and nothing said so. New advisory
+  `lessons-superseded-binding`; the note tags a still-binding row that points at a successor.
+
+### Changed
+
+- **Contract tightening (maintainer ruling 2026-09-21):** what binds every session on the
+  operator's word stops binding on it too. On an Approved or Promoted lesson, ANY move off a
+  binding status, and any change to `superseded_by`, is refused without
+  `"operator_confirm": true`. A Proposed lesson binds nothing and is still rejected freely; an
+  upsert that omits those columns is never refused (plan 075).
+
 ## [4.9.0] - 2026-09-21
 
 **MINOR — the findings_25 batch: the observed lock, the legible reads, the honest denominators

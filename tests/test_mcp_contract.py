@@ -1987,9 +1987,14 @@ class V4EngineTest(unittest.TestCase):
         self.assertTrue(pin["ok"], pin)                            # curation open
         srv.entity_upsert([{**base, "id": "LL-002", "title": "paste v2",
                             "statement": "paste AND verify by re-derivation"}])
-        sup = srv.entity_upsert([{**approved, "pinned": 1,
-                                  "lifecycle_status": "Superseded",
-                                  "superseded_by": "LL-002"}])
+        retire = {**approved, "pinned": 1, "lifecycle_status": "Superseded",
+                  "superseded_by": "LL-002"}
+        retire.pop("operator_confirm", None)
+        refused = srv.entity_upsert([retire])                      # plan 075: what binds on
+        self.assertFalse(refused["ok"], refused)                   # the operator's word is
+        self.assertIn("operator_confirm",                          # retired on it too
+                      refused["items"][0]["error"])
+        sup = srv.entity_upsert([{**retire, "operator_confirm": True}])
         self.assertTrue(sup["ok"], sup)                            # supersession open
 
     def test_lesson_confirm_guard_covers_every_landing_path(self):
@@ -2879,6 +2884,94 @@ class V4EngineTest(unittest.TestCase):
             self.assertIn("csv/waivers.csv", far["csv"]["unowned"])
             self.assertTrue((other / "waivers.csv").exists())
 
+    @staticmethod
+    def _lesson(lid, tail, **extra):
+        return dict({"type": "lesson", "id": lid, "title": "t", "kind": "improve",
+                     "statement": "THE RULE. a shared opening. " + "x" * 200 + tail}, **extra)
+
+    def test_approving_a_successor_retires_the_lesson_it_supersedes(self):
+        """Plan 075 (findings_26 s3): a lesson whose `superseded_by` was set but whose
+        status stayed Approved kept binding every session - the engine accepted the
+        half-finished supersession silently and no doc said the STATUS must change.
+        Status stays the single truth (the note AND the Approved query read it), so the
+        engine finishes the job at the moment the OPERATOR approves the successor."""
+        old = self._lesson("LL-001", " FALSE TAIL")
+        new = self._lesson("LL-002", " CORRECT TAIL")
+        approve = {"lifecycle_status": "Approved", "operator_confirm": True,
+                   "confirmed_by": "anas"}
+        self.assertTrue(srv.entity_upsert([old, new])["ok"])
+        self.assertTrue(srv.entity_upsert([dict(old, **approve)])["ok"])
+        # pointing a BINDING lesson at a successor is the operator's word too: approving
+        # that successor retires this row, so an unattended pointer would let a later,
+        # unrelated approval unbind a lesson nobody agreed to retire (security review)
+        sneaky = srv.entity_upsert([dict(old, lifecycle_status="Approved",
+                                         superseded_by="LL-002")])
+        self.assertFalse(sneaky["ok"], sneaky)
+        self.assertIn("operator_confirm", sneaky["items"][0]["error"])
+        half = srv.entity_upsert([dict(old, lifecycle_status="Approved",
+                                       superseded_by="LL-002", operator_confirm=True)])
+        self.assertTrue(half["ok"], half)
+        self.assertIn("still Approved", half["items"][0]["next"])       # a truthful hint
+        rows = {r[0]: r for r in srv._note_lesson_rows(srv._CURRENT.conn)}
+        self.assertEqual(rows["LL-001"][4], "LL-002")                  # rendered, tagged pending
+        binding = lambda: {r["rule"]: r for r in srv.readiness_check("package")["rules"]}[
+            "lessons-superseded-binding"]
+        self.assertEqual(binding()["entities"], [])                    # successor not approved yet
+        out = srv.entity_upsert([dict(new, **approve)])
+        self.assertTrue(out["ok"], out)
+        self.assertEqual(out["items"][0]["superseded"], ["LL-001"])    # named, never silent
+        approved = srv.entity_query("lesson", status="Approved")["rows"]
+        self.assertEqual([r["id"] for r in approved], ["LL-002"])      # the OTHER binding surface
+        self.assertEqual([r[0] for r in srv._note_lesson_rows(srv._CURRENT.conn)], ["LL-002"])
+        old_row = srv.entity_query("lesson", id="LL-001")["rows"][0]
+        self.assertEqual(old_row["lifecycle_status"], "Superseded")
+        journal = srv.entity_query("progress-entry", search="LL-001 -> Superseded")["rows"]
+        self.assertEqual([(r["event_type"], r["actor"]) for r in journal],
+                         [("transition", "system:lesson-supersession")])
+        self.assertEqual(binding()["entities"], [])
+
+    def test_retiring_a_binding_lesson_needs_the_operators_word(self):
+        """Plan 075 (maintainer ruling 2026-09-21): binding a lesson needs the operator's
+        confirmation, so unbinding one does too. A Proposed lesson binds nothing and may
+        still be rejected freely; a pointer at a lesson that is not approved retires
+        nothing."""
+        old = self._lesson("LL-001", " A")
+        self.assertTrue(srv.entity_upsert([old, self._lesson("LL-002", " B"),
+                                           self._lesson("LL-003", " C")])["ok"])
+        self.assertTrue(srv.entity_upsert([dict(old, lifecycle_status="Approved",
+                                                operator_confirm=True,
+                                                confirmed_by="anas")])["ok"])
+        # ANY move off a binding status, not a list of named ones: `Proposed` unbinds as
+        # surely as `Rejected` - and once Proposed the content is editable again
+        for status in ("Superseded", "Obsolete", "Rejected", "Proposed"):
+            out = srv.entity_upsert([dict(old, lifecycle_status=status)])
+            self.assertFalse(out["ok"], (status, out))
+            self.assertIn("operator_confirm", out["items"][0]["error"])
+        # an upsert that OMITS the status changes nothing about binding: never refused
+        keep = {k: v for k, v in old.items() if k != "lifecycle_status"}
+        self.assertTrue(srv.entity_upsert([dict(keep, pinned=1)])["ok"])
+        self.assertEqual(srv.entity_query("lesson", id="LL-001")["rows"][0]
+                         ["lifecycle_status"], "Approved")             # untouched
+        self.assertTrue(srv.entity_upsert([dict(self._lesson("LL-003", " C"),
+                                                lifecycle_status="Rejected")])["ok"])
+        # the half-state with an APPROVED successor is named by the advisory
+        self.assertTrue(srv.entity_upsert([dict(self._lesson("LL-002", " B"),
+                                                lifecycle_status="Approved",
+                                                operator_confirm=True,
+                                                confirmed_by="anas")])["ok"])
+        self.assertTrue(srv.entity_upsert([dict(old, lifecycle_status="Approved",
+                                                superseded_by="LL-002",
+                                                operator_confirm=True)])["ok"])
+        stuck = {r[0]: r for r in srv._note_lesson_rows(srv._CURRENT.conn)}["LL-001"]
+        self.assertEqual((stuck[4], stuck[5]), ("LL-002", "Approved"))  # NOT "pending"
+        rule = {r["rule"]: r for r in srv.readiness_check("package")["rules"]}[
+            "lessons-superseded-binding"]
+        self.assertEqual((rule["status"], rule["severity"], rule["entities"]),
+                         ("fail", "advisory", ["LL-001"]))
+        done = srv.entity_upsert([dict(old, lifecycle_status="Superseded",
+                                       superseded_by="LL-002", operator_confirm=True)])
+        self.assertTrue(done["ok"], done)
+
     def test_package_unlock_reports_by_default_and_writes_nothing(self):
         """Plan 064 (findings_25 s1): the sanctioned route out of a dead holder's lock.
         The default call only REPORTS - the lock, what was observed, what confirm would do."""
@@ -3149,7 +3242,8 @@ class V4EngineTest(unittest.TestCase):
                           "acs-slice-bound", "defects-minor",
                           "deferred-work-reviewed", "execution-plans-approved",
                           "requirements-wired", "lessons-confirmed",
-                          "lessons-note-budget", "prose-ids-resolve"):
+                          "lessons-note-budget", "prose-ids-resolve",
+                          "lessons-superseded-binding"):
             self.assertIn(rule_name, text, rule_name)
         self.assertIn("STOP for operator approval", text)
         self.assertIn("you NEVER author a `WVR-` row", text)
