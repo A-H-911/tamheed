@@ -2646,6 +2646,27 @@ class V4EngineTest(unittest.TestCase):
             self.assertEqual({w["waiver"] for w in rule["waived"]}, {"WVR-010"})
             self.assertTrue({w["entity"] for w in rule["waived"]} >= {"DEF-010", "DEF-011"})
 
+    def test_migrate_preview_runs_under_a_held_lock_and_confirm_still_refuses(self):
+        """Plan 063 (findings_25 §1): the read-only preview mutates nothing, so it does
+        not need the writer lock — the first tool a post-upgrade operator reaches for
+        must diagnose before it refuses. confirm=true still needs the lock."""
+        srv.package_close()
+        lock = srv.PACKAGE_ROOT / "demo" / "data" / ".lock"
+        lock.write_text(json.dumps({"pid": 4242, "host": "some-other-host",
+                                    "taken_at": "2026-09-19T20:13:02+00:00"}),
+                        encoding="utf-8")
+        try:
+            preview = srv.package_migrate("demo")
+            self.assertIn("nothing to migrate", preview.get("error", ""), preview)
+            self.assertIn("locked", preview.get("error", ""))          # says what it saw
+            self.assertTrue(lock.exists())                             # untouched
+            confirmed = srv.package_migrate("demo", confirm=True)
+            self.assertFalse(confirmed["ok"])
+            self.assertIn("is locked", confirmed["error"])
+            self.assertIn("observed:", confirmed["error"])
+        finally:
+            lock.unlink()
+
     def test_waiver_citation_prefers_the_specific_waiver(self):
         """Plan 060 (beat 15's observation): when a per-entity WVR- and a whole-rule WVR-
         both cover a rule, each waived entity cites the most specific one."""

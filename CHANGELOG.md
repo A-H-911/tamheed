@@ -10,6 +10,15 @@ All notable changes to Tamheed are documented here. The format is based on
 
 ## [Unreleased]
 
+### Added
+
+- The store OBSERVES a lock's holder and reports it (findings_25 s1, plan 063): every
+  lock refusal ends `observed: not-running | reused | alive | unobservable` with the
+  evidence. The lock records the writer's process start time, so a recycled pid is decided
+  by identity, not by a bare liveness check; another host, a legacy lock or a process that
+  cannot be inspected is `unobservable`, never assumed dead. Stdlib only; the server
+  spawns nothing and signals nothing.
+
 ### Fixed
 
 - A flaky assertion in `test_note_pointer_pattern_recognized`: it refused the substring `v1`
@@ -19,6 +28,9 @@ All notable changes to Tamheed are documented here. The format is based on
 
 ### Changed
 
+- `package_migrate`'s read-only preview no longer takes the writer lock: it diagnoses
+  before it refuses, and says when it read under a held lock; `confirm=true` still needs
+  the lock (findings_25 s1, plan 063).
 - `docs/install.md` gains an **Upgrading** section: the marketplace refresh does not update the
   installed plugin (`claude plugin update tamheed@tamheed` + restart does), and the sequence
   around an upgrade in a repo that carries a package — close the lock holder, baseline, preview,

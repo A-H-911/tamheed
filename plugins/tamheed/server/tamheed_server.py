@@ -2683,10 +2683,16 @@ def package_migrate(name: str, confirm: bool = False) -> dict:
     if not data.exists():
         return _err(f"package '{name}' not found under {PACKAGE_ROOT}")
     lock = data / store.LOCK_NAME
-    try:
-        fd = os.open(lock, os.O_CREAT | os.O_EXCL | os.O_WRONLY)
-    except FileExistsError:
-        return _err(f"package '{name}' is locked ({store._describe_lock(lock)})")
+    # Plan 063 (findings_25 s1): the PREVIEW mutates nothing, so it does not take the
+    # writer lock - it reads the on-disk state and says when a lock was present.
+    fd = None
+    held = (f" (read while locked: {store._describe_lock(lock)})"
+            if lock.exists() else "")
+    if confirm:
+        try:
+            fd = os.open(lock, os.O_CREAT | os.O_EXCL | os.O_WRONLY)
+        except FileExistsError:
+            return _err(f"package '{name}' is locked ({store._describe_lock(lock)})")
     try:
         # plan 035: a v4 store never re-migrates, but it CAN learn baseline entity
         # types added by later MINOR releases (extension.md's "registry-row write
@@ -2822,7 +2828,8 @@ def package_migrate(name: str, confirm: bool = False) -> dict:
         if v4_sync and not added and not relocate:
             return _err(f"package is already v{stored}, its entity-type registry"
                         " is current, and data/ holds no foreign audit-trail file"
-                        " — nothing to migrate")
+                        " — nothing to migrate (the expected answer on a current"
+                        " store)" + held)
         for tid, label, prefix, gclass in BASELINE_ENTITY_TYPES:
             if tid in added:
                 tables.setdefault("entity_types", []).append(
@@ -2854,7 +2861,7 @@ def package_migrate(name: str, confirm: bool = False) -> dict:
         if not confirm:
             return {"ok": True, "stage": "preview", "package": name, "report": rep,
                     "note": "nothing written — back the package up (git commit or"
-                            " copy data/), then re-run with confirm=true"}
+                            " copy data/), then re-run with confirm=true" + held}
         # Validate + canonicalize in a scratch store before touching the live files.
         with tempfile.TemporaryDirectory() as td:
             tmp_pkg = Path(td) / "pkg"
@@ -2953,8 +2960,9 @@ def package_migrate(name: str, confirm: bool = False) -> dict:
         out["prompt_library"] = _emit_prompt_library(pkg_dir, name)
         return out
     finally:
-        os.close(fd)
-        lock.unlink()
+        if fd is not None:
+            os.close(fd)
+            lock.unlink()
 
 
 def package_adopt(source_dir: str, name: str | None = None, confirm: bool = False) -> dict:

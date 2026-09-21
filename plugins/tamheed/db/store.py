@@ -10,6 +10,7 @@ import json
 import os
 import socket
 import sqlite3
+import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -29,6 +30,197 @@ class StoreStaleError(RuntimeError):
     A package's data/ lives in a git working tree, so `git checkout`/`pull`/a second
     writer can move it underneath an open session; an unconditional dump would then
     silently overwrite every incoming change with the session's older in-memory copy."""
+
+
+_START_TOLERANCE_S = 2.0  # clock granularity between two reads of one process's start
+
+
+def process_start_time(pid: int) -> tuple[str, float | None]:
+    """Plan 063: OBSERVE a pid without guessing - ("not-running" | "running" |
+    "unobservable", start as epoch seconds or None). Stdlib only, spawns nothing,
+    signals nothing. On Windows `os.kill(pid, 0)` would TERMINATE the process, so
+    the probe is OpenProcess + GetExitCodeProcess + GetProcessTimes: a handle alone
+    proves nothing (an exited process still opens while anyone holds a handle to it
+    - measured), only exit code STILL_ACTIVE does; access denied means it EXISTS but
+    cannot be inspected."""
+    # A pid comes from a JSON file anyone with write access could garble: only a real,
+    # bounded int is probed. bool is an int, Infinity overflows int(), and a huge value
+    # truncates modulo 2**32 in a DWORD and would land on an UNRELATED live process.
+    if (not isinstance(pid, int) or isinstance(pid, bool)
+            or not 0 < pid <= (0xFFFFFFFF if sys.platform == "win32" else 4194304)):
+        return ("unobservable", None)
+    if sys.platform == "win32":
+        return _windows_process_start(pid)
+    if Path("/proc/self/stat").exists():                # Linux: start = boot time + ticks
+        return _linux_process_start(pid)
+    try:                                                # other POSIX: liveness only
+        os.kill(pid, 0)
+    except ProcessLookupError:
+        return ("not-running", None)
+    except OSError:                                     # PermissionError: it exists
+        return ("unobservable", None)
+    return ("running", None)
+
+
+_K32 = None
+
+
+def _kernel32():
+    """kernel32 with its signatures declared ONCE (HANDLE is pointer-sized: an
+    undeclared restype would truncate it to 32 bits)."""
+    global _K32
+    if _K32 is not None:
+        return _K32
+    import ctypes
+    from ctypes import wintypes
+    k32 = ctypes.WinDLL("kernel32", use_last_error=True)
+    k32.OpenProcess.restype = wintypes.HANDLE
+    k32.OpenProcess.argtypes = [wintypes.DWORD, wintypes.BOOL, wintypes.DWORD]
+    k32.CloseHandle.argtypes = [wintypes.HANDLE]
+    k32.GetExitCodeProcess.argtypes = [wintypes.HANDLE, ctypes.POINTER(wintypes.DWORD)]
+    k32.GetProcessTimes.argtypes = ([wintypes.HANDLE]
+                                    + [ctypes.POINTER(wintypes.FILETIME)] * 4)
+    _K32 = k32
+    return k32
+
+
+def _windows_process_start(pid: int) -> tuple[str, float | None]:
+    import ctypes
+    from ctypes import wintypes
+    k32 = _kernel32()
+    handle = k32.OpenProcess(0x1000, False, pid)        # PROCESS_QUERY_LIMITED_INFORMATION
+    if not handle:
+        # 87 = ERROR_INVALID_PARAMETER: no such pid. Anything else (5 = access denied):
+        # it may well exist - say so rather than call it dead.
+        return (("not-running", None) if ctypes.get_last_error() == 87
+                else ("unobservable", None))
+    try:
+        code = wintypes.DWORD()
+        if not k32.GetExitCodeProcess(handle, ctypes.byref(code)):
+            return ("unobservable", None)
+        if code.value != 259:                           # STILL_ACTIVE
+            return ("not-running", None)
+        created, exited, kernel, user = (wintypes.FILETIME() for _ in range(4))
+        if not k32.GetProcessTimes(handle, ctypes.byref(created), ctypes.byref(exited),
+                                   ctypes.byref(kernel), ctypes.byref(user)):
+            return ("running", None)
+        ticks = (created.dwHighDateTime << 32) | created.dwLowDateTime
+        return ("running", ticks / 1e7 - 11644473600)   # FILETIME epoch -> unix epoch
+    finally:
+        k32.CloseHandle(handle)
+
+
+def _linux_process_start(pid: int) -> tuple[str, float | None]:
+    proc = Path(f"/proc/{pid}")
+    if not proc.exists():
+        return ("not-running", None)
+    try:
+        fields = (proc / "stat").read_text(encoding="utf-8").rsplit(")", 1)[1].split()
+        btime = next(int(line.split()[1]) for line in
+                     Path("/proc/stat").read_text(encoding="utf-8").splitlines()
+                     if line.startswith("btime "))
+        return ("running", btime + int(fields[19]) / os.sysconf("SC_CLK_TCK"))
+    except (OSError, ValueError, IndexError, StopIteration):
+        return ("running", None) if proc.exists() else ("not-running", None)
+
+
+def process_identity(pid: int) -> str | None:
+    """An EXACT token for "this very process", immune to wall-clock steps: the Windows
+    creation FILETIME is fixed at creation; on Linux it is boot id + start ticks (the
+    epoch form goes through `btime`, which moves when the clock is stepped). None
+    where the platform offers no such token - identity then falls back to the epoch
+    start with a tolerance."""
+    state, started = process_start_time(pid)
+    if state != "running" or started is None:
+        return None
+    if sys.platform == "win32":
+        return f"win:{round(started * 1e7)}"
+    try:
+        boot = Path("/proc/sys/kernel/random/boot_id").read_text(encoding="utf-8").strip()
+        ticks = (Path(f"/proc/{pid}/stat").read_text(encoding="utf-8")
+                 .rsplit(")", 1)[1].split()[19])
+        return f"linux:{boot}:{ticks}"
+    except (OSError, IndexError):
+        return None
+
+
+def _pid_namespace() -> str | None:
+    """Two containers can share a hostname and still not see each other's pids."""
+    try:
+        return os.readlink("/proc/self/ns/pid")
+    except (OSError, AttributeError, NotImplementedError):
+        return None
+
+
+def _read_lock(lock_path: Path) -> dict:
+    try:
+        parsed = json.loads(lock_path.read_text(encoding="utf-8").strip())
+    except (OSError, ValueError):
+        return {}
+    return parsed if isinstance(parsed, dict) else {}
+
+
+def observe_lock(lock_path: Path, probe=process_start_time,
+                 identity=process_identity) -> dict:
+    """Plan 063 (findings_25 s1): what can be OBSERVED about a lock's holder, with the
+    evidence - the store declines to GUESS, and reporting an observation is not
+    guessing. Outcomes: `not-running` (no such process), `reused` (the pid belongs
+    to a different process - its start differs from the one the lock recorded, or,
+    for a lock that recorded none, it started after the lock was taken), `alive`
+    (the recorded process is running), `unobservable` (another host, an unreadable
+    or legacy lock, access denied, or a platform that cannot report a start time)."""
+    holder = _read_lock(lock_path)
+    out = {"outcome": "unobservable", "pid": holder.get("pid"), "host": holder.get("host"),
+           "taken_at": holder.get("taken_at")}
+    if not holder.get("pid") or not holder.get("host"):
+        return {**out, "evidence": "the lock does not name a pid and a host (legacy or"
+                                   " unreadable) - nothing to observe"}
+    if holder["host"] != socket.gethostname():
+        return {**out, "evidence": f"held on another host ({holder['host']}) - this host"
+                                   " cannot observe that process"}
+    if holder.get("pidns") and holder["pidns"] != _pid_namespace():
+        return {**out, "evidence": "held in another pid namespace (a container sharing"
+                                   " this hostname) - its pids are not visible here"}
+    pid = holder["pid"]
+    state, started = probe(pid)
+    if state == "not-running":
+        return {**out, "outcome": "not-running",
+                "evidence": f"no process with pid {pid} is running on this host"}
+    if state != "running":
+        return {**out, "evidence": f"pid {pid} exists but cannot be inspected (access"
+                                   " denied or unsupported platform)"}
+    if started is None:
+        return {**out, "evidence": f"pid {pid} is running, but this platform cannot"
+                                   " report when it started"}
+    token = holder.get("identity")
+    seen_token = identity(pid) if token else None
+    if token and seen_token:
+        same = token == seen_token
+        return {**out, "outcome": "alive" if same else "reused",
+                "evidence": (f"pid {pid} is the very process that wrote the lock (exact"
+                             " start identity)" if same else
+                             f"pid {pid} is running but is NOT the process that wrote"
+                             " the lock - the pid was reused (exact start identity)")}
+    recorded = holder.get("started")
+    if isinstance(recorded, (int, float)) and not isinstance(recorded, bool):
+        same = abs(started - recorded) <= _START_TOLERANCE_S
+        return {**out, "outcome": "alive" if same else "reused",
+                "evidence": (f"pid {pid} is running and started when the lock's writer"
+                             " did - the same process" if same else
+                             f"pid {pid} is running but started at a different time than"
+                             " the lock's writer - the pid was reused (identity)")}
+    try:
+        taken = datetime.fromisoformat(str(holder.get("taken_at"))).timestamp()
+    except (ValueError, OSError, OverflowError):
+        return {**out, "evidence": "the lock records neither a start time nor a readable"
+                                   " taken_at - nothing to compare"}
+    late = started > taken + _START_TOLERANCE_S
+    return {**out, "outcome": "reused" if late else "alive",
+            "evidence": (f"pid {pid} started AFTER the lock was taken - a process cannot"
+                         " write a file before it exists (ordering; the lock recorded no"
+                         " start time)" if late else
+                         f"pid {pid} is running and predates the lock (ordering only;"
+                         " the lock recorded no start time)")}
 
 
 def _describe_lock(lock_path: Path) -> str:
@@ -52,8 +244,13 @@ def _describe_lock(lock_path: Path) -> str:
         fallback = mtime.isoformat(timespec="seconds")
     except OSError:
         fallback = "unknown"
+    try:
+        seen = observe_lock(lock_path)
+    except Exception as exc:  # noqa: BLE001 - a refusal message must never raise
+        seen = {"outcome": "unobservable", "evidence": f"the observation failed ({exc})"}
     return (f"held by pid {holder.get('pid', '?')} on {holder.get('host', '?')} "
-            f"since {holder.get('taken_at') or fallback}")
+            f"since {holder.get('taken_at') or fallback}; observed: {seen['outcome']}"
+            f" - {seen['evidence']}")
 
 
 def _apply_migrations(conn: sqlite3.Connection) -> None:
@@ -214,6 +411,10 @@ class PackageStore:
         os.write(self._lock_fd, json.dumps({
             "pid": os.getpid(), "host": socket.gethostname(),
             "taken_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+            # plan 063: the writer's own start time is what makes pid REUSE decidable
+            "started": process_start_time(os.getpid())[1],
+            "identity": process_identity(os.getpid()),
+            "pidns": _pid_namespace(),
         }).encode("utf-8"))
         try:
             self.conn = load(self.data_dir)

@@ -4,10 +4,14 @@ Stdlib unittest only. Covers: JSONL -> SQLite -> JSONL byte identity, FK enforce
 CHECK enforcement, ADR supersession immutability, the requirement auto-advance trigger,
 and the single-writer lockfile.
 """
+import json
+import os
 import sqlite3
+import subprocess
 import sys
 import tempfile
 import unittest
+from datetime import datetime, timezone
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -183,6 +187,110 @@ class RoundTripTest(unittest.TestCase):
         # Lock released on exit: reopening succeeds.
         with store.PackageStore(self.pkg):
             pass
+
+    def _lock(self, **holder):
+        lock = Path(self.pkg) / "data" / ".lock"
+        lock.parent.mkdir(parents=True, exist_ok=True)
+        lock.write_text(json.dumps(holder), encoding="utf-8")
+        return lock
+
+    def test_observe_lock_four_outcomes(self):
+        """Plan 063 (findings_25 §1): the store OBSERVES a lock's holder and reports it —
+        not-running / reused / alive / unobservable — and never guesses. Fakes drive
+        the branches (a real pid would make this flaky); the discriminator for reuse
+        is recorded-start != observed-start, both from the process API."""
+        here = store.socket.gethostname()
+        lock = self._lock(pid=4242, host=here, taken_at="2026-09-19T20:13:02+00:00",
+                          started=1000.0)
+        obs = lambda probe: store.observe_lock(lock, probe=probe)["outcome"]
+        # exact identity wins over the epoch tolerance when the lock recorded a token
+        tok = self._lock(pid=4242, host=here, taken_at="2026-09-19T20:13:02+00:00",
+                         started=1000.0, identity="win:1")
+        run = lambda pid: ("running", 1000.0)
+        self.assertEqual(store.observe_lock(tok, probe=run, identity=lambda p: "win:1")
+                         ["outcome"], "alive")
+        self.assertEqual(store.observe_lock(tok, probe=run, identity=lambda p: "win:2")
+                         ["outcome"], "reused")        # same second, different process
+        ns = self._lock(pid=4242, host=here, taken_at="2026-09-19T20:13:02+00:00",
+                        pidns="pid:[1]")
+        self.assertEqual(store.observe_lock(ns, probe=lambda pid: ("not-running", None))
+                         ["outcome"], "unobservable")  # another container, never probed
+        lock = self._lock(pid=4242, host=here, taken_at="2026-09-19T20:13:02+00:00",
+                          started=1000.0)
+        self.assertEqual(obs(lambda pid: ("not-running", None)), "not-running")
+        self.assertEqual(obs(lambda pid: ("running", 1000.5)), "alive")       # same process
+        self.assertEqual(obs(lambda pid: ("running", 5000.0)), "reused")      # pid recycled
+        self.assertEqual(obs(lambda pid: ("running", None)), "unobservable")  # no start time
+        self.assertEqual(obs(lambda pid: ("unobservable", None)), "unobservable")
+        other = self._lock(pid=4242, host="some-other-host", taken_at="2026-09-19T20:13:02+00:00")
+        out = store.observe_lock(other, probe=lambda pid: ("not-running", None))
+        self.assertEqual(out["outcome"], "unobservable")                      # never probed
+        self.assertIn("another host", out["evidence"])
+
+    def test_observe_lock_legacy_lock_falls_back_to_ordering(self):
+        """A lock without a recorded start (pre-4.9.0, or a legacy bare pid) can only be
+        judged by ordering: a process that started AFTER the lock was taken is not the
+        writer (the field's VS Code case). Weaker than identity, and labelled so."""
+        here = store.socket.gethostname()
+        lock = self._lock(pid=71948, host=here, taken_at="2026-08-04T01:51:50+00:00")
+        taken = datetime(2026, 8, 4, 1, 51, 50, tzinfo=timezone.utc).timestamp()
+        late = store.observe_lock(lock, probe=lambda pid: ("running", taken + 8.5 * 3600))
+        self.assertEqual(late["outcome"], "reused")
+        self.assertIn("ordering", late["evidence"])
+        early = store.observe_lock(lock, probe=lambda pid: ("running", taken - 60))
+        self.assertEqual(early["outcome"], "alive")
+        lock.write_text("71948", encoding="utf-8")                            # bare-int lock
+        self.assertEqual(store.observe_lock(
+            lock, probe=lambda pid: ("not-running", None))["outcome"], "unobservable")
+
+    def test_a_garbled_pid_is_unobservable_and_the_refusal_never_raises(self):
+        """Security review of plan 063: JSON accepts Infinity (int() overflows), bool is
+        an int, and a huge pid truncates modulo 2**32 on Windows onto an unrelated live
+        process. None may be probed, and none may mask the StoreLockedError."""
+        for bad in (float("inf"), True, -1, 0, 2 ** 40, "4242", 4242.0, None):
+            self.assertEqual(store.process_start_time(bad), ("unobservable", None), bad)
+        lock = Path(self.pkg) / "data" / ".lock"
+        lock.parent.mkdir(parents=True, exist_ok=True)
+        lock.write_text('{"pid": Infinity, "host": "%s"}' % store.socket.gethostname(),
+                        encoding="utf-8")
+        with self.assertRaises(store.StoreLockedError) as ctx:
+            store.PackageStore(self.pkg).__enter__()
+        self.assertIn("observed: unobservable", str(ctx.exception))
+
+    def test_process_probe_on_real_processes(self):
+        """The real probe, on the two cases that cannot flake: this process is running
+        with an observable-or-absent start, and a finished child whose handle is
+        released is never reported as the same running process."""
+        state, _ = store.process_start_time(os.getpid())
+        self.assertEqual(state, "running")
+        child = subprocess.Popen([sys.executable, "-c", "import time; time.sleep(60)"])
+        try:
+            pid = child.pid
+            self.assertEqual(store.process_start_time(pid)[0], "running")
+            alive_token = store.process_identity(pid)
+        finally:
+            child.kill()
+            child.wait()
+        # the handle is still held here: on Windows the dead process still OPENS, and
+        # only its exit code says it is gone - the case the probe was written for
+        self.assertEqual(store.process_start_time(pid)[0], "not-running")
+        del child
+        # whatever owns that pid now (nothing, or a recycled process) is NOT the child
+        if alive_token is not None:
+            self.assertNotEqual(store.process_identity(pid), alive_token)
+
+    def test_lock_records_the_writers_start_and_refusal_reports_the_observation(self):
+        with store.PackageStore(self.pkg):
+            held = json.loads((Path(self.pkg) / "data" / ".lock").read_text(encoding="utf-8"))
+            self.assertIn("started", held)
+            with self.assertRaises(store.StoreLockedError) as ctx:
+                store.PackageStore(self.pkg).__enter__()
+        self.assertIn("observed:", str(ctx.exception))
+        # it is us: `alive` wherever the platform reports a start time, and an honest
+        # `unobservable` where it cannot - never `not-running` or `reused`
+        expected = ("alive" if store.process_start_time(os.getpid())[1] is not None
+                    else "unobservable")
+        self.assertIn(f"observed: {expected}", str(ctx.exception))
 
     def test_lock_error_names_holder(self):
         """Plan 025 (C31/D): the lock says WHO and SINCE WHEN — a bare PID invited an

@@ -131,7 +131,7 @@ Master record: [063-074-batch-findings-25.md](063-074-batch-findings-25.md) (the
 
 | # | Plan | Depends on | Status |
 |---|---|---|---|
-| 063 | The lock can be observed; the migrate preview runs without it | findings_25 §1 | PLANNED |
+| 063 | [The lock can be observed; the migrate preview runs without it](063-lock-observation-and-lock-free-preview.md) | findings_25 §1 | IN PROGRESS |
 | 064 | `package_unlock` — the sanctioned, journaled route out of a dead holder's lock | 063 | PLANNED |
 | 066 | `server_info` package block + `detail=true` (entity types, relation rules) | findings_25 §3 | PLANNED |
 | 067 | Export envelope carries `partial`; `package_verify(expect=)` | ACMP export consumers | PLANNED |
