@@ -2772,7 +2772,7 @@ class V4EngineTest(unittest.TestCase):
         self.assertEqual(hollow["population"]["rows"], 0)
         self.assertEqual(hollow["status"], "indeterminate")
         self.assertFalse(hollow["discriminating"])
-        self.assertIn("no lesson", hollow["note"])
+        self.assertIn("measured nothing", hollow["note"])
         srv.entity_upsert([{"type": "lesson", "id": "LL-001", "title": "t",
                             "statement": "s", "kind": "improve"}])
         after = srv.readiness_check("package")
@@ -2781,6 +2781,37 @@ class V4EngineTest(unittest.TestCase):
         self.assertEqual(before["ready"], after["ready"])          # advisory: never blocks
         scoped = {r["rule"]: r for r in srv.readiness_check("slice", "SL-001")["rules"]}
         self.assertTrue(scoped["acs-met"]["population"]["scoped"])  # THIS slice's rows
+
+    def test_no_rule_passes_over_nothing_but_a_recorded_omission_is_a_deliberate_zero(self):
+        """Plan 077 (maintainer ruling 2026-09-21; findings_26: two package rules and one
+        slice rule PASSED over zero rows, `population` the only tell). EVERY query-built
+        rule that measured zero rows reads `indeterminate` - the hollow-pass doctrine
+        applied uniformly - EXCEPT where the family's omission is RECORDED: that zero is
+        deliberate, so it reads `pass` and names the omission. Without that exit a
+        legitimately empty family would stay amber forever. `ready` never moves."""
+        before = srv.readiness_check("package")
+        rules = {r["rule"]: r for r in before["rules"]}
+        for name, entry in rules.items():
+            pop = entry.get("population")
+            if pop and pop["rows"] == 0 and not entry["entities"]:
+                self.assertEqual(entry["status"], "indeterminate", name)   # never a pass
+                self.assertFalse(entry["discriminating"], name)
+        name, hollow = next((n, e) for n, e in sorted(rules.items())    # a truly empty family
+                            if e.get("population", {}).get("rows") == 0 and not e["entities"])
+        self.assertEqual(hollow["status"], "indeterminate")
+        self.assertIn("measured nothing", hollow["note"])
+        etype = sorted(t for t, tbl in srv.ENTITY_TABLES.items()
+                       if tbl == hollow["population"]["table"])[0]
+        self.assertTrue(srv.entity_upsert([{"type": "omission", "entity_type": etype,
+                                            "reason": "deliberately none in this package"}])["ok"])
+        after = srv.readiness_check("package")
+        deliberate = {r["rule"]: r for r in after["rules"]}[name]
+        self.assertEqual(deliberate["status"], "pass", (name, deliberate))
+        self.assertEqual(deliberate["omitted"]["entity_type"], etype)
+        self.assertIn("deliberately none", deliberate["omitted"]["reason"])
+        self.assertEqual(before["ready"], after["ready"])                  # never blocks
+        real = rules["defects-closed"]                                     # rows exist: judged
+        self.assertIn(real["status"], ("pass", "fail"))
 
     def test_prose_ids_resolve_names_references_that_resolve_to_nothing(self):
         """Plan 070 (the field's phantom DEF-082, cited by three rows while G-IDS stayed

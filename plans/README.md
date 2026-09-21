@@ -151,8 +151,8 @@ execution order is the row order below). Status values: PLANNED / IN PROGRESS / 
 
 | # | Plan | Depends on | Status |
 |---|---|---|---|
-| 075 | [Supersession completes itself; retiring a binding lesson needs the operator](075-lesson-supersession-completes-itself.md) | findings_26 §3 | IN PROGRESS |
-| 077 | No rule passes over nothing; a recorded omission reads `pass` | maintainer ruling; plan 069 | PLANNED |
+| 075 | [Supersession completes itself; retiring a binding lesson needs the operator](075-lesson-supersession-completes-itself.md) | findings_26 §3 | DONE — 2026-09-21, commit `4c26224`; security + Python reviewers before commit (both found the same CRITICAL: `Proposed` unbound a lesson unattended; the security reviewer a second: an unguarded pointer); CI 9/9 (run 35615991440) |
+| 077 | [No rule passes over nothing; a recorded omission reads `pass`](077-no-rule-passes-over-nothing.md) | maintainer ruling; plan 069 | IN PROGRESS |
 | 076 | Prose-id refinements: `in_code_spans`, `not_well_formed`, the list is a floor | findings_26 §1–§2; 077 | PLANNED |
 | 079 | `waivers-open-ended` advisory | beat 16's observation; 077 | PLANNED |
 | 080 | Upsert results carry `changed_columns` with before/after lengths | the field's silent-loss lessons | PLANNED |

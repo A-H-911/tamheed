@@ -1696,8 +1696,7 @@ def _readiness_report(conn, scope: str, scope_id: str | None) -> dict:
     measured: dict = {"list": None, "table": None, "rows": None}
 
     def rule(name: str, severity: str, entities: list, note: str,
-             na: str | None = None, extra: str | None = None,
-             empty_is_indeterminate: str | None = None) -> None:
+             na: str | None = None, extra: str | None = None) -> None:
         entry = {"rule": name, "severity": severity,
                  "status": "fail" if entities else "pass",
                  "entities": entities, "note": note + (na or "") + (extra or "")}
@@ -1709,12 +1708,30 @@ def _readiness_report(conn, scope: str, scope_id: str | None) -> dict:
                     f"SELECT COUNT(*) FROM {measured['table']}").fetchone()
             entry["population"] = {"table": measured["table"], "rows": rows_n,
                                    "scoped": scoped}
-            if empty_is_indeterminate and rows_n == 0 and not entities:
-                # C35/N3: nothing was recorded, so nothing was adjudicated - the
-                # pass bit cannot tell the two apart; the denominator can.
-                entry["status"] = "indeterminate"
-                entry["discriminating"] = False
-                entry["note"] += empty_is_indeterminate
+            if rows_n == 0 and not entities and not scoped:
+                # Plan 077 (maintainer ruling 2026-09-21; C35/N3 applied uniformly): a
+                # rule over an EMPTY family measured nothing - the pass bit cannot tell
+                # "nothing wrong" from "nothing recorded". The one deliberate zero is a
+                # RECORDED omission: it reads pass and names itself, so a legitimately
+                # empty family never stays amber forever. (A scoped zero is plan 049's.)
+                types = sorted(t for t, tbl in ENTITY_TABLES.items()
+                               if tbl == measured["table"])
+                omitted = conn.execute(
+                    "SELECT entity_type, reason FROM omissions WHERE entity_type IN"
+                    f" ({', '.join('?' * len(types))}) ORDER BY entity_type",
+                    types).fetchone() if types else None
+                if omitted:
+                    entry["omitted"] = {"entity_type": omitted[0], "reason": omitted[1]}
+                    entry["note"] += (f" — no {measured['table']} rows, and the family's"
+                                      " omission is recorded: a deliberate zero")
+                else:
+                    entry["status"] = "indeterminate"
+                    entry["discriminating"] = False
+                    entry["note"] += (
+                        f" — no {measured['table']} rows at all: this rule measured nothing"
+                        " (a package with nothing to report and one that recorded nothing"
+                        " look the same here). Record the rows, or record the family's"
+                        " omission if it is deliberately empty")
         measured.update({"list": None, "table": None, "rows": None})
         if entities and name in waivers:
             waived, remaining = [], []
@@ -1933,10 +1950,7 @@ def _readiness_report(conn, scope: str, scope_id: str | None) -> dict:
              ids("SELECT id FROM lessons WHERE lifecycle_status = 'Proposed'"),
              "lessons recorded by the executing agent awaiting the operator's"
              " interview — confirm (Approve + optionally pin), reject, or refine by"
-             " supersession; ONLY Approved lessons bind future sessions",
-             empty_is_indeterminate=" — no lesson has been recorded at all, so this"
-             " rule adjudicated nothing (a session that learned nothing and one that"
-             " recorded nothing look the same here)")
+             " supersession; ONLY Approved lessons bind future sessions")
         # Plan 075 (findings_26 s3): a lesson pointing at an APPROVED successor while
         # itself still Approved is a half-finished supersession - it keeps binding,
         # beside the lesson that corrects it, and the two can render identically.

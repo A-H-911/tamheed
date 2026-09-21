@@ -22,6 +22,13 @@ All notable changes to Tamheed are documented here. The format is based on
 
 ### Changed
 
+- **No readiness rule passes over nothing (maintainer ruling 2026-09-21, plan 077).** A
+  query-built rule whose family holds zero rows reads `indeterminate` /
+  `discriminating: false` instead of a silent `pass` — the field found two package rules and
+  one slice rule passing over nothing, with `population` the only tell. Measured first: 17 of
+  21 rules on a fresh package. The one deliberate zero is a RECORDED omission: the rule then
+  reads `pass` and carries `omitted`, so a legitimately empty family never stays amber.
+  `indeterminate` never blocks; `ready` does not move.
 - **Contract tightening (maintainer ruling 2026-09-21):** what binds every session on the
   operator's word stops binding on it too. On an Approved or Promoted lesson, ANY move off a
   binding status, and any change to `superseded_by`, is refused without
