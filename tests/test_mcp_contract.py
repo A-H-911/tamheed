@@ -3196,6 +3196,52 @@ class V4EngineTest(unittest.TestCase):
         self.assertEqual((rule()["status"], rule()["in_code_spans"]),
                          ("pass", ["prompts/kickoff.md:3 -> DEF-999"]))   # backticks: inert, visible
 
+    def test_the_package_header_is_written_on_the_operators_word(self):
+        """Plan 094 (ACMP's FB-001): `server_info().package` read the header and no
+        tool wrote it - a package whose go/no-go verdict changed had nowhere to record
+        it. `entity_upsert(type="package")` is a special-cased write to the ONE header
+        row - never a family (no register, no CSV, no registry row): `go_no_go` needs
+        the operator's word and is journaled; identity columns are frozen."""
+        before = srv.server_info()["package"]
+        self.assertEqual(before["go_no_go"], None)
+        out = srv.entity_upsert([{"type": "package", "title": "Demo, renamed",
+                                  "entry_point": "prompts/kickoff.md", "iteration": 3}])
+        self.assertTrue(out["ok"], out)
+        self.assertEqual(sorted(c["column"] for c in out["items"][0]["changed_columns"]),
+                         ["entry_point", "iteration", "title"])
+        after = srv.server_info()["package"]
+        self.assertEqual((after["title"], after["entry_point"], after["iteration"]),
+                         ("Demo, renamed", "prompts/kickoff.md", 3))
+        unattended = srv.entity_upsert([{"type": "package", "go_no_go": "NO-GO: PH-2 stalled"}])
+        self.assertFalse(unattended["ok"], unattended)
+        self.assertIn("operator_confirm", unattended["items"][0]["error"])
+        self.assertEqual(srv.server_info()["package"]["go_no_go"], None)
+        n = srv.entity_query("progress-entry", limit=1)["total"]
+        ruled = srv.entity_upsert([{"type": "package", "go_no_go": "NO-GO: PH-2 stalled",
+                                    "operator_confirm": True}])
+        self.assertTrue(ruled["ok"], ruled)
+        self.assertTrue(ruled["items"][0]["package_audit"].startswith("PE-"))
+        self.assertEqual(srv.server_info()["package"]["go_no_go"], "NO-GO: PH-2 stalled")
+        row = srv.entity_query("progress-entry", search="go_no_go")["rows"][-1]
+        self.assertEqual((row["event_type"], row["actor"]), ("transition", "system:package-guard"))
+        self.assertEqual(srv.entity_query("progress-entry", limit=1)["total"], n + 1)
+        stringy = srv.entity_upsert([{"type": "package", "go_no_go": "GO", "operator_confirm": "false"}])
+        self.assertFalse(stringy["ok"], stringy)                        # the word is the boolean true
+        notint = srv.entity_upsert([{"type": "package", "iteration": "4"}])
+        self.assertIn("integer", notint["items"][0]["error"])           # affinity is not a constraint
+        for frozen in ("name", "profile", "package_version", "created_at"):
+            out = srv.entity_upsert([{"type": "package", frozen: "x"}])
+            self.assertFalse(out["ok"], frozen)
+            self.assertIn(frozen, out["items"][0]["error"])
+        wrong = srv.entity_upsert([{"type": "package", "name": "demo", "title": "same name is fine"}])
+        self.assertTrue(wrong["ok"], wrong)                             # naming the open package is not a change
+        other = srv.entity_upsert([{"type": "package", "name": "other", "title": "x"}])
+        self.assertFalse(other["ok"])
+        self.assertTrue(srv.export_html()["ok"])
+        self.assertFalse((srv.PACKAGE_ROOT / "demo" / "csv" / "packages.csv").exists())  # not a family
+        q = srv.entity_query("package")
+        self.assertIn("server_info", q["error"])                         # read stays there
+
     def test_csv_dir_is_exactly_what_export_html_emits(self):
         """Plan 065 (findings_25 s2): a CSV for a table that no longer exists sat in a
         tool-owned directory for two months, and `package_verify` could not see it. The

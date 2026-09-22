@@ -570,6 +570,79 @@ def _columns(table: str) -> list[str]:
     return [r[1] for r in _CURRENT.conn.execute(f"PRAGMA table_info({table})")]
 
 
+def _operator_word(item: dict) -> bool:
+    """The operator's word is the JSON boolean `true` and nothing else (plan 094's
+    security review): a truthy string like "false" or "no" must never attest."""
+    return item.get("operator_confirm") is True
+
+
+_HEADER_WRITABLE = ("title", "mode", "iteration", "mvp_definition", "entry_point", "go_no_go")
+_HEADER_FROZEN = ("name", "profile", "package_version", "created_at", "custom_attributes")
+
+
+def _write_package_header(conn, i: int, item: dict) -> dict:
+    """Plan 094 (the field's FB-001): the package header - `server_info().package` -
+    was readable and writable by no tool, so a package whose go/no-go verdict changed
+    had nowhere to record it. This writes the ONE header row of the open package:
+    `title`, `mode`, `iteration`, `mvp_definition`, `entry_point`, `go_no_go`; the
+    identity columns are frozen; `go_no_go` is a governance verdict and lands only on
+    the OPERATOR's word, journaled by the engine (system:package-guard). The header is
+    not an entity family: nothing here touches a register, a CSV or the index."""
+    cols = {k: v for k, v in item.items() if k not in ("type", "operator_confirm")}
+    err = None
+    if "name" in cols and cols.pop("name") != _CURRENT_NAME:
+        err = (f"name is frozen: the header written is the open package's ({_CURRENT_NAME!r}),"
+               " never another's")
+    frozen = [c for c in _HEADER_FROZEN if c in cols]
+    unknown = [c for c in cols if c not in _HEADER_WRITABLE and c not in _HEADER_FROZEN]
+    if err is None and frozen:
+        err = (f"header column(s) {frozen} are the package's identity and are frozen —"
+               f" writable: {', '.join(_HEADER_WRITABLE)}")
+    if err is None and unknown:
+        err = f"unknown header column(s) {unknown} — writable: {', '.join(_HEADER_WRITABLE)}"
+    if err is None and not cols:
+        err = "nothing to write — name a header column: " + ", ".join(_HEADER_WRITABLE)
+    if (err is None and "iteration" in cols
+            and (isinstance(cols["iteration"], bool) or not isinstance(cols["iteration"], int))):
+        # SQLite's INTEGER is affinity, not a constraint: 'not-a-number' would be stored
+        err = f"iteration must be an integer (got {cols['iteration']!r})"
+    before = dict(zip(_HEADER_WRITABLE, conn.execute(
+        f"SELECT {', '.join(_HEADER_WRITABLE)} FROM packages WHERE name = ?",
+        (_CURRENT_NAME,)).fetchone()))
+    verdict_moves = ("go_no_go" in cols and not _same_value(cols["go_no_go"], before["go_no_go"]))
+    if err is None and verdict_moves and not _operator_word(item):
+        err = ("go_no_go is the package's governance verdict and changes only on the"
+               " OPERATOR's word — re-run this item with \"operator_confirm\": true after"
+               " their explicit confirmation; never in unattended mode")
+    if err:
+        return {"index": i, "ok": False, "id": _CURRENT_NAME, "error": err}
+    res = {"index": i, "ok": True, "id": _CURRENT_NAME,
+           "changed_columns": _changed_columns(list(cols), cols, before, key="name")}
+    conn.execute(f"SAVEPOINT item{i}")
+    try:
+        conn.execute(
+            "UPDATE packages SET " + ", ".join(f"{c} = ?" for c in cols) + " WHERE name = ?",
+            [json.dumps(v, ensure_ascii=False) if isinstance(v, (dict, list)) else v
+             for v in cols.values()] + [_CURRENT_NAME])
+        if verdict_moves:
+            # the audit row shares the item's savepoint: update and witness land
+            # together or not at all (security review)
+            pe_id = _next_id("PE-", "progress_entries")
+            conn.execute(
+                "INSERT INTO progress_entries (id, event_type, entry, actor, occurred_at)"
+                " VALUES (?, ?, ?, ?, ?)",
+                (pe_id, "transition",
+                 f"PACKAGE {_CURRENT_NAME} go_no_go -> {cols['go_no_go']!r} (was"
+                 f" {before['go_no_go']!r}) on the operator's word — operator_confirm attested",
+                 "system:package-guard", _now()))
+            res["package_audit"] = pe_id
+        conn.execute(f"RELEASE item{i}")
+    except Exception as exc:  # the CHECK on mode, NOT NULL on title
+        conn.execute(f"ROLLBACK TO item{i}")
+        return {"index": i, "ok": False, "id": _CURRENT_NAME, "error": str(exc)}
+    return res
+
+
 def _changed_columns(names: list, cols: dict, before: dict, key: str) -> list[dict]:
     """Plan 080: what an UPDATE actually changed, with the before/after length of text.
     Upserts replace whole rows, so a re-sent long field that silently lost a paragraph
@@ -1116,16 +1189,25 @@ def entity_upsert(entities: list[dict]) -> dict:
     conn.execute("SAVEPOINT batch")
     for i, item in enumerate(entities):
         etype = item.get("type")
+        if etype == "package":
+            # Plan 094 (the field's FB-001): the header row, special-cased - NEVER a
+            # family (no register, no CSV, no registry row, no index). Read stays
+            # server_info().package.
+            res = _write_package_header(conn, i, item)
+            results.append(res)
+            failed = failed or not res["ok"]
+            continue
         table = ENTITY_TABLES.get(etype)
         if table is None:
             results.append({"index": i, "ok": False,
                             "error": f"unknown entity type {etype!r} — one of: "
-                                     f"{', '.join(sorted(ENTITY_TABLES))}"})
+                                     f"{', '.join(sorted(ENTITY_TABLES))}"
+                                     " (the header row is written as type 'package')"})
             failed = True
             continue
         # "force" is the transition-guard override (plan 027), never a column.
         force = bool(item.get("force"))
-        operator_confirm = bool(item.get("operator_confirm"))
+        operator_confirm = _operator_word(item)
         retire = bool(item.get("retire"))
         expect_unchanged = item.get("expect_unchanged")
         cols = {k: v for k, v in item.items()
@@ -1672,6 +1754,11 @@ def entity_query(type: str, id: str | None = None, status: str | None = None,
     if guard := _need_open():
         return guard
     table = ENTITY_TABLES.get(type)
+    if type == "package":
+        # Plan 094: the header is not a family - read it through server_info().package;
+        # entity_upsert(type="package") writes it
+        return _err("'package' is the header row, not a family — read it with"
+                    " server_info().package; entity_upsert(type=\"package\") writes it")
     if table is None:
         return _err(f"unknown entity type {type!r} — one of: "
                 f"{', '.join(sorted(ENTITY_TABLES))}")

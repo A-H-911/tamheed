@@ -23,6 +23,15 @@ All notable changes to Tamheed are documented here. The format is based on
   `prompts/<file>:<line> -> <id>`; `population` counts files (`unit: "files"`); zero project files
   reads `indeterminate`. In a prose file a code span may wrap a line, and the scan honours that.
   Measured: the stock prompts hold no bare phantom, so no package is amber by construction.
+- **The package header is written on the operator's word (ACMP's `FB-001`, plan 094).**
+  `entity_upsert(type="package")` writes the one header row of the open package — `title`, `mode`,
+  `iteration`, `mvp_definition`, `entry_point`, `go_no_go` — special-cased, never a family (no
+  register, no CSV, no registry row). Identity columns are frozen and refused by name. `go_no_go`,
+  the governance verdict, changes only with `operator_confirm`, journaled by the engine
+  (`system:package-guard`, returned as `package_audit`). The read stays `server_info().package`.
+  Its security review tightened one convention for every guard: **the operator's word is the JSON
+  boolean `true` and nothing else** — a truthy string like `"false"` no longer attests on a lesson,
+  a feedback row or the header.
 
 ### Fixed
 
