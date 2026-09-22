@@ -105,7 +105,7 @@ def _freshness(conn: sqlite3.Connection) -> str:
 
 # ------------------------------------------------------------------ sections
 
-def _overview(conn, gates, ready):
+def _overview(conn, gates, ready, readiness=None):
     chips = []
     for gate, info in gates.items():
         if not gate.startswith("G-"):
@@ -302,7 +302,7 @@ def _graph_agg(nodes, edges) -> str:
     return _graph_svg(half, edge_parts, node_parts, label_parts)
 
 
-def _graph(conn, gates, ready):
+def _graph(conn, gates, ready, readiness=None):
     nodes = conn.execute(
         f"SELECT id, entity_type FROM entity_index ORDER BY {_by_id()}").fetchall()
     edges = conn.execute("SELECT from_id, to_id, relation FROM trace_edges"
@@ -378,7 +378,7 @@ _LANE_W = 240   # px per lane
 _ROW_H = 16    # px per node row
 
 
-def _flow(conn, gates, ready):
+def _flow(conn, gates, ready, readiness=None):
     nodes = conn.execute(
         f"SELECT id, entity_type FROM entity_index ORDER BY {_by_id()}").fetchall()
     edges = conn.execute("SELECT from_id, to_id, relation FROM trace_edges"
@@ -482,7 +482,7 @@ def _design_ahead(conn) -> str:
             "an explicit, healthy state): " + esc("; ".join(counts)) + "</p>")
 
 
-def _lessons(conn, gates, ready):
+def _lessons(conn, gates, ready, readiness=None):
     """The lessons working surface (plan 035): the operator's confirmation queue
     first (Proposed rows await the interview), then the Approved register that
     binds sessions (pinned flagged, both impact columns), then closed rows folded
@@ -498,18 +498,28 @@ def _lessons(conn, gates, ready):
                            _table(["id", "kind", "title", "statement", "context"],
                                   queue, row_ids=True), anchor="lessons-queue"))
     approved = conn.execute(
-        "SELECT id, kind, pinned, title, statement, impact_if_followed,"
-        " impact_if_ignored, confirmed_by, confirmed_at FROM lessons"
-        f" WHERE lifecycle_status = 'Approved' {order}").fetchall()
+        "SELECT l.id, l.kind, l.pinned, l.title, l.statement, l.impact_if_followed,"
+        " l.impact_if_ignored, l.confirmed_by, l.confirmed_at, l.superseded_by,"
+        " s.lifecycle_status FROM lessons l LEFT JOIN lessons s ON s.id = l.superseded_by"
+        f" WHERE l.lifecycle_status = 'Approved' {order.replace('id', 'l.id')}").fetchall()
     if approved:
+        # plan 075 (findings_26 s3): a still-Approved lesson pointing at a successor is
+        # a half-finished supersession - tagged here as in the note, so the page and
+        # the note agree
+        def _tag(succ, succ_status):
+            if not succ:
+                return ""
+            return (f"superseded by {succ} — RETIRE THIS ROW (operator)"
+                    if succ_status in ("Approved", "Promoted")
+                    else f"superseded by {succ} — pending its approval")
         rows = [(lid, kind, "pinned" if pin else "", title, stmt, imf, imi,
-                 by, at) for lid, kind, pin, title, stmt, imf, imi, by, at
-                in approved]
+                 by, at, _tag(succ, sstat))
+                for lid, kind, pin, title, stmt, imf, imi, by, at, succ, sstat in approved]
         parts.append(_fold("Approved (rendered into the CLAUDE.md note — pinned"
                            " always, newest fill the cap)", len(rows),
                            _table(["id", "kind", "pinned", "title", "statement",
                                    "impact if followed", "impact if ignored",
-                                   "confirmed by", "confirmed at"], rows,
+                                   "confirmed by", "confirmed at", "supersession"], rows,
                                   row_ids=True), anchor="lessons-approved"))
     promoted = conn.execute(
         "SELECT l.id, l.kind, l.title, l.promoted_to, s.name, s.level"
@@ -536,7 +546,77 @@ def _lessons(conn, gates, ready):
     return "".join(parts)
 
 
-def _registers(conn, gates, ready):
+def _feedback(conn, gates, ready, readiness=None):
+    """The feedback working surface (plan 087, rendered by plan 096): what awaits the
+    operator's word, what is confirmed but not yet reported upstream, the registered
+    local tools, and the closed rows. Ids order numerically."""
+    order = f"ORDER BY {_by_id()}"
+    cols = ("id, kind, title, detail, workaround, tool_path, tool_or_rule,"
+            " plugin_version, confirmed_by, confirmed_at, resolved_in, upstream_ref")
+    head = ["id", "kind", "title", "detail", "workaround", "tool path", "tool / rule",
+            "plugin", "confirmed by", "confirmed at", "resolved in", "upstream ref"]
+    parts = []
+    folds = (
+        ("Awaiting the operator's word (Proposed — interview, then Confirmed or Rejected)",
+         "lifecycle_status = 'Proposed'", "feedback-queue"),
+        ("Confirmed, not yet reported upstream (entity_export(\"feedback\") into the findings)",
+         "lifecycle_status = 'Confirmed' AND kind <> 'local-tool'", "feedback-confirmed"),
+        ("Registered local tools (on the operator's word; writes nothing tool-owned)",
+         "kind = 'local-tool'", "feedback-tools"),
+        ("Reported, resolved or rejected (kept as evidence)",
+         "kind <> 'local-tool' AND lifecycle_status IN ('Reported','Resolved','Rejected')",
+         "feedback-closed"),
+    )
+    for title, where, anchor in folds:
+        rows = conn.execute(f"SELECT {cols} FROM feedback WHERE {where} {order}").fetchall()
+        if rows:
+            parts.append(_fold(title, len(rows), _table(head, rows, row_ids=True),
+                               anchor=anchor))
+    if not parts:
+        return ('<p class="empty">No feedback recorded — a function the tools lack, a defect,'
+                ' a doc error, a question, or a local tool over the package is an FB- row'
+                ' (born Proposed; the operator confirms).</p>')
+    return "".join(parts)
+
+
+def _readiness(conn, gates, ready, readiness=None):
+    """The readiness report (plan 096): what readiness_check("package") says, rendered
+    for the operator - status, severity, population (plan 069), discriminating (077),
+    omitted (077), waived (056/060), the entities capped. Two rules read the calendar
+    (open-questions-overdue, expiring waivers), so the page states the date it was
+    evaluated on: a re-export on a later day changes bytes only where the calendar
+    moved."""
+    if not readiness or "report" not in readiness:
+        return '<p class="empty">Readiness not evaluated for this export.</p>'
+    rep, as_of = readiness["report"], readiness.get("as_of", "")
+    rows = []
+    for r in rep.get("rules", []):
+        pop = r.get("population") or {}
+        pop_s = ""
+        if pop:
+            unit = pop.get("unit", "rows")
+            pop_s = f"{pop.get('table', '')}: {pop.get('rows', '')} {unit}"
+            if pop.get("scoped"):
+                pop_s += " (scoped)"
+        ents = list(r.get("entities") or [])
+        ents_s = ", ".join(ents[:8]) + (f" … +{len(ents) - 8}" if len(ents) > 8 else "")
+        omitted = r.get("omitted") or {}
+        rows.append([r.get("rule"), r.get("severity"), r.get("status"), pop_s,
+                     "" if r.get("discriminating", True) else "no",
+                     omitted.get("reason", ""), ", ".join(r.get("waived") or []), ents_s])
+    verdict = "READY" if rep.get("ready") else "NOT READY"
+    return (f'<p class="ready">Readiness (package scope): {esc(verdict)}</p>'
+            f'<p class="freshness">Evaluated as of {esc(as_of)} — open-questions-overdue and'
+            ' expiring waivers read the calendar; every other rule reads the store only.'
+            ' indeterminate = the rule measured nothing (plan 077); the full report is the'
+            ' readiness_check tool.</p>'
+            + _fold("Rules", len(rows),
+                    _table(["rule", "severity", "status", "population", "discriminating",
+                            "omitted (deliberate zero)", "waived", "entities"], rows),
+                    anchor="readiness-rules"))
+
+
+def _registers(conn, gates, ready, readiness=None):
     parts, empty = [_design_ahead(conn)], []
     for table in ENTITY_TABLES.values():
         if table == "trace_edges":
@@ -556,7 +636,7 @@ def _registers(conn, gates, ready):
     return "".join(parts)
 
 
-def _traceability(conn, gates, ready):
+def _traceability(conn, gates, ready, readiness=None):
     typemap = dict(conn.execute("SELECT id, entity_type FROM entity_index"))
     links: dict[str, dict[str, set]] = {}
     edges = conn.execute(
@@ -588,7 +668,7 @@ def _traceability(conn, gates, ready):
                           csv="trace_edges")
 
 
-def _execution(conn, gates, ready):
+def _execution(conn, gates, ready, readiness=None):
     # Plan 027: v_latest_verdicts (migration 004) orders NUMERICALLY — the old string
     # `ORDER BY av.id DESC` here silently showed a stale verdict as latest once a
     # package crossed 1000 verdict rows (AV-1000 < AV-999 as text).
@@ -657,7 +737,9 @@ def _execution(conn, gates, ready):
                            len(waivers),
                            _table(["waiver", "rule", "applies to", "justification",
                                    "approver", "expires"],
-                                  [[w, r, a or "(whole rule)", j, ap, e or "(close-out)"]
+                                  [[w, r, a or "(whole rule)", j, ap,
+                                    e or ("OPEN-ENDED (whole rule, no expiry)" if a is None
+                                          else "(close-out)")]
                                    for w, r, a, j, ap, e in waivers])))
     # Plan 027: per-phase readiness panel — v_phase_exit (latest-verdict semantics) +
     # declared human gates. The full rule report is `readiness_check` (the tool).
@@ -702,7 +784,7 @@ def _execution(conn, gates, ready):
     return "".join(parts)
 
 
-def _gaps(conn, gates, ready):
+def _gaps(conn, gates, ready, readiness=None):
     """Adopt-mode gap reports + injection-screen flags — these exist to be SEEN."""
     rows = conn.execute(
         "SELECT id, title, question, source_span, custom_attributes FROM open_questions"
@@ -734,20 +816,25 @@ SECTIONS = [
     ("graph", "Relations graph", _graph),
     ("traceability", "Traceability", _traceability),
     ("execution", "Execution progress", _execution),
+    ("readiness", "Readiness", _readiness),
     ("lessons", "Lessons", _lessons),
+    ("feedback", "Feedback", _feedback),
     ("registers", "Registers", _registers),
     ("gaps", "Gap & screening notes", _gaps),
 ]
 
 
-def render(conn: sqlite3.Connection, gates: dict, ready: bool) -> str:
-    """Render the full review surface from a loaded package connection."""
+def render(conn: sqlite3.Connection, gates: dict, ready: bool,
+           readiness: dict | None = None) -> str:
+    """Render the full review surface from a loaded package connection. `readiness`
+    (plan 096) is `{"report": readiness_check's package-scope result, "as_of": date}`,
+    computed by the server so this module never imports it."""
     row = conn.execute("SELECT name FROM packages LIMIT 1").fetchone()
     name = row[0] if row else "unnamed-package"
     freshness = _freshness(conn)
     sections = "\n".join(
         f'<section id="{anchor}"><h2>{esc(title)}</h2>'
-        f'<p class="freshness">Freshness: {esc(freshness)}</p>{fn(conn, gates, ready)}</section>'
+        f'<p class="freshness">Freshness: {esc(freshness)}</p>{fn(conn, gates, ready, readiness)}</section>'
         for anchor, title, fn in SECTIONS)
     css = CSS_PATH.read_text(encoding="utf-8")
     # C18: sticky in-page navigation. These are the ONLY anchors in the export — all

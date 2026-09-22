@@ -4007,7 +4007,11 @@ def export_html(output: str | None = None) -> dict:
         return guard
     import export_html as viewer
     report = gate_run()
-    text = viewer.render(_CURRENT.conn, report["gates"], report["ready"])
+    # Plan 096: the page renders readiness_check("package") too, evaluated as of today
+    # (two rules read the calendar; the page says so)
+    readiness = {"report": _readiness_report(_CURRENT.conn, "package", None),
+                 "as_of": _now()[:10]}
+    text = viewer.render(_CURRENT.conn, report["gates"], report["ready"], readiness)
     # Plan 081: stamp the package digest, so "is this page current?" is a string
     # comparison package_verify can answer without rendering anything. Deterministic:
     # the same state gives the same digest, so two exports stay byte-identical.

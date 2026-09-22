@@ -41,6 +41,13 @@ All notable changes to Tamheed are documented here. The format is based on
   occurrences, a JSON column that would stop parsing, and — the security review's finding — a match
   glued to a digit (`DEC-20` inside `DEC-208`). Recorded twice before as "not built"; the field
   ranked it second and showed it had changed a decision (a 24,117-character re-send deferred a repair).
+- **The review page follows plans 069–095 (plan 096; maintainer ruling 2026-09-22).** `review.html`
+  gains a **Feedback** section (awaiting the operator's word / confirmed, not yet reported /
+  registered local tools / closed) and a **Readiness** section rendering `readiness_check`'s
+  package-scope rules — status, severity, population, discriminating, omitted, waived — under an
+  *Evaluated as of <date>* line, so the two calendar-reading rules move the page only when the
+  calendar does. The Approved-lessons fold shows the plan-075 supersession tag; the waivers fold
+  marks an open-ended whole-rule waiver. Every package's page changes bytes once on its next export.
 
 ### Fixed
 

@@ -188,7 +188,7 @@ devil's-advocate review; execution order is the row order below). Status values:
 | 093 | [FB-002: advisory `prompt-ids-resolve` over the project's prompt files](093-prompt-ids-resolve.md) | FB-002 | DONE — 2026-09-22; no stock body change (the one 'bare' example was a wrapped code span) |
 | 094 | [FB-001: `entity_upsert(type="package")` — the header on the operator's word](094-the-package-header-on-the-operators-word.md) | FB-001 | DONE — 2026-09-23; security review closed three items, incl. the operator's word = the boolean `true` everywhere |
 | 095 | [FB-004: the `substitute` item on `entity_upsert`](095-the-substitute-write.md) | FB-004; 092-094 | DONE — 2026-09-23; two reviewers, one MEDIUM (a match glued to a digit) closed |
-| 096 | review.html follows plans 069-095 (Feedback + Readiness sections, the lesson tag, the waiver mark) | maintainer ruling | PLANNED |
+| 096 | [review.html follows plans 069-095 (Feedback + Readiness sections, the lesson tag, the waiver mark)](096-review-page-follows-the-batches.md) | maintainer ruling | DONE — 2026-09-23 |
 | 097 | Docs + diagrams sweep | 091-096 | PLANNED |
 | 098 | Lab beat 19 | 091-097 + full test | PLANNED |
 | 099 | Release v4.12.0 | 098 | PLANNED |

@@ -60,6 +60,64 @@ class ExportHtmlTest(unittest.TestCase):
         self.assertNotIn("the wrong claim", main)         # gone from the timeline
         self.assertIn("the corrected record", main)       # the correction stays
 
+    def test_review_page_follows_plans_069_to_095(self):
+        """Plan 096 (maintainer ruling 2026-09-22): the page rendered gate_run and generic
+        registers, and had followed none of the last three batches - no Feedback working
+        surface, no supersession tag on an Approved lesson (075), no mark on an open-ended
+        whole-rule waiver (079), and readiness_check never rendered at all, so the human
+        surface had none of population, indeterminate, omitted or waived (069-093). Now it
+        has them; date-dependent rules render as of the export date."""
+        srv.package_create("demo", "Demo", "rnd")
+        long_stmt = "THE RULE. shared opening. " + "x" * 200
+        srv.entity_upsert([
+            {"type": "lesson", "id": "LL-001", "title": "old", "statement": long_stmt + " FALSE",
+             "kind": "improve"},
+            {"type": "lesson", "id": "LL-002", "title": "new", "statement": long_stmt + " TRUE",
+             "kind": "improve"},
+            {"type": "waiver", "id": "WVR-001", "rule": "defects-minor", "justification": "train",
+             "approver": "anas"},
+            {"type": "feedback", "id": "FB-001", "kind": "missing-capability", "title": "no patch mode",
+             "detail": "DEC-208 could not be substituted", "workaround": "a scratch script"},
+            {"type": "feedback", "id": "FB-002", "kind": "question", "title": "does search fold case?"},
+        ])
+        srv.entity_upsert([{"type": "lesson", "id": "LL-001", "title": "old", "statement": long_stmt + " FALSE",
+                            "kind": "improve", "lifecycle_status": "Approved", "operator_confirm": True,
+                            "confirmed_by": "anas"}])
+        srv.entity_upsert([{"type": "lesson", "id": "LL-002", "title": "new", "statement": long_stmt + " TRUE",
+                            "kind": "improve", "lifecycle_status": "Approved", "operator_confirm": True,
+                            "confirmed_by": "anas"}])
+        srv.entity_upsert([{"type": "lesson", "id": "LL-001", "title": "old", "statement": long_stmt + " FALSE",
+                            "kind": "improve", "lifecycle_status": "Approved", "superseded_by": "LL-002",
+                            "operator_confirm": True}])            # the half-state (plan 075)
+        srv.entity_upsert([{"type": "feedback", "id": "FB-002", "kind": "question",
+                            "title": "does search fold case?", "lifecycle_status": "Confirmed",
+                            "operator_confirm": True, "confirmed_by": "anas"}])
+        srv.entity_upsert([{"type": "feedback", "id": "FB-003", "kind": "local-tool", "title": "slate gen",
+                            "tool_path": "scripts/gen-record-slate.mjs", "operator_confirm": True,
+                            "confirmed_by": "anas"}])
+        html = self._export()
+        # Feedback: the working surface
+        self.assertIn('<section id="feedback">', html)
+        self.assertIn("Awaiting the operator&#x27;s word", html)     # esc() escapes the quote
+        self.assertIn("Confirmed, not yet reported upstream", html)
+        self.assertIn("Registered local tools", html)
+        self.assertIn("scripts/gen-record-slate.mjs", html)
+        self.assertIn("a scratch script", html)
+        # Lessons: the supersession tag on the Approved fold
+        self.assertIn("RETIRE THIS ROW", html)
+        # Waivers: the open-ended mark
+        self.assertIn("OPEN-ENDED", html)
+        # Readiness: rendered, with population and the as-of line
+        self.assertIn('<section id="readiness">', html)
+        self.assertIn("Evaluated as of", html)
+        self.assertIn("lessons-superseded-binding", html)
+        self.assertIn("waivers-open-ended", html)
+        self.assertIn("indeterminate", html)
+        self.assertIn("measured nothing", html)
+        self.assertRegex(html, r"prose-ids-resolve")
+        # deterministic within a run
+        self.assertEqual(html, self._export())
+
     def test_lessons_section_renders_queue_pinned_and_impacts(self):
         """Plan 035: the dedicated Lessons section is the operator's working
         surface — the confirmation queue (Proposed), then Approved with the
