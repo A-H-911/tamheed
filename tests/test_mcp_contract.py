@@ -2871,6 +2871,34 @@ class V4EngineTest(unittest.TestCase):
         none = srv.entity_query("defect", search="zzz-no-such")
         self.assertEqual((none["rows"], none.get("matched")), ([], None))  # no rows: no map
 
+    def test_search_with_context_counts_and_shows_every_occurrence(self):
+        """Plan 092 (ACMP's FB-003): `search` located rows and `matched` named the columns,
+        but a census - how many times, and in what words - needed scratch probes over
+        exports/. With `context=N` the result carries `occurrences`: exact counts on the
+        raw needle (never the LIKE-escaped one), ASCII-case-insensitive like LIKE, and
+        snippets of N characters either side, capped. Absent without `context`."""
+        srv.entity_upsert([{"type": "defect", "id": "DEF-092", "severity": "low",
+                            "title": "DEC-208 twice: dec-208 and once more DEC-208.",
+                            "custom_attributes": {"k": "under_score DEC-208 100% done"}}])
+        plain = srv.entity_query("defect", search="DEC-208")
+        self.assertNotIn("occurrences", plain)
+        out = srv.entity_query("defect", search="DEC-208", context=6)
+        occ = out["occurrences"]["DEF-092"]
+        self.assertEqual(occ["title"]["count"], 3)                    # case-insensitive, ASCII
+        self.assertEqual(len(occ["title"]["snippets"]), 3)
+        self.assertEqual(occ["title"]["snippets"][0], "DEC-208 twice")
+        self.assertEqual(occ["custom_attributes"]["count"], 1)         # raw JSON text
+        self.assertNotIn("severity", occ)                              # no hit, no key
+        self.assertEqual(sorted(out["matched"]["DEF-092"]), ["custom_attributes", "title"])  # unchanged
+        pct = srv.entity_query("defect", search="100%", context=3)     # a LIKE-special char
+        self.assertEqual(pct["occurrences"]["DEF-092"]["custom_attributes"]["count"], 1)
+        srv.entity_upsert([{"type": "defect", "id": "DEF-093", "severity": "low",
+                            "title": "x " + "needle " * 40}])
+        many = srv.entity_query("defect", search="needle", context=2)["occurrences"]["DEF-093"]["title"]
+        self.assertEqual(many["count"], 40)                            # counts are never capped
+        self.assertEqual(len(many["snippets"]), 5)                     # snippets are
+        self.assertEqual(srv.entity_query("defect", search="zzz", context=3).get("occurrences"), None)
+
     def test_lesson_approval_says_the_note_is_rebuilt_only_by_handoff_emit(self):
         """Plan 068 (the field's DEF-107): an Approved+pinned lesson sat absent from the
         always-loaded note for two days - nothing said the note is rebuilt ONLY by

@@ -10,6 +10,13 @@ All notable changes to Tamheed are documented here. The format is based on
 
 ## [Unreleased]
 
+### Added
+
+- **`entity_query(search=…, context=N)` is a census (ACMP's `FB-003`, plan 092).** The result
+  carries `occurrences: {id: {column: {count, snippets}}}` — exact counts on the raw needle with
+  `LIKE`'s ASCII case folding, snippets of N characters either side (capped at 5 per column, 50 per
+  response; counts never capped). Absent without `context`; `matched` unchanged.
+
 ### Fixed
 
 - **The feedback teaching says what the code does (findings_28 §3a–§3c, `FB-013`; plan 091).** A

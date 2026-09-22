@@ -342,6 +342,8 @@ _MARKER_RE = re.compile(r"\[NEEDS-CLARIFICATION(?::\s*([A-Za-z]+-\d+))?[^\]]*\]"
 # journal, though for a different reason: not append-only, but a register of what is broken.
 _PROSE_ID_EXEMPT_TABLES = frozenset({"progress_entries", "audit_verdicts", "feedback"})
 _PROSE_ID_CAP = 50
+_SNIPPETS_PER_COLUMN = 5        # plan 092: a census caps its snippets, never its counts
+_SNIPPET_BUDGET = 50
 
 
 def _prose_id_pattern(conn) -> "re.Pattern[str]":
@@ -1592,7 +1594,7 @@ def entity_upsert(entities: list[dict]) -> dict:
 def entity_query(type: str, id: str | None = None, status: str | None = None,
                  columns: list[str] | None = None, limit: int = 100,
                  after_id: str | None = None, ids: list[str] | None = None,
-                 search: str | None = None) -> dict:
+                 search: str | None = None, context: int | None = None) -> dict:
     """Query one entity family with targeted columns — rows, not documents.
 
     `limit` truncates ROWS (never fields — there is NO field truncation anywhere in
@@ -1604,8 +1606,10 @@ def entity_query(type: str, id: str | None = None, status: str | None = None,
     last page); fetch a known set with `ids` (in id order, not request order —
     absent ids are simply missing, `total` tells); narrow with `columns`, `status`,
     or `search` (case-insensitive substring over the family's TEXT columns — the
-    keyword sweep). `id` is the single-row form and combines with none of
-    `after_id`/`ids`."""
+    keyword sweep; the result's `matched` names the columns that hit, and with
+    `context=N` its `occurrences` is a census — exact counts per column and up to five
+    snippets of N characters either side, plan 092). `id` is the single-row form and
+    combines with none of `after_id`/`ids`."""
     if guard := _need_open():
         return guard
     table = ENTITY_TABLES.get(type)
@@ -1686,6 +1690,39 @@ def entity_query(type: str, id: str | None = None, status: str | None = None,
             [needle] * len(text_cols) + ids_now).fetchall()
         out["matched"] = {h[0]: [c for c, hit in zip(text_cols, h[1:]) if hit]
                           for h in sorted(hits)}
+        if context is not None and hits:
+            # Plan 092 (the field's FB-003): a CENSUS - how many times, in what words.
+            # Exact counts on the RAW needle (never the LIKE-escaped one), ASCII-only
+            # case folding like LIKE, snippets of `context` chars either side; counts are
+            # never capped, snippets are (5 per column, 50 per response). custom_attributes
+            # is counted on its stored JSON text.
+            width = max(int(context), 0)
+            probe = re.compile(re.escape(str(search)), re.IGNORECASE | re.ASCII)
+            occurrences: dict[str, dict] = {}
+            budget = _SNIPPET_BUDGET
+            for h in sorted(hits):
+                cols_hit = [c for c, hit in zip(text_cols, h[1:]) if hit]
+                if not cols_hit:
+                    continue
+                row_text = _CURRENT.conn.execute(
+                    f"SELECT {', '.join(cols_hit)} FROM {table} WHERE id = ?",
+                    (h[0],)).fetchone()
+                per_col = {}
+                for col, text in zip(cols_hit, row_text):
+                    spans = [m.span() for m in probe.finditer(text or "")]
+                    if not spans:
+                        continue
+                    snippets = []
+                    for a, b in spans[:_SNIPPETS_PER_COLUMN]:
+                        if budget <= 0:
+                            break
+                        snippets.append(text[max(0, a - width):b + width])
+                        budget -= 1
+                    per_col[col] = {"count": len(spans), "snippets": snippets}
+                if per_col:
+                    occurrences[h[0]] = per_col
+            if occurrences:
+                out["occurrences"] = occurrences
     return out
 
 
