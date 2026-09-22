@@ -3154,6 +3154,48 @@ class V4EngineTest(unittest.TestCase):
                       if r["status"] == "indeterminate" and not r["population"]["scoped"])
         self.assertIn("scoped: false", hollow["note"])                          # the discriminator named
 
+    def test_prompt_ids_resolve_scans_the_projects_prompt_files_not_stock(self):
+        """Plan 093 (ACMP's FB-002, ranked first): `prose-ids-resolve` scans rows; the
+        kickoff prompt - the surface a session reads BEFORE any tool - was scanned by
+        nothing, and the field's only checker read the JSONL. A separate advisory now
+        scans the PROJECT's prompt files: not any file byte-equal to a stock body (the
+        maintainer's example ids are not the project's citations), the same three lists,
+        the same doctrine (backticks make a quotation inert; the list is a floor)."""
+        prompts = srv.PACKAGE_ROOT / "demo" / "prompts"
+        prompts.mkdir(parents=True, exist_ok=True)
+        rule = lambda: {r["rule"]: r for r in srv.readiness_check("package")["rules"]}["prompt-ids-resolve"]
+        empty = rule()                                                 # stock only: nothing to scan
+        self.assertEqual((empty["status"], empty["population"]),
+                         ("indeterminate", {"table": "prompts/*.md", "rows": 0, "scoped": False, "unit": "files"}))
+        self.assertFalse(empty["discriminating"])
+        (prompts / "kickoff.md").write_text(
+            "# Kickoff\n\nStart with SL-001, then DEF-999 (a phantom).\n"
+            "History: `DEF-082` was lost; score = (KPI-17_score * 0.25); narrow SEC-8.\n",
+            encoding="utf-8")
+        seeded = srv.entity_upsert([
+            {"type": "narrative-document", "id": "DOC-001", "doc_kind": "charter", "title": "c"},
+            {"type": "document-section", "id": "SEC-001", "document_id": "DOC-001",
+             "heading": "h", "body": "b"}])
+        self.assertTrue(seeded["ok"], seeded)                          # SEC- pads to three
+        r = rule()
+        self.assertEqual(r["status"], "fail")
+        self.assertEqual(r["entities"], ["prompts/kickoff.md:3 -> DEF-999"])
+        self.assertEqual(r["in_code_spans"], ["prompts/kickoff.md:4 -> DEF-082"])
+        self.assertEqual(r["not_well_formed"], ["prompts/kickoff.md:4 -> SEC-8"])
+        self.assertEqual((r["population"]["rows"], r["population"]["unit"]), (1, "files"))
+        self.assertNotIn("KPI-17", json.dumps(r))
+        self.assertIn("A FLOOR", r["note"])
+        # a stale-stock file (an older release's body) is the maintainer's prose: not scanned
+        hist = json.loads((srv._PROMPTS_DIR / "stock-history.json").read_text(encoding="utf-8"))
+        old_key = sorted(hist["skill-promote.md"], key=srv._vkey)[0]
+        (prompts / "skill-promote.md").write_text(
+            hist["skill-promote.md"][old_key].replace("{package}", "demo"), encoding="utf-8")
+        self.assertEqual(rule()["population"]["rows"], 1)
+        (prompts / "kickoff.md").write_text("# Kickoff\n\nStart with SL-001; `DEF-999` was the phantom.\n",
+                                            encoding="utf-8")
+        self.assertEqual((rule()["status"], rule()["in_code_spans"]),
+                         ("pass", ["prompts/kickoff.md:3 -> DEF-999"]))   # backticks: inert, visible
+
     def test_csv_dir_is_exactly_what_export_html_emits(self):
         """Plan 065 (findings_25 s2): a CSV for a table that no longer exists sat in a
         tool-owned directory for two months, and `package_verify` could not see it. The

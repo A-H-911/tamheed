@@ -37,6 +37,9 @@ import store  # plugins/tamheed/db/store.py  # noqa: E402
 # inline code so TODO/{{...}} inside examples is never flagged as an unfinished marker.
 _CODE_FENCE_RE = re.compile(r"```.*?```", re.DOTALL)
 _INLINE_CODE_RE = re.compile(r"`[^`\n]*`")
+# Plan 093: in a PROSE FILE a code span may wrap a line (CommonMark), and stock prompts do
+# (`Distilled from LL-003, <newline> LL-007 in package …`); row text keeps the one-line rule.
+_INLINE_CODE_WRAPPING_RE = re.compile(r"`[^`]+`")
 
 
 def _strip_code(text: str) -> str:
@@ -342,6 +345,8 @@ _MARKER_RE = re.compile(r"\[NEEDS-CLARIFICATION(?::\s*([A-Za-z]+-\d+))?[^\]]*\]"
 # journal, though for a different reason: not append-only, but a register of what is broken.
 _PROSE_ID_EXEMPT_TABLES = frozenset({"progress_entries", "audit_verdicts", "feedback"})
 _PROSE_ID_CAP = 50
+# Plan 057: version strings compare numerically — "4.10.0" is newer than "4.9.0".
+_vkey = lambda v: tuple(int(p) for p in v.split("."))  # noqa: E731
 _SNIPPETS_PER_COLUMN = 5        # plan 092: a census caps its snippets, never its counts
 _SNIPPET_BUDGET = 50
 
@@ -383,12 +388,7 @@ def _scan_prose_ids(conn) -> dict[str, list[str]]:
     `SEC-001`...) - more likely someone else's numbering than a reference, but a slip
     like `DEF-82` for `DEF-082` lands here too, so it is reported, never dropped.
     Superseded/Obsolete rows are history; a row's own id is not a reference."""
-    known = {r[0] for r in conn.execute("SELECT id FROM entity_index")}
-    pattern = _prose_id_pattern(conn)
-    min_width: dict[str, int] = {}
-    for kid in known:
-        if m := pattern.fullmatch(kid):
-            min_width[m.group(1)] = min(min_width.get(m.group(1), 99), len(m.group(2)))
+    pattern, known, min_width = _id_universe(conn)
     found: dict[str, set] = {"dangling": set(), "in_code_spans": set(),
                              "not_well_formed": set()}
     for table in sorted(set(ENTITY_TABLES.values()) - _PROSE_ID_EXEMPT_TABLES):
@@ -412,20 +412,79 @@ def _scan_prose_ids(conn) -> dict[str, list[str]]:
                     except (TypeError, ValueError):
                         pass
                 for text in texts:
-                    bare = {m.group(0) for m in pattern.finditer(_strip_code(text))}
-                    for m in pattern.finditer(text):
-                        ref = m.group(0)
-                        if ref in known or ref == row[0]:
-                            continue
-                        hit = f"{row[0]}.{col} -> {ref}"
-                        if len(m.group(2)) < min_width.get(m.group(1), 0):
-                            found["not_well_formed"].add(hit)
-                        elif ref in bare:
-                            found["dangling"].add(hit)
-                        else:
-                            found["in_code_spans"].add(hit)
+                    _classify_id_hits(pattern, known, min_width, text,
+                                      f"{row[0]}.{col}", found, own_id=row[0])
     found["in_code_spans"] -= found["dangling"]      # bare somewhere in the column wins
     return {k: sorted(v) for k, v in found.items()}
+
+
+def _id_universe(conn):
+    """The id pattern, every id the index holds, and each family's minimum numeric
+    width (plan 076: `SEC-8` against `SEC-001` is not well-formed)."""
+    known = {r[0] for r in conn.execute("SELECT id FROM entity_index")}
+    pattern = _prose_id_pattern(conn)
+    min_width: dict[str, int] = {}
+    for kid in known:
+        if m := pattern.fullmatch(kid):
+            min_width[m.group(1)] = min(min_width.get(m.group(1), 99), len(m.group(2)))
+    return pattern, known, min_width
+
+
+def _classify_id_hits(pattern, known, min_width, text: str, label: str, found: dict,
+                      own_id: str | None = None, bare: set | None = None) -> None:
+    """Sort every id-shaped token of one text into the three lists under `label`
+    (`<row>.<col>` or `prompts/<file>:<line>`): width first, then bare vs code span.
+    `bare` may be precomputed over a larger text (a whole file, so a code span that
+    wraps across lines still counts as one)."""
+    if bare is None:
+        bare = {m.group(0) for m in pattern.finditer(_strip_code(text))}
+    for m in pattern.finditer(text):
+        ref = m.group(0)
+        if ref in known or ref == own_id:
+            continue
+        hit = f"{label} -> {ref}"
+        if len(m.group(2)) < min_width.get(m.group(1), 0):
+            found["not_well_formed"].add(hit)
+        elif ref in bare:
+            found["dangling"].add(hit)
+        else:
+            found["in_code_spans"].add(hit)
+
+
+def _scan_prompt_ids(conn, pkg_dir: Path, name: str) -> dict:
+    """Plan 093 (the field's FB-002, ranked first): the PROJECT's prompt files - the
+    surface a session reads before any tool - scanned like rows. A file byte-equal to
+    ANY stock body (current or an older release's, `{package}` substituted) is the
+    maintainer's prose, not the project's citations, and is skipped; customised and
+    project-authored files are scanned line by line."""
+    stock: set[str] = set()
+    for bodies in _load_stock_history().values():
+        for body in bodies.values():
+            stock.add(body.replace("{package}", name))
+    for src in _PROMPTS_DIR.glob("*.md"):
+        stock.add(src.read_text(encoding="utf-8").replace("{package}", name))
+    pattern, known, min_width = _id_universe(conn)
+    found: dict[str, set] = {"dangling": set(), "in_code_spans": set(),
+                             "not_well_formed": set()}
+    files = 0
+    prompts_dir = pkg_dir / "prompts"
+    for path in sorted(prompts_dir.glob("*.md")) if prompts_dir.is_dir() else []:
+        text = path.read_text(encoding="utf-8")
+        if text in stock:
+            continue
+        files += 1
+        # code spans wrap across lines in prose files: strip over the WHOLE file with the
+        # wrapping span rule, then label each hit by its line
+        stripped = _INLINE_CODE_WRAPPING_RE.sub(" ", _CODE_FENCE_RE.sub(
+            lambda m: "\n" * m.group(0).count("\n"), text))
+        bare = {m.group(0) for m in pattern.finditer(stripped)}
+        for lineno, line in enumerate(text.splitlines(), 1):
+            _classify_id_hits(pattern, known, min_width, line,
+                              f"prompts/{path.name}:{lineno}", found, bare=bare)
+    found["in_code_spans"] -= found["dangling"]
+    out = {k: sorted(v) for k, v in found.items()}
+    out["files"] = files
+    return out
 
 
 def _scan_markers(conn) -> list[dict]:
@@ -2208,6 +2267,30 @@ def _readiness_report(conn, scope: str, scope_id: str | None) -> dict:
              " are not scanned" + (f" — {cut}" if cut else ""))
         rules[-1].update({k: prose[k][:_PROSE_ID_CAP]
                           for k in ("in_code_spans", "not_well_formed")})
+        # Plan 093 (FB-002): the project's prompt FILES, the surface a session reads
+        # before any tool. Population is files scanned, not a table - set by hand, so
+        # the zero case is stated here and never routed through the omission lookup.
+        pfiles = _scan_prompt_ids(conn, PACKAGE_ROOT / _CURRENT_NAME, _CURRENT_NAME)
+        pcut = "; ".join(f"{k}: showing {_PROSE_ID_CAP} of {len(pfiles[k])}"
+                         for k in ("dangling", "in_code_spans", "not_well_formed")
+                         if len(pfiles[k]) > _PROSE_ID_CAP)
+        rule("prompt-ids-resolve", "advisory", pfiles["dangling"][:_PROSE_ID_CAP],
+             "identifiers written in the PROJECT's prompt files (`<package>/prompts/*.md`"
+             " that are not a stock body) that resolve to NO entity - the prose a session"
+             " reads before it runs any tool: correct the id, record the missing row, or"
+             " quote history in backticks (a code span is inert). THE ENTITY LIST IS A"
+             " FLOOR: `in_code_spans` and `not_well_formed` are informational, as for"
+             " rows; width is tested first" + (f" — {pcut}" if pcut else ""))
+        rules[-1].update({k: pfiles[k][:_PROSE_ID_CAP]
+                          for k in ("in_code_spans", "not_well_formed")})
+        # the uniform population shape (every consumer reads `rows`); `unit` says files
+        rules[-1]["population"] = {"table": "prompts/*.md", "rows": pfiles["files"],
+                                   "scoped": False, "unit": "files"}
+        if pfiles["files"] == 0:
+            rules[-1]["status"] = "indeterminate"
+            rules[-1]["discriminating"] = False
+            rules[-1]["note"] += (" — no project prompt file to scan (every file in prompts/"
+                                  " is a stock body): this rule measured nothing")
         rule("lessons-confirmed", "advisory",
              ids("SELECT id FROM lessons WHERE lifecycle_status = 'Proposed'"),
              "lessons recorded by the executing agent awaiting the operator's"
@@ -2584,7 +2667,6 @@ def _emit_prompt_library(pkg_dir: Path, name: str, force: bool = False,
     history = _load_stock_history()
     # Plan 057: version strings compare numerically — "4.10.0" is newer than "4.9.0",
     # never a lexical compare (lexical would rank 4.10.0 below 4.9.0).
-    _vkey = lambda v: tuple(int(p) for p in v.split("."))
     for src in sorted(_PROMPTS_DIR.glob("*.md")):
         text = src.read_text(encoding="utf-8").replace("{package}", name)
         path = out_dir / src.name

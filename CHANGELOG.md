@@ -16,6 +16,13 @@ All notable changes to Tamheed are documented here. The format is based on
   carries `occurrences: {id: {column: {count, snippets}}}` — exact counts on the raw needle with
   `LIKE`'s ASCII case folding, snippets of N characters either side (capped at 5 per column, 50 per
   response; counts never capped). Absent without `context`; `matched` unchanged.
+- **`prompt-ids-resolve` (ACMP's `FB-002`, ranked first; plan 093).** A new advisory scans the
+  PROJECT's prompt files — every `<package>/prompts/*.md` that is not a stock body (current or any
+  older release's) — for identifiers that resolve to no entity, with the same three lists, caps and
+  doctrine as the row rule (backticks make a quotation inert; the list is a floor); entities read
+  `prompts/<file>:<line> -> <id>`; `population` counts files (`unit: "files"`); zero project files
+  reads `indeterminate`. In a prose file a code span may wrap a line, and the scan honours that.
+  Measured: the stock prompts hold no bare phantom, so no package is amber by construction.
 
 ### Fixed
 

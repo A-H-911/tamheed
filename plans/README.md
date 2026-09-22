@@ -185,7 +185,7 @@ devil's-advocate review; execution order is the row order below). Status values:
 |---|---|---|---|
 | 091 | [The feedback teaching says what the code does (FB-013, findings_28 §3a-§3b; export wording; work_bind sentence)](091-feedback-teaching-says-what-the-code-does.md) | findings_28 | DONE — 2026-09-22 |
 | 092 | [FB-003: `entity_query(search=…, context=N)` reports `occurrences`](092-search-with-context-is-a-census.md) | FB-003 | DONE — 2026-09-22 |
-| 093 | FB-002: advisory `prompt-ids-resolve` over the project's prompt files | FB-002 | PLANNED |
+| 093 | [FB-002: advisory `prompt-ids-resolve` over the project's prompt files](093-prompt-ids-resolve.md) | FB-002 | DONE — 2026-09-22; no stock body change (the one 'bare' example was a wrapped code span) |
 | 094 | FB-001: `entity_upsert(type="package")` — the header on the operator's word | FB-001 | PLANNED |
 | 095 | FB-004: the `substitute` item on `entity_upsert` | FB-004; 092-094 | PLANNED |
 | 096 | review.html follows plans 069-095 (Feedback + Readiness sections, the lesson tag, the waiver mark) | maintainer ruling | PLANNED |
