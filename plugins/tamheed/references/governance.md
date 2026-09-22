@@ -111,7 +111,9 @@ lifecycle transitions, and `superseded_by` stay mutable ON THE OPERATOR'S WORD: 
 single truth for what binds (the note and the `status="Approved"` query both read it), so a
 lesson is retired by its status becoming `Superseded` — `superseded_by` is only a pointer.
 The engine does that itself when the operator approves the successor; by hand, any move off a
-binding status and any change to the pointer needs `"operator_confirm": true` (v4.10).
+binding status and any change to the pointer needs `"operator_confirm": true` (v4.10), and the
+engine journals that by-hand exit (`transition`, `system:lesson-guard`) as it journals an
+approval (v4.11) — the journal covers the lesson lifecycle in both directions.
 **Promoted** (v4.4) =
 distilled into a skill: Approved → Promoted only, `promoted_to` names the `SKL-` row
 (frozen once Promoted), and the lesson leaves the CLAUDE.md note render (full graduation
@@ -153,6 +155,20 @@ independent columns:
 `verified_by` (human/agent/ci), `verification_method` (auto-test/manual/inspection),
 `against_commit` (what state it was judged against). A Met without evidence is *narrated*,
 not *evidenced* — gate_run counts the split.
+
+## Feedback and local tools — on the operator's word (v4.11)
+
+A function tamheed lacks, a defect in it, a wrong doc, a question — or a script the project keeps
+over the package — is a `feedback` row (`FB-`), never a side utility. The agent drafts it
+(`Proposed`: binds nothing, leaves the package nowhere). The OPERATOR confirms it
+(`operator_confirm` + `confirmed_by`; the engine journals `system:feedback-guard`), and only a
+confirmed row leaves — `entity_export("feedback.json", args={"type": "feedback"})` into the
+project's findings, then `Reported`, then `Resolved` with `resolved_in`. A `local-tool` row names
+its `tool_path`, needs the word to exist at all (insert or a later `kind` change) and is born
+`Confirmed`; the tool reads `exports/` only and writes nowhere tool-owned. While a row is
+Confirmed/Reported/Resolved its content changes only with the word, and leaving that set is
+journaled — what the operator vetted is never rewritten underneath their name. `handoff_emit`
+names every row that still awaits the operator or the export.
 
 ## The ambiguity marker (v4)
 

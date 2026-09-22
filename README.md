@@ -297,7 +297,7 @@ that row-level counts cannot see.
 | `server_info(detail?)` | Version, resolved package root, the stored package row; `detail=true` adds the entity types + relation rules |
 | `package_create / package_open / package_close` | Lifecycle + single-writer lock (a refusal reports what was observed about the holder) |
 | `package_unlock(name, confirm?)` | Report a lock's holder; `confirm=true` (operator's words) removes a dead holder's lock, journaled |
-| `entity_upsert(entities[])` | Batch writes — full rows, per-item verdicts; `expect_unchanged` refuses transport drift on a status flip; `retire` removes a wrong edge; an update reports `changed_columns` with text lengths |
+| `entity_upsert(entities[])` | Batch writes — full rows, per-item verdicts; `expect_unchanged` refuses transport drift on a status flip; `retire` removes a wrong edge; an update reports `changed_columns` with text lengths; a `feedback` row (`FB-`) exists on the operator's word |
 | `entity_query(type, …)` | Targeted rows + `total`; `after_id` pages, `ids` fetches a known set, `search` sweeps by keyword; a projection reports `omitted_columns`, a search reports which column `matched` |
 | `trace_query(entity_id, …)` | Typed traceability links |
 | `gate_run()` | Mechanical quality-gate verdict incl. the blocking G-REL relation gate |

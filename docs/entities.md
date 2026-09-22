@@ -1013,16 +1013,17 @@ written server-side; `package_verify` and its `integrity-verified` row; migratio
 #### feedback (`FB-`) — Continuous
 
 What the project tells upstream, and the tools it keeps over the package, exist on the
-OPERATOR's word (v4.11): an agent drafts, the operator confirms, the export carries it out.
+OPERATOR's word (v4.11, migration `005_feedback.sql`): an agent drafts, the operator confirms,
+the export carries it out. Exempt from `prose-ids-resolve` — feedback quotes broken ids on purpose.
 
 ```mermaid
 stateDiagram-v2
     [*] --> Proposed : the agent records a missing function, a defect, a doc error, a question
     [*] --> Confirmed : a local-tool row - refused without operator_confirm, born Confirmed
-    Proposed --> Confirmed : operator_confirm + confirmed_by - the engine journals it
+    Proposed --> Confirmed : operator_confirm + confirmed_by - the engine journals it (feedback_audit)
     Proposed --> Rejected : free - it was only a draft
     Confirmed --> Reported : entity_export("feedback") carried it into the findings
-    Confirmed --> Rejected : operator_confirm - withdrawing what the operator confirmed
+    Confirmed --> Rejected : operator_confirm - withdrawing what the operator confirmed, journaled
     Reported --> Resolved : resolved_in names the release that answered it
     Reported --> Rejected : upstream declined - upstream_ref names why
 ```
@@ -1041,7 +1042,7 @@ stateDiagram-v2
     Proposed --> Rejected : free - it never bound
     Approved --> Promoted : operator_confirm - distilled into a skill
     Approved --> Superseded : the successor it points at is approved - engine, journaled
-    Approved --> Superseded : by hand - operator_confirm
+    Approved --> Superseded : by hand - operator_confirm, journaled (lesson_audit, v4.11)
     Promoted --> Superseded : operator_confirm
     Superseded --> Obsolete
 ```

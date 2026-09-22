@@ -92,6 +92,20 @@ the store byte-exact — a review slate, a docket — has the same rule and its 
 findings_24): **`entity_export`** writes a read tool's whole result to a deterministic,
 digest-stamped JSON file under `<package>/exports/`, and the script quotes from that file; the
 digest names the state the rows came from, so a slate's currency is one `package_verify` away.
+The same file is how a project talks BACK to the plugin (v4.11): what the tools lack, and what
+the project built instead, is an `FB-` row, confirmed by the operator, exported into the
+project's findings, and collected by the maintainer — never a side utility over `data/`.
+
+```mermaid
+flowchart LR
+    A["agent meets a missing function\nor would build a script"] -->|entity_upsert FB- Proposed| P[(package)]
+    P -->|handoff_emit names it| O{operator}
+    O -->|operator_confirm + confirmed_by| C[FB- Confirmed\njournaled system:feedback-guard]
+    C -->|entity_export feedback.json| E[exports/feedback.json]
+    E -->|inside findings_N.md| M[maintainer]
+    M -->|a plan, a release| R[FB- Resolved\nresolved_in]
+    O -.->|a local tool: confirmed before it exists,\nreads exports/ only| T[scripts/gen-*.mjs]
+```
 On the write side, `expect_unchanged` lets a full-row status flip name the columns it did not
 mean to change, and the store refuses transport drift (the field's LL-063: a paragraph lost
 mid-paste with `ok: true`).

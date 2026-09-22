@@ -57,6 +57,18 @@ report a problem.
   without `operator_confirm`; the engine retires a lesson only inside the write where the
   operator approves its successor, journaled. Two reviewers found the two ways an agent could
   have unbound a lesson unattended (`Proposed`; a pre-set pointer); both are closed (plan 075).
+  The by-hand exit is journaled by the engine (plan 086), and the engine's actor namespace is its
+  own: a caller cannot write `system:<component>` on either journal path, so an audit row that
+  says `operator_confirm attested` was written by the server or not at all.
+- **What leaves the package leaves on the operator's word** — a `feedback` row (v4.11) is the
+  only sanctioned channel from a project to the plugin's maintainer; it leaves as an
+  `entity_export` file inside the project's own findings, only once `Confirmed`
+  (`operator_confirm` + `confirmed_by`), and its content cannot be rewritten underneath that
+  confirmation. A local tool over the package exists only as a confirmed `local-tool` row,
+  reads `exports/` only and writes nowhere tool-owned; `handoff_emit` names unconfirmed rows
+  every emission, ids only. Two reviewers bypassed the first guard four ways before commit
+  (a tool kind by update; born Reported; content under an old confirmation; an unjournaled
+  withdrawal); all closed (plan 087).
 - **Approved-only lessons in the note** — the emitted `CLAUDE.md` note's Lessons section renders only
   operator-Approved `LL-` rows and is screened by the same G-INJECT patterns as emitted prompts
   (blocking); the store refuses to land a lesson in Approved/Promoted without the operator's explicit

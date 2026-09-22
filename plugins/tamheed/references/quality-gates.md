@@ -76,7 +76,12 @@ three tiers (engine / judgment / warn) synced against this file in both directio
   which makes the zero deliberate: the rule reads `pass` and carries `omitted`. So an empty
   family is either explained or amber, never silently green. `prose-ids-resolve` fails only
   on bare, well-formed phantoms; `in_code_spans` and `not_well_formed` are informational
-  lists beside it — its entity list is a floor, not a census.
+  lists beside it — its entity list is a floor, not a census. The three lists are disjoint
+  and width is tested first (a narrow token inside a code span lands under
+  `not_well_formed`); each list says when it is cut at 50; `_` is a word character, so a
+  token touching an underscore is part of a longer identifier and is not scanned (v4.11).
+  The whole-table `indeterminate` note names `scoped: false`; a scoped zero (plan 049)
+  carries `scoped: true` — that field tells the two ambers apart.
 - Judgment gates: perform the check and record the verdict (a `progress-entry` note with the evidence).
 - Stage 19 runs everything; Stage 22 re-confirms criticals + `readiness_check("package")` for the
   readiness verdict.
