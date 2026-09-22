@@ -40,6 +40,18 @@ string `"false"` attested; one helper, `_operator_word`, now requires the JSON b
 every guard (lesson, feedback, header). No finding on guard bypass, SQL construction, injection
 (header text never reaches the note; the page escapes every cell), or the round-trip.
 
+## Lab beat 19's finding (fixed before release, `F-4`)
+
+The first dispatch of beat 19 STOPPED at its first header write: `entity_upsert(type="package")`
+raised `TypeError` on the recorded fixture. Root cause: the header row was keyed by the DIRECTORY
+name (`_CURRENT_NAME`), but a package is resolved by its directory and its stored `name` may differ
+(plan 066) - the lab fixture is `package` / `lab-tracker`, and the field's is `tamheed-package` /
+`tamheed-package-v2`, so the crash would have reached ACMP on its first use. The suite never saw
+it because every test package is made by `package_create`, where the two coincide. Fixed: the
+header is the ONE row, read as `server_info` reads it; a sent `name` may be the stored name or the
+directory; the pre-image is read before the error checks, so a refusal is a verdict, never a crash.
+The test now flips the stored name and re-runs the write and the refusal.
+
 ## Tests
 
 `test_the_package_header_is_written_on_the_operators_word`: three columns written and read back

@@ -3241,6 +3241,19 @@ class V4EngineTest(unittest.TestCase):
         self.assertFalse((srv.PACKAGE_ROOT / "demo" / "csv" / "packages.csv").exists())  # not a family
         q = srv.entity_query("package")
         self.assertIn("server_info", q["error"])                         # read stays there
+        # lab beat 19 found the crash: a package is resolved by its DIRECTORY and the stored
+        # name may differ (the lab fixture, the field's package). The header is the ONE row.
+        srv._CURRENT.conn.execute("UPDATE packages SET name = 'demo-v2'")
+        srv._CURRENT.conn.commit()
+        out = srv.entity_upsert([{"type": "package", "entry_point": "prompts/kickoff-2.md"}])
+        self.assertTrue(out["ok"], out)
+        self.assertEqual(out["items"][0]["id"], "demo-v2")
+        self.assertEqual(srv.server_info()["package"]["entry_point"], "prompts/kickoff-2.md")
+        frozen = srv.entity_upsert([{"type": "package", "profile": "enterprise"}])
+        self.assertFalse(frozen["ok"])                                   # a refusal, never a crash
+        self.assertIn("profile", frozen["items"][0]["error"])
+        for legal in ("demo-v2", "demo"):                                # stored name or directory
+            self.assertTrue(srv.entity_upsert([{"type": "package", "name": legal, "iteration": 5}])["ok"], legal)
 
     def test_a_substitute_write_changes_one_token_and_nothing_else(self):
         """Plan 095 (ACMP's FB-004, the one gap that changed a decision: DW-118 deferred a

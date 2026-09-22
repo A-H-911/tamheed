@@ -19,7 +19,10 @@
 - **Priority**: P1 — **Effort**: M — **Risk**: MEDIUM (it rewrites the recorded lab fixture)
 - **Depends on**: 091–097 DONE + the full test (10/10 on the batch tree, 0/10 on an extracted
   `v4.11.0` tree; nine suites clean under `error::DeprecationWarning`; self-test 19/19)
-- **Category**: lab / acceptance — **Planned at**: commit `8fa0e00`, 2026-09-23
+- **Category**: lab / acceptance — **Planned at**: commit `8fa0e00`, 2026-09-23; **redispatched** after
+  the first run STOPPED at Step 4.1 on an engine crash (F-4, fixed in plan 094's amendment) — the
+  first run's Steps 1–3 observations are superseded by the second run's; assertion 4's needle was
+  hollow (beat 18's note already quoted the formula) and is narrowed to the refusal's own tail
 
 ## Why this matters
 
@@ -164,7 +167,7 @@ page contains `<section id="readiness">`, `<section id="feedback">` and `Evaluat
 {"check": "One token in a long title was corrected by a substitute write (plan 095).",
  "cmd": ["python","evals/pkg_check.py","grep-present","{case_dir}/package","export header DRIFTS","--tables","defects"], "expect_exit": 0},
 {"check": "A match glued to a digit was refused, and the note names the longer token (plan 095).",
- "cmd": ["python","evals/pkg_check.py","grep-present","{case_dir}/package","KPI-17_score","--tables","progress_entries"], "expect_exit": 0},
+ "cmd": ["python","evals/pkg_check.py","grep-present","{case_dir}/package","longer token ('KPI-17_score')","--tables","progress_entries"], "expect_exit": 0},
 {"check": "The kickoff prompt quotes its history ids in backticks (plan 093).",
  "cmd": ["python","evals/pkg_check.py","grep-file","{case_dir}/package/prompts/project-kickoff.md","`DEF-090`"], "expect_exit": 0},
 {"check": "The note names the prompt rule's finding before the fix (plan 093).",

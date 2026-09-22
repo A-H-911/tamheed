@@ -29,6 +29,9 @@ All notable changes to Tamheed are documented here. The format is based on
   register, no CSV, no registry row). Identity columns are frozen and refused by name. `go_no_go`,
   the governance verdict, changes only with `operator_confirm`, journaled by the engine
   (`system:package-guard`, returned as `package_audit`). The read stays `server_info().package`.
+  Lab beat 19 caught the first draft keying the row by the package's DIRECTORY name — a stored
+  name may differ (the lab fixture, the field's package) and every header write crashed there;
+  fixed before release: the header is the one row, and a refusal is a verdict, never a crash.
   Its security review tightened one convention for every guard: **the operator's word is the JSON
   boolean `true` and nothing else** — a truthy string like `"false"` no longer attests on a lesson,
   a feedback row or the header.

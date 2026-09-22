@@ -589,10 +589,19 @@ def _write_package_header(conn, i: int, item: dict) -> dict:
     the OPERATOR's word, journaled by the engine (system:package-guard). The header is
     not an entity family: nothing here touches a register, a CSV or the index."""
     cols = {k: v for k, v in item.items() if k not in ("type", "operator_confirm")}
+    # A package is resolved by its DIRECTORY; the stored `name` is descriptive and may
+    # differ (plan 066; the lab fixture is `package` / `lab-tracker`, the field's is
+    # `tamheed-package` / `tamheed-package-v2`). The header is the ONE row - read it the
+    # way server_info does, never by the directory name (lab beat 19 found the crash).
+    stored_row = conn.execute(
+        f"SELECT name, {', '.join(_HEADER_WRITABLE)} FROM packages LIMIT 1").fetchone()
+    if stored_row is None:
+        return {"index": i, "ok": False, "id": _CURRENT_NAME, "error": "no package header row"}
+    stored_name, before = stored_row[0], dict(zip(_HEADER_WRITABLE, stored_row[1:]))
     err = None
-    if "name" in cols and cols.pop("name") != _CURRENT_NAME:
-        err = (f"name is frozen: the header written is the open package's ({_CURRENT_NAME!r}),"
-               " never another's")
+    if "name" in cols and cols.pop("name") not in (stored_name, _CURRENT_NAME):
+        err = (f"name is frozen: the header written is the open package's ({stored_name!r},"
+               f" directory {_CURRENT_NAME!r}), never another's")
     frozen = [c for c in _HEADER_FROZEN if c in cols]
     unknown = [c for c in cols if c not in _HEADER_WRITABLE and c not in _HEADER_FROZEN]
     if err is None and frozen:
@@ -606,24 +615,21 @@ def _write_package_header(conn, i: int, item: dict) -> dict:
             and (isinstance(cols["iteration"], bool) or not isinstance(cols["iteration"], int))):
         # SQLite's INTEGER is affinity, not a constraint: 'not-a-number' would be stored
         err = f"iteration must be an integer (got {cols['iteration']!r})"
-    before = dict(zip(_HEADER_WRITABLE, conn.execute(
-        f"SELECT {', '.join(_HEADER_WRITABLE)} FROM packages WHERE name = ?",
-        (_CURRENT_NAME,)).fetchone()))
     verdict_moves = ("go_no_go" in cols and not _same_value(cols["go_no_go"], before["go_no_go"]))
     if err is None and verdict_moves and not _operator_word(item):
         err = ("go_no_go is the package's governance verdict and changes only on the"
                " OPERATOR's word — re-run this item with \"operator_confirm\": true after"
                " their explicit confirmation; never in unattended mode")
     if err:
-        return {"index": i, "ok": False, "id": _CURRENT_NAME, "error": err}
-    res = {"index": i, "ok": True, "id": _CURRENT_NAME,
+        return {"index": i, "ok": False, "id": stored_name, "error": err}
+    res = {"index": i, "ok": True, "id": stored_name,
            "changed_columns": _changed_columns(list(cols), cols, before, key="name")}
     conn.execute(f"SAVEPOINT item{i}")
     try:
         conn.execute(
             "UPDATE packages SET " + ", ".join(f"{c} = ?" for c in cols) + " WHERE name = ?",
             [json.dumps(v, ensure_ascii=False) if isinstance(v, (dict, list)) else v
-             for v in cols.values()] + [_CURRENT_NAME])
+             for v in cols.values()] + [stored_name])
         if verdict_moves:
             # the audit row shares the item's savepoint: update and witness land
             # together or not at all (security review)
@@ -632,14 +638,14 @@ def _write_package_header(conn, i: int, item: dict) -> dict:
                 "INSERT INTO progress_entries (id, event_type, entry, actor, occurred_at)"
                 " VALUES (?, ?, ?, ?, ?)",
                 (pe_id, "transition",
-                 f"PACKAGE {_CURRENT_NAME} go_no_go -> {cols['go_no_go']!r} (was"
+                 f"PACKAGE {stored_name} go_no_go -> {cols['go_no_go']!r} (was"
                  f" {before['go_no_go']!r}) on the operator's word — operator_confirm attested",
                  "system:package-guard", _now()))
             res["package_audit"] = pe_id
         conn.execute(f"RELEASE item{i}")
     except Exception as exc:  # the CHECK on mode, NOT NULL on title
         conn.execute(f"ROLLBACK TO item{i}")
-        return {"index": i, "ok": False, "id": _CURRENT_NAME, "error": str(exc)}
+        return {"index": i, "ok": False, "id": stored_name, "error": str(exc)}
     return res
 
 
