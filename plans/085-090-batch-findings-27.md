@@ -1,6 +1,6 @@
 # Tamheed v4.11.0 — findings_27, the ACMP guidance rewrite, and the operator-confirmed feedback family
 
-Status: **APPROVED by the maintainer 2026-09-22; executing** (per-plan status lives in the index rows). Revision 2, after the devil's-advocate review and two
+Status: **EXECUTED 2026-09-22 — released as v4.11.0** (approved the same day; per-plan status lives in the index rows). Revision 2, after the devil's-advocate review and two
 mid-review notes from the maintainer.** Read-only work only: `findings_27.md` read in full; its four code
 claims verified against `tamheed_server.py` at `v4.10.0`; ACMP's memory/prompts/handoff files audited
 (one Explore agent; nine of its cited passages re-read verbatim by me; two of its "stale" verdicts

@@ -174,7 +174,7 @@ devil's-advocate review; execution order is the row order below). Status values:
 | 087 | [The `feedback` family (`FB-`, migration 005): upstream feedback and local tools on the operator's word; `handoff_emit` names what awaits](087-feedback-family-on-the-operators-word.md) | maintainer rulings 2026-09-22 | DONE — 2026-09-22; two reviewers, one CRITICAL and one MEDIUM-HIGH closed before commit |
 | 088 | [Docs + diagrams sweep after code lands](088-docs-and-diagrams-sweep-findings-27.md) | 085-087 | DONE — 2026-09-22 |
 | 089 | [Lab beat 18](089-lab-beat-18-findings-27.md) | 085-088 + full test (15/15 vs 0/15 on `v4.10.0`; 9 suites; selftest) | DONE `762b98b` — 9 new assertions, each failing on the pre-beat fixture; D-1 registry-sync unscripted, F-3 fixed |
-| 090 | Release v4.11.0 | 089 | PLANNED |
+| 090 | [Release v4.11.0](090-release-v4110.md) — plan-058 recipe + the fixture follows the stamp | 089 | DONE — 2026-09-22, tag `v4.11.0` (SHA in the tag) |
 
 **Dependency notes (advisor plans).** 042 before 052 (a red matrix leg is unattributable
 until CI has run once). 043 before 051/053 (they edit the same function; 043 settles its

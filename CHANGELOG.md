@@ -10,6 +10,37 @@ All notable changes to Tamheed are documented here. The format is based on
 
 ## [Unreleased]
 
+## [4.11.0] - 2026-09-22
+
+**MINOR — the findings_27 batch: the feedback channel on the operator's word, the journal that
+covers the lesson lifecycle in both directions, and a prose-id scan that sees an underscore
+(plans 085–089; field report findings_27 plus the maintainer's audit of the field's guidance and
+tooling).** ACMP's upgrade to 4.10.0 came back with four findings, every one verified in source:
+the id pattern could not see an underscore, so a formula's variable names read as five dropped
+zeros; width was tested before the code span, so the two informational lists were not what their
+names said; those lists were cut at 50 silently; and a lesson retired by hand — the very path the
+new advisory recommends — was journaled by nobody, six times over on the field's package.
+Alongside, the maintainer's audit found the field's guidance still carrying live instructions to
+read the JSONL store and to delete the lock by hand, and four slate generators plus a folder of
+scratch probes built because tamheed lacked four functions and nothing told upstream. **The
+feedback family (migration `005_feedback.sql`)**: a function the tools lack, a defect, a doc
+error, a question — or a local tool the project keeps — is an `FB-` row. It is born `Proposed`
+and binds nothing; it becomes `Confirmed` only on `operator_confirm` + `confirmed_by`, journaled
+by the engine; a `local-tool` kind arriving on any row needs the word and lands the row
+Confirmed; while a row is Confirmed/Reported/Resolved its content changes only with the word,
+and leaving that set is journaled. `handoff_emit` names the rows still awaiting the operator and
+the confirmed rows not yet exported; `entity_export("feedback")` inside the project's findings is
+how it reaches the maintainer. Two reviewers bypassed the first guard four ways before commit;
+all closed. **The journal**: a by-hand lesson retirement is written by `system:lesson-guard`,
+and — the security reviewer's finding — the engine's actor namespace is now its own: a caller
+cannot write `system:<component>` on either journal path, so an audit row that says
+`operator_confirm attested` was written by the server or not at all. **The scan**: `_` is a word
+character; every cut list says so; the notes state the classification order and name `scoped` as
+the tell between the two ambers. An acceptance script of fifteen checks passes on this tree and
+fails, each for its own reason, on an extracted `v4.10.0` tree; lab beat 18 fired the mechanisms a lab can reach
+against the recorded package (the cut-list clause and the feedback withdrawal are unit-tested,
+not fired: a fixture this small cannot hold fifty phantoms, and the beat never withdraws). No new tool (19); one additive migration; two stock prompt bodies.
+
 ### Added
 
 - **The `feedback` family — upstream feedback and local tools on the operator's word (plan 087,
