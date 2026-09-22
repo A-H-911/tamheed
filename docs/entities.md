@@ -1232,7 +1232,10 @@ in v4 (decision 12) — class lives on the registry, not the row.
 Three tables are infrastructure, not planning content: **`packages`** (the singleton row:
 name, title, `profile` CHECK-constrained to enterprise/rnd/legacy/ai-agentic/unknown,
 `mode` CHECK-constrained, `iteration`, `package_version` — the v4 refusal lock,
-`mvp_definition`, `entry_point`, `go_no_go`); **`entity_types`** (the extensibility
+`mvp_definition`, `entry_point`, `go_no_go` — since v4.12 written through
+`entity_upsert(type="package")`: title, mode, iteration, mvp_definition, entry_point freely,
+`go_no_go` only on the operator's word and journaled by `system:package-guard`; identity columns
+frozen; never a family — no register, no CSV, no registry row); **`entity_types`** (the extensibility
 registry: type_id, label, `id_prefix` UNIQUE, `generation_class` CHECK: Always/
 Conditional/Derived/On-request/Continuous — the machine mirror G-SET enforces, seeded from
 `BASELINE_ENTITY_TYPES` at `package_create`); and **`omissions`** (entity_type PK + NOT

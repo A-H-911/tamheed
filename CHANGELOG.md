@@ -48,6 +48,9 @@ All notable changes to Tamheed are documented here. The format is based on
   *Evaluated as of <date>* line, so the two calendar-reading rules move the page only when the
   calendar does. The Approved-lessons fold shows the plan-075 supersession tag; the waivers fold
   marks an open-ended whole-rule waiver. Every package's page changes bytes once on its next export.
+- **Docs sweep (plan 097).** Every behavior of this batch is documented outside its plan record:
+  the server README rows, quality-gates (nineteen package-scope advisories), governance (a new
+  "package header" section), `docs/architecture.md`, `docs/entities.md`, SECURITY.md.
 
 ### Fixed
 

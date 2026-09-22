@@ -58,7 +58,7 @@ three tiers (engine / judgment / warn) synced against this file in both directio
   (pre-approval decisions/ADRs, ACs not latest-Met, open critical/high defects — medium/low
   advise, undischarged risks, open work incl. the claimed-done `Review` state), waivers
   (operator-approved `WVR-` rows reported `waived`, never silent; expiring), advisory liveness
-  rules (eighteen at package scope, one of them only when the package has waivers — from overdue open questions through `lessons-confirmed` and
+  rules (nineteen at package scope, one of them only when the package has waivers — from overdue open questions through `lessons-confirmed` and
   `prose-ids-resolve`, the identifiers written in prose that resolve to no entity, to
   `lessons-note-budget`, which names the lessons rendering past the always-loaded note's
   curation ceiling as promotion candidates), and the `human_required` checklist from declared
@@ -81,7 +81,10 @@ three tiers (engine / judgment / warn) synced against this file in both directio
   `not_well_formed`); each list says when it is cut at 50; `_` is a word character, so a
   token touching an underscore is part of a longer identifier and is not scanned (v4.11).
   The whole-table `indeterminate` note names `scoped: false`; a scoped zero (plan 049)
-  carries `scoped: true` — that field tells the two ambers apart.
+  carries `scoped: true` — that field tells the two ambers apart. `prompt-ids-resolve`
+  (v4.12) applies the same rule to the PROJECT's prompt files — the prose a session reads
+  before any tool — never to a stock body; its `population` counts files (`unit: files`).
+  Since v4.12 `review.html` renders this report too, evaluated as of its export date.
 - Judgment gates: perform the check and record the verdict (a `progress-entry` note with the evidence).
 - Stage 19 runs everything; Stage 22 re-confirms criticals + `readiness_check("package")` for the
   readiness verdict.

@@ -60,13 +60,20 @@ report a problem.
   The by-hand exit is journaled by the engine (plan 086), and the engine's actor namespace is its
   own: a caller cannot write `system:<component>` on either journal path, so an audit row that
   says `operator_confirm attested` was written by the server or not at all.
+- **A partial write inherits every guard** — the `substitute` item (v4.12) changes one token in one
+  column by materializing the stored row and sending it down the ordinary full-row path; it has no
+  guard of its own to have holes in. It refuses the journal, composite-key rows, `id`, and a match
+  glued to a digit (`DEC-20` inside `DEC-208`), the class the security review found.
+- **The go/no-go verdict is the operator's** — `entity_upsert(type="package")` changes `go_no_go`
+  only with `operator_confirm`, journaled by `system:package-guard`; identity columns are frozen.
 - **What leaves the package leaves on the operator's word** — a `feedback` row (v4.11) is the
   only sanctioned channel from a project to the plugin's maintainer; it leaves as an
   `entity_export` file inside the project's own findings, only once `Confirmed`
   (`operator_confirm` + `confirmed_by`), and its content cannot be rewritten underneath that
   confirmation. A local tool over the package exists only as a confirmed `local-tool` row (no
   draft stage), writes nothing tool-owned; if it reads the STORE, it reads `exports/` only; `handoff_emit` names unconfirmed rows
-  every emission, ids only. Two reviewers bypassed the first guard four ways before commit
+  every emission, ids only. **The operator's word is the JSON boolean `true`** on every guard —
+  a truthy string never attests (v4.12). Two reviewers bypassed the first guard four ways before commit
   (a tool kind by update; born Reported; content under an old confirmation; an unjournaled
   withdrawal); all closed (plan 087).
 - **Approved-only lessons in the note** — the emitted `CLAUDE.md` note's Lessons section renders only

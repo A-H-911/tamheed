@@ -63,7 +63,7 @@ that would create one fails, and the error message is the gate report.
 Above the gates sits the **readiness layer**: `readiness_check(scope, id?)` answers "is this actually
 done?" at a close boundary — `Review` counts as open (claimed is not verified), open critical/high defects
 block while medium/low advise, and a stubborn failure passes only through an operator-approved `WVR-`
-waiver (reported as `waived`, expiring, never silent). Alongside the blocking rules run eighteen
+waiver (reported as `waived`, expiring, never silent). Alongside the blocking rules run nineteen
 package-scope liveness advisories — from overdue open questions to `lessons-confirmed`, which nags while
 any lesson recorded by the executing agent still awaits the operator's confirmation interview, and
 `lessons-note-budget`, which names the lessons rendering past the always-loaded note's curation
@@ -108,7 +108,15 @@ flowchart LR
 ```
 On the write side, `expect_unchanged` lets a full-row status flip name the columns it did not
 mean to change, and the store refuses transport drift (the field's LL-063: a paragraph lost
-mid-paste with `ok: true`).
+mid-paste with `ok: true`). The one departure from whole-row replacement (v4.12, the field's
+FB-004) is the `substitute` item: one exact token in one column, which the server materializes
+onto the stored row and then judges by the ORDINARY path — the same guards, triggers and
+`changed_columns` — so there is no second write contract to guard. The header row (`title`,
+`mode`, `iteration`, `entry_point`, `go_no_go`, `mvp_definition`) is written the same way,
+`entity_upsert(type="package")`, with the go/no-go verdict on the operator's word (FB-001).
+On the read side, `search` with `context=N` is a census — the `occurrences` key, counts and
+snippets per column (FB-003) — and `prompt-ids-resolve` scans the project's own prompt files for phantom ids
+(FB-002), never a stock body.
 
 ## 3. The three actors
 
@@ -143,7 +151,8 @@ sequenceDiagram
     Planner->>Server: decision + scope-change row FIRST, then mutations (iteration+1)
 ```
 
-The operator never proofreads JSONL: human review happens through `review.html` (D-REVIEW — HTML is the
+The operator never proofreads JSONL: human review happens through `review.html` — since v4.12 with a
+Readiness section and a Feedback section beside the registers (D-REVIEW — HTML is the
 only human surface, deterministic and committed alongside the data). The executing agent never edits
 package files: progress enters through `progress_update`/`audit_record`/`work_bind`, and status cascades
 (AC verdicts → requirement lifecycle) fire inside the same transaction.

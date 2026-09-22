@@ -175,6 +175,16 @@ Confirmed/Reported/Resolved its content changes only with the word, and leaving 
 journaled — what the operator vetted is never rewritten underneath their name. `handoff_emit`
 names every row that still awaits the operator or the export.
 
+## The package header — on the operator's word (v4.12)
+
+The header (`server_info().package`) is written with `entity_upsert(type="package")`. `title`,
+`mode`, `iteration`, `mvp_definition` and `entry_point` are the agent's bookkeeping; `go_no_go` is
+the package's governance verdict and changes only with `operator_confirm`, journaled by the
+engine (`system:package-guard`, returned as `package_audit`). `name`, `profile`, `package_version` and `created_at` are the
+package's identity and are frozen. The header is not an entity family: it has no register, no
+CSV and no registry row. **The operator's word, everywhere, is the JSON boolean `true`** — a
+truthy string never attests.
+
 ## The ambiguity marker (v4)
 
 Never assume. Where prose is ambiguous, write `[NEEDS-CLARIFICATION: OQ-NNN]` in place and
