@@ -320,9 +320,12 @@ def _prose_id_pattern(conn) -> "re.Pattern[str]":
     alternation = "|".join(re.escape(p) for p in sorted(prefixes, key=len, reverse=True))
     # a whole token: not the tail of a longer word, not the head of a longer number, and
     # (plan 076) not followed by `-<digit>` - `ADR-2026-001` is someone else's numbering.
-    # The stated cost: a range written `PE-1300-1310` is not scanned. Groups: prefix, digits.
-    return re.compile(r"(?<![A-Za-z0-9-])(" + alternation
-                      + r")(\d+)(?:\.\d+)*(?![A-Za-z0-9])(?!-\d)")
+    # Plan 085 (findings_27 s2): `_` is a word character here too - `KPI-17_score` is a
+    # variable name, not a citation, and a token that touches an underscore on either
+    # side is part of a longer identifier. The stated cost: a range written
+    # `PE-1300-1310` is not scanned. Groups: prefix, digits.
+    return re.compile(r"(?<![A-Za-z0-9_-])(" + alternation
+                      + r")(\d+)(?:\.\d+)*(?![A-Za-z0-9_])(?!-\d)")
 
 
 def _json_values(value):
@@ -1795,7 +1798,9 @@ def _readiness_report(conn, scope: str, scope_id: str | None) -> dict:
                         f" — no {measured['table']} rows at all: this rule measured nothing"
                         " (a package with nothing to report and one that recorded nothing"
                         " look the same here). Record the rows, or record the family's"
-                        " omission if it is deliberately empty")
+                        " omission if it is deliberately empty. (scoped: false - the whole"
+                        " table is empty; a scoped zero reads indeterminate by plan 049"
+                        " and carries scoped: true)")
         measured.update({"list": None, "table": None, "rows": None})
         if entities and name in waivers:
             waived, remaining = [], []
@@ -2003,6 +2008,11 @@ def _readiness_report(conn, scope: str, scope_id: str | None) -> dict:
              " live OQ; resolve the OQ and remove the marker")
         prose = _scan_prose_ids(conn)
         dangling = prose["dangling"]
+        # Plan 085 (findings_27 s3): every cut list says so - a truncated list must
+        # never read as a complete one, on the informational lists as on the failing one.
+        cut = "; ".join(f"{k}: showing {_PROSE_ID_CAP} of {len(prose[k])}"
+                        for k in ("dangling", "in_code_spans", "not_well_formed")
+                        if len(prose[k]) > _PROSE_ID_CAP)
         rule("prose-ids-resolve", "advisory", dangling[:_PROSE_ID_CAP],
              "identifiers written in prose that resolve to NO entity (G-IDS checks"
              " foreign keys and the index, never a sentence): correct the id, or"
@@ -2010,10 +2020,10 @@ def _readiness_report(conn, scope: str, scope_id: str | None) -> dict:
              " THE ENTITY LIST IS A FLOOR, not a census: hits inside code spans are"
              " listed under `in_code_spans` and tokens too narrow to be this family's"
              " ids under `not_well_formed` - both informational, neither fails the"
-             " rule, so backticks hide nothing. The append-only journal and"
-             " Superseded/Obsolete rows are not scanned"
-             + (f" — showing {_PROSE_ID_CAP} of {len(dangling)}"
-                if len(dangling) > _PROSE_ID_CAP else ""))
+             " rule, so backticks hide nothing. The three lists are disjoint and width"
+             " is tested first, so a narrow token inside a code span appears only under"
+             " `not_well_formed`. The append-only journal and Superseded/Obsolete rows"
+             " are not scanned" + (f" — {cut}" if cut else ""))
         rules[-1].update({k: prose[k][:_PROSE_ID_CAP]
                           for k in ("in_code_spans", "not_well_formed")})
         rule("lessons-confirmed", "advisory",

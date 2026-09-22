@@ -169,7 +169,7 @@ devil's-advocate review; execution order is the row order below). Status values:
 
 | # | Plan | Depends on | Status |
 |---|---|---|---|
-| 085 | findings_27 §1-§3: `_` is a word character; the classification order and `scoped` are stated; every list says when it is cut | findings_27 | PLANNED |
+| 085 | [findings_27 §1-§3: `_` is a word character; the classification order and `scoped` are stated; every list says when it is cut](085-prose-id-underscore-and-honest-lists.md) | findings_27 | DONE — 2026-09-22 |
 | 086 | findings_27 §4: the by-hand lesson retirement is journaled by the engine (`system:lesson-guard`) | findings_27; operator ruling | PLANNED |
 | 087 | The `feedback` family (`FB-`, migration 005): upstream feedback and local tools on the operator's word; `handoff_emit` names what awaits | maintainer rulings 2026-09-22 | PLANNED |
 | 088 | Docs + diagrams sweep after code lands | 085-087 | PLANNED |

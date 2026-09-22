@@ -10,6 +10,19 @@ All notable changes to Tamheed are documented here. The format is based on
 
 ## [Unreleased]
 
+### Fixed
+
+- **The id pattern treats `_` as a word character (findings_27 §2, plan 085).** `KPI-17_score` inside
+  a formula yielded a `not_well_formed` hit on `KPI-17`; every such entry on the field's package was
+  that one false positive. A token touching an underscore on either side is part of a longer
+  identifier, as `-<digit>` already meant someone else's numbering. Measured on the field's nine
+  exported families: four underscore-joined labels stop being scanned, no citation does.
+- **Every cut list says so (findings_27 §3, plan 085).** `in_code_spans` and `not_well_formed` were
+  capped at 50 silently; the "showing 50 of N" clause now covers all three lists. The note states the
+  classification order (the lists are disjoint; width is tested first, so a narrow token inside a code
+  span appears only under `not_well_formed`), and the whole-table `indeterminate` note names
+  `scoped: false` as the tell between it and plan 049's scoped zero (findings_27 §1).
+
 ## [4.10.0] - 2026-09-21
 
 **MINOR — the findings_26 batch: a supersession that completes itself, rules that never pass

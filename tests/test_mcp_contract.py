@@ -3001,6 +3001,34 @@ class V4EngineTest(unittest.TestCase):
         self.assertEqual((rule["status"], rule["entities"]), ("pass", []))       # backticks do
         self.assertEqual(rule["in_code_spans"], ["DEF-094.title -> RISK-404"])   # not hide it
 
+    def test_prose_id_scan_sees_an_underscore_and_says_when_a_list_is_cut(self):
+        """Plan 085 (findings_27 s1-s3). `KPI-17_score` is a variable name, not a
+        citation: `_` is a word character everywhere else in this domain, so a token
+        followed (or preceded) by it is part of a longer identifier - exactly as
+        `-<digit>` already means someone else's numbering. The two informational lists
+        were cut at 50 silently while only the failing list said so; and the note now
+        states the classification order (width first) and names `scoped` as the tell
+        between the two `indeterminate` mechanisms."""
+        for n in ("001", "002"):
+            srv.entity_upsert([{"type": "kpi", "id": f"KPI-{n}", "title": f"kpi {n}"}])
+        srv.entity_upsert([{"type": "defect", "id": "DEF-097", "severity": "low",
+                            "title": "score = `(KPI-17_score * 0.25) + (KPI-10_score * 0.2)`"
+                                     " and also plain_KPI-16 here; real slip KPI-8 stays"}])
+        rule = {r["rule"]: r for r in srv.readiness_check("package")["rules"]}["prose-ids-resolve"]
+        listed = rule["entities"] + rule["in_code_spans"] + rule["not_well_formed"]
+        self.assertFalse(any("KPI-17" in e or "KPI-10" in e or "KPI-16" in e for e in listed), listed)
+        self.assertEqual(rule["not_well_formed"], ["DEF-097.title -> KPI-8"])   # a slip still lands
+        self.assertIn("width is tested first", rule["note"])
+        many = "".join(f" `RISK-{9000 + i}`" for i in range(52))                # 52 backticked phantoms
+        srv.entity_upsert([{"type": "defect", "id": "DEF-098", "severity": "low", "title": many}])
+        rule = {r["rule"]: r for r in srv.readiness_check("package")["rules"]}["prose-ids-resolve"]
+        self.assertEqual(len(rule["in_code_spans"]), 50)
+        self.assertIn("in_code_spans: showing 50 of 52", rule["note"])
+        self.assertEqual(rule["status"], "pass")                                # still inert
+        hollow = next(r for r in srv.readiness_check("package")["rules"]
+                      if r["status"] == "indeterminate" and not r["population"]["scoped"])
+        self.assertIn("scoped: false", hollow["note"])                          # the discriminator named
+
     def test_csv_dir_is_exactly_what_export_html_emits(self):
         """Plan 065 (findings_25 s2): a CSV for a table that no longer exists sat in a
         tool-owned directory for two months, and `package_verify` could not see it. The
