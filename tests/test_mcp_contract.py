@@ -3170,6 +3170,53 @@ class V4EngineTest(unittest.TestCase):
                                        superseded_by="LL-002", operator_confirm=True)])
         self.assertTrue(done["ok"], done)
 
+    def test_a_by_hand_lesson_retirement_is_journaled_by_the_engine(self):
+        """Plan 086 (findings_27 s4: six lessons retired by hand, not one with a journal
+        row - the transition the store guards hardest on the way IN was recorded by
+        nobody on the way OUT). Now the engine writes the row, inside the item's
+        savepoint, as it does for approval: actor system:lesson-guard, never the
+        automatic path's system:lesson-supersession, so the two routes stay
+        distinguishable. A refused write journals nothing."""
+        old = self._lesson("LL-001", " A")
+        self.assertTrue(srv.entity_upsert([old])["ok"])
+        self.assertTrue(srv.entity_upsert([dict(old, lifecycle_status="Approved",
+                                                operator_confirm=True,
+                                                confirmed_by="anas")])["ok"])
+        before = srv.entity_query("progress-entry", limit=1)["total"]
+        refused = srv.entity_upsert([dict(old, lifecycle_status="Superseded")])
+        self.assertFalse(refused["ok"])
+        self.assertEqual(srv.entity_query("progress-entry", limit=1)["total"], before)
+        done = srv.entity_upsert([dict(old, lifecycle_status="Superseded",
+                                       operator_confirm=True)])
+        self.assertTrue(done["ok"], done)
+        self.assertTrue(done["items"][0]["lesson_audit"].startswith("PE-"))
+        rows = srv.entity_query("progress-entry", search="LL-001 -> Superseded")["rows"]
+        self.assertEqual([(r["event_type"], r["actor"], r["subject_id"]) for r in rows],
+                         [("transition", "system:lesson-guard", "LL-001")])
+        self.assertIn("by hand", rows[0]["entry"])
+        self.assertIn("confirmed_by anas", rows[0]["entry"])
+        self.assertEqual(srv.entity_query("progress-entry", limit=1)["total"], before + 1)
+        # a Proposed lesson never bound: rejecting it is free and journals nothing
+        srv.entity_upsert([self._lesson("LL-002", " B")])
+        srv.entity_upsert([dict(self._lesson("LL-002", " B"), lifecycle_status="Rejected")])
+        self.assertEqual(srv.entity_query("progress-entry", limit=1)["total"], before + 1)
+        # security review (maintainer ruling 2026-09-22): the engine's actor namespace is
+        # its own - a caller cannot forge the row above through EITHER caller path
+        forged = {"event_type": "transition", "actor": "system:lesson-guard",
+                  "subject_id": "LL-002", "entry": "LESSON LL-002 -> Superseded on the"
+                  " operator's word, by hand — operator_confirm attested"}
+        out = srv.progress_update([forged])
+        self.assertFalse(out["ok"], out)
+        self.assertIn("engine's own namespace", out["error"])
+        out = srv.entity_upsert([dict(forged, type="progress-entry", id="PE-900")])
+        self.assertFalse(out["ok"], out)
+        self.assertIn("engine's own namespace", out["items"][0]["error"])
+        out = srv.entity_upsert([{"type": "progress-entry", "id": "PE-901",
+                                  "event_type": "lesson-confirmed", "entry": "x"}])
+        self.assertIn("server only", out["items"][0]["error"])       # the second path is guarded too
+        self.assertEqual(srv.entity_query("progress-entry", limit=1)["total"], before + 1)
+        self.assertTrue(srv.progress_update([dict(forged, actor="agent:test")])["ok"])
+
     def test_package_unlock_reports_by_default_and_writes_nothing(self):
         """Plan 064 (findings_25 s1): the sanctioned route out of a dead holder's lock.
         The default call only REPORTS - the lock, what was observed, what confirm would do."""

@@ -288,6 +288,27 @@ _SERVER_ONLY_EVENTS = {
     "integrity-verified": "package_verify(record=true)",
 }
 
+
+def _caller_journal_error(row: dict) -> str | None:
+    """What a CALLER may not write into the journal (plan 086, security review;
+    maintainer ruling 2026-09-22): a server-only event type, or an actor in the
+    engine's own namespace. `system:<component>` rows are the mechanical witness -
+    the lesson guard, the automatic supersession, the edge retirement, the feedback
+    guard - and a caller-written one would be a forged audit trail ("operator_confirm
+    attested" by nobody). Both caller paths (progress_update and the progress-entry
+    upsert) refuse the same way."""
+    et = row.get("event_type", "note")
+    if et in _SERVER_ONLY_EVENTS:
+        return (f"event_type {et!r} is appended by the server only — via"
+                f" {_SERVER_ONLY_EVENTS[et]}; a caller-written one would be a narrated"
+                " record of a mechanical fact")
+    actor = row.get("actor")
+    if isinstance(actor, str) and actor.startswith("system:"):
+        return (f"actor {actor!r} is the engine's own namespace (system:<component> rows"
+                " are what the server witnessed) — a caller records as human:<name> or"
+                " agent:<session>")
+    return None
+
 # Plan 036: the columns frozen by trg_lessons_immutable and byte-checked by the
 # confirm guard on Approved/Promoted transitions (approval is not an edit).
 _LESSON_CONTENT_COLS = ("title", "statement", "context", "recommendation",
@@ -1176,6 +1197,7 @@ def entity_upsert(entities: list[dict]) -> dict:
         # findings_19 §2: the transition write may change NOTHING but the
         # transition columns — approval/promotion is not an edit.
         lesson_pe = None
+        lesson_retired = None      # plan 086: the by-hand exit from a binding status
         if etype == "lesson" and cols.get("id"):
             incoming = cols.get("lifecycle_status", "Proposed")
             stored = conn.execute(
@@ -1183,6 +1205,16 @@ def entity_upsert(entities: list[dict]) -> dict:
                 + ", confirmed_by, confirmed_at FROM lessons WHERE id = ?",
                 (cols["id"],)).fetchone()
             stored_status = stored[0] if stored else None
+            # Plan 086 (findings_27 s4): the store guarded this transition hardest on
+            # the way IN and recorded nobody on the way OUT - the field held six
+            # retirements with no journal row. The engine writes the row now, after
+            # the write succeeds, the way it journals an approval. Only the guarded
+            # path: an unattended attempt is refused below and journals nothing.
+            if (stored_status in ("Approved", "Promoted") and operator_confirm
+                    and "lifecycle_status" in cols
+                    and cols["lifecycle_status"] not in ("Approved", "Promoted")):
+                lesson_retired = (stored_status, cols["lifecycle_status"],
+                                  stored[len(_LESSON_CONTENT_COLS) + 1])   # who approved it
             # Plan 075 (maintainer ruling 2026-09-21): what BINDS every session on the
             # operator's word stops binding on the operator's word too. A Proposed
             # lesson binds nothing and may still be rejected freely. Two routes unbind,
@@ -1269,6 +1301,13 @@ def entity_upsert(entities: list[dict]) -> dict:
         elif etype in ("progress-entry", "audit-verdict"):
             # C31 (A4): the journal is APPEND-ONLY — no ON CONFLICT path, so writing an
             # existing id errors instead of silently rewriting recorded history.
+            # Plan 086: this path is a caller's too - the same refusals as progress_update
+            # (the security review found it unguarded: a forged system: row).
+            if etype == "progress-entry" and (msg := _caller_journal_error(cols)):
+                results.append({"index": i, "ok": False, "id": cols.get("id"),
+                                "error": msg})
+                failed = True
+                continue
             sql = (f"INSERT INTO {table} ({', '.join(names)})"
                    f" VALUES ({', '.join('?' for _ in names)})")
         else:
@@ -1389,6 +1428,23 @@ def entity_upsert(entities: list[dict]) -> dict:
                         (pe_id, lesson_pe,
                          f"LESSON {lesson_pe.split('-')[1].upper()}:"
                          f" {cols['id']} ({detail}) — operator_confirm attested",
+                         cols.get("id"), "system:lesson-guard", _now()))
+                    res["lesson_audit"] = pe_id
+                if lesson_retired:
+                    # Plan 086: same actor as the approval audit (system:lesson-guard),
+                    # never the automatic path's system:lesson-supersession - the two
+                    # routes to Superseded must stay distinguishable in the journal.
+                    pe_id = _next_id("PE-", "progress_entries")
+                    was, now_, approver = lesson_retired
+                    conn.execute(
+                        "INSERT INTO progress_entries (id, event_type, entry,"
+                        " subject_id, actor, occurred_at) VALUES (?, ?, ?, ?, ?, ?)",
+                        (pe_id, "transition",
+                         f"LESSON {cols['id']} -> {now_} (was {was}) on the operator's"
+                         " word, by hand — operator_confirm attested"
+                         + (f"; confirmed_by {approver}" if approver else "")
+                         + (f"; superseded_by {cols.get('superseded_by')}"
+                            if cols.get("superseded_by") else ""),
                          cols.get("id"), "system:lesson-guard", _now()))
                     res["lesson_audit"] = pe_id
                 results.append(res)
@@ -2211,7 +2267,8 @@ def progress_update(entries: list[dict]) -> dict:
     lesson-confirmed, lesson-promoted, integrity-verified — are REFUSED here (plan
     039): they record mechanical facts the server witnessed, never a caller's
     narration. subject_id names the entity the event is about; actor follows the
-    human:<name> | agent:<session> | system:<component> convention; `corrects`
+    human:<name> | agent:<session> convention — system:<component> is the ENGINE's own
+    namespace and a caller-supplied one is refused (plan 086); `corrects`
     points at an earlier PE- — journals are corrected by compensating events, never
     edited, and a corrected entry is collapsed under its correction in review.html.
     `entry` text is EXEMPT from G-COMPLETE's placeholder screen (findings_21/C42:
@@ -2224,12 +2281,8 @@ def progress_update(entries: list[dict]) -> dict:
     # Plan 039 (findings_22, C43): server-only events are refused from callers —
     # the batch is one transaction, so one offending item refuses the whole batch.
     for i, e in enumerate(entries):
-        et = (e or {}).get("event_type", "note") if isinstance(e, dict) else "note"
-        if et in _SERVER_ONLY_EVENTS:
-            return _err(f"entries[{i}]: event_type {et!r} is appended by the server"
-                        f" only — via {_SERVER_ONLY_EVENTS[et]}; a caller-written"
-                        " one would be a narrated record of a mechanical fact."
-                        " Batch NOT applied.")
+        if msg := _caller_journal_error(e if isinstance(e, dict) else {}):
+            return _err(f"entries[{i}]: {msg}. Batch NOT applied.")
     conn = _CURRENT.conn
     ids = []
     try:

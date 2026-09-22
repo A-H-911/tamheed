@@ -22,6 +22,20 @@ All notable changes to Tamheed are documented here. The format is based on
   classification order (the lists are disjoint; width is tested first, so a narrow token inside a code
   span appears only under `not_well_formed`), and the whole-table `indeterminate` note names
   `scoped: false` as the tell between it and plan 049's scoped zero (findings_27 §1).
+- **A by-hand lesson retirement is journaled by the engine (findings_27 §4, plan 086).** The store
+  guarded the exit from a binding status on the way in and recorded nobody on the way out: the field's
+  package held six retirements with no journal row. When an Approved/Promoted lesson moves off a
+  binding status on the operator's word, the engine now writes one `transition` row by
+  `system:lesson-guard` (naming the stored approver and any `superseded_by`) and returns it as
+  `lesson_audit`; the automatic path keeps `system:lesson-supersession`, so the two routes stay
+  distinguishable. A refused write journals nothing.
+- **The engine's actor namespace is its own (security review of plan 086; maintainer ruling
+  2026-09-22).** Any caller could forge an engine audit row — `actor: "system:lesson-guard"`, an
+  entry claiming `operator_confirm attested` — through `progress_update` or a `progress-entry`
+  upsert, without touching the guarded write; the upsert path did not even refuse the server-only
+  event types. Both caller paths now refuse an actor starting with `system:` and the server-only
+  events alike; a caller records as `human:<name>` or `agent:<session>`. Measured before the ruling:
+  no eval, prompt, doc or field practice wrote a `system:` actor as a caller.
 
 ## [4.10.0] - 2026-09-21
 
