@@ -162,6 +162,20 @@ execution order is the row order below). Status values: PLANNED / IN PROGRESS / 
 | 083 | [Lab beat 17](083-lab-beat-17-findings-26.md) | 075–082 + acceptance (20/20 vs 0/20 on `v4.9.0`) | DONE `4a0bbb9` — 12 new assertions, each failing on the pre-beat fixture; finding F-1 |
 | 084 | [Release v4.10.0](084-release-v4100.md) — plan-058 recipe + the fixture follows the stamp (F-1) | 083 | DONE — 2026-09-21, tag `v4.10.0` (SHA in the tag) |
 
+### Field cycle findings_27 -- plans 085-090 -> v4.11.0 (2026-09-22; reviewer-executed)
+
+Master record: [085-090-batch-findings-27.md](085-090-batch-findings-27.md) (the approved plan after a
+devil's-advocate review; execution order is the row order below). Status values: PLANNED / IN PROGRESS / DONE.
+
+| # | Plan | Depends on | Status |
+|---|---|---|---|
+| 085 | findings_27 §1-§3: `_` is a word character; the classification order and `scoped` are stated; every list says when it is cut | findings_27 | PLANNED |
+| 086 | findings_27 §4: the by-hand lesson retirement is journaled by the engine (`system:lesson-guard`) | findings_27; operator ruling | PLANNED |
+| 087 | The `feedback` family (`FB-`, migration 005): upstream feedback and local tools on the operator's word; `handoff_emit` names what awaits | maintainer rulings 2026-09-22 | PLANNED |
+| 088 | Docs + diagrams sweep after code lands | 085-087 | PLANNED |
+| 089 | Lab beat 18 | 085-088 + acceptance | PLANNED |
+| 090 | Release v4.11.0 | 089 | PLANNED |
+
 **Dependency notes (advisor plans).** 042 before 052 (a red matrix leg is unattributable
 until CI has run once). 043 before 051/053 (they edit the same function; 043 settles its
 transaction tail). 045's tests land before its refactor (same plan, red then green). 050 and
