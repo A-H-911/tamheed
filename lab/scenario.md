@@ -316,6 +316,66 @@ must fire; the resulting package replaces `evals/sample-results/lab-tracker/pack
       nothing` and `omitted`, and the `review_current` values; then `export_html`;
       `gate_run` ready; `package_verify()` green (`review_current: true`,
       `foreign_csv: []`); `package_close`; no `data/.lock` remains.
+18. **The findings_27 continuation (v4.11.0, plans 085–087)** — another INCREMENTAL
+    session against the recorded package. The agent needs a function the tools lack and
+    records it as feedback instead of writing a script; the operator confirms it and it
+    leaves the package as an export. The agent registers the lab's one local tool on the
+    operator's word after an unattended attempt is refused, and an attempt to rewrite the
+    confirmed row underneath the operator's name is refused. A lesson is retired by hand
+    on the operator's word and the engine writes the row; a forged engine row is refused.
+    A formula's variable names stop tripping the prose-id scan, and the two stock prompts
+    refresh.
+    ✔ THE REGISTRY SYNC (plan 087): the recorded store's `entity_types` predates the
+      `feedback` family, so `package_migrate` runs FIRST in `registry-sync` mode (preview,
+      then confirm) — `entity_types_added: ["feedback"]`, `backup: "none (registry-sync is
+      a pure append)"` — journaled as `REGISTRY-SYNC: entity types added (feedback)` by
+      actor `system:migrate`, exactly as beats 10 and 12 did for `lesson` and `skill`.
+    ✔ THE UNDERSCORE (plan 085): `DEF-005`'s title is re-sent in full carrying a formula
+      whose variables are `KPI-17_score` and `KPI-10_score` → `changed_columns` names
+      `title` alone, and `prose-ids-resolve` still reads `pass` with `entities` [],
+      `in_code_spans` exactly `["DEF-005.title -> RISK-808"]` and `not_well_formed` [] —
+      the variable names appear NOWHERE, because `_` is a word character and, as the
+      rule's own note says, `width is tested first`. `hypotheses-measurable` is the
+      `indeterminate` rule whose note carries `scoped: false`.
+    ✔ THE MISSING FUNCTION AS FEEDBACK (plan 087): `FB-001` is born `Proposed` for a patch
+      mode the tools lack, in place of the script that would otherwise have done the
+      substitution; the UNATTENDED confirmation is REFUSED for `feedback leaves the
+      package only on the OPERATOR's word`, and `handoff_emit` names it while it waits —
+      `1 feedback row(s) await the operator's word (FB-001)`. On the operator's word it is
+      `Confirmed` carrying a `feedback_audit`, journaled by actor `system:feedback-guard`.
+    ✔ THE REWRITE UNDER THE NAME (plan 087): the same row re-sent `Confirmed` with a
+      changed `detail` and NO word is REFUSED for `content drifted on ['detail']`, and the
+      stored `detail` does not move.
+    ✔ THE ROW THAT LEAVES (plan 087): the next emission asks for the export instead —
+      `entity_export("feedback.json", args={"type": "feedback"})` writes an envelope with
+      `total: 1`, `partial: false` — and `FB-001` then goes `Reported` with NO operator
+      word needed, because it has left.
+    ✔ THE LOCAL TOOL (plan 087): `FB-002` (`kind: local-tool`, `tool_path:
+      evals/pkg_check.py`) is REFUSED at INSERT for `a local tool over the package exists
+      only on the OPERATOR's word` — the family total stays 1 — then lands `Confirmed`
+      with a `feedback_audit` on the word. `FB-001`'s `detail` names `DEF-005` and the
+      phantom `RISK-808` and neither appears in any `prose-ids-resolve` list: the family
+      is exempt, like the journal.
+    ✔ THE BY-HAND RETIREMENT (plan 086): `LL-005` is recorded, approved on the operator's
+      word (`lesson_audit`), then retired BY HAND to `Superseded` with no successor — a
+      lesson withdrawn — and the ENGINE writes the row: `lesson_audit`, actor
+      `system:lesson-guard`, `LESSON LL-005 -> Superseded (was Approved) on the operator's
+      word, by hand`.
+    ✔ THE RESERVED NAMESPACE (plan 086): that same row forged by hand is REFUSED on BOTH
+      caller paths — `progress_update` and the `progress-entry` upsert — in the same
+      words, `actor 'system:lesson-guard' is the engine's own namespace`; no forged row
+      reaches the journal.
+    ✔ THE PROMPTS (plan 087): `handoff_emit(refresh_stock=true)` reports `refreshed`
+      exactly `prompts/orient-resume.md` and `prompts/README.md` with
+      `diverged_customized` empty, and the refreshed guide teaches the `FB-` row and the
+      `local-tool` row.
+    ✔ Close the beat with ONE `progress_update` note (actor `agent:lab-beat-18`,
+      `event_type: "note"`) quoting verbatim the `leaves the package only on the
+      OPERATOR's word`, `content drifted on ['detail']`, `a local tool over the package
+      exists only on the OPERATOR's word` and `engine's own namespace` clauses, the words
+      `feedback_audit` and `lesson_audit`, and `width is tested first`; then `export_html`;
+      `gate_run` ready; `package_verify()` green (`verified: true`, `foreign: []`,
+      `foreign_csv: []`, `review_current: true`); `package_close`; no `data/.lock` remains.
 
 **Pass bar:** every ✔ observed; `gate_run` ready (or failing ONLY on deliberately-open
 items the scenario names); the eval runner's lab checks green. `readiness_check` is

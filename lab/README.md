@@ -36,7 +36,13 @@ mechanisms — the lost paragraph reported as a length drop, the half-finished s
 that keeps binding, the two refused unattended retirements and the engine's own retirement
 on the operator's word, the backticked phantom reported inert, the open-ended blanket
 waiver named, the empty family that measured nothing until its omission was recorded, the
-review page that says whether it is current, the completed hand-merge that stops lagging)
+review page that says whether it is current, the completed hand-merge that stops lagging;
+18: the findings_27 mechanisms — the registry synced for a new family, the missing function
+recorded as feedback instead of scripted, confirmed and exported and reported on the operator's
+word, the refused unattended confirmation and the refused rewrite under the operator's own name,
+the local tool that exists only on that word, the by-hand lesson retirement the engine journals
+and the forged engine row refused on both caller paths, the formula's variable names that trip
+no list)
 run as incremental real-agent sessions against the recorded package — the fixture is regenerated
 by continuation, not from scratch.
 

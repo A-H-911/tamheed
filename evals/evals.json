@@ -1323,6 +1323,127 @@
             "tamheed:stock-merged"
           ],
           "expect_exit": 0
+        },
+        {
+          "check": "A missing function was recorded as feedback, confirmed on the operator's word, and reported (plan 087).",
+          "cmd": [
+            "python",
+            "evals/pkg_check.py",
+            "count",
+            "{case_dir}/package",
+            "feedback",
+            "--col",
+            "lifecycle_status=Reported",
+            "--min",
+            "1"
+          ],
+          "expect_exit": 0
+        },
+        {
+          "check": "The lab's local tool exists as a confirmed local-tool row (plan 087).",
+          "cmd": [
+            "python",
+            "evals/pkg_check.py",
+            "count",
+            "{case_dir}/package",
+            "feedback",
+            "--col",
+            "kind=local-tool",
+            "--min",
+            "1"
+          ],
+          "expect_exit": 0
+        },
+        {
+          "check": "The operator's confirmation of feedback is an engine-witnessed journal row (plan 087).",
+          "cmd": [
+            "python",
+            "evals/pkg_check.py",
+            "count",
+            "{case_dir}/package",
+            "progress-entry",
+            "--col",
+            "actor=system:feedback-guard",
+            "--min",
+            "2"
+          ],
+          "expect_exit": 0
+        },
+        {
+          "check": "An unattended confirmation was refused, and the note quotes it (plan 087).",
+          "cmd": [
+            "python",
+            "evals/pkg_check.py",
+            "grep-present",
+            "{case_dir}/package",
+            "leaves the package only on the OPERATOR's word",
+            "--tables",
+            "progress_entries"
+          ],
+          "expect_exit": 0
+        },
+        {
+          "check": "A confirmed row could not be rewritten under the operator's name (plan 087).",
+          "cmd": [
+            "python",
+            "evals/pkg_check.py",
+            "grep-present",
+            "{case_dir}/package",
+            "content drifted on ['detail']",
+            "--tables",
+            "progress_entries"
+          ],
+          "expect_exit": 0
+        },
+        {
+          "check": "The by-hand lesson retirement was journaled by the engine (plan 086).",
+          "cmd": [
+            "python",
+            "evals/pkg_check.py",
+            "grep-present",
+            "{case_dir}/package",
+            "on the operator's word, by hand",
+            "--tables",
+            "progress_entries"
+          ],
+          "expect_exit": 0
+        },
+        {
+          "check": "A forged engine row was refused, and the note quotes the refusal (plan 086).",
+          "cmd": [
+            "python",
+            "evals/pkg_check.py",
+            "grep-present",
+            "{case_dir}/package",
+            "engine's own namespace",
+            "--tables",
+            "progress_entries"
+          ],
+          "expect_exit": 0
+        },
+        {
+          "check": "A formula's variable names live in the defect's prose and trip no list (plan 085).",
+          "cmd": [
+            "python",
+            "evals/pkg_check.py",
+            "grep-present",
+            "{case_dir}/package",
+            "KPI-17_score",
+            "--tables",
+            "defects"
+          ],
+          "expect_exit": 0
+        },
+        {
+          "check": "The fixture's prompt guide carries the 4.11.0 stock body (plan 087).",
+          "cmd": [
+            "python",
+            "evals/pkg_check.py",
+            "grep-file",
+            "{case_dir}/package/prompts/README.md",
+            "local-tool"
+          ],
+          "expect_exit": 0
         }
       ],
       "rubric": [
