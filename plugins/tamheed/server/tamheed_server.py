@@ -2930,7 +2930,8 @@ def handoff_emit(target_dir: str, subdir: str = "handoff", force: bool = False,
         warnings.append(
             f"{len(unexported)} confirmed feedback row(s) not yet reported upstream"
             f" ({', '.join(unexported)}) — entity_export(\"feedback.json\","
-            " args={\"type\": \"feedback\"}) and put the file in your findings; set"
+            " args={\"type\": \"feedback\"}) and QUOTE its envelope and rows in your"
+            " findings (exports are point-in-time and may be untracked in your git); set"
             " each row Reported once it has left")
     # v3.0.0: nothing is emitted into handoff/ anymore — leftover v2 copies actively
     # mislead. Plan 028 (C34 §2): the verdict is PER FILE, by content compare — a
@@ -3029,11 +3030,12 @@ def handoff_emit(target_dir: str, subdir: str = "handoff", force: bool = False,
         " worth repeating) | `entity_upsert` a `lesson` row (`LL-`, born Proposed;"
         " kind improve\\|sustain, statement + impacts) + a `learned_from` edge to"
         " the source — the OPERATOR confirms later; only Approved lessons bind |\n"
-        "| you need a function tamheed lacks, meet a defect or a wrong doc in it, or would"
-        " build a script over the package | a `feedback` row (`FB-`, born Proposed) FIRST"
-        " — never a side tool: a local tool exists only as a `local-tool` row the"
-        " OPERATOR confirmed, reads `exports/` only and writes nowhere tool-owned;"
-        " `handoff_emit` names every row until it has left the package |\n"
+        "| you need a function tamheed lacks, meet a defect or a doc error in it, have a question"
+        " for its maintainer, or would build a script over the package | a `feedback` row (`FB-`;"
+        " kind missing-capability\\|defect\\|doc-error\\|question, born Proposed) FIRST — never a"
+        " side tool: a script is a `local-tool` row that CANNOT be a draft (the OPERATOR's word is"
+        " a precondition of its insert); it writes nothing tool-owned and, if it reads the STORE,"
+        " reads `exports/` only; `handoff_emit` names every row until it has left the package |\n"
         "| you finish a unit of work | `progress_update(...)` — event_type `work-done`,"
         " `subject_id`, your `actor` string, phase/slice ids |\n"
         "| you believe a slice/wbs-item is complete | set its `lifecycle_status` to"

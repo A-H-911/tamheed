@@ -64,8 +64,8 @@ report a problem.
   only sanctioned channel from a project to the plugin's maintainer; it leaves as an
   `entity_export` file inside the project's own findings, only once `Confirmed`
   (`operator_confirm` + `confirmed_by`), and its content cannot be rewritten underneath that
-  confirmation. A local tool over the package exists only as a confirmed `local-tool` row,
-  reads `exports/` only and writes nowhere tool-owned; `handoff_emit` names unconfirmed rows
+  confirmation. A local tool over the package exists only as a confirmed `local-tool` row (no
+  draft stage), writes nothing tool-owned; if it reads the STORE, it reads `exports/` only; `handoff_emit` names unconfirmed rows
   every emission, ids only. Two reviewers bypassed the first guard four ways before commit
   (a tool kind by update; born Reported; content under an old confirmation; an unjournaled
   withdrawal); all closed (plan 087).

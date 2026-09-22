@@ -104,7 +104,7 @@ flowchart LR
     C -->|entity_export feedback.json| E[exports/feedback.json]
     E -->|inside findings_N.md| M[maintainer]
     M -->|a plan, a release| R[FB- Resolved\nresolved_in]
-    O -.->|a local tool: confirmed before it exists,\nreads exports/ only| T[scripts/gen-*.mjs]
+    O -.->|a local tool: confirmed before it exists,\nwrites nothing tool-owned; reads the store via exports/ only| T[scripts/gen-*.mjs]
 ```
 On the write side, `expect_unchanged` lets a full-row status flip name the columns it did not
 mean to change, and the store refuses transport drift (the field's LL-063: a paragraph lost

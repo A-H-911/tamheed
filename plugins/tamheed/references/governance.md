@@ -158,14 +158,19 @@ not *evidenced* — gate_run counts the split.
 
 ## Feedback and local tools — on the operator's word (v4.11)
 
-A function tamheed lacks, a defect in it, a wrong doc, a question — or a script the project keeps
-over the package — is a `feedback` row (`FB-`), never a side utility. The agent drafts it
+A function tamheed lacks, a defect in it, a doc error, a question (`kind`: `missing-capability` | `defect` | `doc-error` | `question` | `local-tool`) — or a
+script the project keeps over the package — is a `feedback` row (`FB-`), never a side utility.
+The agent drafts the first four (`local-tool` cannot be drafted; see below). It drafts it
 (`Proposed`: binds nothing, leaves the package nowhere). The OPERATOR confirms it
 (`operator_confirm` + `confirmed_by`; the engine journals `system:feedback-guard`), and only a
-confirmed row leaves — `entity_export("feedback.json", args={"type": "feedback"})` into the
-project's findings, then `Reported`, then `Resolved` with `resolved_in`. A `local-tool` row names
-its `tool_path`, needs the word to exist at all (insert or a later `kind` change) and is born
-`Confirmed`; the tool reads `exports/` only and writes nowhere tool-owned. While a row is
+confirmed row leaves — `entity_export("feedback.json", args={"type": "feedback"})`, its
+envelope and rows quoted in the project's findings (exports are point-in-time and may be
+untracked), then `Reported`, then `Resolved` with `resolved_in` (`resolved_in` and
+`upstream_ref` are bookkeeping: no word needed). A `local-tool` row names its `tool_path`,
+needs the word to exist at all — it has NO draft stage; the word is a precondition of the insert
+or of a later `kind` change — and is born `Confirmed`. Its rule has two clauses, and the second
+applies only to store readers: it writes nothing tool-owned; if it reads the STORE, it reads `exports/` only (a generator of
+project-owned files inside the package directory satisfies both). While a row is
 Confirmed/Reported/Resolved its content changes only with the word, and leaving that set is
 journaled — what the operator vetted is never rewritten underneath their name. `handoff_emit`
 names every row that still awaits the operator or the export.

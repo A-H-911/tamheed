@@ -10,6 +10,17 @@ All notable changes to Tamheed are documented here. The format is based on
 
 ## [Unreleased]
 
+### Fixed
+
+- **The feedback teaching says what the code does (findings_28 §3a–§3c, `FB-013`; plan 091).** A
+  `local-tool` row has no draft stage — the operator's word is a precondition of its insert (the
+  `005_feedback.sql` header, frozen as shipped, overstates a Proposed stage). The four draftable
+  kinds are named (`missing-capability`, `defect`, `doc-error`, `question`). The local-tool rule has
+  two clauses — *writes nothing tool-owned; if it reads the STORE, it reads `exports/` only* — so a
+  generator of project-owned files inside the package directory satisfies it. Feedback leaves a
+  repo as the export's envelope and rows QUOTED in the findings (`exports/` may be untracked);
+  `handoff_emit`'s warning says so. `work_bind`'s doc: bind a sha that is on origin.
+
 ## [4.11.0] - 2026-09-22
 
 **MINOR — the findings_27 batch: the feedback channel on the operator's word, the journal that

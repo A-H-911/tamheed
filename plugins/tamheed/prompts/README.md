@@ -138,11 +138,14 @@ sessions, never hand-paste rows into a script's input (the hand is the untrusted
 transport). A full-row update that only flips a status names the columns it did not
 mean to change (`expect_unchanged`) so the store refuses transport drift. **A function
 the tools lack is a `feedback` row (`FB-`) first, never a script** (v4.11): what you
-needed, what you did instead, born Proposed — the operator confirms it, then
+needed, what you did instead, born Proposed (`kind`: `missing-capability`, `defect`,
+`doc-error` or `question`) — the operator confirms it, then
 `entity_export("feedback.json", args={"type": "feedback"})` carries it into the
-project's findings. A script the project keeps over the package is a `local-tool` row
-the operator confirmed BEFORE it existed (it reads `exports/` only, writes nowhere
-tool-owned); `handoff_emit` names every row still awaiting the operator or the export.
+project's findings: QUOTE the file's envelope and rows there (exports are point-in-time
+and may be untracked in your git). A script the project keeps over the package is a
+`local-tool` row that cannot be a draft — interview the operator BEFORE the insert; the
+word is its precondition. The rule has two clauses: it writes nothing tool-owned; if it reads the STORE, it reads `exports/` only.
+`handoff_emit` names every row still awaiting the operator or the export.
 Apply `expect_unchanged` to
 every long row regardless of size — transcription fidelity does not degrade with
 length. Before recording a premise as untestable, list the instruments: the SOURCE that

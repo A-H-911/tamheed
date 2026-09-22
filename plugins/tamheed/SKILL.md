@@ -135,10 +135,12 @@ never `data/*.jsonl`, never a pasted display (v4.7). A full-row update that only
 flip a status names the columns it did not mean to change (`expect_unchanged`) and the
 store refuses transport drift. **A function the tools lack is a `feedback` row (`FB-`)
 first, never a side utility** (v4.11): record what you needed and what you did instead,
-born Proposed; the OPERATOR confirms it, and only then does it leave the package
-(`entity_export("feedback")` into the project's findings). A script the project keeps over
-the package is itself a `local-tool` feedback row, confirmed by the operator before it
-exists, reading `exports/` only and writing nowhere tool-owned; `handoff_emit` names
+born Proposed (`kind`: `missing-capability` | `defect` | `doc-error` | `question`); the OPERATOR
+confirms it, and only then does it leave the package — `entity_export("feedback")`, its
+envelope and rows QUOTED in the project's findings (exports are point-in-time and may be
+untracked). A script the project keeps over the package is a `local-tool` feedback row that
+cannot be a draft: the operator's word is a precondition of its insert. Its rule has two
+clauses — it writes nothing tool-owned; if it reads the STORE, it reads `exports/` only; `handoff_emit` names
 every row that still awaits the operator or the export.
 
 **Intake & normalization (stages 1–4).** `package_create(name, title, profile, mode)` opens the store.
