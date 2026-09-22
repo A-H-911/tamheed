@@ -191,6 +191,102 @@ class McpContractTest(unittest.TestCase):
         (prompts_dir / "kickoff.md").write_text(
             "# Kickoff\n\nStart with SL-001.\n", encoding="utf-8")
 
+    def test_feedback_and_local_tools_exist_on_the_operators_word(self):
+        """Plan 087 (maintainer rulings 2026-09-22). The field built utilities around the
+        package because four functions were missing and nothing told upstream. A missing
+        function, a defect, a doc error, a question - or a LOCAL TOOL the project keeps -
+        is now an FB- row: born Proposed by the agent, Confirmed only with the operator's
+        word; a local-tool row is refused at INSERT without it. handoff_emit names what
+        awaits the operator and what is confirmed but not yet exported; the export file
+        is the seam the maintainer collects from. FB rows quote broken ids by nature,
+        so the prose-id rule does not scan them."""
+        self._emit_ready()
+        draft = {"type": "feedback", "id": "FB-001", "kind": "missing-capability",
+                 "title": "no patch mode: a long field must be re-sent whole",
+                 "detail": "the phantom DEC-208 could not be fixed by substitution",
+                 "workaround": "a scratch script built the payload from exports/"}
+        out = srv.entity_upsert([draft])
+        self.assertTrue(out["ok"], out)                                  # a draft is free
+        row = srv.entity_query("feedback", id="FB-001")["rows"][0]
+        self.assertEqual(row["lifecycle_status"], "Proposed")
+        rule = {r["rule"]: r for r in srv.readiness_check("package")["rules"]}["prose-ids-resolve"]
+        self.assertNotIn("FB-001.detail -> DEC-208", rule["entities"])   # exempt, like the journal
+        sneaky = srv.entity_upsert([dict(draft, lifecycle_status="Confirmed")])
+        self.assertFalse(sneaky["ok"], sneaky)
+        self.assertIn("operator_confirm", sneaky["items"][0]["error"])
+        tool = {"type": "feedback", "id": "FB-002", "kind": "local-tool",
+                "title": "record slate generator", "tool_path": "scripts/gen-record-slate.mjs",
+                "detail": "renders N ids with full text for an interview (LL-011); reads exports/ only"}
+        unattended = srv.entity_upsert([tool])
+        self.assertFalse(unattended["ok"], unattended)                   # a tool needs the word to EXIST
+        self.assertIn("operator_confirm", unattended["items"][0]["error"])
+        self.assertEqual(srv.entity_query("feedback", limit=5)["total"], 1)
+        with tempfile.TemporaryDirectory() as target:
+            w = next(w for w in srv.handoff_emit(target)["warnings"] if "feedback" in w)
+        self.assertIn("FB-001", w)                                        # named while it waits
+        self.assertIn("await", w)
+        ok = srv.entity_upsert([dict(draft, lifecycle_status="Confirmed", operator_confirm=True,
+                                     confirmed_by="anas"),
+                                dict(tool, operator_confirm=True, confirmed_by="anas")])
+        self.assertTrue(ok["ok"], ok)
+        self.assertTrue(ok["items"][0]["feedback_audit"].startswith("PE-"))
+        rows = {r["id"]: r for r in srv.entity_query("feedback", limit=5)["rows"]}
+        self.assertEqual(rows["FB-001"]["lifecycle_status"], "Confirmed")
+        self.assertEqual(rows["FB-002"]["lifecycle_status"], "Confirmed")  # a tool is born Confirmed
+        self.assertTrue(rows["FB-002"]["confirmed_at"])
+        with tempfile.TemporaryDirectory() as target:
+            w = next(w for w in srv.handoff_emit(target)["warnings"] if "feedback" in w)
+        self.assertIn("entity_export", w)                                 # confirmed, not yet exported
+        self.assertNotIn("await", w)
+        exp = srv.entity_export("feedback.json", args={"type": "feedback"})
+        self.assertTrue(exp["ok"], exp)
+        self.assertEqual(json.loads(Path(exp["path"]).read_text(encoding="utf-8"))
+                         ["tamheed_export"]["total"], 2)
+        # retiring a Confirmed row is the operator's word too; a draft may be dropped freely
+        self.assertFalse(srv.entity_upsert([dict(draft, lifecycle_status="Rejected")])["ok"])
+        self.assertTrue(srv.entity_upsert([dict(draft, id="FB-003", kind="question")])["ok"])
+        self.assertTrue(srv.entity_upsert([dict(draft, id="FB-003", kind="question",
+                                                lifecycle_status="Rejected")])["ok"])
+        self.assertEqual(srv.server_info()["package"] is not None, True)
+        self.assertIn("feedback", [t["type"] for t in srv.server_info(detail=True)["entity_types"]])
+        # security review of the first draft - three bypasses, each closed:
+        # (1) a tool kind ARRIVING by update, not insert
+        q = dict(draft, id="FB-010", kind="question")
+        self.assertTrue(srv.entity_upsert([q])["ok"])
+        out = srv.entity_upsert([dict(q, kind="local-tool", tool_path="scripts/evil.mjs")])
+        self.assertFalse(out["ok"], out)
+        self.assertIn("local tool", out["items"][0]["error"])
+        # (2) born Reported / Resolved, skipping the word
+        for status in ("Reported", "Resolved"):
+            out = srv.entity_upsert([dict(draft, id="FB-011", kind="defect", lifecycle_status=status)])
+            self.assertFalse(out["ok"], (status, out))
+            self.assertIn("only after it was Confirmed", out["items"][0]["error"])
+        # (3) a Confirmed row rewritten underneath its own confirmation
+        out = srv.entity_upsert([dict(draft, lifecycle_status="Confirmed",
+                                      detail="something the operator never saw")])
+        self.assertFalse(out["ok"], out)
+        self.assertIn("content drifted on ['detail']", out["items"][0]["error"])
+        out = srv.entity_upsert([dict(draft, lifecycle_status="Confirmed", kind="local-tool",
+                                      tool_path="scripts/evil2.mjs")])
+        self.assertFalse(out["ok"], out)                       # a tool arriving on a bound row
+        still = srv.entity_query("feedback", id="FB-001")["rows"][0]
+        self.assertEqual((still["kind"], still["detail"][:11]), ("missing-capability", "the phantom"))
+        # bookkeeping stays free: Confirmed -> Reported (it left), Reported -> Resolved
+        self.assertTrue(srv.entity_upsert([dict(draft, lifecycle_status="Reported")])["ok"])
+        self.assertTrue(srv.entity_upsert([dict(draft, lifecycle_status="Resolved",
+                                                resolved_in="4.12.0")])["ok"])
+        # and a re-confirmed change is allowed, on the word
+        self.assertTrue(srv.entity_upsert([dict(draft, lifecycle_status="Resolved", resolved_in="4.12.0",
+                                                detail="revised", operator_confirm=True)])["ok"])
+        # the way OUT is journaled too (the plan-086 lesson, applied here on review)
+        n = srv.entity_query("progress-entry", limit=1)["total"]
+        out = srv.entity_upsert([dict(draft, lifecycle_status="Rejected", operator_confirm=True)])
+        self.assertTrue(out["ok"], out)
+        self.assertTrue(out["items"][0]["feedback_audit"].startswith("PE-"))
+        self.assertEqual(srv.entity_query("progress-entry", limit=1)["total"], n + 1)
+        row = srv.entity_query("progress-entry", search="FB-001 -> Rejected")["rows"][0]
+        self.assertEqual(row["actor"], "system:feedback-guard")
+
     def test_managed_emission_lifecycle(self):
         """C20: emitted -> unchanged -> diverged -> force. Never a silent clobber.
         v3: the managed surface is the stock library in <package>/prompts/."""

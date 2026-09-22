@@ -191,6 +191,7 @@ Three families reuse the `lifecycle_status` column name with domain vocabularies
 | scope-change | `Proposed`, `Approved`, `Merged` | `Merged` = deltas applied to the plan rows; Approved-never-Merged trips the `scope-changes-merged` advisory |
 | lesson | `Proposed`, `Approved`, `Promoted`, `Rejected`, `Superseded`, `Obsolete` | No Draft (born Proposed, the decisions pattern) and no Deferred — an undecided lesson keeps nagging via the `lessons-confirmed` advisory; entering `Approved` or `Promoted` is confirm-guarded (`operator_confirm`), and `Promoted` is reachable from stored-`Approved` only |
 | skill | `Approved`, `Superseded`, `Obsolete` | Born `Approved` — the promotion interview IS the approval; a re-distillation is a new `SKL-` row with `superseded_by`, never an edit |
+| feedback | `Proposed`, `Confirmed`, `Reported`, `Resolved`, `Rejected` | Born `Proposed` by the agent (binds nothing, leaves the package nowhere); `Confirmed` only on `operator_confirm` + `confirmed_by`, journaled by the engine; a `local-tool` row is refused at INSERT without the word and is born `Confirmed`; `Reported` once exported into the project's findings; `Resolved` names `resolved_in`; withdrawing a Confirmed row needs the word too (v4.11, plan 087) |
 
 Risks add a fourth axis of their own: `risk_state` ∈ {open, mitigated, materialized,
 retired, accepted}, independent of `lifecycle_status`.
@@ -1008,6 +1009,23 @@ no path — who forced what, when escalations happened, which agent session did 
 recording-obligations table in the emitted CLAUDE.md note; `forced-override` audit rows
 written server-side; `package_verify` and its `integrity-verified` row; migration
 `004_amends_verify.sql` (the event kind's CHECK entry).
+
+#### feedback (`FB-`) — Continuous
+
+What the project tells upstream, and the tools it keeps over the package, exist on the
+OPERATOR's word (v4.11): an agent drafts, the operator confirms, the export carries it out.
+
+```mermaid
+stateDiagram-v2
+    [*] --> Proposed : the agent records a missing function, a defect, a doc error, a question
+    [*] --> Confirmed : a local-tool row - refused without operator_confirm, born Confirmed
+    Proposed --> Confirmed : operator_confirm + confirmed_by - the engine journals it
+    Proposed --> Rejected : free - it was only a draft
+    Confirmed --> Reported : entity_export("feedback") carried it into the findings
+    Confirmed --> Rejected : operator_confirm - withdrawing what the operator confirmed
+    Reported --> Resolved : resolved_in names the release that answered it
+    Reported --> Rejected : upstream declined - upstream_ref names why
+```
 
 #### lesson (`LL-`) — Continuous
 

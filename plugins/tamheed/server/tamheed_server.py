@@ -102,6 +102,7 @@ ENTITY_TABLES = {
     "glossary-term": "glossary_terms",  # community-extension worked example
     "lesson": "lessons",           # migration 002 (plan 035): execution-taught, operator-confirmed
     "skill": "skills",             # migration 003 (plan 036): procedural memory distilled from lessons
+    "feedback": "feedback",        # migration 005 (plan 087): upstream feedback + local tools, on the operator's word
     "trace-edge": "trace_edges",   # composite PK; write surface for relations
     "omission": "omissions",       # G-SET recorded-omitted rows (entity_type + reason)
 }
@@ -263,6 +264,7 @@ BASELINE_ENTITY_TYPES = [
     ("glossary-term", "Glossary term (extension example)", "GT-", "On-request"),
     ("lesson", "Lesson learned (LL-)", "LL-", "Continuous"),
     ("skill", "Skill (SKL-, distilled from lessons)", "SKL-", "On-request"),
+    ("feedback", "Upstream feedback / local tool (FB-)", "FB-", "Continuous"),
 ]
 
 # Taught-vocabulary rosters (plan 032): the single source the check.py teaching lint
@@ -311,6 +313,12 @@ def _caller_journal_error(row: dict) -> str | None:
 
 # Plan 036: the columns frozen by trg_lessons_immutable and byte-checked by the
 # confirm guard on Approved/Promoted transitions (approval is not an edit).
+# Plan 087: what the operator confirmed on a feedback row - changing any of it on a bound
+# row needs the word again. Status, resolved_in and upstream_ref stay the agent's bookkeeping.
+_FEEDBACK_CONTENT_COLS = ("kind", "title", "detail", "workaround", "tool_path",
+                          "tool_or_rule", "confirmed_by")
+_FEEDBACK_BOUND = frozenset({"Confirmed", "Reported", "Resolved"})
+
 _LESSON_CONTENT_COLS = ("title", "statement", "context", "recommendation",
                         "rationale", "kind", "category", "impact_if_followed",
                         "impact_if_ignored", "recorded_at")
@@ -330,7 +338,9 @@ _MARKER_RE = re.compile(r"\[NEEDS-CLARIFICATION(?::\s*([A-Za-z]+-\d+))?[^\]]*\]"
 # nothing read a sentence that cites `DEF-082` when no such row exists (the field's phantom,
 # cited by three rows for weeks). Tables whose rows are append-only are exempt: a reference
 # nobody can repair must never hold a rule amber forever (the findings_21 trap).
-_PROSE_ID_EXEMPT_TABLES = frozenset({"progress_entries", "audit_verdicts"})
+# Plan 087: feedback rows QUOTE broken ids by nature (`SEC-8`, `DEC-208`) - exempt like the
+# journal, though for a different reason: not append-only, but a register of what is broken.
+_PROSE_ID_EXEMPT_TABLES = frozenset({"progress_entries", "audit_verdicts", "feedback"})
 _PROSE_ID_CAP = 50
 
 
@@ -1286,6 +1296,69 @@ def entity_upsert(entities: list[dict]) -> dict:
                     continue
                 lesson_pe = ("lesson-confirmed" if incoming == "Approved"
                              else "lesson-promoted")
+        # Plan 087 (maintainer rulings 2026-09-22): what the project tells upstream, and
+        # what it keeps as a local tool over the package, exists on the OPERATOR's word.
+        # A draft (Proposed) is the agent's and free. The BOUND states - Confirmed,
+        # Reported, Resolved - are entered from outside only as Confirmed, with the word
+        # and an attribution; left only with the word; and while a row is bound its
+        # CONTENT (what the operator confirmed) changes only with the word - the lesson
+        # block's drift rule, because a Confirmed row rewritten underneath its own
+        # confirmed_by would misrepresent what the operator vetted (security review: three
+        # bypasses of the first draft, all closed here). A `local-tool` kind ARRIVING on a
+        # row - at insert or by update - needs the word and lands the row Confirmed.
+        feedback_pe = None
+        if etype == "feedback" and cols.get("id"):
+            fb_stored = conn.execute(
+                "SELECT lifecycle_status, " + ", ".join(_FEEDBACK_CONTENT_COLS)
+                + " FROM feedback WHERE id = ?", (cols["id"],)).fetchone()
+            fb_was = fb_stored[0] if fb_stored else None
+            fb_kind_was = fb_stored[1] if fb_stored else None
+            fb_now = cols.get("lifecycle_status", fb_was or "Proposed")
+            err = None
+            tool_arrives = (cols.get("kind") == "local-tool" and fb_kind_was != "local-tool")
+            if tool_arrives:
+                if not operator_confirm:
+                    err = (f"{cols['id']}: a local tool over the package exists only on"
+                           " the OPERATOR's word — interview them with what it reads"
+                           " (exports/ only) and writes (nowhere tool-owned), then re-run"
+                           " this item with \"operator_confirm\": true; never in"
+                           " unattended mode")
+                elif fb_now not in _FEEDBACK_BOUND:
+                    fb_now = cols["lifecycle_status"] = "Confirmed"
+            if err is None and fb_now in _FEEDBACK_BOUND and fb_was not in _FEEDBACK_BOUND:
+                # entering the bound set: only as Confirmed, on the word, attributed
+                if fb_now != "Confirmed":
+                    err = (f"{cols['id']}: feedback is {fb_now} only after it was Confirmed"
+                           " on the OPERATOR's word — confirm it first")
+                elif not operator_confirm:
+                    err = (f"{cols['id']}: feedback leaves the package only on the"
+                           " OPERATOR's word — re-run this item with"
+                           " \"operator_confirm\": true after their explicit confirmation;"
+                           " never in unattended mode")
+                elif not str(cols.get("confirmed_by") or "").strip():
+                    err = (f"{cols['id']}: attribution lands WITH confirmation —"
+                           " set confirmed_by on this write")
+                else:
+                    cols.setdefault("confirmed_at", _now()[:10])
+                    feedback_pe = (fb_was, fb_now)
+            if err is None and fb_was in _FEEDBACK_BOUND and fb_now not in _FEEDBACK_BOUND:
+                if not operator_confirm:
+                    err = (f"{cols['id']}: withdrawing feedback the operator confirmed is the"
+                           " OPERATOR's word too — re-run this item with"
+                           " \"operator_confirm\": true after their explicit confirmation")
+                else:
+                    feedback_pe = (fb_was, fb_now)    # the way OUT is journaled too (plan 086)
+            if err is None and fb_was in _FEEDBACK_BOUND and not operator_confirm:
+                drift = [c for j, c in enumerate(_FEEDBACK_CONTENT_COLS, 1)
+                         if c in cols and cols.get(c) != fb_stored[j]]
+                if drift:
+                    err = (f"{cols['id']}: the operator confirmed this row as it stood —"
+                           f" content drifted on {sorted(drift)}; re-confirm the change with"
+                           " \"operator_confirm\": true, or record a new FB- row")
+            if err:
+                results.append({"index": i, "ok": False, "id": cols["id"], "error": err})
+                failed = True
+                continue
         names = list(cols)
         if etype == "trace-edge":
             # Plan 027: endpoint-type rules, HARD on new writes. Same-batch endpoints
@@ -1447,6 +1520,21 @@ def entity_upsert(entities: list[dict]) -> dict:
                             if cols.get("superseded_by") else ""),
                          cols.get("id"), "system:lesson-guard", _now()))
                     res["lesson_audit"] = pe_id
+                if feedback_pe:
+                    # Plan 087: the operator's confirmation of a feedback row is an
+                    # engine-witnessed fact, like a lesson's (system: is reserved, plan 086).
+                    pe_id = _next_id("PE-", "progress_entries")
+                    conn.execute(
+                        "INSERT INTO progress_entries (id, event_type, entry,"
+                        " subject_id, actor, occurred_at) VALUES (?, ?, ?, ?, ?, ?)",
+                        (pe_id, "transition",
+                         f"FEEDBACK {cols['id']} -> {feedback_pe[1]} (was"
+                         f" {feedback_pe[0] or 'new'}; kind {cols.get('kind')}) on the"
+                         " operator's word — operator_confirm attested"
+                         + (f"; confirmed_by {cols.get('confirmed_by')}"
+                            if cols.get("confirmed_by") else ""),
+                         cols.get("id"), "system:feedback-guard", _now()))
+                    res["feedback_audit"] = pe_id
                 results.append(res)
         except Exception as exc:  # IntegrityError carries the constraint name
             conn.execute(f"ROLLBACK TO item{i}")
@@ -2823,6 +2911,26 @@ def handoff_emit(target_dir: str, subdir: str = "handoff", force: bool = False,
         warnings.append(
             f"{len(library['refreshed'])} stale-stock prompt(s) refreshed to the"
             " current template (refresh_stock)")
+    # Plan 087: feedback is named every emission until it has left the package - ids
+    # only, never row text. INVARIANT this relies on (security review): `warnings` is
+    # returned in the tool result and never written to disk - if a future change surfaces
+    # feedback ids or text into CLAUDE.md or any always-loaded file, screen them first
+    # (the id GLOB admits free text after its first digit, like the lesson id).
+    conn = _CURRENT.conn
+    awaiting = [r[0] for r in conn.execute(
+        "SELECT id FROM feedback WHERE lifecycle_status = 'Proposed' ORDER BY id")]
+    if awaiting:
+        warnings.append(
+            f"{len(awaiting)} feedback row(s) await the operator's word ({', '.join(awaiting)})"
+            " — interview them: Confirmed with operator_confirm, or Rejected")
+    unexported = [r[0] for r in conn.execute(
+        "SELECT id FROM feedback WHERE lifecycle_status = 'Confirmed' ORDER BY id")]
+    if unexported:
+        warnings.append(
+            f"{len(unexported)} confirmed feedback row(s) not yet reported upstream"
+            f" ({', '.join(unexported)}) — entity_export(\"feedback.json\","
+            " args={\"type\": \"feedback\"}) and put the file in your findings; set"
+            " each row Reported once it has left")
     # v3.0.0: nothing is emitted into handoff/ anymore — leftover v2 copies actively
     # mislead. Plan 028 (C34 §2): the verdict is PER FILE, by content compare — a
     # blanket "delete" would have destroyed a live project prompt that existed nowhere
@@ -2920,6 +3028,11 @@ def handoff_emit(target_dir: str, subdir: str = "handoff", force: bool = False,
         " worth repeating) | `entity_upsert` a `lesson` row (`LL-`, born Proposed;"
         " kind improve\\|sustain, statement + impacts) + a `learned_from` edge to"
         " the source — the OPERATOR confirms later; only Approved lessons bind |\n"
+        "| you need a function tamheed lacks, meet a defect or a wrong doc in it, or would"
+        " build a script over the package | a `feedback` row (`FB-`, born Proposed) FIRST"
+        " — never a side tool: a local tool exists only as a `local-tool` row the"
+        " OPERATOR confirmed, reads `exports/` only and writes nowhere tool-owned;"
+        " `handoff_emit` names every row until it has left the package |\n"
         "| you finish a unit of work | `progress_update(...)` — event_type `work-done`,"
         " `subject_id`, your `actor` string, phase/slice ids |\n"
         "| you believe a slice/wbs-item is complete | set its `lifecycle_status` to"

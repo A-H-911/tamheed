@@ -46,6 +46,7 @@ reused (retire, don't recycle). Every entity lives in its `data/<table>.jsonl` f
 | Glossary term | `GT-NNN` | glossary_terms |
 | Lesson | `LL-NNN` | lessons |
 | Skill | `SKL-NNN` | skills |
+| Feedback (upstream feedback / local tool) | `FB-NNN` | feedback |
 
 Retired prefixes: `PRM-` (v3 — prompts became files under `<package>/prompts/`; ids of that
 shape in a converted package are conversion-audit provenance, not entities).

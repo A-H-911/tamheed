@@ -111,7 +111,7 @@ class StoreMigrationTest(unittest.TestCase):
         accepts `amends` (and still rejects an unknown relation); the recreated
         journal CHECK accepts `integrity-verified`; both indexes/triggers survive."""
         conn = store.connect()
-        self.assertEqual(conn.execute("PRAGMA user_version").fetchone()[0], 4)
+        self.assertGreaterEqual(conn.execute("PRAGMA user_version").fetchone()[0], 4)
         conn.executemany(
             "INSERT INTO entity_types (type_id, label, id_prefix, generation_class)"
             " VALUES (?, ?, ?, ?)",
@@ -137,6 +137,27 @@ class StoreMigrationTest(unittest.TestCase):
         self.assertEqual(conn.execute(
             "SELECT entity_type FROM entity_index WHERE id='PE-1'").fetchone()[0],
             "progress-entry")  # the trigger pair was recreated
+        conn.close()
+
+    def test_migration_005_feedback_lands(self):
+        """Plan 087: head is 5; feedback exists with its kind and status vocabularies;
+        a local-tool row must name its file; the index trigger fires."""
+        conn = store.connect()
+        self.assertGreaterEqual(conn.execute("PRAGMA user_version").fetchone()[0], 5)
+        conn.execute("INSERT INTO entity_types (type_id, label, id_prefix, generation_class)"
+                     " VALUES ('feedback', 'Upstream feedback (FB-)', 'FB-', 'Continuous')")
+        conn.execute("INSERT INTO feedback (id, kind, title, workaround) VALUES"
+                     " ('FB-1', 'missing-capability', 'no patch mode', 'a scratch script')")
+        self.assertEqual(conn.execute("SELECT entity_type FROM entity_index WHERE id = 'FB-1'")
+                         .fetchone()[0], "feedback")
+        self.assertEqual(conn.execute("SELECT lifecycle_status FROM feedback").fetchone()[0],
+                         "Proposed")
+        with self.assertRaises(Exception):   # a tool row names its file
+            conn.execute("INSERT INTO feedback (id, kind, title) VALUES ('FB-2', 'local-tool', 't')")
+        with self.assertRaises(Exception):   # closed vocabulary
+            conn.execute("INSERT INTO feedback (id, kind, title) VALUES ('FB-3', 'praise', 't')")
+        conn.execute("INSERT INTO feedback (id, kind, title, tool_path) VALUES"
+                     " ('FB-2', 'local-tool', 't', 'scripts/gen-record-slate.mjs')")
         conn.close()
 
     def test_load_ignores_orphan_jsonl_of_dropped_table(self):

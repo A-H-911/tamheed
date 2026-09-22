@@ -133,7 +133,13 @@ go through the tools too; a committed script that must QUOTE the store byte-exac
 slate, a docket) reads an `entity_export` file the tool wrote under `<package>/exports/` —
 never `data/*.jsonl`, never a pasted display (v4.7). A full-row update that only means to
 flip a status names the columns it did not mean to change (`expect_unchanged`) and the
-store refuses transport drift.
+store refuses transport drift. **A function the tools lack is a `feedback` row (`FB-`)
+first, never a side utility** (v4.11): record what you needed and what you did instead,
+born Proposed; the OPERATOR confirms it, and only then does it leave the package
+(`entity_export("feedback")` into the project's findings). A script the project keeps over
+the package is itself a `local-tool` feedback row, confirmed by the operator before it
+exists, reading `exports/` only and writing nowhere tool-owned; `handoff_emit` names
+every row that still awaits the operator or the export.
 
 **Intake & normalization (stages 1–4).** `package_create(name, title, profile, mode)` opens the store.
 Extract requirements **verbatim with source spans**; `entity_upsert` them as `requirement` rows with

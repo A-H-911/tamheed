@@ -18,6 +18,10 @@ Orient yourself on this project's Tamheed package before doing anything else:
    column (the result's `matched` says which), and a `columns` projection hides the
    rest (`omitted_columns`) — project to enumerate, never to answer *what is the state
    of X*.
+   The feedback: `entity_query("feedback")` — rows still Proposed await the operator's
+   word (interview, never decide); Confirmed rows not yet Reported are owed to upstream
+   (`entity_export("feedback.json", args={"type": "feedback"})` into the findings).
+   A function you find missing this session is a new `FB-` row, never a script.
    Recent state: `entity_query("progress-entry", limit=10)` and
    `entity_query("audit-verdict", limit=10)` — what was the last recorded activity?
 5. **Cross-check git against the package** (the package is the state; git is the

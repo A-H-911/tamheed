@@ -171,7 +171,7 @@ devil's-advocate review; execution order is the row order below). Status values:
 |---|---|---|---|
 | 085 | [findings_27 §1-§3: `_` is a word character; the classification order and `scoped` are stated; every list says when it is cut](085-prose-id-underscore-and-honest-lists.md) | findings_27 | DONE — 2026-09-22 |
 | 086 | [findings_27 §4: the by-hand lesson retirement is journaled by the engine (`system:lesson-guard`)](086-by-hand-lesson-retirement-is-journaled.md) | findings_27; operator ruling | DONE — 2026-09-22; security review closed the `system:` actor forgery on the maintainer's ruling |
-| 087 | The `feedback` family (`FB-`, migration 005): upstream feedback and local tools on the operator's word; `handoff_emit` names what awaits | maintainer rulings 2026-09-22 | PLANNED |
+| 087 | [The `feedback` family (`FB-`, migration 005): upstream feedback and local tools on the operator's word; `handoff_emit` names what awaits](087-feedback-family-on-the-operators-word.md) | maintainer rulings 2026-09-22 | DONE — 2026-09-22; two reviewers, one CRITICAL and one MEDIUM-HIGH closed before commit |
 | 088 | Docs + diagrams sweep after code lands | 085-087 | PLANNED |
 | 089 | Lab beat 18 | 085-088 + acceptance | PLANNED |
 | 090 | Release v4.11.0 | 089 | PLANNED |

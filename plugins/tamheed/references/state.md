@@ -23,9 +23,11 @@ ingestion in v4.0.0 — the store IS the state, and nothing reads or writes that
 
 Human edits between sessions are not a reconciliation problem by construction: humans review through
 the rendered surfaces and change things through the tools (a committed script that quotes the
-store reads an `entity_export` file, v4.7). A hand-edit to `data/*.jsonl` at rest is
-legal (text-canonical storage is the point) and is validated on next load — FK/CHECK violations fail
-loud, nothing is silently repaired.
+store reads an `entity_export` file, v4.7). Text-canonical storage means a hand-edit to
+`data/*.jsonl` at rest is *validated* on next load — FK/CHECK violations fail loud, nothing is
+silently repaired — but it is not a sanctioned path: reads and writes go through the tools,
+a script reads `exports/`, and a function the tools lack is a `feedback` row (v4.11), not a
+reason to open the store.
 
 ## Update cycles (Stage 21)
 

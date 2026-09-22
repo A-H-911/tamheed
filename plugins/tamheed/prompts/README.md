@@ -136,7 +136,14 @@ file the tool wrote under `exports/` — whole rows, digest-stamped, determinist
 immediately before generating and cite the digest, never reuse an export across
 sessions, never hand-paste rows into a script's input (the hand is the untrusted
 transport). A full-row update that only flips a status names the columns it did not
-mean to change (`expect_unchanged`) so the store refuses transport drift; apply it to
+mean to change (`expect_unchanged`) so the store refuses transport drift. **A function
+the tools lack is a `feedback` row (`FB-`) first, never a script** (v4.11): what you
+needed, what you did instead, born Proposed — the operator confirms it, then
+`entity_export("feedback.json", args={"type": "feedback"})` carries it into the
+project's findings. A script the project keeps over the package is a `local-tool` row
+the operator confirmed BEFORE it existed (it reads `exports/` only, writes nowhere
+tool-owned); `handoff_emit` names every row still awaiting the operator or the export.
+Apply `expect_unchanged` to
 every long row regardless of size — transcription fidelity does not degrade with
 length. Before recording a premise as untestable, list the instruments: the SOURCE that
 produces an output is one, and an output-versus-output frame hides it. A scope change that touches a

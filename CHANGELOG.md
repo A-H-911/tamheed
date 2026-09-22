@@ -10,6 +10,27 @@ All notable changes to Tamheed are documented here. The format is based on
 
 ## [Unreleased]
 
+### Added
+
+- **The `feedback` family — upstream feedback and local tools on the operator's word (plan 087,
+  migration `005_feedback.sql`; maintainer rulings 2026-09-22).** The field had built four slate
+  generators over `exports/`, a JSONL-reading id resolver and a folder of scratch probes because
+  tamheed lacked four functions and nothing told upstream. A function the tools lack, a defect, a
+  doc error, a question — or a local tool the project keeps over the package — is now an `FB-` row:
+  `kind`, `detail`, `workaround` (what the agent did instead — the column that catches side tools),
+  `tool_path`, `plugin_version`. A row is born `Proposed` (the agent's draft; it binds nothing and
+  leaves the package nowhere) and becomes `Confirmed` only with `operator_confirm` + `confirmed_by`,
+  journaled by the engine (`system:feedback-guard`); a `local-tool` row is refused at INSERT without
+  the word and is born `Confirmed`; withdrawing a Confirmed row needs the word too. `handoff_emit`
+  names the rows still awaiting the operator and the confirmed rows not yet exported —
+  `entity_export("feedback.json", args={"type": "feedback"})` is how feedback reaches the maintainer,
+  inside the project's findings; no row text reaches an emitted file. The family is `Continuous`
+  (never a G-SET failure) and exempt from `prose-ids-resolve` (feedback quotes broken ids by nature).
+  No new tool. A field package opens as is (migrations apply before the load) and gains the registry
+  row through `package_migrate`'s registry-sync, a pure append. Taught by the always-loaded note's
+  obligations table, SKILL.md, `references/state.md` (a hand-edit at rest is validated, not
+  sanctioned), and the `README.md` and `orient-resume.md` stock prompts.
+
 ### Fixed
 
 - **The id pattern treats `_` as a word character (findings_27 §2, plan 085).** `KPI-17_score` inside
