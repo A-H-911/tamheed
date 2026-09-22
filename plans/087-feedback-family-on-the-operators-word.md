@@ -68,6 +68,11 @@ so an operator-confirmed withdrawal now journals its `transition` row too. Both 
 verified `cols` is a local copy (no caller-dict mutation) and `changed_columns` reports the
 confirmation columns.
 
+**Beat 18's F-3 (fixed before release):** `confirmed_at` was stamped with `setdefault`, a no-op when a
+re-sent full row carries the key as null - the ordinary confirmation path. Now stamped whenever empty;
+the test confirms a draft re-sent with `confirmed_at: null`. The fixture's `FB-001` keeps its null (the
+fixture is what the engine produced at the time).
+
 ## Not built (recorded)
 
 Mechanical detection of a tool's USE (tamheed cannot see a `node` process - doctrine and the

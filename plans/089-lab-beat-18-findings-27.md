@@ -207,11 +207,11 @@ the tree while it runs). Then commit.
 
 ## Done criteria
 
-- [ ] `run_evals --case lab-tracker` all pass (56 + the new assertions)
-- [ ] every new assertion exits non-zero against the Step 1 backup
-- [ ] `python check.py` → `ALL CHECKS PASSED`
-- [ ] `git status --short` shows only in-scope paths; no `data/.lock`
-- [ ] the evidence report exists and every mechanism row says `observed` or why not
+- [x] `run_evals --case lab-tracker` all pass (65: 56 + 9)
+- [x] every new assertion exits non-zero against the Step 1 backup (re-run by the reviewer against `git archive f142dc5`)
+- [x] `python check.py` → `ALL CHECKS PASSED`
+- [x] `git status --short` shows only in-scope paths; no `data/.lock`
+- [x] the evidence report exists and every mechanism row says `observed` or why not
 
 ## STOP conditions
 
@@ -221,3 +221,19 @@ the tree while it runs). Then commit.
   confirmation, or a forged `system:` row is ACCEPTED — quote it and stop.
 - Any tool result contradicts this plan in a way the plan records cannot explain — quote and stop.
 - A step would require editing anything under `plugins/` or `tests/`.
+
+## Review (the reviewer, 2026-09-22, after re-running the done criteria)
+
+Merged `762b98b` by fast-forward. Deviations recorded: **D-1** the fixture's `entity_types.jsonl`
+predated migration 005, so the first `FB-` write failed on the index FK until `package_migrate`'s
+registry-sync ran (preview → confirm; a `system:migrate` journal row, as beats 10 and 12 did for
+lessons and skills) - a beat that fires a new family must script that step, and this plan did not;
+**D-2** the `by hand` needle was hollow (beat 16's note contains it) and was narrowed to the
+engine's exact phrasing. The agent declined the `Co-Authored-By` line it was given and attributed
+the commit to its own model; kept as it is - a trailer must be true. Its claim that the feedback
+withdrawal branch is untested was wrong (`test_feedback_and_local_tools_exist_on_the_operators_word`
+covers `FB-001 -> Rejected` on the word); the branch is unexercised by the beat only. **F-3**
+(`confirmed_at` not stamped on a re-sent row) was real and is fixed in this commit. **F-2** (an
+unnamed `FOREIGN KEY constraint failed` when the failing reference is the index trigger's) is
+recorded under Future options. The cut-list clause is code-tested (plan 085) and could not be
+fired on a fixture this small without inventing phantoms - stated, not faked.

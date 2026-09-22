@@ -1339,7 +1339,8 @@ def entity_upsert(entities: list[dict]) -> dict:
                     err = (f"{cols['id']}: attribution lands WITH confirmation —"
                            " set confirmed_by on this write")
                 else:
-                    cols.setdefault("confirmed_at", _now()[:10])
+                    if not cols.get("confirmed_at"):     # a re-sent full row carries null
+                        cols["confirmed_at"] = _now()[:10]   # (beat 18, F-3)
                     feedback_pe = (fb_was, fb_now)
             if err is None and fb_was in _FEEDBACK_BOUND and fb_now not in _FEEDBACK_BOUND:
                 if not operator_confirm:

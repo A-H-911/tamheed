@@ -57,6 +57,9 @@ All notable changes to Tamheed are documented here. The format is based on
   event types. Both caller paths now refuse an actor starting with `system:` and the server-only
   events alike; a caller records as `human:<name>` or `agent:<session>`. Measured before the ruling:
   no eval, prompt, doc or field practice wrote a `system:` actor as a caller.
+- **`confirmed_at` lands on a re-sent feedback row (lab beat 18, plan 089).** The stamp used
+  `setdefault`, a no-op when the full row re-sent for confirmation carries the key as null - the
+  ordinary path. Stamped whenever empty now.
 - **Docs and diagrams sweep (plan 088).** Every behavior of this batch is documented outside its
   plan record: the server README rows, quality-gates, governance (a new "Feedback and local tools"
   section), extension.md (`005_feedback.sql` as the worked example), SECURITY.md, the root README,

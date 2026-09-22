@@ -226,12 +226,13 @@ class McpContractTest(unittest.TestCase):
         self.assertIn("FB-001", w)                                        # named while it waits
         self.assertIn("await", w)
         ok = srv.entity_upsert([dict(draft, lifecycle_status="Confirmed", operator_confirm=True,
-                                     confirmed_by="anas"),
+                                     confirmed_by="anas", confirmed_at=None),
                                 dict(tool, operator_confirm=True, confirmed_by="anas")])
         self.assertTrue(ok["ok"], ok)
         self.assertTrue(ok["items"][0]["feedback_audit"].startswith("PE-"))
         rows = {r["id"]: r for r in srv.entity_query("feedback", limit=5)["rows"]}
         self.assertEqual(rows["FB-001"]["lifecycle_status"], "Confirmed")
+        self.assertTrue(rows["FB-001"]["confirmed_at"])      # stamped on a re-sent draft too (beat 18, F-3)
         self.assertEqual(rows["FB-002"]["lifecycle_status"], "Confirmed")  # a tool is born Confirmed
         self.assertTrue(rows["FB-002"]["confirmed_at"])
         with tempfile.TemporaryDirectory() as target:

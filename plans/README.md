@@ -173,7 +173,7 @@ devil's-advocate review; execution order is the row order below). Status values:
 | 086 | [findings_27 §4: the by-hand lesson retirement is journaled by the engine (`system:lesson-guard`)](086-by-hand-lesson-retirement-is-journaled.md) | findings_27; operator ruling | DONE — 2026-09-22; security review closed the `system:` actor forgery on the maintainer's ruling |
 | 087 | [The `feedback` family (`FB-`, migration 005): upstream feedback and local tools on the operator's word; `handoff_emit` names what awaits](087-feedback-family-on-the-operators-word.md) | maintainer rulings 2026-09-22 | DONE — 2026-09-22; two reviewers, one CRITICAL and one MEDIUM-HIGH closed before commit |
 | 088 | [Docs + diagrams sweep after code lands](088-docs-and-diagrams-sweep-findings-27.md) | 085-087 | DONE — 2026-09-22 |
-| 089 | [Lab beat 18](089-lab-beat-18-findings-27.md) | 085-088 + full test (15/15 vs 0/15 on `v4.10.0`; 9 suites; selftest) | IN PROGRESS |
+| 089 | [Lab beat 18](089-lab-beat-18-findings-27.md) | 085-088 + full test (15/15 vs 0/15 on `v4.10.0`; 9 suites; selftest) | DONE `762b98b` — 9 new assertions, each failing on the pre-beat fixture; D-1 registry-sync unscripted, F-3 fixed |
 | 090 | Release v4.11.0 | 089 | PLANNED |
 
 **Dependency notes (advisor plans).** 042 before 052 (a red matrix leg is unattributable
@@ -395,6 +395,12 @@ Markdown · ASM-D Python floor rises to the MCP SDK's (≥3.10).
   `**` through directory symlinks; symlinked *files* are covered by plan 055's size cap. (2026-09-12)
 
 ## Future options recorded (not planned)
+
+- **A FOREIGN KEY failure raised by the index trigger is unnamed** (lab beat 18, F-2, 2026-09-22):
+  `entity_upsert`'s FK handler names the offending reference only when it is a column of the row
+  written; when the failing reference is `entity_index.entity_type` (a family missing from a stale
+  registry), the error reads bare `FOREIGN KEY constraint failed`. The remedy is `package_migrate`
+  (registry-sync); naming it in the error is a small legibility gain, revisit on the next field hit.
 
 - **A read-only CLI on the server script** (findings_24 §1's alternative shape, declined
   2026-09-06 on the maintainer's words in favour of `entity_export`): `--read '<json>'`
