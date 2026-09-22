@@ -176,6 +176,23 @@ devil's-advocate review; execution order is the row order below). Status values:
 | 089 | [Lab beat 18](089-lab-beat-18-findings-27.md) | 085-088 + full test (15/15 vs 0/15 on `v4.10.0`; 9 suites; selftest) | DONE `762b98b` — 9 new assertions, each failing on the pre-beat fixture; D-1 registry-sync unscripted, F-3 fixed |
 | 090 | [Release v4.11.0](090-release-v4110.md) — plan-058 recipe + the fixture follows the stamp | 089 | DONE — 2026-09-22, tag `v4.11.0` (SHA in the tag) |
 
+### Field cycle findings_28 -- plans 091-099 -> v4.12.0 (2026-09-22; reviewer-executed)
+
+Master record: [091-099-batch-findings-28.md](091-099-batch-findings-28.md) (the approved plan after a
+devil's-advocate review; execution order is the row order below). Status values: PLANNED / IN PROGRESS / DONE.
+
+| # | Plan | Depends on | Status |
+|---|---|---|---|
+| 091 | The feedback teaching says what the code does (FB-013, findings_28 §3a-§3b; export wording; work_bind sentence) | findings_28 | PLANNED |
+| 092 | FB-003: `entity_query(search=…, context=N)` reports `occurrences` | FB-003 | PLANNED |
+| 093 | FB-002: advisory `prompt-ids-resolve` over the project's prompt files | FB-002 | PLANNED |
+| 094 | FB-001: `entity_upsert(type="package")` — the header on the operator's word | FB-001 | PLANNED |
+| 095 | FB-004: the `substitute` item on `entity_upsert` | FB-004; 092-094 | PLANNED |
+| 096 | review.html follows plans 069-095 (Feedback + Readiness sections, the lesson tag, the waiver mark) | maintainer ruling | PLANNED |
+| 097 | Docs + diagrams sweep | 091-096 | PLANNED |
+| 098 | Lab beat 19 | 091-097 + full test | PLANNED |
+| 099 | Release v4.12.0 | 098 | PLANNED |
+
 **Dependency notes (advisor plans).** 042 before 052 (a red matrix leg is unattributable
 until CI has run once). 043 before 051/053 (they edit the same function; 043 settles its
 transaction tail). 045's tests land before its refactor (same plan, red then green). 050 and
