@@ -643,6 +643,104 @@ def _write_package_header(conn, i: int, item: dict) -> dict:
     return res
 
 
+_SUBSTITUTE_KEYS = frozenset({"type", "id", "substitute", "operator_confirm", "expect_unchanged"})
+
+
+def _glued_match(text: str, old: str) -> str | None:
+    """The first occurrence of `old` that continues into a digit on either side (or a
+    dotted sub-number after it) - a match inside a longer id-shaped token; None when
+    every occurrence is bounded."""
+    start = 0
+    while (i := text.find(old, start)) != -1:
+        before = text[i - 1] if i else ""
+        after = text[i + len(old):i + len(old) + 2]
+        if (before.isdigit() or (after[:1].isdigit())
+                or (after[:1] == "." and after[1:2].isdigit())):
+            lo = i
+            while lo and (text[lo - 1].isalnum() or text[lo - 1] in "-._"):
+                lo -= 1
+            hi = i + len(old)
+            while hi < len(text) and (text[hi].isalnum() or text[hi] in "-._"):
+                hi += 1
+            return text[lo:hi]
+        start = i + len(old)
+    return None
+
+
+def _materialize_substitute(conn, etype: str, table: str, item: dict,
+                            cols: dict) -> tuple[dict, str | None, dict[str, int] | None]:
+    """Plan 095: turn `{"type", "id", "substitute": {col: [old, new]}}` into the FULL
+    stored row with the replace applied, so the ordinary upsert path judges it.
+    Returns (cols, error, substituted-counts). Refused by name: a mixed item; the
+    journal families (corrected by compensating rows, never substituted); a
+    composite-key surface; `id`; an unknown or non-TEXT column; an empty or unchanged
+    `old`; zero occurrences; a JSON column that no longer parses after the replace;
+    a row that does not exist."""
+    extra = sorted(set(item) - _SUBSTITUTE_KEYS)
+    if extra:
+        return cols, (f"a substitute item carries only type, id, substitute, operator_confirm"
+                      f" and expect_unchanged — not {extra}: half a row plus a substitute is"
+                      " ambiguous; send a full row, or a substitute alone"), None
+    if etype in ("progress-entry", "audit-verdict"):
+        return cols, ("journal rows are corrected by compensating rows, never substituted"
+                      " (append-only)"), None
+    if table in _NON_ID_TABLES:
+        return cols, f"substitute needs an id-keyed row, not {etype}", None
+    spec = item.get("substitute")
+    if (not isinstance(spec, dict) or not spec
+            or not all(isinstance(v, list) and len(v) == 2 and all(isinstance(x, str) for x in v)
+                       for v in spec.values())):
+        return cols, ("substitute must be {\"<column>\": [\"<old>\", \"<new>\"]} — exact"
+                      " text, one pair per column"), None
+    rid = item.get("id")
+    if not rid:
+        return cols, "substitute needs the item's id", None
+    info = list(conn.execute(f"PRAGMA table_info({table})"))
+    text_cols = {r[1] for r in info if str(r[2]).upper() == "TEXT"}
+    names = [r[1] for r in info]
+    for col, (old, new) in spec.items():
+        if col == "id":
+            return cols, "substitute never rewrites id — it is the row's identity", None
+        if col not in names:
+            return cols, f"substitute names an unknown column for {etype}: {col!r}", None
+        if col not in text_cols:
+            return cols, f"substitute works on TEXT columns only; {col!r} is not one", None
+        if old == "":
+            return cols, f"substitute: `old` for {col!r} is empty — nothing to find", None
+        if old == new:
+            return cols, f"substitute: nothing to substitute in {col!r} (old == new)", None
+    row = conn.execute(f"SELECT {', '.join(names)} FROM {table} WHERE id = ?", (rid,)).fetchone()
+    if row is None:
+        return cols, f"{rid}: no stored row to substitute in — a substitute is an UPDATE", None
+    full = dict(zip(names, row))       # stored TEXT as stored: JSON round-trips byte-stable
+    counts = {}
+    for col, (old, new) in spec.items():
+        text = full[col] or ""
+        n = text.count(old)
+        if n == 0:
+            return cols, f"{rid}: {old!r} occurs 0 times in {col!r} — nothing substituted", None
+        # security review: a match glued to a digit is INSIDE a longer id-shaped token
+        # (`DEC-20` in `DEC-208`, `SL-1` in `SL-1.2`) - exactly the numbering this store
+        # is built on. Refused, never silently widened.
+        glued = _glued_match(text, old)
+        if glued:
+            return cols, (f"{rid}: {old!r} in {col!r} also matches inside a longer token"
+                          f" ({glued!r}) — a substitute never rewrites part of an id; send"
+                          " the whole token, or a full row"), None
+        replaced = text.replace(old, new)
+        if col == "custom_attributes":
+            try:
+                if not isinstance(json.loads(replaced), (dict, list)):
+                    raise ValueError("not an object or array")
+            except ValueError:
+                return cols, (f"{rid}: the substitution leaves {col!r} as invalid JSON —"
+                              " refused; substitute inside a value, never across the"
+                              " structure"), None
+        full[col] = replaced
+        counts[col] = n
+    return full, None, counts
+
+
 def _changed_columns(names: list, cols: dict, before: dict, key: str) -> list[dict]:
     """Plan 080: what an UPDATE actually changed, with the before/after length of text.
     Upserts replace whole rows, so a re-sent long field that silently lost a paragraph
@@ -1165,6 +1263,13 @@ def entity_upsert(entities: list[dict]) -> dict:
     and an absent triple is an error (an attempt is not a write). Retype in ONE batch:
     the retire item plus the corrected edge. Retire a WRONG edge only — never to
     make a gate pass.
+    To change ONE token in ONE column without the whole row passing through your output
+    (plan 095), send {'type': ..., 'id': ..., 'substitute': {'<column>': ['<old>', '<new>']}}
+    - and nothing else but operator_confirm / expect_unchanged: the server materializes the
+    stored row, replaces exact text (every occurrence; refused when it occurs zero times,
+    on id, on a non-TEXT column, on the journal, or when a JSON column would stop parsing),
+    and sends the result down THIS path, so every guard and trigger judges it; the item
+    reports `substituted` counts beside `changed_columns`.
     A full-row update that only means to flip a status names the columns it did NOT
     mean to change: {'type': ..., 'id': ..., ..., 'expect_unchanged': ['title', ...]}
     (plan 041, the field's LL-063 — a paragraph lost mid-paste with ok: true). The
@@ -1212,7 +1317,19 @@ def entity_upsert(entities: list[dict]) -> dict:
         expect_unchanged = item.get("expect_unchanged")
         cols = {k: v for k, v in item.items()
                 if k not in ("type", "force", "operator_confirm", "retire",
-                             "expect_unchanged")}
+                             "expect_unchanged", "substitute")}
+        substituted = None
+        if "substitute" in item:
+            # Plan 095 (the field's FB-004): one token in one column, without the
+            # whole row passing through the agent's output. The stored row is
+            # MATERIALIZED, the replace applied, and the result goes down the ORDINARY
+            # full-row path from here - every guard, trigger, expect_unchanged and
+            # changed_columns run unchanged; there is no second guard.
+            cols, err, substituted = _materialize_substitute(conn, etype, table, item, cols)
+            if err:
+                results.append({"index": i, "ok": False, "id": item.get("id"), "error": err})
+                failed = True
+                continue
         if expect_unchanged is not None:
             # Plan 041 (findings_24 / the field's LL-063): a full-row write that only
             # means to flip a status names the columns it did NOT mean to change; the
@@ -1564,6 +1681,8 @@ def entity_upsert(entities: list[dict]) -> dict:
                     failed = True
             else:
                 res = {"index": i, "ok": True, "id": cols.get("id")}
+                if substituted:
+                    res["substituted"] = substituted
                 if before_row is not None:
                     res["changed_columns"] = _changed_columns(names, cols, before_row, key)
                 if etype == "lesson" and (

@@ -32,6 +32,15 @@ All notable changes to Tamheed are documented here. The format is based on
   Its security review tightened one convention for every guard: **the operator's word is the JSON
   boolean `true` and nothing else** — a truthy string like `"false"` no longer attests on a lesson,
   a feedback row or the header.
+- **The `substitute` write (ACMP's `FB-004`, plan 095).** `{"type", "id", "substitute":
+  {"<column>": ["<old>", "<new>"]}}` changes one token in one column without the whole row passing
+  through the agent's output: the server materializes the stored row, replaces the exact text, and
+  sends the result down the ordinary full-row path — every guard, trigger, `expect_unchanged` and
+  `changed_columns` judge it as they would a caller's row; the item reports `substituted` counts.
+  Refused by name: a mixed item, the journal, composite-key rows, `id`, a non-TEXT column, zero
+  occurrences, a JSON column that would stop parsing, and — the security review's finding — a match
+  glued to a digit (`DEC-20` inside `DEC-208`). Recorded twice before as "not built"; the field
+  ranked it second and showed it had changed a decision (a 24,117-character re-send deferred a repair).
 
 ### Fixed
 

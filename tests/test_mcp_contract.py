@@ -3242,6 +3242,97 @@ class V4EngineTest(unittest.TestCase):
         q = srv.entity_query("package")
         self.assertIn("server_info", q["error"])                         # read stays there
 
+    def test_a_substitute_write_changes_one_token_and_nothing_else(self):
+        """Plan 095 (ACMP's FB-004, the one gap that changed a decision: DW-118 deferred a
+        repair because a one-token fix meant re-sending 24,117 characters). An item
+        carrying `substitute` names a column and an exact old/new pair; the server
+        MATERIALIZES the stored row, replaces, and sends the result down the ORDINARY
+        full-row path - every guard, trigger, expect_unchanged and changed_columns run
+        unchanged - so there is no second guard to have holes in."""
+        long = "See DEC-208 for the ruling. " + "filler " * 700 + "Again DEC-208."
+        base = {"type": "defect", "id": "DEF-099", "severity": "low", "title": long,
+                "custom_attributes": {"related": ["DEC-208"], "note": "x"}}
+        self.assertTrue(srv.entity_upsert([base])["ok"])
+        stored = srv.entity_query("defect", id="DEF-099")["rows"][0]
+        out = srv.entity_upsert([{"type": "defect", "id": "DEF-099",
+                                  "substitute": {"title": ["DEC-208", "DEC-209"]}}])
+        self.assertTrue(out["ok"], out)
+        item = out["items"][0]
+        self.assertEqual(item["substituted"], {"title": 2})
+        self.assertEqual([c["column"] for c in item["changed_columns"]], ["title"])
+        after = srv.entity_query("defect", id="DEF-099")["rows"][0]
+        self.assertEqual(after["title"], long.replace("DEC-208", "DEC-209"))
+        for col in stored:                                              # nothing else moved
+            if col != "title":
+                self.assertEqual(after[col], stored[col], col)
+        # JSON text: substituted on the stored text, must still parse
+        out = srv.entity_upsert([{"type": "defect", "id": "DEF-099",
+                                  "substitute": {"custom_attributes": ["DEC-208", "DEC-209"]}}])
+        self.assertTrue(out["ok"], out)
+        self.assertEqual(json.loads(srv.entity_query("defect", id="DEF-099")["rows"][0]
+                                    ["custom_attributes"])["related"], ["DEC-209"])   # stored text, parsed
+        broken = srv.entity_upsert([{"type": "defect", "id": "DEF-099",
+                                     "substitute": {"custom_attributes": ["\"note\"", "note"]}}])
+        self.assertFalse(broken["ok"]); self.assertIn("JSON", broken["items"][0]["error"])
+        # the refusals, each by name
+        for bad, why in (
+            ({"substitute": {"title": ["ZZZ", "y"]}}, "occurs 0 times"),
+            ({"substitute": {"title": ["", "y"]}}, "empty"),
+            ({"substitute": {"title": ["DEC-209", "DEC-209"]}}, "nothing to substitute"),
+            ({"substitute": {"id": ["DEF-099", "DEF-100"]}}, "rewrites id"),
+            ({"substitute": {"nope": ["a", "b"]}}, "unknown"),
+            ({"substitute": {"title": ["a", "b"]}, "severity": "high"}, "only"),
+            ({"substitute": "DEC-209"}, "substitute must"),
+        ):
+            out = srv.entity_upsert([dict({"type": "defect", "id": "DEF-099"}, **bad)])
+            self.assertFalse(out["ok"], (bad, out))
+            self.assertIn(why, out["items"][0]["error"], (bad, out["items"][0]["error"]))
+        # security review: a match inside a longer id-shaped token is refused, never widened
+        srv.entity_upsert([{"type": "defect", "id": "DEF-098", "severity": "low",
+                            "title": "See DEC-20, DEC-208 and SL-1.2 here."}])
+        glued = srv.entity_upsert([{"type": "defect", "id": "DEF-098",
+                                    "substitute": {"title": ["DEC-20", "DEC-21"]}}])
+        self.assertFalse(glued["ok"]); self.assertIn("DEC-208", glued["items"][0]["error"])
+        dotted = srv.entity_upsert([{"type": "defect", "id": "DEF-098",
+                                     "substitute": {"title": ["SL-1", "SL-9"]}}])
+        self.assertIn("SL-1.2", dotted["items"][0]["error"])
+        whole = srv.entity_upsert([{"type": "defect", "id": "DEF-098",
+                                    "substitute": {"title": ["DEC-208", "DEC-209"]}}])
+        self.assertTrue(whole["ok"], whole)                              # bounded: fine
+        self.assertEqual(srv.entity_query("defect", id="DEF-098")["rows"][0]["title"],
+                         "See DEC-20, DEC-209 and SL-1.2 here.")
+        gone = srv.entity_upsert([{"type": "defect", "id": "DEF-404",
+                                   "substitute": {"title": ["a", "b"]}}])
+        self.assertIn("no stored row", gone["items"][0]["error"])
+        srv.progress_update([{"entry": "journal row DEC-208", "event_type": "note", "actor": "agent:t"}])
+        pe = srv.entity_query("progress-entry", search="journal row")["rows"][0]["id"]
+        j = srv.entity_upsert([{"type": "progress-entry", "id": pe,
+                                "substitute": {"entry": ["DEC-208", "DEC-209"]}}])
+        self.assertIn("never substituted", j["items"][0]["error"])
+        om = srv.entity_upsert([{"type": "omission", "substitute": {"reason": ["a", "b"]}}])
+        self.assertFalse(om["ok"])
+        # the ordinary guards still stand: an Approved lesson's content is immutable
+        lesson = {"type": "lesson", "id": "LL-001", "title": "t", "kind": "improve",
+                  "statement": "THE RULE mentions DEC-208 once."}
+        srv.entity_upsert([lesson])
+        self.assertTrue(srv.entity_upsert([dict(lesson, lifecycle_status="Approved", operator_confirm=True,
+                                                confirmed_by="anas")])["ok"])
+        imm = srv.entity_upsert([{"type": "lesson", "id": "LL-001",
+                                  "substitute": {"statement": ["DEC-208", "DEC-209"]}}])
+        self.assertFalse(imm["ok"], imm)
+        self.assertEqual(srv.entity_query("lesson", id="LL-001")["rows"][0]["statement"],
+                         "THE RULE mentions DEC-208 once.")
+        # and a bound feedback row's content still needs the word
+        fb = {"type": "feedback", "id": "FB-001", "kind": "defect", "title": "DEC-208 is wrong"}
+        srv.entity_upsert([fb])
+        srv.entity_upsert([dict(fb, lifecycle_status="Confirmed", operator_confirm=True, confirmed_by="anas")])
+        no = srv.entity_upsert([{"type": "feedback", "id": "FB-001",
+                                 "substitute": {"title": ["DEC-208", "DEC-209"]}}])
+        self.assertIn("operator_confirm", no["items"][0]["error"])
+        yes = srv.entity_upsert([{"type": "feedback", "id": "FB-001", "operator_confirm": True,
+                                  "substitute": {"title": ["DEC-208", "DEC-209"]}}])
+        self.assertTrue(yes["ok"], yes)
+
     def test_csv_dir_is_exactly_what_export_html_emits(self):
         """Plan 065 (findings_25 s2): a CSV for a table that no longer exists sat in a
         tool-owned directory for two months, and `package_verify` could not see it. The

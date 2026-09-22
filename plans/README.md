@@ -187,7 +187,7 @@ devil's-advocate review; execution order is the row order below). Status values:
 | 092 | [FB-003: `entity_query(search=…, context=N)` reports `occurrences`](092-search-with-context-is-a-census.md) | FB-003 | DONE — 2026-09-22 |
 | 093 | [FB-002: advisory `prompt-ids-resolve` over the project's prompt files](093-prompt-ids-resolve.md) | FB-002 | DONE — 2026-09-22; no stock body change (the one 'bare' example was a wrapped code span) |
 | 094 | [FB-001: `entity_upsert(type="package")` — the header on the operator's word](094-the-package-header-on-the-operators-word.md) | FB-001 | DONE — 2026-09-23; security review closed three items, incl. the operator's word = the boolean `true` everywhere |
-| 095 | FB-004: the `substitute` item on `entity_upsert` | FB-004; 092-094 | PLANNED |
+| 095 | [FB-004: the `substitute` item on `entity_upsert`](095-the-substitute-write.md) | FB-004; 092-094 | DONE — 2026-09-23; two reviewers, one MEDIUM (a match glued to a digit) closed |
 | 096 | review.html follows plans 069-095 (Feedback + Readiness sections, the lesson tag, the waiver mark) | maintainer ruling | PLANNED |
 | 097 | Docs + diagrams sweep | 091-096 | PLANNED |
 | 098 | Lab beat 19 | 091-097 + full test | PLANNED |
@@ -451,7 +451,7 @@ Markdown · ASM-D Python floor rises to the MCP SDK's (≥3.10).
   when a whole-rule waiver absorbs a row newer than itself.
 
 - **From the findings_25 batch, audited and not built** (2026-09-21, one reason each): a patch/append
-  mode and an implicit `if_match` on every upsert (a write-contract redesign; `expect_unchanged` is
+  mode (**SUPERSEDED by plan 095's `substitute` write, 2026-09-23** — the field ranked it and showed it changed a decision) and an implicit `if_match` on every upsert (a write-contract redesign; `expect_unchanged` is
   the shipped answer); column-fidelity profiling in `package_verify`; flagging stale derived
   artifacts (it would mean rendering the review page on every gate run); `acs-met` respecting
   `Deferred` ACs (**RULED 2026-09-21, maintainer: keep as is** - a deferred criterion still counts;
