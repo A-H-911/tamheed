@@ -183,9 +183,9 @@ devil's-advocate review; execution order is the row order below). Status values:
 
 | # | Plan | Depends on | Status |
 |---|---|---|---|
-| 100 | [The feedback channel's middle: journaled bound-to-bound moves, `feedback-unanswered`, a third handoff warning, the fold split, the sweep prompt (FB-014)](100-the-feedback-channels-middle.md) | FB-014 | IN PROGRESS |
-| 101 | [The header read is a superset of the write (FB-015)](101-the-header-read-is-a-superset-of-the-write.md) | FB-015 | PLANNED |
-| 102 | [Three guard refinements: `go_no_go` presence-checked, the substitute re-run refusal, `expect_unchanged` honours omission](102-three-guard-refinements.md) | findings_29 §1, §3, §4 | PLANNED |
+| 100 | [The feedback channel's middle: journaled bound-to-bound moves, `feedback-unanswered`, a third handoff warning, the fold split, the sweep prompt (FB-014)](100-the-feedback-channels-middle.md) | FB-014 | DONE — 2026-09-23 `ab0a981`; also repairs plan 093's missed `register-liveness.md` step |
+| 101 | [The header read is a superset of the write (FB-015)](101-the-header-read-is-a-superset-of-the-write.md) | FB-015 | DONE — 2026-09-23 |
+| 102 | [Three guard refinements: `go_no_go` presence-checked, the substitute re-run refusal, `expect_unchanged` honours omission](102-three-guard-refinements.md) | findings_29 §1, §3, §4 | IN PROGRESS |
 | 103 | [Docs + diagrams sweep](103-docs-and-diagrams-sweep-findings-29.md) | 100-102 | PLANNED |
 | 104 | [Lab beat 20](104-lab-beat-20-findings-29.md) | 100-103 + full test | PLANNED |
 | 105 | [Release v4.13.0](105-release-v4130.md) | 104 | PLANNED |

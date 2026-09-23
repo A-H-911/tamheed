@@ -4155,8 +4155,11 @@ def export_html(output: str | None = None) -> dict:
             "csv": csv_out}
 
 
+# Plan 101 (the field's FB-015): every header column - the read is a SUPERSET of plan
+# 094's write (mvp_definition was writable and readable only through the HTML page).
 _PACKAGE_ROW = ("name", "title", "profile", "mode", "iteration", "package_version",
-                "go_no_go", "entry_point")
+                "mvp_definition", "entry_point", "go_no_go", "created_at")
+_V1_DERIVED = ("mode", "profile", "created_at")   # export_html's annotation, as data
 
 
 def server_info(detail: bool = False) -> dict:
@@ -4164,7 +4167,9 @@ def server_info(detail: bool = False) -> dict:
 
     With a package open, `package` is its stored row (findings_25 s3, plan 066:
     `packages` is not an entity family, so no other tool can read it - note the
-    stored `name` is descriptive only; a package is resolved by its DIRECTORY).
+    stored `name` is descriptive only; a package is resolved by its DIRECTORY) -
+    all ten header columns, a superset of what entity_upsert(type="package") writes
+    (plan 101, the field's FB-015), plus `v1_manifest_derived` on a migrated package.
     `detail=true` adds the vocabulary: `entity_types` (type, table, id prefix - the
     `type` values entity_query/entity_export accept) and `relation_rules` (the
     endpoint types each trace relation allows), so neither has to be learned from
@@ -4182,8 +4187,12 @@ def server_info(detail: bool = False) -> dict:
     package = None
     if _CURRENT is not None:
         row = _CURRENT.conn.execute(
-            f"SELECT {', '.join(_PACKAGE_ROW)} FROM packages LIMIT 1").fetchone()
+            f"SELECT {', '.join(_PACKAGE_ROW)}, custom_attributes FROM packages LIMIT 1").fetchone()
         package = dict(zip(_PACKAGE_ROW, row)) if row else None
+        # C18 / plan 101: on a migrated package mode/profile/created_at are v1-manifest
+        # passthrough - the page labels them; the tool now says so too (the same predicate)
+        if package and row[-1] and "v1_manifest" in row[-1]:
+            package["v1_manifest_derived"] = list(_V1_DERIVED)
     out = {"ok": True, "version": version,
            "package_root": str(Path(PACKAGE_ROOT).resolve()),
            "open_package": _CURRENT_NAME,

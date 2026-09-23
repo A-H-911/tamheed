@@ -22,6 +22,6 @@ tool says nothing.
 
 ## Done criteria
 
-- [ ] RED then GREEN (`:2810` extended to ten keys; the seeded annotation; absent on a fresh package)
-- [ ] `python check.py`; dry-run on a fixture copy (write `mvp_definition`, read it back)
+- [x] RED then GREEN (`:2810` extended to ten keys; the seeded annotation; absent on a fresh package)
+- [x] `python check.py`; dry-run on a fixture copy (write `mvp_definition`, read it back)
 - [ ] CI green

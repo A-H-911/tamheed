@@ -2878,6 +2878,25 @@ class V4EngineTest(unittest.TestCase):
         self.assertEqual(info["package"]["name"], "demo")
         for key in ("title", "profile", "mode", "iteration", "package_version", "go_no_go"):
             self.assertIn(key, info["package"])
+        # Plan 101 (the field's FB-015): the read is a SUPERSET of the write - all ten
+        # header columns; a caller could write mvp_definition and read it back only
+        # through the HTML page. The page's "(v1-manifest-derived)" annotation reaches
+        # the tool as data, only on a migrated package.
+        self.assertEqual(set(info["package"]), {"name", "title", "profile", "mode", "iteration",
+                                                "package_version", "mvp_definition", "entry_point",
+                                                "go_no_go", "created_at"})
+        self.assertTrue(info["package"]["created_at"])
+        out = srv.entity_upsert([{"type": "package", "mvp_definition": "the loop, end to end"}])
+        self.assertTrue(out["ok"], out)
+        self.assertEqual(srv.server_info()["package"]["mvp_definition"], "the loop, end to end")
+        srv._CURRENT.conn.execute("UPDATE packages SET custom_attributes = ?",
+                                  (json.dumps({"v1_manifest": {"mode": "resume"}}),))
+        srv._CURRENT.conn.commit()
+        self.assertEqual(srv.server_info()["package"]["v1_manifest_derived"],
+                         ["mode", "profile", "created_at"])
+        srv._CURRENT.conn.execute("UPDATE packages SET custom_attributes = NULL")
+        srv._CURRENT.conn.commit()
+        self.assertNotIn("v1_manifest_derived", srv.server_info()["package"])
         self.assertNotIn("entity_types", info)                     # lean by default
         self.assertNotIn("relation_rules", info)
         detail = srv.server_info(detail=True)

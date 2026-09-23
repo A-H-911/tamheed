@@ -1235,7 +1235,9 @@ name, title, `profile` CHECK-constrained to enterprise/rnd/legacy/ai-agentic/unk
 `mvp_definition`, `entry_point`, `go_no_go` — since v4.12 written through
 `entity_upsert(type="package")`: title, mode, iteration, mvp_definition, entry_point freely,
 `go_no_go` only on the operator's word and journaled by `system:package-guard`; identity columns
-frozen; never a family — no register, no CSV, no registry row); **`entity_types`** (the extensibility
+frozen; never a family — no register, no CSV, no registry row; since v4.13 `server_info().package`
+reads back ALL ten columns, a superset of the write, and names the v1-manifest-derived ones on a
+migrated package); **`entity_types`** (the extensibility
 registry: type_id, label, `id_prefix` UNIQUE, `generation_class` CHECK: Always/
 Conditional/Derived/On-request/Continuous — the machine mirror G-SET enforces, seeded from
 `BASELINE_ENTITY_TYPES` at `package_create`); and **`omissions`** (entity_type PK + NOT
