@@ -16,5 +16,5 @@ annotated tag `v4.13.0`; push the tag separately; CI on the tag; memory + index 
 
 ## Done criteria
 
-- [ ] lints green; tag pushed; CI green on the tag
-- [ ] the ACMP brief printed in the transcript (transcript-only)
+- [x] lints green; tag `v4.13.0` on `91774b6` pushed; CI green
+- [x] the ACMP brief printed in the transcript (transcript-only)

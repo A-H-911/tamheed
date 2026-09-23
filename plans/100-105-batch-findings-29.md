@@ -1,6 +1,6 @@
 # Tamheed v4.13.0 — the findings_29 batch: the feedback channel's middle, the header read, three guard refinements
 
-Status: **APPROVED 2026-09-23 (revision 2, after the devil's-advocate review) — IN PROGRESS.** Index: [README.md](README.md) § Field cycle findings_29.
+Status: **EXECUTED — v4.13.0 tagged on `91774b6`, 2026-09-23 (revision 2 approved after the devil's-advocate review).** Index: [README.md](README.md) § Field cycle findings_29.
 Read-only work only: `findings_29.md` in full; the fifteen `FB-` rows through ACMP's tool-written
 `exports/feedback.json` (UTF-8; never `data/`); ACMP's diff since findings_28 by file name; every
 tamheed-side claim verified in source at the line; ACMP's prompt files classified with the plan-093
