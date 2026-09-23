@@ -1,6 +1,6 @@
 # Tamheed v4.12.0 — the findings_28 batch: the four capabilities the feedback channel asked for, and the channel's return half
 
-Status: **APPROVED by the maintainer 2026-09-22; executing** (per-plan status lives in the index rows). Revision 2, after the devil's-advocate review.
+Status: **EXECUTED 2026-09-23 — released as v4.12.0** (approved 2026-09-22; per-plan status lives in the index rows). Revision 2, after the devil's-advocate review.
 Read-only work only: `findings_28.md` read in full; the thirteen `FB-` rows read through ACMP's
 tool-written `exports/feedback.json` (never `data/`); the rewrite commit (`85d0fb4d`) and PR #431
 spot-checked; findings_28's tamheed-side claims verified in source; **two design assumptions of

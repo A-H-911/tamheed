@@ -10,6 +10,38 @@ All notable changes to Tamheed are documented here. The format is based on
 
 ## [Unreleased]
 
+## [4.12.0] - 2026-09-23
+
+**MINOR — the findings_28 batch: the four capabilities the feedback channel asked for, the review
+page's catch-up, and the channel's return half (plans 091–098; field report findings_28 and the
+thirteen `FB-` rows it carried).** The channel worked on its first use: ACMP filed thirteen rows,
+every one confirmed by an operator who refused to rubber-stamp them — one tool was deleted when
+asked what it computed — and exported them as a digest-stamped file. This release answers the four
+requests. **`FB-004`, a substitute write**: `{"type", "id", "substitute": {"<column>": ["<old>",
+"<new>"]}}` changes one token in one column without the whole row passing through the agent's
+output; the server materializes the stored row, replaces the exact text, and sends the result down
+the ordinary full-row path, so every guard, trigger, `expect_unchanged` and `changed_columns` judge
+it as a caller's row and there is no second guard to have holes in — the security reviewer's one
+finding, a match glued to a digit (`DEC-20` inside `DEC-208`), is refused by name. Recorded twice
+before as "not built"; the field showed it had changed a decision. **`FB-001`, a writable header**:
+`entity_upsert(type="package")` writes `title`, `mode`, `iteration`, `mvp_definition`,
+`entry_point` and `go_no_go` — the verdict only on the operator's word, journaled — special-cased
+and never a family, so no package's review page or CSV set changes for it. **`FB-002`, the prompt
+files** (the field ranked it first): `prompt-ids-resolve` scans the project's own prompt files for
+phantom ids with the row rule's doctrine, never a stock body. **`FB-003`, a census**:
+`entity_query(search=…, context=N)` reports `occurrences` — counts and snippets per column. The
+review page renders `readiness_check` for the first time, evaluated as of its export date, and
+gains a Feedback section, the supersession tag on Approved lessons and the open-ended waiver
+mark. The feedback teaching now says what the code does (a local tool has no draft stage; the
+two-clause rule; the kinds by name), and one convention tightened on every guard: the operator's
+word is the JSON boolean `true` and nothing else. An acceptance script of twelve checks passes on
+this tree and fails, each for its own reason, on an extracted `v4.11.0` tree. Lab beat 19 took
+three dispatches: the first two stopped, correctly, on crashes the suite could never see — the
+header write keyed by a directory name that the recorded fixture and the field's package both
+differ from, and the page joining waived records as strings — each fixed and pinned before the
+next run; the third fired every mechanism and all five refusals against the recorded package. No migration; no new tool (19); one stock
+prompt body (`README.md`).
+
 ### Added
 
 - **`entity_query(search=…, context=N)` is a census (ACMP's `FB-003`, plan 092).** The result
