@@ -36,5 +36,5 @@
 
 - [x] lints green inside `python check.py` -> `ALL CHECKS PASSED`
 - [x] the fixture's `prompts/README.md` byte-equals the released body; `diverged: []`
-- [ ] tag `v4.12.0` on the release commit; CI green on it
-- [ ] master record -> EXECUTED; index row 099 DONE; memory updated; the ACMP brief printed
+- [x] tag `v4.12.0` on the release commit `a472bd3`; CI green on it (2026-09-23)
+- [x] master record -> EXECUTED; index row 099 DONE; memory updated; the ACMP brief printed in the transcript
