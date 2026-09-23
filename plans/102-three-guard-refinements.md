@@ -32,3 +32,9 @@
         normalizes Unicode - pre-existing, no harmful widening demonstrated.
 - [x] dry-run on a fixture copy (`scratchpad/dryrun_v4130.py`)
 - [ ] CI green
+
+## Amendment (2026-09-23, from reading ACMP's feedback table and journal, not the findings file)
+
+`PE-1357` in ACMP's journal has an empty `actor`: it is `work_bind`'s row, and the engine wrote it
+with no author and the default event type — the one engine-written row not signed `system:<component>`.
+Now `system:work-bind`; the bind test pins it.

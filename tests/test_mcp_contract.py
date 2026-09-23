@@ -1880,6 +1880,11 @@ class McpContractTest(unittest.TestCase):
         row = srv.entity_query("requirement", id="FR-001", columns=["last_referenced"])
         self.assertIsNotNone(row["rows"][0]["last_referenced"])
         self.assertFalse(srv.work_bind("commit def", ["FR-999"])["ok"])
+        # Plan 102 amendment (read off ACMP's journal, PE-1357): the bind row was the one
+        # engine-written row with NO actor - every other engine row signs system:<component>
+        pe = srv.entity_query("progress-entry", search="commit abc123")["rows"][0]
+        self.assertEqual((pe["actor"], pe["event_type"]), ("system:work-bind", "note"))
+        self.assertEqual(json.loads(pe["custom_attributes"])["binds"], ["FR-001", "AC-001"])
 
     def test_progress_update_appends(self):
         make_complete_package("demo")

@@ -70,6 +70,8 @@ report a problem.
   NAMES `go_no_go` without `operator_confirm` (v4.13: presence-checked, so a refusal probe can fail),
   journals a real move by `system:package-guard`, and writes no audit row for an attested re-send of
   the same verdict; identity columns are frozen.
+- **Every engine-written journal row is signed `system:<component>`** — `work_bind`'s was the one
+  anonymous row (found in the field's journal, v4.13); a caller can never write a `system:` actor.
 - **A feedback row is journaled at every move** — entering the bound set and leaving it on the
   operator's word (v4.11), and the bookkeeping moves within it (v4.13: `Confirmed → Reported`,
   `Reported → Resolved`); the row says which it was and never claims a word it did not get.

@@ -2861,10 +2861,12 @@ def work_bind(ref: str, entity_ids: list[str], note: str | None = None) -> dict:
                              (now, eid))
             stamped.append(eid)
         pe_id = _next_id("PE-", "progress_entries")
+        # Plan 102 amendment (ACMP's PE-1357 had no author): the bind row is an engine
+        # row and signs like every other one - system: is the engine's, reserved (plan 086)
         conn.execute(
-            "INSERT INTO progress_entries (id, entry, occurred_at, custom_attributes)"
-            " VALUES (?, ?, ?, ?)",
-            (pe_id, note or f"{ref} satisfies {', '.join(stamped)}", now,
+            "INSERT INTO progress_entries (id, entry, actor, occurred_at, custom_attributes)"
+            " VALUES (?, ?, ?, ?, ?)",
+            (pe_id, note or f"{ref} satisfies {', '.join(stamped)}", "system:work-bind", now,
              json.dumps({"ref": ref, "binds": stamped})),
         )
     except Exception as exc:

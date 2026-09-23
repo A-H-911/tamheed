@@ -38,7 +38,8 @@ findings about the guards. Additive, MINOR. **No migration.**
   the UPDATE and never counts as drift (the retire path had said so since plan 040; this path said
   the opposite and refused a correct partial write). The JSON refusal is named for what it checks,
   `custom_attributes`. Both id rules say a green means every id RESOLVES, not that the sentence
-  about it is true.
+  about it is true. Read off ACMP's journal while checking the feedback table: `work_bind`'s row
+  was the one engine-written row with NO actor — it now signs `system:work-bind`.
 
 ## [4.12.0] - 2026-09-23
 
