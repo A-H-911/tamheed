@@ -42,7 +42,11 @@ recorded as feedback instead of scripted, confirmed and exported and reported on
 word, the refused unattended confirmation and the refused rewrite under the operator's own name,
 the local tool that exists only on that word, the by-hand lesson retirement the engine journals
 and the forged engine row refused on both caller paths, the formula's variable names that trip
-no list)
+no list; 19: the findings_28 mechanisms — the phantom id in the project's own kickoff prompt
+reported amber and made inert by backticks, the token census that counts every occurrence, the
+go/no-go verdict that lands only on the operator's word — a string never attests — and the
+engine's own witness of it, the one-token substitute that touches nothing else and the glued,
+immutable and mixed substitutes refused, the review page's Readiness and Feedback sections)
 run as incremental real-agent sessions against the recorded package — the fixture is regenerated
 by continuation, not from scratch.
 

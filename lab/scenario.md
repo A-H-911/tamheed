@@ -376,6 +376,56 @@ must fire; the resulting package replaces `evals/sample-results/lab-tracker/pack
       `feedback_audit` and `lesson_audit`, and `width is tested first`; then `export_html`;
       `gate_run` ready; `package_verify()` green (`verified: true`, `foreign: []`,
       `foreign_csv: []`, `review_current: true`); `package_close`; no `data/.lock` remains.
+19. **The findings_28 continuation (v4.12.0).** The project's kickoff prompt narrates a
+    phantom id and the new prompt rule reads amber; quoting it in backticks makes it inert
+    and visible. A token census with context counts every occurrence of a known id. The
+    package's go/no-go verdict is changed on the operator's word after an unattended
+    attempt is refused, and a string `"false"` does not attest. One token in a long defect
+    title is corrected by a `substitute` write that touches nothing else, a match glued to
+    a digit is refused, and a substitute on an Approved lesson is refused. The review page
+    gains its Readiness and Feedback sections.
+    ✔ THE PROMPT RULE (plan 093): one history line naming two ids that resolve to nothing
+      is appended BY HAND to `prompts/project-kickoff.md` — a prompt is a file — and
+      `readiness_check("package")` reads `prompt-ids-resolve` `status: fail` over
+      `population` `{table: "prompts/*.md", rows: 1, scoped: false, unit: "files"}`, its
+      `entities` naming `prompts/project-kickoff.md:4 -> DEF-090` and
+      `prompts/project-kickoff.md:4 -> SL-007`, under the note's own `THE ENTITY LIST IS A
+      FLOOR`. Quoting both ids in backticks makes them inert: the rule reads `pass`,
+      `entities` empties and both move to `in_code_spans`. `gate_run` never moves — the
+      rule is advisory.
+    ✔ THE CENSUS (plan 092): `entity_query("defect", search="RISK-808", context=12)`
+      reports `matched` `{"DEF-005": ["title"]}` and `occurrences` `DEF-005.title`
+      `count: 1` with one snippet carrying `` `RISK-808` ``;
+      `entity_query("defect", search="KPI-1", context=8)` counts TWO `occurrences` in that
+      same title — `KPI-17_score` and `KPI-10_score`. A census counts SUBSTRINGS; the
+      prose-id rule does not, and those two tokens still trip no id list.
+    ✔ THE HEADER (plan 094): `entity_upsert(type="package")` writes `entry_point` =
+      `prompts/project-kickoff.md` — `changed_columns` names it alone and
+      `server_info().package` reads it back. The UNATTENDED verdict is REFUSED for
+      `go_no_go is the package's governance verdict and changes only on the OPERATOR's
+      word`, and a STRING `"true"` is refused in exactly the same words — only the JSON
+      boolean attests. On the operator's word the verdict lands and the ENGINE witnesses it
+      in the same savepoint: `package_audit` `PE-034`, `event_type: "transition"`, actor
+      `system:package-guard`. `profile` stays frozen: `header column(s) ['profile'] are the
+      package's identity and are frozen`.
+    ✔ THE SUBSTITUTE (plan 095): one token in `DEF-005`'s long title is corrected by a
+      `substitute` write — `substituted` `{"title": 1}`, `changed_columns` exactly one
+      entry with `old_len` and `new_len` both 108 — and every other column of the row stays
+      byte-identical to the pre-beat backup. A match glued to a digit is REFUSED:
+      `'KPI-1' in 'title' also matches inside a longer token ('KPI-17_score')`. A
+      substitute on the Approved lesson `LL-004` is REFUSED by the immutability trigger —
+      `approved/promoted lessons are immutable: supersede, never edit` — and a mixed item
+      is REFUSED because `a substitute item carries only type, id, substitute,
+      operator_confirm and expect_unchanged`.
+    ✔ Close the beat with ONE `progress_update` note (actor `agent:lab-beat-19`,
+      `event_type: "note"`) quoting verbatim the pre-backtick entity string, the `changes
+      only on the OPERATOR's word` clause, the glued-match refusal naming the
+      `longer token ('KPI-17_score')`, the words `substituted`, `occurrences` and
+      `package_audit`, and `in_code_spans` — written BEFORE the export, so the page is
+      re-rendered after it; then `export_html`, whose page carries
+      `<section id="readiness">`, `<section id="feedback">` and `Evaluated as of` (plan
+      096); `gate_run` ready; `package_verify()` green (`verified: true`, `foreign: []`,
+      `foreign_csv: []`, `review_current: true`); `package_close`; no `data/.lock` remains.
 
 **Pass bar:** every ✔ observed; `gate_run` ready (or failing ONLY on deliberately-open
 items the scenario names); the eval runner's lab checks green. `readiness_check` is

@@ -1444,6 +1444,106 @@
             "local-tool"
           ],
           "expect_exit": 0
+        },
+        {
+          "check": "The go/no-go verdict was changed on the operator's word and the engine journaled it (plan 094).",
+          "cmd": [
+            "python",
+            "evals/pkg_check.py",
+            "count",
+            "{case_dir}/package",
+            "progress-entry",
+            "--col",
+            "actor=system:package-guard",
+            "--min",
+            "1"
+          ],
+          "expect_exit": 0
+        },
+        {
+          "check": "An unattended verdict change was refused, and the note quotes it (plan 094).",
+          "cmd": [
+            "python",
+            "evals/pkg_check.py",
+            "grep-present",
+            "{case_dir}/package",
+            "changes only on the OPERATOR's word",
+            "--tables",
+            "progress_entries"
+          ],
+          "expect_exit": 0
+        },
+        {
+          "check": "One token in a long title was corrected by a substitute write (plan 095).",
+          "cmd": [
+            "python",
+            "evals/pkg_check.py",
+            "grep-present",
+            "{case_dir}/package",
+            "export header DRIFTS",
+            "--tables",
+            "defects"
+          ],
+          "expect_exit": 0
+        },
+        {
+          "check": "A match glued to a digit was refused, and the note names the longer token (plan 095).",
+          "cmd": [
+            "python",
+            "evals/pkg_check.py",
+            "grep-present",
+            "{case_dir}/package",
+            "longer token ('KPI-17_score')",
+            "--tables",
+            "progress_entries"
+          ],
+          "expect_exit": 0
+        },
+        {
+          "check": "The kickoff prompt quotes its history ids in backticks (plan 093).",
+          "cmd": [
+            "python",
+            "evals/pkg_check.py",
+            "grep-file",
+            "{case_dir}/package/prompts/project-kickoff.md",
+            "`DEF-090`"
+          ],
+          "expect_exit": 0
+        },
+        {
+          "check": "The note names the prompt rule's finding before the fix (plan 093).",
+          "cmd": [
+            "python",
+            "evals/pkg_check.py",
+            "grep-present",
+            "{case_dir}/package",
+            "project-kickoff.md",
+            "--tables",
+            "progress_entries"
+          ],
+          "expect_exit": 0
+        },
+        {
+          "check": "The recorded review page carries the Readiness section (plan 096).",
+          "cmd": [
+            "python",
+            "evals/pkg_check.py",
+            "grep-file",
+            "{case_dir}/package/review.html",
+            "section id=\"readiness\""
+          ],
+          "expect_exit": 0
+        },
+        {
+          "check": "The recorded review page carries the Feedback section (plan 096).",
+          "cmd": [
+            "python",
+            "evals/pkg_check.py",
+            "grep-file",
+            "{case_dir}/package/review.html",
+            "section id=\"feedback\""
+          ],
+          "expect_exit": 0
         }
       ],
       "rubric": [
