@@ -1,6 +1,6 @@
 # Tamheed MCP server
 
-Documents the tool surface as of **tamheed v4.12.0**.
+Documents the tool surface as of **tamheed v4.13.0**.
 
 The **only write path** into a Tamheed package (ADR-0001). Agents interact with a package
 exclusively through these MCP tools: every write passes schema validation (FKs, CHECKs,

@@ -10,6 +10,30 @@ All notable changes to Tamheed are documented here. The format is based on
 
 ## [Unreleased]
 
+## [4.13.0] - 2026-09-23
+
+**MINOR — the findings_29 batch: the feedback channel's middle, the header read, three guard
+refinements (plans 100–104; field report findings_29 and the two `FB-` rows it carried).** ACMP's
+first week on 4.12.0 answered the question the last release asked: the four capabilities worked on
+real repairs, and the field found what only use finds. **`FB-014`**: a request that went upstream
+had no liveness surface — `handoff_emit` named a row only while it awaited the operator or the
+export, nothing journaled the move within the bound set, and the review page filed unanswered
+reports under a closing heading; now the move is journaled as bookkeeping (the row never claims a
+word it did not get), the `feedback-unanswered` advisory and a third warning name every reported
+row until `resolved_in` is set, and the page splits unanswered from closed. **`FB-015`**:
+`server_info().package` reads back all ten header columns, a superset of the write. **Three
+guards**: `go_no_go` is presence-checked (the last brief's refusal probe re-sent the stored verdict
+and could not fail); `substitute` refuses the re-run shape the field derived by reading (a
+replacement that contains its needle, already present, would compound); `expect_unchanged` honours
+omission — a sent column must match, an omitted one is preserved by the UPDATE — and, the security
+review's finding, runs against the FINAL row, after the engine's own column writes. The disposition
+recipe is now taught as a partial row, because "full rows, as stored" was the riskier instruction
+on a bound row. `register-liveness.md` walks `feedback-unanswered` and the `prompt-ids-resolve`
+step plan 093 had left out. An acceptance script of eleven discriminating checks passes on this
+tree and fails, each for its own reason, on an extracted `v4.12.0` tree. Lab beat 20 fired every
+mechanism against the recorded package after every new surface was dry-run on a copy of it first.
+No migration; no new tool (19); two stock prompt bodies (`README.md`, `register-liveness.md`).
+
 The findings_29 batch (plans 100-105; the master record is `plans/100-105-batch-findings-29.md`).
 ACMP's first week on 4.12.0: the four answers worked; two new rows (`FB-014`, `FB-015`) and four
 findings about the guards. Additive, MINOR. **No migration.**
