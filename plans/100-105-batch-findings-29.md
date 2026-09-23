@@ -166,3 +166,19 @@ Approval authorized plans 100–105, commits, pushes and the `v4.13.0` tag on
 10. **MINOR release v4.13.0** with lab beat 20.
 
 Approve as written, or name which of the ten to change.
+
+## Execution notes (2026-09-23)
+
+- **Plan 102's security review** found the `expect_unchanged` check ran BEFORE the feedback block's own
+  column writes (`lifecycle_status`, `confirmed_at` on a local-tool arrival) — an omitted-then-engine-set
+  column slipped past the assertion. Closed: the check runs against the FINAL row; the PoC is a test.
+- **Checking the feedback TABLE (the export and the journal's CSV mirror), not only findings_29**: every
+  `system:` row in ACMP's 1,359-row journal is the engine's (six actors, no forgery); `PE-1357` had an
+  empty actor — `work_bind`'s row, the one engine-written journal row with no author. Fixed under plan
+  102's amendment (`system:work-bind`).
+- **Beat 20's first dispatch STOPPED correctly at Step 9**: Step 2 resolves the fixture's only
+  `Reported` row and beat 18's assertion (`lifecycle_status=Reported --min 1`) counted zero. The copy-based
+  dry run (F-4/F-5's lesson) proves a NEW surface fires but never runs `run_evals`, so it cannot see an
+  EXISTING assertion the beat falsifies. **Recipe lesson F-6: when a beat moves a lifecycle state, grep
+  the case's assertions for predicates naming that state before dispatch.** Ruling: the beat-18
+  assertion re-aimed at the engine's confirmation journal row (a fact that survives disposition).

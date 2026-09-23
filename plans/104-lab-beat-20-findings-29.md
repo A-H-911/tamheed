@@ -69,7 +69,7 @@ No `plugin.json` bump; do not touch `CHANGELOG.md`, the version stamps, `plugins
 ## Scope
 
 **In scope**: `evals/sample-results/lab-tracker/package/**` (through the tools), `evals/evals.json`
-(append to the `lab-tracker` case only), `lab/scenario.md` (append beat 20), `lab/README.md` (add
+(append to the `lab-tracker` case; PLUS the one amendment below), `lab/scenario.md` (append beat 20), `lab/README.md` (add
 beat 20 to the beats list), `plans/evidence/lab-continuation-report-104-2026-09-23.md` (new).
 **Out of scope**: everything else.
 
@@ -191,6 +191,23 @@ replaced by the Step 1 BACKUP — every one must exit NON-zero there — and the
 fixture, where every one exits 0. Put both columns in the report. A needle already present in the
 backup is hollow: narrow it and say so.
 
+### Step 8b: Amendment (the reviewer's ruling, 2026-09-23, after the first dispatch STOPPED at Step 9)
+
+Step 2 resolves the fixture's only `Reported` row, and beat 18's assertion *"A missing function was
+recorded as feedback, confirmed on the operator's word, and reported (plan 087)"* asserts
+`lifecycle_status=Reported --min 1` — a live state the channel is designed to leave. The first
+dispatch stopped on it, correctly: the plan's copy-based dry run never runs `run_evals`, so it could
+not see an EXISTING assertion the beat falsifies (recipe lesson F-6). Ruling: re-aim that one
+assertion at the fact beat 18 established — the engine's confirmation row — which survives
+disposition; the "reported and answered" half is beat 20's assertion 2. Edit that entry in place:
+
+```json
+{"check": "A missing function was recorded as feedback and confirmed on the operator's word - the engine's own journal row (plan 087; its reporting and resolution are beat 20's).",
+ "cmd": ["python","evals/pkg_check.py","grep-present","{case_dir}/package","FB-001 -> Confirmed (was Proposed","--tables","progress_entries"], "expect_exit": 0}
+```
+
+Nothing else in the file changes. Then continue with Step 9.
+
 ### Step 9: Docs + evidence + gate
 
 Append beat 20 to `lab/scenario.md` and to `lab/README.md`'s beats list (one clause, in the
@@ -206,11 +223,11 @@ the tree while it runs). Then commit.
 
 ## Done criteria
 
-- [ ] `run_evals --case lab-tracker` all pass (81: 73 + 8)
-- [ ] every new assertion exits non-zero against the Step 1 backup (re-run by the reviewer against `git archive <pre-beat sha>`)
-- [ ] `python check.py` → `ALL CHECKS PASSED`
-- [ ] `git status --short` shows only in-scope paths; no `data/.lock`
-- [ ] the evidence report exists and every mechanism row says `observed` or why not
+- [x] `run_evals --case lab-tracker` all pass (81: 73 + 8)
+- [x] every new assertion exits non-zero against the Step 1 backup (re-run by the reviewer against `git archive 6b98480`: 8/8 backup=1, fixture=0)
+- [x] `python check.py` → `ALL CHECKS PASSED`
+- [x] `git status --short` shows only in-scope paths; no `data/.lock`
+- [x] the evidence report exists and every mechanism row says `observed` or why not
 
 ## STOP conditions
 
@@ -220,3 +237,13 @@ the tree while it runs). Then commit.
 - Step 2.2's journal row contains `attested` — quote it and stop (a false claim of the word).
 - Any tool result contradicts this plan in a way the plan records cannot explain — quote and stop.
 - A step would require editing anything under `plugins/` or `tests/`.
+
+## Review (the reviewer, 2026-09-23, after re-running the done criteria)
+
+Cherry-picked `0a681dd` onto main as `faf4036` (main had moved by plan 102's amendment; the beat
+touches only the fixture, the eval case, the lab docs and the evidence report). The first dispatch
+STOPPED correctly at Step 9 on the plan's own gap — Step 2 leaves no `Reported` row and beat 18's
+assertion named that state; the copy-based dry run cannot see an existing assertion a beat
+falsifies (recipe lesson F-6: grep the case for predicates naming a state the beat moves). The
+beat itself fired every mechanism on the first run, all five refusals included, and the fixture
+changed only through the tools. The agent's `Co-Authored-By` names its own model, kept.

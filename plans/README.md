@@ -187,8 +187,8 @@ devil's-advocate review; execution order is the row order below). Status values:
 | 101 | [The header read is a superset of the write (FB-015)](101-the-header-read-is-a-superset-of-the-write.md) | FB-015 | DONE — 2026-09-23 |
 | 102 | [Three guard refinements: `go_no_go` presence-checked, the substitute re-run refusal, `expect_unchanged` honours omission](102-three-guard-refinements.md) | findings_29 §1, §3, §4 | DONE — 2026-09-23; security review: one HIGH (the check ran before the engine's own column writes) closed |
 | 103 | [Docs + diagrams sweep](103-docs-and-diagrams-sweep-findings-29.md) | 100-102 | DONE — 2026-09-23 |
-| 104 | [Lab beat 20](104-lab-beat-20-findings-29.md) | 100-103 + full test | PLANNED |
-| 105 | [Release v4.13.0](105-release-v4130.md) | 104 | PLANNED |
+| 104 | [Lab beat 20](104-lab-beat-20-findings-29.md) | 100-103 + full test (11/11 vs 0/11 on `v4.12.0`; selftest 19/19) | DONE `faf4036` — first dispatch stopped correctly on the plan's own assertion collision (F-6); 8 new assertions, each failing on the pre-beat fixture |
+| 105 | [Release v4.13.0](105-release-v4130.md) | 104 | IN PROGRESS |
 
 ### Field cycle findings_28 -- plans 091-099 -> v4.12.0 (2026-09-22; reviewer-executed)
 
