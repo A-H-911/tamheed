@@ -190,7 +190,7 @@ devil's-advocate review; execution order is the row order below). Status values:
 | 095 | [FB-004: the `substitute` item on `entity_upsert`](095-the-substitute-write.md) | FB-004; 092-094 | DONE — 2026-09-23; two reviewers, one MEDIUM (a match glued to a digit) closed |
 | 096 | [review.html follows plans 069-095 (Feedback + Readiness sections, the lesson tag, the waiver mark)](096-review-page-follows-the-batches.md) | maintainer ruling | DONE — 2026-09-23 |
 | 097 | [Docs + diagrams sweep](097-docs-and-diagrams-sweep-findings-28.md) | 091-096 | DONE — 2026-09-23 |
-| 098 | [Lab beat 19](098-lab-beat-19-findings-28.md) | 091-097 + full test (10/10 vs 0/10 on `v4.11.0`; 9 suites; selftest) | IN PROGRESS |
+| 098 | [Lab beat 19](098-lab-beat-19-findings-28.md) | 091-097 + full test (12/12 vs 0/12 on `v4.11.0`; 9 suites; selftest) | DONE `9a7aa34` — three dispatches: F-4 and F-5 (two engine crashes only the recorded fixture could show) fixed between them; 8 new assertions, each failing on the pre-beat fixture |
 | 099 | Release v4.12.0 | 098 | PLANNED |
 
 **Dependency notes (advisor plans).** 042 before 052 (a red matrix leg is unattributable

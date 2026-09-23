@@ -197,11 +197,11 @@ the tree while it runs). Then commit.
 
 ## Done criteria
 
-- [ ] `run_evals --case lab-tracker` all pass (65 + the new assertions)
-- [ ] every new assertion exits non-zero against the Step 1 backup
-- [ ] `python check.py` → `ALL CHECKS PASSED`
-- [ ] `git status --short` shows only in-scope paths; no `data/.lock`
-- [ ] the evidence report exists and every mechanism row says `observed` or why not
+- [x] `run_evals --case lab-tracker` all pass (73: 65 + 8)
+- [x] every new assertion exits non-zero against the Step 1 backup (re-run by the reviewer against `git archive de7055a`)
+- [x] `python check.py` → `ALL CHECKS PASSED`
+- [x] `git status --short` shows only in-scope paths; no `data/.lock`
+- [x] the evidence report exists and every mechanism row says `observed` or why not
 
 ## STOP conditions
 
@@ -211,3 +211,16 @@ the tree while it runs). Then commit.
   glued-match substitute is ACCEPTED — quote it and stop.
 - Any tool result contradicts this plan in a way the plan records cannot explain — quote and stop.
 - A step would require editing anything under `plugins/` or `tests/`.
+
+## Review (the reviewer, 2026-09-23, after re-running the done criteria)
+
+Merged `9a7aa34` by fast-forward after three dispatches. The first two STOPPED correctly on engine
+crashes the suite could not see — **F-4** (plan 094 keyed the header by directory name; the recorded
+fixture and the field's package both store a different name) and **F-5** (plan 096 joined `waived`
+records as strings; the test's waiver never fired) — each fixed, tested, added to the acceptance
+script, and pushed before the next dispatch. Before the third, every beat step was dry-run on a
+fixture copy; nothing new surfaced. The third run fired every mechanism and all five refusals; no
+needle was hollow. The lab did exactly its job twice: the recorded fixture is the only package with
+real accumulated history, and a new surface must be dry-run on it before an agent is dispatched
+(two thirty-minute runs found what a thirty-second dry run finds). The agents' `Co-Authored-By`
+lines name their own model, kept: a trailer must be true.
