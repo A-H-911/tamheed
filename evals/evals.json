@@ -1325,17 +1325,15 @@
           "expect_exit": 0
         },
         {
-          "check": "A missing function was recorded as feedback, confirmed on the operator's word, and reported (plan 087).",
+          "check": "A missing function was recorded as feedback and confirmed on the operator's word - the engine's own journal row (plan 087; its reporting and resolution are beat 20's).",
           "cmd": [
             "python",
             "evals/pkg_check.py",
-            "count",
+            "grep-present",
             "{case_dir}/package",
-            "feedback",
-            "--col",
-            "lifecycle_status=Reported",
-            "--min",
-            "1"
+            "FB-001 -> Confirmed (was Proposed",
+            "--tables",
+            "progress_entries"
           ],
           "expect_exit": 0
         },
@@ -1542,6 +1540,112 @@
             "grep-file",
             "{case_dir}/package/review.html",
             "section id=\"feedback\""
+          ],
+          "expect_exit": 0
+        },
+        {
+          "check": "A reported feedback row was resolved by the recipe and the engine journaled the bookkeeping move without claiming a word (plan 100).",
+          "cmd": [
+            "python",
+            "evals/pkg_check.py",
+            "grep-present",
+            "{case_dir}/package",
+            "bookkeeping, no word required",
+            "--tables",
+            "progress_entries"
+          ],
+          "expect_exit": 0
+        },
+        {
+          "check": "The resolved row names the release and the plan that answered it (plan 100).",
+          "cmd": [
+            "python",
+            "evals/pkg_check.py",
+            "count",
+            "{case_dir}/package",
+            "feedback",
+            "--col",
+            "lifecycle_status=Resolved",
+            "--col",
+            "resolved_in=4.12.0",
+            "--min",
+            "1"
+          ],
+          "expect_exit": 0
+        },
+        {
+          "check": "The MVP definition was written through the tool and is stored (plan 101).",
+          "cmd": [
+            "python",
+            "evals/pkg_check.py",
+            "grep-present",
+            "{case_dir}/package",
+            "ten times a day",
+            "--tables",
+            "packages"
+          ],
+          "expect_exit": 0
+        },
+        {
+          "check": "Re-sending the current verdict without the operator's word was refused, and the note quotes the probe (plan 102).",
+          "cmd": [
+            "python",
+            "evals/pkg_check.py",
+            "grep-present",
+            "{case_dir}/package",
+            "presence",
+            "--tables",
+            "progress_entries"
+          ],
+          "expect_exit": 0
+        },
+        {
+          "check": "A prefix repair landed once by substitute (plan 102).",
+          "cmd": [
+            "python",
+            "evals/pkg_check.py",
+            "grep-present",
+            "{case_dir}/package",
+            "DEF-001 (fixed in",
+            "--tables",
+            "defects"
+          ],
+          "expect_exit": 0
+        },
+        {
+          "check": "The second run of the same substitute was refused, and the note names the count (plan 102).",
+          "cmd": [
+            "python",
+            "evals/pkg_check.py",
+            "grep-present",
+            "{case_dir}/package",
+            "already occurs 1 time(s)",
+            "--tables",
+            "progress_entries"
+          ],
+          "expect_exit": 0
+        },
+        {
+          "check": "A partial row naming an omitted column in expect_unchanged passed, and a sent drifted one was refused (plan 102).",
+          "cmd": [
+            "python",
+            "evals/pkg_check.py",
+            "grep-present",
+            "{case_dir}/package",
+            "omitted column is preserved",
+            "--tables",
+            "progress_entries"
+          ],
+          "expect_exit": 0
+        },
+        {
+          "check": "The recorded review page files the resolved row under the closed fold, not a closing heading over live reports (plan 100).",
+          "cmd": [
+            "python",
+            "evals/pkg_check.py",
+            "grep-file",
+            "{case_dir}/package/review.html",
+            "Resolved or rejected (kept as evidence)"
           ],
           "expect_exit": 0
         }

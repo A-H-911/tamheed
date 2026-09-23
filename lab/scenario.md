@@ -426,6 +426,63 @@ must fire; the resulting package replaces `evals/sample-results/lab-tracker/pack
       `<section id="readiness">`, `<section id="feedback">` and `Evaluated as of` (plan
       096); `gate_run` ready; `package_verify()` green (`verified: true`, `foreign: []`,
       `foreign_csv: []`, `review_current: true`); `package_close`; no `data/.lock` remains.
+20. **The findings_29 continuation (v4.13.0).** The request the project reported in beat
+    18 has been answered upstream; the readiness rule and the handoff warning had named it
+    every day until now. It is resolved by a partial row — id, kind, title and the three
+    bookkeeping columns — and the engine journals the move as bookkeeping, claiming no
+    word. The MVP definition is written and read back through the tool. Re-sending the
+    current verdict without the operator's word is refused; with it, nothing is journaled
+    because nothing moved. A prefix repair by `substitute` passes once and is refused the
+    second time. A partial defect row names an omitted column in `expect_unchanged` and
+    passes.
+    ✔ THE CHANNEL'S MIDDLE (plan 100): `FB-001` — the patch-mode request beat 18 filed,
+      answered upstream by plan 095 in 4.12.0 — is closed by the disposition recipe the
+      readiness note itself teaches: a PARTIAL row of `id`, `kind`, `title`,
+      `lifecycle_status: "Resolved"`, `resolved_in: "4.12.0"` and
+      `upstream_ref: "tamheed plan 095"`. `changed_columns` names exactly those three
+      bookkeeping columns, and `detail` and `workaround` read back byte-identical to the
+      pre-beat backup — the absence of a column from `changed_columns` is the proof that
+      the UPDATE preserved it. The engine journals the move itself: `feedback_audit`
+      `PE-036`, `event_type: "transition"`, actor `system:feedback-guard`, entry
+      `FEEDBACK FB-001 -> Resolved (was Reported; kind missing-capability) — bookkeeping,
+      no word required; resolved_in 4.12.0; upstream_ref tamheed plan 095` — and it never
+      says `attested`, because no word was asked for or given. The advisory
+      `feedback-unanswered` moves from `fail` (`entities: ["FB-001"]`) to `pass` with an
+      empty list, and `handoff_emit`'s third feedback warning — the one naming `FB-001` as
+      `reported upstream and not yet answered` — is gone.
+    ✔ THE HEADER READ (plan 101): `entity_upsert(type="package")` writes `mvp_definition`
+      and `server_info().package` reads it straight back, together with all ten header
+      columns — `created_at` (`2026-08-14T14:33:11Z`) among them, which no caller may
+      write. `v1_manifest_derived` is ABSENT: this package was born v4 and was never
+      migrated from a v1 manifest, so there is nothing for that key to annotate.
+    ✔ THE VERDICT, PRESENCE-CHECKED (plan 102): the CURRENT verdict, re-sent unchanged and
+      unattended — the shape the change-checked guard let through, so the 4.12.0 brief's
+      refusal probe could not fail — is REFUSED: `go_no_go is the package's governance
+      verdict and changes only on the OPERATOR's word`. On the operator's word the same
+      item is accepted with `changed_columns: []` and NO `package_audit` key, and the
+      progress-entry total holds at 36 across the step: the audit row is written only when
+      the verdict MOVES.
+    ✔ THE SUBSTITUTE RE-RUN (plan 102): a prefix repair on `DEF-005`'s long title —
+      `DEF-001` to `DEF-001 (fixed in SL-002)` — lands once (`substituted` `{"title": 1}`,
+      `old_len` 108, `new_len` 126). Sent a SECOND time, byte-identical, it is REFUSED:
+      `'DEF-001 (fixed in SL-002)' already occurs 1 time(s) in 'title' and contains
+      'DEF-001' — a re-run would compound it`. The title still carries exactly one
+      `DEF-001 (fixed in SL-002)`.
+    ✔ EXPECT_UNCHANGED HONOURS OMISSION (plan 102): a PARTIAL `DEF-005` row naming
+      `custom_attributes` in `expect_unchanged` while OMITTING it is ACCEPTED with
+      `changed_columns: []` — an omitted column is preserved by the UPDATE, so naming it is
+      a true assertion, never drift. The same item with a drifted value actually SENT is
+      REFUSED: `custom_attributes differ(s) from the stored row (a sent column must match;
+      an omitted column is preserved by the UPDATE and never counts as drift)`.
+    ✔ Close the beat with ONE `progress_update` note (actor `agent:lab-beat-20`,
+      `event_type: "note"`) quoting verbatim `bookkeeping, no word required`, the `changes
+      only on the OPERATOR's word` clause, `already occurs 1 time(s)`, `omitted column is
+      preserved`, and the words `feedback-unanswered` and `mvp_definition` — written BEFORE
+      the export; then `export_html`, whose page carries `id="feedback-closed"` and
+      `Resolved or rejected (kept as evidence)` and no longer files live reports under the
+      closing heading `Reported, resolved or rejected` (plan 100); `gate_run` ready;
+      `package_verify()` green (`verified: true`, `foreign: []`, `foreign_csv: []`,
+      `review_current: true`); `package_close`; no `data/.lock` remains.
 
 **Pass bar:** every ✔ observed; `gate_run` ready (or failing ONLY on deliberately-open
 items the scenario names); the eval runner's lab checks green. `readiness_check` is

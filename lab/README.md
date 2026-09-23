@@ -46,7 +46,13 @@ no list; 19: the findings_28 mechanisms — the phantom id in the project's own 
 reported amber and made inert by backticks, the token census that counts every occurrence, the
 go/no-go verdict that lands only on the operator's word — a string never attests — and the
 engine's own witness of it, the one-token substitute that touches nothing else and the glued,
-immutable and mixed substitutes refused, the review page's Readiness and Feedback sections)
+immutable and mixed substitutes refused, the review page's Readiness and Feedback sections;
+20: the findings_29 mechanisms — the reported request closed by the partial-row disposition
+recipe and journaled as bookkeeping that claims no word, the readiness advisory and the handoff
+warning that fall silent with it, the MVP definition written and read back beside every other
+header column, the current verdict re-sent unattended and refused by the presence check, the
+prefix repair that lands once and is refused on the re-run, the partial row whose omitted
+column is preserved and the sent drifted one refused)
 run as incremental real-agent sessions against the recorded package — the fixture is regenerated
 by continuation, not from scratch.
 
