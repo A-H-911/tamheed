@@ -28,8 +28,10 @@ Execute ONE iteration against the `{package}` Tamheed package, no pauses:
 6. Close: set the finished `wbs-item` to `lifecycle_status: "Review"` (done-claimed;
    `Implemented` is the verified state, and readiness counts Review as open). If the
    slice's criteria all look Met, `readiness_check("slice", "<SL-x>")` — a blocking
-   failure is a stop condition (force or a waiver needs a human). Then `gate_run()`
-   and `package_close()`.
+   failure is a stop condition (force or a waiver needs a human). `ready: false` with NO
+   blocking failure means a blocking rule could not discriminate — `indeterminate` names
+   it (an empty slice: no ACs, no work items); record the rows the slice lacks, never
+   report it as a failure. Then `gate_run()` and `package_close()`.
 7. End with EXACTLY this block (the loop driver parses it; one line, fixed order):
 
    `ITERATION: wbs=<WBS-x|none> slice=<SL-x|none> acs_moved=<n> gate=<pass|fail> ready=<true|false|n/a> stop=<none|reason> lessons_pending=<n>`

@@ -176,6 +176,20 @@ devil's-advocate review; execution order is the row order below). Status values:
 | 089 | [Lab beat 18](089-lab-beat-18-findings-27.md) | 085-088 + full test (15/15 vs 0/15 on `v4.10.0`; 9 suites; selftest) | DONE `762b98b` — 9 new assertions, each failing on the pre-beat fixture; D-1 registry-sync unscripted, F-3 fixed |
 | 090 | [Release v4.11.0](090-release-v4110.md) — plan-058 recipe + the fixture follows the stamp | 089 | DONE — 2026-09-22, tag `v4.11.0` (SHA in the tag) |
 
+### Field cycle findings_30 -- plans 106-111 -> v4.14.0 (2026-09-24; reviewer-executed)
+
+Master record: [106-111-batch-findings-30.md](106-111-batch-findings-30.md) (the approved plan after a
+devil's-advocate review; execution order is the row order below). Status values: PLANNED / IN PROGRESS / DONE.
+
+| # | Plan | Depends on | Status |
+|---|---|---|---|
+| 106 | [`ready` follows its doctrine: false while a blocking rule is indeterminate, with the list (FB-016)](106-ready-follows-its-doctrine.md) | FB-016 | IN PROGRESS |
+| 107 | [Three honesty fixes: `deferred-work-reviewed` population, the pointer warning, the empty unanswered fold](107-three-honesty-fixes.md) | findings_30 §3.2-3.3 | PLANNED |
+| 108 | [`expect_unchanged` refuses the vacuous case; the sweep prompt's four gaps](108-expect-unchanged-refuses-the-vacuous-case.md) | findings_30 Q3, Q5 | PLANNED |
+| 109 | [Docs + diagrams sweep](109-docs-and-diagrams-sweep-findings-30.md) | 106-108 | PLANNED |
+| 110 | [Lab beat 21](110-lab-beat-21-findings-30.md) | 106-109 + full test | PLANNED |
+| 111 | [Release v4.14.0](111-release-v4140.md) | 110 | PLANNED |
+
 ### Field cycle findings_29 -- plans 100-105 -> v4.13.0 (2026-09-23; reviewer-executed)
 
 Master record: [100-105-batch-findings-29.md](100-105-batch-findings-29.md) (the approved plan after a

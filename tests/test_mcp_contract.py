@@ -652,31 +652,70 @@ class McpContractTest(unittest.TestCase):
         self.assertEqual(closed["status"], "indeterminate")    # not a false green
         self.assertIs(closed["discriminating"], False)
         self.assertEqual(closed["entities"], [])
-        # indeterminate never blocks: ready reflects only the real failures
-        blocking_fails = [r for r in out["rules"]
+        # Plan 106 (the field's FB-016): `ready` is false while ANY blocking rule failed OR
+        # could not discriminate - "an empty slice is not a ready slice" (quality-gates.md,
+        # plan 049) is now what the tool says too; `indeterminate` names the rules.
+        blocking_fails = [r["rule"] for r in out["rules"]
                           if r["severity"] == "blocking" and r["status"] == "fail"]
-        self.assertEqual(out["ready"], not blocking_fails)
+        blocking_ind = [r["rule"] for r in out["rules"]
+                        if r["severity"] == "blocking" and r["status"] == "indeterminate"]
+        self.assertEqual(out["ready"], not blocking_fails and not blocking_ind)
+        self.assertEqual(out["indeterminate"], blocking_ind)
+        self.assertIn("defects-closed", out["indeterminate"])
         # the loud all-null case stays a real fail (maintainer-locked)
         pkg = {r["rule"]: r for r in srv.readiness_check("package")["rules"]}
         self.assertEqual(pkg["risks-discharged"]["status"], "fail")
 
     def test_scoped_readiness_reads_indeterminate_when_scope_is_empty(self):
         """Plan 049: a slice/phase with no ACs, work items, or slices measured nothing —
-        loud amber, never a green; `ready` is untouched (indeterminate never blocks)."""
+        loud amber, never a green. Plan 106 (the field's FB-016): `ready` follows -
+        false while any blocking rule is indeterminate, `indeterminate` names them;
+        the Implemented transition guard still trips on `fail` only (quality-gates.md)."""
         make_complete_package("demo")
         out = srv.entity_upsert([{"type": "phase", "id": "PH-2", "title": "later"},
                                  {"type": "slice", "id": "SL-002", "title": "empty",
                                   "phase_id": "PH-2"}])
         self.assertTrue(out["ok"], out)
-        sl = {r["rule"]: r for r in srv.readiness_check("slice", id="SL-002")["rules"]}
+        rep = srv.readiness_check("slice", id="SL-002")
+        sl = {r["rule"]: r for r in rep["rules"]}
         for name in ("acs-met", "wbs-done"):
             self.assertEqual(sl[name]["status"], "indeterminate", (name, sl[name]))
             self.assertIs(sl[name]["discriminating"], False)
             self.assertEqual(sl[name]["entities"], [])
-        ph = {r["rule"]: r for r in srv.readiness_check("phase", id="PH-2")["rules"]}
+        self.assertIs(rep["ready"], False)                          # an empty slice is not ready
+        # defects-closed too: the package has NO defects and no recorded omission, so the
+        # whole-table branch (plan 077) reads indeterminate at every scope - the remedy is
+        # the family's omission, recorded below
+        self.assertEqual(rep["indeterminate"], ["acs-met", "wbs-done", "defects-closed"])
+        ph = srv.readiness_check("phase", id="PH-2")
+        phr = {r["rule"]: r for r in ph["rules"]}
         for name in ("acs-met", "wbs-done"):
-            self.assertEqual(ph[name]["status"], "indeterminate", (name, ph[name]))
-        self.assertEqual(ph["slices-closed"]["status"], "fail")     # SL-002 is open: real
+            self.assertEqual(phr[name]["status"], "indeterminate", (name, phr[name]))
+        self.assertEqual(phr["slices-closed"]["status"], "fail")     # SL-002 is open: real
+        self.assertIs(ph["ready"], False)
+        self.assertEqual(ph["indeterminate"], ["acs-met", "wbs-done", "defects-closed"])
+        srv.entity_upsert([{"type": "omission", "entity_type": "defect",
+                            "reason": "no defect has been found yet"}])
+        rep = srv.readiness_check("slice", id="SL-002")
+        self.assertEqual(rep["indeterminate"], ["acs-met", "wbs-done"])   # a deliberate zero passes
+        self.assertEqual({r["rule"]: r for r in rep["rules"]}["defects-closed"]["omitted"]["entity_type"], "defect")
+        # the guard is unchanged: no blocking FAILURE, so the empty slice may still close
+        moved = srv.entity_upsert([{"type": "slice", "id": "SL-002", "title": "empty",
+                                    "phase_id": "PH-2", "lifecycle_status": "Implemented"}])
+        self.assertTrue(moved["ok"], moved)
+        # populate the scope: a work item and a Met criterion make it discriminate
+        srv.entity_upsert([{"type": "slice", "id": "SL-002", "title": "empty", "phase_id": "PH-2"},
+                           {"type": "wbs-item", "id": "WBS-002", "title": "w", "slice_id": "SL-002",
+                            "lifecycle_status": "Implemented"},
+                           {"type": "acceptance-criterion", "id": "AC-002", "title": "c",
+                            "requirement_id": "FR-001", "slice_id": "SL-002",
+                            "lifecycle_status": "Approved"}])
+        srv.audit_record([{"ac_id": "AC-002", "verdict": "Met", "evidence": "run",
+                           "verified_by": "ci", "verification_method": "auto-test",
+                           "against_commit": "abc"}])
+        rep = srv.readiness_check("slice", id="SL-002")
+        self.assertEqual(rep["indeterminate"], [])
+        self.assertIs(rep["ready"], True, rep["rules"])
         # populated scope is unaffected
         live = {r["rule"]: r for r in srv.readiness_check("slice", id="SL-001")["rules"]}
         self.assertNotEqual(live["acs-met"]["status"], "indeterminate")

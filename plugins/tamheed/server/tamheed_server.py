@@ -2712,10 +2712,17 @@ def _readiness_report(conn, scope: str, scope_id: str | None) -> dict:
         for gid, kind, definition, outcome in conn.execute(
             "SELECT id, gate_kind, definition, outcome FROM execution_gates"
             f" WHERE {gate_where} ORDER BY id", gate_params)]
-    ready = not any(r["severity"] == "blocking" and r["status"] == "fail"
-                    for r in rules)
-    out = {"scope": scope, "id": scope_id, "ready": ready, "rules": rules,
-           "human_required": human_required}
+    # Plan 106 (the field's FB-016): `ready` follows the doctrine quality-gates.md already
+    # stated - "an empty slice is not a ready slice". A blocking rule that could not
+    # discriminate (indeterminate) is not a pass: ready is false and `indeterminate`
+    # names the rules. The Implemented transition guard is unchanged - it trips on
+    # `fail` only (the doc's second clause) - so history's empty slices still close.
+    indeterminate = [r["rule"] for r in rules
+                     if r["severity"] == "blocking" and r["status"] == "indeterminate"]
+    ready = not indeterminate and not any(
+        r["severity"] == "blocking" and r["status"] == "fail" for r in rules)
+    out = {"scope": scope, "id": scope_id, "ready": ready, "indeterminate": indeterminate,
+           "rules": rules, "human_required": human_required}
     if expired_waivers:
         out["expired_waivers"] = expired_waivers
     return out

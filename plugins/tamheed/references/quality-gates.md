@@ -69,7 +69,11 @@ three tiers (engine / judgment / warn) synced against this file in both directio
   `indeterminate`, never `pass` ("cannot measure" ≠ "verified clean"); only real `fail` blocks.
   The same holds at phase/slice scope: `acs-met`, `wbs-done` and `slices-closed` on a scope
   that holds no rows of that kind read `indeterminate` with `discriminating: false` — an
-  empty slice is not a ready slice, and the `Implemented` guard still trips only on `fail`.
+  empty slice is not a ready slice: **since v4.14 `ready` is `false` while ANY blocking rule
+  is `indeterminate`, and the result's `indeterminate` list names them** (the field's FB-016:
+  29 slices read ready on a rule that measured nothing). The `Implemented` guard still trips
+  only on `fail` — history's empty slices still close; a package that has recorded no
+  defects records the family's omission, or every scope's `defects-closed` stays amber.
   Every query-built rule also reports the `population` it measured (`table`, `rows`,
   `scoped`): read it before trusting a green. **No rule passes over nothing**: a rule whose
   family holds zero rows reads `indeterminate` — unless the family's omission is RECORDED,
