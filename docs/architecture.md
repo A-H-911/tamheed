@@ -103,7 +103,8 @@ flowchart LR
     O -->|operator_confirm + confirmed_by| C[FB- Confirmed\njournaled system:feedback-guard]
     C -->|entity_export feedback.json| E[exports/feedback.json]
     E -->|inside findings_N.md| M[maintainer]
-    M -->|a plan, a release| R[FB- Resolved\nresolved_in]
+    P -->|feedback-unanswered + handoff_emit\nname it until resolved_in is set| M
+    M -->|a plan, a release - a PARTIAL row:\nid, kind, title, status, resolved_in, upstream_ref| R[FB- Resolved\nresolved_in]
     O -.->|a local tool: confirmed before it exists,\nwrites nothing tool-owned; reads the store via exports/ only| T[scripts/gen-*.mjs]
 ```
 On the write side, `expect_unchanged` lets a full-row status flip name the columns it did not
@@ -113,7 +114,11 @@ FB-004) is the `substitute` item: one exact token in one column, which the serve
 onto the stored row and then judges by the ORDINARY path — the same guards, triggers and
 `changed_columns` — so there is no second write contract to guard. The header row (`title`,
 `mode`, `iteration`, `entry_point`, `go_no_go`, `mvp_definition`) is written the same way,
-`entity_upsert(type="package")`, with the go/no-go verdict on the operator's word (FB-001).
+`entity_upsert(type="package")`, with the go/no-go verdict on the operator's word (FB-001) —
+presence-checked since v4.13: naming the verdict at all is the operator's act. Two things the
+field found in v4.12's first week and v4.13 closes: a replacement that contains its needle is
+refused when already present (a second run would compound), and `expect_unchanged` treats an
+omitted column as what it is — preserved by the UPDATE, never drift.
 On the read side, `search` with `context=N` is a census — the `occurrences` key, counts and
 snippets per column (FB-003) — and `prompt-ids-resolve` scans the project's own prompt files for phantom ids
 (FB-002), never a stock body.

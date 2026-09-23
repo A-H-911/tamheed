@@ -183,8 +183,10 @@ local-tool row never resolves).
 
 The header (`server_info().package`) is written with `entity_upsert(type="package")`. `title`,
 `mode`, `iteration`, `mvp_definition` and `entry_point` are the agent's bookkeeping; `go_no_go` is
-the package's governance verdict and changes only with `operator_confirm`, journaled by the
-engine (`system:package-guard`, returned as `package_audit`). `name`, `profile`, `package_version` and `created_at` are the
+the package's governance verdict: NAME it only when changing it, and only with `operator_confirm`
+(v4.13: presence-checked — a header copied back from `server_info().package` is refused
+unattended); a real move is journaled by the engine (`system:package-guard`, returned as
+`package_audit`), an attested re-send of the same verdict writes no audit row. `name`, `profile`, `package_version` and `created_at` are the
 package's identity and are frozen. The header is not an entity family: it has no register, no
 CSV and no registry row. **The operator's word, everywhere, is the JSON boolean `true`** — a
 truthy string never attests.

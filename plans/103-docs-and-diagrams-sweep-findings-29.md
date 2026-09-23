@@ -19,5 +19,5 @@ CHANGELOG `[Unreleased]`.
 
 ## Done criteria
 
-- [ ] every behaviour named in ≥ 2 docs; mermaid lint; `python check.py`
+- [x] every behaviour named in ≥ 2 docs (census: feedback-unanswered 10, presence-check 4, re-run 13, omission 3, v1_manifest_derived 2, RESOLVES 4); diagrams re-read; `python check.py`
 - [ ] CI green

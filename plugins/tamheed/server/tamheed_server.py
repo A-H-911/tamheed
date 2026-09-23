@@ -2529,7 +2529,8 @@ def _readiness_report(conn, scope: str, scope_id: str | None) -> dict:
              " rule, so backticks hide nothing. The three lists are disjoint and width"
              " is tested first, so a narrow token inside a code span appears only under"
              " `not_well_formed`. The append-only journal and Superseded/Obsolete rows"
-             " are not scanned" + (f" — {cut}" if cut else ""))
+             " are not scanned. A green means every id RESOLVES - not that the sentence"
+             " about it is true" + (f" — {cut}" if cut else ""))
         rules[-1].update({k: prose[k][:_PROSE_ID_CAP]
                           for k in ("in_code_spans", "not_well_formed")})
         # Plan 093 (FB-002): the project's prompt FILES, the surface a session reads
@@ -2545,7 +2546,8 @@ def _readiness_report(conn, scope: str, scope_id: str | None) -> dict:
              " reads before it runs any tool: correct the id, record the missing row, or"
              " quote history in backticks (a code span is inert). THE ENTITY LIST IS A"
              " FLOOR: `in_code_spans` and `not_well_formed` are informational, as for"
-             " rows; width is tested first" + (f" — {pcut}" if pcut else ""))
+             " rows; width is tested first. A green means every id RESOLVES - not that the"
+             " sentence about it is true" + (f" — {pcut}" if pcut else ""))
         rules[-1].update({k: pfiles[k][:_PROSE_ID_CAP]
                           for k in ("in_code_spans", "not_well_formed")})
         # the uniform population shape (every consumer reads `rows`); `unit` says files

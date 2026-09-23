@@ -141,7 +141,9 @@ envelope and rows QUOTED in the project's findings (exports are point-in-time an
 untracked). A script the project keeps over the package is a `local-tool` feedback row that
 cannot be a draft: the operator's word is a precondition of its insert. Its rule has two
 clauses — it writes nothing tool-owned; if it reads the STORE, it reads `exports/` only; `handoff_emit` names
-every row that still awaits the operator or the export.
+every row that still awaits the operator or the export, and every reported row until it is
+answered (`feedback-unanswered`, v4.13); when upstream ships or answers it, set the row Resolved
+with `resolved_in`/`upstream_ref` as a PARTIAL row — id, kind, title and those three.
 
 **Intake & normalization (stages 1–4).** `package_create(name, title, profile, mode)` opens the store.
 Extract requirements **verbatim with source spans**; `entity_upsert` them as `requirement` rows with

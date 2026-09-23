@@ -10,6 +10,36 @@ All notable changes to Tamheed are documented here. The format is based on
 
 ## [Unreleased]
 
+The findings_29 batch (plans 100-105; the master record is `plans/100-105-batch-findings-29.md`).
+ACMP's first week on 4.12.0: the four answers worked; two new rows (`FB-014`, `FB-015`) and four
+findings about the guards. Additive, MINOR. **No migration.**
+
+- **The feedback channel's middle (ACMP's `FB-014`; plan 100).** A `Reported` row upstream never
+  answered had no liveness surface. Now the move WITHIN the bound set (`Confirmed → Reported`,
+  `Reported → Resolved`) is journaled as `transition` by `system:feedback-guard` with bookkeeping
+  text — the row never claims a word it did not get; the advisory `feedback-unanswered` names every
+  reported row with no `resolved_in` (registers excluded; emitted only when the package has feedback
+  rows, the plan-079 posture); `handoff_emit` carries a third warning, ids only; the review page's
+  middle fold splits into *Reported upstream, not yet answered* and *Resolved or rejected (kept as
+  evidence)*; one predicate serves all three. The disposition recipe is taught as a PARTIAL row —
+  `id`, `kind`, `title`, `lifecycle_status`, `resolved_in`, `upstream_ref` — because omitted columns
+  are preserved and the drift guard is presence-checked (the 4.12.0 brief's "full rows, as stored"
+  was the riskier instruction). `register-liveness.md` gains walk steps for `feedback-unanswered`
+  and for `prompt-ids-resolve`, which plan 093 had left out of the sweep prompt.
+- **The header read is a superset of the write (ACMP's `FB-015`; plan 101).** `server_info().package`
+  reports all ten columns — `mvp_definition` and `created_at` were writable or stored and readable
+  only through `review.html` — and, on a migrated package, `v1_manifest_derived` (the page's
+  annotation, as data).
+- **Three guard refinements (findings_29 §1, §3, §4; plan 102).** `go_no_go` is PRESENCE-checked:
+  naming it without the operator's word is refused whatever the value (the brief's probe re-sent the
+  stored verdict and could not fail); an attested re-send writes no audit row. `substitute` refuses
+  the re-run shape — `new` contains `old` and already occurs — with the remedy in the message.
+  `expect_unchanged` honours omission: a sent column must match, an omitted column is preserved by
+  the UPDATE and never counts as drift (the retire path had said so since plan 040; this path said
+  the opposite and refused a correct partial write). The JSON refusal is named for what it checks,
+  `custom_attributes`. Both id rules say a green means every id RESOLVES, not that the sentence
+  about it is true.
+
 ## [4.12.0] - 2026-09-23
 
 **MINOR — the findings_28 batch: the four capabilities the feedback channel asked for, the review

@@ -62,10 +62,17 @@ report a problem.
   says `operator_confirm attested` was written by the server or not at all.
 - **A partial write inherits every guard** — the `substitute` item (v4.12) changes one token in one
   column by materializing the stored row and sending it down the ordinary full-row path; it has no
-  guard of its own to have holes in. It refuses the journal, composite-key rows, `id`, and a match
-  glued to a digit (`DEC-20` inside `DEC-208`), the class the security review found.
-- **The go/no-go verdict is the operator's** — `entity_upsert(type="package")` changes `go_no_go`
-  only with `operator_confirm`, journaled by `system:package-guard`; identity columns are frozen.
+  guard of its own to have holes in. It refuses the journal, composite-key rows, `id`, a match
+  glued to a digit (`DEC-20` inside `DEC-208`), the class the security review found, and (v4.13)
+  the re-run shape — a replacement that contains the needle and is already present would compound
+  on a second run; the field found it, the guard now names it.
+- **The go/no-go verdict is the operator's** — `entity_upsert(type="package")` refuses any item that
+  NAMES `go_no_go` without `operator_confirm` (v4.13: presence-checked, so a refusal probe can fail),
+  journals a real move by `system:package-guard`, and writes no audit row for an attested re-send of
+  the same verdict; identity columns are frozen.
+- **A feedback row is journaled at every move** — entering the bound set and leaving it on the
+  operator's word (v4.11), and the bookkeeping moves within it (v4.13: `Confirmed → Reported`,
+  `Reported → Resolved`); the row says which it was and never claims a word it did not get.
 - **What leaves the package leaves on the operator's word** — a `feedback` row (v4.11) is the
   only sanctioned channel from a project to the plugin's maintainer; it leaves as an
   `entity_export` file inside the project's own findings, only once `Confirmed`

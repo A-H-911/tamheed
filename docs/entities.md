@@ -1022,9 +1022,10 @@ stateDiagram-v2
     [*] --> Confirmed : a local-tool row - refused without operator_confirm, born Confirmed
     Proposed --> Confirmed : operator_confirm + confirmed_by - the engine journals it (feedback_audit)
     Proposed --> Rejected : free - it was only a draft
-    Confirmed --> Reported : entity_export("feedback") carried it into the findings
+    Confirmed --> Reported : entity_export("feedback") carried it into the findings - journaled, bookkeeping (v4.13)
     Confirmed --> Rejected : operator_confirm - withdrawing what the operator confirmed, journaled
-    Reported --> Resolved : resolved_in names the release that answered it
+    Reported --> Resolved : resolved_in names the release (or the answer) - journaled, bookkeeping (v4.13)
+    Reported --> Reported : feedback-unanswered names it at every readiness_check, handoff_emit at every emission
     Reported --> Rejected : upstream declined - upstream_ref names why
 ```
 

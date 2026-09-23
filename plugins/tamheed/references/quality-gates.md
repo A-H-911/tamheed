@@ -84,6 +84,10 @@ three tiers (engine / judgment / warn) synced against this file in both directio
   carries `scoped: true` — that field tells the two ambers apart. `prompt-ids-resolve`
   (v4.12) applies the same rule to the PROJECT's prompt files — the prose a session reads
   before any tool — never to a stock body; its `population` counts files (`unit: files`).
+  Both id rules check that an id RESOLVES, never that the sentence about it is true (the
+  field found seven true-looking sentences about a row that now exists). `feedback-unanswered`
+  (v4.13) names every reported feedback row until `resolved_in` is set; like
+  `waivers-open-ended` it exists only when the package has rows of that family.
   Since v4.12 `review.html` renders this report too, evaluated as of its export date.
 - Judgment gates: perform the check and record the verdict (a `progress-entry` note with the evidence).
 - Stage 19 runs everything; Stage 22 re-confirms criticals + `readiness_check("package")` for the
