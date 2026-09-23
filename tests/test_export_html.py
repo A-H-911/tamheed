@@ -76,6 +76,8 @@ class ExportHtmlTest(unittest.TestCase):
              "kind": "improve"},
             {"type": "waiver", "id": "WVR-001", "rule": "defects-minor", "justification": "train",
              "approver": "anas"},
+            {"type": "defect", "id": "DEF-001", "severity": "low", "title": "a minor one the"
+             " waiver absorbs - so the rule FIRES and its waived list is populated (beat 19)"},
             {"type": "feedback", "id": "FB-001", "kind": "missing-capability", "title": "no patch mode",
              "detail": "DEC-208 could not be substituted", "workaround": "a scratch script"},
             {"type": "feedback", "id": "FB-002", "kind": "question", "title": "does search fold case?"},
@@ -115,6 +117,7 @@ class ExportHtmlTest(unittest.TestCase):
         self.assertIn("indeterminate", html)
         self.assertIn("measured nothing", html)
         self.assertRegex(html, r"prose-ids-resolve")
+        self.assertIn("DEF-001 (WVR-001)", html)                          # a waived row renders
         # deterministic within a run
         self.assertEqual(html, self._export())
 

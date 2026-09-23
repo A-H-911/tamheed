@@ -579,6 +579,19 @@ def _feedback(conn, gates, ready, readiness=None):
     return "".join(parts)
 
 
+def _waived_cell(waived) -> str:
+    """`waived` is a list of {entity, waiver} dicts (plan 060), never strings - lab beat 19
+    found the join that assumed otherwise. Rendered `DEF-003 (WVR-001)`; a bare string is
+    tolerated, never assumed."""
+    parts = []
+    for w in waived or []:
+        if isinstance(w, dict):
+            parts.append(f"{w.get('entity', '')} ({w.get('waiver', '')})")
+        else:
+            parts.append(str(w))
+    return ", ".join(parts)
+
+
 def _readiness(conn, gates, ready, readiness=None):
     """The readiness report (plan 096): what readiness_check("package") says, rendered
     for the operator - status, severity, population (plan 069), discriminating (077),
@@ -603,7 +616,7 @@ def _readiness(conn, gates, ready, readiness=None):
         omitted = r.get("omitted") or {}
         rows.append([r.get("rule"), r.get("severity"), r.get("status"), pop_s,
                      "" if r.get("discriminating", True) else "no",
-                     omitted.get("reason", ""), ", ".join(r.get("waived") or []), ents_s])
+                     omitted.get("reason", ""), _waived_cell(r.get("waived")), ents_s])
     verdict = "READY" if rep.get("ready") else "NOT READY"
     return (f'<p class="ready">Readiness (package scope): {esc(verdict)}</p>'
             f'<p class="freshness">Evaluated as of {esc(as_of)} — open-questions-overdue and'

@@ -22,7 +22,9 @@
 - **Category**: lab / acceptance — **Planned at**: commit `8fa0e00`, 2026-09-23; **redispatched** after
   the first run STOPPED at Step 4.1 on an engine crash (F-4, fixed in plan 094's amendment) — the
   first run's Steps 1–3 observations are superseded by the second run's; assertion 4's needle was
-  hollow (beat 18's note already quoted the formula) and is narrowed to the refusal's own tail
+  hollow (beat 18's note already quoted the formula) and is narrowed to the refusal's own tail;
+  **redispatched a second time** after the second run STOPPED at Step 6 on the page renderer
+  (F-5, fixed in plan 096's amendment) - Steps 1-5 fired every mechanism and all five refusals
 
 ## Why this matters
 

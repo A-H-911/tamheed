@@ -34,6 +34,16 @@ plan 069.
   note agree.
 - The waivers fold marks `OPEN-ENDED (whole rule, no expiry)` in the expires cell.
 
+## Lab beat 19's finding (fixed before release, `F-5`)
+
+The second run of beat 19 STOPPED at `export_html()`: `readiness_check` builds `waived` as
+`{entity, waiver}` dicts (plan 060) and the Readiness section joined them as strings. The suite never
+saw it because the test created a waiver and no defect, so the rule never fired and `waived` stayed
+empty; the lab fixture, with three open low defects under two waivers, was the first package to
+reach the line. Fixed (`_waived_cell` renders `DEF-003 (WVR-001)`); the test now creates the defect
+the waiver absorbs and asserts the rendered cell. F-4's sibling: a new surface must be run on the
+recorded fixture, the one package with real accumulated history.
+
 ## Tests
 
 `test_review_page_follows_plans_069_to_095`: the four folds' presence and one row each; the tag on
