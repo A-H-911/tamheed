@@ -621,8 +621,12 @@ def _write_package_header(conn, i: int, item: dict) -> dict:
             and (isinstance(cols["iteration"], bool) or not isinstance(cols["iteration"], int))):
         # SQLite's INTEGER is affinity, not a constraint: 'not-a-number' would be stored
         err = f"iteration must be an integer (got {cols['iteration']!r})"
+    # Plan 102 (findings_29 §1): PRESENCE-checked - naming the verdict at all is the
+    # operator's act, whatever the value (the change-checked guard accepted an unattended
+    # re-send of the stored verdict, so the release brief's refusal probe could not fail).
+    # The audit row is still written only when the verdict MOVES: no old == new rows.
     verdict_moves = ("go_no_go" in cols and not _same_value(cols["go_no_go"], before["go_no_go"]))
-    if err is None and verdict_moves and not _operator_word(item):
+    if err is None and "go_no_go" in cols and not _operator_word(item):
         err = ("go_no_go is the package's governance verdict and changes only on the"
                " OPERATOR's word — re-run this item with \"operator_confirm\": true after"
                " their explicit confirmation; never in unattended mode")
@@ -686,7 +690,8 @@ def _materialize_substitute(conn, etype: str, table: str, item: dict,
     Returns (cols, error, substituted-counts). Refused by name: a mixed item; the
     journal families (corrected by compensating rows, never substituted); a
     composite-key surface; `id`; an unknown or non-TEXT column; an empty or unchanged
-    `old`; zero occurrences; a JSON column that no longer parses after the replace;
+    `old`; zero occurrences; a glued match; a re-run (`new` contains `old` and is
+    already present); `custom_attributes` no longer parsing after the replace;
     a row that does not exist."""
     extra = sorted(set(item) - _SUBSTITUTE_KEYS)
     if extra:
@@ -739,6 +744,16 @@ def _materialize_substitute(conn, etype: str, table: str, item: dict,
             return cols, (f"{rid}: {old!r} in {col!r} also matches inside a longer token"
                           f" ({glued!r}) — a substitute never rewrites part of an id; send"
                           " the whole token, or a full row"), None
+        # Plan 102 (findings_29 §3): a replacement that CONTAINS the needle re-matches its
+        # own output - `scripts/X` -> `src/web/scripts/X` run twice doubles the prefix. The
+        # first run passes; when `new` is already present the item is a re-run (or an
+        # ambiguous first run) and is refused with the remedy. Same class as the glue
+        # refusal: a needle matching more than the caller meant.
+        if old in new and (present := text.count(new)):
+            return cols, (f"{rid}: {new!r} already occurs {present} time(s) in {col!r} and"
+                          f" contains {old!r} — a re-run would compound it; send old and new"
+                          " with the characters that bound them (the backticks, the"
+                          " delimiter) so the result cannot re-match, or a full row"), None
         replaced = text.replace(old, new)
         if col == "custom_attributes":
             try:
@@ -1262,9 +1277,13 @@ def entity_export(path: str, tool: str = "entity_query", args: dict | None = Non
 def entity_upsert(entities: list[dict]) -> dict:
     """Batch upsert (one transaction, all-or-nothing). Each item: {'type': ..., <columns>}.
 
-    Send FULL rows, even when updating an existing entity: the upsert's INSERT half
+    Send full rows - or at least the NOT NULL columns: the upsert's INSERT half
     evaluates NOT NULL on omitted columns BEFORE conflict resolution, so a partial
-    {'id', 'statement'} update of an existing row fails on e.g. title NOT NULL.
+    {'id', 'statement'} update of an existing row fails on e.g. title NOT NULL. Every
+    OTHER omitted column of an existing row is PRESERVED (the UPDATE assigns only the
+    names you sent) - the feedback disposition recipe (plan 100) is exactly that:
+    id, kind, title, lifecycle_status, resolved_in, upstream_ref, nothing else, and
+    `changed_columns` proves the rest did not move.
     Returns per-item verdicts; a violated constraint is named in the item's error.
     Trace edges are keyed (from_id, to_id, relation), so writing a new relation
     between a pair never replaces an old one — it sits beside it. To RETIRE an edge
@@ -1279,15 +1298,18 @@ def entity_upsert(entities: list[dict]) -> dict:
     (plan 095), send {'type': ..., 'id': ..., 'substitute': {'<column>': ['<old>', '<new>']}}
     - and nothing else but operator_confirm / expect_unchanged: the server materializes the
     stored row, replaces exact text (every occurrence; refused when it occurs zero times,
-    on id, on a non-TEXT column, on the journal, or when a JSON column would stop parsing),
-    and sends the result down THIS path, so every guard and trigger judges it; the item
-    reports `substituted` counts beside `changed_columns`.
+    on id, on a non-TEXT column, on the journal, when the match is glued to a digit -
+    `DEC-20` inside `DEC-208` -, when `custom_attributes` would stop parsing, or when
+    `new` contains `old` AND already occurs - a re-run would compound; bound the needle
+    with its delimiters), and sends the result down THIS path, so every guard and
+    trigger judges it; the item reports `substituted` counts beside `changed_columns`.
+    Beside a `substitute`, `expect_unchanged` guards the WHOLE materialized row.
     A full-row update that only means to flip a status names the columns it did NOT
     mean to change: {'type': ..., 'id': ..., ..., 'expect_unchanged': ['title', ...]}
     (plan 041, the field's LL-063 — a paragraph lost mid-paste with ok: true). The
-    server compares every named column to the stored row and refuses the item naming
-    any that differ; an OMITTED named column counts as changed (the guard protects a
-    FULL-row write); JSON columns compare as parsed values; id-keyed rows only, never
+    server compares every named column you SENT to the stored row and refuses the item
+    naming any that differ; an OMITTED named column is preserved by the UPDATE and is
+    never drift (plan 102); JSON columns compare as parsed values; id-keyed rows only, never
     the append-only journal. It proves the write alters nothing you named — not that
     you saw the row correctly: re-fetch through entity_query and paste that.
     Entity prose is screened by G-COMPLETE's placeholder scan (TODO/TBD/FIXME/
@@ -1340,46 +1362,6 @@ def entity_upsert(entities: list[dict]) -> dict:
             cols, err, substituted = _materialize_substitute(conn, etype, table, item, cols)
             if err:
                 results.append({"index": i, "ok": False, "id": item.get("id"), "error": err})
-                failed = True
-                continue
-        if expect_unchanged is not None:
-            # Plan 041 (findings_24 / the field's LL-063): a full-row write that only
-            # means to flip a status names the columns it did NOT mean to change; the
-            # server compares them to the stored row and refuses drift — the
-            # immutability trigger's self-verifying property, opt-in, for the long-text
-            # registers that have no trigger. It proves the WRITE alters nothing named,
-            # not that the caller saw the row correctly.
-            err = None
-            if (not isinstance(expect_unchanged, list) or not expect_unchanged
-                    or not all(isinstance(c, str) for c in expect_unchanged)):
-                err = "expect_unchanged must be a non-empty list of column names"
-            elif table in _NON_ID_TABLES:
-                err = f"expect_unchanged guards id-keyed rows only (not {etype})"
-            elif etype in ("progress-entry", "audit-verdict"):
-                err = "expect_unchanged: journal rows are never updated (append-only)"
-            elif not cols.get("id"):
-                err = "expect_unchanged needs the item's id"
-            elif bad := sorted(set(expect_unchanged) - set(_columns(table))):
-                err = f"expect_unchanged names unknown columns for {etype}: {bad}"
-            else:
-                stored = conn.execute(
-                    f"SELECT {', '.join(expect_unchanged)} FROM {table} WHERE id = ?",
-                    (cols["id"],)).fetchone()
-                if stored is None:
-                    err = (f"{cols['id']}: no stored row to compare — expect_unchanged"
-                           " guards an UPDATE")
-                else:
-                    drifted = [c for c, was in zip(expect_unchanged, stored)
-                               if not _same_value(cols.get(c), was)]
-                    if drifted:
-                        err = (f"{cols['id']}: expect_unchanged — {', '.join(drifted)}"
-                               " differ(s) from the stored row (an omitted column"
-                               " counts as changed): the transport altered the"
-                               " value; re-fetch the row through entity_query and"
-                               " paste that")
-            if err:
-                results.append({"index": i, "ok": False, "id": cols.get("id"),
-                                "error": err})
                 failed = True
                 continue
         if retire:
@@ -1637,6 +1619,55 @@ def entity_upsert(entities: list[dict]) -> dict:
                            " \"operator_confirm\": true, or record a new FB- row")
             if err:
                 results.append({"index": i, "ok": False, "id": cols["id"], "error": err})
+                failed = True
+                continue
+        if expect_unchanged is not None:
+            # Plan 041 (findings_24 / the field's LL-063): a full-row write that only
+            # means to flip a status names the columns it did NOT mean to change; the
+            # server compares them to the stored row and refuses drift — the
+            # immutability trigger's self-verifying property, opt-in, for the long-text
+            # registers that have no trigger. It proves the WRITE alters nothing named,
+            # not that the caller saw the row correctly. Runs LAST, against the FINAL
+            # cols (plan 102's security review): the feedback block may populate
+            # lifecycle_status / confirmed_at after the caller omitted them, and a
+            # column the engine adds is one the caller's assertion must still see.
+            err = None
+            if (not isinstance(expect_unchanged, list) or not expect_unchanged
+                    or not all(isinstance(c, str) for c in expect_unchanged)):
+                err = "expect_unchanged must be a non-empty list of column names"
+            elif table in _NON_ID_TABLES:
+                err = f"expect_unchanged guards id-keyed rows only (not {etype})"
+            elif etype in ("progress-entry", "audit-verdict"):
+                err = "expect_unchanged: journal rows are never updated (append-only)"
+            elif not cols.get("id"):
+                err = "expect_unchanged needs the item's id"
+            elif bad := sorted(set(expect_unchanged) - set(_columns(table))):
+                err = f"expect_unchanged names unknown columns for {etype}: {bad}"
+            else:
+                stored = conn.execute(
+                    f"SELECT {', '.join(expect_unchanged)} FROM {table} WHERE id = ?",
+                    (cols["id"],)).fetchone()
+                if stored is None:
+                    err = (f"{cols['id']}: no stored row to compare — expect_unchanged"
+                           " guards an UPDATE")
+                else:
+                    # Plan 102 (findings_29 §4): an OMITTED column is preserved - the
+                    # UPDATE assigns only sent names - so naming it is a true assertion,
+                    # never drift (the retire path said so; this one said the opposite
+                    # and refused a correct partial write). Beside a `substitute` the
+                    # row is materialized first, so every column is "sent" and checked.
+                    drifted = [c for c, was in zip(expect_unchanged, stored)
+                               if c in cols and not _same_value(cols[c], was)]
+                    if drifted:
+                        err = (f"{cols['id']}: expect_unchanged — {', '.join(drifted)}"
+                               " differ(s) from the stored row (a sent column must"
+                               " match; an omitted column is preserved by the UPDATE"
+                               " and never counts as drift): the transport altered the"
+                               " value; re-fetch the row through entity_query and"
+                               " paste that")
+            if err:
+                results.append({"index": i, "ok": False, "id": cols.get("id"),
+                                "error": err})
                 failed = True
                 continue
         names = list(cols)

@@ -2502,9 +2502,37 @@ class V4EngineTest(unittest.TestCase):
                                  "expect_unchanged": ["title", "custom_attributes"],
                                  "custom_attributes": {"a": 1}}])
         self.assertTrue(ok["ok"], ok)
-        out = srv.entity_upsert([{"type": "defect", "id": "DEF-001", "severity": "low",
-                                  "expect_unchanged": ["title"]}])   # omitted = changed
-        self.assertIn("title differ", out["items"][0]["error"])
+        # Plan 102 (findings_29 §4): an OMITTED column is preserved by the UPDATE (only sent
+        # names are assigned), so naming it is a true assertion, never drift; a SENT column
+        # must still match. Before, "an omitted column counts as changed" refused a correct
+        # partial write - the retire path (`:1500`) already said otherwise.
+        srv.entity_upsert([{"type": "defect", "id": "DEF-001", "title": long, "severity": "high",
+                            "custom_attributes": {"note": "a paragraph that must survive"}}])
+        out = srv.entity_upsert([{"type": "defect", "id": "DEF-001", "title": long, "severity": "low",
+                                  "expect_unchanged": ["custom_attributes"]}])   # omitted = preserved
+        self.assertTrue(out["ok"], out)
+        self.assertEqual([c["column"] for c in out["items"][0]["changed_columns"]], ["severity"])
+        row = srv.entity_query("defect", id="DEF-001")["rows"][0]
+        self.assertEqual(json.loads(row["custom_attributes"]), {"note": "a paragraph that must survive"})
+        out = srv.entity_upsert([{"type": "defect", "id": "DEF-001", "title": long, "severity": "low",
+                                  "custom_attributes": {"note": "a paragraph that must  survive"},
+                                  "expect_unchanged": ["custom_attributes"]}])   # sent and drifted
+        self.assertFalse(out["ok"])
+        self.assertIn("custom_attributes differ", out["items"][0]["error"])
+        self.assertIn("omitted column is preserved", out["items"][0]["error"])
+        # plan 102's security review: a column the ENGINE populates after the caller omitted
+        # it (a local-tool arrival sets lifecycle_status Confirmed) is one the assertion
+        # must still see - the check runs against the final row, not the item as sent.
+        srv.entity_upsert([{"type": "feedback", "id": "FB-050", "kind": "missing-capability",
+                            "title": "t", "detail": "d"}])
+        out = srv.entity_upsert([{"type": "feedback", "id": "FB-050", "kind": "local-tool",
+                                  "title": "t", "detail": "d", "tool_path": "scripts/x.mjs",
+                                  "confirmed_by": "anas", "operator_confirm": True,
+                                  "expect_unchanged": ["lifecycle_status"]}])
+        self.assertFalse(out["ok"], out)
+        self.assertIn("lifecycle_status differ", out["items"][0]["error"])
+        self.assertEqual(srv.entity_query("feedback", id="FB-050")["rows"][0]["lifecycle_status"],
+                         "Proposed")
         out = srv.entity_upsert([{"type": "defect", "id": "DEF-777", "title": "t",
                                   "severity": "low", "expect_unchanged": ["title"]}])
         self.assertIn("no stored row to compare", out["items"][0]["error"])
@@ -3312,6 +3340,19 @@ class V4EngineTest(unittest.TestCase):
         self.assertEqual(srv.server_info()["package"]["go_no_go"], "NO-GO: PH-2 stalled")
         row = srv.entity_query("progress-entry", search="go_no_go")["rows"][-1]
         self.assertEqual((row["event_type"], row["actor"]), ("transition", "system:package-guard"))
+        # Plan 102 (findings_29 §1): PRESENCE-checked - naming the verdict without the word
+        # is refused whatever the value (the 4.12.0 brief's probe re-sent the stored
+        # verdict and could not fail); an attested re-send is ok and writes NO audit row.
+        same = srv.entity_upsert([{"type": "package", "go_no_go": "NO-GO: PH-2 stalled"}])
+        self.assertFalse(same["ok"], same)
+        self.assertIn("operator_confirm", same["items"][0]["error"])
+        n2 = srv.entity_query("progress-entry", limit=1)["total"]
+        same = srv.entity_upsert([{"type": "package", "go_no_go": "NO-GO: PH-2 stalled",
+                                   "operator_confirm": True}])
+        self.assertTrue(same["ok"], same)
+        self.assertNotIn("package_audit", same["items"][0])
+        self.assertEqual(same["items"][0]["changed_columns"], [])
+        self.assertEqual(srv.entity_query("progress-entry", limit=1)["total"], n2)
         self.assertEqual(srv.entity_query("progress-entry", limit=1)["total"], n + 1)
         stringy = srv.entity_upsert([{"type": "package", "go_no_go": "GO", "operator_confirm": "false"}])
         self.assertFalse(stringy["ok"], stringy)                        # the word is the boolean true
@@ -3405,6 +3446,32 @@ class V4EngineTest(unittest.TestCase):
         gone = srv.entity_upsert([{"type": "defect", "id": "DEF-404",
                                    "substitute": {"title": ["a", "b"]}}])
         self.assertIn("no stored row", gone["items"][0]["error"])
+        # Plan 102 (findings_29 §3): a replacement that CONTAINS the needle is not
+        # idempotent - run twice, `scripts/X` -> `src/web/scripts/X` doubles the prefix.
+        # The first run passes; the re-run shape (new already present) is refused with
+        # the remedy; the digit-glue check fires first when both apply.
+        srv.entity_upsert([{"type": "defect", "id": "DEF-097", "severity": "low",
+                            "title": "see `scripts/scan.mjs` and scripts/scan.mjs (bare)"}])
+        first = srv.entity_upsert([{"type": "defect", "id": "DEF-097",
+                                    "substitute": {"title": ["scripts/scan.mjs", "src/web/scripts/scan.mjs"]}}])
+        self.assertTrue(first["ok"], first)
+        self.assertEqual(first["items"][0]["substituted"], {"title": 2})
+        again = srv.entity_upsert([{"type": "defect", "id": "DEF-097",
+                                    "substitute": {"title": ["scripts/scan.mjs", "src/web/scripts/scan.mjs"]}}])
+        self.assertFalse(again["ok"], again)
+        self.assertIn("already occurs 2 time(s)", again["items"][0]["error"])
+        self.assertIn("bound", again["items"][0]["error"])
+        self.assertEqual(srv.entity_query("defect", id="DEF-097")["rows"][0]["title"],
+                         "see `src/web/scripts/scan.mjs` and src/web/scripts/scan.mjs (bare)")
+        anchored = srv.entity_upsert([{"type": "defect", "id": "DEF-097",
+                                       "substitute": {"title": ["`src/web/scripts/scan.mjs`",
+                                                                "`src/web/scripts/scan.mjs` (path)"]}}])
+        self.assertTrue(anchored["ok"], anchored)                       # bounded needle: extends once
+        srv.entity_upsert([{"type": "defect", "id": "DEF-096", "severity": "low",
+                            "title": "DEC-20 and DEC-208 and DEC-2081"}])
+        both = srv.entity_upsert([{"type": "defect", "id": "DEF-096",
+                                   "substitute": {"title": ["DEC-20", "DEC-208"]}}])
+        self.assertIn("longer token", both["items"][0]["error"])        # glue first
         srv.progress_update([{"entry": "journal row DEC-208", "event_type": "note", "actor": "agent:t"}])
         pe = srv.entity_query("progress-entry", search="journal row")["rows"][0]["id"]
         j = srv.entity_upsert([{"type": "progress-entry", "id": pe,

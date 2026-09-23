@@ -23,6 +23,12 @@
 
 ## Done criteria
 
-- [ ] RED then GREEN; `python check.py`; security reviewer's findings closed or recorded
-- [ ] dry-run on a fixture copy
+- [x] RED then GREEN; `python check.py`; security reviewer's findings closed or recorded
+      - **HIGH (closed)**: the `expect_unchanged` check ran BEFORE the feedback block, which populates
+        `lifecycle_status`/`confirmed_at` on a local-tool arrival - an omitted-then-engine-set column
+        slipped past the assertion (the old code refused it by accident of its wrong rule). The check
+        now runs against the FINAL `cols`, immediately before `names = list(cols)`; the reviewer's
+        PoC is a test. Guards 1 and 2: no bypass found. LOW (recorded, not built): neither match
+        normalizes Unicode - pre-existing, no harmful widening demonstrated.
+- [x] dry-run on a fixture copy (`scratchpad/dryrun_v4130.py`)
 - [ ] CI green
