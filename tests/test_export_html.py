@@ -97,6 +97,17 @@ class ExportHtmlTest(unittest.TestCase):
         srv.entity_upsert([{"type": "feedback", "id": "FB-003", "kind": "local-tool", "title": "slate gen",
                             "tool_path": "scripts/gen-record-slate.mjs", "operator_confirm": True,
                             "confirmed_by": "anas"}])
+        # plan 100 (FB-014): a reported-and-unanswered row and a resolved one, so the split folds
+        srv.entity_upsert([{"type": "feedback", "id": "FB-004", "kind": "defect", "title": "header unreadable",
+                            "operator_confirm": True, "confirmed_by": "anas", "lifecycle_status": "Confirmed"},
+                           {"type": "feedback", "id": "FB-005", "kind": "doc-error", "title": "wrong clause",
+                            "operator_confirm": True, "confirmed_by": "anas", "lifecycle_status": "Confirmed"}])
+        srv.entity_upsert([{"type": "feedback", "id": "FB-004", "kind": "defect", "title": "header unreadable",
+                            "lifecycle_status": "Reported"},
+                           {"type": "feedback", "id": "FB-005", "kind": "doc-error", "title": "wrong clause",
+                            "lifecycle_status": "Reported"}])
+        srv.entity_upsert([{"type": "feedback", "id": "FB-005", "kind": "doc-error", "title": "wrong clause",
+                            "lifecycle_status": "Resolved", "resolved_in": "4.12.0"}])
         html = self._export()
         # Feedback: the working surface
         self.assertIn('<section id="feedback">', html)
@@ -105,6 +116,16 @@ class ExportHtmlTest(unittest.TestCase):
         self.assertIn("Registered local tools", html)
         self.assertIn("scripts/gen-record-slate.mjs", html)
         self.assertIn("a scratch script", html)
+        # plan 100: an unanswered report is not filed under a closing heading
+        self.assertIn('id="feedback-reported"', html)
+        self.assertIn("Reported upstream, not yet answered", html)
+        self.assertIn("Resolved or rejected (kept as evidence)", html)
+        self.assertNotIn("Reported, resolved or rejected", html)
+        reported = html.index('id="feedback-reported"'); closed = html.index('id="feedback-closed"')
+        self.assertLess(html.index("FB-004", reported), closed, "FB-004 sits in the unanswered fold")
+        self.assertGreater(html.index("FB-005", closed), closed, "FB-005 sits in the closed fold")
+        self.assertNotIn("FB-005", html[reported:closed])
+        self.assertIn("feedback-unanswered", html)                 # the rule renders in Readiness
         # Lessons: the supersession tag on the Approved fold
         self.assertIn("RETIRE THIS ROW", html)
         # Waivers: the open-ended mark
@@ -120,6 +141,12 @@ class ExportHtmlTest(unittest.TestCase):
         self.assertIn("DEF-001 (WVR-001)", html)                          # a waived row renders
         # deterministic within a run
         self.assertEqual(html, self._export())
+
+    def test_feedback_unanswered_predicate_is_the_servers(self):
+        """Plan 100: the rule, the warning and the fold share ONE predicate; the page repeats
+        the literal (it imports nothing from the server), so this holds them equal."""
+        src = Path(viewer.__file__).read_text(encoding="utf-8")
+        self.assertIn(srv._FEEDBACK_UNANSWERED_WHERE, src)
 
     def test_lessons_section_renders_queue_pinned_and_impacts(self):
         """Plan 035: the dedicated Lessons section is the operator's working

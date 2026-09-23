@@ -58,7 +58,7 @@ three tiers (engine / judgment / warn) synced against this file in both directio
   (pre-approval decisions/ADRs, ACs not latest-Met, open critical/high defects — medium/low
   advise, undischarged risks, open work incl. the claimed-done `Review` state), waivers
   (operator-approved `WVR-` rows reported `waived`, never silent; expiring), advisory liveness
-  rules (nineteen at package scope, one of them only when the package has waivers — from overdue open questions through `lessons-confirmed` and
+  rules (twenty at package scope, two of them only when the package has waivers or feedback rows — from overdue open questions through `lessons-confirmed`, `feedback-unanswered` and
   `prose-ids-resolve`, the identifiers written in prose that resolve to no entity, to
   `lessons-note-budget`, which names the lessons rendering past the always-loaded note's
   curation ceiling as promotion candidates), and the `human_required` checklist from declared

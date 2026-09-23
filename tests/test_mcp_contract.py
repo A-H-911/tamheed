@@ -288,6 +288,75 @@ class McpContractTest(unittest.TestCase):
         row = srv.entity_query("progress-entry", search="FB-001 -> Rejected")["rows"][0]
         self.assertEqual(row["actor"], "system:feedback-guard")
 
+    def test_feedback_reported_rows_stay_visible_until_answered(self):
+        """Plan 100 (the field's FB-014, findings_29 §2). handoff_emit named a row while it
+        awaited the operator or the export and went silent the moment it was Reported;
+        nothing journaled the move within the bound set, so "outstanding since when" was
+        unanswerable, and ACMP's five open requests were named by nothing in the package
+        for a day. Now: the bound-to-bound move is journaled (bookkeeping text - it never
+        claims a word it did not get), the `feedback-unanswered` advisory names Reported
+        rows with no `resolved_in` (registers excluded; the rule exists only when the
+        package has feedback rows), and handoff_emit carries a third warning, ids only."""
+        self._emit_ready()
+        rules = lambda: {r["rule"]: r for r in srv.readiness_check("package")["rules"]}
+        self.assertNotIn("feedback-unanswered", rules())      # no feedback rows: no rule (plan 079)
+        draft = {"type": "feedback", "id": "FB-001", "kind": "missing-capability",
+                 "title": "no patch mode", "detail": "the phantom DEC-208 could not be substituted"}
+        srv.entity_upsert([draft])
+        srv.entity_upsert([dict(draft, lifecycle_status="Confirmed", operator_confirm=True,
+                                confirmed_by="anas")])
+        self.assertEqual(rules()["feedback-unanswered"]["entities"], [])   # Confirmed: not yet reported
+        # Confirmed -> Reported by the disposition recipe: id, the NOT NULL columns, the move
+        out = srv.entity_upsert([{"type": "feedback", "id": "FB-001", "kind": "missing-capability",
+                                  "title": "no patch mode", "lifecycle_status": "Reported"}])
+        self.assertTrue(out["ok"], out)
+        pe = out["items"][0]["feedback_audit"]
+        row = srv.entity_query("progress-entry", id=pe)["rows"][0]
+        self.assertEqual(row["actor"], "system:feedback-guard")
+        self.assertIn("FB-001 -> Reported (was Confirmed", row["entry"])
+        self.assertIn("bookkeeping", row["entry"])
+        self.assertNotIn("attested", row["entry"])                # no word was given; none is claimed
+        still = srv.entity_query("feedback", id="FB-001")["rows"][0]
+        self.assertEqual(still["detail"][:11], "the phantom")     # omitted columns preserved
+        rule = rules()["feedback-unanswered"]
+        self.assertEqual((rule["status"], rule["severity"], rule["entities"]),
+                         ("fail", "advisory", ["FB-001"]))
+        self.assertEqual(rule["population"]["table"], "feedback")
+        self.assertIn("resolved_in", rule["note"])
+        tool = {"type": "feedback", "id": "FB-002", "kind": "local-tool", "title": "slate gen",
+                "tool_path": "scripts/gen.mjs", "operator_confirm": True, "confirmed_by": "anas"}
+        srv.entity_upsert([tool])
+        srv.entity_upsert([{"type": "feedback", "id": "FB-002", "kind": "local-tool", "title": "slate gen",
+                            "tool_path": "scripts/gen.mjs", "lifecycle_status": "Reported"}])
+        self.assertEqual(rules()["feedback-unanswered"]["entities"], ["FB-001"])  # a register never resolves
+        with tempfile.TemporaryDirectory() as target:
+            ws = [w for w in srv.handoff_emit(target)["warnings"] if "feedback" in w]
+        self.assertEqual(len(ws), 1, ws)
+        self.assertIn("FB-001", ws[0])
+        self.assertNotIn("FB-002", ws[0])
+        self.assertIn("not yet answered", ws[0])
+        self.assertNotIn("phantom", ws[0])                        # ids only, never row text
+        # Reported -> Resolved by the recipe; only the three bookkeeping columns move
+        out = srv.entity_upsert([{"type": "feedback", "id": "FB-001", "kind": "missing-capability",
+                                  "title": "no patch mode", "lifecycle_status": "Resolved",
+                                  "resolved_in": "4.12.0", "upstream_ref": "tamheed plan 095"}])
+        self.assertTrue(out["ok"], out)
+        self.assertEqual([c["column"] for c in out["items"][0]["changed_columns"]],
+                         ["lifecycle_status", "resolved_in", "upstream_ref"])
+        row = srv.entity_query("progress-entry", id=out["items"][0]["feedback_audit"])["rows"][0]
+        self.assertIn("FB-001 -> Resolved (was Reported", row["entry"])
+        self.assertEqual(rules()["feedback-unanswered"]["status"], "pass")
+        with tempfile.TemporaryDirectory() as target:
+            self.assertEqual([w for w in srv.handoff_emit(target)["warnings"] if "feedback" in w], [])
+        # a re-sent row with the same status writes no journal row
+        n = srv.entity_query("progress-entry", limit=1)["total"]
+        out = srv.entity_upsert([{"type": "feedback", "id": "FB-001", "kind": "missing-capability",
+                                  "title": "no patch mode", "lifecycle_status": "Resolved",
+                                  "resolved_in": "4.12.0", "upstream_ref": "tamheed plan 095"}])
+        self.assertTrue(out["ok"], out)
+        self.assertNotIn("feedback_audit", out["items"][0])
+        self.assertEqual(srv.entity_query("progress-entry", limit=1)["total"], n)
+
     def test_managed_emission_lifecycle(self):
         """C20: emitted -> unchanged -> diverged -> force. Never a silent clobber.
         v3: the managed surface is the stock library in <package>/prompts/."""
@@ -3805,7 +3874,8 @@ class V4EngineTest(unittest.TestCase):
                           "deferred-work-reviewed", "execution-plans-approved",
                           "requirements-wired", "lessons-confirmed",
                           "lessons-note-budget", "prose-ids-resolve",
-                          "lessons-superseded-binding", "waivers-open-ended"):
+                          "lessons-superseded-binding", "waivers-open-ended",
+                          "prompt-ids-resolve", "feedback-unanswered"):   # plans 093 (missed), 100
             self.assertIn(rule_name, text, rule_name)
         self.assertIn("STOP for operator approval", text)
         self.assertIn("you NEVER author a `WVR-` row", text)

@@ -563,8 +563,15 @@ def _feedback(conn, gates, ready, readiness=None):
          "lifecycle_status = 'Confirmed' AND kind <> 'local-tool'", "feedback-confirmed"),
         ("Registered local tools (on the operator's word; writes nothing tool-owned)",
          "kind = 'local-tool'", "feedback-tools"),
-        ("Reported, resolved or rejected (kept as evidence)",
-         "kind <> 'local-tool' AND lifecycle_status IN ('Reported','Resolved','Rejected')",
+        # plan 100 (the field's FB-014): an unanswered report is not closed - the heading
+        # said "kept as evidence" over rows that were still live requests. The predicate is
+        # the server's _FEEDBACK_UNANSWERED_WHERE, repeated (a test holds them equal).
+        ("Reported upstream, not yet answered (set resolved_in / upstream_ref when it ships)",
+         "lifecycle_status = 'Reported' AND resolved_in IS NULL AND kind <> 'local-tool'",
+         "feedback-reported"),
+        ("Resolved or rejected (kept as evidence)",
+         "kind <> 'local-tool' AND (lifecycle_status IN ('Resolved','Rejected')"
+         " OR (lifecycle_status = 'Reported' AND resolved_in IS NOT NULL))",
          "feedback-closed"),
     )
     for title, where, anchor in folds:

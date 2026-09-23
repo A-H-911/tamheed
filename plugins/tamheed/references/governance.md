@@ -172,8 +172,12 @@ or of a later `kind` change — and is born `Confirmed`. Its rule has two clause
 applies only to store readers: it writes nothing tool-owned; if it reads the STORE, it reads `exports/` only (a generator of
 project-owned files inside the package directory satisfies both). While a row is
 Confirmed/Reported/Resolved its content changes only with the word, and leaving that set is
-journaled — what the operator vetted is never rewritten underneath their name. `handoff_emit`
-names every row that still awaits the operator or the export.
+journaled — what the operator vetted is never rewritten underneath their name. The move
+WITHIN that set (`Confirmed → Reported`, `Reported → Resolved`) is bookkeeping, needs no word,
+and is journaled too (v4.13, the field's FB-014) — the row says which it was. `handoff_emit`
+names every row that still awaits the operator or the export, and every reported row until it
+is answered; the `feedback-unanswered` advisory lists the same rows (registers excluded — a
+local-tool row never resolves).
 
 ## The package header — on the operator's word (v4.12)
 

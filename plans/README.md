@@ -176,6 +176,20 @@ devil's-advocate review; execution order is the row order below). Status values:
 | 089 | [Lab beat 18](089-lab-beat-18-findings-27.md) | 085-088 + full test (15/15 vs 0/15 on `v4.10.0`; 9 suites; selftest) | DONE `762b98b` — 9 new assertions, each failing on the pre-beat fixture; D-1 registry-sync unscripted, F-3 fixed |
 | 090 | [Release v4.11.0](090-release-v4110.md) — plan-058 recipe + the fixture follows the stamp | 089 | DONE — 2026-09-22, tag `v4.11.0` (SHA in the tag) |
 
+### Field cycle findings_29 -- plans 100-105 -> v4.13.0 (2026-09-23; reviewer-executed)
+
+Master record: [100-105-batch-findings-29.md](100-105-batch-findings-29.md) (the approved plan after a
+devil's-advocate review; execution order is the row order below). Status values: PLANNED / IN PROGRESS / DONE.
+
+| # | Plan | Depends on | Status |
+|---|---|---|---|
+| 100 | [The feedback channel's middle: journaled bound-to-bound moves, `feedback-unanswered`, a third handoff warning, the fold split, the sweep prompt (FB-014)](100-the-feedback-channels-middle.md) | FB-014 | IN PROGRESS |
+| 101 | [The header read is a superset of the write (FB-015)](101-the-header-read-is-a-superset-of-the-write.md) | FB-015 | PLANNED |
+| 102 | [Three guard refinements: `go_no_go` presence-checked, the substitute re-run refusal, `expect_unchanged` honours omission](102-three-guard-refinements.md) | findings_29 §1, §3, §4 | PLANNED |
+| 103 | [Docs + diagrams sweep](103-docs-and-diagrams-sweep-findings-29.md) | 100-102 | PLANNED |
+| 104 | [Lab beat 20](104-lab-beat-20-findings-29.md) | 100-103 + full test | PLANNED |
+| 105 | [Release v4.13.0](105-release-v4130.md) | 104 | PLANNED |
+
 ### Field cycle findings_28 -- plans 091-099 -> v4.12.0 (2026-09-22; reviewer-executed)
 
 Master record: [091-099-batch-findings-28.md](091-099-batch-findings-28.md) (the approved plan after a

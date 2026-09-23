@@ -145,7 +145,12 @@ project's findings: QUOTE the file's envelope and rows there (exports are point-
 and may be untracked in your git). A script the project keeps over the package is a
 `local-tool` row that cannot be a draft — interview the operator BEFORE the insert; the
 word is its precondition. The rule has two clauses: it writes nothing tool-owned; if it reads the STORE, it reads `exports/` only.
-`handoff_emit` names every row still awaiting the operator or the export.
+`handoff_emit` names every row still awaiting the operator or the export, and every reported
+row until it is answered (the `feedback-unanswered` advisory lists the same rows). When the
+maintainer ships or answers it, set the row `Resolved` with `resolved_in` (the release, or the
+response to a question) and `upstream_ref` as a PARTIAL row — id, kind, title and those three:
+omitted columns are preserved, their absence from `changed_columns` proves it, and the engine
+journals the move. A local-tool row is a register: it never resolves.
 Apply `expect_unchanged` to
 every long row regardless of size — transcription fidelity does not degrade with
 length. Before recording a premise as untestable, list the instruments: the SOURCE that

@@ -106,7 +106,18 @@ is the only wrong answer.
     row if the reference is real. An immutable row (approved AC, ADR, lesson) is
     repaired by supersession, never by an edit. Code spans, the append-only journal and
     Superseded/Obsolete rows are not scanned — history may name what was refused.
-17. Close the sweep: `progress_update([{"entry": "liveness sweep: <per-family tally —
+17. **Dangling references in prompt files** (`prompt-ids-resolve`): the same rule over
+    the PROJECT's own `prompts/*.md` (never a stock body) — the prose a session reads
+    before any tool. Fix the id or record the row; quote history in backticks (a code
+    span is inert and lands in `in_code_spans`). A green here means every id RESOLVES,
+    not that the sentence about it is true.
+18. **Feedback reported and not yet answered** (`feedback-unanswered`): each `FB-` row
+    that went upstream and has no `resolved_in`. If the maintainer shipped or answered
+    it, set it `Resolved` with `resolved_in` and `upstream_ref` as a PARTIAL row (id,
+    kind, title and those three — omitted columns are preserved); if upstream declined,
+    `Rejected` on the operator's word; otherwise carry it and say so. Local-tool rows are
+    registers and never appear here.
+19. Close the sweep: `progress_update([{"entry": "liveness sweep: <per-family tally —
     resolved / carried / escalated / awaiting operator>", "event_type": "note",
     "actor": "agent:<session>"}])`, then `readiness_check("package")` again and report
     the advisory delta plus everything now awaiting operator words (promotions,

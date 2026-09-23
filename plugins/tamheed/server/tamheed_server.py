@@ -321,6 +321,12 @@ def _caller_journal_error(row: dict) -> str | None:
 _FEEDBACK_CONTENT_COLS = ("kind", "title", "detail", "workaround", "tool_path",
                           "tool_or_rule", "confirmed_by")
 _FEEDBACK_BOUND = frozenset({"Confirmed", "Reported", "Resolved"})
+# Plan 100 (the field's FB-014): a row that went upstream and was never answered. ONE
+# predicate for the readiness rule, the handoff warning and the review page's fold (the
+# page repeats the literal; a test holds the two equal) - a register (local-tool) never
+# resolves, so it is excluded.
+_FEEDBACK_UNANSWERED_WHERE = ("lifecycle_status = 'Reported' AND resolved_in IS NULL"
+                              " AND kind <> 'local-tool'")
 
 _LESSON_CONTENT_COLS = ("title", "statement", "context", "recommendation",
                         "rationale", "kind", "category", "impact_if_followed",
@@ -1607,14 +1613,21 @@ def entity_upsert(entities: list[dict]) -> dict:
                 else:
                     if not cols.get("confirmed_at"):     # a re-sent full row carries null
                         cols["confirmed_at"] = _now()[:10]   # (beat 18, F-3)
-                    feedback_pe = (fb_was, fb_now)
+                    feedback_pe = (fb_was, fb_now, True)
             if err is None and fb_was in _FEEDBACK_BOUND and fb_now not in _FEEDBACK_BOUND:
                 if not operator_confirm:
                     err = (f"{cols['id']}: withdrawing feedback the operator confirmed is the"
                            " OPERATOR's word too — re-run this item with"
                            " \"operator_confirm\": true after their explicit confirmation")
                 else:
-                    feedback_pe = (fb_was, fb_now)    # the way OUT is journaled too (plan 086)
+                    feedback_pe = (fb_was, fb_now, True)    # the way OUT is journaled too (plan 086)
+            if (err is None and fb_was in _FEEDBACK_BOUND and fb_now in _FEEDBACK_BOUND
+                    and fb_was != fb_now):
+                # Plan 100 (the field's FB-014): the move WITHIN the bound set - Confirmed ->
+                # Reported (it went upstream), Reported -> Resolved (it was answered) - is
+                # bookkeeping, no word required, and was the one step nobody journaled: the
+                # channel had a record of both ends and none of "outstanding since when".
+                feedback_pe = (fb_was, fb_now, False)
             if err is None and fb_was in _FEEDBACK_BOUND and not operator_confirm:
                 drift = [c for j, c in enumerate(_FEEDBACK_CONTENT_COLS, 1)
                          if c in cols and cols.get(c) != fb_stored[j]]
@@ -1792,17 +1805,26 @@ def entity_upsert(entities: list[dict]) -> dict:
                 if feedback_pe:
                     # Plan 087: the operator's confirmation of a feedback row is an
                     # engine-witnessed fact, like a lesson's (system: is reserved, plan 086).
+                    # Plan 100: a bookkeeping move inside the bound set is journaled too, and
+                    # the row SAYS which it was - it never claims a word it did not get.
+                    was, now, attested = feedback_pe
+                    head = f"FEEDBACK {cols['id']} -> {now} (was {was or 'new'}; kind {cols.get('kind')})"
+                    if attested:
+                        entry = (head + " on the operator's word — operator_confirm attested"
+                                 + (f"; confirmed_by {cols.get('confirmed_by')}"
+                                    if cols.get("confirmed_by") else ""))
+                    else:
+                        entry = (head + " — bookkeeping, no word required"
+                                 + (f"; resolved_in {cols.get('resolved_in')}"
+                                    if cols.get("resolved_in") else "")
+                                 + (f"; upstream_ref {cols.get('upstream_ref')}"
+                                    if cols.get("upstream_ref") else ""))
                     pe_id = _next_id("PE-", "progress_entries")
                     conn.execute(
                         "INSERT INTO progress_entries (id, event_type, entry,"
                         " subject_id, actor, occurred_at) VALUES (?, ?, ?, ?, ?, ?)",
-                        (pe_id, "transition",
-                         f"FEEDBACK {cols['id']} -> {feedback_pe[1]} (was"
-                         f" {feedback_pe[0] or 'new'}; kind {cols.get('kind')}) on the"
-                         " operator's word — operator_confirm attested"
-                         + (f"; confirmed_by {cols.get('confirmed_by')}"
-                            if cols.get("confirmed_by") else ""),
-                         cols.get("id"), "system:feedback-guard", _now()))
+                        (pe_id, "transition", entry, cols.get("id"), "system:feedback-guard",
+                         _now()))
                     res["feedback_audit"] = pe_id
                 results.append(res)
         except Exception as exc:  # IntegrityError carries the constraint name
@@ -2533,6 +2555,20 @@ def _readiness_report(conn, scope: str, scope_id: str | None) -> dict:
                  " to the operator - set `expires`, or narrow it to the entities it"
                  " was approved for (`applies_to`). You never author or edit a waiver"
                  " on your own judgment")
+        # Plan 100 (the field's FB-014): a feedback row that went upstream (Reported) and
+        # was never answered had no liveness surface - handoff_emit named a row only while
+        # it awaited the operator or the export. Emitted only when the package HAS feedback
+        # rows (the plan-079 posture: most packages never file any); registers excluded.
+        if conn.execute("SELECT 1 FROM feedback LIMIT 1").fetchone():
+            rule("feedback-unanswered", "advisory",
+                 ids(f"SELECT id FROM feedback WHERE {_FEEDBACK_UNANSWERED_WHERE} ORDER BY id"),
+                 "feedback reported upstream and not yet answered. When it ships - or, for a"
+                 " question, when the maintainer answers - set lifecycle_status Resolved with"
+                 " `resolved_in` (the release or the response) and `upstream_ref` (the plan or"
+                 " reply), as a PARTIAL row: id, kind, title and those three (omitted columns"
+                 " are preserved; the engine journals the move). `Rejected` on the operator's"
+                 " word if upstream declined. A local-tool row is a register: it never"
+                 " resolves and is not listed here")
         # Plan 039 (the ACMP register: 57 Approved lessons, 48 pinned, 0 promoted —
         # 57 lines in the always-loaded note): pinning bypasses the cap by design,
         # so the cost of a pin is made visible instead. Entities = the rows that
@@ -3264,6 +3300,16 @@ def handoff_emit(target_dir: str, subdir: str = "handoff", force: bool = False,
             " args={\"type\": \"feedback\"}) and QUOTE its envelope and rows in your"
             " findings (exports are point-in-time and may be untracked in your git); set"
             " each row Reported once it has left")
+    # Plan 100 (the field's FB-014): "left the package" is not "was answered" - a Reported
+    # row stayed invisible for a day at ACMP. Named until resolved_in is set; ids only.
+    unanswered = [r[0] for r in conn.execute(
+        f"SELECT id FROM feedback WHERE {_FEEDBACK_UNANSWERED_WHERE} ORDER BY id")]
+    if unanswered:
+        warnings.append(
+            f"{len(unanswered)} feedback row(s) reported upstream and not yet answered"
+            f" ({', '.join(unanswered)}) — when the maintainer ships or answers it, set the row"
+            " Resolved with resolved_in and upstream_ref (a partial row: id, kind, title and"
+            " those three); the feedback-unanswered readiness rule lists the same rows")
     # v3.0.0: nothing is emitted into handoff/ anymore — leftover v2 copies actively
     # mislead. Plan 028 (C34 §2): the verdict is PER FILE, by content compare — a
     # blanket "delete" would have destroyed a live project prompt that existed nowhere
@@ -3366,7 +3412,7 @@ def handoff_emit(target_dir: str, subdir: str = "handoff", force: bool = False,
         " kind missing-capability\\|defect\\|doc-error\\|question, born Proposed) FIRST — never a"
         " side tool: a script is a `local-tool` row that CANNOT be a draft (the OPERATOR's word is"
         " a precondition of its insert); it writes nothing tool-owned and, if it reads the STORE,"
-        " reads `exports/` only; `handoff_emit` names every row until it has left the package |\n"
+        " reads `exports/` only; `handoff_emit` names every row until it has left the package, and every reported row until it is answered (`feedback-unanswered`) |\n"
         "| you finish a unit of work | `progress_update(...)` — event_type `work-done`,"
         " `subject_id`, your `actor` string, phase/slice ids |\n"
         "| you believe a slice/wbs-item is complete | set its `lifecycle_status` to"

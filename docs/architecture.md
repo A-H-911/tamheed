@@ -63,7 +63,7 @@ that would create one fails, and the error message is the gate report.
 Above the gates sits the **readiness layer**: `readiness_check(scope, id?)` answers "is this actually
 done?" at a close boundary — `Review` counts as open (claimed is not verified), open critical/high defects
 block while medium/low advise, and a stubborn failure passes only through an operator-approved `WVR-`
-waiver (reported as `waived`, expiring, never silent). Alongside the blocking rules run nineteen
+waiver (reported as `waived`, expiring, never silent). Alongside the blocking rules run twenty
 package-scope liveness advisories — from overdue open questions to `lessons-confirmed`, which nags while
 any lesson recorded by the executing agent still awaits the operator's confirmation interview, and
 `lessons-note-budget`, which names the lessons rendering past the always-loaded note's curation
