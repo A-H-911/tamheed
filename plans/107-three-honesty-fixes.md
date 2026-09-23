@@ -16,5 +16,5 @@
 
 ## Done criteria
 
-- [ ] RED then GREEN for each; `python check.py`
+- [x] RED then GREEN for each; `python check.py` (step 11 of `register-liveness.md` rewritten here with its `4.14.0` key — it describes this rule)
 - [ ] CI green

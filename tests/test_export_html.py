@@ -126,6 +126,16 @@ class ExportHtmlTest(unittest.TestCase):
         self.assertGreater(html.index("FB-005", closed), closed, "FB-005 sits in the closed fold")
         self.assertNotIn("FB-005", html[reported:closed])
         self.assertIn("feedback-unanswered", html)                 # the rule renders in Readiness
+        # deterministic within a run
+        self.assertEqual(html, self._export())
+        # plan 107 (findings_30 §3.3): once the unanswered fold is empty it is SAID to be
+        # empty, not omitted - "nothing outstanding" and "no such section" must differ
+        srv.entity_upsert([{"type": "feedback", "id": "FB-004", "kind": "defect", "title": "header unreadable",
+                            "lifecycle_status": "Resolved", "resolved_in": "4.13.0"}])
+        html2 = self._export()
+        self.assertIn('id="feedback-reported"', html2)
+        self.assertIn("No reported feedback awaits an answer", html2)
+        self.assertNotIn("Reported upstream, not yet answered (", html2)   # the fold itself is gone
         # Lessons: the supersession tag on the Approved fold
         self.assertIn("RETIRE THIS ROW", html)
         # Waivers: the open-ended mark
@@ -139,8 +149,6 @@ class ExportHtmlTest(unittest.TestCase):
         self.assertIn("measured nothing", html)
         self.assertRegex(html, r"prose-ids-resolve")
         self.assertIn("DEF-001 (WVR-001)", html)                          # a waived row renders
-        # deterministic within a run
-        self.assertEqual(html, self._export())
 
     def test_feedback_unanswered_predicate_is_the_servers(self):
         """Plan 100: the rule, the warning and the fold share ONE predicate; the page repeats

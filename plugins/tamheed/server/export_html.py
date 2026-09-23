@@ -579,6 +579,12 @@ def _feedback(conn, gates, ready, readiness=None):
         if rows:
             parts.append(_fold(title, len(rows), _table(head, rows, row_ids=True),
                                anchor=anchor))
+        elif anchor == "feedback-reported" and conn.execute(
+                "SELECT 1 FROM feedback LIMIT 1").fetchone():
+            # plan 107 (findings_30 §3.3): an empty unanswered fold is SAID to be empty -
+            # "nothing outstanding" and "no such section" looked the same
+            parts.append('<p class="empty" id="feedback-reported">No reported feedback'
+                         ' awaits an answer.</p>')
     if not parts:
         return ('<p class="empty">No feedback recorded — a function the tools lack, a defect,'
                 ' a doc error, a question, or a local tool over the package is an FB- row'

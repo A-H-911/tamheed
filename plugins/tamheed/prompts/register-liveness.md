@@ -63,10 +63,12 @@ is the only wrong answer.
     waivers with no expiry: each keeps waiving rows written long after it was approved.
     Show the operator what it absorbs today and ask for an `expires` date or a narrower
     `applies_to` — their decision, never yours.
-11. **Deferred work** (`deferred-work-reviewed`): read each open `DW-`'s activation
-    trigger against current reality. Fired → say so and point the operator at the
-    replan-deferred prompt (activation is a scope decision, not yours). Not fired →
-    it is deliberately carried; nothing to write.
+11. **Deferred work** (`deferred-work-reviewed`): the rule lists Open and Scheduled
+    rows — the ones a human still judges. Read each activation trigger against current
+    reality. Fired → say so and point the operator at the replan-deferred prompt
+    (activation is a scope decision, not yours); once Activated the row is work — its
+    WBS rows carry it — and leaves this list. Not fired → it is deliberately carried;
+    nothing to write, and the row stays listed until it fires or is closed.
 12. **Execution plans** (`execution-plans-approved`): plans still Draft/Proposed for
     active slices — finish them and **STOP for operator approval**.
 13. **Unwired requirements** (`requirements-wired`): every listed requirement gets its

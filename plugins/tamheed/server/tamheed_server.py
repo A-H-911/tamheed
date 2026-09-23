@@ -2404,10 +2404,17 @@ def _readiness_report(conn, scope: str, scope_id: str | None) -> dict:
                  " AND discharged_by IS NULL"),
              "open/materialized risks with no discharging AC/test",
              na=na_note("risks", "discharged_by"))
+        # Plan 107 (findings_30 Q5.1): Activated rows LEFT this list - the trigger fired and
+        # the work exists as WBS rows (replan-deferred writes them in the same scope change),
+        # so the amber was permanent for a row that had been judged (ACMP: 44 -> 44 after
+        # eight activations). Open and Scheduled still need a judge.
         rule("deferred-work-reviewed", "advisory",
              ids("SELECT id FROM deferred_work"
-                 " WHERE lifecycle_status IN ('Open','Activated','Scheduled')"),
-             "activation triggers are prose — a human judges whether each fired")
+                 " WHERE lifecycle_status IN ('Open','Scheduled')"),
+             "activation triggers are prose — a human judges whether each fired: Open (has"
+             " the trigger fired?) and Scheduled (has the date come?) rows are listed; an"
+             " Activated row is work now (its WBS rows carry it) and Done / Won't-do are"
+             " closed — a judged row leaves this list by moving to one of those states")
         # findings_17 B1 (plan 033): the old resolved_by-only predicate measured
         # BOOKKEEPING — 70 of ACMP's 76 OQs carried evidenced resolutions yet read
         # amber. A non-empty resolution OR a resolver resolves; Deferred IS the
@@ -3542,14 +3549,18 @@ def handoff_emit(target_dir: str, subdir: str = "handoff", force: bool = False,
         pkg_content = _apply_note(pkg_existing, pkg_md)
         if _NOTE_BLOCK_RE.search(pkg_content) is None:
             pkg_content = pkg_existing + note  # pointer repo, first emission
-        if pkg_content != pkg_existing:
+        rebuilt = pkg_content != pkg_existing
+        if rebuilt:
             pkg_md.write_text(pkg_content, encoding="utf-8", newline="\n")
             emitted.append(str(pkg_md.resolve()))
+        # Plan 107 (findings_30 Q1.4): say what happened - the old text claimed an update
+        # over `written: []` on every idle re-emission
         warnings.append(
             f"{claude_md.resolve()} imports the package note"
             f" (@{_CURRENT_NAME}/CLAUDE.md) — the managed span lives at"
-            f" {pkg_md.resolve()} and was updated there; the root file was"
-            " left untouched")
+            f" {pkg_md.resolve()} and "
+            + ("was rebuilt there" if rebuilt else "is current there; nothing written")
+            + "; the root file was left untouched")
     else:
         warnings.append(
             f"{claude_md.resolve()} carries a v1-era Tamheed operating note"

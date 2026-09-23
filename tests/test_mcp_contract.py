@@ -1072,6 +1072,14 @@ class McpContractTest(unittest.TestCase):
             # "v1-era" is the v1 warning's own wording; a bare "v1" also matches random
             # temp-dir names inside the full paths this warning prints (CI run 35537117338).
             self.assertNotIn("v1-era", w)
+            # Plan 107 (findings_30 Q1.4): the warning says what happened - rebuilt on a
+            # change, "current" on an idle re-emission - never "updated" over written: []
+            self.assertIn("was rebuilt there", w)
+            again = srv.handoff_emit(target)
+            w2 = next(w for w in again["warnings"] if "imports the package note" in w)
+            self.assertIn("is current there; nothing written", w2)
+            self.assertNotIn("updated", w2)
+            self.assertEqual(again["written"], [])
             # a TRUE v1 note (heading, no markers, no import) still warns —
             # with the full path and without the stale "v2" wording
             root_md.write_text("# P\n\n## Tamheed progress tracking\n\nold table\n",
@@ -2200,6 +2208,29 @@ class V4EngineTest(unittest.TestCase):
         self.assertEqual(pkg["clarifications-open"]["entities"],
                          ["CON-001.statement -> OQ-001"])
         self.assertEqual(pkg["acs-slice-bound"]["status"], "pass")  # AC-001 bound
+
+    def test_deferred_work_reviewed_lists_what_a_human_still_judges(self):
+        """Plan 107 (findings_30 Q5.1): the advisory listed Open, Activated AND Scheduled
+        rows, so a row activated into work stayed amber forever (ACMP: 44 -> 44 after
+        eight activations). Activated = the trigger fired and the WBS rows exist
+        (replan-deferred); it leaves the list. Open and Scheduled still need a judge."""
+        rules = lambda: {r["rule"]: r for r in srv.readiness_check("package")["rules"]}
+        out = srv.entity_upsert([{"type": "deferred-work", "id": "DW-001", "title": "later", "severity": "low",
+                            "activation_trigger": "when the API is public"},
+                           {"type": "deferred-work", "id": "DW-002", "title": "dated", "severity": "low",
+                            "activation_trigger": "2026-12-01", "lifecycle_status": "Scheduled"},
+                           {"type": "deferred-work", "id": "DW-003", "title": "fired", "severity": "low",
+                            "activation_trigger": "when v2 ships", "lifecycle_status": "Activated"},
+                           {"type": "deferred-work", "id": "DW-004", "title": "done", "severity": "low",
+                            "activation_trigger": "x", "lifecycle_status": "Done"}])
+        self.assertTrue(out["ok"], out)
+        r = rules()["deferred-work-reviewed"]
+        self.assertEqual(r["entities"], ["DW-001", "DW-002"])
+        self.assertIn("Activated", r["note"])
+        self.assertTrue(srv.entity_upsert([{"type": "deferred-work", "id": "DW-001", "title": "later", "severity": "low",
+                            "activation_trigger": "when the API is public",
+                            "lifecycle_status": "Activated"}])["ok"])
+        self.assertEqual(rules()["deferred-work-reviewed"]["entities"], ["DW-002"])
 
     def test_lessons_confirmed_advisory_and_immutability(self):
         """Plan 035: a Proposed lesson fires the lessons-confirmed advisory;
