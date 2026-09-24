@@ -2267,6 +2267,41 @@ class V4EngineTest(unittest.TestCase):
                          ["CON-001.statement -> OQ-001"])
         self.assertEqual(pkg["acs-slice-bound"]["status"], "pass")  # AC-001 bound
 
+    def test_carries_makes_a_finished_activation_visible(self):
+        """Plan 113 (ACMP's FB-018): "its WBS rows carry it" was prose - no typed edge could
+        link a work item to the deferred row it carries, so an Activated row whose work had
+        FINISHED was invisible to every rule. `carries` (wbs-item -> deferred-work) is the
+        edge; the `deferred-work-carried` advisory lists Activated rows with no OPEN carrier
+        (Review counts as open) - bind one, or close the row Done."""
+        info = srv.server_info()                 # setUp created "demo" with PH-1 / SL-001
+        self.assertEqual(info["migrations_head"], "006_carries.sql")
+        self.assertEqual(info["schema_version"], 6)
+        rules = lambda: {r["rule"]: r for r in srv.readiness_check("package")["rules"]}
+        out = srv.entity_upsert([
+            {"type": "deferred-work", "id": "DW-001", "title": "later", "severity": "low",
+             "activation_trigger": "when X", "lifecycle_status": "Activated"},
+            {"type": "wbs-item", "id": "WBS-009", "title": "carry it", "slice_id": "SL-001"}])
+        self.assertTrue(out["ok"], out)
+        r = rules()
+        self.assertNotIn("DW-001", r["deferred-work-reviewed"]["entities"])   # plan 107: Activated left it
+        self.assertEqual(r["deferred-work-carried"]["entities"], ["DW-001"])   # ...and nothing carries it
+        self.assertEqual(r["deferred-work-carried"]["severity"], "advisory")
+        self.assertIn("no open carrier", r["deferred-work-carried"]["note"])
+        wrong = srv.entity_upsert([{"type": "trace-edge", "from_id": "DW-001", "to_id": "WBS-009",
+                                    "relation": "carries"}])
+        self.assertFalse(wrong["ok"])                                        # the direction is typed
+        self.assertIn("does not allow deferred-work -> wbs-item", wrong["items"][0]["error"])
+        edge = srv.entity_upsert([{"type": "trace-edge", "from_id": "WBS-009", "to_id": "DW-001",
+                                   "relation": "carries"}])
+        self.assertTrue(edge["ok"], edge)
+        self.assertEqual(rules()["deferred-work-carried"]["entities"], [])   # an open item carries it
+        self.assertEqual(srv.trace_query("DW-001", direction="in")["edges"][0]["relation"], "carries")
+        done = srv.entity_upsert([{"type": "wbs-item", "id": "WBS-009", "title": "carry it",
+                                   "slice_id": "SL-001", "lifecycle_status": "Implemented"}])
+        self.assertTrue(done["ok"], done)
+        self.assertEqual(rules()["deferred-work-carried"]["entities"], ["DW-001"])  # finished: close it
+        self.assertTrue(srv.gate_run()["ok"])                                # G-REL accepts the edge
+
     def test_deferred_work_reviewed_lists_what_a_human_still_judges(self):
         """Plan 107 (findings_30 Q5.1): the advisory listed Open, Activated AND Scheduled
         rows, so a row activated into work stayed amber forever (ACMP: 44 -> 44 after
@@ -4107,7 +4142,8 @@ class V4EngineTest(unittest.TestCase):
                           "risk-liveness", "hypotheses-measurable",
                           "decisions-look-architectural", "scope-changes-merged",
                           "acs-slice-bound", "defects-minor",
-                          "deferred-work-reviewed", "execution-plans-approved",
+                          "deferred-work-reviewed", "deferred-work-carried",
+                          "execution-plans-approved",
                           "requirements-wired", "lessons-confirmed",
                           "lessons-note-budget", "prose-ids-resolve",
                           "lessons-superseded-binding", "waivers-open-ended",

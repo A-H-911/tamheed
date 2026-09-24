@@ -33,6 +33,8 @@ Review and activate deferred work in the `<package>` Tamheed package:
 4. After approval, apply each `SC-` IN THIS ORDER, then set it Merged:
    - flip the `DW-` status to Activated (full-row upsert);
    - upsert the `wbs-item`/`slice` rows the work becomes, with `phase_id`/`slice_id`;
-   - wire the trace edges (`implements`/`relates_to`) so G-TRACE sees the linkage.
+   - wire the trace edges (`implements`/`relates_to`) so G-TRACE sees the linkage, and a
+     `carries` edge from each new `wbs-item` to the `DW-` row (v5): the carrier is what
+     `deferred-work-carried` reads — when every carrier is Implemented the row is Done.
 5. `gate_run()` — the new scope must not break the gates — and report what was
    activated before executing any of it.

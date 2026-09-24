@@ -17,8 +17,20 @@ Migration `006_carries.sql` (the 002/004 recreation of `trace_edges` with `carri
 
 ## Done criteria
 
-- [ ] RED then GREEN: edge accepted, reverse refused, advisory lists / drops / re-lists; `test_store_migrations` 006 twin
-- [ ] a v4.14 fixture copy opens with `schema_version 6`, edges intact, `package_verify` unchanged
-- [ ] the `amends` grep re-run: every surviving file also names `carries`
-- [ ] `python check.py`
+- [x] RED then GREEN: edge accepted, reverse refused, advisory lists / drops / re-lists; `test_store_migrations` 006 twin
+- [x] a v4.14 fixture copy opens with `schema_version 6`, edges intact, `package_verify` unchanged
+- [x] the `amends` grep re-run: every surviving file also names `carries`
+- [x] `python check.py`
 - [ ] CI green
+
+## Execution note (2026-09-25)
+
+RED: the contract test failed on the missing rule; the store test on the missing relation. GREEN
+after `006_carries.sql` (a `trace_edges` recreation, the 002/004 pattern) + `RELATION_RULES` +
+the advisory. Measured on a COPY of the lab fixture: `schema_version` 6, `migrations_head`
+`006_carries.sql`, 30 edges loaded == 30 on disk, `package_verify` true — no operator step, no
+JSONL change. The `amends` grep re-run: the files still without `carries` name `amends` in the
+scope-change context only (modes.md, prompt-templates.md, follow-up-prompts.template.md,
+agent-control.template.md, the drift-register and progress-sync skills, lab/README.md, migration
+004) — `carries` does not belong beside them. Lint 7 required the migration to be named in the
+CHANGELOG, so the 5.0.0 `[Unreleased]` block starts here (plan 117 completes it).

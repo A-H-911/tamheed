@@ -53,6 +53,7 @@ flowchart TB
     SC -- "scope_adds / scope_modifies /<br/>scope_removes" --> REQ
     SC -- "amends" --> DEC
     SC -- "amends" --> ADR
+    WBS -- "carries" --> DW
     WVR -- "applies_to (column)" --> DEF
     OQ -- "cited by [NEEDS-CLARIFICATION] markers" --> REQ
     LL -- "learned_from" --> DEF
@@ -154,7 +155,7 @@ One `data/<table>.jsonl` file per non-empty family. Class = the registry's gener
 | execution-gate | `GATE-` | Conditional | DoR/DoD/checkpoint/approval definitions (prose a HUMAN evaluates — surfaced as human_required); `outcome` records the latest Go/Hold/Redirect/Kill decision |
 | convention | `CONV-` | Conditional | Durable conventions the executor must honor |
 | defect | `DEF-` | Conditional | Found bugs; severity critical/high/medium/low — **open critical/high block readiness, medium/low advise**; `found_in` locates it |
-| deferred-work | `DW-` | Conditional | Postponed work with severity + activation trigger + invariant at stake |
+| deferred-work | `DW-` | Conditional | Postponed work with severity + activation trigger + invariant at stake; once Activated, the wbs-item that carries it says so with a `carries` edge (v5) — `deferred-work-carried` lists Activated rows no open item carries |
 | scope-change | `SC-` | Continuous | Drift record: Proposed → Approved → **Merged** (deltas applied to plan rows via scope_adds/scope_modifies/scope_removes edges; a RULING it touches via an `amends` edge — a `DEC-` merges by full-row upsert, an `ADR-` by supersession; Merged is set LAST, after every target is applied and re-read; scope-changes-merged advisory flags Approved-never-Merged) |
 | waiver | `WVR-` | Conditional | A named readiness rule satisfied for a named entity: justification + approver + expiry; reported as `waived`, never silent (v4 — the alternative is informal bypass) |
 | progress-entry | `PE-` | Continuous | Append-only TYPED journal: event_type (work-done/verdict-recorded/transition/gate-decision/escalation/correction/note from callers; forced-override/lesson-confirmed/lesson-promoted/integrity-verified are SERVER-appended only and refused from `progress_update`) + subject + actor + `corrects` compensation pointer |

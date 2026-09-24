@@ -217,9 +217,12 @@ unfinished-marker failure. The `clarifications-open` advisory counts live marker
   (`derives_from`, `implements`, `verifies`, `tests`, `mitigates`, `discharges`,
   `blocked_by`, `satisfies`, `supersedes`, `scope_adds`/`scope_modifies`/`scope_removes`,
   `learned_from` — a lesson names what taught it: defect, decision, risk, slice,
-  wbs-item, or progress-entry — and `amends` (v4.5): a scope change that carves an
+  wbs-item, or progress-entry — `amends` (v4.5): a scope change that carves an
   exception out of a RULING or re-scopes one — scope-change → decision | adr only; a
-  ruling is not a plan row, so the scope_* deltas never point at one),
+  ruling is not a plan row, so the scope_* deltas never point at one — and `carries`
+  (v5): the wbs-item that carries an ACTIVATED deferred-work row, written in the
+  activating batch; the `deferred-work-carried` advisory lists Activated rows no open
+  item carries),
   not only in prose. `relates_to` is the documented untyped escape hatch. Endpoint types are
   enforced at write time and by the **blocking G-REL gate**. Edges are keyed (from, to,
   relation), so a new relation never replaces an old one — a wrong edge is RETIRED

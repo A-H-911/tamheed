@@ -58,8 +58,9 @@ Draft → Proposed → Approved → Implemented
 - A row that exists because of another entity records a typed link (`derives_from`, `mitigates`, `verifies`,
   `supersedes`, `blocked_by`, the scope-delta kinds `scope_adds`/`scope_modifies`/`scope_removes`,
   `amends` (a scope change → the `DEC-`/`ADR-` ruling it carves an exception out of — a `DEC-`
-  merges by full-row upsert, an `ADR-` by supersession), and `learned_from` (a lesson names what
-  taught it); `relates_to` is the documented untyped escape hatch), not only prose. Edges are
+  merges by full-row upsert, an `ADR-` by supersession), `carries` (a wbs-item → the activated
+  `DW-` row it carries), and `learned_from` (a lesson names what taught it); `relates_to` is the
+  documented untyped escape hatch), not only prose. Edges are
   keyed (from, to, relation): a wrong edge is retired (`retire: true` on the trace-edge item,
   journaled by the server) and the correct one written in the same batch — a new relation
   never replaces an old one by itself. A full-row update that only flips a status names the

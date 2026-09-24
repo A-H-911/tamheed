@@ -10,6 +10,42 @@ All notable changes to Tamheed are documented here. The format is based on
 
 ## [Unreleased]
 
+The findings_31 batch (plans 112-119; the master record is `plans/112-119-batch-findings-31.md`).
+**MAJOR: the handoff contract changes** — the instruction surface moves from the always-loaded note
+and sixteen stock prompt files into plugin-shipped skills. **The store stays v4-shaped**:
+`schema_version` reads 6 after migration `006_carries.sql`, `package_open` behaves as before and
+`package_migrate` answers "nothing to migrate" — no operator step. The one operator action is
+`handoff_emit(<repo>, refresh_stock=true)` per project, which rebuilds the note as v5 and deletes
+the retired stock prompt files that are byte-equal to a shipped release.
+
+- **The front door lives at `skills/tamheed/SKILL.md` (plan 114).** A plugin with a `skills/`
+  directory loads no root `SKILL.md` (Claude Code docs), so the front door moved first — its
+  invocation stays `/tamheed:tamheed`. check.py lint 12 keeps every plugin skill well-formed
+  (name == folder, a description, ≤ 500 lines, no `{package}` placeholder, `${CLAUDE_PLUGIN_ROOT}`
+  paths resolve, stack-neutral, no field identifiers).
+- **Seven discipline skills (plan 115)**: `tamheed:package-writes`, `reading-the-record`,
+  `operator-interview`, `written-claims`, `test-evidence`, `measurement-evidence`, `ci-evidence` —
+  generic procedure plus anonymised field evidence, adapted from a production package's
+  operator-confirmed skills (`writing-to-the-package`, `before-you-cite-a-record`,
+  `interviewing-the-operator`, `keeping-written-claims-true`, `trusting-a-green-test`,
+  `trusting-a-measurement`, `ci-evidence`). Loaded on relevance wherever the plugin is enabled.
+- **Sixteen scenario slash skills + engine v5 (plan 116).** `/tamheed:slice-kickoff`,
+  `/tamheed:progress-sync`, `/tamheed:orient-resume`, … (`disable-model-invocation`: the operator
+  invokes, as they pasted; `$ARGUMENTS` names another package). The stock library is
+  `prompts/README.md` alone; a retired file left on disk is a `leftover_stale_stock` (deleted only
+  with `refresh_stock=true`, reported `retired`) or a `leftover_customized` (kept, named). The note
+  is v5: the obligations table, the lessons and the skills line stay; the tool cheat-sheet goes;
+  the flush sentence names the store writes that flush JSONL (`export_html` and `handoff_emit`
+  write other files — the mechanism the note had carried since plan 039 was wrong; the
+  conclusion held). `agent-control.template.md`'s conventions point at the skills.
+- **`carries` (wbs-item → deferred-work) and the `deferred-work-carried` advisory (ACMP's
+  `FB-018`; plan 113; migration `006_carries.sql`, the 002/004 recreation).** "Its WBS rows
+  carry it" is measurable now: the advisory lists Activated rows no OPEN item carries — every
+  carrier Implemented means the row is Done. `replan-deferred` writes the edge in the batch.
+- **findings_31 doc cycle (plan 112)**: `register-liveness` step 15 states the true note-budget
+  mechanism (ACMP's `FB-017`); a partial row still carries every NOT NULL column; the promotion
+  guard is the paste verifier.
+
 ## [4.14.0] - 2026-09-24
 
 **MINOR — the findings_30 batch: `ready` follows its own doctrine, three honesty fixes, the sweep

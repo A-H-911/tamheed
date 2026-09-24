@@ -117,6 +117,7 @@ flowchart TB
     SC -- "scope_modifies" --> SL
     SC -- "amends" --> DEC
     SC -- "amends" --> ADR
+    WBS -- "carries" --> DW
     WVR -- "applies_to (column)" --> DEF
     LL -- "learned_from" --> DEF
     LL -- "promoted_to (column)" --> SKL
@@ -187,7 +188,7 @@ Three families reuse the `lifecycle_status` column name with domain vocabularies
 | Family | `lifecycle_status` values | Notes |
 |---|---|---|
 | defect | `Open`, `In-progress`, `Fixed`, `Won't-fix`, `Duplicate` | open critical/high block readiness; `Won't-fix` is a decision, record why |
-| deferred-work | `Open`, `Activated`, `Scheduled`, `Done`, `Won't-do` | `Activated` = the activation trigger fired and the work exists as WBS rows (replan-deferred writes them in the same scope change); since v4.14 the `deferred-work-reviewed` advisory lists Open and Scheduled only — a judged row leaves it |
+| deferred-work | `Open`, `Activated`, `Scheduled`, `Done`, `Won't-do` | `Activated` = the activation trigger fired and the work exists as WBS rows (replan-deferred writes them in the same scope change, each with a `carries` edge to the row since v5); since v4.14 the `deferred-work-reviewed` advisory lists Open and Scheduled only — a judged row leaves it — and since v5 `deferred-work-carried` lists Activated rows no OPEN wbs-item carries: every carrier Implemented means Done (migration `006_carries.sql`; the field's FB-018) |
 | scope-change | `Proposed`, `Approved`, `Merged` | `Merged` = deltas applied to the plan rows; Approved-never-Merged trips the `scope-changes-merged` advisory |
 | lesson | `Proposed`, `Approved`, `Promoted`, `Rejected`, `Superseded`, `Obsolete` | No Draft (born Proposed, the decisions pattern) and no Deferred — an undecided lesson keeps nagging via the `lessons-confirmed` advisory; entering `Approved` or `Promoted` is confirm-guarded (`operator_confirm`), and `Promoted` is reachable from stored-`Approved` only |
 | skill | `Approved`, `Superseded`, `Obsolete` | Born `Approved` — the promotion interview IS the approval; a re-distillation is a new `SKL-` row with `superseded_by`, never an edit |

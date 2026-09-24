@@ -32,7 +32,8 @@ current.
    defect / decision / risk / slice / wbs-item / progress-entry that taught it), plus the
    scope-delta kinds (`scope_adds`/`scope_modifies`/`scope_removes` — plan rows only) and
    `amends` (a scope change → the `DEC-`/`ADR-` ruling it carves an exception out of or
-   re-scopes; v4.5); `relates_to` is the documented untyped escape hatch. There is no after-the-fact "collect the links" pass.
+   re-scopes; v4.5) and `carries` (a wbs-item → the activated `DW-` row it carries; v5 —
+   the edge `deferred-work-carried` reads); `relates_to` is the documented untyped escape hatch. There is no after-the-fact "collect the links" pass.
    Edges are keyed `(from_id, to_id, relation)`: writing a new relation between a pair never
    replaces an old one — a wrong edge is RETIRED (`retire: true` on the trace-edge item; the
    triple is deleted, the relation rule is not consulted, and the server journals it as a

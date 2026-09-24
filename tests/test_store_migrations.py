@@ -160,6 +160,26 @@ class StoreMigrationTest(unittest.TestCase):
                      " ('FB-2', 'local-tool', 't', 'scripts/gen-record-slate.mjs')")
         conn.close()
 
+    def test_migration_006_carries_lands(self):
+        """Plan 113: head is 6; `carries` is a legal relation and the vocabulary stays closed."""
+        conn = store.connect()
+        self.assertGreaterEqual(conn.execute("PRAGMA user_version").fetchone()[0], 6)
+        for tid, prefix in (("phase", "PH-"), ("slice", "SL-"), ("wbs-item", "WBS-"),
+                            ("deferred-work", "DW-")):
+            conn.execute("INSERT INTO entity_types (type_id, label, id_prefix, generation_class)"
+                         " VALUES (?, ?, ?, 'Continuous')", (tid, tid, prefix))
+        conn.execute("INSERT INTO phases (id, title) VALUES ('PH-1', 'p')")
+        conn.execute("INSERT INTO slices (id, title, phase_id) VALUES ('SL-1', 's', 'PH-1')")
+        conn.execute("INSERT INTO wbs_items (id, title, slice_id) VALUES ('WBS-1', 'w', 'SL-1')")
+        conn.execute("INSERT INTO deferred_work (id, title, severity, activation_trigger)"
+                     " VALUES ('DW-1', 'd', 'low', 't')")
+        conn.execute("INSERT INTO trace_edges (from_id, to_id, relation) VALUES"
+                     " ('WBS-1', 'DW-1', 'carries')")
+        with self.assertRaises(Exception):   # closed vocabulary
+            conn.execute("INSERT INTO trace_edges (from_id, to_id, relation) VALUES"
+                         " ('WBS-1', 'DW-1', 'frobs')")
+        conn.close()
+
     def test_load_ignores_orphan_jsonl_of_dropped_table(self):
         """A data/ dir with a JSONL for a table the schema no longer declares loads
         without error — the contract a DROP TABLE migration (003) lands on. The orphan

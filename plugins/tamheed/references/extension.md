@@ -9,7 +9,8 @@ extension, registered end to end; `../db/migrations/003_skills.sql` (the skill f
 `Promoted` state, plan 036) continues the same chain, and `../db/migrations/004_amends_verify.sql`
 (plan 039) is the worked example of the two SMALLER extensions — a new trace relation (`amends`)
 and a new journal event kind (`integrity-verified`), each a CHECK recreation on an empty-at-connect
-table; `../db/migrations/005_feedback.sql` (the feedback family, plan 087) is the newest
+table, and `../db/migrations/006_carries.sql` (plan 113, v5) repeats the relation case alone
+(`carries`, read by one advisory); `../db/migrations/005_feedback.sql` (the feedback family, plan 087) is the newest
 whole-family add and the shortest worked example: one table with its index triggers, a
 `ENTITY_TABLES` + `BASELINE_ENTITY_TYPES` row (`Continuous`, so no existing package fails G-SET),
 an `_PROSE_ID_EXEMPT_TABLES` decision, the catalog and governance rows, the naming template's

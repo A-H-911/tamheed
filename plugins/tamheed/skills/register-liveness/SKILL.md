@@ -82,9 +82,12 @@ is the only wrong answer.
 11. **Deferred work** (`deferred-work-reviewed`): the rule lists Open and Scheduled
     rows — the ones a human still judges. Read each activation trigger against current
     reality. Fired → say so and point the operator at `/tamheed:replan-deferred`
-    (activation is a scope decision, not yours); once Activated the row is work — its
-    WBS rows carry it — and leaves this list. Not fired → it is deliberately carried;
-    nothing to write, and the row stays listed until it fires or is closed.
+    (activation is a scope decision, not yours); once Activated the row is work — a
+    `wbs-item` `carries` it (the edge, v5) — and leaves this list. Not fired → it is
+    deliberately carried; nothing to write, and the row stays listed until it fires or
+    is closed. **Finished activations** (`deferred-work-carried`): an Activated row whose
+    every carrier is Implemented, or that no `wbs-item` carries at all — put each to the
+    operator: close it Done (the work landed), or bind the item that carries it.
 12. **Execution plans** (`execution-plans-approved`): plans still Draft/Proposed for
     active slices — finish them and **STOP for operator approval**.
 13. **Unwired requirements** (`requirements-wired`): every listed requirement gets its

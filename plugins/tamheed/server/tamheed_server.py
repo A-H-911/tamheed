@@ -172,6 +172,10 @@ RELATION_RULES: dict = {
     # into _PLAN_ROWS: a ruling is not a plan row, and the merge differs (DEC-:
     # full-row upsert; ADR-: supersession, the immutable family's only edit).
     "amends": (frozenset({"scope-change"}), _DECISION),
+    # plan 113 (findings_31's FB-018): the work item that CARRIES an activated deferred row.
+    # "Its WBS rows carry it" was prose - no typed edge could name the rows - so a finished
+    # activation was invisible to every rule. Migration 006 widened the CHECK.
+    "carries": (frozenset({"wbs-item"}), frozenset({"deferred-work"})),
 }
 
 
@@ -2422,8 +2426,22 @@ def _readiness_report(conn, scope: str, scope_id: str | None) -> dict:
                  " WHERE lifecycle_status IN ('Open','Scheduled')"),
              "activation triggers are prose — a human judges whether each fired: Open (has"
              " the trigger fired?) and Scheduled (has the date come?) rows are listed; an"
-             " Activated row is work now (its WBS rows carry it) and Done / Won't-do are"
-             " closed — a judged row leaves this list by moving to one of those states")
+             " Activated row is work now (a wbs-item `carries` it — deferred-work-carried"
+             " lists the ones no open item carries) and Done / Won't-do are closed — a"
+             " judged row leaves this list by moving to one of those states")
+        # Plan 113 (findings_31's FB-018): "carries" is an edge since v5, so a finished
+        # activation is visible - an Activated row whose every carrier is closed, or that
+        # no wbs-item carries at all, is a row a human still has to close or bind.
+        rule("deferred-work-carried", "advisory",
+             ids("SELECT d.id FROM deferred_work d WHERE d.lifecycle_status = 'Activated'"
+                 " AND NOT EXISTS (SELECT 1 FROM trace_edges e JOIN wbs_items w"
+                 " ON w.id = e.from_id WHERE e.to_id = d.id AND e.relation = 'carries'"
+                 " AND w.lifecycle_status NOT IN"
+                 " ('Implemented','Superseded','Obsolete','Rejected'))"),
+             "an Activated row is work only while an OPEN wbs-item `carries` it (the edge is"
+             " written with the WBS rows in the activating batch; Review counts as open):"
+             " listed rows have no open carrier — every carrier Implemented means the row"
+             " is Done (close it); no carrier at all means bind one or judge the row")
         # findings_17 B1 (plan 033): the old resolved_by-only predicate measured
         # BOOKKEEPING — 70 of ACMP's 76 OQs carried evidenced resolutions yet read
         # amber. A non-empty resolution OR a resolver resolves; Deferred IS the

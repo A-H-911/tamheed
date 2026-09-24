@@ -69,7 +69,8 @@ into the v4 baseline — the mechanics are unchanged). Four steps, all of them a
    trigger pair. New migrations continue the v4 chain (append-only on the re-baselined 001 —
    `002_lessons.sql` is the live worked example of a whole family, `003_skills.sql` a second
    family plus a state, `004_amends_verify.sql` the small cases: a new trace relation and a new
-   journal event kind, each a CHECK recreation on an empty-at-connect table); `glossary_terms`
+   journal event kind, each a CHECK recreation on an empty-at-connect table, `006_carries.sql`
+   the relation case again); `glossary_terms`
    (a baseline table since v4) remains the worked example of the SHAPE. The
    store's connection factory applies every migration ≥ 002 automatically; do **not** touch `schema.sql`
    (it stays byte-identical to `001_init.sql`; the lint gate checks).

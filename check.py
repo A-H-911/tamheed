@@ -320,7 +320,7 @@ def gate_lint() -> None:
     gov_tpl = (REPO / "plugins" / "tamheed" / "templates" /
                "governance.template.md").read_text(encoding="utf-8")
     for needle in ("Implemented", "Review", "scope_adds", "relates_to",
-                   "learned_from", "amends", "retire", "expect_unchanged"):
+                   "learned_from", "amends", "carries", "retire", "expect_unchanged"):
         if needle not in gov_tpl:
             fail(f"governance.template.md lacks {needle!r} — the template is a"
                  " necessary copy and moves with references/governance.md")
