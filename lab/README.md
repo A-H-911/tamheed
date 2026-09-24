@@ -52,7 +52,12 @@ recipe and journaled as bookkeeping that claims no word, the readiness advisory 
 warning that fall silent with it, the MVP definition written and read back beside every other
 header column, the current verdict re-sent unattended and refused by the presence check, the
 prefix repair that lands once and is refused on the re-run, the partial row whose omitted
-column is preserved and the sent drifted one refused)
+column is preserved and the sent drifted one refused; 21: the findings_30 mechanisms — the
+empty slice that reads not ready and names the two rules that could not discriminate, made
+ready by one bound work item and one criterion with a Met verdict, the recorded omission read
+back as a deliberate zero, the pointer warning that says whether it rebuilt or wrote nothing,
+the empty unanswered fold that says it is empty, and the `expect_unchanged` that names a
+column the item does not carry refused as asserting nothing)
 run as incremental real-agent sessions against the recorded package — the fixture is regenerated
 by continuation, not from scratch.
 

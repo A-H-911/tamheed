@@ -4,3 +4,4 @@ AC-002,Due today is not overdue,"Given a task due today, when listed, then it is
 AC-003,Help text is polished,"Given tick --help, then the text is typo-free and lists every command.",FR-002,SL-002,Approved,,,,1,,,,,
 AC-004,CSV export writes one row per task,"Given tasks exist in tasks.json, when `export` is run, then a CSV file with one row per task (id, title, due, done) is written beside tasks.json and the command exits 0.",FR-004,SL-002,Superseded,,,AC-005,1,1,,,,
 AC-005,CSV export writes one row per task,"Given tasks exist in tasks.json, when `export` is run, then a CSV file with one row per task (id, title, due, done) is written beside tasks.json and the command exits 0.",FR-007,SL-002,Approved,,,,1,,,,,
+AC-006,the export header round-trips,,FR-001,SL-003,Approved,,,,1,,,,,

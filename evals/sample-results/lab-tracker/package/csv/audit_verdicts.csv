@@ -4,3 +4,4 @@ AV-002,AC-001,Met,python -m unittest test_tracker: 5 tests green incl. test_add_
 AV-003,AC-003,Not-met,trakcer typo intentionally left under WVR-001,agent,inspection,lab-run,1,2026-08-14T14:49:00Z,,
 AV-004,AC-004,Pending,,agent,inspection,,1,2026-09-06T12:18:36Z,,
 AV-005,AC-005,Pending,,agent,inspection,,1,2026-09-06T12:26:29Z,,
+AV-006,AC-006,Met,lab beat 21: the export header round-trip test,agent,inspection,e0661cc,1,2026-09-24T00:16:46Z,,

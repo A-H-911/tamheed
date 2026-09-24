@@ -483,6 +483,53 @@ must fire; the resulting package replaces `evals/sample-results/lab-tracker/pack
       closing heading `Reported, resolved or rejected` (plan 100); `gate_run` ready;
       `package_verify()` green (`verified: true`, `foreign: []`, `foreign_csv: []`,
       `review_current: true`); `package_close`; no `data/.lock` remains.
+21. **The findings_30 continuation (v4.14.0).** The third slice closed a year ago with no
+    criteria and no work items, and the tool had called it ready while its own page called
+    it not ready. Now the tool says `ready: false` and names the two rules that could not
+    discriminate; one work item and one criterion with a Met verdict make it ready. The
+    pointer warning says what it did; the page says when nothing awaits an answer; a guard
+    that could only pass is refused; the deferred-work advisory reads its recorded omission
+    as a deliberate zero.
+    ✔ READY FOLLOWS ITS OWN DOCTRINE (plan 106): untouched, `readiness_check("slice",
+      id="SL-003")` reads `ready: false` with `indeterminate: ["acs-met", "wbs-done"]` —
+      both rules `status: "indeterminate"`, `discriminating: false`, scoped `population`
+      `rows: 0`. A rule that cannot discriminate is not a pass, and the page has always
+      said so. Populating the slice through the tools — `WBS-4` (`slice_id: "SL-003"`,
+      `Implemented`) and `AC-006` (`requirement_id: "FR-001"`, `slice_id: "SL-003"`,
+      `Approved`) with an `audit_record` `Met` verdict (`verified_by: "agent"`,
+      `verification_method: "inspection"`, `against_commit`) — flips it to `ready: true`,
+      `indeterminate: []`, both populations `rows: 1`. `SL-001` reads `ready: true`,
+      `indeterminate: []` before and after: the fix discriminates, it does not blanket.
+    ✔ THE OMISSION AS A DELIBERATE ZERO (plan 107): `deferred-work-reviewed` passes over an
+      empty family and SAYS why — `no deferred_work rows, and the family's omission is
+      recorded: a deliberate zero` — carrying the recorded reason back in `omitted`
+      (`The lab tracker defers no work: every slice is in scope for its phase.`). The note
+      also names Open and Scheduled as the rows a human still judges. **No `DW-` row is
+      written here**: the recorded omission IS the answer.
+    ✔ THE POINTER WARNING TELLS THE TRUTH (plan 107): with a root `CLAUDE.md` in a scratch
+      target that imports `@package/CLAUDE.md`, the first `handoff_emit` warns that the
+      managed span `was rebuilt there; the root file was left untouched`; an idle
+      re-emission warns that it `is current there; nothing written; the root file was left
+      untouched` and returns `written: []`. The warning reports what the call did, not what
+      the call might have done.
+    ✔ THE EMPTY FOLD SAYS SO (plan 107): `export_html`'s page renders
+      `<p class="empty" id="feedback-reported">No reported feedback awaits an answer.</p>`
+      instead of an empty fold — the channel's two rows being `FB-001` `Resolved` and
+      `FB-002` a `local-tool` register, which never reports.
+    ✔ THE VACUOUS ASSERTION REFUSED (plan 108): a `DEF-005` item naming `custom_attributes`
+      in `expect_unchanged` while OMITTING that column is REFUSED — `expect_unchanged names
+      column(s) this item does not carry (custom_attributes) — an omitted column is
+      preserved by the UPDATE, so naming it asserts nothing: drop it from expect_unchanged,
+      or send it`. The same item naming `title`, a column it DOES carry, is accepted with
+      `changed_columns: []`. Beat 20 proved the omitted-column write passes; a guard that
+      could only ever pass now says so instead of pretending to check.
+    ✔ Close the beat with ONE `progress_update` note (actor `agent:lab-beat-21`,
+      `event_type: "note"`) quoting verbatim `SL-003 read ready: false`,
+      `indeterminate: ["acs-met", "wbs-done"]`, `is current there; nothing written`,
+      `No reported feedback awaits an answer`, `asserts nothing` and `a deliberate zero` —
+      written BEFORE the export; then `export_html`; `gate_run` ready; `package_verify()`
+      green (`verified: true`, `foreign: []`, `foreign_csv: []`, `review_current: true`);
+      `package_close`; no `data/.lock` remains.
 
 **Pass bar:** every ✔ observed; `gate_run` ready (or failing ONLY on deliberately-open
 items the scenario names); the eval runner's lab checks green. `readiness_check` is
@@ -491,6 +538,7 @@ expectedly NOT ready on the scenario's deliberately-open items (AC-003 and, sinc
 `due_by` also trips `open-questions-overdue` by calendar and the `open-questions-resolved`
 / `clarifications-open` pair; the waived DEF-003 and, since beat 15, DEF-004 — the CSV-guard
 defect, open low, waived by `WVR-002`, which, being a WHOLE-rule waiver, also sweeps up beat
-16's DEF-005 — the phantom-id defect, open low; `SL-003` is Implemented-by-force and deliberately empty,
-so its scoped `acs-met`/`wbs-done` read `indeterminate` by design) — anything else failing
-there is a finding.
+16's DEF-005 — the phantom-id defect, open low; `SL-003` is Implemented-by-force and was
+deliberately empty until beat 21, so its scoped `acs-met`/`wbs-done` read `indeterminate` by
+design up to that point — since beat 21 they discriminate and `SL-003` reads ready) — anything
+else failing there is a finding.

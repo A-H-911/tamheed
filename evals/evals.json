@@ -1648,6 +1648,99 @@
             "Resolved or rejected (kept as evidence)"
           ],
           "expect_exit": 0
+        },
+        {
+          "check": "The empty slice read ready: false with both rules named, and the note quotes it (plan 106).",
+          "cmd": [
+            "python",
+            "evals/pkg_check.py",
+            "grep-present",
+            "{case_dir}/package",
+            "SL-003 read ready: false",
+            "--tables",
+            "progress_entries"
+          ],
+          "expect_exit": 0
+        },
+        {
+          "check": "The slice was populated with a work item bound to it (plan 106).",
+          "cmd": [
+            "python",
+            "evals/pkg_check.py",
+            "count",
+            "{case_dir}/package",
+            "wbs-item",
+            "--col",
+            "slice_id=SL-003",
+            "--min",
+            "1"
+          ],
+          "expect_exit": 0
+        },
+        {
+          "check": "The slice's criterion carries a Met verdict (plan 106).",
+          "cmd": [
+            "python",
+            "evals/pkg_check.py",
+            "count",
+            "{case_dir}/package",
+            "acceptance-criterion",
+            "--col",
+            "slice_id=SL-003",
+            "--min",
+            "1"
+          ],
+          "expect_exit": 0
+        },
+        {
+          "check": "The pointer warning told the truth on an idle re-emission, and the note quotes it (plan 107).",
+          "cmd": [
+            "python",
+            "evals/pkg_check.py",
+            "grep-present",
+            "{case_dir}/package",
+            "is current there; nothing written",
+            "--tables",
+            "progress_entries"
+          ],
+          "expect_exit": 0
+        },
+        {
+          "check": "The recorded review page says when no reported feedback awaits an answer (plan 107).",
+          "cmd": [
+            "python",
+            "evals/pkg_check.py",
+            "grep-file",
+            "{case_dir}/package/review.html",
+            "No reported feedback awaits an answer"
+          ],
+          "expect_exit": 0
+        },
+        {
+          "check": "A vacuous expect_unchanged was refused, and the note quotes the refusal (plan 108).",
+          "cmd": [
+            "python",
+            "evals/pkg_check.py",
+            "grep-present",
+            "{case_dir}/package",
+            "asserts nothing",
+            "--tables",
+            "progress_entries"
+          ],
+          "expect_exit": 0
+        },
+        {
+          "check": "The deferred-work advisory read the recorded omission as a deliberate zero, and the note says so (plan 107).",
+          "cmd": [
+            "python",
+            "evals/pkg_check.py",
+            "grep-present",
+            "{case_dir}/package",
+            "a deliberate zero",
+            "--tables",
+            "progress_entries"
+          ],
+          "expect_exit": 0
         }
       ],
       "rubric": [
