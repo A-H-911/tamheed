@@ -853,7 +853,8 @@ def package_create(name: str, title: str, profile: str, mode: str = "full") -> d
         return _err(f"create failed: {exc}")
     _CURRENT, _CURRENT_NAME = s, name
     # v3.0.0 (plan 027): <package>/prompts/ is the Stage-20 authoring surface — it
-    # exists from birth, seeded with the stock scenario library.
+    # exists from birth, seeded with the operator guide (v5: README.md alone; the
+    # scenarios are the plugin's skills).
     library = _emit_prompt_library(pkg_dir, name)
     return {"ok": True, "package": name, "dir": str(pkg_dir),
             "package_root": str(Path(PACKAGE_ROOT).resolve()),
@@ -2628,7 +2629,7 @@ def _readiness_report(conn, scope: str, scope_id: str | None) -> dict:
              f"the always-loaded CLAUDE.md note renders {len(rendered)} lesson"
              f" line(s) against a curation ceiling of {_NOTE_LESSONS_CEILING}"
              + (" — past it (an always-loaded surface degrades as instructions"
-                " pile up): distil shared themes into a skill (skill-promote.md —"
+                " pile up): distil shared themes into a skill (/tamheed:skill-promote —"
                 " promoted lessons graduate out of the note) or unpin what no"
                 " longer needs to bind every session" if over else ""))
         gate_where, gate_params = "applies_to IS NULL", ()
@@ -2936,6 +2937,14 @@ def _managed_emit(path: Path, content: str, force: bool = False) -> str:
     return "emitted"
 
 
+def _stock_names() -> set[str]:
+    """Plan 116 (v5): every file name tamheed ever shipped into <package>/prompts/ - the
+    current bundle's files (README.md alone since 5.0.0) plus every stock-history key. A
+    retired stock file left on disk is never a PROJECT prompt: it neither satisfies the
+    "no project prompts" refusal nor joins the project set the scans run over."""
+    return {p.name for p in _PROMPTS_DIR.glob("*.md")} | set(_load_stock_history())
+
+
 def _load_stock_history() -> dict:
     """The bundled roster of every stock body ever shipped ({package} intact) —
     plan 032: the history that makes stock divergence classifiable. Missing file =
@@ -2954,8 +2963,16 @@ _STOCK_MERGED_RE = re.compile(r"<!--\s*tamheed:stock-merged\s+(\d+\.\d+\.\d+)\s*
 
 def _emit_prompt_library(pkg_dir: Path, name: str, force: bool = False,
                          refresh_stock: bool = False) -> dict:
-    """Copy the bundled scenario prompts into <package>/prompts/ (C19; the library lives
-    with the package). Deterministic: static content, {package} substitution only.
+    """Copy the bundled stock files into <package>/prompts/ (C19; the library lives with
+    the package) - since v5.0.0 (plan 116) that is README.md alone: the sixteen scenarios
+    are the plugin's slash skills (`/tamheed:<name>`), updated with the plugin. Deterministic:
+    static content, {package} substitution only.
+
+    v5 leftover pass: a retired stock file still on disk (a package created under 4.x) is
+    classified against the history exactly like a diverged file - byte-equal to any shipped
+    release's body after substitution = `leftover_stale_stock`, deleted ONLY with
+    refresh_stock=True (reported `retired`: the operator never customised it - the same
+    proof the overwrite relies on); anything else = `leftover_customized`, never touched.
 
     v4.1 (plan 032): every `diverged` stock file is subclassified against the bundled
     stock history — `stale-stock` (byte-equals a HISTORICAL release's stock after the
@@ -2968,7 +2985,8 @@ def _emit_prompt_library(pkg_dir: Path, name: str, force: bool = False,
     out_dir = pkg_dir / "prompts"
     result: dict[str, list] = {"emitted": [], "unchanged": [], "diverged": [],
                                "diverged_stale_stock": [], "diverged_customized": [],
-                               "refreshed": []}
+                               "refreshed": [], "leftover_stale_stock": [],
+                               "leftover_customized": [], "retired": []}
     history = _load_stock_history()
     # Plan 057: version strings compare numerically — "4.10.0" is newer than "4.9.0",
     # never a lexical compare (lexical would rank 4.10.0 below 4.9.0).
@@ -3013,6 +3031,24 @@ def _emit_prompt_library(pkg_dir: Path, name: str, force: bool = False,
                          any(line == other for other in rest)
                          for line in text.splitlines())})
         result[status].append(rel)
+    current = {p.name for p in _PROMPTS_DIR.glob("*.md")}
+    for fname in sorted(set(history) - current):
+        path = out_dir / fname
+        if not path.exists():
+            continue
+        rel = f"prompts/{fname}"
+        on_disk = path.read_text(encoding="utf-8")
+        matches = next(
+            (release for release, body in
+             sorted(history[fname].items(), key=lambda kv: _vkey(kv[0]), reverse=True)
+             if body.replace("{package}", name) == on_disk), None)
+        if matches is None:
+            result["leftover_customized"].append(rel)
+        elif refresh_stock:
+            path.unlink()
+            result["retired"].append(rel)
+        else:
+            result["leftover_stale_stock"].append({"file": rel, "matches": matches})
     return result
 
 
@@ -3233,8 +3269,10 @@ def handoff_emit(target_dir: str, subdir: str = "handoff", force: bool = False,
                  refresh_stock: bool = False) -> dict:
     """Wire the target project to the package: .mcp.json (standalone installs) + the
     CLAUDE.md operating note. v3.0.0 (plan 027): prompts are NOT copied into the
-    target — <package>/prompts/ is the single source (stock scenario library +
-    project-authored kickoff prompts, all plain .md the operator reads and picks).
+    target — <package>/prompts/ is the single source of PROJECT prompts (plus the
+    operator guide); since v5.0.0 (plan 116) the stock scenarios are the plugin's slash
+    skills, and the note (v5) points at the plugin's discipline skills instead of
+    carrying a tool cheat-sheet.
     Emission is blocked if the injection screen finds instruction-shaped text in any
     package prompt file. Reports stale v1 references AND restated register content
     found in the target's CLAUDE.md/AGENTS.md.
@@ -3256,7 +3294,7 @@ def handoff_emit(target_dir: str, subdir: str = "handoff", force: bool = False,
     pkg_dir = PACKAGE_ROOT / _CURRENT_NAME
     library = _emit_prompt_library(pkg_dir, _CURRENT_NAME, force=force,
                                    refresh_stock=refresh_stock)
-    stock = {p.name for p in _PROMPTS_DIR.glob("*.md")}
+    stock = _stock_names()
     prompts_dir = pkg_dir / "prompts"
     prompt_files = sorted(prompts_dir.glob("*.md")) if prompts_dir.exists() else []
     project = [p.name for p in prompt_files if p.name not in stock]
@@ -3336,6 +3374,24 @@ def handoff_emit(target_dir: str, subdir: str = "handoff", force: bool = False,
         warnings.append(
             f"{len(library['refreshed'])} stale-stock prompt(s) refreshed to the"
             " current template (refresh_stock)")
+    # Plan 116 (v5): the scenarios are slash skills; a retired stock file left on disk is
+    # named by class - deleted only on refresh, and only when byte-equal to shipped stock.
+    if left := library["leftover_stale_stock"]:
+        warnings.append(
+            f"{len(left)} retired stock prompt(s) remain in <package>/prompts/, byte-equal"
+            " to a shipped release (the scenarios are the plugin's /tamheed:<name> skills"
+            " since v5.0.0): re-run with refresh_stock=true to delete them safely"
+            f" ({', '.join(e['file'].removeprefix('prompts/') for e in left)})")
+    if custom_left := library["leftover_customized"]:
+        warnings.append(
+            f"{len(custom_left)} customised copy(ies) of retired stock prompt(s) kept"
+            f" ({', '.join(n.removeprefix('prompts/') for n in custom_left)}) — keep each"
+            " as a project prompt under a NEW name (the stock name is retired and its skill"
+            " is /tamheed:<name>), or delete it yourself; refresh never touches it")
+    if retired := library["retired"]:
+        warnings.append(
+            f"{len(retired)} retired stock prompt(s) deleted (refresh_stock) — the scenarios"
+            f" are the plugin's /tamheed:<name> skills ({', '.join(n.removeprefix('prompts/') for n in retired)})")
     # Plan 087: feedback is named every emission until it has left the package - ids
     # only, never row text. INVARIANT this relies on (security review): `warnings` is
     # returned in the tool result and never written to disk - if a future change surfaces
@@ -3425,25 +3481,33 @@ def handoff_emit(target_dir: str, subdir: str = "handoff", force: bool = False,
                    "(no project-level .mcp.json entry needed)." if plugin_hosted else
                    "The `tamheed` MCP server is registered in this project's `.mcp.json`.")
     note_block = (
-        "<!-- tamheed:note v4 -->\n\n"
+        "<!-- tamheed:note v5 -->\n\n"
         f"This project executes Tamheed package `{_CURRENT_NAME}` "
         f"(under `{PACKAGE_ROOT.resolve()}`). **The package is the record — when code and "
         "package disagree, fix the code or record a scope change; never let them drift.** "
         "**Package data lives in the git working tree** (C31): uncommitted package writes "
         "are destroyed by `git reset --hard` / `git checkout` / `git stash` exactly like "
         "uncommitted source — commit the package `data/` before branch operations. "
-        "`work_bind`, the closing `progress_update`, `export_html` and `handoff_emit` all "
-        "FLUSH `data/*.jsonl` AFTER the commit they record, so the tree is dirty again the "
-        "moment you finish recording: run `git status --porcelain -uall` immediately "
-        "before ANY branch operation — never a memory of having committed. "
+        "Every store write (`entity_upsert`, `progress_update`, `audit_record`, `work_bind`, "
+        "`package_verify(record=true)`, `package_close`) FLUSHES `data/*.jsonl`, and "
+        "`export_html` / `handoff_emit` write package files beside it — `work_bind` records "
+        "a commit and dirties the tree AFTER it, so the tree is dirty again the moment you "
+        "finish recording: run `git status --porcelain -uall` immediately before ANY branch "
+        "operation — never a memory of having committed. "
         f"{server_line} All package reads/writes go through the `tamheed` MCP tools — a "
         "committed script that must QUOTE the store (a review slate, a docket) reads an "
         "`entity_export` file the tool wrote under `exports/`, never `data/*.jsonl` and "
-        "never a pasted display; "
-        f"ready-made task prompts live in `{_CURRENT_NAME}/prompts/` — start with "
-        f"`{_CURRENT_NAME}/prompts/README.md`, the operator guide (which prompt for "
-        f"which situation, semi-auto vs fully-auto); the human review surface is "
-        f"`{_CURRENT_NAME}/review.html`.\n"
+        "never a pasted display. The HOW of every write, read and git crossing is the "
+        "plugin's `tamheed:package-writes` skill — `tamheed:reading-the-record` before "
+        "citing a row, `tamheed:operator-interview` at every STOP, `tamheed:test-evidence` / "
+        "`tamheed:measurement-evidence` / `tamheed:ci-evidence` behind every verdict (they "
+        "load on relevance; this table stays here because it is mandatory). The scenario "
+        "ceremonies are the plugin's operator-invoked slash skills (`/tamheed:orient-resume`, "
+        "`/tamheed:slice-kickoff`, `/tamheed:progress-sync`, `/tamheed:slice-review`, "
+        "`/tamheed:register-liveness`, …): "
+        f"`{_CURRENT_NAME}/prompts/README.md`, the operator guide, maps every situation to "
+        f"its skill, and project-authored prompts live in `{_CURRENT_NAME}/prompts/`; the "
+        f"human review surface is `{_CURRENT_NAME}/review.html`.\n"
         "\n### Recording obligations (mandatory — unrecorded work is drift)\n\n"
         "| During execution, when… | Record BEFORE moving on |\n"
         "|---|---|\n"
@@ -3486,31 +3550,6 @@ def handoff_emit(target_dir: str, subdir: str = "handoff", force: bool = False,
         "\nIf you cannot record (lock held, package missing), STOP and tell the"
         " operator — do not proceed unrecorded.\n"
         f"{lessons_section}"
-        "\n### Tool cheat-sheet (execution loop)\n\n"
-        "- `progress_update(entries=[{entry, event_type?, subject_id?, actor?,"
-        " corrects?, phase_id?, slice_id?}])` — append TYPED progress (correct via a"
-        " `correction` event, never edit)\n"
-        "- `audit_record(verdicts=[{ac_id, verdict: Met|Partial|Not-met|Pending,"
-        " evidence?, verified_by?, verification_method?, against_commit?}])` —"
-        " evidence ref = evidenced, not narrated\n"
-        "- `work_bind(ref, entity_ids=[...], note?)` — stamp a commit/PR onto entities\n"
-        "- `entity_query(type, id?, status?, columns?, limit?, after_id?, ids?, search?)`"
-        " — rows + total + next_after (page with after_id; quote a known set via ids;"
-        " keyword-sweep via search)\n"
-        "- `trace_query(entity_id, direction: out|in|both, relation?)` — typed links\n"
-        "- `entity_upsert(entities=[{type, id, ...}])` — FULL rows, even for updates;"
-        " `expect_unchanged: [cols]` on an item refuses the write if those columns"
-        " differ from the stored row (a long-row status flip is self-verifying);"
-        " `{type: trace-edge, from_id, to_id, relation, retire: true}` removes that"
-        " edge (journaled — retype in ONE batch: retire + the corrected edge)\n"
-        "- `entity_export(path, tool?, args?)` — write a read tool's WHOLE result to"
-        " `<package>/exports/<path>` (digest-stamped, deterministic) for a committed"
-        " script to quote from; pass a limit above total for a whole family\n"
-        "- `gate_run()` — mechanical gate verdict · `readiness_check(scope, id?)` —"
-        " is it actually DONE (waivers honored, Review counts open)\n"
-        "- `export_html()` — refresh review.html · `server_info()` — version + root\n"
-        "- `package_verify(name?, record?)` — canonical round-trip of the on-disk store"
-        " (per-file byte-equality, foreign files, digest); `record=true` journals it\n"
         "<!-- /tamheed:note -->\n")
     note = "\n## Tamheed progress tracking\n" + note_block
     claude_md = target / "CLAUDE.md"

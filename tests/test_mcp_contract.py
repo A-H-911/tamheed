@@ -359,29 +359,29 @@ class McpContractTest(unittest.TestCase):
 
     def test_managed_emission_lifecycle(self):
         """C20: emitted -> unchanged -> diverged -> force. Never a silent clobber.
-        v3: the managed surface is the stock library in <package>/prompts/."""
+        v3: the managed surface is the stock library in <package>/prompts/ - since v5
+        (plan 116) that is the operator guide alone; the scenarios are plugin skills."""
         self._emit_ready()
         with tempfile.TemporaryDirectory() as target:
             first = srv.handoff_emit(target)                # library seeded at create
-            self.assertIn("prompts/orient-resume.md",
+            self.assertIn("prompts/README.md",
                           first["prompt_library"]["unchanged"])
             second = srv.handoff_emit(target)               # nothing changed anywhere
             self.assertEqual(second["written"], [])
-            self.assertIn("prompts/orient-resume.md",
+            self.assertIn("prompts/README.md",
                           second["prompt_library"]["unchanged"])
             self.assertIn("CLAUDE.md", second["unchanged"])
-            stock = srv.PACKAGE_ROOT / "demo" / "prompts" / "orient-resume.md"
+            stock = srv.PACKAGE_ROOT / "demo" / "prompts" / "README.md"
             stock.write_text(stock.read_text(encoding="utf-8") + "\nOPERATOR NOTE\n",
                              encoding="utf-8")
             third = srv.handoff_emit(target)                # hand edit: refused, reported
-            self.assertIn("prompts/orient-resume.md",
+            self.assertIn("prompts/README.md",
                           third["prompt_library"]["diverged"])
             self.assertIn("OPERATOR NOTE", stock.read_text(encoding="utf-8"))
             forced = srv.handoff_emit(target, force=True)   # explicit force overwrites
-            self.assertIn("prompts/orient-resume.md",
+            self.assertIn("prompts/README.md",
                           forced["prompt_library"]["emitted"])
             self.assertNotIn("OPERATOR NOTE", stock.read_text(encoding="utf-8"))
-
     def test_upsert_accepts_dict_custom_attributes(self):
         """Plan 023 (C28/C2): a JSON object serializes at binding — a raw dict used to
         fail the whole batch with sqlite's opaque "type 'dict' is not supported"."""
@@ -1029,26 +1029,31 @@ class McpContractTest(unittest.TestCase):
 
     def test_note_teaches_paging_verify_amends_and_the_flush_rule(self):
         """Plan 039: the note carries LL-061's refinement of C31 (recording FLUSHES
-        after the commit it records — the porcelain check, never a memory), the
-        widened entity_query cheat-sheet line, package_verify, and the `amends`
-        merge semantics in the SC obligation row; the agent-control template
-        carries the same commit rule."""
+        after the commit it records — the porcelain check, never a memory) and the
+        `amends` merge semantics in the SC obligation row; the agent-control template
+        carries the same commit rule. v5 (plan 116): the cheat-sheet lines — paging,
+        package_verify, edge retirement, entity_export, expect_unchanged — live in the
+        tamheed:package-writes skill instead."""
         self._emit_ready()
         with tempfile.TemporaryDirectory() as target:
             srv.handoff_emit(target)
             note = (Path(target) / "CLAUDE.md").read_text(encoding="utf-8")
-        for needle in ("git status --porcelain -uall", "FLUSH `data/*.jsonl` AFTER",
-                       "after_id?, ids?, search?", "package_verify(name?, record?)",
+        for needle in ("git status --porcelain -uall", "FLUSHES `data/*.jsonl`",
+                       "dirties the tree AFTER it",       # plan 116: the mechanism, corrected
                        "`amends` for a ruling", "RE-READ them",
-                       "retire: true}` removes that edge",      # plan 040
-                       "entity_export(path, tool?, args?)", "expect_unchanged: [cols]",
                        "reads an `entity_export` file the tool wrote"):   # plan 041
             self.assertIn(needle, note, needle)
+        skill = (REPO_ROOT / "plugins" / "tamheed" / "skills" / "package-writes" /
+                 "SKILL.md").read_text(encoding="utf-8")
+        for needle in ("after_id", "package_verify", "retire: true",
+                       "entity_export", "expect_unchanged: [cols]", "substitute",
+                       "git status --porcelain -uall", "NOT NULL"):
+            self.assertIn(needle, skill, needle)
         tpl = (REPO_ROOT / "plugins" / "tamheed" / "templates" /
                "agent-control.template.md").read_text(encoding="utf-8")
         self.assertIn("git status --porcelain -uall", tpl)
         self.assertIn("package_verify", tpl)
-
+        self.assertIn("tamheed:package-writes", tpl)
     def test_note_pointer_pattern_recognized(self):
         """findings_19 §1 (plan 036): a target CLAUDE.md whose heading section is
         a POINTER (the @<package>/CLAUDE.md import) is never called a v1 note —
@@ -1065,7 +1070,7 @@ class McpContractTest(unittest.TestCase):
             self.assertEqual(root_md.read_text(encoding="utf-8"), pointer)
             pkg_md = srv.PACKAGE_ROOT / "demo" / "CLAUDE.md"
             self.assertTrue(pkg_md.exists())
-            self.assertIn("<!-- tamheed:note v4 -->",
+            self.assertIn("<!-- tamheed:note v5 -->",
                           pkg_md.read_text(encoding="utf-8"))
             w = next(w for w in out["warnings"] if "imports the package note" in w)
             self.assertIn(str(pkg_md.resolve()), w)
@@ -1432,45 +1437,89 @@ class McpContractTest(unittest.TestCase):
             self.assertIn("Stage 20", out["error"])
             self.assertFalse((Path(target) / ".mcp.json").exists())
 
+    def test_retired_stock_leftovers_are_classified_and_deleted_only_on_refresh(self):
+        """Plan 116 (v5): the sixteen scenarios are slash skills; a package created under
+        4.x still carries their files. One byte-equal to a shipped release is a
+        `leftover_stale_stock` (named; refresh_stock deletes it, reported `retired` — the
+        same proof the overwrite relies on); a customised copy is `leftover_customized`
+        (named with the rename advice; never deleted). A leftover is never a PROJECT
+        prompt: alone it does not satisfy the "no project-authored prompts" refusal, and
+        it never joins `project_prompts`."""
+        make_complete_package("demo")
+        prompts = srv.PACKAGE_ROOT / "demo" / "prompts"
+        hist = json.loads((srv._PROMPTS_DIR / "stock-history.json").read_text(encoding="utf-8"))
+        newest = lambda n: hist[n][sorted(hist[n], key=srv._vkey)[-1]].replace("{package}", "demo")
+        (prompts / "slice-kickoff.md").write_text(newest("slice-kickoff.md"),
+                                                  encoding="utf-8", newline="\n")
+        (prompts / "orient-resume.md").write_text(newest("orient-resume.md") + "\nmine\n",
+                                                  encoding="utf-8", newline="\n")
+        with tempfile.TemporaryDirectory() as target:
+            out = srv.handoff_emit(target)
+            self.assertFalse(out["ok"])                        # leftovers are not project prompts
+            self.assertIn("no project-authored prompts", out["error"])
+        (prompts / "kickoff.md").write_text("# Kickoff\n\nStart with SL-001.\n", encoding="utf-8")
+        with tempfile.TemporaryDirectory() as target:
+            out = srv.handoff_emit(target)
+            lib = out["prompt_library"]
+            self.assertEqual(out["project_prompts"], ["kickoff.md"])
+            self.assertEqual([e["file"] for e in lib["leftover_stale_stock"]],
+                             ["prompts/slice-kickoff.md"])
+            self.assertEqual(lib["leftover_customized"], ["prompts/orient-resume.md"])
+            self.assertEqual(lib["retired"], [])
+            self.assertTrue(any("retired stock prompt(s) remain" in w and "refresh_stock=true" in w
+                                and "slice-kickoff.md" in w for w in out["warnings"]), out["warnings"])
+            self.assertTrue(any("customised copy" in w and "orient-resume.md" in w and "NEW name" in w
+                                for w in out["warnings"]), out["warnings"])
+        self.assertTrue((prompts / "slice-kickoff.md").exists())      # a plain emit deletes nothing
+        with tempfile.TemporaryDirectory() as target:
+            out = srv.handoff_emit(target, refresh_stock=True)
+            lib = out["prompt_library"]
+            self.assertEqual(lib["retired"], ["prompts/slice-kickoff.md"])
+            self.assertEqual(lib["leftover_stale_stock"], [])
+            self.assertEqual(lib["leftover_customized"], ["prompts/orient-resume.md"])
+            self.assertTrue(any("deleted (refresh_stock)" in w and "slice-kickoff.md" in w
+                                for w in out["warnings"]), out["warnings"])
+        self.assertFalse((prompts / "slice-kickoff.md").exists())
+        self.assertTrue((prompts / "orient-resume.md").read_text(encoding="utf-8").endswith("mine\n"))
+        # the customised leftover is the operator's prose now: prompt-ids-resolve scans it
+        # beside the project prompt (a stale-stock leftover was never scanned)
+        rule = {r["rule"]: r for r in srv.readiness_check("package")["rules"]}["prompt-ids-resolve"]
+        self.assertEqual(rule["population"]["rows"], 2)
+
     def test_package_create_seeds_library(self):
         """Plan 027: <package>/prompts/ is the Stage-20 authoring surface — it exists
-        from birth with the stock library."""
+        from birth with the stock library; v5 (plan 116): the operator guide alone —
+        no scenario file is ever seeded again (they are the plugin's skills)."""
         out = srv.package_create("demo", "Demo", "rnd")
         self.assertTrue(out["ok"], out)
-        self.assertGreaterEqual(len(out["prompt_library"]["emitted"]), 5)
+        self.assertEqual(out["prompt_library"]["emitted"], ["prompts/README.md"])
         lib = srv.PACKAGE_ROOT / "demo" / "prompts"
-        self.assertTrue((lib / "orient-resume.md").exists())
-
+        self.assertTrue((lib / "README.md").exists())
+        self.assertFalse((lib / "orient-resume.md").exists())
+        self.assertEqual(sorted(p.name for p in lib.glob("*.md")), ["README.md"])
     def test_prompt_library_emitted_with_package_name(self):
         self._emit_ready()
         with tempfile.TemporaryDirectory() as target:
             out = srv.handoff_emit(target)
-            self.assertEqual(len(out["prompt_library"]["unchanged"]), 17)  # from create
+            self.assertEqual(out["prompt_library"]["unchanged"], ["prompts/README.md"])
             self.assertEqual(out["project_prompts"], ["kickoff.md"])  # README is stock
         lib = srv.PACKAGE_ROOT / "demo" / "prompts"
         stock = sorted(p.name for p in lib.glob("*.md") if p.name != "kickoff.md")
-        self.assertEqual(stock, [  # plans 027/028/032: guide + 15 scenarios, both styles
-            "README.md", "defect-triage.md", "drift-register.md",
-            "generate-report.md", "integrity-check.md", "loop-guard.md",
-            "loop-iteration.md", "orient-resume.md", "package-onboarding.md",
-            "phase-close.md", "progress-sync.md", "register-liveness.md",
-            "release-close-out.md", "replan-deferred.md", "skill-promote.md",
-            "slice-kickoff.md", "slice-review.md"])
-        text = (lib / "orient-resume.md").read_text(encoding="utf-8")
-        self.assertIn('package_open("demo")', text)      # {package} substituted
-        self.assertNotIn("{package}", text)
-        loop = (lib / "loop-iteration.md").read_text(encoding="utf-8")
-        self.assertIn("ITERATION: wbs=", loop)           # the machine contract line
+        self.assertEqual(stock, ["README.md"])   # plan 116: the guide is the whole stock
         guide = (lib / "README.md").read_text(encoding="utf-8")
-        self.assertIn("Which prompt, when", guide)       # plan 028: the operator guide
-        self.assertIn("`demo` prompt guide", guide)
+        self.assertIn('package_unlock("demo")', guide)      # {package} substituted
         self.assertNotIn("{package}", guide)
+        self.assertIn("Which skill, when", guide)           # plan 116: the operator guide
+        self.assertIn("`demo` prompt guide", guide)
+        for name in ("orient-resume", "slice-kickoff", "loop-iteration", "loop-guard",
+                     "skill-promote", "register-liveness"):
+            self.assertIn(f"/tamheed:{name}", guide, name)  # every scenario, by its skill
         # plan 030 (C36): the table indexes the FOLDER, not just the library, and the
         # guide teaches the single-writer lock + the stale-lock discipline
         self.assertIn("project prompts are operator-authored", guide)
         self.assertIn("single-writer lock", guide)
         self.assertIn("Never auto-clear", guide)
-
+        self.assertIn("leftover_customized", guide)          # the v4 -> v5 leftover story
     def test_leftover_verdicts_delete_vs_move(self):
         """Plan 028 (C34 §2): the leftover warning is per file — a byte/normalized
         copy of a package prompt says delete; unique content says MOVE."""
@@ -1536,26 +1585,30 @@ class McpContractTest(unittest.TestCase):
             self.assertEqual(len(tallies), 1)
             self.assertEqual(tallies[0]["family"], "audit-verdict")
 
-    def test_claude_md_note_contains_cheatsheet(self):
+    def test_claude_md_note_v5_keeps_the_obligations_and_points_at_the_skills(self):
+        """Plan 116 (v5): the always-loaded note keeps the mandatory obligations table and
+        the lessons, names the plugin's discipline skills and the operator-invoked scenario
+        skills, and no longer carries the tool cheat-sheet (its rules live in
+        tamheed:package-writes)."""
         self._emit_ready()
         with tempfile.TemporaryDirectory() as target:
             srv.handoff_emit(target)
             note = (Path(target) / "CLAUDE.md").read_text(encoding="utf-8")
-        for needle in ("Tool cheat-sheet", "audit_record(", "work_bind(",
-                       "entity_query(", "FULL rows", "demo/prompts/",
-                       # plan 027: the note is marker-managed and carries the
-                       # mandatory obligations table + the readiness protocol
-                       "<!-- tamheed:note v4 -->", "<!-- /tamheed:note -->",
+        for needle in ("<!-- tamheed:note v5 -->", "<!-- /tamheed:note -->",
                        "Recording obligations", "`scope-change` row (`SC-`) FIRST",
                        "activation trigger", "readiness_check(scope)",
                        "STOP and tell the operator",
-                       # plan 031 (v4): the new obligations rows + evidence chain
                        "NEEDS-CLARIFICATION", "**Review** (done-claimed)",
                        "`WVR-` waiver", "verified_by", "against_commit",
                        "event_type `work-done`",
-                       "demo/prompts/README.md"):     # plan 028: the operator guide
-            self.assertIn(needle, note)
-
+                       "demo/prompts/README.md",             # the operator guide
+                       "tamheed:package-writes", "tamheed:reading-the-record",
+                       "tamheed:operator-interview", "/tamheed:slice-kickoff",
+                       "this table stays here because it is mandatory"):
+            self.assertIn(needle, note, needle)
+        for gone in ("Tool cheat-sheet", "tamheed:note v4", "audit_record(verdicts=",
+                     "ready-made task prompts"):
+            self.assertNotIn(gone, note, gone)
     def test_claude_md_v1_note_warned_never_touched(self):
         """Plan 027: a v1 note (heading, no markers) has no terminator to bound a safe
         machine edit — warned, never modified; operator prose below it survives."""
@@ -1606,64 +1659,64 @@ class McpContractTest(unittest.TestCase):
     def test_stock_divergence_classified_customized(self):
         """Plan 032: the v3.2 'indistinguishable without history' era is over — a
         hand edit matches no historical stock, classifies CUSTOMISED, and the warning
-        names the per-file acceptance path + force; refresh never touches it."""
+        names the per-file acceptance path + force; refresh never touches it.
+        v5: the one stock file is the operator guide."""
         self._emit_ready()
-        stock = srv.PACKAGE_ROOT / "demo" / "prompts" / "orient-resume.md"
+        stock = srv.PACKAGE_ROOT / "demo" / "prompts" / "README.md"
         # plan 078: the customisation REWRITES a stock line - a file that merely appends
         # to the current stock contains it whole and is, correctly, no longer "lagging"
         lines = stock.read_text(encoding="utf-8").splitlines(keepends=True)
-        edited = "# our own orient-resume\n" + "".join(lines[1:]) + "\ncustomised\n"
+        edited = "# our own guide\n" + "".join(lines[1:]) + "\ncustomised\n"
         stock.write_text(edited, encoding="utf-8")
         with tempfile.TemporaryDirectory() as target:
             out = srv.handoff_emit(target, refresh_stock=True)
             lib = out["prompt_library"]
-            self.assertIn("prompts/orient-resume.md", lib["diverged"])
+            self.assertIn("prompts/README.md", lib["diverged"])
             # plan 034 (findings_18 §2): customized entries carry the lag field
             custom = {e["file"]: e["stock_last_changed"]
                       for e in lib["diverged_customized"]}
-            self.assertIn("prompts/orient-resume.md", custom)
-            self.assertRegex(custom["prompts/orient-resume.md"], r"^\d+\.\d+\.\d+$")
+            self.assertIn("prompts/README.md", custom)
+            self.assertRegex(custom["prompts/README.md"], r"^\d+\.\d+\.\d+$")
             self.assertEqual(lib["diverged_stale_stock"], [])
             self.assertEqual(lib["refreshed"], [])
             w = next(w for w in out["warnings"] if "CUSTOMISED" in w)
             self.assertIn("delete it and re-emit", w)
             self.assertIn("force=True overwrites ALL", w)
-            self.assertIn("stock last changed: orient-resume.md", w)
+            self.assertIn("stock last changed: README.md", w)
             self.assertIn("if a customization predates", w)
         self.assertEqual(stock.read_text(encoding="utf-8"), edited)  # never touched
-
     def test_stale_stock_classified_and_safely_refreshed(self):
         """Plan 032: a package file byte-equal to an OLDER release's stock (with the
         {package} substitution applied) classifies STALE-STOCK, names the release it
         matches, and refresh_stock=true — and ONLY refresh — updates it; a plain emit
-        just reports it."""
+        just reports it. v5: measured on the operator guide, the one stock file."""
         self._emit_ready()
         history = json.loads(
             (REPO_ROOT / "plugins" / "tamheed" / "prompts" / "stock-history.json")
             .read_text(encoding="utf-8"))
-        old_release, old_body = sorted(history["slice-kickoff.md"].items())[0]
-        stock = srv.PACKAGE_ROOT / "demo" / "prompts" / "slice-kickoff.md"
+        old_release, old_body = sorted(history["README.md"].items(),
+                                       key=lambda kv: srv._vkey(kv[0]))[0]
+        stock = srv.PACKAGE_ROOT / "demo" / "prompts" / "README.md"
         stock.write_text(old_body.replace("{package}", "demo"),
                          encoding="utf-8", newline="\n")
         with tempfile.TemporaryDirectory() as target:
             out = srv.handoff_emit(target)                     # no refresh: report only
             lib = out["prompt_library"]
             self.assertEqual(lib["diverged_stale_stock"],
-                             [{"file": "prompts/slice-kickoff.md",
+                             [{"file": "prompts/README.md",
                                "matches": old_release}])
-            self.assertIn("prompts/slice-kickoff.md", lib["diverged"])
+            self.assertIn("prompts/README.md", lib["diverged"])
             self.assertTrue(any("STALE-STOCK" in w and "refresh_stock=true" in w
                                 for w in out["warnings"]))
         with tempfile.TemporaryDirectory() as target:
             out = srv.handoff_emit(target, refresh_stock=True)
             lib = out["prompt_library"]
-            self.assertEqual(lib["refreshed"], ["prompts/slice-kickoff.md"])
-            self.assertNotIn("prompts/slice-kickoff.md", lib["diverged"])
+            self.assertEqual(lib["refreshed"], ["prompts/README.md"])
+            self.assertNotIn("prompts/README.md", lib["diverged"])
         current = (REPO_ROOT / "plugins" / "tamheed" / "prompts" /
-                   "slice-kickoff.md").read_text(encoding="utf-8")
+                   "README.md").read_text(encoding="utf-8")
         self.assertEqual(stock.read_text(encoding="utf-8"),
                          current.replace("{package}", "demo"))
-
     def test_stock_history_versions_sort_numerically(self):
         """Plan 057: '4.10.0' is newer than '4.9.0' — the release a stale file
         'matches' must come from a numeric compare, never lexical (lexical ranks
@@ -1671,7 +1724,7 @@ class McpContractTest(unittest.TestCase):
         so only sort order — not content — decides which `matches`; the buggy
         lexical `reverse=True` sort would report the older '4.9.0' first."""
         self._emit_ready()
-        fname = "orient-resume.md"
+        fname = "README.md"
         stock = srv.PACKAGE_ROOT / "demo" / "prompts" / fname
         old_body = stock.read_text(encoding="utf-8") + "\n<!-- old -->\n"
         stock.write_text(old_body, encoding="utf-8", newline="\n")
@@ -1683,10 +1736,11 @@ class McpContractTest(unittest.TestCase):
         stale = [d for d in out["diverged_stale_stock"] if d["file"].endswith(fname)]
         self.assertTrue(stale, out)
         self.assertEqual(stale[0]["matches"], "4.10.0")
-
     def test_refresh_then_force_precedence(self):
         """Plan 032: refresh handles stale-stock; force covers the customized
-        remainder — composable in one call, refresh never widening force's blast."""
+        remainder — composable in one call, refresh never widening force's blast.
+        v5 (plan 116): a retired scenario left on disk is the stale side (deleted by the
+        refresh, reported `retired`); the customised guide is force's."""
         self._emit_ready()
         history = json.loads(
             (REPO_ROOT / "plugins" / "tamheed" / "prompts" / "stock-history.json")
@@ -1695,22 +1749,21 @@ class McpContractTest(unittest.TestCase):
         stale = srv.PACKAGE_ROOT / "demo" / "prompts" / "defect-triage.md"
         stale.write_text(old_body.replace("{package}", "demo"),
                          encoding="utf-8", newline="\n")
-        custom = srv.PACKAGE_ROOT / "demo" / "prompts" / "orient-resume.md"
+        custom = srv.PACKAGE_ROOT / "demo" / "prompts" / "README.md"
         custom.write_text(custom.read_text(encoding="utf-8") + "\nmine\n",
                           encoding="utf-8")
         with tempfile.TemporaryDirectory() as target:
             lib = srv.handoff_emit(target, refresh_stock=True,
                                    force=True)["prompt_library"]
-        self.assertIn("prompts/orient-resume.md", lib["emitted"])   # force took it
-        self.assertIn("prompts/defect-triage.md",
-                      lib["refreshed"] + lib["emitted"])            # stale updated
+        self.assertIn("prompts/README.md", lib["emitted"])          # force took it
+        self.assertEqual(lib["retired"], ["prompts/defect-triage.md"])  # refresh retired it
+        self.assertFalse(stale.exists())
         self.assertNotIn("mine", custom.read_text(encoding="utf-8"))
-
     def test_stock_history_missing_degrades_to_customized(self):
         """No history file = every divergence reads customized — never a false
-        stale-stock, so refresh can never clobber."""
+        stale-stock, so refresh can never clobber (nor delete a leftover)."""
         self._emit_ready()
-        stock = srv.PACKAGE_ROOT / "demo" / "prompts" / "orient-resume.md"
+        stock = srv.PACKAGE_ROOT / "demo" / "prompts" / "README.md"
         stock.write_text("anything\n", encoding="utf-8")
         real = srv._PROMPTS_DIR
         with tempfile.TemporaryDirectory() as empty, \
@@ -1725,47 +1778,52 @@ class McpContractTest(unittest.TestCase):
                 srv._PROMPTS_DIR = real
         custom = {e["file"]: e["stock_last_changed"]
                   for e in lib["diverged_customized"]}
-        self.assertIn("prompts/orient-resume.md", custom)
+        self.assertIn("prompts/README.md", custom)
         # no history -> no lag claim (degrades honest, plan 034)
-        self.assertIsNone(custom["prompts/orient-resume.md"])
+        self.assertIsNone(custom["prompts/README.md"])
         self.assertEqual(lib["refreshed"], [])
+        self.assertEqual(lib["retired"], [])
         self.assertEqual(stock.read_text(encoding="utf-8"), "anything\n")
-
     def test_a_completed_hand_merge_is_visible(self):
         """Plan 078 (findings_26): a customised prompt hand-merged to the current stock
         still came back in `diverged_customized` with an unchanged warning - "nothing
         records WHEN we merged". Two honest signals: the operator's DECLARED marker (a
         claim, reported as one) and mechanical line-containment of the current stock. The
         heuristic alone was measured to fail on the field's own merged file, whose
-        customisation rewrote stock lines; the marker covers exactly that case."""
+        customisation rewrote stock lines; the marker covers exactly that case.
+        v5 (plan 116): measured on the operator guide, the one stock file - one shape per emit."""
         self._emit_ready()
-        lib_dir = srv.PACKAGE_ROOT / "demo" / "prompts"
+        guide = srv.PACKAGE_ROOT / "demo" / "prompts" / "README.md"
+        current = guide.read_text(encoding="utf-8")
         newest = sorted(json.loads((srv._PROMPTS_DIR / "stock-history.json")
-                                   .read_text(encoding="utf-8"))["integrity-check.md"],
-                        key=lambda v: tuple(int(x) for x in v.split(".")))[-1]
-        rewritten = lib_dir / "integrity-check.md"          # stock lines REWRITTEN + a marker
-        rewritten.write_text(f"# our own integrity check\n\n<!-- tamheed:stock-merged {newest} -->"
-                             "\n\nproject steps only\n", encoding="utf-8")
-        superset = lib_dir / "slice-review.md"              # stock kept whole + local lines
-        superset.write_text(superset.read_text(encoding="utf-8") + "\n## Ours\n\nlocal step\n",
-                            encoding="utf-8")
-        lagging = lib_dir / "orient-resume.md"              # rewritten, marker names an OLD release
-        lagging.write_text("# ours\n\n<!-- tamheed:stock-merged 3.0.0 -->\n\nsteps\n",
-                           encoding="utf-8")
-        with tempfile.TemporaryDirectory() as target:
-            out = srv.handoff_emit(target)
-        self.assertTrue(out["ok"], out)                     # the marker trips no screen
-        by = {e["file"]: e for e in out["prompt_library"]["diverged_customized"]}
-        self.assertEqual(by["prompts/integrity-check.md"]["stock_merged"], f"declared {newest}")
-        self.assertFalse(by["prompts/integrity-check.md"]["contains_current_stock"])
-        self.assertTrue(by["prompts/slice-review.md"]["contains_current_stock"])
-        self.assertIsNone(by["prompts/slice-review.md"]["stock_merged"])
-        self.assertEqual(by["prompts/orient-resume.md"]["stock_merged"], "declared 3.0.0")
-        lag = next(w for w in out["warnings"] if "CUSTOMISED" in w)
-        self.assertIn("orient-resume.md", lag)              # the only one still lagging
-        self.assertNotIn("integrity-check.md (", lag)
-        self.assertNotIn("slice-review.md (", lag)
+                                   .read_text(encoding="utf-8"))["README.md"], key=srv._vkey)[-1]
 
+        def emit():
+            with tempfile.TemporaryDirectory() as target:
+                out = srv.handoff_emit(target)
+            self.assertTrue(out["ok"], out)                 # the marker trips no screen
+            entry = {e["file"]: e for e in out["prompt_library"]["diverged_customized"]}
+            return entry["prompts/README.md"], next(w for w in out["warnings"] if "CUSTOMISED" in w)
+
+        # stock lines REWRITTEN + a marker naming the current release: declared, not lagging
+        guide.write_text(f"# our own guide\n\n<!-- tamheed:stock-merged {newest} -->"
+                         "\n\nproject steps only\n", encoding="utf-8")
+        entry, lag = emit()
+        self.assertEqual(entry["stock_merged"], f"declared {newest}")
+        self.assertFalse(entry["contains_current_stock"])
+        self.assertNotIn("README.md (", lag)
+        # stock kept whole + local lines: contains the current stock, no marker, not lagging
+        guide.write_text(current + "\n## Ours\n\nlocal step\n", encoding="utf-8")
+        entry, lag = emit()
+        self.assertTrue(entry["contains_current_stock"])
+        self.assertIsNone(entry["stock_merged"])
+        self.assertNotIn("README.md (", lag)
+        # rewritten, marker names an OLD release: still lagging
+        guide.write_text("# ours\n\n<!-- tamheed:stock-merged 3.0.0 -->\n\nsteps\n",
+                         encoding="utf-8")
+        entry, lag = emit()
+        self.assertEqual(entry["stock_merged"], "declared 3.0.0")
+        self.assertIn("README.md (", lag)
     def test_stale_reference_report_is_precise(self):
         self._emit_ready()
         with tempfile.TemporaryDirectory() as target:
@@ -2809,7 +2867,7 @@ class V4EngineTest(unittest.TestCase):
         self.assertEqual(rule["entities"], ["LL-005", "LL-004", "LL-003", "LL-002",
                                             "LL-001", "LL-028", "LL-027", "LL-026"])
         self.assertIn("28 lesson line(s)", rule["note"])
-        self.assertIn("skill-promote.md", rule["note"])
+        self.assertIn("/tamheed:skill-promote", rule["note"])
         self.assertEqual(srv._NOTE_LESSONS_CEILING, 20)
 
     def test_migrate_relocates_converted_file_out_of_data(self):
@@ -3205,24 +3263,34 @@ class V4EngineTest(unittest.TestCase):
     def test_stock_prompts_teach_the_field_rules(self):
         """Plan 071: portable rules the field paid for, pinned by needle so they cannot
         rot - and two stale teachings removed (the hand-deleted lock; the claim that a
-        query round-trip truncates, which pushed a field repo onto the JSONL for weeks)."""
-        lib = REPO_ROOT / "plugins" / "tamheed" / "prompts"
-        read = lambda name: (lib / name).read_text(encoding="utf-8")
-        guide = read("README.md")
+        query round-trip truncates, which pushed a field repo onto the JSONL for weeks).
+        v5 (plan 116): the scenarios are skills under plugins/tamheed/skills/."""
+        bundle = REPO_ROOT / "plugins" / "tamheed"
+        guide = (bundle / "prompts" / "README.md").read_text(encoding="utf-8")
+        read = lambda name: (bundle / "skills" / name / "SKILL.md").read_text(encoding="utf-8")
         for needle in ("Show the record with its id", "Ask every time", "package_unlock",
                        "Never auto-clear", "read made FOR transmission"):
             self.assertIn(needle, guide, needle)
         for stale in ("re-commits the damage", "Repair from `data/*.jsonl`",
                       "delete `data/.lock` when EITHER"):
             self.assertNotIn(stale, guide, stale)
-        check = read("integrity-check.md")
+        check = read("integrity-check")
         for needle in ("Every gate is row-level", "`population`", "prose-ids-resolve"):
             self.assertIn(needle, check, needle)
-        self.assertIn("which words of the trigger", read("replan-deferred.md"))
-        orient = read("orient-resume.md")
-        for needle in ("Search finds candidates", "package_unlock", "omitted_columns"):
+        self.assertIn("which words of the trigger", read("replan-deferred"))
+        orient = read("orient-resume")
+        for needle in ("Search finds candidates", "package_unlock", "omitted_columns",
+                       "/tamheed:slice-kickoff", "/tamheed:package-onboarding"):
             self.assertIn(needle, orient, needle)
-
+        # the loop skill tells the agent to READ the guard (it cannot invoke an
+        # operator-only skill) and keeps the machine contract line
+        loop = read("loop-iteration")
+        self.assertIn("${CLAUDE_PLUGIN_ROOT}/skills/loop-guard/SKILL.md", loop)
+        self.assertIn("ITERATION: wbs=", loop)
+        for name in ("slice-kickoff", "register-liveness", "skill-promote"):
+            head = read(name).split("---")[1]
+            self.assertIn("disable-model-invocation: true", head, name)
+            self.assertNotIn("{package}", read(name), name)
     def test_a_stale_review_page_is_detectable(self):
         """Plan 081 (the field's "GIT CLEAN != PACKAGE ARTIFACTS CURRENT": review.html and
         csv/ regenerate ONLY on export_html, and a stale page once sat on origin while git
@@ -4032,8 +4100,8 @@ class V4EngineTest(unittest.TestCase):
         """The liveness playbook names every package-scope advisory rule the engine
         actually runs (enumerated from _readiness_report at plan time; this needle
         keeps them from drifting apart)."""
-        text = (REPO_ROOT / "plugins" / "tamheed" / "prompts" /
-                "register-liveness.md").read_text(encoding="utf-8")
+        text = (REPO_ROOT / "plugins" / "tamheed" / "skills" / "register-liveness" /
+                "SKILL.md").read_text(encoding="utf-8")
         for rule_name in ("clarifications-open", "open-questions-overdue",
                           "open-questions-resolved", "assumptions-current",
                           "risk-liveness", "hypotheses-measurable",
@@ -4066,8 +4134,8 @@ class V4EngineTest(unittest.TestCase):
 
     def test_close_outs_sweep_expired_waivers(self):
         for name in ("release-close-out.md", "phase-close.md"):
-            text = (REPO_ROOT / "plugins" / "tamheed" / "prompts" / name)\
-                .read_text(encoding="utf-8")
+            text = (REPO_ROOT / "plugins" / "tamheed" / "skills" / name.removesuffix(".md")
+                    / "SKILL.md").read_text(encoding="utf-8")
             self.assertIn("expired_waivers", text, name)
 
 

@@ -236,7 +236,8 @@ def gate_lint() -> None:
     blacklist = [("binds_to", "all"), ("milestones-reached", "all"),
                  ('"status":', "all"), ("PRM-", "prompts+templates"),
                  ("PASS/FAIL", "prompts"),
-                 ("tamheed:note v3", "all")]  # marker bumped to v4 (plan 035)
+                 ("tamheed:note v3", "all"),  # marker bumped to v4 (plan 035)
+                 ("tamheed:note v4", "all")]  # and to v5 (plan 116)
     _hist = re.compile(r"retired|deleted|renamed|blacklist|historical", re.I)
     problems = []
     for rel, text in teaching.items():

@@ -17,8 +17,21 @@ Sixteen `skills/<scenario>/SKILL.md` from the prompt bodies (`{package}` → the
 
 ## Done criteria
 
-- [ ] RED then GREEN (`:1539` retired; `:1606-1713` re-aimed; new leftover tests; `:3205` re-aimed at the skills)
-- [ ] dry-run on a fixture copy: 16 `retired`, README refreshed, `project-kickoff.md` untouched, note v5 in the workspace copy
-- [ ] `-p "/tamheed:slice-kickoff"` resolves on a bundle copy
-- [ ] `python check.py`
+- [x] RED then GREEN (`:1539` retired; `:1606-1713` re-aimed; new leftover tests; `:3205` re-aimed at the skills)
+- [x] dry-run on a fixture copy: 16 `retired`, README refreshed, `project-kickoff.md` untouched, note v5 in the workspace copy
+- [x] `-p "/tamheed:slice-kickoff"` resolves on a bundle copy
+- [x] `python check.py`
 - [ ] CI green
+
+## Execution note (2026-09-25)
+
+RED: seven tests (the re-aimed library tests, the note v5 test, the new leftover test) failed before
+the engine change; GREEN after it, plus five more tests re-aimed at the skills' paths and the v5
+marker (172 OK). Dry-run on a fixture COPY: 16 `leftover_stale_stock` on a plain emit, 16 `retired` on
+`refresh_stock`, README refreshed, `project-kickoff.md` untouched, the workspace note rebuilt as v5
+(cheat-sheet gone, skills named, the obligations table kept), `prompt-ids-resolve` population 1,
+`package_verify` true. Probe on a copy of the current bundle: `/tamheed:slice-kickoff` loaded verbatim;
+the model's own skill list shows exactly the eight model-invocable skills — the sixteen
+`disable-model-invocation` scenarios stay out of context, as the docs say. The note's flush sentence is
+corrected in the same rebuild (plan 115's review, HIGH 1). The scenario skills were born with plan
+112's step-15 and NOT-NULL text (their files are created here; 112 commits the server README).

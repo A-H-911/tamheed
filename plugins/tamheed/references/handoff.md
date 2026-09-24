@@ -122,7 +122,7 @@ baseline never had them): `package_migrate` converts a v2 store's `data/prompts.
 `handoff_emit` warns about leftover `handoff/prm-*.md` copies — delete them; the package folder is
 the single source.
 
-The CLAUDE.md operating note is a **tool-owned marker span** (`<!-- tamheed:note v4 -->…<!--
+The CLAUDE.md operating note is a **tool-owned marker span** (`<!-- tamheed:note v5 -->…<!--
 /tamheed:note -->`, plan 029): rebuilt on EVERY emit — always current, no force involved. A hand
 edit inside the markers is overwritten (with a warning); operator content belongs OUTSIDE the
 markers — the AGENTS.md template (`templates/agent-control.template.md`) carries the same

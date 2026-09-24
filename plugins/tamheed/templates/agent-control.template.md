@@ -46,7 +46,7 @@ generation: derived      # regenerated from the package each update cycle
 ## Recording obligations (mandatory — unrecorded work is drift)
 
 <!-- Keep this table IDENTICAL to the one in the emitted CLAUDE.md operating note
-     (tamheed_server.py, tamheed:note v4) — drift between the two is grep-detectable. -->
+     (tamheed_server.py, tamheed:note v5) — drift between the two is grep-detectable. -->
 
 | During execution, when… | Record BEFORE moving on |
 |---|---|
@@ -70,22 +70,18 @@ proceed unrecorded.
 - Work **acceptance-criteria-first**: pick an `AC-`, write the failing test, implement,
   `audit_record` with evidence, repeat.
 - No phase starts with red CI; keep changes small and reviewable.
-- **Commit the package `data/` before branch operations** — package writes live in the
-  git working tree like any uncommitted change. `work_bind`, the closing `progress_update`,
-  `export_html` and `handoff_emit` all FLUSH `data/*.jsonl` AFTER the commit they record, so
-  the tree is dirty again the moment you finish recording: run `git status --porcelain -uall`
-  immediately before ANY branch operation — never a memory of having committed.
-- **Read registers through the tools, never the files**: large families page with
-  `entity_query(..., after_id=<next_after>)`, a known set is quoted verbatim via `ids=[...]`,
-  keyword sweeps use `search=`; `package_verify()` proves the on-disk store is canonical
-  (`record=true` journals the digest on the operator's words). A committed script that must
-  QUOTE the store (a review slate, a docket) reads an `entity_export` file the tool wrote under
-  `exports/` — never `data/*.jsonl`, never a pasted display; export immediately before
-  generating. A full-row status flip on a long row carries `expect_unchanged: [cols]` so the
-  store refuses transport drift.
+- **The HOW of every package write, read and git crossing is the tamheed plugin's
+  `tamheed:package-writes` skill** (v5): commit the package `data/` before branch operations
+  and run `git status --porcelain -uall` immediately before any branch operation (recording
+  FLUSHES `data/*.jsonl` after the commit it records); read registers through the tools,
+  never the files (`entity_query` pages, `entity_export` for a committed script,
+  `package_verify()` for the canonical proof); a status flip on a long row names its
+  untouched columns (`expect_unchanged`) or uses `substitute`. `tamheed:reading-the-record`
+  before citing a row; `tamheed:operator-interview` at every STOP.
 
 ## Kickoff
 
-Start from the kickoff prompt in `<package-name>/prompts/` (project-authored); the stock
-scenario prompts there (slice-kickoff, progress-sync, orient-resume, …) cover the
-recurring situations — read the folder and pick.
+Start from the kickoff prompt in `<package-name>/prompts/` (project-authored); the
+recurring situations are the plugin's slash skills — `/tamheed:package-onboarding` for an
+agent that has never seen the package, then `/tamheed:orient-resume`, `/tamheed:slice-kickoff`,
+`/tamheed:progress-sync`, … (`<package-name>/prompts/README.md` maps every situation).
