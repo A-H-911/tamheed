@@ -193,11 +193,11 @@ two minutes — background it and wait; never edit the tree while it runs). Then
 
 ## Done criteria
 
-- [ ] `run_evals --case lab-tracker` all pass (88: 81 + 7)
-- [ ] every new assertion exits non-zero against the Step 1 backup (re-run by the reviewer against `git archive <pre-beat sha>`)
-- [ ] `python check.py` → `ALL CHECKS PASSED`
-- [ ] `git status --short` shows only in-scope paths; no `data/.lock`
-- [ ] the evidence report exists and every mechanism row says `observed` or why not
+- [x] `run_evals --case lab-tracker` all pass (88: 81 + 7)
+- [x] every new assertion exits non-zero against the Step 1 backup (re-run by the reviewer against `git archive e0661cc`: 7/7 backup=1, fixture=0)
+- [x] `python check.py` → `ALL CHECKS PASSED`
+- [x] `git status --short` shows only in-scope paths; no `data/.lock`
+- [x] the evidence report exists and every mechanism row says `observed` or why not
 
 ## STOP conditions
 
@@ -207,3 +207,15 @@ two minutes — background it and wait; never edit the tree while it runs). Then
 - Step 2.1 reads `ready: true` on the untouched `SL-003` — quote it and stop (plan 106 did not land).
 - Any tool result contradicts this plan in a way the plan records cannot explain — quote and stop.
 - A step would require editing anything under `plugins/` or `tests/`, or writing a `DW-` row.
+
+## Review (the reviewer, 2026-09-24, after re-running the done criteria)
+
+Cherry-picked `d298f71` onto main as `59fe5b5`. One dispatch; every mechanism fired; no STOP. Three
+deviations, all kept: (F-9) Step 3.2's root file imported `@package/CLAUDE.md`, so `handoff_emit`
+built the managed span INSIDE the fixture — the agent deleted the untracked file rather than commit a
+body carrying its worktree's absolute path; the plan should have pointed the import at a scratch
+package name. (N-4) One Pass-bar sentence in `lab/scenario.md` said `SL-003` is deliberately empty
+by design — the beat the plan mandates falsifies it; the agent corrected the clause rather than
+ship a false line (the F-6 class in prose). (N-2) A stale lock left by the agent's own crashed
+driver, before any write, was hand-deleted; the idle round-trip proved zero diff. The `Co-Authored-By`
+names the agent's own model, kept.

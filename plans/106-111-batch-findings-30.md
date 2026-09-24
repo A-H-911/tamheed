@@ -170,3 +170,13 @@ on `main` under the standing git delegation, and the ACMP brief. Behaviour and d
 7. **MINOR release v4.14.0** with lab beat 21.
 
 Approve as written, or name which of the seven to change.
+
+## Execution notes (2026-09-24)
+
+- Plan 106 exposed a second consequence of the doctrine: a package with NO defects and no `defect`
+  omission reads `defects-closed` indeterminate at every scope, so no scope is ready until the
+  omission is recorded — plan 077 applied uniformly; pinned by the test and said in quality-gates.
+- Beat 21's F-9: a root `CLAUDE.md` importing `@package/CLAUDE.md` makes the FIXTURE the emission site;
+  the next beat that exercises the pointer warning imports a scratch package name, never the fixture's.
+- Beat 21's N-4: `lab/scenario.md`'s Pass bar described `SL-003` as deliberately empty by design; the
+  beat that populates it must re-aim that sentence — the F-6 grep now covers `lab/scenario.md` too.
