@@ -41,7 +41,10 @@ is the only wrong answer.
    (full-row upsert) so the nag has an answer on record. Every full-row upsert in
    this sweep that only means to change ONE column re-fetches the row through
    `entity_query` and names the rest in `"expect_unchanged": [...]` — the store
-   refuses transport drift on the columns you did not mean to touch.
+   refuses transport drift on the columns you did not mean to touch. Name only columns
+   the item CARRIES: an omitted column is preserved by the store, so naming it asserts
+   nothing and is refused; a one-token change is a `substitute` item, which needs no
+   re-fetch at all.
 8. **Unmerged scope changes** (`scope-changes-merged`): an Approved `SC-` whose deltas
    never landed — apply the row changes its `scope_adds`/`scope_modifies`/
    `scope_removes` edges name (via `entity_upsert`); an `amends` edge merges its
@@ -55,7 +58,10 @@ is the only wrong answer.
    NOTE: an Approved AC's content is immutable; if the binding itself is the change,
    supersede instead), or record the deliberate choice to verify at package scope
    only.
-10. **Minor defects** (`defects-minor`): fix the quick ones now (the defect-triage
+10. **Minor defects** (`defects-minor`): before framing ANY question for the operator,
+    `entity_query(search="<DEF-id>")` across families — a ruling often lives in a
+    decision, an AC or a scope change, never on the defect row (the field re-asked three
+    questions whose answers were already recorded). Fix the quick ones now (the defect-triage
     flow: fix, evidence-chained `audit_record`, status flip, `work_bind`). For ones
     worth carrying, propose a waiver to the operator — **waivers are operator-only:
     you NEVER author a `WVR-` row without their words** — or convert to
@@ -63,10 +69,12 @@ is the only wrong answer.
     waivers with no expiry: each keeps waiving rows written long after it was approved.
     Show the operator what it absorbs today and ask for an `expires` date or a narrower
     `applies_to` — their decision, never yours.
-11. **Deferred work** (`deferred-work-reviewed`): read each open `DW-`'s activation
-    trigger against current reality. Fired → say so and point the operator at the
-    replan-deferred prompt (activation is a scope decision, not yours). Not fired →
-    it is deliberately carried; nothing to write.
+11. **Deferred work** (`deferred-work-reviewed`): the rule lists Open and Scheduled
+    rows — the ones a human still judges. Read each activation trigger against current
+    reality. Fired → say so and point the operator at the replan-deferred prompt
+    (activation is a scope decision, not yours); once Activated the row is work — its
+    WBS rows carry it — and leaves this list. Not fired → it is deliberately carried;
+    nothing to write, and the row stays listed until it fires or is closed.
 12. **Execution plans** (`execution-plans-approved`): plans still Draft/Proposed for
     active slices — finish them and **STOP for operator approval**.
 13. **Unwired requirements** (`requirements-wired`): every listed requirement gets its
@@ -94,8 +102,11 @@ is the only wrong answer.
     distillation ceremony is its own interview. **STOP for the operator's words on
     every lesson — you never self-approve, mechanically.**
 15. **Note budget** (`lessons-note-budget`): the always-loaded CLAUDE.md note renders
-    every pinned lesson; past the curation ceiling (20 rendered lines) the rule names
-    the rows that render beyond it — the promotion candidates. Put them to the
+    EVERY pinned lesson plus an unpinned fill of the 10 highest-numbered Approved ones;
+    past the curation ceiling (20 rendered lines) the rule names the rows that render
+    beyond it — the promotion candidates. The arithmetic: unpinning removes a line only
+    if the lesson's number is too low to re-enter the fill, so with N pinned lessons
+    reaching 20 needs at least N - 10 removals, not one. Put them to the
     operator: distil the shared themes into a skill (`skill-promote.md` — promoted
     lessons graduate out of the note) or unpin what no longer needs to bind every
     session. Pinning stays their choice; the rule only makes its cost visible.

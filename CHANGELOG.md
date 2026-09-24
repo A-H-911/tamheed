@@ -10,6 +10,26 @@ All notable changes to Tamheed are documented here. The format is based on
 
 ## [Unreleased]
 
+## [4.14.0] - 2026-09-24
+
+**MINOR — the findings_30 batch: `ready` follows its own doctrine, three honesty fixes, the sweep
+prompt's four gaps (plans 106–110; field report findings_30 and `FB-016`).** ACMP's first day on
+4.13.0 answered the last brief's questions on every value and filed one row: `readiness_check`
+called a slice with no criteria and no work items ready while `quality-gates.md` said an empty
+slice is not ready and the review page's own per-slice panel had always rendered it "not ready".
+**Behaviour change, named first:** `ready` is now false while ANY blocking rule is `indeterminate`,
+and the result carries `indeterminate: [rule names]`; a loop harness reading `ready=` at slice
+scope halts on an empty slice, and `loop-iteration.md` says what that means. The `Implemented`
+transition guard is unchanged. Three honest-reporting gaps closed: `deferred-work-reviewed` no
+longer lists an Activated row forever, the pointer-import warning says what it did, and the review
+page says when nothing awaits an answer. The guard that could only pass is refused:
+`expect_unchanged` naming a column the item does not carry. The sweep prompt closes the four gaps
+running it end to end exposed. An acceptance script of nine discriminating checks passes on this
+tree and fails, each for its own reason, on an extracted `v4.13.0` tree; lab beat 21 fired every
+mechanism against the recorded package after a dry-run on a copy and the F-6 grep of the eval case.
+No migration; no new tool (19); three stock prompt bodies (`README.md`, `register-liveness.md`,
+`loop-iteration.md`).
+
 The findings_30 batch (plans 106-111; the master record is `plans/106-111-batch-findings-30.md`).
 ACMP's first day on 4.13.0: every prediction held on its values, the channel worked end to end on
 its first new row, and the round's one engine finding was a contradiction between the doctrine

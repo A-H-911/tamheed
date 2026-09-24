@@ -1,4 +1,4 @@
-# How to use this folder — the `package` prompt guide (tamheed v4.13.0)
+# How to use this folder — the `package` prompt guide (tamheed v4.14.0)
 
 This folder is the **single prompt surface** for the `package` Tamheed package. Every
 file is a paste-ready prompt for a Claude Code session. Two kinds live here:
@@ -149,7 +149,8 @@ word is its precondition. The rule has two clauses: it writes nothing tool-owned
 row until it is answered (the `feedback-unanswered` advisory lists the same rows). When the
 maintainer ships or answers it, set the row `Resolved` with `resolved_in` (the release, or the
 response to a question) and `upstream_ref` as a PARTIAL row — id, kind, title and those three:
-omitted columns are preserved, their absence from `changed_columns` proves it, and the engine
+omitted columns are preserved, their absence from `changed_columns` proves it (the recipe
+needs no `expect_unchanged` — naming a column the row does not carry is refused), and the engine
 journals the move. A local-tool row is a register: it never resolves.
 Apply `expect_unchanged` to
 every long row regardless of size — transcription fidelity does not degrade with
