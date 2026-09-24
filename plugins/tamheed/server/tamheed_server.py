@@ -1308,8 +1308,9 @@ def entity_upsert(entities: list[dict]) -> dict:
     mean to change: {'type': ..., 'id': ..., ..., 'expect_unchanged': ['title', ...]}
     (plan 041, the field's LL-063 — a paragraph lost mid-paste with ok: true). The
     server compares every named column you SENT to the stored row and refuses the item
-    naming any that differ; an OMITTED named column is preserved by the UPDATE and is
-    never drift (plan 102); JSON columns compare as parsed values; id-keyed rows only, never
+    naming any that differ; naming a column the item does NOT carry is refused too (plan
+    108: an omitted column is preserved by the UPDATE, so the assertion would be vacuous -
+    beside a `substitute` every column is carried); JSON columns compare as parsed values; id-keyed rows only, never
     the append-only journal. It proves the write alters nothing you named — not that
     you saw the row correctly: re-fetch through entity_query and paste that.
     Entity prose is screened by G-COMPLETE's placeholder scan (TODO/TBD/FIXME/
@@ -1652,13 +1653,20 @@ def entity_upsert(entities: list[dict]) -> dict:
                            " guards an UPDATE")
                 else:
                     # Plan 102 (findings_29 §4): an OMITTED column is preserved - the
-                    # UPDATE assigns only sent names - so naming it is a true assertion,
-                    # never drift (the retire path said so; this one said the opposite
-                    # and refused a correct partial write). Beside a `substitute` the
-                    # row is materialized first, so every column is "sent" and checked.
+                    # UPDATE assigns only sent names - so it is never drift. Plan 108
+                    # (findings_30 Q3): but NAMING one asserted nothing - a guard that can
+                    # only pass - so it is refused with the remedy. `cols` is the FINAL row
+                    # here (after the engine's own populations; beside a `substitute` it is
+                    # the whole materialized row), so a column the engine set counts as sent.
+                    unsent = [c for c in expect_unchanged if c not in cols]
                     drifted = [c for c, was in zip(expect_unchanged, stored)
                                if c in cols and not _same_value(cols[c], was)]
-                    if drifted:
+                    if unsent:
+                        err = (f"{cols['id']}: expect_unchanged names column(s) this item"
+                               f" does not carry ({', '.join(unsent)}) — an omitted column"
+                               " is preserved by the UPDATE, so naming it asserts nothing:"
+                               " drop it from expect_unchanged, or send it")
+                    elif drifted:
                         err = (f"{cols['id']}: expect_unchanged — {', '.join(drifted)}"
                                " differ(s) from the stored row (a sent column must"
                                " match; an omitted column is preserved by the UPDATE"

@@ -2584,7 +2584,14 @@ class V4EngineTest(unittest.TestCase):
         srv.entity_upsert([{"type": "defect", "id": "DEF-001", "title": long, "severity": "high",
                             "custom_attributes": {"note": "a paragraph that must survive"}}])
         out = srv.entity_upsert([{"type": "defect", "id": "DEF-001", "title": long, "severity": "low",
-                                  "expect_unchanged": ["custom_attributes"]}])   # omitted = preserved
+                                  "expect_unchanged": ["custom_attributes"]}])   # omitted: vacuous
+        # Plan 108 (findings_30 Q3): naming a column the row does not carry asserted NOTHING
+        # under 4.13.0 - "a guard that can only pass". Refused, with the remedy.
+        self.assertFalse(out["ok"], out)
+        self.assertIn("custom_attributes", out["items"][0]["error"])
+        self.assertIn("asserts nothing", out["items"][0]["error"])
+        out = srv.entity_upsert([{"type": "defect", "id": "DEF-001", "title": long, "severity": "low",
+                                  "expect_unchanged": ["title"]}])              # sent and equal
         self.assertTrue(out["ok"], out)
         self.assertEqual([c["column"] for c in out["items"][0]["changed_columns"]], ["severity"])
         row = srv.entity_query("defect", id="DEF-001")["rows"][0]

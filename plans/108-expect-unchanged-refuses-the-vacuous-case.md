@@ -16,5 +16,5 @@ an existing ruling first", step 11 the new population, step 15 the render arithm
 
 ## Done criteria
 
-- [ ] RED then GREEN; `python check.py`; the batch-29 security PoC still green
+- [x] RED then GREEN; `python check.py`; the batch-29 security PoC still green; dry-run on a fixture copy (the refusal fires)
 - [ ] CI green
