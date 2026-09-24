@@ -186,7 +186,7 @@ devil's-advocate review; execution order is the row order below). Status values:
 | 106 | [`ready` follows its doctrine: false while a blocking rule is indeterminate, with the list (FB-016)](106-ready-follows-its-doctrine.md) | FB-016 | DONE — 2026-09-24 `6013cd6` |
 | 107 | [Three honesty fixes: `deferred-work-reviewed` population, the pointer warning, the empty unanswered fold](107-three-honesty-fixes.md) | findings_30 §3.2-3.3 | DONE — 2026-09-24 |
 | 108 | [`expect_unchanged` refuses the vacuous case; the sweep prompt's four gaps](108-expect-unchanged-refuses-the-vacuous-case.md) | findings_30 Q3, Q5 | DONE — 2026-09-24 |
-| 109 | [Docs + diagrams sweep](109-docs-and-diagrams-sweep-findings-30.md) | 106-108 | IN PROGRESS |
+| 109 | [Docs + diagrams sweep](109-docs-and-diagrams-sweep-findings-30.md) | 106-108 | DONE — 2026-09-24 |
 | 110 | [Lab beat 21](110-lab-beat-21-findings-30.md) | 106-109 + full test | PLANNED |
 | 111 | [Release v4.14.0](111-release-v4140.md) | 110 | PLANNED |
 

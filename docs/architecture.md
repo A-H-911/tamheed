@@ -121,7 +121,8 @@ onto the stored row and then judges by the ORDINARY path — the same guards, tr
 presence-checked since v4.13: naming the verdict at all is the operator's act. Two things the
 field found in v4.12's first week and v4.13 closes: a replacement that contains its needle is
 refused when already present (a second run would compound), and `expect_unchanged` treats an
-omitted column as what it is — preserved by the UPDATE, never drift.
+omitted column as what it is — preserved by the UPDATE, never drift — and (v4.14) refuses a named
+column the item does not carry, the guard the field found could only pass.
 On the read side, `search` with `context=N` is a census — the `occurrences` key, counts and
 snippets per column (FB-003) — and `prompt-ids-resolve` scans the project's own prompt files for phantom ids
 (FB-002), never a stock body.

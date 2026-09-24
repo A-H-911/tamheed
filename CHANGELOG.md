@@ -10,6 +10,35 @@ All notable changes to Tamheed are documented here. The format is based on
 
 ## [Unreleased]
 
+The findings_30 batch (plans 106-111; the master record is `plans/106-111-batch-findings-30.md`).
+ACMP's first day on 4.13.0: every prediction held on its values, the channel worked end to end on
+its first new row, and the round's one engine finding was a contradiction between the doctrine
+and the tool. Additive, MINOR. **No migration.** **One behaviour change harnesses read, named first.**
+
+- **`readiness_check().ready` follows its own doctrine (ACMP's `FB-016`; plan 106).**
+  `quality-gates.md` said "an empty slice is not a ready slice" and the review page's per-slice
+  panel had always rendered one as "not ready"; the tool said `ready: true`, because `ready`
+  ignored `indeterminate` — 29 of the field's 44 slices read ready on a blocking rule that measured
+  nothing. Now `ready` is false while ANY blocking rule is `indeterminate`, and the result carries
+  `indeterminate: [rule names]`. **A loop harness reading `ready=` at slice scope halts on an empty
+  slice** — `loop-iteration.md` says what that means (record the rows the slice lacks; it is not a
+  failure). The `Implemented` transition guard is unchanged: `fail` only, so history's empty slices
+  still close. A package that has recorded no defects records the family's omission, or every
+  scope's `defects-closed` stays amber (plan 077, applied uniformly).
+- **Three honesty fixes (findings_30 §3.2-3.3, Q1.4; plan 107).** `deferred-work-reviewed` lists
+  Open and Scheduled rows only — an Activated row is work (its WBS rows carry it) and used to stay
+  amber forever; the pointer-import warning says `was rebuilt there` only when the note changed;
+  the review page says when the unanswered feedback fold is empty instead of omitting it.
+- **`expect_unchanged` refuses a column the item does not carry (findings_30 Q3; plan 108).**
+  Under 4.13.0 naming an omitted column passed and asserted nothing — a guard that can only pass.
+  Beside a `substitute` every column is carried, so nothing changes there. `register-liveness.md`
+  closes the four gaps running it end to end exposed: name only carried columns (step 7), search
+  across families for an existing ruling before framing any interview (step 10), the rule's new
+  population (step 11), the note's render arithmetic (step 15).
+- **Documented from the field**: `substitute` on `lifecycle_status` is the cheapest correct status
+  flip (25 moves in one round, zero transport). findings_19 §3 closes: a `substitute` FK failure
+  names the column.
+
 ## [4.13.0] - 2026-09-23
 
 **MINOR — the findings_29 batch: the feedback channel's middle, the header read, three guard

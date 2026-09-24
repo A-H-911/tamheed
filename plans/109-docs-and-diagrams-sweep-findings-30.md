@@ -15,4 +15,5 @@ readiness prose in docs/entities.md; docs/architecture.md's readiness paragraph 
 
 ## Done criteria
 
-- [ ] every behaviour in >= 2 docs; `python check.py`; CI green
+- [x] every behaviour in >= 2 docs (census: indeterminate 8, pointer texts 2, empty fold 2, refusal 6, status flip 2 by meaning, Open+Scheduled 3); the readiness sequence diagram gains the `ready` note; `python check.py`
+- [ ] CI green

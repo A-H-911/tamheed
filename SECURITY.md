@@ -110,7 +110,8 @@ report a problem.
   to a caller-named path outside `data/` (resolved before the check; an existing file is replaced
   only if it is itself a tamheed export). The file holds brief-derived text a script will RENDER —
   consumers escape it, the viewer's escape-first rule applies to them too. On the write side,
-  `expect_unchanged` refuses a full-row write that alters columns the caller named as untouched.
+  `expect_unchanged` refuses a full-row write that alters columns the caller named as untouched — and
+  (v4.14) a write that names a column it does not carry, because that assertion could only pass.
 - **Safe-by-default store** — no raw-SQL tool; batch mutations are transactional (all-or-nothing);
   approval-bearing rows are immutable (supersede, never edit); one writer per package via a fail-loud
   lockfile; `handoff_emit` refuses emission when the injection screen finds instruction-shaped text.

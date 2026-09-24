@@ -143,7 +143,11 @@ cannot be a draft: the operator's word is a precondition of its insert. Its rule
 clauses — it writes nothing tool-owned; if it reads the STORE, it reads `exports/` only; `handoff_emit` names
 every row that still awaits the operator or the export, and every reported row until it is
 answered (`feedback-unanswered`, v4.13); when upstream ships or answers it, set the row Resolved
-with `resolved_in`/`upstream_ref` as a PARTIAL row — id, kind, title and those three.
+with `resolved_in`/`upstream_ref` as a PARTIAL row — id, kind, title and those three, no
+`expect_unchanged` (a column the item does not carry is refused there, v4.14). A status flip on any
+long row is a `substitute` on `lifecycle_status` — zero transport, every guard. `readiness_check`'s
+`ready` is false while any blocking rule is `indeterminate` (v4.14): an empty slice is not ready;
+`indeterminate` names the rules and the remedy is the rows, or the family's recorded omission.
 
 **Intake & normalization (stages 1–4).** `package_create(name, title, profile, mode)` opens the store.
 Extract requirements **verbatim with source spans**; `entity_upsert` them as `requirement` rows with

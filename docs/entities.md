@@ -187,7 +187,7 @@ Three families reuse the `lifecycle_status` column name with domain vocabularies
 | Family | `lifecycle_status` values | Notes |
 |---|---|---|
 | defect | `Open`, `In-progress`, `Fixed`, `Won't-fix`, `Duplicate` | open critical/high block readiness; `Won't-fix` is a decision, record why |
-| deferred-work | `Open`, `Activated`, `Scheduled`, `Done`, `Won't-do` | `Activated` = the activation trigger fired |
+| deferred-work | `Open`, `Activated`, `Scheduled`, `Done`, `Won't-do` | `Activated` = the activation trigger fired and the work exists as WBS rows (replan-deferred writes them in the same scope change); since v4.14 the `deferred-work-reviewed` advisory lists Open and Scheduled only — a judged row leaves it |
 | scope-change | `Proposed`, `Approved`, `Merged` | `Merged` = deltas applied to the plan rows; Approved-never-Merged trips the `scope-changes-merged` advisory |
 | lesson | `Proposed`, `Approved`, `Promoted`, `Rejected`, `Superseded`, `Obsolete` | No Draft (born Proposed, the decisions pattern) and no Deferred — an undecided lesson keeps nagging via the `lessons-confirmed` advisory; entering `Approved` or `Promoted` is confirm-guarded (`operator_confirm`), and `Promoted` is reachable from stored-`Approved` only |
 | skill | `Approved`, `Superseded`, `Obsolete` | Born `Approved` — the promotion interview IS the approval; a re-distillation is a new `SKL-` row with `superseded_by`, never an edit |
@@ -874,6 +874,7 @@ sequenceDiagram
     Agent->>Store: entity_upsert DEF-004 lifecycle_status Fixed, fixed_by AV-019
     Agent->>Ready: readiness_check(scope=slice, id=SL-002)
     Ready-->>Agent: defects-closed pass — acs-met re-evaluated on the LATEST verdict
+    Note over Ready: ready is true only when no blocking rule failed AND none is indeterminate (v4.14); indeterminate names the rest
 ```
 
 **Related mechanics.** `defects-closed` (blocking, all scopes), `defects-minor`
