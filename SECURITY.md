@@ -21,7 +21,7 @@ report a problem.
 
 ## Controls in place
 
-- **Untrusted-content handling** — operating principle 10 in `plugins/tamheed/SKILL.md`, safeguard 18 in
+- **Untrusted-content handling** — operating principle 10 in `plugins/tamheed/skills/tamheed/SKILL.md`, safeguard 18 in
   `plugins/tamheed/references/safeguards.md`, and the handoff screening step in
   `plugins/tamheed/references/handoff.md`. Brief text is fenced + provenance-labeled, never an imperative.
 - **No VCS command execution** — the store and the package tools execute no VCS commands; the sole

@@ -37,7 +37,7 @@ python check.py     # everything CI runs — if this is green, you are set up
 These are load-bearing. A change that breaks one is a regression even if tests pass.
 
 1. **The skill owns the capability; entry points are thin wrappers.** All methodology lives in
-   `plugins/tamheed/SKILL.md` + `references/`. External entry points only normalize input, invoke
+   `plugins/tamheed/skills/tamheed/SKILL.md` + `references/`. External entry points only normalize input, invoke
    the skill, and route output (gate **G-CMD-THIN**). The MCP server is *not* a wrapper — it is
    the capability's mechanical half, the only write path into a package.
 2. **The bundle is self-contained.** Claude Code copies the plugin directory to a cache on

@@ -15,7 +15,7 @@
   <a href="#license">MIT</a> &middot;
   <a href="docs/install.md">Install</a> &middot;
   <a href="docs/migrate-from-keystone.md">Migrate from Keystone</a> &middot;
-  <a href="plugins/tamheed/SKILL.md">Skill spec</a>
+  <a href="plugins/tamheed/skills/tamheed/SKILL.md">Skill spec</a>
 </p>
 
 ---
@@ -371,8 +371,8 @@ artifacts → package storage → validation → handoff). One principle governs
 > **The skill owns the capability; every entry point is a thin wrapper.**
 
 All judgment — the 22 stages, artifact selection, quality gates, handoff logic — lives in the
-[`tamheed` skill](plugins/tamheed/SKILL.md): a **progressive-disclosure** bundle (a short `SKILL.md` front
-door plus `references/` loaded on demand). The **MCP server is not an entry point** — it is the mechanical
+[`tamheed` skill](plugins/tamheed/skills/tamheed/SKILL.md): a **progressive-disclosure** bundle (a short
+front door at `skills/tamheed/SKILL.md` plus `references/` loaded on demand). The **MCP server is not an entry point** — it is the mechanical
 half of the capability itself: referential gates (identifiers, decision
 statuses, requirement provenance) are FOREIGN KEY / CHECK / NOT NULL constraints enforced at write time,
 coverage gates are SQL views, and `gate_run` reports it all. The bundle is **self-contained** — everything
@@ -401,7 +401,7 @@ tamheed/
 ├── plugins/tamheed/                  # the self-contained skill bundle (the installable unit)
 │   ├── .claude-plugin/plugin.json
 │   ├── .mcp.json                     # auto-starts the server when the plugin is enabled
-│   ├── SKILL.md                      # always-loaded entry point (owns the capability)
+│   ├── skills/tamheed/SKILL.md       # the front door (owns the capability), beside the plugin's other skills (v5)
 │   ├── references/                   # per-stage / per-concern depth (incl. artifact-catalog.md)
 │   ├── templates/                    # surviving narrative section templates
 │   ├── scripts/                      # scratch_diff.py (package diff utility)

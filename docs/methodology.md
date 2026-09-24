@@ -24,7 +24,7 @@ trustworthy. The governing principle is architectural: **the skill owns the capa
 wrappers.** The operating principles are epistemic: never invent requirements; separate facts from decisions
 from proposals; surface assumptions instead of burying them; no premature architecture; preserve the
 unresolved; verify before you claim; and prefer operationally useful artifacts over ceremonial ones. The
-full, enforced list is in [`../plugins/tamheed/SKILL.md`](../plugins/tamheed/SKILL.md) (operating principles) and
+full, enforced list is in [`../plugins/tamheed/skills/tamheed/SKILL.md`](../plugins/tamheed/skills/tamheed/SKILL.md) (operating principles) and
 [`../plugins/tamheed/references/safeguards.md`](../plugins/tamheed/references/safeguards.md) (each anti-pattern paired with its
 control).
 
@@ -73,7 +73,7 @@ These three audiences are routinely confused, so Tamheed keeps them in separate 
 | Concern | Audience | Where it lives | Must NOT contain |
 |---|---|---|---|
 | **Execution-agent instructions** | Claude Code (the downstream executor) | the generated package's `handoff/` prompts + the artifacts they reference | Tamheed's internal process; planner-only context |
-| **Skill-implementation concerns** | Tamheed itself (the methodology author/runtime) | `../plugins/tamheed/SKILL.md` + `../plugins/tamheed/references/` | a specific project's content; entry-point parsing |
+| **Skill-implementation concerns** | Tamheed itself (the methodology author/runtime) | `../plugins/tamheed/skills/tamheed/SKILL.md` + `../plugins/tamheed/references/` | a specific project's content; entry-point parsing |
 | **Slash-command / entry-point concerns** | the wrapper that launches Tamheed (`/tamheed`, a CLI, an API, a UI) | external entry points (CLI/API/UI) | any methodology or planning logic (safeguard 12) — the MCP server is not a wrapper but the capability's mechanical half |
 
 The handoff prompts are written for **Claude Code** as the executor, using its native affordances where they

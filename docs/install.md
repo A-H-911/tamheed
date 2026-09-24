@@ -109,7 +109,7 @@ cp -r plugins/tamheed/* ~/.claude/skills/tamheed/
 ## Other MCP-capable agents (generic)
 
 Any agent that can read files *and run MCP servers* can use Tamheed: point it at
-`plugins/tamheed/SKILL.md`, let it load the `references/` beside it on demand, and register the server from
+`plugins/tamheed/skills/tamheed/SKILL.md`, let it load the bundle's `references/` on demand, and register the server from
 `plugins/tamheed/.mcp.json` (or launch `server/tamheed_server.py --package-dir <root>` yourself). The
 bundle is self-contained, so copying the folder is all that's needed. Without an MCP host the methodology
 is readable but packages cannot be created — see the capability tiers above.

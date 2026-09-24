@@ -20,7 +20,7 @@ The repository is its own **plugin marketplace**, and the skill is one **self-co
 .claude-plugin/marketplace.json      # repo = marketplace (one plugin: tamheed)
 plugins/tamheed/                     # THE installable bundle — self-contained, copied intact on install
 ├── .claude-plugin/plugin.json
-├── SKILL.md                          # always-loaded front door (owns the capability)
+├── skills/tamheed/SKILL.md           # the front door (owns the capability); v5: beside the plugin's other skills
 ├── references/                       # on-demand depth: artifact-catalog, governance, workflow, extension, adopt
 ├── templates/                        # section templates for narrative prose + prompt patterns
 ├── db/                               # the store: schema.sql (v4 DDL), migrations/, store.py, CANONICAL.md
@@ -64,7 +64,7 @@ uv run plugins/tamheed/server/tamheed_server.py --selftest
 > **The skill owns the capability; every entry point is a thin wrapper.**
 
 All methodology — the 22 stages, artifact selection, quality gates, readiness, handoff — lives in
-`plugins/tamheed/SKILL.md` + its `references/`. External entry points only normalize input, invoke
+`plugins/tamheed/skills/tamheed/SKILL.md` + its `references/`. External entry points only normalize input, invoke
 the skill, and route output. In Claude Code the skill *is* the entry point.
 
 The 22 stages: **Understand** (1–8 intake→scope) → **Explore** (9–15 research→decisions→risk) →

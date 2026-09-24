@@ -13,6 +13,9 @@ description: >-
   "project charter", or a long pasted project brief — even if the word "Tamheed" is never said.
 ---
 
+> Paths in this file and its references are relative to the bundle root, `${CLAUDE_PLUGIN_ROOT}`
+> — two directories above this skill's own folder (the plugin substitutes the placeholder at load).
+
 # Tamheed
 
 This skill documents tamheed **v4.14.0** (the version travels with the bundle;
@@ -283,8 +286,9 @@ Read the reference file when you reach the matching part of the work; do not loa
 | `server/README.md` | Server install/launch; the full MCP tool reference |
 | `db/CANONICAL.md` | Canonical JSONL serialization; the single-writer rule |
 
-This skill is **self-contained**: everything it reads or invokes at runtime lives in this directory —
-references, section templates in `templates/`, the DDL + store in `db/`, and the MCP server in
-`server/`. (The v1 validator, schemas, and importer were retired in v4 — an old Keystone
+This skill is **self-contained**: everything it reads or invokes at runtime lives in the bundle —
+references, section templates in `templates/`, the DDL + store in `db/`, the MCP server in
+`server/`, and the plugin's other skills in `skills/` (v5: this front door lives at
+`skills/tamheed/SKILL.md`, because a plugin with a `skills/` directory loads no root `SKILL.md`). (The v1 validator, schemas, and importer were retired in v4 — an old Keystone
 package migrates under tamheed 3.2.1 first, then v3→v4 here — the escape route is
 documented in the repo's docs, not in this bundle.)

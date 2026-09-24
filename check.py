@@ -175,7 +175,7 @@ def gate_lint() -> None:
     #    are updated with EVERY release — each must carry the current version string,
     #    so a release that skips one fails the gate (the version-sync-lint precedent).
     for rel in ("README.md", "plugins/tamheed/server/README.md",
-                "plugins/tamheed/prompts/README.md", "plugins/tamheed/SKILL.md",
+                "plugins/tamheed/prompts/README.md", "plugins/tamheed/skills/tamheed/SKILL.md",
                 "plugins/tamheed/references/artifact-catalog.md"):
         if plugin_ver not in (REPO / rel).read_text(encoding="utf-8"):
             fail(f"{rel} does not mention the current version {plugin_ver} — the"
@@ -207,8 +207,12 @@ def gate_lint() -> None:
         teaching[f"templates/{p.name}"] = p.read_text(encoding="utf-8")
     for p in sorted(refs.glob("*.md")):
         teaching[f"references/{p.name}"] = p.read_text(encoding="utf-8")
-    teaching["SKILL.md"] = (REPO / "plugins" / "tamheed" / "SKILL.md")\
-        .read_text(encoding="utf-8")
+    # Plan 114 (v5): the front door lives at skills/tamheed/SKILL.md (a plugin with a
+    # skills/ directory loads no root SKILL.md); every other skill is a teaching file too.
+    skills_dir = REPO / "plugins" / "tamheed" / "skills"
+    for p in sorted(skills_dir.glob("*/SKILL.md")):
+        teaching[f"skills/{p.parent.name}/SKILL.md"] = p.read_text(encoding="utf-8")
+    FRONT_DOOR = "skills/tamheed/SKILL.md"
     relations = set(srv.RELATION_RULES) | {"relates_to"}
     # The gate rosters form a CLOSED TRIANGLE with references/quality-gates.md
     # (plan 033): mechanical (engine GATE_NAMES) + judgment + warn tiers; every
@@ -250,11 +254,13 @@ def gate_lint() -> None:
             if tok not in relations:
                 problems.append(f"{rel}: unknown relation {tok!r}")
         for name, scope in blacklist:
-            if scope == "prompts" and not rel.startswith("prompts/"):
+            # a scenario or discipline skill is prompt-shaped teaching (plan 114)
+            promptish = rel.startswith("prompts/") or (rel.startswith("skills/") and rel != FRONT_DOOR)
+            if scope == "prompts" and not promptish:
                 continue
             if scope == "prompts+templates" and rel.startswith("references/"):
                 continue
-            if scope == "prompts+templates" and rel == "SKILL.md":
+            if scope == "prompts+templates" and rel == FRONT_DOOR:
                 continue
             for line in text.splitlines():
                 if name in line and not _hist.search(line):
@@ -273,7 +279,8 @@ def gate_lint() -> None:
     #     references/generated-structure.md, which describes that same tree.
     link_files = {f"references/{p.name}": p for p in sorted(refs.glob("*.md"))
                   if p.name != "generated-structure.md"}
-    link_files["SKILL.md"] = REPO / "plugins" / "tamheed" / "SKILL.md"
+    for p in sorted(skills_dir.glob("*/SKILL.md")):
+        link_files[f"skills/{p.parent.name}/SKILL.md"] = p
     link_files["server/README.md"] = REPO / "plugins" / "tamheed" / "server" / "README.md"
     link_files["db/CANONICAL.md"] = REPO / "plugins" / "tamheed" / "db" / "CANONICAL.md"
     path_token = re.compile(
@@ -317,6 +324,52 @@ def gate_lint() -> None:
             fail(f"governance.template.md lacks {needle!r} — the template is a"
                  " necessary copy and moves with references/governance.md")
     print("lint: template governance copies in sync")
+
+    # 12) the skills lint (plan 114, v5): every plugin skill is invoked by its folder name,
+    #     so the frontmatter must agree with it; a body past 500 lines is what the harness
+    #     docs warn against; `{package}` is the retired prompt placeholder (a skill reads the
+    #     package from the note or $ARGUMENTS); a `${CLAUDE_PLUGIN_ROOT}/...` token is a path
+    #     lint 10 cannot see (it skips `{`); and the teaching surface is stack-neutral (front
+    #     door principle 9) and never carries a field package's identifiers - an id in a
+    #     teaching body reads as a pointer into a store the reader does not have.
+    skill_problems = []
+    id_re = re.compile(r"\b(?:FR|NFR|CON|INV|ASM|DEP|OQ|DEC|ADR|RISK|HYP|EXP|POC|TEST|KPI|STK"
+                       r"|PH|MS|SL|WBS|AC|AV|PE|DEF|DW|GATE|EP|CONV|SC|WVR|DOC|SEC|DIA|GT|LL"
+                       r"|SKL|FB)-\d+(?:\.\d+)?\b|(?<![\w`])#\d+\b")
+    stack_re = re.compile(r"\b(?:Kestrel|TestServer|MediatR|InMemory|EF Core|Dependabot|Playwright"
+                          r"|Keycloak|Webex|MinIO|Vitest|Jest|axe|Docker|Kubernetes|Terraform"
+                          r"|ACMP|acmp)\b")
+    root_tok = re.compile(r"\$\{CLAUDE_PLUGIN_ROOT\}/([A-Za-z0-9_./-]+)")
+    for p in sorted(skills_dir.glob("*/SKILL.md")):
+        rel, text = f"skills/{p.parent.name}/SKILL.md", p.read_text(encoding="utf-8")
+        parts = text.split("---\n")
+        front = parts[1] if text.startswith("---\n") and len(parts) >= 3 else ""
+        name = re.search(r"^name:\s*(\S+)\s*$", front, re.M)
+        if not name or name.group(1) != p.parent.name:
+            skill_problems.append(f"{rel}: frontmatter name {name.group(1) if name else None!r}"
+                                  f" != folder {p.parent.name!r}")
+        if not re.search(r"^description:\s*\S", front, re.M):
+            skill_problems.append(f"{rel}: no description in the frontmatter")
+        if (n := text.count("\n")) > 500:
+            skill_problems.append(f"{rel}: {n} lines (keep SKILL.md under 500)")
+        if "{package}" in text:
+            skill_problems.append(f"{rel}: carries the retired {{package}} placeholder")
+        for m in root_tok.finditer(text):
+            if not (REPO / "plugins" / "tamheed" / m.group(1)).exists():
+                skill_problems.append(f"{rel}: ${{CLAUDE_PLUGIN_ROOT}}/{m.group(1)} does not exist")
+        for line in text.splitlines():
+            # tamheed's own design record (docs/design-decisions.md) is the one id a
+            # teaching body may cite; every other id shape is a pointer into a store
+            # the reader does not have.
+            if (m := stack_re.search(line)) or (
+                    (m := id_re.search(line)) and m.group(0) not in {"ADR-0001"}):
+                skill_problems.append(f"{rel}: not stack-neutral / field identifier {m.group(0)!r}"
+                                      f" ({line.strip()[:60]!r})")
+                break
+    if skill_problems:
+        fail("skills lint (plan 114):\n  " + "\n  ".join(skill_problems))
+    print(f"lint: {len(list(skills_dir.glob('*/SKILL.md')))} plugin skill(s) well-formed,"
+          " stack-neutral, placeholder paths resolve")
 
 
 def gate_canonical() -> None:

@@ -176,6 +176,23 @@ devil's-advocate review; execution order is the row order below). Status values:
 | 089 | [Lab beat 18](089-lab-beat-18-findings-27.md) | 085-088 + full test (15/15 vs 0/15 on `v4.10.0`; 9 suites; selftest) | DONE `762b98b` — 9 new assertions, each failing on the pre-beat fixture; D-1 registry-sync unscripted, F-3 fixed |
 | 090 | [Release v4.11.0](090-release-v4110.md) — plan-058 recipe + the fixture follows the stamp | 089 | DONE — 2026-09-22, tag `v4.11.0` (SHA in the tag) |
 
+### Field cycle findings_31 -- plans 112-119 -> v5.0.0 (2026-09-24; reviewer-executed)
+
+Master record: [112-119-batch-findings-31.md](112-119-batch-findings-31.md) (the approved plan after a
+devil's-advocate review; execution order 114 → 115 → 116 → 112 → 113 → 117 → 118 → 119 — the surfaces
+112/113 edit are created by 114-116). Status values: PLANNED / IN PROGRESS / DONE.
+
+| # | Plan | Depends on | Status |
+|---|---|---|---|
+| 112 | [The findings_31 doc cycle: FB-017's step 15, the NOT NULL clause, the paste verifier, the brief's five errors](112-findings-31-doc-cycle.md) | 116 | PLANNED |
+| 113 | [`carries` (wbs-item -> deferred-work) + the `deferred-work-carried` advisory, migration 006 (FB-018)](113-carries-relation-and-deferred-work-carried.md) | 116 | PLANNED |
+| 114 | [The front door moves into `skills/`; the skills lint](114-front-door-moves-into-skills.md) | §0 (passed) | IN PROGRESS |
+| 115 | [Seven discipline skills adopted from ACMP under tamheed names](115-seven-discipline-skills.md) | 114 | PLANNED |
+| 116 | [Sixteen scenario skills + engine v5: note v5, README-only library, leftovers retired on refresh](116-scenario-skills-and-engine-v5.md) | 114, 115 | PLANNED |
+| 117 | [Docs + diagrams sweep for v5.0.0](117-docs-and-diagrams-sweep-v5.md) | 112-116 | PLANNED |
+| 118 | [Lab beat 22](118-lab-beat-22-v5.md) | 112-117 + full test | PLANNED |
+| 119 | [Release v5.0.0 + the ACMP brief](119-release-v500.md) | 118 | PLANNED |
+
 ### Field cycle findings_30 -- plans 106-111 -> v4.14.0 (2026-09-24; reviewer-executed)
 
 Master record: [106-111-batch-findings-30.md](106-111-batch-findings-30.md) (the approved plan after a

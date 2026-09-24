@@ -53,7 +53,7 @@ class CheckLintsTest(unittest.TestCase):
             self._restore(rel)
 
     def test_dead_path_reference_is_caught(self):
-        rel = "plugins/tamheed/SKILL.md"
+        rel = "plugins/tamheed/skills/tamheed/SKILL.md"
         p = self.copy / rel
         p.write_text(p.read_text(encoding="utf-8") + "\nSee `references/does-not-exist.md`.\n",
                      encoding="utf-8")
@@ -62,6 +62,35 @@ class CheckLintsTest(unittest.TestCase):
             self.assertEqual(code, 1); self.assertIn("dead path references", out)
         finally:
             self._restore(rel)
+
+    def test_skill_frontmatter_drift_is_caught(self):
+        """Plan 114 (lint 12): a skill folder whose frontmatter name differs from the folder
+        is invoked under a name the docs never show - the lint refuses it."""
+        rel = "plugins/tamheed/skills/probe-drift/SKILL.md"
+        p = self.copy / rel
+        p.parent.mkdir(parents=True)
+        p.write_text("---\nname: something-else\ndescription: A probe.\n---\nBody.\n",
+                     encoding="utf-8")
+        try:
+            code, out = self._lint()
+            self.assertEqual(code, 1); self.assertIn("skills lint", out)
+        finally:
+            p.unlink(); p.parent.rmdir()
+
+    def test_stack_coupled_skill_is_caught(self):
+        """Plan 114 (lint 12): the bundle's teaching surface is stack-neutral (front-door
+        principle 9) and never carries a field package's identifiers."""
+        rel = "plugins/tamheed/skills/probe-stack/SKILL.md"
+        p = self.copy / rel
+        p.parent.mkdir(parents=True)
+        p.write_text("---\nname: probe-stack\ndescription: A probe.\n---\n"
+                     "Run it on Kestrel; see WBS-40.3.\n", encoding="utf-8")
+        try:
+            code, out = self._lint()
+            self.assertEqual(code, 1); self.assertIn("skills lint", out)
+            self.assertIn("Kestrel", out); self.assertIn("WBS-", out)
+        finally:
+            p.unlink(); p.parent.rmdir()
 
     def test_widened_mcp_pin_is_caught(self):
         rel = "plugins/tamheed/server/tamheed_server.py"
