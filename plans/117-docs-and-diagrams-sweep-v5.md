@@ -17,6 +17,26 @@ README, server README, generated-structure (tree), handoff.md, governance, quali
 
 ## Done criteria
 
-- [ ] per-behaviour grep ≥ 2 docs
-- [ ] `python check.py`
+- [x] per-behaviour grep ≥ 2 docs
+- [x] `python check.py`
 - [ ] CI green
+
+## Execution note (2026-09-25)
+
+Fifteen files by a transactional script (one exact match per edit): README.md (the note paragraph,
+the bundle tree), docs/architecture.md (the handoff sequence line, the bundle tree, a new
+"instruction surfaces" flowchart: ambient note / on-relevance discipline skills / operator-invoked
+scenarios / project skills, each with its owner and delivery path), docs/entities.md (plugin skills
+vs project skills, the `Obsolete` + `upstreamed_to` retirement recipe), docs/install.md (the plugin
+route with the seven + sixteen, project-scope enablement per the docs, the restart after an update,
+"a MAJOR that changes the handoff contract, not the store", refresh_stock's v5 semantics, the manual
+route's unverified nesting), docs/migrate-from-keystone.md, artifact-catalog.md, generated-structure.md
+(the tree), handoff.md (the library paragraph, the flush mechanism corrected, `force`'s scope),
+prompt-templates.md (the scenario table by skill name), quality-gates.md (G-INJECT's scan set),
+follow-up-prompts and package-readme templates, the server README's `handoff_emit` row, the front
+door (migrate mode's guide sentence; the reference index row), SECURITY.md (the plugin's own skills
+as static bundle text; the deletion proof). The CHANGELOG 5.0.0 block was started by plan 113 (lint 7)
+and already names the mapping and the migration. Coverage: `tamheed:package-writes` 7 files,
+`/tamheed:` 15, the leftover semantics 9, the note v5 5, `carries` 25, `006_carries` 5, the moved
+front door 7. Left as history, deliberately: lab/scenario.md's beat prose and lab/README.md (records
+of what earlier beats measured; beat 22 re-aims the one Pass-bar sentence F-6 names).

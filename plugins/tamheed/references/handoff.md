@@ -12,8 +12,9 @@ and `handoff_emit(target_dir)` wires the target project to the package (it copie
     stop/await-approval gate;
   - *follow-up* prompt(s) — one per phase gate (`PH-`), each resuming from the prior phase's exit
     criteria, plus situational prompts as needed (see `prompt-templates.md`);
-  - the **stock scenario library** (17 files: 16 scenarios + the folder README, plugin-versioned,
-    seeded at `package_create`): orientation (orient-resume, package-onboarding), execution
+  - the **operator guide** (`prompts/README.md`, plugin-versioned, seeded at `package_create` —
+    since v5 the one stock file) and the **scenario skills** the plugin ships (`/tamheed:<name>`,
+    operator-invoked, updated with the plugin): orientation (orient-resume, package-onboarding), execution
     (slice-kickoff, progress-sync, defect-triage, drift-register), close-outs (slice-review,
     phase-close, release-close-out), replanning (replan-deferred), the promotion interview
     (skill-promote), audit/report (integrity-check,
@@ -29,11 +30,13 @@ and `handoff_emit(target_dir)` wires the target project to the package (it copie
   (`amends` for a ruling; Merged set LAST after the targets are applied and re-read);
   progress/audit/bind per unit; `readiness_check(scope)` before declaring a slice/phase/release
   done. The same table lives verbatim in the agent-control template. The note's C31 paragraph
-  also carries the flush rule (v4.5): recording (`work_bind`, the closing `progress_update`,
-  `export_html`, `handoff_emit`) rewrites `data/*.jsonl` AFTER the commit it records — `git
-  status --porcelain -uall` before any branch operation. Its cheat-sheet teaches the read
-  discipline: registers are read through `entity_query` whatever their size (`after_id` pages,
-  `ids` quotes a known set, `search` sweeps), and `package_verify` proves the store canonical.
+  also carries the flush rule (v4.5, mechanism corrected in v5): every store write (`entity_upsert`,
+  `progress_update`, `audit_record`, `work_bind`, `package_verify(record=true)`, `package_close`)
+  flushes `data/*.jsonl`, and `export_html` / `handoff_emit` write other package files — `work_bind`
+  records a commit and dirties the tree AFTER it — so `git status --porcelain -uall` before any
+  branch operation. Since v5 the note carries no cheat-sheet: the read and write discipline
+  (`entity_query` paging, `entity_export`, `package_verify`, `expect_unchanged`, `substitute`) is
+  the plugin's `tamheed:package-writes` skill, which the note names.
   Since v4.7 the read rule draws one more line: a committed script that must QUOTE the store
   (a review slate, a docket) reads an `entity_export` file the tool wrote under `exports/` —
   never `data/*.jsonl`, never a pasted display — and a full-row status flip on a long row
@@ -132,7 +135,7 @@ the recognized **pointer pattern** — the note is delivered via the import, so 
 lives (and is rebuilt) in the PACKAGE's own CLAUDE.md while the root file is left untouched. Only a
 heading with neither markers nor the import line is a genuine v1 note — warned, never
 machine-edited; delete the section once and re-emit. Every such warning names the full path of the
-file it is about. `force` means exactly one thing: overwrite ALL diverged stock prompt files (+ .mcp.json);
+file it is about. `force` means exactly one thing: overwrite ALL diverged stock files (the guide; + .mcp.json);
 to accept the current template for ONE file, delete it and re-emit. The stale-v1 warning block
 still retracts itself when a later emit's scan is clean. Re-running `handoff_emit` is therefore the standing cutover verifier:
 everything `unchanged`, no warnings, no `restated_content` findings = the cutover is done and

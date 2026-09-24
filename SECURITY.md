@@ -91,9 +91,18 @@ report a problem.
   `operator_confirm` on the write.
 - **Skill files** — a promoted skill's `SKILL.md` body is operator-approved interview output, written
   by the agent on the operator's words and operator-owned from that moment; the server neither writes
-  nor reads skill files (the package row holds metadata only), and the promotion prompt instructs a
+  nor reads skill files (the package row holds metadata only), and the promotion skill instructs a
   G-INJECT-style self-review of the draft before it is shown for approval — a skill is a standing
   instruction surface and is treated as one.
+- **The plugin's own skills (v5)** — the front door, seven discipline skills and sixteen scenario
+  skills under `plugins/tamheed/skills/` are static bundle text with no package-derived content: they
+  reach a session through the plugin install, never through a package, and check.py's skills lint
+  keeps them well-formed, stack-neutral and free of field identifiers. The scenarios carry
+  `disable-model-invocation`: the operator invokes a ceremony, the model never starts one. The note
+  `handoff_emit` writes names them by skill name only — no skill body ever enters the note, so the
+  note's screens are unchanged. Deleting a retired 4.x scenario file from `<package>/prompts/` happens
+  only with `refresh_stock=true` and only when the file is byte-equal to a shipped release (the proof
+  the overwrite has always relied on); a customised copy is never touched.
 - **Server-witnessed journal facts cannot be narrated** — the four journal kinds the server appends
   (`forced-override`, `lesson-confirmed`, `lesson-promoted`, `integrity-verified`) are refused from
   `progress_update`; `package_verify` is read-only by default and journals a digest only on a passing

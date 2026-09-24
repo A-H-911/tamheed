@@ -46,38 +46,40 @@ Prompts that make Claude Code (or a human) check work against the plan — a cod
 implementation honors `INV-001..INV-00n`; report violations with file:line"), readiness recheck ("re-run
 the quality gates against the current repo"), and PR review against acceptance criteria.
 
-## The stock scenario library (plan 018, grown in plan 027)
+## The scenario skills (plan 018, grown in plan 027; skills since v5, plan 116)
 
-Distinct from the project prompts above: seventeen files — sixteen ready-to-paste operator scenario
-prompts plus the folder README — ship in the bundle (`../prompts/`) and are emitted verbatim (only
-`{package}` substituted) into `<package>/prompts/` by `package_create`, `package_migrate`,
-`package_adopt`, and `handoff_emit`. The authoritative per-file guide is the emitted
-`prompts/README.md`; this file teaches AUTHORING project prompts:
+Distinct from the project prompts above: sixteen operator-invoked scenario skills ship in the bundle
+(`../skills/<name>/SKILL.md`, `disable-model-invocation`; invoked as `/tamheed:<name>`, an argument
+naming another package) and are updated with the plugin — never emitted per project. Only the
+operator guide (`prompts/README.md`) is still emitted, `{package}` substituted, by `package_create`,
+`package_migrate`, `package_adopt`, and `handoff_emit`; it is the authoritative situation map. This
+file teaches AUTHORING project prompts:
 
-| File | Scenario |
+| Skill | Scenario |
 |---|---|
-| `orient-resume.md` | Re-orient after a session clear/compaction — tools + git-history cross-check against `work_bind` records (unreferenced commits classified by `git show --name-only`: package-only writes cannot cite themselves) |
-| `package-onboarding.md` | A cold agent meets the package from zero: charter → invariants → roadmap → state → obligations |
-| `slice-kickoff.md` | Start the next open slice plan-first (STOP for approval, then AC-first execution) |
-| `progress-sync.md` | Record completed work: progress entries, bindings, evidenced verdicts, typed scope changes |
-| `defect-triage.md` | A bug surfaced: `DEF-` row BEFORE the fix, then fix/audit/bind/close the loop |
-| `drift-register.md` | Work happened unrecorded: classify everything into DEF-/DW-/SC-first + progress/bindings |
-| `slice-review.md` | Slice completion: `entity_export` the ACs first (a committed slate quotes the file), audit ACs with evidence, bind commits, `readiness_check("slice")`, stop at the gate |
-| `phase-close.md` | Phase exit: phase-scope readiness blocking-clean, milestones, human GATE- confirmations, the guarded transition |
-| `release-close-out.md` | Package-scope readiness blocking-clean, human gates recorded, export, notes, close |
-| `replan-deferred.md` | Deferred-work triggers review: SC- first, activate, wire edges, STOP on new scope |
-| `skill-promote.md` | Operator-run promotion interview: cluster Approved lessons → name/trigger/edge-cases/level → operator approves content → write the `SKILL.md` → `SKL-` row + `Promoted` flips (`operator_confirm`) |
-| `register-liveness.md` | Readiness advisories piling up — the amber-list sweep, run on a cadence (incl. `amends` merges, Merged-last, and the note-budget promotion candidates) |
-| `integrity-check.md` | Read-only audit: `package_verify` (the canonical round-trip, foreign files, digest), gates, counts, trace spot-checks, narrated + ungraded verdicts by id, rulings buried in closed rows, staleness + unbound commits — reads through the tool (`after_id`/`ids`/`search`), never the files |
-| `generate-report.md` | Export + how to read `review.html` (nav, folded tables, freshness) |
-| `loop-iteration.md` | Fully-auto: ONE unattended pass ending in the machine-parseable `ITERATION:` block |
-| `loop-guard.md` | Fully-auto: the stop conditions — scope decisions and forced transitions always need a human |
+| `orient-resume` | Re-orient after a session clear/compaction — tools + git-history cross-check against `work_bind` records (unreferenced commits classified by `git show --name-only`: package-only writes cannot cite themselves) |
+| `package-onboarding` | A cold agent meets the package from zero: charter → invariants → roadmap → state → obligations |
+| `slice-kickoff` | Start the next open slice plan-first (STOP for approval, then AC-first execution) |
+| `progress-sync` | Record completed work: progress entries, bindings, evidenced verdicts, typed scope changes |
+| `defect-triage` | A bug surfaced: `DEF-` row BEFORE the fix, then fix/audit/bind/close the loop |
+| `drift-register` | Work happened unrecorded: classify everything into DEF-/DW-/SC-first + progress/bindings |
+| `slice-review` | Slice completion: `entity_export` the ACs first (a committed slate quotes the file), audit ACs with evidence, bind commits, `readiness_check("slice")`, stop at the gate |
+| `phase-close` | Phase exit: phase-scope readiness blocking-clean, milestones, human GATE- confirmations, the guarded transition |
+| `release-close-out` | Package-scope readiness blocking-clean, human gates recorded, export, notes, close |
+| `replan-deferred` | Deferred-work triggers review: SC- first, activate, wire edges, STOP on new scope |
+| `skill-promote` | Operator-run promotion interview: cluster Approved lessons → name/trigger/edge-cases/level → operator approves content → write the `SKILL.md` → `SKL-` row + `Promoted` flips (`operator_confirm`) |
+| `register-liveness` | Readiness advisories piling up — the amber-list sweep, run on a cadence (incl. `amends` merges, Merged-last, and the note-budget promotion candidates) |
+| `integrity-check` | Read-only audit: `package_verify` (the canonical round-trip, foreign files, digest), gates, counts, trace spot-checks, narrated + ungraded verdicts by id, rulings buried in closed rows, staleness + unbound commits — reads through the tool (`after_id`/`ids`/`search`), never the files |
+| `generate-report` | Export + how to read `review.html` (nav, folded tables, freshness) |
+| `loop-iteration` | Fully-auto: ONE unattended pass ending in the machine-parseable `ITERATION:` block |
+| `loop-guard` | Fully-auto: the stop conditions — scope decisions and forced transitions always need a human |
 
-They are trusted bundle content with no package-derived text; the relocated G-INJECT screen
-scans them anyway at `handoff_emit` (tamper detection is free). Stock files follow the
+They are trusted bundle content with no package-derived text, linted by check.py (lint 12:
+well-formed, stack-neutral, no field identifiers, no `{package}` placeholder). The guide follows the
 managed-emission sync model in `handoff.md`: re-emit refreshes, hand edits are detected and
-refused, nothing is silently clobbered. Project prompt files are operator-owned — never
-managed-refreshed, only screened.
+refused, nothing is silently clobbered; a retired 4.x scenario file left in `<package>/prompts/` is
+named by `handoff_emit` and deleted by `refresh_stock=true` only when byte-equal to a shipped
+release. Project prompt files are operator-owned — never managed-refreshed, only screened.
 
 ## Wiring rules
 

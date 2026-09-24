@@ -34,8 +34,17 @@ This repository is its own plugin marketplace (see [`../.claude-plugin/marketpla
 /plugin install tamheed@tamheed
 ```
 
-Invoke it as **`/tamheed:tamheed`** — plugin skills are namespaced by the plugin name. Or just describe a
-planning task; the skill's description triggers it automatically. When Claude Code asks to approve the
+Invoke the front door as **`/tamheed:tamheed`** — plugin skills are namespaced by the plugin name (since
+v5 it lives at `skills/tamheed/SKILL.md`, beside the plugin's other skills). Or just describe a planning
+task; the skill's description triggers it automatically. The plugin also ships the execution surface:
+seven discipline skills that load on relevance (`tamheed:package-writes`, `tamheed:reading-the-record`,
+`tamheed:operator-interview`, `tamheed:written-claims`, `tamheed:test-evidence`,
+`tamheed:measurement-evidence`, `tamheed:ci-evidence`) and sixteen operator-invoked scenario skills
+(`/tamheed:orient-resume`, `/tamheed:slice-kickoff`, `/tamheed:progress-sync`, … — the emitted
+`<package>/prompts/README.md` maps every situation). To enable the plugin for one project only, put its
+`enabledPlugins` entry in the project's `.claude/settings.json` (the docs list user, project and local
+scopes; a project without a package sees only the seven discipline descriptions, which never fire
+without one). When Claude Code asks to approve the
 `tamheed` MCP server (per-server approval), say yes — it is the only write path into a package. To update
 later, see [Upgrading](#upgrading-an-installed-plugin) — refreshing the marketplace alone does not update the plugin.
 
@@ -56,6 +65,10 @@ claude plugin marketplace update tamheed
 claude plugin update tamheed@tamheed      # "restart required to apply"
 ```
 
+Updated skills in a cached marketplace plugin need a **session restart** (`/reload-plugins` re-reads
+hooks and MCP servers, not cached skills) — after 5.0.0 the sixteen scenarios and the discipline skills
+arrive with the restart, no per-project step.
+
 (In a session: `/plugin marketplace update tamheed`, then `/plugin` → Installed → tamheed → update.)
 Reload or restart, then check `~/.claude/plugins/cache/tamheed/tamheed/<version>/` exists. If the
 tools are unreachable afterwards, run the self-test before diagnosing anything else — it
@@ -71,8 +84,10 @@ that is not the one in service.
    baseline of `gate_run()`, `readiness_check("package")` and `package_verify()`.
 2. *After:* `server_info()` names the new version. With no package open,
    `package_migrate(name)` previews any registry sync or relocate; on a current store it answers
-   "nothing to migrate", which is the happy path. A MAJOR release says so in the CHANGELOG and
-   `package_open` refuses until the staged migration runs.
+   "nothing to migrate", which is the happy path. A MAJOR release says so in the CHANGELOG; when it
+   changes the store's shape, `package_open` refuses until the staged migration runs — **5.0.0 does
+   not**: it changes the handoff contract, the store stays v4-shaped (`schema_version` reads 6 after
+   migration `006_carries.sql`, applied at connect with no operator step).
    **If the holder is already gone** (the usual state after an upgrade: reloading ends the
    session that held the lock) there is nothing to `package_close()`. The refusal itself says
    what the store observed about the holder; `package_unlock(name)` reports it on demand, and
@@ -80,9 +95,13 @@ that is not the one in service.
    observed `not-running` or `reused`, journaled. It refuses on `alive` and `unobservable`
    (another host, a container): there, removing `data/.lock` by hand stays the deliberate path.
 3. `package_open(name)`, then `gate_run()` / `readiness_check("package")` — compare with the baseline.
-4. `handoff_emit(target_dir, refresh_stock=true)` — refreshes only the stock prompts you never
-   customised and re-renders the tool-owned note; customised prompts are listed with the release
-   their stock last changed, for a hand-merge. Never reach for `force` to get there.
+4. `handoff_emit(target_dir, refresh_stock=true)` — refreshes the operator guide when you never
+   customised it, re-renders the tool-owned note (v5 since 5.0.0: obligations + lessons, the
+   cheat-sheet gone, the plugin's skills named) and **deletes the retired 4.x scenario files that
+   are byte-equal to a shipped release** (reported `retired`; a customised copy is kept and named —
+   keep it as a project prompt under a new name, or delete it yourself). A customised guide is
+   listed with the release its stock last changed, for a hand-merge. Never reach for `force` to get
+   there.
 5. `export_html()` — `review.html` and `csv/` are derived and deterministic, so a release that
    changes rendering shows up as a one-time diff if you track them (4.8.0: formula-shaped CSV
    cells are quote-prefixed, ids order numerically). `data/*.jsonl` must not change from an idle
@@ -90,7 +109,10 @@ that is not the one in service.
 
 ## Claude Code — manual / standalone
 
-Copy the bundle into a skills directory to get the shorter, un-namespaced `/tamheed`:
+Copy the bundle into a skills directory. Because the bundle carries `.claude-plugin/plugin.json`, the
+docs say it loads there as a plugin named `tamheed@skills-dir`; whether that route discovers the nested
+`skills/` directory (the front door and the execution skills since v5) is not documented and was not
+measured — the marketplace route above is the supported one.
 
 ```text
 # user scope (available in every project)

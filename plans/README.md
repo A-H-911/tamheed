@@ -189,7 +189,7 @@ devil's-advocate review; execution order 114 → 115 → 116 → 112 → 113 →
 | 114 | [The front door moves into `skills/`; the skills lint](114-front-door-moves-into-skills.md) | §0 (passed) | DONE — 2026-09-24 `e7172c3` |
 | 115 | [Seven discipline skills adopted from ACMP under tamheed names](115-seven-discipline-skills.md) | 114 | DONE — 2026-09-25 |
 | 116 | [Sixteen scenario skills + engine v5: note v5, README-only library, leftovers retired on refresh](116-scenario-skills-and-engine-v5.md) | 114, 115 | DONE — 2026-09-25 |
-| 117 | [Docs + diagrams sweep for v5.0.0](117-docs-and-diagrams-sweep-v5.md) | 112-116 | PLANNED |
+| 117 | [Docs + diagrams sweep for v5.0.0](117-docs-and-diagrams-sweep-v5.md) | 112-116 | DONE — 2026-09-25 |
 | 118 | [Lab beat 22](118-lab-beat-22-v5.md) | 112-117 + full test | PLANNED |
 | 119 | [Release v5.0.0 + the ACMP brief](119-release-v500.md) | 118 | PLANNED |
 

@@ -19,16 +19,18 @@ Markdown registers.
 │   ├── …
 │   └── .lock                      # single-writer lock (transient; never committed)
 ├── data-v3-backup/                # only after a v3→v4 package_migrate: the pre-migration data/ files
-├── prompts/                       # v3 (plan 027): ALL prompts, plain .md — read the folder, pick
+├── prompts/                       # v3 (plan 027): the project's prompts, plain .md — read the folder, pick
 │   ├── <kickoff>.md               # project-authored (Stage 20; any non-stock filename)
-│   └── <16 stock scenarios>.md    # + README.md — the bundled library ({package} substituted), seeded at create
+│   └── README.md                  # the operator guide ({package} substituted), seeded at create — v5: the ONE
+│                                  #   stock file; the 16 scenarios are the plugin's /tamheed:<name> skills
 ├── review.html (+ csv/)           # the human review surface, exported on demand
 ├── exports/                       # v4.7: entity_export files — a read tool's whole result, digest-
 │   └── <name>.json                #   stamped, deterministic; the sanctioned read for committed scripts
 │                                  #   (derived, regenerable; commit or ignore — never under data/)
 └── (target project root)          # handoff_emit writes there (wiring only, no prompt copies):
     ├── .mcp.json                  #   executor-side MCP config → the tamheed server
-    └── CLAUDE.md                  #   the marker-managed operating note (obligations table)
+    └── CLAUDE.md                  #   the marker-managed operating note (v5: obligations table + lessons,
+                                   #   naming the plugin's skills; no cheat-sheet)
 ```
 
 The operator commits `<project-package>/data/` to whichever repository they choose — the package

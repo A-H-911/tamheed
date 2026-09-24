@@ -149,7 +149,7 @@ sequenceDiagram
     Planner->>Operator: readiness verdict + open items (go/no-go gate)
     Operator-->>Planner: GO
     Planner->>Server: handoff_emit(target project)
-    Server-->>Executor: handoff prompts + executor-side .mcp.json + CLAUDE.md note
+    Server-->>Executor: executor-side .mcp.json + the CLAUDE.md note (v5: obligations + lessons, pointing at the plugin's skills) + the prompts guide
     Executor->>Server: progress_update · audit_record (evidence refs) · work_bind
     Note over Server: cascade-on-transition: all ACs of a requirement Met ⇒ requirement auto-advances
     Executor->>Server: entity_export(path, tool, args) — before a review slate is generated
@@ -177,14 +177,31 @@ tamheed/
 └── plugins/tamheed/                       # THE PLUGIN — the self-contained skill bundle
     ├── .claude-plugin/plugin.json
     ├── .mcp.json                           # auto-starts the server when the plugin is enabled
-    ├── SKILL.md                            # always-loaded front door (owns the capability)
+    ├── skills/                             # v5: tamheed/SKILL.md (the front door, owns the capability) + 7 discipline + 16 scenario skills
     ├── references/                         # on-demand depth + artifact-catalog.md
     ├── templates/                          # surviving narrative section templates
     ├── scripts/                            # scratch_diff.py (package diff utility)
     ├── db/                                 # the store: schema.sql + migrations/ + store.py + CANONICAL.md
     ├── server/                             # Tamheed MCP server (only write path into a package)
-    ├── prompts/                            # scenario prompt library, emitted into <package>/prompts/
+    ├── prompts/                            # the operator guide (emitted into <package>/prompts/) + stock-history.json
     └── assets/                             # logos
+```
+
+### The instruction surfaces (v5)
+
+Four surfaces instruct an executing session, each with one owner and one delivery path — the
+always-loaded note stays small because everything that is HOW rather than WHAT moved to skills:
+
+```mermaid
+flowchart LR
+    EMIT[handoff_emit] -->|rebuilds every emit| NOTE["CLAUDE.md note - tamheed:note v5<br/>AMBIENT: package pointer, the obligations table, Approved lessons, the skills line"]
+    EMIT -->|refreshes the guide, retires stale leftovers| GUIDE["package/prompts/<br/>README.md (the one stock file) + project-authored prompts"]
+    UPD[claude plugin update] -->|ships| DISC["7 discipline skills<br/>ON RELEVANCE: package-writes, reading-the-record, operator-interview, written-claims, test-evidence, measurement-evidence, ci-evidence"]
+    UPD -->|ships| SCEN["16 scenario skills<br/>OPERATOR-INVOKED /tamheed:name - description out of context"]
+    PROMO["/tamheed:skill-promote"] -->|writes on the operator's word| PROJ[".claude/skills/name<br/>PROJECT: promoted lessons, operator-owned, SKL- rows"]
+    NOTE -.->|names| DISC
+    NOTE -.->|names| SCEN
+    NOTE -.->|the skills line| PROJ
 ```
 
 **Self-containment is a hard requirement, not a preference.** Claude Code copies the plugin directory to a

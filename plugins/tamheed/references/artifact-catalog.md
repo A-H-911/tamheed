@@ -2,7 +2,8 @@
 
 The authoritative, human-facing list of every artifact a Tamheed package carries. Since v2
 the package **is a relational store** (`data/*.jsonl`, one file per entity family — see
-`../db/CANONICAL.md`); since v3 the handoff prompts are **files** under `<package>/prompts/`;
+`../db/CANONICAL.md`); since v3 the handoff prompts are **files** under `<package>/prompts/`
+(since v5 the project's own — the stock scenarios are the plugin's `/tamheed:<name>` skills);
 v4 (plan 031) re-baselined the schema, added waivers, typed the progress journal, and made
 this catalog the teaching mirror of the live registry. The machine mirror of the generation
 classes is `BASELINE_ENTITY_TYPES` (`../server/tamheed_server.py`), seeded into the
@@ -172,7 +173,7 @@ One `data/<table>.jsonl` file per non-empty family. Class = the registry's gener
 
 | Artifact | Location | Class | Notes |
 |---|---|---|---|
-| Prompt library | `<package>/prompts/*.md` | Always | 15 stock scenario prompts + README (managed emission: emitted/unchanged/diverged, diverged classified stale-stock vs customized against the bundled stock history; refresh_stock safely updates stale-stock) + operator-authored project prompts |
+| Prompt library | `<package>/prompts/*.md` | Always | The operator guide (`README.md`, the one stock file since v5; managed emission: emitted/unchanged/diverged, diverged classified stale-stock vs customized against the bundled stock history; refresh_stock safely updates stale-stock and deletes retired 4.x scenario leftovers byte-equal to shipped stock) + the project's own prompts; the sixteen scenarios are the plugin's `/tamheed:<name>` skills + operator-authored project prompts |
 | Review surface | `<package>/review.html` (+ `csv/`) | Derived | `export_html` — deterministic, zero-JS, committed |
 | Agent-control note | executor repo `CLAUDE.md` (tool-owned marker span) | Derived | `handoff_emit` — carries the recording-obligations table |
 | Executor MCP config | executor repo `.mcp.json` | Derived | `handoff_emit` |

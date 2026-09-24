@@ -68,7 +68,7 @@ the last recorded activity (a longer read pages: pass the result's `next_after` 
 `git show --name-only` (package-only writes cannot cite their own sha; only source-touching
 commits are candidates), flag those, and do not invent verdicts for them. Summarize current phase/slice, last completed `WBS-`, the
 invariants in force (`entity_query("invariant")`), and any unrecorded work. Then await the
-next task. (The emitted `<package>/prompts/orient-resume.md` is the full version of this.)
+next task. (The plugin's `/tamheed:orient-resume` skill is the full version of this.)
 
 ### Invariant audit
 Verify the implementation honors `INV-001..INV-00n`. Report any violation with `file:line` and a proposed

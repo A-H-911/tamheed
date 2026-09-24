@@ -220,9 +220,13 @@ installs (plugin installs already register the server) plus the `CLAUDE.md` oper
 content outside the `<!-- tamheed:note -->` markers). The note carries the **mandatory
 recording-obligations table** — defect found → `DEF-` row *before* the fix; out-of-scope discovery →
 `DW-` row with a trigger; any deviation → `SC-` row *first*; progress/audit/bind per unit;
-`readiness_check` before declaring anything done — plus the full tool cheat-sheet. Stock prompt files
-stay managed (`written`/`unchanged`/`diverged`; a hand-customised file is never overwritten without
-`force`, and accepting a new template for ONE file is just delete + re-emit). Emission is screened
+`readiness_check` before declaring anything done. Since v5 the HOW lives in the plugin's skills the
+note names (`tamheed:package-writes` before any write, `tamheed:reading-the-record` before citing a
+row, `tamheed:operator-interview` at every STOP; the scenarios are the operator-invoked
+`/tamheed:<name>` slash skills) and the note carries no cheat-sheet. The one stock file in
+`<package>/prompts/` is the operator guide (`README.md`), managed as before (`written`/`unchanged`/
+`diverged`; a hand-customised file is never overwritten without `force`); a retired 4.x scenario file
+left on disk is named and, when byte-equal to a shipped release, deleted by `refresh_stock=true`. Emission is screened
 (G-INJECT blocks instruction-shaped text) and reported: `stale_references`, `restated_content`
 (copies drift silently — the report suggests the live reference form), and `converted_prompts`
 (legacy prompts converted from v2 get per-kind curation hints until reviewed). The executing agent
@@ -405,7 +409,8 @@ tamheed/
 │   ├── references/                   # per-stage / per-concern depth (incl. artifact-catalog.md)
 │   ├── templates/                    # surviving narrative section templates
 │   ├── scripts/                      # scratch_diff.py (package diff utility)
-│   ├── prompts/                      # the stock scenario library + operator guide (emitted into <package>/prompts/)
+│   ├── skills/                       # the plugin's skills: 7 discipline + 16 operator-invoked scenarios (v5)
+│   ├── prompts/                      # the operator guide (emitted into <package>/prompts/) + the stock history
 │   ├── db/                           # relational store: schema.sql, migrations/ (append-only), store.py, CANONICAL.md
 │   ├── server/                       # the Tamheed MCP server (the only write path into a package)
 │   └── assets/                       # logos

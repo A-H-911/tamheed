@@ -41,8 +41,8 @@ traceability — every entity a row, every write through the Tamheed MCP tools.
 ## How an execution agent consumes this
 
 Start from the prompts folder: **`prompts/README.md`** is the operator guide (which
-prompt for which situation, semi-auto vs fully-auto, the single-writer lock). The
-project-authored kickoff prompt lives beside the stock scenario library. The target
+`/tamheed:<name>` skill for which situation, semi-auto vs fully-auto, the single-writer lock).
+The project-authored kickoff prompt lives beside it; the scenarios are the plugin's skills. The target
 repo's `CLAUDE.md` carries the recording-obligations table (emitted by `handoff_emit`)
 — the package is the record; unrecorded work is drift.
 

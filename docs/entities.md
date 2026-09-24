@@ -1115,7 +1115,7 @@ at `entity_query("lesson")` for the rest); and the six-target `learned_from` edg
 v4.5 the ceiling has a nag: the field register grew to 57 Approved lessons with 48 pinned
 and none promoted — 57 lines in the always-loaded note — so the `lessons-note-budget`
 advisory names, in the note's own render order, every lesson rendering past position 20 as
-a promotion candidate (`skill-promote.md`, or unpin). Pinning stays the operator's choice;
+a promotion candidate (`/tamheed:skill-promote`, or unpin). Pinning stays the operator's choice;
 its cost stops being invisible.
 
 **Related mechanics.** The `lessons-confirmed` package advisory (Proposed rows awaiting
@@ -1150,8 +1150,8 @@ operational, with Voyager's skill library as the agent-side precedent. The row i
 operator-owned after creation; the server never writes or reads skill files (the v3
 files-doctrine).
 
-**Lifecycle position.** Created only by the operator's promotion interview — the stock
-`skill-promote.md` prompt runs it: cluster Approved-lesson candidates, interview the
+**Lifecycle position.** Created only by the operator's promotion interview — the
+`/tamheed:skill-promote` scenario skill runs it: cluster Approved-lesson candidates, interview the
 operator (name, trigger, edge cases, level — default project), the operator approves the
 drafted content, the agent writes the file, then one batch records the `SKL-` row and flips
 each source lesson to `Promoted` (`promoted_to` set, `operator_confirm` carried).
@@ -1175,6 +1175,17 @@ cluster → promote with human confirmation). Tamheed's deliberate difference fr
 confidence-scored lineage: **operator confirmation at entry replaces numeric confidence and
 decay** — there is no score to game and nothing rots silently; a wrong skill is superseded
 by a human, not decayed by a counter.
+
+**Plugin skills vs project skills (v5).** The plugin ships its own skills under
+`plugins/tamheed/skills/` — the front door, seven discipline skills loaded on relevance
+(`tamheed:package-writes` and its neighbours) and sixteen operator-invoked scenario skills
+(`/tamheed:slice-kickoff`, …) — one source, updated with the plugin, never refreshed per project
+and never recorded as `SKL-` rows: they are tamheed's teaching surface (lint 12 keeps them
+well-formed, stack-neutral and free of field identifiers). A `SKL-` row is the PROJECT's own
+distillation, written into `.claude/skills/` on the operator's word and owned by them; the two
+never collide (plugin skills are namespaced). A project skill whose content the plugin later
+ships is retired by its operator: the row goes `Obsolete` with `custom_attributes.upstreamed_to`
+naming the plugin skill (`superseded_by` is a foreign key to `skills(id)` and cannot point upstream).
 
 **Related mechanics.** `lessons.promoted_to` FK (the `DEC-`→`ADR-` promotion idiom);
 the confirm guard (promotion requires stored-`Approved` + an existing `SKL-` target);

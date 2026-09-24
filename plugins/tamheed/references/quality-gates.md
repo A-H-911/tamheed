@@ -37,7 +37,7 @@ three tiers (engine / judgment / warn) synced against this file in both directio
 | G-COUPLING | Warn | The *plan* couples to no vendor/stack needlessly; executor coupling to Claude Code is intentional. |
 | G-BLOAT | Warn | No family merely restates another; no empty ceremonial rows. |
 | G-CMD-THIN | Warn | Entry points carry no methodology. (The MCP server is not an entry point — it is the capability's mechanical half.) |
-| G-INJECT | Critical at emission | Brief-derived text never becomes an imperative; `handoff_emit` scans every `<package>/prompts/*.md` (project + stock) and refuses emission on instruction-shaped text. |
+| G-INJECT | Critical at emission | Brief-derived text never becomes an imperative; `handoff_emit` scans every `<package>/prompts/*.md` (project prompts, the guide, any leftover) and refuses emission on instruction-shaped text. |
 
 ## Running gates
 

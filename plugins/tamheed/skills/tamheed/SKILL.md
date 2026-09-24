@@ -100,8 +100,9 @@ Default to **interactive**. Modes are defined in `references/modes.md`:
   `provenance_repaired`, `edges_retyped`/`edges_deduplicated`, `entity_types_added`/`_scrubbed`,
   `legacy_prompts` — explained, never glossed. The operator backs up, then
   `package_migrate(name, confirm=true)`; the old files are kept in `data-v3-backup/`. On
-  success the package carries a refreshed prompt library in `<package>/prompts/` — point the
-  operator at it (`refresh_stock=true` on the next `handoff_emit` safely updates stale stock).
+  success the package carries a refreshed operator guide in `<package>/prompts/` — point the
+  operator at it (`refresh_stock=true` on the next `handoff_emit` safely updates a stale guide and
+  deletes retired 4.x scenario files byte-equal to shipped stock; the scenarios are `/tamheed:<name>`).
   On a **v4** store that merely predates a newer entity family, `package_migrate` runs a staged
   **registry-sync** instead: preview reports `entity_types_added`, confirm appends the registry
   rows (pure registry append, no backup taken; `columns_added` names any files that
@@ -279,7 +280,7 @@ Read the reference file when you reach the matching part of the work; do not loa
 | `references/safeguards.md` | The anti-patterns to actively prevent |
 | `references/handoff.md` | Assembling the execution-agent handoff |
 | `references/adopt.md` | Brownfield onboarding (`adopt` mode) |
-| `references/prompt-templates.md` | Writing project prompt files + the 17-file stock scenario library |
+| `references/prompt-templates.md` | Writing project prompt files + the sixteen scenario skills |
 | `references/generated-structure.md` | The layout of a generated package |
 | `references/state.md` | State, resumption, and update cycles |
 | `references/extension.md` | Adding capabilities without touching core logic |

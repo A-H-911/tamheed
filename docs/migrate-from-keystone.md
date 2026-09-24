@@ -105,8 +105,9 @@ coexist: agents keep reading the stale v1 instructions, editing dead registers, 
 the v1 validator — silently undoing the migration.
 
 1. Open the migrated package and run `handoff_emit(<repo>)`: it appends the "Tamheed progress
-   tracking" operating note (with the MCP tool cheat-sheet) to the repo's `CLAUDE.md`, emits
-   the `<package>/prompts/` scenario library, and returns `stale_references` — every v1-flow
+   tracking" operating note (the obligations table; since v5 it points at the plugin's skills
+   instead of carrying a cheat-sheet) to the repo's `CLAUDE.md`, emits the `<package>/prompts/`
+   operator guide (the scenarios are `/tamheed:<name>` skills since v5), and returns `stale_references` — every v1-flow
    pointer found in `CLAUDE.md`/`AGENTS.md` as `file:line` + a suggested replacement. Apply
    those replacements; product-domain uses of the word "Keystone" are never flagged. On
    plugin-hosted servers no project `.mcp.json` entry is written (the installed plugin
@@ -158,10 +159,10 @@ and not by reverting the repo:
 5. Re-run `handoff_emit` — managed emissions make it the verifier: expect `unchanged`
    everywhere except deliberate changes, no stale-warning block, and review the
    `stale_references`/`restated_content` findings including the **emitted prompt bodies**.
-6. **Refresh the stock prompts**: prompts are plain files, and the stock library refreshes
-   at emission. Since v4.1, `handoff_emit(refresh_stock=true)` safely updates every
-   never-customised stock file to the current templates; hand-customised files are left
-   alone and reported, never overwritten.
+6. **Refresh the stock files**: since v4.1, `handoff_emit(refresh_stock=true)` safely updates every
+   never-customised stock file to the current template (since v5 that is the operator guide alone,
+   and the same call deletes retired 4.x scenario files byte-equal to a shipped release);
+   hand-customised files are left alone and reported, never overwritten.
 7. `export_html` and commit the regenerated `review.html` + `csv/`.
 
 ## The scratch-diff regression measurement (post-upgrade acceptance)
