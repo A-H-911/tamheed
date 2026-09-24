@@ -17,6 +17,17 @@ Step 15 rewritten with the true arithmetic and its corollary — in the `registe
 
 ## Done criteria
 
-- [ ] RED then GREEN (the skills-teaching test names the new arithmetic and the NOT NULL clause)
-- [ ] `python check.py`
+- [x] RED then GREEN (the skills-teaching test names the new arithmetic and the NOT NULL clause)
+- [x] `python check.py`
 - [ ] CI green
+
+## Execution note (2026-09-25)
+
+Landed after 114-116, on the surfaces that survive: step 15 rewritten in the `register-liveness`
+skill (the fill is always exactly ten while ten or more unpinned Approved lessons exist, so a pinned
+unpin or promotion removes exactly one line and an unpinned retirement removes nothing; N pinned needs
+N - 10 pinned removals); step 18's clause and the server README's recipe say a partial row still
+carries every NOT NULL column; `skill-promote` step 5 says the promotion guard is the paste verifier.
+The brief's five errors are owned in the batch record §1.1-1.5. The RED/GREEN criterion was met by the
+skills-teaching test re-aimed in plan 116 (the scenario skill files were born with this text); the
+server README clause is asserted by no test — it is prose beside the recipe.

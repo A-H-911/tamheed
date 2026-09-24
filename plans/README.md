@@ -184,7 +184,7 @@ devil's-advocate review; execution order 114 → 115 → 116 → 112 → 113 →
 
 | # | Plan | Depends on | Status |
 |---|---|---|---|
-| 112 | [The findings_31 doc cycle: FB-017's step 15, the NOT NULL clause, the paste verifier, the brief's five errors](112-findings-31-doc-cycle.md) | 116 | PLANNED |
+| 112 | [The findings_31 doc cycle: FB-017's step 15, the NOT NULL clause, the paste verifier, the brief's five errors](112-findings-31-doc-cycle.md) | 116 | DONE — 2026-09-25 |
 | 113 | [`carries` (wbs-item -> deferred-work) + the `deferred-work-carried` advisory, migration 006 (FB-018)](113-carries-relation-and-deferred-work-carried.md) | 116 | PLANNED |
 | 114 | [The front door moves into `skills/`; the skills lint](114-front-door-moves-into-skills.md) | §0 (passed) | DONE — 2026-09-24 `e7172c3` |
 | 115 | [Seven discipline skills adopted from ACMP under tamheed names](115-seven-discipline-skills.md) | 114 | DONE — 2026-09-25 |
