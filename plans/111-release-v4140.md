@@ -15,5 +15,5 @@ separately; CI; memory + index close-out.
 
 ## Done criteria
 
-- [ ] lints green; tag pushed; CI green
-- [ ] the ACMP brief printed in the transcript
+- [x] lints green; tag `v4.14.0` on `83cfb12` pushed; CI green
+- [x] the ACMP brief printed in the transcript

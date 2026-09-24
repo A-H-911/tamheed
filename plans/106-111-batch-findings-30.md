@@ -1,6 +1,6 @@
 # Tamheed v4.14.0 — the findings_30 batch: `ready` follows its own doctrine, three honesty fixes, the sweep prompt's four gaps
 
-Status: **APPROVED 2026-09-24 (revision 2, after the devil's-advocate review) — IN PROGRESS.** Index: [README.md](README.md) § Field cycle findings_30.
+Status: **EXECUTED — v4.14.0 tagged on `83cfb12`, 2026-09-24 (revision 2 approved after the devil's-advocate review).** Index: [README.md](README.md) § Field cycle findings_30.
 Read-only work only: `findings_30.md` in full; the sixteen `FB-` rows through ACMP's tool-written
 `exports/feedback.json` (`count == total == 16`, `partial: false`; never `data/`); the journal
 through `csv/progress_entries.csv` (1,380 rows; seven `system:` actors, all the engine's;

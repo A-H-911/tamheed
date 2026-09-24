@@ -188,7 +188,7 @@ devil's-advocate review; execution order is the row order below). Status values:
 | 108 | [`expect_unchanged` refuses the vacuous case; the sweep prompt's four gaps](108-expect-unchanged-refuses-the-vacuous-case.md) | findings_30 Q3, Q5 | DONE — 2026-09-24 |
 | 109 | [Docs + diagrams sweep](109-docs-and-diagrams-sweep-findings-30.md) | 106-108 | DONE — 2026-09-24 |
 | 110 | [Lab beat 21](110-lab-beat-21-findings-30.md) | 106-109 + full test (9/9 vs 0/9 on `v4.13.0`; selftest 19/19) | DONE `59fe5b5` — one dispatch, every mechanism fired; F-9 (the pointer import built the span inside the fixture) recorded |
-| 111 | [Release v4.14.0](111-release-v4140.md) | 110 | IN PROGRESS |
+| 111 | [Release v4.14.0](111-release-v4140.md) | 110 | DONE — 2026-09-24, tag `v4.14.0` on `83cfb12`, CI green; the fixture followed by `refresh_stock` (three guides) |
 
 ### Field cycle findings_29 -- plans 100-105 -> v4.13.0 (2026-09-23; reviewer-executed)
 
