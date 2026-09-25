@@ -191,7 +191,7 @@ devil's-advocate review; execution order 114 → 115 → 116 → 112 → 113 →
 | 116 | [Sixteen scenario skills + engine v5: note v5, README-only library, leftovers retired on refresh](116-scenario-skills-and-engine-v5.md) | 114, 115 | DONE — 2026-09-25 |
 | 117 | [Docs + diagrams sweep for v5.0.0](117-docs-and-diagrams-sweep-v5.md) | 112-116 | DONE — 2026-09-25 |
 | 118 | [Lab beat 22](118-lab-beat-22-v5.md) | 112-117 + full test (9/9 vs 0/9 on `v4.14.0`; invariants 2/2; selftest 19/19; CI green) | DONE `80c7173` — one dispatch, 7/7 discriminate; F-10 (grep `tests/` too) recorded |
-| 119 | [Release v5.0.0 + the ACMP brief](119-release-v500.md) | 118 | PLANNED |
+| 119 | [Release v5.0.0 + the ACMP brief](119-release-v500.md) | 118 | DONE — 2026-09-25, tag `v5.0.0` on `bbdeb4a`; the fixture's guide followed by tool |
 
 ### Field cycle findings_30 -- plans 106-111 -> v4.14.0 (2026-09-24; reviewer-executed)
 

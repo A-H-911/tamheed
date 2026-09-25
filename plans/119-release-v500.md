@@ -17,6 +17,21 @@ The release recipe (plugin.json == newest CHANGELOG heading; the six stamp lines
 
 ## Done criteria
 
-- [ ] tag `v5.0.0`
+- [x] tag `v5.0.0`
 - [ ] CI green on the tag commit
-- [ ] the brief printed
+- [x] the brief printed
+
+## Execution note (2026-09-25)
+
+Recipe: `plugin.json` 5.0.0 == the newest CHANGELOG heading; the six stamp lines; the guide's
+5.0.0 history key re-set to the shipped body; annotated tag `v5.0.0` on `bbdeb4a`; main and the tag
+pushed separately. Before the tag: the full gate green on the stamped tree; the three
+`--plugin-dir` probes on a copy of the bundle exactly as tagged (`PROBE-OK`; the front door loads
+from `skills/tamheed` and reports v5.0.0; the model lists the eight model-invocable skills). The
+fixture's guide followed by tool: beat 22 had refreshed it to the INTERIM 5.0.0 body (never a
+release; it leaves the history at the stamp, so the tool reads it `customized`) — the follow script
+proved the file byte-equal to that interim body and only then let `force` overwrite exactly that
+one file (`emitted: ["prompts/README.md"]`, `retired: []`, gate ready, verify true, review
+current). Lesson recorded in memory: add a pre-release history key only at the release. The CHANGELOG
+lead's "one stock file changes" was corrected before the stamp (advisor): the library is README
+alone, sixteen files retired, migration 006 ships. The ACMP brief follows in the transcript.

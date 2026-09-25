@@ -1,6 +1,6 @@
 # Tamheed v5.0.0 — skills as the instruction surface, `carries`, and the findings_31 cycle
 
-Status: **APPROVED 2026-09-24 (revision 2, after the devil's-advocate review) — IN PROGRESS.** Index: [README.md](README.md) § Field cycle findings_31.
+Status: **EXECUTED — v5.0.0 tagged on `bbdeb4a`, 2026-09-25 (revision 2 approved after the devil's-advocate review).** Index: [README.md](README.md) § Field cycle findings_31.
 Execution order differs from the numbering: 114 → 115 → 116 → 112 → 113 → 117 → full test → 118 → 119, because the surfaces plans 112 and 113 edit (the scenario bodies, the write rules) are created by 114-116.
 §0 RESULT (2026-09-24, before plan 114): `/tamheed:probe` → `PROBE-OK`; `/tamheed:tamheed` loaded with `Base directory … \skills\tamheed` and the `${CLAUDE_PLUGIN_ROOT}` sentence substituted to the bundle root; the skills list showed `tamheed:probe` and `tamheed:tamheed`. All three passed.
 Read-only work only: `findings_31.md` in full; the eighteen `FB-` rows through ACMP's tool-written
@@ -124,6 +124,18 @@ probe would edit your settings. It is not a STOP condition; install.md states it
     `local-tool`). The 5.0.0 README keeps those three needles, and the beat plan checks them before
     dispatch (F-6).
 22. "lint 11 (new)" collides with the existing lint 11 (template copies). It is lint 12.
+23. **(execution) The beat plan's F-6 grep did not cover `tests/`**: `test_pkg_check_grep_tree` used the
+    fixture's prompts folder as a corpus for `gate_run`, a word that lived in the retired files; the
+    agent left `tests/**` alone and reported it; the needle was re-aimed in the close-out (F-10).
+24. **(execution) The beat plan expected `gate_run` ready on a bare scratch package** — G-SET fails
+    there on the nine Always families a bare package never has; the plan's expectation, not the agent's.
+25. **(execution) The beat refreshed the fixture's guide to an unreleased body** (the pre-release
+    `5.0.0` history key), which left the history at the stamp — the fixture-follow proved
+    byte-equality to that body and forced exactly that file (plan 119's note).
+26. **(execution, the reviewer's find) The note's flush sentence, since plan 039, named
+    `export_html`/`handoff_emit` as JSONL flushers** — only the store writes reach `_commit()`; the
+    conclusion held, the mechanism was wrong; corrected in the v5 rebuild, the guide, the template,
+    handoff.md and the `package-writes` skill; owned in the brief.
 
 **The engine (findings_31, each verified)**
 16. **`FB-017`** — step 15's mechanism is false (`_note_lesson_rows`: pinned + `unpinned[:10]`; any
