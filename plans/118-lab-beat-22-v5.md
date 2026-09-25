@@ -229,8 +229,30 @@ while it runs). Then commit (explicit paths).
 
 ## Done criteria
 
-- [ ] `run_evals --case lab-tracker` all pass (95: 88 + 7)
-- [ ] every new assertion exits non-zero against the Step 1 backup (re-run by the reviewer against `git archive <dispatch sha>`)
-- [ ] `python check.py` → `ALL CHECKS PASSED`
-- [ ] `git status --short` shows only in-scope paths; no `data/.lock`; the sixteen deletions and nothing else under `prompts/`
-- [ ] the evidence report exists and every mechanism row says `observed` or why not
+- [x] `run_evals --case lab-tracker` all pass (95: 88 + 7)
+- [x] every new assertion exits non-zero against the Step 1 backup (re-run by the reviewer against `git archive <dispatch sha>`)
+- [x] `python check.py` → `ALL CHECKS PASSED`
+- [x] `git status --short` shows only in-scope paths; no `data/.lock`; the sixteen deletions and nothing else under `prompts/`
+- [x] the evidence report exists and every mechanism row says `observed` or why not
+
+## Execution note (2026-09-25)
+
+One dispatch; every step performed; 7/7 assertions discriminate (backup 1 / fixture 0), re-run by
+the reviewer against `git archive f40d68b`: 7/7 `pre=1 fixture=0`; `run_evals --case lab-tracker`
+95/95; cherry-picked as `80c7173`. Deviations, all kept:
+- **F-10 (the reviewer's miss, a recipe lesson):** `tests/test_eval_runner.py::test_pkg_check_grep_tree`
+  used the fixture's `prompts/` as a corpus for the word `gate_run`, which lived in thirteen of the
+  sixteen retired files — the F-6 grep covered `evals.json` and `scenario.md`, not `tests/`. The agent
+  left `tests/**` alone (out of scope) and reported `check.py` red; the reviewer re-aimed the needle
+  to `Which skill, when` (present only in the v5 guide) in the close-out commit. **A beat that deletes
+  or rewrites fixture files greps `tests/` too.**
+- **N-1:** the plan expected `gate_run` `ready: true` on the bare scratch `carry` package; it read
+  false on G-SET (nine Always families a bare package never has) while G-REL accepted the edge — the
+  plan's expectation was wrong, the agent did not force it.
+- **N-2:** the plan called `lab/scenario.md:369` beat 20's sentence; it is beat 18's. The clause went
+  where the plan pointed (the right sentence); beat 16's line 259 also names `orient-resume.md` as
+  refreshed and was left as history.
+- **N-3:** "row count (12)" counted the table header; there are 11 obligation rows.
+- **N-4:** the refreshed guide still carries the 4.14.0 header (the beat forbids a bump); the release
+  re-refreshes it (plan 119's fixture-follow step).
+- `evals.json` is CRLF in the working tree; the seven entries were inserted as text, 87 lines added.
