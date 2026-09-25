@@ -1,70 +1,80 @@
 # How to use this folder — the `package` prompt guide (tamheed v4.14.0)
 
-This folder is the **single prompt surface** for the `package` Tamheed package. Every
-file is a paste-ready prompt for a Claude Code session. Two kinds live here:
+This folder holds the **project's own prompts** for the `package` Tamheed package — plus
+this guide. Since v5.0.0 the stock scenarios are no longer files here: they are the tamheed
+plugin's **slash skills**, `/tamheed:<name>`, updated with the plugin and never refreshed
+per project. Two kinds of thing live in this folder:
 
-- **Stock scenarios** (this file and the 16 named below) — shipped by tamheed, refreshed
-  on upgrade; if you hand-edit one, later refreshes report it `diverged` and never
-  overwrite without `force`. Since v4.1 the tool tells the two divergence kinds
-  apart against its shipped stock history: a file byte-equal to an OLDER release's
-  stock is `stale-stock` (you never customised it) — `handoff_emit` with
-  `refresh_stock=true` updates ONLY those; a `customized` file is never touched by
-  refresh (per-file acceptance stays delete + re-emit; `force` still overwrites
-  ALL diverged). ⚠ Customizing a stock prompt therefore opts it out of every future
-  refresh, silently and permanently — the emission warning names how far the stock
-  has since moved (`stock_last_changed`); to carry a release's improvements into a
-  customized copy, hand-merge: the bundled `stock-history.json` holds every
-  release's body, so extract the current one and diff against your copy. When the merge
-  is done, say so IN the file — a line `<!-- tamheed:stock-merged X.Y.Z -->` naming the
-  release you merged — and the lag warning stops for that file (reported as your
-  declaration, never verified).
+- **This guide** (`README.md`) — shipped by tamheed and refreshed on upgrade (`handoff_emit`
+  with `refresh_stock=true` updates it when it is byte-equal to an older release's copy; a
+  hand-edited copy is `customized` and never touched by refresh). ⚠ Customising it opts it
+  out of every future refresh — the emission warning names how far the stock has since
+  moved (`stock_last_changed`); to carry a release's improvements into a customised copy,
+  hand-merge from the bundled `stock-history.json` and say so IN the file with a line
+  `<!-- tamheed:stock-merged X.Y.Z -->` (reported as your declaration, never verified).
 - **Your project prompts** — any other filename. Operator-owned; tamheed never touches
-  them. Name them by purpose, kebab-case (`kickoff.md`, `phase3-resume.md`). Files named
-  `prm-NNN-<kind>.md` with a `<!-- converted … -->` header are legacy prompts converted
-  from the old database — audit names, not a pattern to copy; review each (keep the
-  project-specific parts, drop what the stock library now covers) and remove the header
-  line when done.
+  them. Name them by purpose, kebab-case (`kickoff.md`, `phase3-resume.md`). The
+  `prompt-ids-resolve` readiness rule scans them (never a stock body): every id written in
+  them must resolve. Files named `prm-NNN-<kind>.md` with a `<!-- converted … -->` header
+  are legacy prompts converted from the old database — audit names, not a pattern to copy.
 
-## Which prompt, when
+**Leftovers from before v5.0.0.** A package created under 4.x still holds the sixteen
+retired stock files (`slice-kickoff.md`, `progress-sync.md`, …). `handoff_emit` names each:
+one byte-equal to a shipped release's stock is a `leftover_stale_stock` and
+`refresh_stock=true` deletes it (reported as `retired` — the same proof today's refresh
+relies on: you never customised it); a `leftover_customized` copy is never deleted — keep it
+as a project prompt under a new name (the stock name is retired), or delete it yourself.
 
-| Situation | Paste |
+## Which skill, when
+
+| Situation | Invoke |
 |---|---|
-| A brand-new agent has never seen this package | `package-onboarding.md` |
-| Resuming after a session clear / compaction | `orient-resume.md` |
-| Starting the next slice of work | `slice-kickoff.md` |
-| Work is done, package not yet updated | `progress-sync.md` |
-| A bug was found or reported | `defect-triage.md` |
-| Work happened without recording (any session) | `drift-register.md` |
-| A slice is believed complete | `slice-review.md` |
-| A phase is believed complete | `phase-close.md` |
-| Closing out a release | `release-close-out.md` |
-| Deferred-work triggers may have fired | `replan-deferred.md` |
-| Readiness advisories piling up (the amber list) | `register-liveness.md` — run it on a cadence, not only at close |
-| Distilling confirmed lessons into a reusable skill | `skill-promote.md` — the operator-interview ceremony (project or user level) |
-| Read-only trust audit of the package | `integrity-check.md` |
-| Refresh + read the human report | `generate-report.md` |
-| Unattended execution — the repeated prompt | `loop-iteration.md` |
-| Unattended execution — the brake (read FIRST) | `loop-guard.md` |
+| A brand-new agent has never seen this package | `/tamheed:package-onboarding` |
+| Resuming after a session clear / compaction | `/tamheed:orient-resume` |
+| Starting the next slice of work | `/tamheed:slice-kickoff` |
+| Work is done, package not yet updated | `/tamheed:progress-sync` |
+| A bug was found or reported | `/tamheed:defect-triage` |
+| Work happened without recording (any session) | `/tamheed:drift-register` |
+| A slice is believed complete | `/tamheed:slice-review` |
+| A phase is believed complete | `/tamheed:phase-close` |
+| Closing out a release | `/tamheed:release-close-out` |
+| Deferred-work triggers may have fired | `/tamheed:replan-deferred` |
+| Readiness advisories piling up (the amber list) | `/tamheed:register-liveness` — run it on a cadence, not only at close |
+| Distilling confirmed lessons into a reusable skill | `/tamheed:skill-promote` — the operator-interview ceremony (project or user level) |
+| Read-only trust audit of the package | `/tamheed:integrity-check` |
+| Refresh + read the human report | `/tamheed:generate-report` |
+| Unattended execution — the repeated prompt | `/tamheed:loop-iteration` |
+| Unattended execution — the brake (read FIRST) | `/tamheed:loop-guard` |
 | Something project-specific | any other `.md` here — project prompts are operator-authored, purpose-named; read the folder |
+
+Every scenario skill is **operator-invoked** (`disable-model-invocation`): the agent never
+starts a ceremony on its own, exactly as it never pasted one. Each works in the package this
+project's `CLAUDE.md` note names; an argument names another (`/tamheed:slice-kickoff other`).
+Beside them, five **discipline skills** load on relevance in every session where the plugin
+is enabled: `tamheed:package-writes` (every write, read and git crossing),
+`tamheed:reading-the-record` (before citing a row), `tamheed:operator-interview` (at every
+STOP), and `tamheed:test-evidence` / `tamheed:measurement-evidence` / `tamheed:ci-evidence`
+(what a verdict's evidence must survive).
 
 ## Semi-auto style (you drive)
 
-The typical loop: `orient-resume` → `slice-kickoff` → the agent works → `progress-sync`
-→ `slice-review` → next slice (phase exits via `phase-close`, releases via
-`release-close-out`). Every **STOP for approval** in these prompts is real — the agent
-waits for your words. Three things are always yours alone: **scope changes** (the
-`SC-` row needs your approval before its changes are applied and it is set Merged),
-**waivers** (a `WVR-` row satisfying one named readiness rule for one named entity —
-the agent may ask for one, never author one), and **`force`** (overriding a whole
-blocked `Implemented` transition past failing readiness rules).
+The typical loop: `/tamheed:orient-resume` → `/tamheed:slice-kickoff` → the agent works →
+`/tamheed:progress-sync` → `/tamheed:slice-review` → next slice (phase exits via
+`/tamheed:phase-close`, releases via `/tamheed:release-close-out`). Every **STOP for
+approval** in these skills is real — the agent waits for your words. Three things are
+always yours alone: **scope changes** (the `SC-` row needs your approval before its changes
+are applied and it is set Merged), **waivers** (a `WVR-` row satisfying one named readiness
+rule for one named entity — the agent may ask for one, never author one), and **`force`**
+(overriding a whole blocked `Implemented` transition past failing readiness rules).
 
 ## Fully-auto style (unattended)
 
-Pair `loop-iteration.md` (the prompt a loop repeats) with `loop-guard.md` (the stop
-conditions — read it before starting any loop). Drive it either way:
+Pair `/tamheed:loop-iteration` (the skill a loop repeats) with `/tamheed:loop-guard` (the
+stop conditions — read it before starting any loop). Drive it either way:
 
-- an **in-session loop** (e.g. Claude Code `/loop`) re-pasting loop-iteration;
-- an **external harness** starting a fresh session per iteration and parsing the final
+- an **in-session loop** (e.g. Claude Code `/loop`) re-invoking `/tamheed:loop-iteration`;
+- an **external harness** starting a fresh session per iteration
+  (`claude -p "/tamheed:loop-iteration"`) and parsing the final
   `ITERATION: wbs=… slice=… acs_moved=… gate=… ready=… stop=… lessons_pending=…`
   line to decide continue/stop (and to watch the operator-interview queue grow).
 
@@ -74,7 +84,7 @@ defect spike, empty iterations, or any store error. You resolve, you restart.
 
 ## One session at a time
 
-The package has a **single-writer lock** (`data/.lock`). Two sessions pasting prompts
+The package has a **single-writer lock** (`data/.lock`). Two sessions invoking skills
 concurrently will collide: the second `package_open` refuses, naming the holder (pid,
 host, taken_at) **and what the store observed about it** — `not-running`, `reused`
 (the pid now belongs to another process), `alive`, or `unobservable`. After a crash or
@@ -88,7 +98,8 @@ Never auto-clear; when unsure, ask the other session's operator.
 ## Asking the operator
 
 When a decision is the operator's — a verdict, a waiver, `force`, `package_unlock`, a
-scope change, a lesson — START THE INTERVIEW; do not report a blocker and wait.
+scope change, a lesson — START THE INTERVIEW; do not report a blocker and wait
+(`tamheed:operator-interview` is the full procedure).
 
 1. **Do the homework first.** Never ask what the package or the repository already
    answers: the operator should be deciding, not researching.
@@ -105,7 +116,8 @@ The **Recording obligations** table in this project's `CLAUDE.md` note binds eve
 session, prompted or not: defects, deferred work, and scope changes are registered
 BEFORE moving on; verdicts carry evidence and its chain (`verified_by`,
 `verification_method`, `against_commit`); done-claimed is `Review`, verified is
-`Implemented`; `readiness_check` runs before anything is declared done. Repairing a damaged
+`Implemented`; `readiness_check` runs before anything is declared done. The HOW is the
+`tamheed:package-writes` skill; the rules it carries, in short: repairing a damaged
 field? Build the payload from a read made FOR transmission — `entity_export` to a file,
 or an `entity_query` result taken whole (no field is ever truncated: `total` tells you
 about rows, `omitted_columns` about a projection) — never from a display, an excerpt or
@@ -124,7 +136,7 @@ itself in review.html when it names one (the server's own edge-retire `correctio
 names no entry and folds nothing). The journal's server-appended kinds (`forced-override`,
 `lesson-confirmed`, `lesson-promoted`, `integrity-verified`) are REFUSED from
 `progress_update` — the server records those facts itself. Approved lessons
-with a shared theme can be distilled into a SKILL (`skill-promote.md`) that Claude Code
+with a shared theme can be distilled into a SKILL (`/tamheed:skill-promote`) that Claude Code
 loads natively — promoted lessons graduate out of the note, the skill file carries them;
 past the note's curation ceiling the `lessons-note-budget` advisory names the
 promotion candidates. Registers are read THROUGH the tools, whatever their size:
@@ -136,10 +148,11 @@ file the tool wrote under `exports/` — whole rows, digest-stamped, determinist
 immediately before generating and cite the digest, never reuse an export across
 sessions, never hand-paste rows into a script's input (the hand is the untrusted
 transport). A full-row update that only flips a status names the columns it did not
-mean to change (`expect_unchanged`) so the store refuses transport drift. **A function
-the tools lack is a `feedback` row (`FB-`) first, never a script** (v4.11): what you
-needed, what you did instead, born Proposed (`kind`: `missing-capability`, `defect`,
-`doc-error` or `question`) — the operator confirms it, then
+mean to change (`expect_unchanged`) so the store refuses transport drift — and a partial
+row still carries every NOT NULL column (a bare `{id, pinned}` on a lesson is refused on
+its title). **A function the tools lack is a `feedback` row (`FB-`) first, never a script**
+(v4.11): what you needed, what you did instead, born Proposed (`kind`:
+`missing-capability`, `defect`, `doc-error` or `question`) — the operator confirms it, then
 `entity_export("feedback.json", args={"type": "feedback"})` carries it into the
 project's findings: QUOTE the file's envelope and rows there (exports are point-in-time
 and may be untracked in your git). A script the project keeps over the package is a
@@ -165,9 +178,11 @@ only, never to make a gate pass. A remedy a tool's note or a release note names 
 always an operation the server exposes — if you cannot find it, report that as a
 finding rather than improvising.
 `package_verify()` proves the on-disk store is canonical (per-file byte-equality, foreign
-files, a citable digest; `record=true` journals it on the operator's words). Recording
-FLUSHES `data/*.jsonl` after the commit it records (`work_bind`, the closing
-`progress_update`, `export_html`, `handoff_emit`) — `git status --porcelain -uall`
+files, a citable digest; `record=true` appends the server-witnessed `integrity-verified` row —
+journal a verification when the operator wants the record). Every store write (`entity_upsert`,
+`progress_update`, `audit_record`, `work_bind`, `package_verify(record=true)`, `package_close`)
+FLUSHES `data/*.jsonl`, and `export_html` / `handoff_emit` write package files beside it —
+`work_bind` records a commit and dirties the tree AFTER it: `git status --porcelain -uall`
 before any branch operation, never a memory of having committed. The package is the
 record — when code and package disagree, fix the code or record the change; never let
 them drift.

@@ -368,7 +368,8 @@ must fire; the resulting package replaces `evals/sample-results/lab-tracker/pack
     ✔ THE PROMPTS (plan 087): `handoff_emit(refresh_stock=true)` reports `refreshed`
       exactly `prompts/orient-resume.md` and `prompts/README.md` with
       `diverged_customized` empty, and the refreshed guide teaches the `FB-` row and the
-      `local-tool` row.
+      `local-tool` row (the stock scenarios are the plugin's skills since beat 22 / v5.0.0;
+      the guide is the one stock file).
     ✔ Close the beat with ONE `progress_update` note (actor `agent:lab-beat-18`,
       `event_type: "note"`) quoting verbatim the `leaves the package only on the
       OPERATOR's word`, `content drifted on ['detail']`, `a local tool over the package
@@ -530,6 +531,51 @@ must fire; the resulting package replaces `evals/sample-results/lab-tracker/pack
       written BEFORE the export; then `export_html`; `gate_run` ready; `package_verify()`
       green (`verified: true`, `foreign: []`, `foreign_csv: []`, `review_current: true`);
       `package_close`; no `data/.lock` remains.
+22. **The v5.0.0 continuation.** The sixteen scenario prompts the package had carried since v3
+    are the plugin's slash skills now; the tool named the sixteen leftovers, refused to delete them
+    on a plain emit, and deleted them on `refresh_stock` because each was byte-equal to shipped
+    stock. The note it wrote is v5: the obligations table stays, the cheat-sheet is gone, the
+    plugin's skills are named, and the flush sentence finally says which tool flushes what. On a
+    scratch package a work item `carries` an activated deferred row and the advisory watches the
+    carrier close; the lab's own deferred-work omission still reads as a deliberate zero. The
+    note-budget step says what the field measured: an unpinned retirement removes nothing.
+    ✔ THE RETIRED LIBRARY (plan 116): opened at `schema_version: 6` (migration 006 applies at
+      connect; `package_migrate` is NOT run). A plain `handoff_emit` into a SCRATCH target with
+      no `CLAUDE.md` reports `project_prompts: ["project-kickoff.md"]`, sixteen
+      `leftover_stale_stock` entries (`{"file": "prompts/<name>.md", "matches": "<release>"}`),
+      `leftover_customized: []`, `retired: []`, and warns `16 retired stock prompt(s) remain`
+      with `re-run with refresh_stock=true to delete them safely` — and deletes nothing: all
+      18 files are still on disk. `handoff_emit(refresh_stock=true)` reports `retired` (the
+      sixteen paths), `refreshed: ["prompts/README.md"]` and warns `16 retired stock
+      prompt(s) deleted (refresh_stock)`; `prompts/` holds exactly `README.md` and the
+      untouched project-authored `project-kickoff.md`, and the guide carries
+      `## Which skill, when`. `prompt-ids-resolve` still reads `pass` over `rows: 1`.
+    ✔ THE NOTE v5 (plan 116): the scratch `CLAUDE.md` opens `<!-- tamheed:note v5 -->`,
+      names the plugin's `tamheed:package-writes` skill, says `work_bind` records a commit
+      and `dirties the tree AFTER it`, keeps `### Recording obligations`, and carries no
+      `Tool cheat-sheet` and no `tamheed:note v4`. A re-emission returns `written: []` with
+      `CLAUDE.md` `unchanged` — the note is byte-stable.
+    ✔ CARRIES (plan 113), on a SCRATCH package (`carry`, outside the repository — **no `DW-`
+      row is ever written to the fixture**): `DW-001` `Activated` with no carrier →
+      `deferred-work-carried` `fail`, `entities: ["DW-001"]` (`deferred-work-reviewed` passes:
+      Activated is work, not a judgment). The reverse edge `DW-001 carries WBS-1` is REFUSED —
+      `does not allow deferred-work -> wbs-item`; `WBS-1 carries DW-001` lands, the list
+      empties and `trace_query("DW-001", direction="in")` shows the one `carries` edge. `WBS-1`
+      set `Implemented` → `DW-001` is listed again: the finished activation is visible.
+      `G-REL` passes the edge.
+    ✔ THE ARITHMETIC (plan 112): `register-liveness`'s step 15 says retiring or rejecting an
+      UNPINNED lesson `removes NOTHING` — the fill simply refills; on the fixture
+      `lessons-note-budget` passes at 1 rendered lesson line against the ceiling of 20.
+    ✔ THE OMISSION FOR BOTH RULES (plans 107, 113): `deferred-work-reviewed` and
+      `deferred-work-carried` both `pass` over the recorded `deferred-work` omission, both
+      carrying it in `omitted` — `a deliberate zero`.
+    ✔ Close the beat with ONE `progress_update` note (actor `agent:lab-beat-22`,
+      `event_type: "note"`) quoting verbatim `16 retired stock prompt(s) deleted
+      (refresh_stock)`, `Which skill, when`, `tamheed:note v5`, `dirties the tree AFTER it`,
+      `deferred-work-carried listed DW-001`, `does not allow deferred-work -> wbs-item`,
+      `removes NOTHING`, `schema_version 6` and `a deliberate zero`; then `export_html`;
+      `gate_run` ready; `package_verify()` green (`verified: true`, `foreign: []`,
+      `foreign_csv: []`, `review_current: true`); `package_close`; no `data/.lock` remains.
 
 **Pass bar:** every ✔ observed; `gate_run` ready (or failing ONLY on deliberately-open
 items the scenario names); the eval runner's lab checks green. `readiness_check` is

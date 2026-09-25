@@ -1741,6 +1741,93 @@
             "progress_entries"
           ],
           "expect_exit": 0
+        },
+        {
+          "check": "The sixteen retired stock scenarios are gone from the fixture's prompts folder (plan 116).",
+          "cmd": [
+            "python",
+            "evals/pkg_check.py",
+            "grep-tree-absent",
+            "{case_dir}/package/prompts",
+            "Loop guard — the brake"
+          ],
+          "expect_exit": 0
+        },
+        {
+          "check": "The fixture's prompt guide is the v5 guide: it maps situations to skills (plan 116).",
+          "cmd": [
+            "python",
+            "evals/pkg_check.py",
+            "grep-file",
+            "{case_dir}/package/prompts/README.md",
+            "Which skill, when"
+          ],
+          "expect_exit": 0
+        },
+        {
+          "check": "The tool deleted the leftovers only on refresh_stock, and the note quotes the count (plan 116).",
+          "cmd": [
+            "python",
+            "evals/pkg_check.py",
+            "grep-present",
+            "{case_dir}/package",
+            "deleted (refresh_stock)",
+            "--tables",
+            "progress_entries"
+          ],
+          "expect_exit": 0
+        },
+        {
+          "check": "The note the tool wrote is v5 and its flush sentence names the mechanism (plan 116).",
+          "cmd": [
+            "python",
+            "evals/pkg_check.py",
+            "grep-present",
+            "{case_dir}/package",
+            "dirties the tree AFTER it",
+            "--tables",
+            "progress_entries"
+          ],
+          "expect_exit": 0
+        },
+        {
+          "check": "A work item carried an activated deferred row and the advisory watched the carrier close (plan 113).",
+          "cmd": [
+            "python",
+            "evals/pkg_check.py",
+            "grep-present",
+            "{case_dir}/package",
+            "deferred-work-carried listed DW-001",
+            "--tables",
+            "progress_entries"
+          ],
+          "expect_exit": 0
+        },
+        {
+          "check": "The carries relation is typed: the reverse direction was refused (plan 113).",
+          "cmd": [
+            "python",
+            "evals/pkg_check.py",
+            "grep-present",
+            "{case_dir}/package",
+            "does not allow deferred-work -> wbs-item",
+            "--tables",
+            "progress_entries"
+          ],
+          "expect_exit": 0
+        },
+        {
+          "check": "The note-budget step states the field's arithmetic, and the note quotes it (plan 112).",
+          "cmd": [
+            "python",
+            "evals/pkg_check.py",
+            "grep-present",
+            "{case_dir}/package",
+            "removes NOTHING",
+            "--tables",
+            "progress_entries"
+          ],
+          "expect_exit": 0
         }
       ],
       "rubric": [

@@ -57,7 +57,12 @@ empty slice that reads not ready and names the two rules that could not discrimi
 ready by one bound work item and one criterion with a Met verdict, the recorded omission read
 back as a deliberate zero, the pointer warning that says whether it rebuilt or wrote nothing,
 the empty unanswered fold that says it is empty, and the `expect_unchanged` that names a
-column the item does not carry refused as asserting nothing)
+column the item does not carry refused as asserting nothing; 22: the v5.0.0 mechanisms — the
+sixteen retired stock prompts named as leftovers, kept on a plain emit and deleted on
+`refresh_stock`, the guide that maps situations to skills, the byte-stable v5 note whose flush
+sentence names the mechanism, the `carries` edge typed in one direction and the advisory that
+watches the carrier close, the note-budget arithmetic quoted, and the recorded omission read as a
+deliberate zero by both deferred-work rules)
 run as incremental real-agent sessions against the recorded package — the fixture is regenerated
 by continuation, not from scratch.
 
