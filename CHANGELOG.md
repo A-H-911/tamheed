@@ -10,6 +10,25 @@ All notable changes to Tamheed are documented here. The format is based on
 
 ## [Unreleased]
 
+## [5.0.0] - 2026-09-25
+
+**MAJOR — the findings_31 batch: the instruction surface moves into plugin skills (plans 112–119;
+field report findings_31, `FB-017`, `FB-018`).** The always-loaded note and sixteen stock prompt
+files carried tamheed's execution discipline into every project and were refreshed one package at a
+time; now the plugin ships it — seven discipline skills loaded on relevance, sixteen operator-invoked
+`/tamheed:<name>` scenario skills, the front door at `skills/tamheed/SKILL.md` — updated by
+`claude plugin update` alone. The handoff contract changes (what `handoff_emit` emits, what the
+note holds, where the scenarios live), hence MAJOR; **the store stays v4-shaped** (`schema_version`
+6 after `006_carries.sql`, applied at connect — no `package_migrate` step). One operator action per
+project: `handoff_emit(<repo>, refresh_stock=true)` rebuilds the note as v5 and deletes the retired
+stock files that are byte-equal to a shipped release. An acceptance script of nine discriminating
+checks passes on this tree and fails, each for its own reason, on an extracted `v4.14.0`; the
+front door and the slash skills were measured loading through `claude --plugin-dir`; lab beat 22
+fired every mechanism against the recorded package after a dry-run on a copy and the F-6 grep.
+No new tool (19). The stock library is `README.md` alone — the sixteen scenario files are retired from
+the bundle (their bodies stay in the history for the leftover classifier) — and migration
+`006_carries.sql` ships.
+
 The findings_31 batch (plans 112-119; the master record is `plans/112-119-batch-findings-31.md`).
 **MAJOR: the handoff contract changes** — the instruction surface moves from the always-loaded note
 and sixteen stock prompt files into plugin-shipped skills. **The store stays v4-shaped**:

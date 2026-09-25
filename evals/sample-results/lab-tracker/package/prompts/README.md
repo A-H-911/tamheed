@@ -1,4 +1,4 @@
-# How to use this folder — the `package` prompt guide (tamheed v4.14.0)
+# How to use this folder — the `package` prompt guide (tamheed v5.0.0)
 
 This folder holds the **project's own prompts** for the `package` Tamheed package — plus
 this guide. Since v5.0.0 the stock scenarios are no longer files here: they are the tamheed
