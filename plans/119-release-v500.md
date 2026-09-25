@@ -18,7 +18,7 @@ The release recipe (plugin.json == newest CHANGELOG heading; the six stamp lines
 ## Done criteria
 
 - [x] tag `v5.0.0`
-- [ ] CI green on the tag commit
+- [x] CI green on the tag commit (`bbdeb4a completed success`)
 - [x] the brief printed
 
 ## Execution note (2026-09-25)
