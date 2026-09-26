@@ -10,8 +10,18 @@ ingestion in v4.0.0 — the store IS the state, and nothing reads or writes that
 
 ## Resume
 
-`resume` = `package_open(name)` + orient:
+`resume` = `package_open(name)` + orient. Since v5.1 the first read is free: `package_open` and
+`server_info` return a **`resume` block** — the latest `handoff` journal entry with its
+`correction` chain, `handoff_behind` (the work-done/transition entries written after it), the
+open feedback, the open slices, the last three journal ids, the lock holder and the next step —
+and the plugin's SessionStart hook prints the same block into the model's context on every
+session start, clear and compaction (after a compaction the package is still open, so
+`server_info` is the first call; `package_open` refuses an open package). The handoff is a
+journal entry the agent writes LAST before it stops (`tamheed:session-handoff`); the
+`handoff-current` advisory names one the journal has moved past. The block is a read of the
+store, never a state file — the doctrine above is unchanged.
 
+0. Read the handoff and its corrections; orient from the journal for the entries after it.
 1. `entity_query` the working families (requirements by status, open questions, decisions Proposed).
    Registers are read through the tool whatever their size: `limit` cuts rows (never fields),
    `total` is exact, the result's `next_after` pages the rest (`after_id`), `ids=[...]` fetches a

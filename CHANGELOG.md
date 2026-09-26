@@ -10,8 +10,51 @@ All notable changes to Tamheed are documented here. The format is based on
 
 ## [Unreleased]
 
-**The findings_32 batch (plans 120–128, in progress).** Migration `007_handoff.sql` ships: the
-`handoff` journal kind and `skills.upstreamed_to` (plan 121). The full entry is written at the release.
+**MINOR — the findings_32 batch: the resume surface, the menu contract, and the five notes (plans
+120–128; field report findings_32, `FB-019`–`FB-022`).** The v5 premise — discipline skills load on
+relevance — is broken in a crowded host: with thirty-three plugins enabled most skill descriptions
+reach the model name-only, and none of the seven fired across a full field round. Now the note and the
+tool results name the skill, the seven discipline skills leave the `/` menu, and the state a session
+stops in has a typed home. Migration `007_handoff.sql` ships (applied at connect; `schema_version` 7;
+`skills.jsonl` rewrites once on the first close because every column serialises). No new tool (19).
+
+- **The `handoff` journal kind and the resume block (plans 121, 122).** `progress_update` accepts
+  `event_type: "handoff"` — where a session stopped, written LAST. `package_open` and `server_info`
+  return a `resume` block: the latest handoff with its `correction` chain, `handoff_behind`, the open
+  feedback, the open slices, the last three journal ids, the lock holder, the next step and the skill to
+  invoke. review.html gains a Resume section after the overview.
+- **The SessionStart hook (plan 123).** `hooks/hooks.json` runs `server/resume_hook.py` on every
+  session start, resume, clear, compaction and fork and prints the resume block into context: guarded
+  (silent without a tamheed note in `CLAUDE.md` or behind one `@` import), lockless, screened by the
+  injection gate, capped at 40 lines, one line and exit 0 on any failure. Plain stdout, never JSON.
+- **Two advisories (plan 122).** `handoff-current` lists the work-done/transition entries no handoff
+  covers (indeterminate before any work is journalled); `lessons-stranded` (only when the package has
+  skill rows) lists Promoted lessons whose retired skill row has neither `superseded_by` nor the new
+  `upstreamed_to` — the field's `FB-020`. Twenty-three package-scope advisories.
+- **The menu contract and the result hints (plan 120).** The seven discipline skills carry
+  `user-invocable: false` (menu 24 → 18; model listing 8 → 9 with `session-handoff`); lint 12 enforces
+  exactly one flag per skill. `audit_record` names the evidence skill(s) by `verification_method`,
+  `readiness_check` names `operator-interview` on a blocking failure, `progress_update` names
+  `session-handoff` on a handoff. The note paragraph names all eight skills and carries the handoff
+  sentence; the obligations table and the `v5` marker are unchanged (the span rebuilds once).
+- **The skills (plan 124).** New `tamheed:session-handoff` (in the menu and model-invocable);
+  `orient-resume` reads the resume block first and uses `server_info` after a compaction; five
+  practices adopted (never manufacture a status, a rename skips quoted text, a carried premise is a
+  claim, fix the file never the pointer, ask before anything destructive — the agent cannot see a
+  permission prompt); `integrity-check` absorbs the `changed_columns` re-derivation and lessons
+  liveness (`FB-019`); `skill-promote` states the correction and retirement doctrine (`FB-020`,
+  `FB-021`). The AGENTS template keeps only `owner` in its frontmatter.
+- **handoff_emit's scans (plan 125).** A declared `stock-merged X.Y.Z` marker is verified against
+  the stock history (`stock_merged`); a project prompt over 300 lines or 24,576 bytes is named
+  (`oversized_prompts`); every file the skills table points at is scanned for stale sentences,
+  including the retired "export_html flushes" claim; the restated-content scan gains `status-claim`
+  and `id-dense`; the tool-owned note span is stripped before every scan (a latent second-emit false
+  positive on a target with the note inline), and the pointer case scans the package's `CLAUDE.md`.
+- **Docs (plans 123, 126).** `docs/install.md` corrects project-only enablement (`FB-022`:
+  `enabledPlugins` merges key by key; disable at user scope, then enable at project scope; the Claude
+  Code bug reported) and documents the hook with a `settings.json` fallback; SECURITY.md gains trust
+  boundary 5 and the hook control; `extension.md` describes scenario and discipline skills and hooks;
+  the resume flow is diagrammed in `docs/entities.md` and `docs/architecture.md`.
 
 ## [5.0.0] - 2026-09-25
 

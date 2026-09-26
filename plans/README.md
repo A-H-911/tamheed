@@ -1,4 +1,4 @@
-# Implementation plans -- the Tamheed program index (through v4.x)
+# Implementation plans -- the Tamheed program index (through v5.x)
 
 The authoritative index of every plan since the Track-B re-architecture began. One row
 per plan; the plan files are close-out records (frozen once DONE except post-acceptance
@@ -175,6 +175,24 @@ devil's-advocate review; execution order is the row order below). Status values:
 | 088 | [Docs + diagrams sweep after code lands](088-docs-and-diagrams-sweep-findings-27.md) | 085-087 | DONE — 2026-09-22 |
 | 089 | [Lab beat 18](089-lab-beat-18-findings-27.md) | 085-088 + full test (15/15 vs 0/15 on `v4.10.0`; 9 suites; selftest) | DONE `762b98b` — 9 new assertions, each failing on the pre-beat fixture; D-1 registry-sync unscripted, F-3 fixed |
 | 090 | [Release v4.11.0](090-release-v4110.md) — plan-058 recipe + the fixture follows the stamp | 089 | DONE — 2026-09-22, tag `v4.11.0` (SHA in the tag) |
+
+### Field cycle findings_32 -- plans 120-128 -> v5.1.0 (2026-09-26; maintainer-executed)
+
+Master record: [120-128-batch-findings-32.md](120-128-batch-findings-32.md) (the approved plan after a
+devil's-advocate review, 21 interview rulings; execution order 120 → 121 → 122 → 123 → 124 → 125 → 126
+→ 127 → 128). Status values: PLANNED / IN PROGRESS / DONE.
+
+| # | Plan | Depends on | Status |
+|---|---|---|---|
+| 120 | [The menu contract, the result skill hints, the note sentence](120-menu-contract-and-skill-hints.md) | — | DONE — 2026-09-26 `80d9779` |
+| 121 | [Migration 007: the `handoff` journal kind + `skills.upstreamed_to`](121-migration-007-handoff-and-upstreamed-to.md) | — | DONE — 2026-09-26 `80d9779` |
+| 122 | [The resume block, `handoff-current`, `lessons-stranded`, the Resume panel](122-resume-block-and-advisories.md) | 121 | DONE — 2026-09-26 `144074f` |
+| 123 | [The SessionStart hook](123-session-start-hook.md) | 122 | DONE — 2026-09-26 `88cb788` (loading test M1 PASS) |
+| 124 | [session-handoff, the resume step, five practices, two absorbed steps, the retirement doctrine, the AGENTS template](124-skills-and-agents-template.md) | 121 | DONE — 2026-09-26 `18d8ae8` |
+| 125 | [handoff_emit scans: marker verified, oversized prompt, skill files, two detectors, the note span stripped](125-handoff-emit-scans.md) | — | DONE — 2026-09-26 `8dfb229` |
+| 126 | [Docs + diagrams sweep for v5.1.0](126-docs-and-diagrams-sweep-findings-32.md) | 120-125 | IN PROGRESS |
+| 127 | [The version stamp, then lab beat 23 + evals](127-stamp-then-lab-beat-23.md) | 126 | PLANNED |
+| 128 | [Tag v5.1.0, this repo's local enable, the ACMP brief, close-out](128-release-v510.md) | all | PLANNED |
 
 ### Field cycle findings_31 -- plans 112-119 -> v5.0.0 (2026-09-24; reviewer-executed)
 

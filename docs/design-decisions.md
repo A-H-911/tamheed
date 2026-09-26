@@ -129,3 +129,20 @@ in [`entities.md`](entities.md) §2. The full decision record is
 [`adr/adr-0002-v4-entity-model-re-baseline.md`](adr/adr-0002-v4-entity-model-re-baseline.md). With it, the
 v1 machinery (validator, importer, schemas) was retired; v1 packages take the two-step escape route via
 tamheed 3.2.1.
+
+## 13. D-RESUME — the resume surface rides on the journal, not on a state file (2026-09-26, v5.1)
+
+The field's largest project carried "where the session stopped" in a 3,600-line kickoff prompt and
+three hand-pointed journal ids, and its discipline skills never fired because a crowded host delivers
+most skill descriptions name-only. v5.1 keeps the doctrine — the package IS the state — and gives that
+state a typed home: a caller-written `handoff` journal entry (append-only; corrected, never edited),
+returned by `package_open`/`server_info` as the `resume` block and printed by the plugin's
+`SessionStart` hook as plain text (guarded, lockless, screened, capped, never able to fail the
+session). The obligations table was NOT extended: the handoff duty is a sentence in the note and the
+`handoff-current` advisory, so the note marker stays `v5` and every project's AGENTS copy stays
+lint-identical. The discipline skills leave the `/` menu and the phase-start tool results name the
+skill to invoke — a name works for the model even when its description did not arrive. The
+alternatives rejected: a state file (the v1 mistake), an engine-managed live-state span in AGENTS.md
+(a committed copy that goes stale between emits), a PreCompact hook (it cannot inject; exit 2 blocks
+compaction), and JSON hook output (the plugin path's bug history). Record: plan
+[`120-128-batch-findings-32.md`](../plans/120-128-batch-findings-32.md).

@@ -991,6 +991,22 @@ column, never edges.
 | `phase_id` / `slice_id` | FKs | Where in the plan |
 | `occurred_at` | TEXT | When |
 
+**The resume surface (v5.1, plans 121–123).** A `handoff` entry is the typed place for "where this
+session stopped"; the engine returns the latest one with its correction chain as the `resume`
+block, the plugin's SessionStart hook prints it, and `handoff-current` names one that is behind
+the journal. The package stays the state — the block is a read of it, never a state file.
+
+```mermaid
+flowchart LR
+    S["session ends / compaction ahead"] -->|"progress_update event_type handoff - written LAST"| J[(journal)]
+    J -->|"corrects PE-N"| J
+    J -->|"_resume_block: latest handoff + corrections, handoff_behind,<br/>open feedback, open slices, lock"| R["resume block"]
+    R -->|"package_open / server_info result"| A["next session"]
+    R -->|"SessionStart hook - plain stdout, screened, capped"| A
+    J -->|"work-done / transition after the handoff"| C["handoff-current advisory - fail"]
+    C -->|"tamheed:session-handoff"| S
+```
+
 **Purpose.** The append-only execution journal, typed (decision 11, event-sourcing-lite):
 typed past-tense events with subjects and actors are queryable ("show every
 forced-override"); a wrong entry is corrected by a new `correction` entry pointing at it
@@ -1139,6 +1155,7 @@ family).
 | `target_path` | TEXT | Where the `SKILL.md` was written |
 | `lifecycle_status` | NOT NULL DEFAULT `Approved`; CHECK: `Approved` / `Superseded` / `Obsolete` | Born Approved — the interview IS the approval |
 | `superseded_by` | FK → `skills(id)` | A re-distillation is a NEW row, never an edit |
+| `upstreamed_to` | TEXT (v5.1, `007_handoff.sql`) | The plugin skill that absorbed a retired project skill (`tamheed:package-writes`) — `superseded_by` can only name another `SKL-` row, and a plugin skill has none. With either pointer set, the Promoted lessons that still point at the retired row (`promoted_to` is immutable) stay reachable; the `lessons-stranded` advisory names the rest |
 
 **Purpose.** Procedural memory, distilled from lessons. The package carries a
 three-generation memory: the episodic `PE-` journal (what happened), the declarative `LL-`

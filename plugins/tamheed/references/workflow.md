@@ -207,6 +207,11 @@ human-intervention point.
   guard refuses it otherwise; loops never carry the flag). Approved lessons the operator wants as a
   durable procedure are promoted to a `skill` (`SKL-` + a written `SKILL.md`) via the `skill-promote`
   interview — promoted lessons graduate out of the note.
+  Before a compaction, at session end or on a handover the agent writes a `handoff` entry LAST
+  (v5.1: `event_type: "handoff"` — resume point, in-flight ids, what awaits the operator, verified
+  facts with their instrument, what not to carry); the latest one is the `resume` block the next
+  session gets from `package_open`/`server_info` and the SessionStart hook, and `handoff-current`
+  names one the journal has moved past. A stale handoff is corrected (`corrects`), never edited.
   Close boundaries run `readiness_check(scope)` (plan 027): blocking rules guard the phase/slice
   `Implemented` transition — `"force": true` only on the operator's explicit words, and the server
   writes the FORCED audit row itself.

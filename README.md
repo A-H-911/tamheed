@@ -222,8 +222,11 @@ recording-obligations table** — defect found → `DEF-` row *before* the fix; 
 `DW-` row with a trigger; any deviation → `SC-` row *first*; progress/audit/bind per unit;
 `readiness_check` before declaring anything done. Since v5 the HOW lives in the plugin's skills the
 note names (`tamheed:package-writes` before any write, `tamheed:reading-the-record` before citing a
-row, `tamheed:operator-interview` at every STOP; the scenarios are the operator-invoked
-`/tamheed:<name>` slash skills) and the note carries no cheat-sheet. The one stock file in
+row, `tamheed:operator-interview` at every STOP, and since v5.1 `tamheed:session-handoff` before a
+compaction — eight discipline skills, out of the `/` menu, named by the tool results as well as the
+note; the scenarios are the operator-invoked `/tamheed:<name>` slash skills) and the note carries no
+cheat-sheet. The plugin's SessionStart hook prints the package's resume block — the latest handoff —
+into every new session, clear and compaction. The one stock file in
 `<package>/prompts/` is the operator guide (`README.md`), managed as before (`written`/`unchanged`/
 `diverged`; a hand-customised file is never overwritten without `force`); a retired 4.x scenario file
 left on disk is named and, when byte-equal to a shipped release, deleted by `refresh_stock=true`. Emission is screened
@@ -239,7 +242,10 @@ an operator-approved **`WVR-` waiver** (reported as `waived`, never silent, expi
 whole-transition override stays an explicit operator-confirmed `"force": true`, which the server
 itself records as a typed `forced-override` progress event. Audit verdicts carry their **evidence
 chain** (`verified_by`, `verification_method`, `against_commit`); the progress journal is **typed
-events** corrected by compensating entries, never edited; genuine ambiguity is recorded in place as
+events** corrected by compensating entries, never edited — since v5.1 a `handoff` entry says where a
+session stopped, and the latest one comes back as the **resume block** of `package_open` /
+`server_info` and through the plugin's SessionStart hook after every clear or compaction, with the
+`handoff-current` advisory naming a handoff the journal has moved past; genuine ambiguity is recorded in place as
 `[NEEDS-CLARIFICATION: OQ-NNN]` markers that G-COMPLETE validates against live open questions. Typed
 relations are validated at write time too: a semantically wrong edge (say `TEST —mitigates→ FR`) is
 rejected with both endpoint types named, stored violations FAIL the blocking **G-REL** gate, and

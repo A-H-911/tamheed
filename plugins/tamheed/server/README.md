@@ -8,6 +8,14 @@ NOT NULL provenance), queries return rows instead of whole documents, and a cons
 violation surfaced by a tool *is* the quality-gate report. This server is the successor of
 `validate_package.py` — the mechanical half of the capability the skill owns.
 
+**The plugin also ships one hook (v5.1, plan 123).** `hooks/hooks.json` runs
+`server/resume_hook.py` on every `SessionStart` (startup, resume, clear, compact, fork): a stdlib
+script with no inline metadata (`uv run --no-project`, ~0.1 s) that finds the tamheed note in the
+project's `CLAUDE.md` (or behind one `@` import), loads the package locklessly (`store.load`) and
+prints the **resume block** — the same `_resume_block` `package_open`/`server_info` return — as
+plain text, screened by the injection gate, capped at 40 lines, one line and exit 0 on any failure.
+It writes nothing and takes no lock.
+
 ## Install & launch
 
 **Python floor: 3.10** (the `mcp` SDK's `requires-python = ">=3.10"`, verified 2026-07-17

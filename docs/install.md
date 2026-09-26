@@ -120,7 +120,10 @@ that is not the one in service.
    "nothing to migrate", which is the happy path. A MAJOR release says so in the CHANGELOG; when it
    changes the store's shape, `package_open` refuses until the staged migration runs — **5.0.0 does
    not**: it changes the handoff contract, the store stays v4-shaped (`schema_version` reads 6 after
-   migration `006_carries.sql`, applied at connect with no operator step).
+   migration `006_carries.sql`, applied at connect with no operator step). **5.1.0 does not either**:
+   `007_handoff.sql` (the `handoff` journal kind, `skills.upstreamed_to`) applies at connect,
+   `schema_version` reads 7, and `skills.jsonl` rewrites once on the first close — every column
+   serialises, so each row gains `"upstreamed_to": null`; commit it with the rest.
    **If the holder is already gone** (the usual state after an upgrade: reloading ends the
    session that held the lock) there is nothing to `package_close()`. The refusal itself says
    what the store observed about the holder; `package_unlock(name)` reports it on demand, and

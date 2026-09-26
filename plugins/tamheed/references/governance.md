@@ -117,7 +117,13 @@ approval (v4.11) — the journal covers the lesson lifecycle in both directions.
 **Promoted** (v4.4) =
 distilled into a skill: Approved → Promoted only, `promoted_to` names the `SKL-` row
 (frozen once Promoted), and the lesson leaves the CLAUDE.md note render (full graduation
-— the skill file carries the content forward).
+— the skill file carries the content forward). A Promoted lesson whose skill row is later
+retired (Superseded or Obsolete) stays reachable only through a pointer on that row —
+`superseded_by` (a successor `SKL-`) or `upstreamed_to` (v5.1: the plugin skill that absorbed
+it, e.g. `tamheed:package-writes`); the `lessons-stranded` advisory names the Promoted lessons
+behind a retired row that carries neither. A wrong sentence in a distilled skill FILE is the
+operator's hand-edit plus a `correction` journal entry naming the row, never a re-distillation
+(that is for a change in the lesson SET) and never a note on the pointer.
 
 **Skill statuses** (v4.4) are exactly: Approved, Superseded, Obsolete — born Approved out
 of the operator's promotion interview (the interview IS the approval; a domain lifecycle).

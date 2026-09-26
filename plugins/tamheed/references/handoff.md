@@ -141,6 +141,23 @@ still retracts itself when a later emit's scan is clean. Re-running `handoff_emi
 everything `unchanged`, no warnings, no `restated_content` findings = the cutover is done and
 undrifted.
 
+**What v5.1 added to the emission (plans 120–125).** The note paragraph names all eight
+discipline skills and carries one sentence about the handoff: before a compaction, at session end
+or on a handover the agent writes a `handoff` journal entry LAST (`tamheed:session-handoff`); the
+latest one comes back as the `resume` block of `package_open`/`server_info` and through the
+plugin's SessionStart hook, and `handoff-current` names one the journal has moved past. The
+obligations table is unchanged (the marker stays `v5`; the span rebuilds once because its text
+changed). Four scans joined the emission, all report-only: a declared `<!-- tamheed:stock-merged
+X.Y.Z -->` marker is **verified** against the stock history (`stock_merged`: the release must
+exist and every line it added must be present; a leftover customised copy gets the same check); a
+project prompt over 300 lines or 24,576 bytes is named as carrying state (`oversized_prompts`);
+every file the skills table points at is scanned for stale sentences (`stale_references`,
+`file: "skill:<name> (<path>)"`), including the retired "export_html flushes" claim; and the
+restated-content scan gained two detectors — a lifecycle word beside an id or an id range
+(`status-claim`) and a paragraph naming six or more ids of one family (`id-dense`). The tool-owned
+spans are stripped before every scan, and in the pointer-import case the package's own `CLAUDE.md`
+is scanned too.
+
 **Package writes are working-tree changes (C31).** The canonical `data/` lives inside the
 project's git working tree, so uncommitted package writes are destroyed by
 `git reset --hard`, `git checkout`, and `git stash` exactly like uncommitted source —

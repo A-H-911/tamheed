@@ -83,7 +83,9 @@ procedural: an operator interview distills Approved lessons into a **skill** (`S
 The journal itself distinguishes what a caller reports from what the server witnessed: the four
 server-appended kinds (`forced-override`, `lesson-confirmed`, `lesson-promoted`, `integrity-verified`)
 are refused from `progress_update` (v4.5), so a narrated "confirmed" or "verified" can never be
-journaled by hand. And the store's byte-stability guarantee — an idle open→close is a zero-diff — is
+journaled by hand. The caller-written `handoff` kind (v5.1) is the journal's newest use: where a
+session stopped, returned as the `resume` block and printed by the SessionStart hook (§4 below), with
+the `handoff-current` advisory naming a handoff the journal has moved past. And the store's byte-stability guarantee — an idle open→close is a zero-diff — is
 exercised on demand by **`package_verify`**: the canonical round-trip reported per file, foreign files
 in `data/` named, an unloadable store reported as a finding, memory compared to disk when the package
 is open, and a sha256 digest of the canonical files that `record=true` journals as a citable fact
@@ -196,13 +198,54 @@ always-loaded note stays small because everything that is HOW rather than WHAT m
 flowchart LR
     EMIT[handoff_emit] -->|rebuilds every emit| NOTE["CLAUDE.md note - tamheed:note v5<br/>AMBIENT: package pointer, the obligations table, Approved lessons, the skills line"]
     EMIT -->|refreshes the guide, retires stale leftovers| GUIDE["package/prompts/<br/>README.md (the one stock file) + project-authored prompts"]
-    UPD[claude plugin update] -->|ships| DISC["7 discipline skills<br/>ON RELEVANCE: package-writes, reading-the-record, operator-interview, written-claims, test-evidence, measurement-evidence, ci-evidence"]
+    UPD[claude plugin update] -->|ships| DISC["8 discipline skills (v5.1)<br/>MODEL-INVOKED, out of the / menu: package-writes, reading-the-record, operator-interview, written-claims, test-evidence, measurement-evidence, ci-evidence, session-handoff (both routes)"]
     UPD -->|ships| SCEN["16 scenario skills<br/>OPERATOR-INVOKED /tamheed:name - description out of context"]
+    UPD -->|ships| HOOK["hooks/hooks.json (v5.1)<br/>SessionStart: resume_hook.py prints the resume block - plain text, screened, capped"]
     PROMO["/tamheed:skill-promote"] -->|writes on the operator's word| PROJ[".claude/skills/name<br/>PROJECT: promoted lessons, operator-owned, SKL- rows"]
     NOTE -.->|names| DISC
     NOTE -.->|names| SCEN
     NOTE -.->|the skills line| PROJ
+    RES["tool results (v5.1)<br/>audit_record, readiness_check, progress_update, package_open/server_info"] -.->|"skill: tamheed:name"| DISC
 ```
+
+In a crowded host most skill descriptions reach the model **name-only** (the field measured 389 of
+490 with thirty-three plugins enabled), so "load on relevance" cannot carry the discipline alone:
+since v5.1 the note names all eight skills and the phase-start tool results name the one to invoke
+(`audit_record` → the evidence skill(s) by `verification_method`; `readiness_check` with a blocking
+failure → `operator-interview`; `progress_update` of a handoff → `session-handoff`; the resume block
+→ `package-writes`). A name works for the model even when its description did not arrive.
+
+### The resume surface (v5.1)
+
+After `/clear` or a compaction nothing used to reach the agent for free — the note is byte-stable
+by design, and the MCP process with its lock survives a compaction (so `package_open` refuses; the
+first call is `server_info`). Now the state a session stops in has a typed home in the journal, and
+three surfaces return the same read of it:
+
+```mermaid
+sequenceDiagram
+    participant A1 as session N (agent)
+    participant S as tamheed MCP server
+    participant P as package (journal)
+    participant H as SessionStart hook
+    participant A2 as session N+1 (agent)
+    A1->>S: progress_update(event_type="handoff") - written LAST
+    S->>P: PE- appended (corrected later via corrects, never edited)
+    Note over A2: /clear, a compaction, a new session
+    H->>P: store.load (lockless, read-only)
+    H-->>A2: the resume block - plain stdout, G-INJECT screened, 40 lines max
+    A2->>S: server_info (or package_open on a fresh session)
+    S->>P: _resume_block: latest handoff + corrections, handoff_behind,<br/>open feedback, open slices, lock holder
+    S-->>A2: resume: {...}, skill: tamheed:package-writes
+    A2->>S: readiness_check("package")
+    S-->>A2: handoff-current: the work entries no handoff covers
+```
+
+The hook is guarded (silent without a tamheed note in `CLAUDE.md` or behind one `@` import),
+lockless, screened, capped, and can never fail the session (one line, exit 0); its output is plain
+text because the plugin JSON-output path has a bug history. The review surface renders the same block
+as its Resume section. What v5.1 did NOT do: extend the obligations table (the handoff duty is a note
+sentence plus the advisory, so the marker stays `v5`), add a tool (19), or add a state file.
 
 **Self-containment is a hard requirement, not a preference.** Claude Code copies the plugin directory to a
 cache on install, so anything the skill reads or invokes at runtime must live inside `plugins/tamheed/` with
