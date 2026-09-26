@@ -31,7 +31,8 @@ for p in (HERE, HERE.parent / "db"):
 
 MAX_LINES = 40            # the whole block
 ENTRY_LINES = 25          # of the handoff entry itself
-ENTRY_CHARS = 2000
+ENTRY_CHARS = 4000        # plan 132 (v5.2): = the resume block's own cap; a 12-line field
+                          # handoff was already 1,735 chars under the 2,000 of 5.1
 TITLE_CHARS = 60
 
 _NOTE_RE = re.compile(r"<!--\s*tamheed:note v(\d+)\s*-->(.*?)<!--\s*/tamheed:note\s*-->", re.S)

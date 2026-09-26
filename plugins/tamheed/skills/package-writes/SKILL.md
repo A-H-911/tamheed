@@ -99,6 +99,8 @@ id resolves, and the damage stays until someone reads it.
 - After a squash-merge, a `git pull` that will not fast-forward is the tell: verify the package tree is
   identical at both shas and drop the local commits — never a merge commit.
 - *Why:* a squash-merge carries every unpushed commit below the branch point into the pull request.
+- A branch or an open pull request that the handoff does not explain is a stop: ask the operator. It
+  is a state nothing in the record describes.
 
 ## 6. Write a sha into a row only once the commit is on the remote
 
@@ -117,6 +119,10 @@ id resolves, and the damage stays until someone reads it.
 - When a batch is uncertain, under-claim: write what is verifiable, add rows afterwards.
 - *Why:* no gate reads a commit message against the store, and a commit message reads as a receipt.
   Memory of an intention is indistinguishable from memory of an action.
+- A shell chain fails CLOSED for the command that breaks and OPEN for a later command that reads a
+  file the chain should have written: a commit took a stale message file from another session, with
+  correct files and no error anywhere. Write the message to a unique path, remove it afterwards, and
+  read the commit's subject back.
 
 ## 8. Set a scope change to `Merged` last
 
@@ -164,6 +170,26 @@ id resolves, and the damage stays until someone reads it.
   old id in prose, a prompt file that repeats it. Sweep with `search=` across every family for the
   OLD text after the rename, and read each hit (`tamheed:reading-the-record` step 3: two keys, not
   one); `prose-ids-resolve` and `prompt-ids-resolve` catch a dangling id, never a stale sentence.
+
+## 12. Coupled rows move in one batch
+
+Nothing in the store compares these pairs; every one was found by a sweep, not by a rule.
+
+- **Closing the last child readies nothing by itself.** The parent item and the slice have their own
+  rules — re-run `readiness_check` on the slice — and the slice's `Implemented` is the operator's
+  verdict; `Review` is the done-claim.
+- **A requirement's status and its deferred-work row's are uncoupled columns.** A requirement
+  labelled out of scope beside an Activated row for the same work is invisible to every rule. When you
+  move one, check the other in the same breath; measure the deferred set, never assume it only grows.
+- **The item and its deferred-work row move together.** A deferred-work row never closes itself when
+  its item ships; close it in the done-claim batch — the omission recurred four times in one project.
+- **A done-claimed item names the acceptance criteria it satisfies**, or records, citing the ruling,
+  why it has none. Nothing enforces the amendment, and an item without it is permanently
+  unreviewable.
+- **A placeholder row says so.** A test row created to satisfy a trace gate says in its own text that
+  it is planned and not written; it must never read as evidence that a test exists.
+- **Run the gate; never carry its count.** A pass count or a version floor written into a rule
+  survives every upgrade that falsifies it.
 
 ---
 

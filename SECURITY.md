@@ -30,10 +30,11 @@ report a problem.
   nothing unless the project's `CLAUDE.md` (or ONE `@`-imported file) carries the tamheed note; it
   reads the store through the lockless loader and never takes the writer lock or writes a byte; the
   handoff text is withheld when the `G-INJECT` screen (`_INJECT_RE`) finds instruction-shaped text;
-  the block is at most 40 lines and the entry at most 25 lines / 2,000 characters; any failure is one
-  line and exit 0. Its output is plain text (never JSON hook output). Opt-out: `disableAllHooks` in
-  the project's settings, or disable the plugin for that project (`enabledPlugins`); Claude Code has
-  no per-hook switch.
+  the block is at most 40 lines and the entry at most 25 lines / 4,000 characters (v5.2: the resume
+  block's own cap; 5.1 printed 2,000); any failure is one line and exit 0. Its output is plain text
+  (never JSON hook output). Opt-out: disable the plugin for that project (`enabledPlugins`) — the
+  only per-plugin switch; `disableAllHooks` disables every hook of every tool in that project, and
+  Claude Code has no per-hook switch.
 
 - **Untrusted-content handling** — operating principle 10 in `plugins/tamheed/skills/tamheed/SKILL.md`, safeguard 18 in
   `plugins/tamheed/references/safeguards.md`, and the handoff screening step in

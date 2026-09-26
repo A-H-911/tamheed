@@ -49,6 +49,12 @@ The operator should be deciding, not researching. Never ask a question whose ans
 repository or the package.
 - *Why:* an interview that hands back unresearched options looks like consultation while transferring
   the work.
+- **An absent reason is not a reason.** A decline recorded without one reads like a signal because a
+  decline usually carries one — and that is exactly what makes it worth one question, never an
+  inference. Asked once, a twice-declined item was promoted, and every inference the record offered
+  (a concern unstated, work still owed) would have been wrong about finished code.
+- **Put verdicts per item.** A batch verdict carries an item through on its neighbours' strength; a
+  per-item slate withheld one of eight on a criterion the batch would have passed — twice.
 
 **3. Ask clearly and simply, with examples.**
 One decision per question, plain language, and a concrete picture of what each option means in
@@ -97,6 +103,10 @@ next session asks again. Honour a ceremony's STOPs in the record as well as in y
 - *Field evidence:* after the operator declined a promotion ceremony, their two answers were journaled
   "so the interview is not re-run from scratch"; the operator rejected the entry — *always you must
   interview me* — and a correction followed.
+- **Asking again is about consent for a NEW action; it is not a licence to re-open a settled ruling.**
+  Re-put a ruling only when its premise has moved, and name the moved premise when you do; re-asking
+  one whose premise stands is re-litigating. A route ruled once was re-asked when its premise changed
+  and held — that was legitimate; asking a third time with nothing changed would not have been.
 
 ---
 

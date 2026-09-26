@@ -71,8 +71,11 @@ start, resume, clear, compaction and fork it runs `server/resume_hook.py` (stdli
 — the latest `handoff` journal entry with its corrections, how many work entries followed it, the
 open feedback and slices, the lock holder and the next step — into the model's context. It prints
 nothing in a project whose `CLAUDE.md` (or one `@`-imported file) carries no tamheed note, withholds an
-instruction-shaped handoff, caps itself at 40 lines, and on any failure prints one line and exits 0.
-Opt-out: `disableAllHooks` in the project's settings, or disable the plugin for that project. If your
+instruction-shaped handoff, caps itself at 40 lines (up to 25 lines / 4,000 characters of the entry
+itself — the resume block's own cap, since v5.2), and on any failure prints one line and exits 0.
+Opt-out: disable the plugin for that project (`enabledPlugins`, the FB-022 recipe above) — that is
+the only per-plugin switch; `disableAllHooks` in the project's settings disables EVERY hook of every
+tool you run there, not just this one. If your
 Claude Code build drops plugin `SessionStart` output (a bug reported against early-2026 builds;
 measured working on 2.1.283), the same command works as a user or project hook in `settings.json`:
 

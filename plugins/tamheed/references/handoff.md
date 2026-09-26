@@ -128,8 +128,9 @@ the single source.
 The CLAUDE.md operating note is a **tool-owned marker span** (`<!-- tamheed:note v5 -->…<!--
 /tamheed:note -->`, plan 029): rebuilt on EVERY emit — always current, no force involved. A hand
 edit inside the markers is overwritten (with a warning); operator content belongs OUTSIDE the
-markers — the AGENTS.md template (`templates/agent-control.template.md`) carries the same
-obligations table for project customization. Note classification is **marker-based, never
+markers — the AGENTS.md template (`templates/agent-control.template.md`) points at the note's
+obligations table since v5.2 (plan 132; its own copy drifted in the field and was the restated
+shape the scan reports — one copy, no drift). Note classification is **marker-based, never
 heading-only** (findings_19 §1): a heading accompanied by an `@<package>/CLAUDE.md` import line is
 the recognized **pointer pattern** — the note is delivered via the import, so the managed span
 lives (and is rebuilt) in the PACKAGE's own CLAUDE.md while the root file is left untouched. Only a

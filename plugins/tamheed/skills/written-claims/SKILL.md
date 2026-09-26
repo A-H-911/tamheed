@@ -2,10 +2,11 @@
 name: written-claims
 user-invocable: false
 description: >-
-  Use before writing or merging prose that states a mechanism, a count, a sequence, a scope or a
-  done-claim — a progress entry, a WBS done-clause, an audit verdict's evidence, a findings file, a
-  memory line, a code comment, an inventory ("every remaining consumer") — and whenever you retract or
-  correct a claim you or someone else made.
+  Use before writing or merging prose that states a mechanism, a count, a sequence, a scope, a
+  status or a done-claim — a progress entry, a WBS done-clause, an audit verdict's evidence, a
+  findings file, a memory line, a kickoff prompt or any other file a session reads before acting, a
+  code comment, an inventory ("every remaining consumer") — and whenever you retract or correct a
+  claim you or someone else made, or record a ruling that changes what earlier prose assumed.
 ---
 
 # Written claims
@@ -26,7 +27,9 @@ skill covers what you WRITE, and keeping it true afterwards.
 When you reuse a sentence's shape, re-derive every claim in it. Do not just refresh the figure. A
 fresh number makes the stale words beside it look checked. And when a document carries an ordered
 sequence (numbered findings, versioned entries), check the sequence itself for gaps and collisions —
-no id sweep looks at an ordinal.
+no id sweep looks at an ordinal. Re-derive attributions too: a claim credited to the wrong record
+sends a reader to a place where nothing is amiss, which is worse than a wrong count — a count merely
+disagrees with the list beneath it.
 - *Field evidence:* "nine families" was carried out of an older sentence beside a freshly measured
   count; measured, it was fifteen — inside the sentence claiming the check ran clean.
 
@@ -50,6 +53,15 @@ derived row asserts what the source says cannot be asserted, the derived row is 
 this pattern" — so a reader can see what it could never find. When a value changes where it comes
 from, also find what reads it to JUDGE, REPORT or ASSERT: validators, health checks, startup checks,
 diagnostic logs, test fixtures. Search the type name and the section name, not the property accesses.
+- **When you build what the record said did not exist, sweep for the old claim by the thing's NAME,
+  at build time.** Sentences describing the old world carry no id of the row that changes them. At
+  scoping, read every acceptance criterion bound to the requirement and treat an exclusion or
+  *because* clause naming the thing as a supersession owed in that same scope change. Before the
+  change merges, grep the SOURCE tree — not only the package — for the name and for absence shapes
+  (*no surface*, *never*, *not yet*, *does not exist*), and fix what the change made false in the
+  same change.
+- *Field evidence:* a picker shipped while a source file still said no surface offered one, and the
+  criterion bound to it still gave the old reason.
 
 **5. When you retract a claim, grep the shipped diff for the retracted words.**
 Take the literal phrase, not the idea. Search the open change and the files it touches: comments,
@@ -60,6 +72,13 @@ read the corrected text for any claim about how it was proved; a false mechanism
 false calibration story.
 - *Field evidence:* a progress entry retracted a claim in the register and the pull request body, but
   the merged test still stated it.
+- **A ruling falsifies prose that REASONS from the old state without naming it.** When a row is
+  closed, re-decided or moved, grep its id AND the advisory and register names built on it, and read
+  what each hit CONCLUDES rather than what it asserts — nine sentences went false when one defect
+  closed, and none of them named its status. Ship the fix in the ruling's own commit: the window
+  between a ruling and its write-up is where the falsified sentence gets committed, and it is widest
+  when the work is going well. Every artefact a decision touches moves in the same batch; the one
+  you skip is the one the next session reads.
 
 **6. A correction is a new entry, never an edit.**
 The journal is append-only: `progress_update` with `event_type: correction` and `corrects: <PE-id>`
@@ -76,6 +95,32 @@ recorded by a `correction` journal entry naming the skill row), not a note in th
 wrong.
 - *Field evidence:* an index line carried *"SUPERSEDED by a later decision"* for weeks while the
   file it pointed at kept the superseded rule; readers of the file never saw the index.
+
+**8. A live surface carries the command, not the answer.**
+In a file a session reads before acting — a kickoff prompt, an operating note, a memory index — a
+lifecycle status, a negative (*has not started*), a count with a disclaimer beside it, an ordinal
+(*the fourth time*), a list of a moving queue, or a table rebuilt from the store is a status with no
+timestamp: true when written, false on the next write, and read as current. Delete the answer and
+keep the command that measures it; name the list instead of counting it; re-derive a table when it
+is needed, never restore it; describe nothing an operator edits between sessions. A commit message is
+a dated record and may say what was decided; the same sentence in a live file is stale — what makes
+prose stale is not the sentence but whether the artefact claims to describe NOW.
+- A judgement that a requirement is satisfied belongs in a verdict row, never in a code comment
+  where no register view can see it.
+- Cite an id, a commit or a digest, never a regenerated file's path: a reused path is a pointer that
+  silently re-aims at new content.
+- *Field evidence:* a kickoff prompt grew to 3,600 lines of carried counts, statuses and "your
+  verdict" tails, and one hundred and twenty-seven of its sentences read as restated register
+  content; the rules survived the diet, the answers did not.
+
+**9. Read the predicate a scope claim describes, and list its members.**
+When you fix an instance and write down why, the last step is to read the guard, glob or
+registration that decides the scope — the `or`s, what resolves, what a glob anchors on — then fix
+every member, or name in the comment the members you did not fix and why. A true but narrow comment
+is confirmed by every check anyone runs. Widening the comment is not the same as fixing the class;
+do not record it as if it were.
+- *Field evidence:* a comment warned about one kind of write while the predicate below it covered a
+  second, and two of those writes were silently lost.
 
 ---
 

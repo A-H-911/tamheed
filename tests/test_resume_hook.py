@@ -139,6 +139,26 @@ class ResumeHookTest(unittest.TestCase):
         self.assertNotIn("  line 199", out)
         self.assertIn(f'entity_query("progress-entry", ids=["{h}"]) for the rest', out)
 
+    def test_entry_char_cap_follows_the_resume_block(self):
+        """Plan 132 (v5.2, findings_33 R11): the hook prints up to 4,000 characters of the
+        entry — the resume block's own cap — so a real handoff (the field's was 1,735 chars in
+        12 lines) prints whole; past the cap the block arrives already cut with `truncated`,
+        and that is the branch that prints the marker."""
+        self._package()
+        whole = "\n".join(f"line {i}: " + "x" * 280 for i in range(10))   # ~2,900 chars
+        self._journal([{"entry": whole, "event_type": "handoff", "actor": "agent:x"}])
+        out, _ = run_hook(self.project)
+        self.assertIn("  line 9: " + "x" * 280, out)
+        self.assertNotIn("for the rest", out)
+        self.assertEqual(hook.ENTRY_CHARS, srv._RESUME_ENTRY_CAP)
+        over = "\n".join(f"line {i}: " + "y" * 280 for i in range(16))    # ~4,600 chars
+        (h2,) = self._journal([{"entry": over, "event_type": "handoff", "actor": "agent:x"}])
+        out, _ = run_hook(self.project)
+        self.assertIn("  line 0: " + "y" * 280, out)
+        self.assertNotIn("line 15: " + "y" * 280, out)
+        self.assertIn(f'entity_query("progress-entry", ids=["{h2}"]) for the rest', out)
+        self.assertIn(f"Handoff {h2} (", out)     # the latest one; {h} is history in "Latest journal"
+
     def test_failure_posture_is_one_line_exit_zero(self):
         self._package()
         (self.project / "pkg" / "data" / "packages.jsonl").write_text("{not json\n", encoding="utf-8")

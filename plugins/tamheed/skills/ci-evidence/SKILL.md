@@ -30,6 +30,11 @@ the PR-head run and can read all-green while the branch is red.
   disagree. A run id cannot be attributed to the wrong tree; a colour can.
 - *Field evidence:* a verdict called the merged tree green while the merge commit's own run concluded
   failure with the backend red.
+- **"Green" is a claim about EVERY workflow on that sha.** Read each one's conclusion, not the one
+  you happened to read first — and `cancelled` is a third conclusion, neither pass nor fail, that a
+  filter on failures steps straight over: a gating secret scan hit its own timeout and was cancelled
+  while the build workflow on the same commit said success, so the trunk read green with its gate
+  never evaluated.
 
 **2. Decide which event you are reasoning about before predicting whether anything runs.**
 On a direct push, a path filter is checked against that push, so a package-only commit may run
@@ -56,6 +61,12 @@ belongs to code, tests AND build configuration.
 - *Why:* a gate you forgot leaves no trace in a list you wrote yourself.
 - *Field evidence:* twenty-nine commits carried a gates line without coverage; run at last, coverage
   failed on eight files, while a debug build had flagged a file that a release build cleared.
+- **A job that stopped at an early step cannot vouch for the steps it never reached** — list them
+  as not run. And a checkout changes the source, not the installed environment: reinstall before you
+  believe a local build, and say which tree you built against. A "main is broken too" verdict was
+  reached with the other branch's dependencies still on disk.
+- **Verify candidate changes one at a time against the current trunk**, so every failure has a single
+  cause; a batch merge shows a later red as an unrelated-looking flake and a regression with no cause.
 
 **5. Bound and prove any poll loop before backgrounding it.**
 Run the predicate once in the foreground and read the value it produces. Bound every loop by an
@@ -63,6 +74,21 @@ iteration count and print the raw predicate value at exit. Treat a poller that h
 suspect, not as "still running".
 - *Why:* an unbounded loop turns an evaluation failure into a silent hang. Three background pollers
   once held an error string, never the zero they waited for, and would have run forever.
+
+**6. Attribute a red by its signature.**
+Before naming a known intermittent defect as the cause, match the red on its exception type, its
+frames and the suite it hit — never on whichever defect is nearest to hand. Two families that share a
+colour differ in every one of those: one was a single suite's scattered client timeouts with every
+other suite green and fast; the other was an integration container crash with its own frames. A
+register keyed on signature settled two attributions in seconds that would otherwise have been argued.
+
+**7. Recording a red.**
+- A recurrence of a CLOSED defect is a NEW row, filed on its own evidence — never an append to the
+  closed row, and never a citation of its closure as precedent.
+- A red that matches an OPEN intermittent row gets its occurrence appended there; the row's
+  occurrence list is the count, not a prose ordinal. It is never re-run into silence.
+- Two runs of identical code that disagree with each other are a defect, not "flaky". One more green
+  makes nothing flaky, and a diagnosis licences no claim that any remedy greens the trunk.
 
 ## Recording it in the package
 

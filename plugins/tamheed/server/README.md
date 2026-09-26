@@ -13,7 +13,8 @@ violation surfaced by a tool *is* the quality-gate report. This server is the su
 script with no inline metadata (`uv run --no-project`, ~0.1 s) that finds the tamheed note in the
 project's `CLAUDE.md` (or behind one `@` import), loads the package locklessly (`store.load`) and
 prints the **resume block** — the same `_resume_block` `package_open`/`server_info` return — as
-plain text, screened by the injection gate, capped at 40 lines, one line and exit 0 on any failure.
+plain text, screened by the injection gate, capped at 40 lines (the entry itself at 25 lines /
+4,000 characters, the block's own cap — v5.2), one line and exit 0 on any failure.
 It writes nothing and takes no lock.
 
 ## Install & launch

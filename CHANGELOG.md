@@ -37,9 +37,32 @@ All notable changes to Tamheed are documented here. The format is based on
   (result key `skill_audit`) — never on the row's insert, never on an idle re-send; an omitted
   `lifecycle_status` reads as unchanged. It counts toward `handoff-current` like every transition.
 
+- **The discipline skills absorb the field's rules** (plan 132; the field's FB-025 and the
+  forty-four generic gaps read out of a project's 113 carried rules, each verified at the file):
+  `measurement-evidence` gains step 6 "Cause, control and classification" (eight rules: a positive
+  control proves firing, not coupling; what you changed to observe it; one calibration per check;
+  reproduction confirms, intervention explains; a root-path tool names a path; classify from source;
+  a layer no test reaches; two instruments disagreeing) and the singular-over-plural subject;
+  `written-claims` gains step 8 "A live surface carries the command, not the answer", step 9 "Read
+  the predicate a scope claim describes", the build-time sweep by name, the ruling sweep, and
+  attribution; `reading-the-record` gains the constraint-first shortlist, the bundled-property
+  remedy, and "what binds is the note's roster"; `ci-evidence` gains every-workflow/`cancelled`,
+  "Attribute a red by its signature", "Recording a red", the early-stopped job and one-at-a-time
+  verification; `operator-interview` gains the absent reason, per-item verdicts and the
+  moved-premise rule; `test-evidence` gains the local race fix and coverage-versus-calls;
+  `package-writes` gains §12 "Coupled rows move in one batch", the unexplained branch and the
+  shell chain that fails open.
+- **The hook prints up to 4,000 characters of the handoff** (plan 132; = the resume block's own
+  cap; 5.1 printed 2,000 — a 12-line field handoff was already 1,735). `session-handoff` says so
+  ("under 25 lines and 4,000 characters") and teaches the close-out order: status moves, the
+  handoff, the commit, the bind.
+
 ### Changed
 - **`lessons-stranded` measures the Promoted lessons** (plan 131): its `population` is
   `{table: lessons, unit: "promoted lessons"}`, not the whole table the join reads.
+- **The AGENTS template points at the note's obligations table** (plan 132): its own copy is gone —
+  one copy, no drift; the handoff sentence stays. Nothing to do in a project whose AGENTS.md
+  already has no table.
 
 ## [5.1.0] - 2026-09-26
 

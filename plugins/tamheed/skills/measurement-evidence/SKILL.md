@@ -71,6 +71,10 @@ moves, and the number is true of a set that excludes the answer.
 - **A prescribed command is a claim to re-verify, not an authority to quote.** A committed "measure it
   with this command" keeps its authority long after the artifact it measures was rewritten underneath
   it. What catches it is refusing a number that disagrees with something you independently know.
+- **A singular argument over a plural result is a clean answer about the wrong subject.** When the
+  scoping query can return several rows — every active slice, every open item — run the check on
+  every row it returns; a command written for one silently adjudicates one and leaves the rest
+  unasked, and nothing downstream says so.
 
 ## 4. Two sources agree?
 
@@ -96,6 +100,46 @@ moves, and the number is true of a set that excludes the answer.
 - **Record the variables you are HOLDING, not just the one you are varying.** An investigation varied
   command shape exhaustively across three sessions and never recorded which paths the commands read —
   and the paths were the cause. One controlled pair settled it in two commands.
+
+## 6. Cause, control and classification
+
+The step most often skipped by people who did steps 2–5 properly.
+
+- **A positive control proves the instrument FIRES; it cannot prove the trigger's quantity is the
+  fault's symptom.** A stall watchdog was mutation-checked ten of ten, through a seam built so the
+  control could exist; its trigger measured whether the process was scheduled. When the fault came,
+  that quantity never left its healthy value while every request burned its whole ceiling — no
+  threshold on it could ever have fired. Ask what the trigger measures, and whether the fault moves it.
+- **Ask what you CHANGED in order to observe this, and whether the environment the claim governs
+  has it.** A build logger was calibrated against a throwaway image with a verbosity flag added
+  precisely to see its output, and shipped into a pipeline that lacked the flag: the act of observing
+  supplied the missing link, so the instrument passed its own test in the one place the fault could
+  not occur. Prefer a channel the target environment already uses.
+- **One calibration licences one check.** Checks that share a parser, a loader or a key extractor do
+  not share trustworthiness; each embodies its own claim about what correct looks like and needs its
+  own oracle — an independent one, because re-reading your own code finds nothing: the code did
+  exactly what you wrote.
+- **A reproduction CONFIRMS; only an intervention EXPLAINS.** Recreating a failure on demand proves
+  that something in what you changed is sufficient, and silently credits whichever change you were
+  already watching. List everything the setup changed — not what you meant to change — vary ONE
+  thing, and predict the outcome before running it. Treat the FIX as the real experiment: a fix that
+  fails under the true failing precondition falsifies the mechanism.
+- **A root-path tool names A path, never THE cause.** When removing the named, plausible suspect
+  changes nothing and the enumeration of roots cannot terminate, the retention is structural — and
+  that inability to terminate is itself the tell.
+- **Classify from source, never from an attribute, a register row or a filename.** Three proxies in
+  one session each said "built" while correcting the previous one; the sharpest case was a routed,
+  well-commented, EMPTY shell whose own header said nothing was drawn. Check both directions, and
+  check that the instrument can discriminate at all.
+- **A layer no test can reach is not a gap in the tests; it is a property of the composition, and
+  it worsens as protection improves.** When an earlier layer refuses the whole population a later
+  layer exists to refuse, the later one cannot be exercised from outside. Assert it at its own
+  boundary and give each layer a distinguishable signature — three tests asserting the same refusal
+  read as rigour while testing whichever layer runs first, and keep passing if any one is deleted.
+- **When a new instrument disagrees with an old one, both hypotheses predict the observation** — the
+  new one miscounts, or the old one credited what it should not have. Shrink the disagreement to ONE
+  artefact small enough to adjudicate by hand, get per-item output rather than a percentage, and read
+  the disputed item yourself.
 
 ## When a premise looks untestable
 

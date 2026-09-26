@@ -1009,10 +1009,10 @@ class McpContractTest(unittest.TestCase):
                 (Path(target) / "CLAUDE.md").read_text(encoding="utf-8"), text)
 
     def test_note_obligations_match_agent_control_template(self):
-        """Plan 035: the obligations table lives in the note literal AND
-        agent-control.template.md — previously synced by NOTHING. Every
-        obligation trigger cell in the emitted note must appear in the
-        template."""
+        """Plan 035 synced the obligations table between the note literal and
+        agent-control.template.md. Plan 132 (v5.2, findings_33 R10) ends the twin: the note
+        is the ONE copy, the template points at it and carries no obligation row (a second
+        copy drifted, and is the restated shape the scan reports); the handoff sentence stays."""
         self._emit_ready()
         with tempfile.TemporaryDirectory() as target:
             srv.handoff_emit(target)
@@ -1023,9 +1023,11 @@ class McpContractTest(unittest.TestCase):
         cells = [ln.split("|")[1].strip() for ln in table.splitlines()
                  if ln.startswith("| ") and "---" not in ln
                  and "During execution" not in ln]
-        self.assertGreaterEqual(len(cells), 9)
+        self.assertGreaterEqual(len(cells), 9)                # the note still carries it
         for cell in cells:
-            self.assertIn(cell, tpl, f"obligation row missing from template: {cell}")
+            self.assertNotIn(f"| {cell} |", tpl, f"obligation row copied into the template: {cell}")
+        self.assertIn("tool-owned tamheed note in `<package-name>/CLAUDE.md`", tpl)
+        self.assertIn("write a `handoff` journal entry LAST", tpl)
 
     def test_note_teaches_paging_verify_amends_and_the_flush_rule(self):
         """Plan 039: the note carries LL-061's refinement of C31 (recording FLUSHES

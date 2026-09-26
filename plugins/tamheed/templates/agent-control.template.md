@@ -50,25 +50,16 @@ owner: <name-or-role>
 
 ## Recording obligations (mandatory — unrecorded work is drift)
 
-<!-- Keep this table IDENTICAL to the one in the emitted CLAUDE.md operating note
-     (tamheed_server.py, tamheed:note v5) — drift between the two is grep-detectable. -->
+<!-- v5.2 (plan 132): this file no longer carries a copy of the obligations table. The table is
+     the TOOL-OWNED note `handoff_emit` writes into `<package-name>/CLAUDE.md` (imported by the root
+     CLAUDE.md) and rebuilds on every emit; a second copy here drifted, and a copy of register
+     content is exactly the shape `handoff_emit`'s restated-content scan reports. -->
 
-| During execution, when… | Record BEFORE moving on |
-|---|---|
-| you find a defect | `entity_upsert` a `defect` row (`DEF-`, honest severity — open critical/high BLOCK readiness) — then fix it |
-| you find needed work that is out of scope | `entity_upsert` a `deferred-work` row (`DW-`) with an activation trigger |
-| you deviate from the approved plan in any way | a `scope-change` row (`SC-`) FIRST, `decision_ref` naming the deciding `DEC-`/`ADR-`, delta edges (`scope_adds`/`scope_modifies`/`scope_removes` for plan rows; `amends` for a ruling — DEC-: full-row upsert, ADR-: supersede) naming the affected rows — after approval, apply the row changes, RE-READ them, and only then set the `SC-` to Merged |
-| you hit genuine ambiguity | an `open-question` row (`OQ-`, with owner + due_by) and `[NEEDS-CLARIFICATION: OQ-NNN]` at the exact spot — NEVER assume |
-| execution teaches you something durable (a mistake's fix, a practice worth repeating) | `entity_upsert` a `lesson` row (`LL-`, born Proposed; kind improve\|sustain, statement + impacts) + a `learned_from` edge to the source — the OPERATOR confirms later; only Approved lessons bind |
-| you need a function tamheed lacks, meet a defect or a doc error in it, have a question for its maintainer, or would build a script over the package | a `feedback` row (`FB-`; kind missing-capability\|defect\|doc-error\|question, born Proposed) FIRST — never a side tool: a script is a `local-tool` row that CANNOT be a draft (the OPERATOR's word is a precondition of its insert); it writes nothing tool-owned and, if it reads the STORE, reads `exports/` only; `handoff_emit` names every row until it has left the package, and every reported row until it is answered (`feedback-unanswered`) |
-| you finish a unit of work | `progress_update(...)` — event_type `work-done`, `subject_id`, your `actor` string, phase/slice ids |
-| you believe a slice/wbs-item is complete | set its `lifecycle_status` to **Review** (done-claimed) — `Implemented` means VERIFIED and is readiness-guarded |
-| you verify an acceptance criterion | `audit_record(...)` with evidence + `verified_by` + `verification_method` + `against_commit` — never Met without proof |
-| you create a commit or PR | `work_bind(ref, entity_ids=[...])` |
-| you declare a slice/phase/release done | `readiness_check(scope)` first — resolve every blocking failure, or ask the OPERATOR for a `WVR-` waiver (their words; you never author your own) — `"force": true` only on the operator's explicit words |
-
-If you cannot record (lock held, package missing), STOP and tell the operator — do not
-proceed unrecorded.
+The obligations table — what to record before moving on (defects, deferred work, scope changes,
+open questions, lessons, feedback, work-done entries, `Review` claims, verdicts, bindings,
+readiness before any done-claim) — is the tool-owned tamheed note in `<package-name>/CLAUDE.md`,
+which this file's `CLAUDE.md` imports; it is never copied here. If you cannot record (lock held,
+package missing), STOP and tell the operator — do not proceed unrecorded.
 
 Before a compaction, at session end or on a handover, write a `handoff` journal entry LAST
 (`tamheed:session-handoff`: resume point, in-flight ids, what awaits the operator, verified facts

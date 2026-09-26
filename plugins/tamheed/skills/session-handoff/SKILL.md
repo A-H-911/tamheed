@@ -33,7 +33,9 @@ which question is still open, which figure was measured and which was assumed. A
 
 ## The shape — five short sections, ids not rows
 
-Write ONE entry, under 40 lines, in this order:
+Write ONE entry, under 25 lines and 4,000 characters — the SessionStart hook prints exactly that
+much of it, and the `resume` block carries the same; past either cap the next session sees a
+truncation marker and has to query for the rest — in this order:
 
 1. **Resume at.** The next action, concretely: the slice or work item, the step of the ceremony, the
    exact tool call if one is half-done. One or two lines.
@@ -67,8 +69,13 @@ Write ONE entry, under 40 lines, in this order:
 - **Nothing instruction-shaped.** The entry is printed into the next session's context by the hook
   and screened by the injection gate; an entry the screen withholds reaches nobody. Write state, not
   commands to a reader.
-- **Then commit the package `data/`** with the rest of the close-out
-  (`tamheed:package-writes`): an uncommitted handoff is destroyed by the next `git checkout`.
+- **Status moves first, the handoff, then the commit, then the bind.** A feedback row's or a
+  skill row's status move is journalled by the engine as a `transition` and counts against
+  `handoff-current` exactly like your own work-done entries — write those BEFORE the handoff.
+  After it: commit the package `data/` with the rest of the close-out (`tamheed:package-writes`;
+  an uncommitted handoff is destroyed by the next `git checkout`), then `work_bind` that commit —
+  a bind is journalled as a `note`, so the handoff stays current and the commit stays bound. A
+  field close-out that skipped the bind left its own handoff commit unrecorded.
 
 ## What this skill does NOT cover
 

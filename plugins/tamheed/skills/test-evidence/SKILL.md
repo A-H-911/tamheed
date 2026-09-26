@@ -93,6 +93,9 @@ features, and every one of those failures was the new test's.
 - Prefer an approach that cannot leak (real timers plus polling) over one that needs cleanup.
 - A control proven against one implementation says nothing about the next: **re-run the control
   whenever the thing it is a control FOR changes**, not only when something looks wrong.
+- **A fix for a race that passes locally proves nothing** — the local machine wins the race every
+  time, so only a loaded runner can see it. A stop that cancels before it awaits is not a join; make
+  the fix deterministic by construction (await the body itself), never by timing.
 
 ## 7. Reading the numbers around the test
 
@@ -103,6 +106,9 @@ features, and every one of those failures was the new test's.
   contains, so a latent timing- or environment-dependent defect can surface on any draw. The cost of a
   re-run is bounded; its value is not bounded by the question that prompted it. This does not license
   re-running a red to see if it passes — where a project rule forbids that, the rule wins.
+- **Coverage proves a line ran under test, never that production code calls it.** A method can be
+  fully covered and never invoked outside its own test; coverage catches unread state, not an
+  uncalled method.
 
 ## Recording the verdict
 
