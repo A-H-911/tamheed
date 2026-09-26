@@ -10,6 +10,14 @@ All notable changes to Tamheed are documented here. The format is based on
 
 ## [Unreleased]
 
+### Fixed
+- **`handoff_emit`'s `stock_merged` check verifies the whole declared release** (plan 129, the
+  field's FB-023). The 5.1 check required only the lines the declared release ADDED over the
+  previous one, so a `stock-merged 4.9.0` marker over a 4.2.1-era body read `verified: true, 0/9`
+  with 38 of 4.9.0's 62 lines absent. Every non-blank line of the declared body is required now;
+  each absent line is attributed to the release that introduced it (`missing_by_release`), the
+  reason names the counts per release, and `delta_missing` stays beside it. Report-only, as before.
+
 ## [5.1.0] - 2026-09-26
 
 **MINOR — the findings_32 batch: the resume surface, the menu contract, and the five notes (plans

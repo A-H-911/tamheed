@@ -3157,14 +3157,17 @@ _STOCK_MERGED_RE = re.compile(r"<!--\s*tamheed:stock-merged\s+(\d+\.\d+\.\d+)\s*
 
 
 def _stock_merged_check(fname: str, on_disk: str, name: str, history: dict) -> dict | None:
-    """Plan 125 (v5.1, the field's FB-019): verify a declared `stock-merged X.Y.Z` marker
-    against the shipped history instead of reporting it as a bare claim. X.Y.Z must be a
-    release of this file's stock; the lines that release ADDED relative to the previous one
-    (after `{package}` substitution) must all be present in the file. Delta-based on
-    purpose: a whole-body containment test calls every partial hand-merge false, and a
-    customisation that rewrites older stock lines is exactly what the marker is for. The
-    field's case — a marker declared for a release whose closing section alone was merged —
-    reads `verified: false` with the count of absent lines."""
+    """Plan 125 (v5.1, the field's FB-019) verified a declared `stock-merged X.Y.Z` marker
+    against the lines X.Y.Z ADDED over the previous release. The field's FB-023 (v5.2, plan
+    129) showed what that misses: a marker over a much older body passes as soon as the newest
+    increment alone is merged (4.9.0 declared; its nine closing lines present; 38 of its 62
+    lines absent; `verified: true`). Now the WHOLE declared body is required — every non-blank
+    line of release X.Y.Z's stock (after `{package}` substitution) must be present — and each
+    absent line is attributed to the first release whose body carries it
+    (`missing_by_release`), so the operator sees which increments were never merged.
+    `delta_missing` (the declared release's own increment) stays beside it. A customisation
+    that REWRITES stock lines reads as absent here; that is why the check is report-only: it
+    states what the marker's claim would need, never that the customisation is wrong."""
     declared = _STOCK_MERGED_RE.search(on_disk)
     if not declared:
         return None
@@ -3172,20 +3175,33 @@ def _stock_merged_check(fname: str, on_disk: str, name: str, history: dict) -> d
     releases = sorted(history.get(fname, {}), key=_vkey)
     entry: dict = {"file": f"prompts/{fname}", "declared": ver}
     if ver not in releases:
-        entry.update({"verified": False, "delta_missing": None,
+        entry.update({"verified": False, "delta_missing": None, "missing_by_release": None,
                       "reason": f"{ver} is not a release of this file's stock history"})
         return entry
+
+    def lines(rel: str) -> list[str]:
+        return [ln.strip() for ln in history[fname][rel].replace("{package}", name).splitlines()
+                if ln.strip()]
+
+    bodies = {rel: set(lines(rel)) for rel in releases}
     idx = releases.index(ver)
-    body = history[fname][ver].replace("{package}", name)
-    prev = history[fname][releases[idx - 1]].replace("{package}", name) if idx else ""
-    prev_lines = {ln.strip() for ln in prev.splitlines() if ln.strip()}
-    delta = [ln.strip() for ln in body.splitlines()
-             if ln.strip() and ln.strip() not in prev_lines]
+    prev_lines = bodies[releases[idx - 1]] if idx else set()
+    required = lines(ver)
     have = {ln.strip() for ln in on_disk.splitlines() if ln.strip()}
-    missing = [ln for ln in delta if ln not in have]
-    entry.update({"verified": not missing, "delta_missing": f"{len(missing)}/{len(delta)}",
+    missing = [ln for ln in required if ln not in have]
+    delta = [ln for ln in required if ln not in prev_lines]
+    delta_missing = [ln for ln in delta if ln not in have]
+    by_release: dict[str, int] = {}
+    for ln in missing:   # ascending releases: the first body carrying the line introduced it
+        origin = next(rel for rel in releases if ln in bodies[rel])
+        by_release[origin] = by_release.get(origin, 0) + 1
+    by_release = dict(sorted(by_release.items(), key=lambda kv: _vkey(kv[0])))
+    entry.update({"verified": not missing,
+                  "delta_missing": f"{len(delta_missing)}/{len(delta)}",
+                  "missing_by_release": by_release,
                   "reason": None if not missing else
-                  f"{len(missing)} of the {len(delta)} lines {ver} added are absent"})
+                  f"{len(missing)} of the {len(required)} lines of {ver} are absent ("
+                  + ", ".join(f"{rel}: {n}" for rel, n in by_release.items()) + ")"})
     return entry
 
 

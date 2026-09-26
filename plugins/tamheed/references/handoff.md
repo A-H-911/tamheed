@@ -149,7 +149,10 @@ plugin's SessionStart hook, and `handoff-current` names one the journal has move
 obligations table is unchanged (the marker stays `v5`; the span rebuilds once because its text
 changed). Four scans joined the emission, all report-only: a declared `<!-- tamheed:stock-merged
 X.Y.Z -->` marker is **verified** against the stock history (`stock_merged`: the release must
-exist and every line it added must be present; a leftover customised copy gets the same check); a
+exist and — since v5.2, plan 129, the field's FB-023 — every line of the declared release's body
+must be present, each absent line attributed to the release that introduced it in
+`missing_by_release`; the 5.1 check required only the declared release's own increment, which a
+marker over a much older body satisfied; a leftover customised copy gets the same check); a
 project prompt over 300 lines or 24,576 bytes is named as carrying state (`oversized_prompts`);
 every file the skills table points at is scanned for stale sentences (`stale_references`,
 `file: "skill:<name> (<path>)"`), including the retired "export_html flushes" claim; and the

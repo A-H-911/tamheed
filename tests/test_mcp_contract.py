@@ -1474,6 +1474,44 @@ class McpContractTest(unittest.TestCase):
             self.assertIn("prompts/orient-resume.md", out["prompt_library"]["leftover_customized"])
             left = next(c for c in out["stock_merged"] if c["file"] == "prompts/orient-resume.md")
             self.assertTrue(left["verified"], left)
+            self.assertEqual(left["missing_by_release"], {})
+
+    def test_stock_merged_attributes_missing_lines_to_their_release(self):
+        """Plan 129 (v5.2, the field's FB-023): a marker over an OLD body whose only merged
+        part is the declared release's own increment passed the delta check. The whole
+        declared body is required now, and every absent line is attributed to the release
+        that introduced it — the field's 4.9.0 marker over a 4.2.1-era body read
+        `verified: true, 0/9` with 38 of 62 lines absent; it reads false with the increments
+        named."""
+        self._emit_ready()
+        history = json.loads((REPO_ROOT / "plugins" / "tamheed" / "prompts" /
+                              "stock-history.json").read_text(encoding="utf-8"))
+        prompts = srv.PACKAGE_ROOT / "demo" / "prompts"
+        rel = sorted(history["orient-resume.md"], key=srv._vkey)      # five releases
+        self.assertGreaterEqual(len(rel), 4)
+        first, prev, latest = rel[0], rel[-2], rel[-1]
+        strip = lambda v: [ln.strip() for ln in history["orient-resume.md"][v]
+                           .replace("{package}", "demo").splitlines() if ln.strip()]
+        increment = [ln for ln in strip(latest) if ln not in set(strip(prev))]
+        with tempfile.TemporaryDirectory() as target:
+            srv.handoff_emit(target)
+            # the field's shape: the FIRST release's body + the LATEST increment + the marker
+            (prompts / "orient-resume.md").write_text(
+                history["orient-resume.md"][first].replace("{package}", "demo")
+                + "\n" + "\n".join(increment) + f"\n<!-- tamheed:stock-merged {latest} -->\n",
+                encoding="utf-8")
+            out = srv.handoff_emit(target)
+            self.assertTrue(out["ok"], out)
+            chk = next(c for c in out["stock_merged"] if c["file"] == "prompts/orient-resume.md")
+            self.assertFalse(chk["verified"], chk)
+            self.assertEqual(chk["delta_missing"], f"0/{len(increment)}")   # the increment IS there
+            self.assertTrue(chk["missing_by_release"], chk)
+            self.assertTrue(set(chk["missing_by_release"]) <= set(rel[1:-1]), chk)  # the middle releases
+            self.assertEqual(sum(chk["missing_by_release"].values()),
+                             int(chk["reason"].split(" of the ")[0]))
+            self.assertEqual(list(chk["missing_by_release"]),
+                             sorted(chk["missing_by_release"], key=srv._vkey))
+            self.assertTrue(any("stock-merged" in w and "absent (" in w for w in out["warnings"]))
 
     def test_audit_tally_restatement_flagged(self):
         self._emit_ready()
