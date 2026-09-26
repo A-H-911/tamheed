@@ -1,7 +1,15 @@
 # Tamheed v5.1.0 — the findings_32 batch: the resume surface, the menu contract, and the five notes
 
-Status: **EXECUTING (started 2026-09-26)** — index section "Field cycle findings_32" in
-[README.md](README.md). Execution order: 120 → 121 → 122 → 123 → 124 → 125 → 126 → 127 → 128
+Status: **EXECUTED — v5.1.0 tagged on `519005d` (CI green), 2026-09-26** — index section "Field
+cycle findings_32" in [README.md](README.md). Commits: 120+121 `80d9779`, 122 `144074f`, 123
+`88cb788`, 124 `18d8ae8`, 125 `8dfb229`, 126 `a2bd7b8`, 127 `519005d`; the close-out commit carries
+this record's final state. Execution misses owned: (1) W7 called `verification_method` free text —
+the DDL CHECKs it (`auto-test|manual|inspection`), caught by the first contract test and mapped
+exactly; (2) the batch commit for 122 was refused once by a repo hook that reads any `-n` in the
+command line as `--no-verify` (a `sed -n` in the same command) — reads and commits are now separate
+commands; (3) the beat ran in-process through the engine's tool functions, not over MCP stdio
+(tamheed's tools are not enabled in this repository's session until the local enable takes effect
+after a restart) — recorded in the evidence report's honesty limit. Execution order: 120 → 121 → 122 → 123 → 124 → 125 → 126 → 127 → 128
 (120 and 125 have no dependency; 122/124 need 121; 123 needs 122; 126 needs 120–125; 127 needs 126).
 
 §0 RESULT: see the measurements below (filled as they land).
@@ -76,15 +84,15 @@ The approved plan §5.2, per plan 120–128, with expected outputs.
 
 | # | Plan | Depends on | Status |
 |---|---|---|---|
-| 120 | [Menu contract, skill hints, note sentence, README wording](120-menu-contract-and-skill-hints.md) | — | PLANNED |
-| 121 | [Migration 007: `handoff` kind + `skills.upstreamed_to`](121-migration-007-handoff-and-upstreamed-to.md) | — | PLANNED |
-| 122 | [Resume block, `handoff-current`, `lessons-stranded`, Resume panel](122-resume-block-and-advisories.md) | 121 | PLANNED |
-| 123 | [The SessionStart hook](123-session-start-hook.md) | 122 | PLANNED |
-| 124 | [Skills and the AGENTS template](124-skills-and-agents-template.md) | 121 | PLANNED |
-| 125 | [handoff_emit scans](125-handoff-emit-scans.md) | — | PLANNED |
-| 126 | [Docs + diagrams sweep](126-docs-and-diagrams-sweep-findings-32.md) | 120–125 | PLANNED |
-| 127 | [Version stamp, then lab beat 23 + evals](127-stamp-then-lab-beat-23.md) | 126 | PLANNED |
-| 128 | [Tag v5.1.0, this repo, the ACMP brief, close-out](128-release-v510.md) | all | PLANNED |
+| 120 | [Menu contract, skill hints, note sentence, README wording](120-menu-contract-and-skill-hints.md) | — | DONE `80d9779` |
+| 121 | [Migration 007: `handoff` kind + `skills.upstreamed_to`](121-migration-007-handoff-and-upstreamed-to.md) | — | DONE `80d9779` |
+| 122 | [Resume block, `handoff-current`, `lessons-stranded`, Resume panel](122-resume-block-and-advisories.md) | 121 | DONE `144074f` |
+| 123 | [The SessionStart hook](123-session-start-hook.md) | 122 | DONE `88cb788` (M1 PASS) |
+| 124 | [Skills and the AGENTS template](124-skills-and-agents-template.md) | 121 | DONE `18d8ae8` |
+| 125 | [handoff_emit scans](125-handoff-emit-scans.md) | — | DONE `8dfb229` |
+| 126 | [Docs + diagrams sweep](126-docs-and-diagrams-sweep-findings-32.md) | 120–125 | DONE `a2bd7b8` |
+| 127 | [Version stamp, then lab beat 23 + evals](127-stamp-then-lab-beat-23.md) | 126 | DONE `519005d` |
+| 128 | [Tag v5.1.0, this repo, the ACMP brief, close-out](128-release-v510.md) | all | DONE — tag `v5.1.0` on `519005d` |
 
 Status values: PLANNED / IN PROGRESS / DONE.
 

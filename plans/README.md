@@ -190,9 +190,9 @@ devil's-advocate review, 21 interview rulings; execution order 120 → 121 → 1
 | 123 | [The SessionStart hook](123-session-start-hook.md) | 122 | DONE — 2026-09-26 `88cb788` (loading test M1 PASS) |
 | 124 | [session-handoff, the resume step, five practices, two absorbed steps, the retirement doctrine, the AGENTS template](124-skills-and-agents-template.md) | 121 | DONE — 2026-09-26 `18d8ae8` |
 | 125 | [handoff_emit scans: marker verified, oversized prompt, skill files, two detectors, the note span stripped](125-handoff-emit-scans.md) | — | DONE — 2026-09-26 `8dfb229` |
-| 126 | [Docs + diagrams sweep for v5.1.0](126-docs-and-diagrams-sweep-findings-32.md) | 120-125 | IN PROGRESS |
-| 127 | [The version stamp, then lab beat 23 + evals](127-stamp-then-lab-beat-23.md) | 126 | PLANNED |
-| 128 | [Tag v5.1.0, this repo's local enable, the ACMP brief, close-out](128-release-v510.md) | all | PLANNED |
+| 126 | [Docs + diagrams sweep for v5.1.0](126-docs-and-diagrams-sweep-findings-32.md) | 120-125 | DONE — 2026-09-26 `a2bd7b8` |
+| 127 | [The version stamp, then lab beat 23 + evals](127-stamp-then-lab-beat-23.md) | 126 + full gate (suites; lints; canonical; evals 3/3 incl. 7 new assertions) | DONE — 2026-09-26 `519005d` (stamp before the beat; M4 = 9, M5 every class observed) |
+| 128 | [Tag v5.1.0, this repo's local enable, the ACMP brief, close-out](128-release-v510.md) | 127 | DONE — 2026-09-26, tag `v5.1.0` on `519005d` (CI green); the brief delivered in two parts (transcript) |
 
 ### Field cycle findings_31 -- plans 112-119 -> v5.0.0 (2026-09-24; reviewer-executed)
 
