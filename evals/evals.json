@@ -1828,6 +1828,91 @@
             "progress_entries"
           ],
           "expect_exit": 0
+        },
+        {
+          "check": "The resume block carries the beat's final handoff, written LAST, with nothing journalled after it (plan 122).",
+          "cmd": [
+            "python",
+            "evals/pkg_check.py",
+            "resume",
+            "{case_dir}/package"
+          ],
+          "expect_exit": 0,
+          "expect_substring": "handoff=PE-044 behind=0"
+        },
+        {
+          "check": "handoff-current passes on the recorded package - the journal did not move past the final handoff (plan 122).",
+          "cmd": [
+            "python",
+            "evals/pkg_check.py",
+            "rule",
+            "{case_dir}/package",
+            "handoff-current"
+          ],
+          "expect_exit": 0,
+          "expect_substring": "handoff-current=pass"
+        },
+        {
+          "check": "lessons-stranded is emitted (the package has skill rows) and names nothing: the Obsolete skill carries no Promoted lesson (plan 122).",
+          "cmd": [
+            "python",
+            "evals/pkg_check.py",
+            "rule",
+            "{case_dir}/package",
+            "lessons-stranded"
+          ],
+          "expect_exit": 0,
+          "expect_substring": "lessons-stranded=pass entities=[]"
+        },
+        {
+          "check": "Two handoff entries were written this beat: the one the journal overtook and the final one (plan 121).",
+          "cmd": [
+            "python",
+            "evals/pkg_check.py",
+            "count",
+            "{case_dir}/package",
+            "progress-entry",
+            "--col",
+            "event_type=handoff",
+            "--min",
+            "2"
+          ],
+          "expect_exit": 0
+        },
+        {
+          "check": "The beat's note quotes the tool-result hints and the schema head (plans 120, 121).",
+          "cmd": [
+            "python",
+            "evals/pkg_check.py",
+            "grep-present",
+            "{case_dir}/package",
+            "skill test-evidence + ci-evidence",
+            "--tables",
+            "progress_entries"
+          ],
+          "expect_exit": 0
+        },
+        {
+          "check": "The review surface carries the Resume section (plan 122).",
+          "cmd": [
+            "python",
+            "evals/pkg_check.py",
+            "grep-file",
+            "{case_dir}/package/review.html",
+            "<section id=\"resume\">"
+          ],
+          "expect_exit": 0
+        },
+        {
+          "check": "The guide followed the stamp: refresh_stock carried it to the 5.1.0 body that names eight discipline skills (plans 120, 127).",
+          "cmd": [
+            "python",
+            "evals/pkg_check.py",
+            "grep-tree-present",
+            "{case_dir}/package/prompts",
+            "eight **discipline skills**"
+          ],
+          "expect_exit": 0
         }
       ],
       "rubric": [

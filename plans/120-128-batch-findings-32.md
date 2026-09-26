@@ -23,8 +23,8 @@ Measurements before any plan is dispatched:
 | M1 | Plugin `SessionStart` plain-text stdout reaches the model (`--plugin-dir` probe with a stub hook; the probe line names `bash` or `powershell`) | quoted back | **PASS** 2026-09-26, Claude Code 2.1.283: the model quoted the line back as `SessionStart:startup hook success: …`; the `command` (bash) path fired, `source='startup'`, `CLAUDE_PROJECT_DIR` set with forward slashes, cwd = the project |
 | M2 | `uv run --no-project` of a stdlib script | ≤ 200 ms | 115 ms first, 77 ms repeat, 99 ms with imports (uv 0.9.21) |
 | M3 | Lockless `store.load` on a copy of ACMP's `data/` (4,246 ids) | < 1 s | 147 / 119 / 117 ms |
-| M4 | Menu / model-listing counts after plan 120 | 18 / 9 | _pending_ |
-| M5 | Dry-run of every new surface on a lab-tracker copy (§5.1.3 of the plan) | classes recorded | _pending_ |
+| M4 | Menu / model-listing counts after plan 120 | 18 / 9 | **PASS** 2026-09-26 on the final bundle: the model listed exactly nine `tamheed:` skills (the eight discipline skills + `tamheed:tamheed`), none of the sixteen scenarios; the `/` menu count (18) follows from the frontmatter (16 scenarios + the two both-route skills) and is not measurable headlessly |
+| M5 | Dry-run of every new surface on a lab-tracker copy (§5.1.3 of the plan) | classes recorded | **PASS** 2026-09-26, beat 23 phase B (`plans/evidence/lab-continuation-report-127-2026-09-26.md`): every predicted class observed, no deviation |
 
 Fallback if M1 fails: ship `resume_hook.py` anyway; document the `settings.json` hook snippet (the
 #16538 workaround) in `docs/install.md`; the resume block still arrives through `package_open` /

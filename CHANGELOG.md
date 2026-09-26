@@ -10,6 +10,8 @@ All notable changes to Tamheed are documented here. The format is based on
 
 ## [Unreleased]
 
+## [5.1.0] - 2026-09-26
+
 **MINOR — the findings_32 batch: the resume surface, the menu contract, and the five notes (plans
 120–128; field report findings_32, `FB-019`–`FB-022`).** The v5 premise — discipline skills load on
 relevance — is broken in a crowded host: with thirty-three plugins enabled most skill descriptions

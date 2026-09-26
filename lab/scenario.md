@@ -577,6 +577,60 @@ must fire; the resulting package replaces `evals/sample-results/lab-tracker/pack
       `gate_run` ready; `package_verify()` green (`verified: true`, `foreign: []`,
       `foreign_csv: []`, `review_current: true`); `package_close`; no `data/.lock` remains.
 
+23. **The v5.1.0 continuation — the resume surface.** The package opens at `schema_version`
+    7 (migration 007 at connect; `package_migrate` is NOT run) and `package_open` already
+    answers where the last session stopped: a `resume` block with no handoff yet and every work
+    entry counted as uncovered. The agent writes a handoff mid-beat on purpose, moves the journal
+    past it, corrects it, and then writes the real one LAST; the tool results name the skill to
+    invoke at every phase start. `refresh_stock` carries the guide to 5.1.0 and the note gains the
+    handoff sentence without changing its marker. The scratch phase fires what must never touch the
+    fixture: the stranded lesson, the oversized prompt, the false marker, the two detectors, the
+    hook after a compaction.
+    ✔ THE RESUME BLOCK (plan 122): `package_open("package")` returns `resume` with `handoff:
+      null`, `handoff_behind: 11` and `skill: "tamheed:package-writes"`; `server_info` reads
+      `schema_version: 7`, `migrations_head: "007_handoff.sql"`. `handoff-current` reads `fail`
+      over `population: {table: progress_entries, rows: 11, unit: "work entries"}` with the eleven
+      work-done/transition ids as entities; `lessons-stranded` is emitted (the package has skill
+      rows) and reads `pass` with no entity (the Obsolete `SKL-002` carries no Promoted lesson).
+    ✔ THE HINTS (plan 120): `readiness_check("package")` carries `skill:
+      "tamheed:operator-interview"` (the scenario's deliberately-open blocking items);
+      `audit_record` on `AC-001` with `verification_method: "auto-test"` returns `skill:
+      ["tamheed:test-evidence", "tamheed:ci-evidence"]`; the `progress_update` that writes the
+      first handoff returns `skill: "tamheed:session-handoff"`.
+    ✔ THE JOURNAL MOVES PAST THE HANDOFF (plan 122): after the first handoff `handoff-current`
+      reads `pass`; one `work-done` later it reads `fail` with exactly that entry as its one
+      entity; a `correction` (`corrects` the handoff) appears in the resume block's
+      `corrections` list with `handoff_behind: 1` and a `next` line that says a fresh handoff is
+      due.
+    ✔ THE EMISSION (plans 120, 125): `handoff_emit(<scratch target>, refresh_stock=true)`
+      reports `refreshed: ["prompts/README.md"]` (the guide now says `eight **discipline
+      skills**`), `stock_merged: []`, `oversized_prompts: []`, no `stale_references` from the
+      skill file the skills table points at, and `restated_content: []`; the scratch `CLAUDE.md`
+      opens `<!-- tamheed:note v5 -->` (the marker unchanged), names `tamheed:session-handoff`
+      and `tamheed:written-claims`, and carries `write a \`handoff\` journal entry LAST`. A second
+      emit returns `CLAUDE.md` `unchanged` and nothing restated from the note it wrote.
+    ✔ THE SCRATCH PHASE (plans 122, 125, 123), on a COPY of the package outside the repository —
+      **nothing here is written to the fixture**: `SKL-001` set `Obsolete` → `lessons-stranded`
+      `fail`, `entities: ["LL-001"]`; `entity_upsert` writes `upstreamed_to:
+      "tamheed:reading-the-record"` (`changed_columns` names the one column) → `pass`. A
+      302-line `prm-next.md` → `oversized_prompts: [{file: "prompts/prm-next.md", lines: 302,
+      …}]` and a warning `a prompt this size carries state`. The previous release's guide body
+      plus `<!-- tamheed:stock-merged 5.1.0 -->` → `stock_merged: [{declared: "5.1.0", verified:
+      false, delta_missing: "14/14"}]` and a warning `the marker is a claim`. A scratch `AGENTS.md`
+      with `SL-001–SL-003 is COMPLETE` and six `FB-` ids in one paragraph → `status-claim` (line
+      3, family slice) and `id-dense` (line 5, family feedback, count 6). The hook run with
+      `source: "compact"` prints seven lines: the header (`schema 7`, `unlocked`), the
+      re-injection line, `Handoff PE-044 … 0 work-done/transition entries since`, the entry, the
+      latest journal ids, `Next:` and `Skill: tamheed:package-writes`; exit 0.
+    ✔ Close the beat with ONE `progress_update` note (actor `agent:lab-beat-23`, `event_type:
+      "note"`) quoting verbatim `schema_version 7`, `handoff none`, `pass after it`, `skill
+      test-evidence + ci-evidence`, `skill session-handoff`, `eight discipline skills`, `note v5`,
+      `stock_merged and oversized_prompts were empty` and `nothing restated`; THEN the final
+      handoff (`event_type: "handoff"`, written LAST — `handoff-current` reads `pass`); then
+      `export_html` (review.html carries `<section id="resume">` and `Latest handoff: PE-044`);
+      `gate_run` ready; `package_verify()` green (`verified: true`, `dirty: []`, `foreign: []`,
+      `review_current: true`); `package_close`; no `data/.lock` remains.
+
 **Pass bar:** every ✔ observed; `gate_run` ready (or failing ONLY on deliberately-open
 items the scenario names); the eval runner's lab checks green. `readiness_check` is
 expectedly NOT ready on the scenario's deliberately-open items (AC-003 and, since beat

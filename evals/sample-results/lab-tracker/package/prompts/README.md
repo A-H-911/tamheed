@@ -1,4 +1,4 @@
-# How to use this folder — the `package` prompt guide (tamheed v5.0.0)
+# How to use this folder — the `package` prompt guide (tamheed v5.1.0)
 
 This folder holds the **project's own prompts** for the `package` Tamheed package — plus
 this guide. Since v5.0.0 the stock scenarios are no longer files here: they are the tamheed
@@ -30,7 +30,8 @@ as a project prompt under a new name (the stock name is retired), or delete it y
 | Situation | Invoke |
 |---|---|
 | A brand-new agent has never seen this package | `/tamheed:package-onboarding` |
-| Resuming after a session clear / compaction | `/tamheed:orient-resume` |
+| Resuming after a session clear / compaction | `/tamheed:orient-resume` — the SessionStart hook has already printed the resume block; the skill reads the handoff first |
+| Before a compaction, at session end, on a handover | `/tamheed:session-handoff` — the `handoff` journal entry, written LAST |
 | Starting the next slice of work | `/tamheed:slice-kickoff` |
 | Work is done, package not yet updated | `/tamheed:progress-sync` |
 | A bug was found or reported | `/tamheed:defect-triage` |
@@ -50,11 +51,17 @@ as a project prompt under a new name (the stock name is retired), or delete it y
 Every scenario skill is **operator-invoked** (`disable-model-invocation`): the agent never
 starts a ceremony on its own, exactly as it never pasted one. Each works in the package this
 project's `CLAUDE.md` note names; an argument names another (`/tamheed:slice-kickoff other`).
-Beside them, five **discipline skills** load on relevance in every session where the plugin
-is enabled: `tamheed:package-writes` (every write, read and git crossing),
-`tamheed:reading-the-record` (before citing a row), `tamheed:operator-interview` (at every
-STOP), and `tamheed:test-evidence` / `tamheed:measurement-evidence` / `tamheed:ci-evidence`
-(what a verdict's evidence must survive).
+Beside them, eight **discipline skills** are model-invoked (out of the `/` menu since v5.1)
+in every session where the plugin is enabled: `tamheed:package-writes` (every write, read and
+git crossing), `tamheed:reading-the-record` (before citing a row), `tamheed:written-claims`
+(before prose that states a mechanism or a count), `tamheed:operator-interview` (at every STOP),
+`tamheed:test-evidence` / `tamheed:measurement-evidence` / `tamheed:ci-evidence` (what a
+verdict's evidence must survive), and `tamheed:session-handoff` (write the handoff LAST before a
+compaction, at session end or on a handover — it also answers to `/tamheed:session-handoff`).
+In a crowded host their descriptions may reach the model name-only; the `CLAUDE.md` note and
+the tool results name the one to invoke — invoke it by name. The plugin's SessionStart hook
+prints the package's resume block (the latest handoff and what followed it) into every new
+session, clear and compaction; `package_open` and `server_info` return the same block.
 
 ## Semi-auto style (you drive)
 

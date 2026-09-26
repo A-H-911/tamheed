@@ -62,7 +62,12 @@ sixteen retired stock prompts named as leftovers, kept on a plain emit and delet
 `refresh_stock`, the guide that maps situations to skills, the byte-stable v5 note whose flush
 sentence names the mechanism, the `carries` edge typed in one direction and the advisory that
 watches the carrier close, the note-budget arithmetic quoted, and the recorded omission read as a
-deliberate zero by both deferred-work rules)
+deliberate zero by both deferred-work rules; 23: the v5.1.0 mechanisms — the resume block with no
+handoff and eleven uncovered work entries, the `handoff` entry written mid-beat then overtaken and
+corrected then written LAST, `handoff-current` following each move, the tool results naming the
+skill, the guide refreshed to eight discipline skills with the note's marker unchanged, and — on a
+scratch copy only — the stranded lesson passing once `upstreamed_to` is set, the oversized prompt,
+the false `stock-merged` marker, the two detectors, and the hook after a compaction)
 run as incremental real-agent sessions against the recorded package — the fixture is regenerated
 by continuation, not from scratch.
 

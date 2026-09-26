@@ -11,7 +11,7 @@
 <p align="center"><strong>Turn a project description into a validated, traceable, execution-ready planning &amp; handoff package for Claude Code to implement.</strong></p>
 
 <p align="center">
-  <em>Claude Code plugin + MCP-backed agent skill &middot; v5.0.0</em> &middot;
+  <em>Claude Code plugin + MCP-backed agent skill &middot; v5.1.0</em> &middot;
   <a href="#license">MIT</a> &middot;
   <a href="docs/install.md">Install</a> &middot;
   <a href="docs/migrate-from-keystone.md">Migrate from Keystone</a> &middot;
@@ -445,7 +445,7 @@ See [`CONTRIBUTING.md`](CONTRIBUTING.md) and
 
 ## Maturity
 
-**v5.x** (currently v5.0.0). The methodology (22 stages), the re-baselined relational store (plan 031:
+**v5.x** (currently v5.1.0). The methodology (22 stages), the re-baselined relational store (plan 031:
 claimed-vs-verified `Review`, evidence-chained verdicts, `WVR-` waivers, severity-thresholded blocking,
 typed progress events, drift-delta scope changes, blocking G-REL, `[NEEDS-CLARIFICATION]` markers), the
 MCP tool surface, the canonical serialization, and the in-place migration path (v2/v3

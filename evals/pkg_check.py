@@ -154,6 +154,37 @@ def cmd_verify(args) -> int:
     return 0 if out["verified"] else 1
 
 
+def cmd_resume(args) -> int:
+    """Plan 127 (v5.1): the resume block package_open returns — prints the latest handoff id (or
+    none), handoff_behind, the correction count and the skill hint; exit 0 when a handoff exists."""
+    pkg = _open(args.package)
+    try:
+        block = srv.server_info()["resume"]
+    finally:
+        srv.package_close()
+    ho = block.get("handoff")
+    print(f"package={pkg.name} handoff={ho['id'] if ho else 'none'}"
+          f" behind={block['handoff_behind']}"
+          f" corrections={len(ho['corrections']) if ho else 0} skill={block['skill']}")
+    return 0 if ho else 1
+
+
+def cmd_rule(args) -> int:
+    """Plan 127 (v5.1): one readiness rule's status and entities at package scope
+    (assert by substring: `<rule>=pass|fail|indeterminate`); exit 1 if the rule is absent."""
+    _open(args.package)
+    try:
+        report = srv.readiness_check("package")
+    finally:
+        srv.package_close()
+    for r in report["rules"]:
+        if r["rule"] == args.rule:
+            print(f"{r['rule']}={r['status']} entities={r['entities']}")
+            return 0
+    print(f"{args.rule}=ABSENT")
+    return 1
+
+
 def cmd_file_exists(args) -> int:
     ok = Path(args.path).is_file()
     print(f"{args.path}: {'exists' if ok else 'MISSING'}")
@@ -218,6 +249,15 @@ def main(argv: list[str] | None = None) -> int:
                                       " (package_verify; read-only)")
     p.add_argument("package")
     p.set_defaults(fn=cmd_verify)
+
+    p = sub.add_parser("resume", help="the resume block: latest handoff, behind count, skill (v5.1)")
+    p.add_argument("package")
+    p.set_defaults(fn=cmd_resume)
+
+    p = sub.add_parser("rule", help="one package-scope readiness rule's status (v5.1)")
+    p.add_argument("package")
+    p.add_argument("rule")
+    p.set_defaults(fn=cmd_rule)
 
     p = sub.add_parser("file-exists", help="a recorded file exists")
     p.add_argument("path")
