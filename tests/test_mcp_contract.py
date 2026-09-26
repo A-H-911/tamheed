@@ -1351,6 +1351,130 @@ class McpContractTest(unittest.TestCase):
             self.assertIn("verify", by_family["risk"]["suggestion"])
             self.assertEqual(len(out["restated_content"]), 2)  # nothing else fires
 
+    def test_id_dense_and_status_claim_detectors_and_note_span_stripped(self):
+        """Plan 125 (v5.1, findings_32 note 2): a lifecycle word beside an id (or a range)
+        and a paragraph dense with one family's ids are reported; the tool-owned note span
+        is stripped before scanning, so a note INLINE in the target's CLAUDE.md is not
+        reported on the second emit (the scan reads the previous emit's span)."""
+        self._emit_ready()
+        with tempfile.TemporaryDirectory() as target:
+            (Path(target) / "AGENTS.md").write_text(
+                "# Ops\n\n"
+                "The ladder SL-001–SL-019 is COMPLETE; SL-014 is DEFERRED INDEFINITELY.\n\n"
+                "Open feedback: FB-001, FB-002, FB-003, FB-004, FB-005 and FB-006 are the"
+                " rows we mirror here.\n\n"
+                "Three rows: FB-007, FB-008, FB-009.\n", encoding="utf-8")
+            out = srv.handoff_emit(target)
+            self.assertTrue(out["ok"], out)
+            kinds = {(f["kind"], f["line"], f["family"]) for f in out["restated_content"]
+                     if f["file"] == "AGENTS.md"}
+            self.assertIn(("status-claim", 3, "slice"), kinds)
+            self.assertIn(("id-dense", 5, "feedback"), kinds)
+            self.assertEqual(len(kinds), 2)                 # three ids never fire
+            dense = next(f for f in out["restated_content"] if f["kind"] == "id-dense")
+            self.assertEqual(dense["count"], 6)
+            # the note inline: nothing from CLAUDE.md on the SECOND emit either
+            for _ in range(2):
+                out = srv.handoff_emit(target)
+            self.assertTrue(out["ok"], out)
+            self.assertIn("<!-- tamheed:note v5 -->",
+                          (Path(target) / "CLAUDE.md").read_text(encoding="utf-8"))
+            self.assertEqual([f for f in out["restated_content"] if f["file"] == "CLAUDE.md"], [])
+            self.assertEqual([f for f in out["stale_references"] if f["file"] == "CLAUDE.md"], [])
+
+    def test_pointer_case_scans_the_package_claude_md_and_skill_files(self):
+        """Plan 125: with `@<pkg>/CLAUDE.md` the package's own CLAUDE.md is scanned too (span
+        stripped), and every file the skills table points at is scanned for stale sentences —
+        the retired 'export_html flushes' claim (the field's FB-021) among them."""
+        self._emit_ready()
+        with tempfile.TemporaryDirectory() as target:
+            (Path(target) / "CLAUDE.md").write_text("# Root\n\n@demo/CLAUDE.md\n", encoding="utf-8")
+            pkg_md = srv.PACKAGE_ROOT / "demo" / "CLAUDE.md"
+            pkg_md.write_text("# Package\n\nRisks RISK-001, RISK-002, RISK-003, RISK-004,"
+                              " RISK-005, RISK-006 live here.\n", encoding="utf-8")
+            skill_dir = Path(target) / ".claude" / "skills" / "writing-rows"
+            skill_dir.mkdir(parents=True)
+            (skill_dir / "SKILL.md").write_text(
+                "# Writing rows\n\nwork_bind, export_html and handoff_emit all flush JSONL.\n",
+                encoding="utf-8")
+            srv._CURRENT.conn.execute(
+                "INSERT INTO skills (id, name, title, level, target_path) VALUES"
+                " ('SKL-001', 'writing-rows', 'Writing rows', 'project',"
+                " '.claude/skills/writing-rows/SKILL.md')")
+            srv._CURRENT.conn.commit()
+            out = srv.handoff_emit(target)
+            self.assertTrue(out["ok"], out)
+            dense = [f for f in out["restated_content"] if f["file"] == "demo/CLAUDE.md"]
+            self.assertEqual([(f["kind"], f["family"]) for f in dense], [("id-dense", "risk")])
+            stale = [f for f in out["stale_references"] if f["file"].startswith("skill:writing-rows")]
+            self.assertEqual(len(stale), 1)
+            self.assertIn("flush that never happens", stale[0]["suggestion"])
+            self.assertEqual(stale[0]["line"], 3)
+            out = srv.handoff_emit(target)   # second emit: the rebuilt span is stripped
+            self.assertEqual([f for f in out["restated_content"] if f["file"] == "demo/CLAUDE.md"
+                              and f["kind"] != "id-dense"], [])
+
+    def test_oversized_project_prompt_is_named(self):
+        """Plan 125 (findings_32 note 4): a project prompt over 300 lines or 24,576 bytes
+        carries state; handoff_emit names it and says where state belongs."""
+        self._emit_ready()
+        big = srv.PACKAGE_ROOT / "demo" / "prompts" / "prm-next.md"
+        big.write_text("# Kickoff\n" + "\n".join(f"line {i}" for i in range(301)) + "\n",
+                       encoding="utf-8")
+        with tempfile.TemporaryDirectory() as target:
+            out = srv.handoff_emit(target)
+            self.assertTrue(out["ok"], out)
+            (o,) = out["oversized_prompts"]
+            self.assertEqual((o["file"], o["lines"]), ("prompts/prm-next.md", 302))
+            self.assertTrue(any("carries state" in w and "prm-next.md" in w for w in out["warnings"]))
+            big.write_text("# Kickoff\n\nshort\n", encoding="utf-8")
+            self.assertEqual(srv.handoff_emit(target)["oversized_prompts"], [])
+
+    def test_stock_merged_marker_is_verified_against_the_history(self):
+        """Plan 125 (the field's FB-019): a declared marker is checked, not echoed — the
+        release must exist and the lines it added must be present; a leftover customised
+        copy gets the same check."""
+        self._emit_ready()
+        history = json.loads((REPO_ROOT / "plugins" / "tamheed" / "prompts" /
+                              "stock-history.json").read_text(encoding="utf-8"))
+        prompts = srv.PACKAGE_ROOT / "demo" / "prompts"
+        with tempfile.TemporaryDirectory() as target:
+            srv.handoff_emit(target)                         # emits the current README
+            readme = prompts / "README.md"
+            releases = sorted(history["README.md"], key=srv._vkey)
+            latest, prev = releases[-1], releases[-2]
+            body = history["README.md"][latest].replace("{package}", "demo")
+            # a partial hand-merge: the previous release's body, the marker, and ONE added line
+            prev_body = history["README.md"][prev].replace("{package}", "demo")
+            added = [ln for ln in body.splitlines() if ln.strip()
+                     and ln.strip() not in {p.strip() for p in prev_body.splitlines()}]
+            readme.write_text(prev_body + f"\n<!-- tamheed:stock-merged {latest} -->\n"
+                              + added[0] + "\n", encoding="utf-8")
+            out = srv.handoff_emit(target)
+            (chk,) = out["stock_merged"]
+            self.assertEqual((chk["file"], chk["declared"], chk["verified"]),
+                             ("prompts/README.md", latest, False))
+            self.assertEqual(chk["delta_missing"], f"{len(added) - 1}/{len(added)}")
+            self.assertTrue(any("stock-merged" in w and "claim" in w for w in out["warnings"]))
+            # the complete merge verifies
+            readme.write_text(body + f"\n<!-- tamheed:stock-merged {latest} -->\n", encoding="utf-8")
+            (chk,) = srv.handoff_emit(target)["stock_merged"]
+            self.assertEqual((chk["verified"], chk["delta_missing"]), (True, f"0/{len(added)}"))
+            # an unknown release
+            readme.write_text(body + "\n<!-- tamheed:stock-merged 9.9.9 -->\n", encoding="utf-8")
+            (chk,) = srv.handoff_emit(target)["stock_merged"]
+            self.assertFalse(chk["verified"])
+            self.assertIn("not a release", chk["reason"])
+            # a leftover customised copy carries the same check
+            rel = sorted(history["orient-resume.md"], key=srv._vkey)[-1]
+            (prompts / "orient-resume.md").write_text(
+                history["orient-resume.md"][rel].replace("{package}", "demo")
+                + f"\nour addition\n<!-- tamheed:stock-merged {rel} -->\n", encoding="utf-8")
+            out = srv.handoff_emit(target)
+            self.assertIn("prompts/orient-resume.md", out["prompt_library"]["leftover_customized"])
+            left = next(c for c in out["stock_merged"] if c["file"] == "prompts/orient-resume.md")
+            self.assertTrue(left["verified"], left)
+
     def test_audit_tally_restatement_flagged(self):
         self._emit_ready()
         with tempfile.TemporaryDirectory() as target:

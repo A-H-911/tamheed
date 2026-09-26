@@ -998,6 +998,8 @@ def _stored_package_version(pkg_dir: Path) -> str | None:
 
 
 _PE_NUM = "CAST(SUBSTR(id, 4) AS INTEGER)"   # PE-NNN → NNN (plan 057: never a string sort)
+_PROMPT_MAX_LINES = 300        # plan 125: a project prompt past either limit carries state
+_PROMPT_MAX_BYTES = 24_576     # bytes (UTF-8), not characters
 _RESUME_ENTRY_CAP = 4000                       # chars of the handoff entry a block carries
 
 
@@ -3086,7 +3088,32 @@ _STALE_PATTERNS = [
      "the v1 tree is a frozen archive; the Tamheed package is the record"),
     (re.compile(r"progress-log\.md|acceptance-audit\.md"),
      "v1 hand-edited artifacts — record via progress_update/audit_record instead"),
+    # Plan 125 (v5.1, the field's FB-021): the pre-5.0.0 note said export_html and
+    # handoff_emit flush the JSONL; only store writes reach the commit. The sentence was
+    # distilled into a project skill file and outlived the note that carried it.
+    (re.compile(r"(?:export_html|handoff_emit)[^.\n]{0,80}\bflush", re.IGNORECASE),
+     "only store writes flush data/*.jsonl; export_html and handoff_emit write package files"
+     " beside it (v5) — this sentence names a flush that never happens"),
 ]
+
+
+def _strip_tool_spans(text: str) -> str:
+    """Plan 125: the scans over a target's agent-control files skip the TOOL-OWNED spans
+    (the note and the stale-warning block) — the note renders ten id-led lesson lines and
+    the skills line, which read as restated register content on the second emit (the
+    scans run before the note is rebuilt, so the previous emit's span is on disk)."""
+    return _STALE_BLOCK_RE.sub("", _NOTE_BLOCK_RE.sub("", text))
+
+
+def _scan_stale_lines(label: str, text: str) -> list[dict]:
+    findings = []
+    for lineno, line in enumerate(text.splitlines(), 1):
+        for pattern, suggestion in _STALE_PATTERNS:
+            if pattern.search(line):
+                findings.append({"file": label, "line": lineno,
+                                 "text": line.strip()[:160], "suggestion": suggestion})
+                break
+    return findings
 
 
 def _managed_emit(path: Path, content: str, force: bool = False) -> str:
@@ -3129,6 +3156,39 @@ def _load_stock_history() -> dict:
 _STOCK_MERGED_RE = re.compile(r"<!--\s*tamheed:stock-merged\s+(\d+\.\d+\.\d+)\s*-->")
 
 
+def _stock_merged_check(fname: str, on_disk: str, name: str, history: dict) -> dict | None:
+    """Plan 125 (v5.1, the field's FB-019): verify a declared `stock-merged X.Y.Z` marker
+    against the shipped history instead of reporting it as a bare claim. X.Y.Z must be a
+    release of this file's stock; the lines that release ADDED relative to the previous one
+    (after `{package}` substitution) must all be present in the file. Delta-based on
+    purpose: a whole-body containment test calls every partial hand-merge false, and a
+    customisation that rewrites older stock lines is exactly what the marker is for. The
+    field's case — a marker declared for a release whose closing section alone was merged —
+    reads `verified: false` with the count of absent lines."""
+    declared = _STOCK_MERGED_RE.search(on_disk)
+    if not declared:
+        return None
+    ver = declared.group(1)
+    releases = sorted(history.get(fname, {}), key=_vkey)
+    entry: dict = {"file": f"prompts/{fname}", "declared": ver}
+    if ver not in releases:
+        entry.update({"verified": False, "delta_missing": None,
+                      "reason": f"{ver} is not a release of this file's stock history"})
+        return entry
+    idx = releases.index(ver)
+    body = history[fname][ver].replace("{package}", name)
+    prev = history[fname][releases[idx - 1]].replace("{package}", name) if idx else ""
+    prev_lines = {ln.strip() for ln in prev.splitlines() if ln.strip()}
+    delta = [ln.strip() for ln in body.splitlines()
+             if ln.strip() and ln.strip() not in prev_lines]
+    have = {ln.strip() for ln in on_disk.splitlines() if ln.strip()}
+    missing = [ln for ln in delta if ln not in have]
+    entry.update({"verified": not missing, "delta_missing": f"{len(missing)}/{len(delta)}",
+                  "reason": None if not missing else
+                  f"{len(missing)} of the {len(delta)} lines {ver} added are absent"})
+    return entry
+
+
 def _emit_prompt_library(pkg_dir: Path, name: str, force: bool = False,
                          refresh_stock: bool = False) -> dict:
     """Copy the bundled stock files into <package>/prompts/ (C19; the library lives with
@@ -3154,7 +3214,8 @@ def _emit_prompt_library(pkg_dir: Path, name: str, force: bool = False,
     result: dict[str, list] = {"emitted": [], "unchanged": [], "diverged": [],
                                "diverged_stale_stock": [], "diverged_customized": [],
                                "refreshed": [], "leftover_stale_stock": [],
-                               "leftover_customized": [], "retired": []}
+                               "leftover_customized": [], "retired": [],
+                               "stock_merged": []}   # plan 125: declared markers, verified
     history = _load_stock_history()
     # Plan 057: version strings compare numerically — "4.10.0" is newer than "4.9.0",
     # never a lexical compare (lexical would rank 4.10.0 below 4.9.0).
@@ -3190,6 +3251,8 @@ def _emit_prompt_library(pkg_dir: Path, name: str, force: bool = False,
                 # containment test alone fails on a customisation that REWRITES stock
                 # lines, which is what the marker is for.
                 declared = _STOCK_MERGED_RE.search(on_disk)
+                if chk := _stock_merged_check(src.name, on_disk, name, history):
+                    result["stock_merged"].append(chk)
                 rest = iter(on_disk.splitlines())
                 result["diverged_customized"].append(
                     {"file": rel,
@@ -3212,6 +3275,8 @@ def _emit_prompt_library(pkg_dir: Path, name: str, force: bool = False,
              if body.replace("{package}", name) == on_disk), None)
         if matches is None:
             result["leftover_customized"].append(rel)
+            if chk := _stock_merged_check(fname, on_disk, name, history):
+                result["stock_merged"].append(chk)
         elif refresh_stock:
             path.unlink()
             result["retired"].append(rel)
@@ -3220,19 +3285,25 @@ def _emit_prompt_library(pkg_dir: Path, name: str, force: bool = False,
     return result
 
 
-def _stale_reference_report(target: Path) -> list[dict]:
-    findings = []
+def _agent_control_files(target: Path, extra: tuple = ()) -> list[tuple[str, str]]:
+    """(label, text) for the target's CLAUDE.md / AGENTS.md plus `extra` (label, path)
+    pairs — the package's own CLAUDE.md in the pointer-import case (plan 125) — with the
+    tool-owned spans stripped."""
+    out = []
     for fname in ("CLAUDE.md", "AGENTS.md"):
         path = target / fname
-        if not path.exists():
-            continue
-        for lineno, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
-            for pattern, suggestion in _STALE_PATTERNS:
-                if pattern.search(line):
-                    findings.append({"file": fname, "line": lineno,
-                                     "text": line.strip()[:160],
-                                     "suggestion": suggestion})
-                    break
+        if path.exists():
+            out.append((fname, _strip_tool_spans(path.read_text(encoding="utf-8"))))
+    for label, path in extra:
+        if Path(path).is_file():
+            out.append((label, _strip_tool_spans(Path(path).read_text(encoding="utf-8"))))
+    return out
+
+
+def _stale_reference_report(target: Path, extra: tuple = ()) -> list[dict]:
+    findings = []
+    for label, text in _agent_control_files(target, extra):
+        findings += _scan_stale_lines(label, text)
     return findings
 
 
@@ -3243,6 +3314,18 @@ _ID_LED_LINE_RE = re.compile(r"^\s*(?:-\s*\*\*|\|\s*)([A-Z]{2,5})-\d")
 _AUDIT_TALLY_RE = re.compile(r"\d+\s+Met\b.*\d+\s+(?:Partial|Not-met|Pending)")
 _PKG_REF_RE = re.compile(r"entity_query\(|review\.html|gate_run")
 _PREFIX_TYPE = {p.rstrip("-"): tid for tid, _label, p, _cls in BASELINE_ENTITY_TYPES}
+# Plan 125 (v5.1, findings_32 note 2): the two sentences the run detector cannot see. A
+# paragraph naming many ids of ONE family is a hand-maintained mirror of a register (the
+# field kept a 3,000-char feedback mirror in a bullet); a lifecycle word beside an id or an
+# id range is a status copy ("P1-P19 COMPLETE" was two phases stale). Both drift on the
+# next write and read as current. Report-only, like every restated-content finding.
+_ANY_ID_RE = re.compile(r"\b([A-Z]{2,5})-\d+(?:\.\d+)?\b")
+_ID_DENSE_MIN = 6
+_STATUS_WORDS = r"(?:COMPLETE|DONE|Implemented|DEFERRED|Approved|Met)"
+_STATUS_CLAIM_RE = re.compile(
+    rf"\b(?P<p1>[A-Z]{{2,5}})-\d+(?:\.\d+)?(?:\s*[–-]\s*(?:[A-Z]{{2,5}}-)?\d+(?:\.\d+)?)?"
+    rf"[^\n]{{0,40}}?\b{_STATUS_WORDS}\b"
+    rf"|\b{_STATUS_WORDS}\b[^\n]{{0,40}}?\b(?P<p2>[A-Z]{{2,5}})-\d+(?:\.\d+)?")
 
 
 def _restated_findings(label: str, lines: list[str]) -> list[dict]:
@@ -3287,16 +3370,54 @@ def _restated_findings(label: str, lines: list[str]) -> list[dict]:
                 "suggestion": "a hard-coded audit tally goes stale on the first new "
                               "verdict — the live form is gate_run()'s audit_evidence "
                               "split / review.html#execution"})
+    # Plan 125: id-dense paragraphs and status claims, over the lines the run detector
+    # did not already report.
+    covered = {j for f in findings for j in range(f["line"] - 1, f["line"] - 1 + f["count"])}
+    para_start = None
+    for i, line in enumerate(lines + [""]):
+        if line.strip():
+            if para_start is None:
+                para_start = i
+            continue
+        if para_start is not None and not any(j in covered for j in range(para_start, i)):
+            fam_ids: dict[str, set] = {}
+            for ln in lines[para_start:i]:
+                for m in _ANY_ID_RE.finditer(ln):
+                    if m.group(1) in _PREFIX_TYPE:
+                        fam_ids.setdefault(m.group(1), set()).add(m.group(0))
+            for prefix, found in sorted(fam_ids.items()):
+                if len(found) >= _ID_DENSE_MIN:
+                    tid = _PREFIX_TYPE[prefix]
+                    findings.append({
+                        "file": label, "line": para_start + 1, "family": tid,
+                        "count": len(found), "kind": "id-dense",
+                        "suggestion": f"a paragraph naming {len(found)} {tid} rows is a"
+                                      " hand-maintained mirror of the register — it drifts on"
+                                      f" the next write; the live form is `entity_query(\"{tid}\")`"
+                                      " / review.html#registers"})
+        para_start = None
+    for i, line in enumerate(lines):
+        if i in covered:
+            continue
+        for m in _STATUS_CLAIM_RE.finditer(line):
+            prefix = m.group("p1") or m.group("p2")
+            if prefix in _PREFIX_TYPE:
+                tid = _PREFIX_TYPE[prefix]
+                findings.append({
+                    "file": label, "line": i + 1, "family": tid, "count": 1,
+                    "kind": "status-claim",
+                    "suggestion": f"a lifecycle word beside an id ({m.group(0).strip()[:60]!r})"
+                                  " is a status copy — it goes stale on the next write and reads"
+                                  f" as current; the live form is `entity_query(\"{tid}\", id=…)`"
+                                  " / readiness_check(scope)"})
+                break
     return findings
 
 
-def _restated_content_report(target: Path) -> list[dict]:
+def _restated_content_report(target: Path, extra: tuple = ()) -> list[dict]:
     findings = []
-    for fname in ("CLAUDE.md", "AGENTS.md"):
-        path = target / fname
-        if path.exists():
-            findings += _restated_findings(
-                fname, path.read_text(encoding="utf-8").splitlines())
+    for label, text in _agent_control_files(target, extra):
+        findings += _restated_findings(label, text.splitlines())
     return findings
 
 
@@ -3470,6 +3591,17 @@ def handoff_emit(target_dir: str, subdir: str = "handoff", force: bool = False,
         return _err("no project-authored prompts in <package>/prompts/ — write the "
                     "kickoff prompt file(s) there first (Stage 20; adopted packages: "
                     "author at least a kickoff prompt)")
+    # Plan 125 (v5.1, findings_32 note 4): a project prompt past the threshold carries
+    # STATE — the field's kickoff prompt reached 3,600 lines / 360 KB of carried lists and
+    # traps that went stale on every write. State belongs in a handoff entry and the registers.
+    oversized = []
+    for p in prompt_files:
+        if p.name in stock:
+            continue
+        raw = p.read_bytes()
+        lines = raw.count(b"\n") + (1 if raw and not raw.endswith(b"\n") else 0)
+        if lines > _PROMPT_MAX_LINES or len(raw) > _PROMPT_MAX_BYTES:
+            oversized.append({"file": f"prompts/{p.name}", "lines": lines, "bytes": len(raw)})
     # G-INJECT, relocated to the file substrate (v3.0.0): scan EVERY package prompt —
     # project-authored AND stock (stock scanning is free and catches tampering).
     findings = []
@@ -3511,6 +3643,17 @@ def handoff_emit(target_dir: str, subdir: str = "handoff", force: bool = False,
         emit(mcp_cfg_path, json.dumps(cfg, indent=2) + "\n", ".mcp.json")
 
     warnings: list[str] = []
+    for o in oversized:
+        warnings.append(
+            f"{o['file']} is {o['lines']} lines / {o['bytes']} bytes — a prompt this size"
+            " carries state; state belongs in a `handoff` journal entry (tamheed:session-handoff)"
+            f" and the registers (limits: {_PROMPT_MAX_LINES} lines / {_PROMPT_MAX_BYTES} bytes)")
+    for chk in library.get("stock_merged", []):
+        if not chk["verified"]:
+            warnings.append(
+                f"{chk['file']} declares `stock-merged {chk['declared']}` but {chk['reason']}"
+                " — the marker is a claim: complete the merge from stock-history.json, or"
+                " correct the marker")
     # Plan 032: the v3.2 warning said the two kinds of stock divergence were
     # "indistinguishable without history" — the bundled stock history now IS that
     # history, so the warning names each class and its safe path.
@@ -3620,7 +3763,22 @@ def handoff_emit(target_dir: str, subdir: str = "handoff", force: bool = False,
         if m := _CONVERTED_RE.match(first):
             converted.append({"file": f"prompts/{path.name}", "id": m.group(1),
                               "kind": m.group(2), "hint": _converted_hint(m.group(2))})
-    stale = _stale_reference_report(target)
+    # Plan 125: in the pointer-import case the note lives in the package's own CLAUDE.md;
+    # scan it like the target's files (the previous emit's span is stripped either way).
+    pkg_claude = pkg_dir / "CLAUDE.md"
+    extra = ((f"{_CURRENT_NAME}/CLAUDE.md", pkg_claude),) if pkg_claude.is_file() else ()
+    stale = _stale_reference_report(target, extra)
+    # Plan 125 (the field's FB-021): a distilled skill FILE is operator-owned and never
+    # refreshed, so the sentence a plugin release retired outlives it there. Scan every
+    # file the skills table points at (report-only; the operator edits on their word).
+    for sname, spath in _CURRENT.conn.execute(
+            "SELECT name, target_path FROM skills WHERE lifecycle_status = 'Approved'"
+            " AND target_path IS NOT NULL ORDER BY CAST(SUBSTR(id, 5) AS INTEGER)"):
+        sp = Path(str(spath))
+        sp = sp if sp.is_absolute() else target / sp
+        if sp.is_file():
+            stale += _scan_stale_lines(f"skill:{sname} ({spath})",
+                                       sp.read_text(encoding="utf-8", errors="replace"))
     # C24/D-8, carried into v3: v1-protocol instructions and dead relative links inside
     # package prompt files (migrated v1 prompts land there) misdirect the kickoff —
     # scan them like the target's agent-control files; never rewrite.
@@ -3637,7 +3795,7 @@ def handoff_emit(target_dir: str, subdir: str = "handoff", force: bool = False,
                     stale.append({"file": rel, "line": lineno, "text": m.group(1),
                                   "suggestion": "dead relative link from "
                                                 "<package>/prompts/ — fix the path"})
-    restated = _restated_content_report(target)
+    restated = _restated_content_report(target, extra)
     # Plan 028 (C34): the C22 detectors run over package prompt files too — a converted
     # prompt's hard-coded audit tally had drifted factually wrong with no signal.
     # Advisory only; never blocks emission (that strength stays G-INJECT's alone).
@@ -3802,7 +3960,11 @@ def handoff_emit(target_dir: str, subdir: str = "handoff", force: bool = False,
     return {"ok": True, "written": emitted, "unchanged": unchanged, "diverged": diverged,
             "prompt_library": library, "project_prompts": project,
             "converted_prompts": converted, "stale_references": stale,
-            "restated_content": restated, "warnings": warnings}
+            "restated_content": restated,
+            # plan 125 (v5.1): the declared markers verified against the stock history, and
+            # the project prompts that carry state by their size
+            "stock_merged": library.get("stock_merged", []), "oversized_prompts": oversized,
+            "warnings": warnings}
 
 
 # --------------------------------------------------------------------------- staged flows & export
