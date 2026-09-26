@@ -1,5 +1,6 @@
 ---
 name: package-writes
+user-invocable: false
 description: >-
   Use before any write to a Tamheed package (entity_upsert - full-row, substitute or retire items -
   progress_update, audit_record, work_bind, package_verify with record); before export_html or

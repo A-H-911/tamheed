@@ -180,6 +180,30 @@ class StoreMigrationTest(unittest.TestCase):
                          " ('WBS-1', 'DW-1', 'frobs')")
         conn.close()
 
+    def test_migration_007_handoff_lands(self):
+        """Plan 121 (v5.1): head is 7; `handoff` is a legal journal kind, the vocabulary stays
+        closed, the trigger pair survives the recreation, and skills carry `upstreamed_to`."""
+        conn = store.connect()
+        self.assertGreaterEqual(conn.execute("PRAGMA user_version").fetchone()[0], 7)
+        conn.execute("INSERT INTO entity_types (type_id, label, id_prefix, generation_class)"
+                     " VALUES ('progress-entry', 'Progress entry (PE-)', 'PE-', 'Continuous')")
+        conn.execute("INSERT INTO progress_entries (id, event_type, entry)"
+                     " VALUES ('PE-1', 'handoff', 'Resume at: the next slice')")
+        with self.assertRaises(Exception):   # closed vocabulary
+            conn.execute("INSERT INTO progress_entries (id, event_type, entry)"
+                         " VALUES ('PE-2', 'hand-off', 'e')")
+        self.assertEqual(conn.execute(
+            "SELECT entity_type FROM entity_index WHERE id='PE-1'").fetchone()[0],
+            "progress-entry")  # the trigger pair was recreated
+        cols = [r[1] for r in conn.execute("PRAGMA table_info(skills)")]
+        self.assertIn("upstreamed_to", cols)
+        self.assertEqual(cols[-1], "upstreamed_to")  # appended: the JSONL key lands last
+        conn.execute("INSERT INTO entity_types (type_id, label, id_prefix, generation_class)"
+                     " VALUES ('skill', 'Skill (SKL-)', 'SKL-', 'Continuous')")
+        conn.execute("INSERT INTO skills (id, name, title, lifecycle_status, upstreamed_to)"
+                     " VALUES ('SKL-1', 'writing-rows', 't', 'Obsolete', 'tamheed:package-writes')")
+        conn.close()
+
     def test_load_ignores_orphan_jsonl_of_dropped_table(self):
         """A data/ dir with a JSONL for a table the schema no longer declares loads
         without error — the contract a DROP TABLE migration (003) lands on. The orphan

@@ -1,5 +1,6 @@
 ---
 name: operator-interview
+user-invocable: false
 description: >-
   Use whenever something needs the operator — a decision that is theirs, an action only they can take,
   a confirmation or an approval (a scope change, a waiver, a forced transition, a lesson, a feedback

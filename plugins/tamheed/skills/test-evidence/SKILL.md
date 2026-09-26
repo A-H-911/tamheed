@@ -1,5 +1,6 @@
 ---
 name: test-evidence
+user-invocable: false
 description: >-
   Use BEFORE writing a test for a refusal, guard, limit, absence or error path; before recording a Met
   verdict whose evidence is a passing test or suite; and before accepting that an existing test proves

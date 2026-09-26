@@ -9,8 +9,11 @@ extension, registered end to end; `../db/migrations/003_skills.sql` (the skill f
 `Promoted` state, plan 036) continues the same chain, and `../db/migrations/004_amends_verify.sql`
 (plan 039) is the worked example of the two SMALLER extensions — a new trace relation (`amends`)
 and a new journal event kind (`integrity-verified`), each a CHECK recreation on an empty-at-connect
-table, and `../db/migrations/006_carries.sql` (plan 113, v5) repeats the relation case alone
-(`carries`, read by one advisory); `../db/migrations/005_feedback.sql` (the feedback family, plan 087) is the newest
+table, `../db/migrations/006_carries.sql` (plan 113, v5) repeats the relation case alone
+(`carries`, read by one advisory), and `../db/migrations/007_handoff.sql` (plan 121, v5.1) is the
+worked example of a CALLER-written event kind (`handoff`, returned by the `resume` block) beside the
+smallest extension of all — one nullable column (`skills.upstreamed_to`, `ALTER TABLE … ADD COLUMN`;
+every existing package's file for that table rewrites once, because every column serialises); `../db/migrations/005_feedback.sql` (the feedback family, plan 087) is the newest
 whole-family add and the shortest worked example: one table with its index triggers, a
 `ENTITY_TABLES` + `BASELINE_ENTITY_TYPES` row (`Continuous`, so no existing package fails G-SET),
 an `_PROSE_ID_EXEMPT_TABLES` decision, the catalog and governance rows, the naming template's
@@ -40,7 +43,7 @@ governance rule.
 | New project-type profile | Add a profile that biases selection + research depth (the `packages.profile` CHECK gains the value via a migration). | `artifact-rules.md`, `research-depth.md`, `../db/migrations/` |
 | New diagram kind | Extend the `diagrams.kind` CHECK via a migration + a generation note. | `../db/migrations/`, `generated-structure.md` |
 | New trace relation | Extend the `trace_edges.relation` CHECK via a migration (recreate the table — it is empty at connect time) AND add the endpoint rule to `RELATION_RULES` (the write-time + G-REL enforcement); teach it in `governance.md`/`traceability.md` and the governance template (lint 11 needle). `004_amends_verify.sql` + `amends` is the worked example. | `../db/migrations/`, `../server/tamheed_server.py` |
-| New journal event kind | Extend the `progress_entries.event_type` CHECK via a migration and add the name to `PE_EVENT_TYPES` (the teaching-lint roster, DDL-tied by test); a kind the SERVER witnesses joins `_SERVER_ONLY_EVENTS` so callers cannot narrate it. `integrity-verified` (004) is the worked example. | `../db/migrations/`, `../server/tamheed_server.py` |
+| New journal event kind | Extend the `progress_entries.event_type` CHECK via a migration and add the name to `PE_EVENT_TYPES` (the teaching-lint roster, DDL-tied by test); a kind the SERVER witnesses joins `_SERVER_ONLY_EVENTS` so callers cannot narrate it. `integrity-verified` (004) is the server-witnessed worked example; `handoff` (007, v5.1) the caller-written one — note the teaching lint checks only HYPHENATED `event_type` tokens, so a one-word kind is guarded by the DDL write-through test alone. | `../db/migrations/`, `../server/tamheed_server.py` |
 | New entry point | Build a thin wrapper that normalizes input and routes output to THIS skill. | a CLI / API / UI wrapper (in Claude Code the skill itself is the entry point) |
 
 New identifier prefixes live **on the registry row** (`id_prefix`) and in the new table's CHECK —

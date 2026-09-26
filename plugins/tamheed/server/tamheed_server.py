@@ -284,7 +284,8 @@ PE_EVENT_TYPES = frozenset({"work-done", "verdict-recorded", "transition",
                             "forced-override", "gate-decision", "escalation",
                             "correction", "note",
                             "lesson-confirmed", "lesson-promoted",
-                            "integrity-verified"})
+                            "integrity-verified",
+                            "handoff"})  # v5.1 (plan 121): where a session stopped
 # Plan 039 (findings_22, C43): events the SERVER appends — progress_update refuses
 # them from callers. The field data had five agent-written `lesson-confirmed` rows
 # beside the 58 server-appended ones: a vocabulary that never refuses a server-only
@@ -2783,7 +2784,13 @@ def readiness_check(scope: str = "package", id: str | None = None) -> dict:
         if conn.execute(f"SELECT 1 FROM {table} WHERE id = ?", (id,)).fetchone() is None:
             return _err(f"unknown {scope} id {id!r}")
         scope_id = id
-    return {"ok": True, **_readiness_report(conn, scope, scope_id)}
+    report = _readiness_report(conn, scope, scope_id)
+    out = {"ok": True, **report}
+    if any(r.get("severity") == "blocking" and r.get("status") == "fail"
+           for r in report.get("rules", [])):
+        # plan 120: a blocking failure is a STOP - the operator resolves it or waives it
+        out["skill"] = "tamheed:operator-interview"
+    return out
 
 
 # --------------------------------------------------------------------------- execution loop
@@ -2793,8 +2800,10 @@ def progress_update(entries: list[dict]) -> dict:
     'subject_id'?, 'actor'?, 'corrects'?, 'phase_id'?, 'slice_id'?}.
 
     v4 (plan 031): events are TYPED — event_type from {work-done, verdict-recorded,
-    transition, gate-decision, escalation, correction, note} (default 'note', the
-    deliberate escape hatch). The server-appended kinds — forced-override,
+    transition, gate-decision, escalation, correction, note, handoff} (default 'note', the
+    deliberate escape hatch; `handoff` (v5.1, plan 121) is where a session stopped — the
+    latest one comes back in the `resume` block of package_open/server_info and a stale
+    one is corrected, never edited). The server-appended kinds — forced-override,
     lesson-confirmed, lesson-promoted, integrity-verified — are REFUSED here (plan
     039): they record mechanical facts the server witnessed, never a caller's
     narration. subject_id names the entity the event is about; actor follows the
@@ -2833,7 +2842,29 @@ def progress_update(entries: list[dict]) -> dict:
         return _err(str(exc))
     if err := _commit():
         return err
-    return {"ok": True, "ids": ids}
+    out = {"ok": True, "ids": ids}
+    if any(isinstance(e, dict) and e.get("event_type") == "handoff" for e in entries):
+        out["skill"] = "tamheed:session-handoff"  # plan 120: the result names the discipline
+    return out
+
+
+# Plan 120 (v5.1, findings_32 Q1): in a crowded host most skill descriptions reach the model
+# name-only, so "load on relevance" cannot carry the discipline alone - the phase-start tool
+# RESULTS name the skill. audit_record maps each verdict's verification_method (the DDL's
+# closed vocabulary: auto-test | manual | inspection) to the evidence skill(s) whose test it
+# must survive - a green suite is test evidence AND, when it ran in CI, run attribution; a
+# manual or inspected verdict is a measurement. An absent method names all three.
+_ALL_EVIDENCE_SKILLS = ("tamheed:test-evidence", "tamheed:measurement-evidence",
+                        "tamheed:ci-evidence")
+_EVIDENCE_SKILLS = {
+    "auto-test": ("tamheed:test-evidence", "tamheed:ci-evidence"),
+    "manual": ("tamheed:measurement-evidence",),
+    "inspection": ("tamheed:measurement-evidence",),
+}
+
+
+def _evidence_skills(method) -> tuple[str, ...]:
+    return _EVIDENCE_SKILLS.get(method, _ALL_EVIDENCE_SKILLS)
 
 
 def audit_record(verdicts: list[dict]) -> dict:
@@ -2872,7 +2903,11 @@ def audit_record(verdicts: list[dict]) -> dict:
         return _err(str(exc))
     if err := _commit():
         return err
-    return {"ok": True, "ids": ids}
+    skills = sorted({s for v in verdicts for s in _evidence_skills(v.get("verification_method"))},
+                    key=_ALL_EVIDENCE_SKILLS.index)
+    return {"ok": True, "ids": ids,
+            # plan 120: the evidence skill(s) each verdict must survive, by verification_method
+            "skill": list(skills)}
 
 
 def work_bind(ref: str, entity_ids: list[str], note: str | None = None) -> dict:
@@ -3517,9 +3552,14 @@ def handoff_emit(target_dir: str, subdir: str = "handoff", force: bool = False,
         "`entity_export` file the tool wrote under `exports/`, never `data/*.jsonl` and "
         "never a pasted display. The HOW of every write, read and git crossing is the "
         "plugin's `tamheed:package-writes` skill — `tamheed:reading-the-record` before "
-        "citing a row, `tamheed:operator-interview` at every STOP, `tamheed:test-evidence` / "
-        "`tamheed:measurement-evidence` / `tamheed:ci-evidence` behind every verdict (they "
-        "load on relevance; this table stays here because it is mandatory). The scenario "
+        "citing a row, `tamheed:written-claims` before prose that states a mechanism or a "
+        "count, `tamheed:operator-interview` at every STOP, `tamheed:test-evidence` / "
+        "`tamheed:measurement-evidence` / `tamheed:ci-evidence` behind every verdict, and "
+        "`tamheed:session-handoff` before a compaction, at session end or on a handover: "
+        "write a `handoff` journal entry LAST — the `resume` block of `package_open` / "
+        "`server_info` returns the latest one, and `handoff-current` names a missing one "
+        "(invoke a skill by NAME when its description did not reach you; a tool result that "
+        "names one is the cue; this table stays here because it is mandatory). The scenario "
         "ceremonies are the plugin's operator-invoked slash skills (`/tamheed:orient-resume`, "
         "`/tamheed:slice-kickoff`, `/tamheed:progress-sync`, `/tamheed:slice-review`, "
         "`/tamheed:register-liveness`, …): "

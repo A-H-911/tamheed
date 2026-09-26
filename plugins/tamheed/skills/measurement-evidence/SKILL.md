@@ -1,5 +1,6 @@
 ---
 name: measurement-evidence
+user-invocable: false
 description: >-
   Use BEFORE trusting or reporting any measurement — a scan or grep returning zero, a green suite or
   run, a coverage or performance number, a detector or health check you built, a reproduction of a

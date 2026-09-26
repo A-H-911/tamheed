@@ -351,6 +351,19 @@ def gate_lint() -> None:
                                   f" != folder {p.parent.name!r}")
         if not re.search(r"^description:\s*\S", front, re.M):
             skill_problems.append(f"{rel}: no description in the frontmatter")
+        # Plan 120 (v5.1, findings_32 E13): the menu contract. A scenario is operator-invoked
+        # (`disable-model-invocation: true` - description out of context, in the `/` menu); a
+        # discipline skill is model-invoked (`user-invocable: false` - out of the menu, description
+        # in context). Every skill sets exactly one, except the two that take both routes.
+        dmi = bool(re.search(r"^disable-model-invocation:\s*true\s*$", front, re.M))
+        uinv = bool(re.search(r"^user-invocable:\s*false\s*$", front, re.M))
+        both_routes = p.parent.name in {"tamheed", "session-handoff"}
+        if both_routes and (dmi or uinv):
+            skill_problems.append(f"{rel}: takes both routes - neither flag belongs here")
+        elif not both_routes and dmi == uinv:
+            skill_problems.append(
+                f"{rel}: set exactly one of `disable-model-invocation: true` (a scenario) or"
+                f" `user-invocable: false` (a discipline skill) - found {'both' if dmi else 'neither'}")
         if (n := text.count("\n")) > 500:
             skill_problems.append(f"{rel}: {n} lines (keep SKILL.md under 500)")
         if "{package}" in text:
@@ -370,7 +383,7 @@ def gate_lint() -> None:
     if skill_problems:
         fail("skills lint (plan 114):\n  " + "\n  ".join(skill_problems))
     print(f"lint: {len(list(skills_dir.glob('*/SKILL.md')))} plugin skill(s) well-formed,"
-          " stack-neutral, placeholder paths resolve")
+          " stack-neutral, placeholder paths resolve, menu contract holds")
 
 
 def gate_canonical() -> None:

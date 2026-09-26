@@ -1978,6 +1978,41 @@ class McpContractTest(unittest.TestCase):
         self.assertEqual(gates["audit_evidence"]["evidenced"], 1)
         self.assertEqual(gates["audit_evidence"]["narrated"], 0)
 
+    def test_result_hints_name_the_discipline_skill(self):
+        """Plan 120 (v5.1, findings_32 Q1): in a crowded host skill descriptions arrive
+        name-only, so the phase-start RESULTS name the skill. audit_record maps each verdict's
+        free-text verification_method to the evidence skill(s); readiness_check names
+        operator-interview exactly when a blocking rule fails; progress_update names
+        session-handoff exactly when a handoff is written."""
+        make_complete_package("demo")
+        mapped = srv.audit_record([{"ac_id": "AC-001", "verdict": "Met", "evidence": "e",
+                                    "verification_method": "auto-test"}])
+        self.assertEqual(mapped["skill"], ["tamheed:test-evidence", "tamheed:ci-evidence"])
+        unmapped = srv.audit_record([{"ac_id": "AC-001", "verdict": "Met", "evidence": "e"}])
+        self.assertEqual(unmapped["skill"], ["tamheed:test-evidence",
+                                             "tamheed:measurement-evidence",
+                                             "tamheed:ci-evidence"])
+        two = srv.audit_record([   # the DDL's closed vocabulary: auto-test | manual | inspection
+            {"ac_id": "AC-001", "verdict": "Met", "evidence": "e", "verification_method": "inspection"},
+            {"ac_id": "AC-001", "verdict": "Met", "evidence": "e", "verification_method": "manual"}])
+        self.assertTrue(two["ok"], two)
+        self.assertEqual(two["skill"], ["tamheed:measurement-evidence"])
+        ready = srv.readiness_check("package")
+        blocking_fail = any(r["severity"] == "blocking" and r["status"] == "fail"
+                            for r in ready["rules"])
+        self.assertEqual("skill" in ready, blocking_fail)
+        if blocking_fail:
+            self.assertEqual(ready["skill"], "tamheed:operator-interview")
+        plain = srv.progress_update([{"entry": "did a thing", "event_type": "work-done",
+                                      "actor": "agent:test"}])
+        self.assertNotIn("skill", plain)
+        handoff = srv.progress_update([{"entry": "Resume at: AC-002", "event_type": "handoff",
+                                        "actor": "agent:test"}])
+        self.assertEqual(handoff["skill"], "tamheed:session-handoff")
+        row = srv.entity_query("progress-entry", id=handoff["ids"][0],
+                               columns=["event_type"])["rows"][0]
+        self.assertEqual(row["event_type"], "handoff")   # the 007 CHECK admits it
+
     def test_work_bind_stamps_last_referenced(self):
         make_complete_package("demo")
         result = srv.work_bind("commit abc123", ["FR-001", "AC-001"])
@@ -2274,8 +2309,8 @@ class V4EngineTest(unittest.TestCase):
         edge; the `deferred-work-carried` advisory lists Activated rows with no OPEN carrier
         (Review counts as open) - bind one, or close the row Done."""
         info = srv.server_info()                 # setUp created "demo" with PH-1 / SL-001
-        self.assertEqual(info["migrations_head"], "006_carries.sql")
-        self.assertEqual(info["schema_version"], 6)
+        self.assertEqual(info["migrations_head"], "007_handoff.sql")
+        self.assertEqual(info["schema_version"], 7)
         rules = lambda: {r["rule"]: r for r in srv.readiness_check("package")["rules"]}
         out = srv.entity_upsert([
             {"type": "deferred-work", "id": "DW-001", "title": "later", "severity": "low",

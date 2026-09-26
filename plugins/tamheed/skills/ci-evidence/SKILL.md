@@ -1,5 +1,6 @@
 ---
 name: ci-evidence
+user-invocable: false
 description: >-
   Use before stating that CI or a deploy is green, red or done; before recording an audit verdict,
   a gate-decision journal entry or a done-claim that rests on a CI run; before predicting whether a

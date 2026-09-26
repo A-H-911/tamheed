@@ -10,6 +10,9 @@ All notable changes to Tamheed are documented here. The format is based on
 
 ## [Unreleased]
 
+**The findings_32 batch (plans 120–128, in progress).** Migration `007_handoff.sql` ships: the
+`handoff` journal kind and `skills.upstreamed_to` (plan 121). The full entry is written at the release.
+
 ## [5.0.0] - 2026-09-25
 
 **MAJOR — the findings_31 batch: the instruction surface moves into plugin skills (plans 112–119;

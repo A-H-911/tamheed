@@ -1,5 +1,6 @@
 ---
 name: written-claims
+user-invocable: false
 description: >-
   Use before writing or merging prose that states a mechanism, a count, a sequence, a scope or a
   done-claim — a progress entry, a WBS done-clause, an audit verdict's evidence, a findings file, a

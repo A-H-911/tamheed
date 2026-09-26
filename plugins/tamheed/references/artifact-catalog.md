@@ -159,7 +159,7 @@ One `data/<table>.jsonl` file per non-empty family. Class = the registry's gener
 | deferred-work | `DW-` | Conditional | Postponed work with severity + activation trigger + invariant at stake; once Activated, the wbs-item that carries it says so with a `carries` edge (v5) — `deferred-work-carried` lists Activated rows no open item carries |
 | scope-change | `SC-` | Continuous | Drift record: Proposed → Approved → **Merged** (deltas applied to plan rows via scope_adds/scope_modifies/scope_removes edges; a RULING it touches via an `amends` edge — a `DEC-` merges by full-row upsert, an `ADR-` by supersession; Merged is set LAST, after every target is applied and re-read; scope-changes-merged advisory flags Approved-never-Merged) |
 | waiver | `WVR-` | Conditional | A named readiness rule satisfied for a named entity: justification + approver + expiry; reported as `waived`, never silent (v4 — the alternative is informal bypass) |
-| progress-entry | `PE-` | Continuous | Append-only TYPED journal: event_type (work-done/verdict-recorded/transition/gate-decision/escalation/correction/note from callers; forced-override/lesson-confirmed/lesson-promoted/integrity-verified are SERVER-appended only and refused from `progress_update`) + subject + actor + `corrects` compensation pointer |
+| progress-entry | `PE-` | Continuous | Append-only TYPED journal: event_type (work-done/verdict-recorded/transition/gate-decision/escalation/correction/note/handoff from callers — `handoff` (v5.1) is where a session stopped, returned as the `resume` block; forced-override/lesson-confirmed/lesson-promoted/integrity-verified are SERVER-appended only and refused from `progress_update`) + subject + actor + `corrects` compensation pointer |
 
 ### Prose & artifacts
 

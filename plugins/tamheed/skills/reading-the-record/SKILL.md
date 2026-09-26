@@ -1,5 +1,6 @@
 ---
 name: reading-the-record
+user-invocable: false
 description: >-
   Use before asserting what a requirement, decision, ADR, acceptance criterion or any register row
   says; before offering the operator an option; before calling a status, count or figure stale; and
