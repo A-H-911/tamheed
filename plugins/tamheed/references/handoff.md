@@ -158,8 +158,10 @@ project prompt over 300 lines or 24,576 bytes is named as carrying state (`overs
 every file the skills table points at is scanned for stale sentences (`stale_references`,
 `file: "skill:<name> (<path>)"`), including the retired "export_html flushes" claim; and the
 restated-content scan gained two detectors — a lifecycle word beside an id or an id range
-(`status-claim`) and a paragraph naming six or more ids of one family (`id-dense`). The tool-owned
-spans are stripped before every scan, and in the pointer-import case the package's own `CLAUDE.md`
+(`status-claim`) and a paragraph naming six or more ids of one family (`id-dense`, reported at the
+paragraph's first line). That scan runs over the target's `CLAUDE.md` / `AGENTS.md` and over EVERY
+`prompts/*.md` in the package — since 5.0 all of them are project-owned or leftovers, plus the stock
+guide. The tool-owned spans are stripped before every scan, and in the pointer-import case the package's own `CLAUDE.md`
 is scanned too. Since v5.2 (plan 130, the field's FB-024) the self-retracting stale-warning block
 lives beside the note — in the package's `CLAUDE.md` when the root imports it — never in a file the
 tool does not own; its text names agent-control, prompt and skill files (the scan's scope since

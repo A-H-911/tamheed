@@ -101,9 +101,12 @@ claude plugin marketplace update tamheed
 claude plugin update tamheed@tamheed      # "restart required to apply"
 ```
 
-Updated skills in a cached marketplace plugin need a **session restart** (`/reload-plugins` re-reads
-hooks and MCP servers, not cached skills) — after 5.0.0 the sixteen scenarios and the discipline skills
-arrive with the restart, no per-project step.
+Updated skills in a cached marketplace plugin arrive with `/reload-plugins` followed by
+`/reload-skills` — measured in the field on 5.1.0 (no restart; the model's skill listing showed the
+new set), and neither command is in Claude Code's published documentation, so a **session restart**
+remains the documented route. `/reload-plugins` re-reads hooks and MCP servers, and it fires the
+plugin's SessionStart hook as `SessionStart:resume` — the resume block appears right after the reload,
+not only at the next session start.
 
 (In a session: `/plugin marketplace update tamheed`, then `/plugin` → Installed → tamheed → update.)
 Reload or restart, then check `~/.claude/plugins/cache/tamheed/tamheed/<version>/` exists. If the
@@ -125,8 +128,11 @@ that is not the one in service.
    not**: it changes the handoff contract, the store stays v4-shaped (`schema_version` reads 6 after
    migration `006_carries.sql`, applied at connect with no operator step). **5.1.0 does not either**:
    `007_handoff.sql` (the `handoff` journal kind, `skills.upstreamed_to`) applies at connect,
-   `schema_version` reads 7, and `skills.jsonl` rewrites once on the first close — every column
-   serialises, so each row gains `"upstreamed_to": null`; commit it with the rest.
+   `schema_version` reads 7, and `skills.jsonl` rewrites once on the first store WRITE (every
+   table is written on every commit; the first `package_verify` before that write reads
+   `verified: false, dirty: ["skills.jsonl"]`, as the field measured) — every column serialises,
+   so each row gains `"upstreamed_to": null`; commit it with the rest. **5.2.0 changes no store
+   shape either**: no migration, `schema_version` stays 7, no JSONL rewrite.
    **If the holder is already gone** (the usual state after an upgrade: reloading ends the
    session that held the lock) there is nothing to `package_close()`. The refusal itself says
    what the store observed about the holder; `package_unlock(name)` reports it on demand, and

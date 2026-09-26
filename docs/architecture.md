@@ -239,13 +239,23 @@ sequenceDiagram
     S-->>A2: resume: {...}, skill: tamheed:package-writes
     A2->>S: readiness_check("package")
     S-->>A2: handoff-current: the work entries no handoff covers
+    A2->>S: entity_query(type, id)
+    S-->>A2: rows + skill: tamheed:reading-the-record (v5.2 - the row arrives with its cue)
+    A2->>S: handoff_emit(target)
+    S-->>A2: scans + skill: tamheed:written-claims (v5.2 - only when a scan found something)
+    A2->>S: entity_upsert(skill row: Obsolete + upstreamed_to)
+    S->>P: PE- transition signed system:skill-guard (v5.2)
 ```
 
 The hook is guarded (silent without a tamheed note in `CLAUDE.md` or behind one `@` import),
 lockless, screened, capped, and can never fail the session (one line, exit 0); its output is plain
 text because the plugin JSON-output path has a bug history. The review surface renders the same block
 as its Resume section. What v5.1 did NOT do: extend the obligations table (the handoff duty is a note
-sentence plus the advisory, so the marker stays `v5`), add a tool (19), or add a state file.
+sentence plus the advisory, so the marker stays `v5`), add a tool (19), or add a state file. v5.2
+(plans 129–135, the first field round on this surface) added two cues — every `entity_query` result
+and any `handoff_emit` finding name their skill, since the field measured that nothing loads without
+a result naming it — and the engine's `system:skill-guard` row on a skill row's lifecycle move; the
+hook prints up to 4,000 characters of the entry (the block's own cap).
 
 **Self-containment is a hard requirement, not a preference.** Claude Code copies the plugin directory to a
 cache on install, so anything the skill reads or invokes at runtime must live inside `plugins/tamheed/` with

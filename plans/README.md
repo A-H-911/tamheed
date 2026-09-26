@@ -176,6 +176,23 @@ devil's-advocate review; execution order is the row order below). Status values:
 | 089 | [Lab beat 18](089-lab-beat-18-findings-27.md) | 085-088 + full test (15/15 vs 0/15 on `v4.10.0`; 9 suites; selftest) | DONE `762b98b` — 9 new assertions, each failing on the pre-beat fixture; D-1 registry-sync unscripted, F-3 fixed |
 | 090 | [Release v4.11.0](090-release-v4110.md) — plan-058 recipe + the fixture follows the stamp | 089 | DONE — 2026-09-22, tag `v4.11.0` (SHA in the tag) |
 
+### Field cycle findings_33 -- plans 129-135 -> v5.2.0 (2026-09-26; maintainer-executed)
+
+Master record: [129-135-batch-findings-33.md](129-135-batch-findings-33.md) (the approved plan after a
+devil's-advocate review, 8 interview rulings R7–R14; execution order 129 → 130 → 131 → 132 → 133 → 134
+→ 135). The brief to the field project is a committed file, read by path:
+[briefs/acmp-5.2.0.md](briefs/acmp-5.2.0.md). Status values: PLANNED / IN PROGRESS / DONE.
+
+| # | Plan | Depends on | Status |
+|---|---|---|---|
+| 129 | [`stock_merged` verifies the whole declared release (FB-023)](129-stock-merged-whole-body.md) | — | DONE — 2026-09-26 `8a75914` |
+| 130 | [The stale-warning block's home, text and removal (FB-024)](130-stale-block-home-text-removal.md) | — | DONE — 2026-09-26 `b72296e` |
+| 131 | [Two more cues, the stranded rule's population, the skill guard](131-cues-populations-skill-guard.md) | — | DONE — 2026-09-26 `96506c3` |
+| 132 | [The sixteen and the forty-four rules, the template's pointer, the hook's caps (FB-025)](132-skills-template-hook-caps.md) | 131 | DONE — 2026-09-26 `9424a12` |
+| 133 | [Docs + diagrams sweep for v5.2.0](133-docs-and-diagrams-sweep-findings-33.md) | 129-132 | IN PROGRESS |
+| 134 | [The version stamp, then lab beat 24 + evals](134-stamp-then-lab-beat-24.md) | 133 + full gate | PLANNED |
+| 135 | [Tag v5.2.0, the brief file, close-out](135-release-v520.md) | 134 | PLANNED |
+
 ### Field cycle findings_32 -- plans 120-128 -> v5.1.0 (2026-09-26; maintainer-executed)
 
 Master record: [120-128-batch-findings-32.md](120-128-batch-findings-32.md) (the approved plan after a

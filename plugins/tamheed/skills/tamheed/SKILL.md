@@ -257,7 +257,11 @@ block (the latest `handoff` journal entry with its corrections, the work entries
 the open feedback and slices, the lock holder, the next step), and the plugin's SessionStart hook
 prints the same block into the model's context on every session start, clear and compaction. A
 session writes that handoff LAST before it stops (`tamheed:session-handoff`); `handoff-current`
-names one the journal has moved past. There is no state file to reconcile; humans review through
+names one the journal has moved past. A tool result is the cue that loads a discipline skill (the
+field measured that nothing loads without one): since v5.2 every `entity_query` result names
+`tamheed:reading-the-record` and any `handoff_emit` finding names `tamheed:written-claims`, beside
+the v5.1 cues on `package_open`/`server_info`, `audit_record`, `readiness_check` and the handoff
+write. There is no state file to reconcile; humans review through
 the rendered surfaces and changes enter through tools. Details: `references/state.md`.
 
 ## Extension points

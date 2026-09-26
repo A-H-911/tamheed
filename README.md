@@ -245,7 +245,9 @@ chain** (`verified_by`, `verification_method`, `against_commit`); the progress j
 events** corrected by compensating entries, never edited — since v5.1 a `handoff` entry says where a
 session stopped, and the latest one comes back as the **resume block** of `package_open` /
 `server_info` and through the plugin's SessionStart hook after every clear or compaction, with the
-`handoff-current` advisory naming a handoff the journal has moved past; genuine ambiguity is recorded in place as
+`handoff-current` advisory naming a handoff the journal has moved past (since v5.2 every `entity_query`
+result and any `handoff_emit` finding name the discipline skill to invoke, and a skill row's retirement
+is journalled by `system:skill-guard`); genuine ambiguity is recorded in place as
 `[NEEDS-CLARIFICATION: OQ-NNN]` markers that G-COMPLETE validates against live open questions. Typed
 relations are validated at write time too: a semantically wrong edge (say `TEST —mitigates→ FR`) is
 rejected with both endpoint types named, stored violations FAIL the blocking **G-REL** gate, and

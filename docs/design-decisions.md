@@ -146,3 +146,41 @@ alternatives rejected: a state file (the v1 mistake), an engine-managed live-sta
 (a committed copy that goes stale between emits), a PreCompact hook (it cannot inject; exit 2 blocks
 compaction), and JSON hook output (the plugin path's bug history). Record: plan
 [`120-128-batch-findings-32.md`](../plans/120-128-batch-findings-32.md).
+
+## 14. Four rulings from the first field round on the resume surface (2026-09-26, v5.2)
+
+The field ran v5.1 for a day and returned three defects and a measurement. Each ruling below was
+taken against evidence read at the path, not from the report.
+
+- **D-STOCK-BODY — a `stock-merged X.Y.Z` marker claims the whole body of X.Y.Z.** The v5.1 check
+  verified only the lines X.Y.Z added over the previous release, so a marker over a body three
+  releases older passed as soon as the newest increment alone was merged (38 of 62 lines absent,
+  `verified: true`). Every line of the declared body is required now, and each absent line is
+  attributed to the release that introduced it. Rejected: "increments only, both counts shown"
+  (never fails a partial merge) and "every increment from the first release" (demands lines a later
+  release removed). The check stays report-only because a customisation that rewrites stock lines
+  reads as absent — the marker states what the claim would need, not that the customisation is wrong.
+- **D-STALE-HOME — the stale-warning block lives beside the note, never in a file the tool does not
+  own.** In the pointer-import case v5.1 appended it to the root `CLAUDE.md` while the emission's own
+  warning said the root was untouched; it goes into the package's `CLAUDE.md` now, the warning names
+  the block's add/remove apart from the span, and removal is tail-aware so a stale → clean cycle is
+  byte-neutral. The block's text names the scan's scope (agent-control, prompt and skill files).
+- **D-CUES-2 — a tool result is the cue; the note is not.** Measured: no discipline skill loaded
+  without a tool result naming it, and the always-loaded note naming all eight cued nothing. v5.1's
+  "phase-start tools only" ruling was revisited on that evidence: every `entity_query` result names
+  `reading-the-record` (the row arrives with its cue), and `handoff_emit` names `written-claims`
+  exactly when a scan found something to fix; the `entity_export` file, a script's input, never
+  carries a cue. Rejected: naming skills on write results (the cue arrives after the write) and
+  leaving the two skills to the note alone (measured insufficient).
+- **D-SKILL-GUARD — the engine witnesses a skill row's moves.** A retirement (Obsolete +
+  `upstreamed_to`) was the one lifecycle move with no `system:` row; the field wrote its record by
+  hand. Now a `transition` signed `system:skill-guard` records a status change or a pointer's
+  arrival — never the insert (the promotion ceremony journals `lesson-promoted`), never an idle
+  re-send — and it counts toward `handoff-current` like every transition, which is why the
+  `session-handoff` skill orders the close-out: status moves, the handoff, the commit, the bind.
+
+Also decided without a diagram: the AGENTS template points at the note's obligations table instead
+of carrying a twin (one copy, no drift); the hook prints 25 lines / 4,000 characters of the entry
+(= the resume block's own cap); `lessons-stranded` measures the Promoted lessons; the brief to a
+field project is a committed file read by path, after paste damage in two consecutive cycles. Record:
+plan [`129-135-batch-findings-33.md`](../plans/129-135-batch-findings-33.md).
