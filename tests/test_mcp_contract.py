@@ -1317,11 +1317,13 @@ class McpContractTest(unittest.TestCase):
             root.write_text("# Root\n\nOperator text.\n", encoding="utf-8")
             agents = Path(target) / "AGENTS.md"
             agents.write_text("Use gate_run via the tamheed MCP tools.\n", encoding="utf-8")
-            srv.handoff_emit(target)
+            first = srv.handoff_emit(target)
+            self.assertNotIn("skill", first)                 # plan 131: no finding, no cue
             clean = root.read_bytes()                        # note appended, no block
             agents.write_text("Run validate_package.py before merging.\n",
                               encoding="utf-8")
-            srv.handoff_emit(target)
+            flagged = srv.handoff_emit(target)
+            self.assertEqual(flagged["skill"], "tamheed:written-claims")   # plan 131
             claude = root.read_text(encoding="utf-8")
             self.assertIn("<!-- tamheed:stale-warning -->", claude)
             self.assertIn("agent-control files, prompt files or skill files", claude)
@@ -2244,6 +2246,16 @@ class McpContractTest(unittest.TestCase):
         row = srv.entity_query("progress-entry", id=handoff["ids"][0],
                                columns=["event_type"])["rows"][0]
         self.assertEqual(row["event_type"], "handoff")   # the 007 CHECK admits it
+        # Plan 131 (v5.2, findings_33 Q1): the row arrives with its cue; the export file — a
+        # script's input — never carries it
+        q = srv.entity_query("requirement", limit=1)
+        self.assertEqual(q["skill"], "tamheed:reading-the-record")
+        exp = srv.entity_export("hint-probe.json", "entity_query",
+                                {"type": "requirement", "limit": 1})
+        self.assertTrue(exp["ok"], exp)
+        envelope = json.loads(Path(exp["path"]).read_text(encoding="utf-8"))
+        self.assertNotIn("skill", envelope["result"])
+        self.assertEqual(envelope["result"]["count"], 1)
 
     def test_resume_block_and_handoff_current(self):
         """Plan 122 (v5.1, findings_32 note 4): package_open and server_info carry the
@@ -2317,10 +2329,51 @@ class McpContractTest(unittest.TestCase):
             return next(r for r in srv.readiness_check("package")["rules"]
                         if r["rule"] == "lessons-stranded")
         self.assertEqual((rule()["status"], rule()["entities"]), ("fail", ["LL-001"]))
+        self.assertEqual(rule()["population"], {"table": "lessons", "rows": 1, "scoped": False,
+                                                "unit": "promoted lessons"})   # plan 131
         conn.execute("UPDATE skills SET upstreamed_to = 'tamheed:package-writes'"
                      " WHERE id = 'SKL-001'")
         conn.commit()
         self.assertEqual((rule()["status"], rule()["entities"]), ("pass", []))
+
+    def test_skill_lifecycle_moves_are_journalled_by_the_engine(self):
+        """Plan 131 (v5.2, findings_33 §4): a skill's status move and its retirement pointer
+        are engine-witnessed like a lesson's or a feedback row's — one `transition` row signed
+        `system:skill-guard`; never on INSERT (skill-promote journals that), never on an idle
+        re-send; a partial row that omits lifecycle_status reads as unchanged; and the row
+        counts toward handoff-current like every other transition."""
+        make_complete_package("demo")
+
+        def journal_n():
+            return srv.entity_query("progress-entry", limit=1)["total"]
+        n0 = journal_n()
+        born = srv.entity_upsert([{"type": "skill", "id": "SKL-001", "name": "writing-rows",
+                                   "title": "Writing rows"}])
+        self.assertTrue(born["ok"], born)
+        self.assertNotIn("skill_audit", born["items"][0])
+        self.assertEqual(journal_n(), n0)
+        srv.progress_update([{"entry": "Resume at: AC-001", "event_type": "handoff",
+                              "actor": "agent:test"}])
+        retired = srv.entity_upsert([{"type": "skill", "id": "SKL-001", "name": "writing-rows",
+                                      "title": "Writing rows", "lifecycle_status": "Obsolete",
+                                      "upstreamed_to": "tamheed:package-writes"}])   # partial
+        self.assertTrue(retired["ok"], retired)
+        pe = retired["items"][0]["skill_audit"]
+        row = srv.entity_query("progress-entry", id=pe)["rows"][0]
+        self.assertEqual((row["event_type"], row["actor"], row["subject_id"]),
+                         ("transition", "system:skill-guard", "SKL-001"))
+        self.assertIn("SKILL SKL-001 -> Obsolete (was ", row["entry"])
+        self.assertIn("upstreamed_to tamheed:package-writes", row["entry"])
+        n1 = journal_n()
+        again = srv.entity_upsert([{"type": "skill", "id": "SKL-001", "name": "writing-rows",
+                                    "title": "Writing rows",
+                                    "upstreamed_to": "tamheed:package-writes"}])
+        self.assertTrue(again["ok"], again)
+        self.assertNotIn("skill_audit", again["items"][0])       # idle: nothing moved
+        self.assertEqual(journal_n(), n1)
+        hc = next(r for r in srv.readiness_check("package")["rules"]
+                  if r["rule"] == "handoff-current")
+        self.assertEqual((hc["status"], hc["entities"]), ("fail", [pe]))   # behind by one
 
     def test_work_bind_stamps_last_referenced(self):
         make_complete_package("demo")

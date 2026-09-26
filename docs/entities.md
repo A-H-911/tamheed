@@ -1155,7 +1155,7 @@ family).
 | `target_path` | TEXT | Where the `SKILL.md` was written |
 | `lifecycle_status` | NOT NULL DEFAULT `Approved`; CHECK: `Approved` / `Superseded` / `Obsolete` | Born Approved — the interview IS the approval |
 | `superseded_by` | FK → `skills(id)` | A re-distillation is a NEW row, never an edit |
-| `upstreamed_to` | TEXT (v5.1, `007_handoff.sql`) | The plugin skill that absorbed a retired project skill (`tamheed:package-writes`) — `superseded_by` can only name another `SKL-` row, and a plugin skill has none. With either pointer set, the Promoted lessons that still point at the retired row (`promoted_to` is immutable) stay reachable; the `lessons-stranded` advisory names the rest |
+| `upstreamed_to` | TEXT (v5.1, `007_handoff.sql`) | The plugin skill that absorbed a retired project skill (`tamheed:package-writes`); its arrival, like any status move on this table, is journalled by `system:skill-guard` (v5.2) — `superseded_by` can only name another `SKL-` row, and a plugin skill has none. With either pointer set, the Promoted lessons that still point at the retired row (`promoted_to` is immutable) stay reachable; the `lessons-stranded` advisory names the rest |
 
 **Purpose.** Procedural memory, distilled from lessons. The package carries a
 three-generation memory: the episodic `PE-` journal (what happened), the declarative `LL-`

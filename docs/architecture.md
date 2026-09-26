@@ -205,7 +205,7 @@ flowchart LR
     NOTE -.->|names| DISC
     NOTE -.->|names| SCEN
     NOTE -.->|the skills line| PROJ
-    RES["tool results (v5.1)<br/>audit_record, readiness_check, progress_update, package_open/server_info"] -.->|"skill: tamheed:name"| DISC
+    RES["tool results (v5.1, v5.2)<br/>audit_record, readiness_check, progress_update, package_open/server_info,<br/>entity_query (every row), handoff_emit (any finding)"] -.->|"skill: tamheed:name"| DISC
 ```
 
 In a crowded host most skill descriptions reach the model **name-only** (the field measured 389 of

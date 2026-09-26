@@ -25,6 +25,22 @@ All notable changes to Tamheed are documented here. The format is based on
   skill files (the scan's scope), not "v1 references" and "the v1 tree". Removal is tail-aware:
   a stale → clean cycle leaves the file byte-identical (5.1 left two extra newlines).
 
+### Added
+- **Two more results name their discipline skill** (plan 131, findings_33 Q1 — measured: no
+  discipline skill loaded without a tool result naming it, and the note naming all eight cued
+  none). `entity_query` carries `skill: tamheed:reading-the-record` on every result — the row
+  arrives with its cue; the `entity_export` file, a script's input, never carries it.
+  `handoff_emit` carries `skill: tamheed:written-claims` exactly when a scan found something to
+  fix (restated content, a stale reference, an oversized prompt, an unverified marker).
+- **`system:skill-guard`** (plan 131, findings_33 §4): a skill row's `lifecycle_status` move, and
+  the arrival of `upstreamed_to` or `superseded_by`, is journalled by the engine as a `transition`
+  (result key `skill_audit`) — never on the row's insert, never on an idle re-send; an omitted
+  `lifecycle_status` reads as unchanged. It counts toward `handoff-current` like every transition.
+
+### Changed
+- **`lessons-stranded` measures the Promoted lessons** (plan 131): its `population` is
+  `{table: lessons, unit: "promoted lessons"}`, not the whole table the join reads.
+
 ## [5.1.0] - 2026-09-26
 
 **MINOR — the findings_32 batch: the resume surface, the menu contract, and the five notes (plans

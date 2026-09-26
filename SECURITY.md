@@ -86,6 +86,8 @@ report a problem.
   the same verdict; identity columns are frozen.
 - **Every engine-written journal row is signed `system:<component>`** — `work_bind`'s was the one
   anonymous row (found in the field's journal, v4.13); a caller can never write a `system:` actor.
+  v5.2 closes the last unwitnessed move: a skill row's status change and its retirement pointer
+  are journalled by `system:skill-guard` (the field had written that record by hand).
 - **A feedback row is journaled at every move** — entering the bound set and leaving it on the
   operator's word (v4.11), and the bookkeeping moves within it (v4.13: `Confirmed → Reported`,
   `Reported → Resolved`); the row says which it was and never claims a word it did not get.

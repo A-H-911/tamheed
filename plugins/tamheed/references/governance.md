@@ -121,7 +121,10 @@ distilled into a skill: Approved → Promoted only, `promoted_to` names the `SKL
 retired (Superseded or Obsolete) stays reachable only through a pointer on that row —
 `superseded_by` (a successor `SKL-`) or `upstreamed_to` (v5.1: the plugin skill that absorbed
 it, e.g. `tamheed:package-writes`); the `lessons-stranded` advisory names the Promoted lessons
-behind a retired row that carries neither. A wrong sentence in a distilled skill FILE is the
+behind a retired row that carries neither. Since v5.2 the engine witnesses the move: a skill
+row's `lifecycle_status` change, and the arrival of either pointer, is journalled as a
+`transition` signed `system:skill-guard` — never on the row's insert (the promotion ceremony
+journals `lesson-promoted`), never on an idle re-send. A wrong sentence in a distilled skill FILE is the
 operator's hand-edit plus a `correction` journal entry naming the row, never a re-distillation
 (that is for a change in the lesson SET) and never a note on the pointer.
 

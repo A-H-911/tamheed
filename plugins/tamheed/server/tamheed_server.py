@@ -1328,7 +1328,8 @@ def entity_export(path: str, tool: str = "entity_query", args: dict | None = Non
         "version": server_info()["version"], "package": _CURRENT_NAME, "tool": tool,
         "args": args, "digest": _canonical_digest(in_memory),
         "memory_matches_disk": in_memory == on_disk},
-        "result": result}
+        # plan 131: a script's input never carries a model cue (and never churns for one)
+        "result": {k: v for k, v in result.items() if k != "skill"}}
     if "count" in result and "total" in result:
         # plan 067: the FILE says whether it is short - a reader should not have to
         # re-derive it from count/total/next_after (still deterministic: no clock)
@@ -1701,6 +1702,24 @@ def entity_upsert(entities: list[dict]) -> dict:
                 results.append({"index": i, "ok": False, "id": cols["id"], "error": err})
                 failed = True
                 continue
+        # Plan 131 (v5.2, findings_33 §4): a skill's lifecycle move was the one status change
+        # the engine did not witness — the field wrote its retirement record by hand. The
+        # feedback guard's stored-vs-incoming compare, journaled after the write lands; never
+        # on INSERT (skill-promote journals `lesson-promoted`), never on an idle re-send, and
+        # an omitted lifecycle_status reads as unchanged (the field's retirements were partial rows).
+        skill_pe = None
+        if etype == "skill" and cols.get("id"):
+            sk_stored = conn.execute(
+                "SELECT lifecycle_status, upstreamed_to, superseded_by FROM skills WHERE id = ?",
+                (cols["id"],)).fetchone()
+            if sk_stored is not None:
+                sk_was = sk_stored[0]
+                sk_now = cols.get("lifecycle_status", sk_was)
+                pointers = [(c, cols.get(c))
+                            for j, c in enumerate(("upstreamed_to", "superseded_by"), 1)
+                            if cols.get(c) and sk_stored[j] is None]
+                if sk_now != sk_was or pointers:
+                    skill_pe = (sk_was, sk_now, pointers)
         if expect_unchanged is not None:
             # Plan 041 (findings_24 / the field's LL-063): a full-row write that only
             # means to flip a status names the columns it did NOT mean to change; the
@@ -1944,6 +1963,18 @@ def entity_upsert(entities: list[dict]) -> dict:
                         (pe_id, "transition", entry, cols.get("id"), "system:feedback-guard",
                          _now()))
                     res["feedback_audit"] = pe_id
+                if skill_pe:
+                    # Plan 131: the engine witnesses the move; a caller can never sign system:.
+                    sk_was, sk_now, pointers = skill_pe
+                    pe_id = _next_id("PE-", "progress_entries")
+                    conn.execute(
+                        "INSERT INTO progress_entries (id, event_type, entry,"
+                        " subject_id, actor, occurred_at) VALUES (?, ?, ?, ?, ?, ?)",
+                        (pe_id, "transition",
+                         f"SKILL {cols['id']} -> {sk_now} (was {sk_was})"
+                         + "".join(f"; {c} {v}" for c, v in pointers),
+                         cols.get("id"), "system:skill-guard", _now()))
+                    res["skill_audit"] = pe_id
                 results.append(res)
         except Exception as exc:  # IntegrityError carries the constraint name
             conn.execute(f"ROLLBACK TO item{i}")
@@ -2084,6 +2115,10 @@ def entity_query(type: str, id: str | None = None, status: str | None = None,
             page_params).fetchone()[0]
     out = {"ok": True, "rows": rows, "count": len(rows), "total": total,
            "next_after": next_after}
+    # Plan 131 (v5.2, findings_33 Q1): the row arrives with its cue. Measured in the field: no
+    # discipline skill loaded without a tool result naming it, and the always-loaded note
+    # naming all eight cued none — reading-the-record was named by no result at all.
+    out["skill"] = "tamheed:reading-the-record"
     # Plan 068: a row cut announces itself through `total`; a projection announced
     # nothing, and `search` never said WHERE it matched (it reads every TEXT column,
     # custom_attributes included). Top-level siblings of `rows`, never per-row keys.
@@ -2768,6 +2803,12 @@ def _readiness_report(conn, scope: str, scope_id: str | None) -> dict:
                  " `superseded_by` (a successor SKL- row) or `upstreamed_to` (the plugin"
                  " skill that absorbed it, e.g. `tamheed:package-writes`) on the operator's"
                  " word — the lessons stay Promoted; the pointer is what makes them reachable")
+            # Plan 131 (v5.2, findings_33 §4): the population is the Promoted lessons — the
+            # rows a retired skill can strand — not the whole lessons table the join reads.
+            (promoted,) = conn.execute("SELECT COUNT(*) FROM lessons"
+                                       " WHERE lifecycle_status = 'Promoted'").fetchone()
+            rules[-1]["population"] = {"table": "lessons", "rows": promoted,
+                                       "scoped": False, "unit": "promoted lessons"}
         gate_where, gate_params = "applies_to IS NULL", ()
     elif scope == "phase":
         rule("acs-met", "blocking",
@@ -4002,14 +4043,20 @@ def handoff_emit(target_dir: str, subdir: str = "handoff", force: bool = False,
         emitted.append("CLAUDE.md")
     else:
         unchanged.append("CLAUDE.md")
-    return {"ok": True, "written": emitted, "unchanged": unchanged, "diverged": diverged,
-            "prompt_library": library, "project_prompts": project,
-            "converted_prompts": converted, "stale_references": stale,
-            "restated_content": restated,
-            # plan 125 (v5.1): the declared markers verified against the stock history, and
-            # the project prompts that carry state by their size
-            "stock_merged": library.get("stock_merged", []), "oversized_prompts": oversized,
-            "warnings": warnings}
+    out = {"ok": True, "written": emitted, "unchanged": unchanged, "diverged": diverged,
+           "prompt_library": library, "project_prompts": project,
+           "converted_prompts": converted, "stale_references": stale,
+           "restated_content": restated,
+           # plan 125 (v5.1): the declared markers verified against the stock history, and
+           # the project prompts that carry state by their size
+           "stock_merged": library.get("stock_merged", []), "oversized_prompts": oversized,
+           "warnings": warnings}
+    # Plan 131 (v5.2, findings_33 Q1): every finding above is a sentence in prose to fix —
+    # the result names the skill for that, exactly when there is something to fix.
+    if (restated or stale or oversized
+            or any(not c["verified"] for c in library.get("stock_merged", []))):
+        out["skill"] = "tamheed:written-claims"
+    return out
 
 
 # --------------------------------------------------------------------------- staged flows & export
