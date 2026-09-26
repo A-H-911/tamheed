@@ -1,6 +1,9 @@
 # Tamheed v5.2.0 — the findings_33 batch: the two field defects, the sixteen (and forty-four) rules, the cues that never fired
 
-Status: **IN PROGRESS** — index section "Field cycle findings_33" in [README.md](README.md). Execution
+Status: **EXECUTED — v5.2.0 tagged on the release commit (this record's commit; CI green),
+2026-09-26** — index section "Field cycle findings_33" in [README.md](README.md). Commits: 129
+`8a75914`, 130 `b72296e`, 131 `96506c3`, 132 `9424a12`, 133 `8975009`, 134 `7107122`; 135 = the
+close-out commit that carries this record, the brief and the index — the tag sits on it. Execution
 order 129 → 130 → 131 → 132 → 133 → 134 → 135 (129/130/131 have no dependency; 132 needs 131's wording;
 133 needs 129–132; 134 needs 133; 135 needs all).
 
@@ -69,9 +72,9 @@ tag ordering; the README history key; the sub-agent's list).
 | 130 | [The stale-warning block's home, text and removal](130-stale-block-home-text-removal.md) | DONE `b72296e` |
 | 131 | [Two more cues, the stranded rule's population, the skill guard](131-cues-populations-skill-guard.md) | DONE `96506c3` |
 | 132 | [The sixteen and the forty-four rules, the template's pointer, the hook's caps](132-skills-template-hook-caps.md) | DONE `9424a12` |
-| 133 | [Docs + diagrams sweep](133-docs-and-diagrams-sweep-findings-33.md) | IN PROGRESS |
-| 134 | [The version stamp, then lab beat 24 + evals](134-stamp-then-lab-beat-24.md) | PLANNED |
-| 135 | [Tag v5.2.0, the brief file, close-out](135-release-v520.md) | PLANNED |
+| 133 | [Docs + diagrams sweep](133-docs-and-diagrams-sweep-findings-33.md) | DONE `8975009` |
+| 134 | [The version stamp, then lab beat 24 + evals](134-stamp-then-lab-beat-24.md) | DONE `7107122` |
+| 135 | [Tag v5.2.0, the brief file, close-out](135-release-v520.md) | DONE — the release commit; tag `v5.2.0` |
 
 Execution notes (owned as they land): (1) plan 129's `prompts/README.md` wording was reverted before
 its commit — the guide is a stock body with history and lint 9 requires it to equal its newest key,

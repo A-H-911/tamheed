@@ -189,9 +189,9 @@ devil's-advocate review, 8 interview rulings R7–R14; execution order 129 → 1
 | 130 | [The stale-warning block's home, text and removal (FB-024)](130-stale-block-home-text-removal.md) | — | DONE — 2026-09-26 `b72296e` |
 | 131 | [Two more cues, the stranded rule's population, the skill guard](131-cues-populations-skill-guard.md) | — | DONE — 2026-09-26 `96506c3` |
 | 132 | [The sixteen and the forty-four rules, the template's pointer, the hook's caps (FB-025)](132-skills-template-hook-caps.md) | 131 | DONE — 2026-09-26 `9424a12` |
-| 133 | [Docs + diagrams sweep for v5.2.0](133-docs-and-diagrams-sweep-findings-33.md) | 129-132 | IN PROGRESS |
-| 134 | [The version stamp, then lab beat 24 + evals](134-stamp-then-lab-beat-24.md) | 133 + full gate | PLANNED |
-| 135 | [Tag v5.2.0, the brief file, close-out](135-release-v520.md) | 134 | PLANNED |
+| 133 | [Docs + diagrams sweep for v5.2.0](133-docs-and-diagrams-sweep-findings-33.md) | 129-132 | DONE — 2026-09-26 `8975009` |
+| 134 | [The version stamp, then lab beat 24 + evals](134-stamp-then-lab-beat-24.md) | 133 + full gate (suites; lints; canonical; evals 3/3 incl. 5 new assertions) | DONE — 2026-09-26 `7107122` (stamp before the beat; M8 through Claude Code PASS) |
+| 135 | [Tag v5.2.0, the brief file, close-out](135-release-v520.md) | 134 | DONE — 2026-09-26, tag `v5.2.0` on the release commit (CI green); the brief is a committed file read by path |
 
 ### Field cycle findings_32 -- plans 120-128 -> v5.1.0 (2026-09-26; maintainer-executed)
 
