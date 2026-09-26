@@ -631,6 +631,54 @@ must fire; the resulting package replaces `evals/sample-results/lab-tracker/pack
       `gate_run` ready; `package_verify()` green (`verified: true`, `dirty: []`, `foreign: []`,
       `review_current: true`); `package_close`; no `data/.lock` remains.
 
+24. **The v5.2.0 continuation — the first field round's fixes.** The package opens at
+    `schema_version` 7 (no migration in 5.2.0) with the resume block naming beat 23's final
+    handoff. The agent reads a skill row and is cued by the result, retires the lab's project skill
+    behind its plugin twin with a PARTIAL row and watches the engine journal it, sees the handoff
+    fall behind by exactly that row, refreshes the guide to 5.2.0, and writes the real handoff
+    LAST. The scratch phase fires what must never touch the fixture: the false marker over an old
+    body, the stale skill sentence behind a pointer, the byte-clean cycle, the hook.
+    ✔ THE CUES (plan 131): `entity_query("skill", id="SKL-001")` carries `skill:
+      "tamheed:reading-the-record"`; the `entity_export` of the same query (scratch phase) carries
+      no `skill` in its `result`; `handoff_emit` with nothing to fix carries no `skill`, and with a
+      finding carries `skill: "tamheed:written-claims"`.
+    ✔ THE SKILL GUARD (plan 131): `entity_upsert` of `SKL-001` as a partial row (`lifecycle_status:
+      "Obsolete"`, `upstreamed_to: "tamheed:reading-the-record"`) returns `skill_audit: <PE-id>`;
+      that entry reads `event_type: transition`, `actor: system:skill-guard`, `subject_id:
+      SKL-001`, `SKILL SKL-001 -> Obsolete (was Approved); upstreamed_to tamheed:reading-the-record`;
+      `lessons-stranded` reads `pass` with `population.unit: "promoted lessons"` (the one Promoted
+      `LL-001` reachable through the pointer); `handoff-current` reads `fail` with exactly that
+      entry as its one entity and the resume block reads `handoff_behind: 1`; an idle re-send of
+      the row returns no `skill_audit` and journals nothing.
+    ✔ THE EMISSION (plans 129, 130, 134): `handoff_emit(<scratch target>, refresh_stock=true)`
+      reports `refreshed: ["prompts/README.md"]` (the guide now reads `tamheed v5.2.0` and names
+      the `entity_query` cue), `stock_merged: []`, `oversized_prompts: []`, `stale_references: []`
+      (the retired skill's file is no longer scanned: Approved rows only), `restated_content: []`,
+      no `skill` key; the scratch `CLAUDE.md` carries no stale-warning block and no skills line at
+      all (no Approved skill remains once `SKL-001` is retired; `SKL-002` was already Obsolete).
+    ✔ THE SCRATCH PHASE (plans 129, 130, 132), on a COPY outside the repository — **nothing here is
+      written to the fixture**: the lab skill re-Approved on the copy with a clean file under the
+      target, then a clean pointer emit first (root `# Lab` + the heading + `@package/CLAUDE.md`;
+      the package's `CLAUDE.md` bytes captured). Then the guide rewritten as the 5.0.0 body +
+      5.2.0's increment + `<!-- tamheed:stock-merged 5.2.0 -->`, and the skill file carrying
+      `work_bind, export_html and handoff_emit all flush JSONL` → `stock_merged: [{declared:
+      "5.2.0", verified: false, delta_missing: "0/9", missing_by_release: {"5.1.0": 11}}]`, one
+      `stale_references` entry, `skill: "tamheed:written-claims"`, the block in the PACKAGE's
+      `CLAUDE.md`, the root's bytes unchanged, the warning `is current there; the stale-warning
+      block was added there; the root file was left untouched`; a second emit writes nothing and
+      leaves the bytes; the guide restored and the sentence fixed → no findings, no `skill`, the
+      package file byte-identical to the clean emit, the warning `the stale-warning block was
+      removed there`. The hook run with `source:
+      "compact"` over the final handoff prints the whole entry under the 4,000-character cap; exit 0.
+    ✔ Close the beat with ONE `progress_update` note (actor `agent:lab-beat-24`, `event_type:
+      "note"`) quoting verbatim `schema_version 7`, `skill reading-the-record`,
+      `system:skill-guard`, `promoted lessons`, `behind by one`, `tamheed v5.2.0`, `no stale-warning
+      block`; THEN the final handoff (`event_type: "handoff"`, written LAST — `handoff-current`
+      reads `pass`); then `export_html` (review.html carries the Resume section, the new latest
+      handoff and `promoted lessons` in the readiness table); `gate_run` ready; `package_verify()`
+      green (`verified: true`, `dirty: []`, `foreign: []`, `review_current: true`); `package_close`;
+      no `data/.lock` remains.
+
 **Pass bar:** every ✔ observed; `gate_run` ready (or failing ONLY on deliberately-open
 items the scenario names); the eval runner's lab checks green. `readiness_check` is
 expectedly NOT ready on the scenario's deliberately-open items (AC-003 and, since beat

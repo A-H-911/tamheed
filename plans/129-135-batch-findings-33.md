@@ -28,7 +28,8 @@ once), and the server is not plugin-hosted in-process (so `.mcp.json` is written
 | M5 | `entity_query` result keys | `count, next_after, ok, rows, total` | + `skill` |
 | M6 | The hook (script) over the copied `PE-1473` (1,735 chars, 12 lines) | the whole entry, 21 lines, no marker | same (cap 4,000 after 132) |
 | M7 | Byte-identity cycle (stale → stale → clean), non-pointer and pointer | — (5.1: two extra newlines; root written in the pointer case) | pinned by two contract tests: bytes identical; root constant; second stale emit `unchanged` |
-| M8 | The 4,000-char entry through Claude Code (`--plugin-dir`, the M6 recipe of 5.1) | — | **pending — plan 134** |
+| M8 | The 4,000-char entry through Claude Code (`--plugin-dir`, the M6 recipe of 5.1) | — | **PASS** 2026-09-26: a 3,615-char, 16-line handoff (`PE-048` on a scratch copy) written into a scratch project; `claude --plugin-dir plugins/tamheed -p …` quoted the block's first line and the entry's LAST line (`Line 15 …`) verbatim and answered "no" to a `for the rest` marker — Claude Code did not cut a block that size (U1 settled; the docs are silent on a cap) |
+| M9 | Lab beat 24 (plan 134) | — | every class held on the second run; the first run's phase B compared bytes across a legitimate span change (owned in plan 134); evidence `evidence/lab-continuation-report-134-2026-09-26.md` |
 
 Skill file sizes after 132 (lines): measurement-evidence 165, written-claims 136, reading-the-record 141,
 ci-evidence 114, operator-interview 138, test-evidence 132, package-writes 208, session-handoff 91;

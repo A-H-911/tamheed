@@ -10,6 +10,15 @@ All notable changes to Tamheed are documented here. The format is based on
 
 ## [Unreleased]
 
+## [5.2.0] - 2026-09-26
+
+**MINOR — the findings_33 batch: the first field round on the resume surface (plans 129–135; field
+report findings_33, `FB-023`–`FB-025`).** The field ran 5.1.0 for a day: every prediction held, the
+resume block came back byte-identical through the hook and the tool, and three rows came upstream —
+a marker check that passed the case it was built to catch, a warning block written into a file the
+tool does not own, and sixteen rules the discipline twins lacked — plus one measurement: no
+discipline skill loaded without a tool result naming it. No migration; `schema_version` stays 7.
+
 ### Fixed
 - **`handoff_emit`'s `stock_merged` check verifies the whole declared release** (plan 129, the
   field's FB-023). The 5.1 check required only the lines the declared release ADDED over the

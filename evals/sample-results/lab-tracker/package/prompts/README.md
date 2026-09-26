@@ -1,4 +1,4 @@
-# How to use this folder — the `package` prompt guide (tamheed v5.1.0)
+# How to use this folder — the `package` prompt guide (tamheed v5.2.0)
 
 This folder holds the **project's own prompts** for the `package` Tamheed package — plus
 this guide. Since v5.0.0 the stock scenarios are no longer files here: they are the tamheed
@@ -11,7 +11,8 @@ per project. Two kinds of thing live in this folder:
   out of every future refresh — the emission warning names how far the stock has since
   moved (`stock_last_changed`); to carry a release's improvements into a customised copy,
   hand-merge from the bundled `stock-history.json` and say so IN the file with a line
-  `<!-- tamheed:stock-merged X.Y.Z -->` (reported as your declaration, never verified).
+  `<!-- tamheed:stock-merged X.Y.Z -->` — verified against the bundled history: every line of
+  release X.Y.Z must be present, and the emission names the releases whose lines are absent.
 - **Your project prompts** — any other filename. Operator-owned; tamheed never touches
   them. Name them by purpose, kebab-case (`kickoff.md`, `phase3-resume.md`). The
   `prompt-ids-resolve` readiness rule scans them (never a stock body): every id written in
@@ -58,8 +59,12 @@ git crossing), `tamheed:reading-the-record` (before citing a row), `tamheed:writ
 `tamheed:test-evidence` / `tamheed:measurement-evidence` / `tamheed:ci-evidence` (what a
 verdict's evidence must survive), and `tamheed:session-handoff` (write the handoff LAST before a
 compaction, at session end or on a handover — it also answers to `/tamheed:session-handoff`).
-In a crowded host their descriptions may reach the model name-only; the `CLAUDE.md` note and
-the tool results name the one to invoke — invoke it by name. The plugin's SessionStart hook
+In a crowded host their descriptions may reach the model name-only; the tool results name the
+one to invoke — invoke it by name: `package_open`/`server_info` name `tamheed:package-writes`,
+every `entity_query` result names `tamheed:reading-the-record`, `readiness_check` names
+`tamheed:operator-interview` on a blocking failure, `audit_record` names the evidence skill for
+the verdict's method, a handoff write names `tamheed:session-handoff`, and `handoff_emit` names
+`tamheed:written-claims` whenever a scan found something to fix (v5.2). The plugin's SessionStart hook
 prints the package's resume block (the latest handoff and what followed it) into every new
 session, clear and compaction; `package_open` and `server_info` return the same block.
 

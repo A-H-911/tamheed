@@ -1838,7 +1838,7 @@
             "{case_dir}/package"
           ],
           "expect_exit": 0,
-          "expect_substring": "handoff=PE-044 behind=0"
+          "expect_substring": "handoff=PE-047 behind=0"
         },
         {
           "check": "handoff-current passes on the recorded package - the journal did not move past the final handoff (plan 122).",
@@ -1911,6 +1911,69 @@
             "grep-tree-present",
             "{case_dir}/package/prompts",
             "eight **discipline skills**"
+          ],
+          "expect_exit": 0
+        },
+        {
+          "check": "The guide followed the 5.2.0 stamp: refresh_stock carried it to the body that names the entity_query cue (plans 131, 134).",
+          "cmd": [
+            "python",
+            "evals/pkg_check.py",
+            "grep-tree-present",
+            "{case_dir}/package/prompts",
+            "tamheed v5.2.0"
+          ],
+          "expect_exit": 0
+        },
+        {
+          "check": "The engine journalled the lab skill's retirement: a transition signed system:skill-guard naming the pointer (plan 131).",
+          "cmd": [
+            "python",
+            "evals/pkg_check.py",
+            "grep-present",
+            "{case_dir}/package",
+            "SKILL SKL-001 -> Obsolete (was Approved); upstreamed_to tamheed:reading-the-record",
+            "--tables",
+            "progress_entries"
+          ],
+          "expect_exit": 0
+        },
+        {
+          "check": "The beat's note quotes the entity_query cue, the guard's actor and the stranded rule's population unit (plans 131, 134).",
+          "cmd": [
+            "python",
+            "evals/pkg_check.py",
+            "grep-present",
+            "{case_dir}/package",
+            "a population of promoted lessons",
+            "--tables",
+            "progress_entries"
+          ],
+          "expect_exit": 0
+        },
+        {
+          "check": "Three handoff entries by now: beat 23's two and beat 24's final one, written LAST after the guard's row (plans 122, 134).",
+          "cmd": [
+            "python",
+            "evals/pkg_check.py",
+            "count",
+            "{case_dir}/package",
+            "progress-entry",
+            "--col",
+            "event_type=handoff",
+            "--min",
+            "3"
+          ],
+          "expect_exit": 0
+        },
+        {
+          "check": "The review surface renders the stranded rule's population unit (plan 131; U3 measured: the readiness table prints population).",
+          "cmd": [
+            "python",
+            "evals/pkg_check.py",
+            "grep-file",
+            "{case_dir}/package/review.html",
+            "promoted lessons"
           ],
           "expect_exit": 0
         }
