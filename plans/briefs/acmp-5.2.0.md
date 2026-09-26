@@ -28,8 +28,10 @@ plugin as the only per-plugin opt-out.
    `readiness_check("package")`, `package_verify()` and `server_info()` outputs.
 2. `claude plugin marketplace update tamheed`, `claude plugin update tamheed@tamheed`, then
    `/reload-plugins` and `/reload-skills` (your measured route; neither command is documented, the
-   docs say restart). **Check the install against the TAG, not HEAD**: `installed_plugins.json`'s
-   `gitCommitSha` must equal the output of `git -C C:\Users\ahammo\Repos\tamheed rev-list -n 1 v5.2.0`.
+   docs say restart). **Check the installed TREE against the tag, not the sha**: with the marketplace
+   at HEAD, `git -C C:\Users\ahammo\Repos\tamheed diff v5.2.0 HEAD -- plugins/tamheed` must be empty
+   (a docs-only commit landed after the tag — this brief's own correction — so `gitCommitSha` is
+   HEAD's, while the plugin tree is the tag's; your 5.1.0 blob comparison is the same check).
 3. **No migration.** `server_info` reads `5.2.0`, `migrations_head 007_handoff.sql`,
    `schema_version 7`. No JSONL rewrites on the first write. The hook fires on the reload as
    `SessionStart:resume` and prints `PE-1473` whole (it did on the copy: 21 lines, no marker).
@@ -64,10 +66,11 @@ the verified generic gaps below.
 
 ## 2. Part B — ACMP-side, on the operator's word
 
-1. **`LL-099`–`LL-111` (the 113 carried rules).** The maintainer classified every rule against the
-   eight discipline skills and re-read each candidate at the file: **36 were already covered** by a
-   twin, **about 30 are absorbed now** (5.2.0), **33 are project-specific** and stay yours. Absorbed,
-   by skill — `written-claims`: the whole PROSE-1 family (a status, a negative, a hedged count, an
+1. **`LL-099`–`LL-111` (the 113 carried rules).** A classifier placed every rule against the eight
+   discipline skills: **44 generic candidates**, every one re-read at the file by the maintainer and
+   **all 44 absorbed** in 5.2.0 (one only in part), condensed into about 30 sentences; the other 69 it
+   placed as **36 already covered** by a twin and **33 project-specific** — those two classes were
+   NOT re-read, so treat them as the classifier's verdict, not the maintainer's. Absorbed, by skill — `written-claims`: the whole PROSE-1 family (a status, a negative, a hedged count, an
    ordinal, a moving list, a restored table are a status with no timestamp: give the command), PROSE-2
    (a ruling falsifies prose that reasons from the old state: grep the id AND the advisory name, ship
    in the ruling's commit, every artefact in one batch), PROSE-3's attribution, code-comment judgement

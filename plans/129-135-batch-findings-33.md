@@ -76,6 +76,14 @@ tag ordering; the README history key; the sub-agent's list).
 | 134 | [The version stamp, then lab beat 24 + evals](134-stamp-then-lab-beat-24.md) | DONE `7107122` |
 | 135 | [Tag v5.2.0, the brief file, close-out](135-release-v520.md) | DONE — the release commit; tag `v5.2.0` |
 
+Post-tag docs commit, owned: the advisor's review after the tag found the brief's carried-rules sum
+wrong (36 + 30 + 33 ≠ 113 — all 44 generic candidates entered the skills as ~30 sentences; the 36
+"covered" and 33 "project-specific" are the classifier's classes, not re-read). The fix is docs-only
+and lands AFTER the tag, deviating from plan 135's "nothing after the tag": the plugin tree is
+byte-identical to the tag, so the brief's install check became tree equality (`git diff v5.2.0
+HEAD -- plugins/tamheed` empty) instead of sha equality. The plan file's "dropped CI-3 475" was a
+phantom drop (the classifier had listed it as covered).
+
 Execution notes (owned as they land): (1) plan 129's `prompts/README.md` wording was reverted before
 its commit — the guide is a stock body with history and lint 9 requires it to equal its newest key,
 so the text lands with the `5.2.0` key in 134 (the plan file had it in 129); (2) plan 130's first test

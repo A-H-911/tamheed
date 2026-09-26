@@ -22,6 +22,12 @@ shipped engine; the three feedback dispositions; the carried-rules verdict (36 c
 / 33 project-specific) for the operator's per-lesson call; the close-out order; `findings_34`'s
 questions. The ACMP prompt is one line naming the path.
 
+## Deviation, owned
+
+One docs-only commit landed after the tag: the brief's carried-rules sum was wrong (see the batch
+record). The plugin tree at HEAD equals the tag's; the brief's install check was reworded to tree
+equality so the field's check still holds.
+
 ## Owed housekeeping (the user's)
 
 - The six orphan worktrees under `.claude/worktrees/` (from the 5.1.0 cycle) are still there.
