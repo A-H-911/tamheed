@@ -29,7 +29,8 @@ This follows the Agent Skills open standard's **evaluation-driven development**
 
 Each case carries **`deterministic_assertions`** — now *executable*: each live assertion is
 a command (run from the repo root, `{case_dir}` substituted) plus an expected-exit /
-expected-substring contract, speaking the `evals/pkg_check.py` vocabulary (`gates`, `count`,
+expected-substring contract, speaking the `evals/pkg_check.py` vocabulary (`gates`, `count`, `resume` and `rule` (v5.1: the
+resume block's latest handoff, one readiness rule's status),
 `nonempty`, `nonempty-any`, `grep-absent`/`grep-present` (canonical JSONL tables, named or
 all), `grep-tree-present`/`grep-tree-absent` (a directory of files — e.g. generated
 `prompts/` — plan 056), `file-exists`, `grep-file`, and `verify` — the package's own

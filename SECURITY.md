@@ -108,7 +108,7 @@ report a problem.
   nor reads skill files (the package row holds metadata only), and the promotion skill instructs a
   G-INJECT-style self-review of the draft before it is shown for approval — a skill is a standing
   instruction surface and is treated as one.
-- **The plugin's own skills (v5)** — the front door, seven discipline skills and sixteen scenario
+- **The plugin's own skills (v5)** — the front door, eight discipline skills (v5.1) and sixteen scenario
   skills under `plugins/tamheed/skills/` are static bundle text with no package-derived content: they
   reach a session through the plugin install, never through a package, and check.py's skills lint
   keeps them well-formed, stack-neutral and free of field identifiers. The scenarios carry

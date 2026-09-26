@@ -33,6 +33,7 @@ Measurements before any plan is dispatched:
 | M3 | Lockless `store.load` on a copy of ACMP's `data/` (4,246 ids) | < 1 s | 147 / 119 / 117 ms |
 | M4 | Menu / model-listing counts after plan 120 | 18 / 9 | **PASS** 2026-09-26 on the final bundle: the model listed exactly nine `tamheed:` skills (the eight discipline skills + `tamheed:tamheed`), none of the sixteen scenarios; the `/` menu count (18) follows from the frontmatter (16 scenarios + the two both-route skills) and is not measurable headlessly |
 | M5 | Dry-run of every new surface on a lab-tracker copy (§5.1.3 of the plan) | classes recorded | **PASS** 2026-09-26, beat 23 phase B (`plans/evidence/lab-continuation-report-127-2026-09-26.md`): every predicted class observed, no deviation |
+| M6 | The REAL bundle's `hooks/hooks.json` + `server/resume_hook.py` end to end through Claude Code (`--plugin-dir plugins/tamheed` from the scratch project that carries a package with a handoff) | the block quoted back | **PASS** 2026-09-26 (post-tag, Claude Code 2.1.283): the model quoted `tamheed resume — package \`package\` (schema 7) — unlocked`, `Handoff PE-044 (…); 0 work-done/transition entries since.` and `Skill: tamheed:package-writes — invoke it by name before your first write.`; the first line arrived prefixed `SessionStart:startup hook success:`; the bash `command` path fired |
 
 Fallback if M1 fails: ship `resume_hook.py` anyway; document the `settings.json` hook snippet (the
 #16538 workaround) in `docs/install.md`; the resume block still arrives through `package_open` /

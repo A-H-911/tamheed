@@ -252,8 +252,13 @@ the correct one written in the same batch; a new relation never replaces an old 
 
 The package **is** the state: the relational store holds every register, narrative section, and the
 package row (profile, mode, iteration). `resume` = `package_open` + `entity_query` for where things
-stand. There is no state file to reconcile; humans review through the rendered surfaces and changes
-enter through tools. Details: `references/state.md`.
+stand — and since v5.1 the first read is free: `package_open` and `server_info` return a `resume`
+block (the latest `handoff` journal entry with its corrections, the work entries written after it,
+the open feedback and slices, the lock holder, the next step), and the plugin's SessionStart hook
+prints the same block into the model's context on every session start, clear and compaction. A
+session writes that handoff LAST before it stops (`tamheed:session-handoff`); `handoff-current`
+names one the journal has moved past. There is no state file to reconcile; humans review through
+the rendered surfaces and changes enter through tools. Details: `references/state.md`.
 
 ## Extension points
 

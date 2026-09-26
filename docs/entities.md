@@ -1194,7 +1194,7 @@ decay** — there is no score to game and nothing rots silently; a wrong skill i
 by a human, not decayed by a counter.
 
 **Plugin skills vs project skills (v5).** The plugin ships its own skills under
-`plugins/tamheed/skills/` — the front door, seven discipline skills loaded on relevance
+`plugins/tamheed/skills/` — the front door, eight discipline skills (model-invoked, out of the `/` menu; v5.1 — the note and the tool results name the one to invoke)
 (`tamheed:package-writes` and its neighbours) and sixteen operator-invoked scenario skills
 (`/tamheed:slice-kickoff`, …) — one source, updated with the plugin, never refreshed per project
 and never recorded as `SKL-` rows: they are tamheed's teaching surface (lint 12 keeps them

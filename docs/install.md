@@ -37,12 +37,12 @@ This repository is its own plugin marketplace (see [`../.claude-plugin/marketpla
 Invoke the front door as **`/tamheed:tamheed`** — plugin skills are namespaced by the plugin name (since
 v5 it lives at `skills/tamheed/SKILL.md`, beside the plugin's other skills). Or just describe a planning
 task; the skill's description triggers it automatically. The plugin also ships the execution surface:
-seven discipline skills that load on relevance (`tamheed:package-writes`, `tamheed:reading-the-record`,
-`tamheed:operator-interview`, `tamheed:written-claims`, `tamheed:test-evidence`,
-`tamheed:measurement-evidence`, `tamheed:ci-evidence`) and sixteen operator-invoked scenario skills
+eight discipline skills, model-invoked and named by the note and the tool results (`tamheed:package-writes`,
+`tamheed:reading-the-record`, `tamheed:operator-interview`, `tamheed:written-claims`, `tamheed:test-evidence`,
+`tamheed:measurement-evidence`, `tamheed:ci-evidence`, `tamheed:session-handoff`) and sixteen operator-invoked scenario skills
 (`/tamheed:orient-resume`, `/tamheed:slice-kickoff`, `/tamheed:progress-sync`, … — the emitted
-`<package>/prompts/README.md` maps every situation). Since v5.1 the seven discipline skills are hidden
-from the `/` menu (`user-invocable: false`) and an eighth, `/tamheed:session-handoff`, takes both routes.
+`<package>/prompts/README.md` maps every situation). Since v5.1 seven of the eight are hidden
+from the `/` menu (`user-invocable: false`) and the eighth, `/tamheed:session-handoff`, takes both routes.
 
 **Project-only enablement (the field's FB-022, measured).** `enabledPlugins` merges **key by key across
 scopes** — the highest-precedence scope that mentions the plugin id wins (user < project < local). A
