@@ -41,10 +41,21 @@ seven discipline skills that load on relevance (`tamheed:package-writes`, `tamhe
 `tamheed:operator-interview`, `tamheed:written-claims`, `tamheed:test-evidence`,
 `tamheed:measurement-evidence`, `tamheed:ci-evidence`) and sixteen operator-invoked scenario skills
 (`/tamheed:orient-resume`, `/tamheed:slice-kickoff`, `/tamheed:progress-sync`, … — the emitted
-`<package>/prompts/README.md` maps every situation). To enable the plugin for one project only, put its
-`enabledPlugins` entry in the project's `.claude/settings.json` (the docs list user, project and local
-scopes; a project without a package sees only the seven discipline descriptions, which never fire
-without one). When Claude Code asks to approve the
+`<package>/prompts/README.md` maps every situation). Since v5.1 the seven discipline skills are hidden
+from the `/` menu (`user-invocable: false`) and an eighth, `/tamheed:session-handoff`, takes both routes.
+
+**Project-only enablement (the field's FB-022, measured).** `enabledPlugins` merges **key by key across
+scopes** — the highest-precedence scope that mentions the plugin id wins (user < project < local). A
+`true` at user scope therefore reaches every project, and adding a project entry alone never narrows it.
+To enable tamheed for one project only: install (or enable) it at **project scope from the start**
+(`claude plugin install tamheed@tamheed --scope project`), or, when it is already enabled at user scope,
+**disable it there first, then enable it at project scope** — `claude plugin disable tamheed@tamheed
+--scope user`, then `claude plugin enable tamheed@tamheed --scope project`, which writes
+`{"enabledPlugins": {"tamheed@tamheed": true}}` into `.claude/settings.json`. Run in that order: the
+enable command checks the merged effective state, not the project file, and refuses "already enabled at
+project scope" while the user entry exists (a Claude Code bug, reported 2026-09-25); between the disable
+and the enable the project has no plugin, so do it with no package open. A project without a package
+sees only the discipline descriptions, which never fire without one. When Claude Code asks to approve the
 `tamheed` MCP server (per-server approval), say yes — it is the only write path into a package. To update
 later, see [Upgrading](#upgrading-an-installed-plugin) — refreshing the marketplace alone does not update the plugin.
 
@@ -53,6 +64,28 @@ To try it before installing (no marketplace needed):
 ```text
 claude --plugin-dir ./plugins/tamheed
 ```
+
+**The SessionStart hook (v5.1).** The plugin ships one hook (`hooks/hooks.json`): on every session
+start, resume, clear, compaction and fork it runs `server/resume_hook.py` (stdlib, ~0.1 s through
+`uv run --no-project`, plus the lockless load of the package) and prints the package's **resume block**
+— the latest `handoff` journal entry with its corrections, how many work entries followed it, the
+open feedback and slices, the lock holder and the next step — into the model's context. It prints
+nothing in a project whose `CLAUDE.md` (or one `@`-imported file) carries no tamheed note, withholds an
+instruction-shaped handoff, caps itself at 40 lines, and on any failure prints one line and exits 0.
+Opt-out: `disableAllHooks` in the project's settings, or disable the plugin for that project. If your
+Claude Code build drops plugin `SessionStart` output (a bug reported against early-2026 builds;
+measured working on 2.1.283), the same command works as a user or project hook in `settings.json`:
+
+```json
+{"hooks": {"SessionStart": [{"matcher": "startup|resume|clear|compact|fork",
+  "hooks": [{"type": "command",
+             "command": "uv run --no-project \"${CLAUDE_PLUGIN_ROOT}/server/resume_hook.py\"; exit 0",
+             "timeout": 10}]}]}}
+```
+
+(outside a plugin, replace `${CLAUDE_PLUGIN_ROOT}` with the installed plugin's path). The same block
+is returned by `package_open` and `server_info`, so nothing is lost without the hook — it is the
+free copy after a compaction.
 
 ## Upgrading an installed plugin
 

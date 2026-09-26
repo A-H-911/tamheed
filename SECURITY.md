@@ -18,8 +18,22 @@ report a problem.
 4. **Agent tool calls → MCP server → package store.** The only write path into a package: structured,
    validated arguments (no raw SQL, package names validated, single-writer lock); a constraint violation
    fails the call. (The v1 repository bootstrapper was removed in v2 — ASM-B.)
+5. **Journal → the next session's context (v5.1).** The plugin's `SessionStart` hook prints the
+   package's resume block — the latest agent-authored `handoff` journal entry — into the model's context
+   at every session start, resume, clear, compaction and fork. Agent-written prose entering an
+   always-loaded surface is the same class as the note's lessons (boundary 3): it is screened before it
+   is printed, capped, and read-only.
 
 ## Controls in place
+
+- **The SessionStart hook is guarded, screened, capped and lockless** (plan 123) — it prints
+  nothing unless the project's `CLAUDE.md` (or ONE `@`-imported file) carries the tamheed note; it
+  reads the store through the lockless loader and never takes the writer lock or writes a byte; the
+  handoff text is withheld when the `G-INJECT` screen (`_INJECT_RE`) finds instruction-shaped text;
+  the block is at most 40 lines and the entry at most 25 lines / 2,000 characters; any failure is one
+  line and exit 0. Its output is plain text (never JSON hook output). Opt-out: `disableAllHooks` in
+  the project's settings, or disable the plugin for that project (`enabledPlugins`); Claude Code has
+  no per-hook switch.
 
 - **Untrusted-content handling** — operating principle 10 in `plugins/tamheed/skills/tamheed/SKILL.md`, safeguard 18 in
   `plugins/tamheed/references/safeguards.md`, and the handoff screening step in

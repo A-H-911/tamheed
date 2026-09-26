@@ -38,6 +38,7 @@ SUITES = [
     "tests/test_migrate_v3to4.py",
     "tests/test_adopt_sample.py",
     "tests/test_export_html.py",
+    "tests/test_resume_hook.py",
     "tests/test_eval_runner.py",
     "tests/test_scratch_diff.py",
     "tests/test_check_lints.py",

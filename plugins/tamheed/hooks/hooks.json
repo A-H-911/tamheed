@@ -1,0 +1,18 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup|resume|clear|compact|fork",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "uv run --no-project \"${CLAUDE_PLUGIN_ROOT}/server/resume_hook.py\"; exit 0",
+            "commandWindows": "uv run --no-project \"$env:CLAUDE_PLUGIN_ROOT/server/resume_hook.py\"",
+            "timeout": 10,
+            "statusMessage": "tamheed: reading the package's resume state..."
+          }
+        ]
+      }
+    ]
+  }
+}
