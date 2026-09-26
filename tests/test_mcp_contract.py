@@ -1307,22 +1307,92 @@ class McpContractTest(unittest.TestCase):
         self.assertIn("unknown entity type", out["items"][0]["error"])
 
     def test_stale_warning_block_retracts_when_clean(self):
-        """C20/B2: the warning's lifetime is coupled to the CURRENT scan, not the first."""
+        """C20/B2: the warning's lifetime is coupled to the CURRENT scan, not the first.
+        Plan 130 (v5.2, the field's FB-024): a stale → stale → clean cycle leaves the file
+        BYTE-IDENTICAL to its clean state (5.1 left two extra newlines), the second stale emit
+        writes nothing, and the block's text names what the scan covers, not "v1"."""
         self._emit_ready()
         with tempfile.TemporaryDirectory() as target:
+            root = Path(target) / "CLAUDE.md"
+            root.write_text("# Root\n\nOperator text.\n", encoding="utf-8")
             agents = Path(target) / "AGENTS.md"
+            agents.write_text("Use gate_run via the tamheed MCP tools.\n", encoding="utf-8")
+            srv.handoff_emit(target)
+            clean = root.read_bytes()                        # note appended, no block
             agents.write_text("Run validate_package.py before merging.\n",
                               encoding="utf-8")
             srv.handoff_emit(target)
-            claude = (Path(target) / "CLAUDE.md").read_text(encoding="utf-8")
+            claude = root.read_text(encoding="utf-8")
             self.assertIn("<!-- tamheed:stale-warning -->", claude)
+            self.assertIn("agent-control files, prompt files or skill files", claude)
+            self.assertNotIn("v1", claude.split("<!-- tamheed:stale-warning -->")[1])
+            stale_bytes = root.read_bytes()
+            again = srv.handoff_emit(target)                 # still stale: stable, not longer
+            self.assertIn("CLAUDE.md", again["unchanged"])
+            self.assertEqual(root.read_bytes(), stale_bytes)
             agents.write_text("Use gate_run via the tamheed MCP tools.\n",
                               encoding="utf-8")             # operator fixes the reference
             out = srv.handoff_emit(target)
             self.assertEqual(out["stale_references"], [])
-            claude = (Path(target) / "CLAUDE.md").read_text(encoding="utf-8")
+            claude = root.read_text(encoding="utf-8")
             self.assertNotIn("tamheed:stale-warning", claude)   # retracted
             self.assertIn("## Tamheed progress tracking", claude)  # note survives
+            self.assertEqual(root.read_bytes(), clean)       # byte-identical to the clean state
+
+    def test_pointer_case_stale_block_lives_in_the_package_claude_md(self):
+        """Plan 130 (v5.2, the field's FB-024): with `@<pkg>/CLAUDE.md` the block goes beside
+        the note in the PACKAGE's CLAUDE.md; the root's bytes never change (5.1 appended the
+        block to the root while the warning said the root was untouched); the warning names
+        the block's add/remove separately from the span; a 5.1-era block left in the root is
+        stripped once and said so."""
+        self._emit_ready()
+        with tempfile.TemporaryDirectory() as target:
+            root = Path(target) / "CLAUDE.md"
+            pointer = "# Project\n\n## Tamheed progress tracking\n\n@demo/CLAUDE.md\n"
+            root.write_text(pointer, encoding="utf-8", newline="\n")
+            pkg_md = srv.PACKAGE_ROOT / "demo" / "CLAUDE.md"
+            skill_dir = Path(target) / ".claude" / "skills" / "writing-rows"
+            skill_dir.mkdir(parents=True)
+            skill = skill_dir / "SKILL.md"
+            skill.write_text("# Writing rows\n\nUse the tools.\n", encoding="utf-8")
+            srv._CURRENT.conn.execute(
+                "INSERT INTO skills (id, name, title, level, target_path) VALUES"
+                " ('SKL-001', 'writing-rows', 'Writing rows', 'project',"
+                " '.claude/skills/writing-rows/SKILL.md')")
+            srv._CURRENT.conn.commit()
+            srv.handoff_emit(target)
+            clean_pkg = pkg_md.read_bytes()
+            self.assertEqual(root.read_bytes(), pointer.encode("utf-8"))
+            skill.write_text("# Writing rows\n\nwork_bind, export_html and handoff_emit all"
+                             " flush JSONL.\n", encoding="utf-8")            # a stale hit
+            out = srv.handoff_emit(target)
+            self.assertEqual(len(out["stale_references"]), 1, out["stale_references"])
+            self.assertEqual(root.read_bytes(), pointer.encode("utf-8"))     # root untouched
+            self.assertIn("<!-- tamheed:stale-warning -->", pkg_md.read_text(encoding="utf-8"))
+            w = next(w for w in out["warnings"] if "imports the package note" in w)
+            self.assertIn("is current there; the stale-warning block was added there", w)
+            self.assertIn("the root file was left untouched", w)
+            stale_pkg = pkg_md.read_bytes()
+            again = srv.handoff_emit(target)                                  # stable
+            self.assertEqual(again["written"], [])
+            self.assertEqual(pkg_md.read_bytes(), stale_pkg)
+            w2 = next(w for w in again["warnings"] if "imports the package note" in w)
+            self.assertIn("is current there; nothing written", w2)
+            skill.write_text("# Writing rows\n\nUse the tools.\n", encoding="utf-8")
+            out = srv.handoff_emit(target)
+            self.assertEqual(out["stale_references"], [])
+            self.assertEqual(pkg_md.read_bytes(), clean_pkg)                  # bytes restored
+            w3 = next(w for w in out["warnings"] if "imports the package note" in w)
+            self.assertIn("the stale-warning block was removed there", w3)
+            # a 5.1-era block left in the ROOT is stripped once, and the warning says so
+            root.write_text(pointer + "\n<!-- tamheed:stale-warning -->\n> old\n"
+                            "<!-- /tamheed:stale-warning -->\n", encoding="utf-8", newline="\n")
+            out = srv.handoff_emit(target)
+            self.assertEqual(root.read_bytes(), pointer.encode("utf-8"))
+            self.assertIn("CLAUDE.md", out["written"])
+            w4 = next(w for w in out["warnings"] if "imports the package note" in w)
+            self.assertIn("a 5.1-era stale-warning block was removed from the root file", w4)
+            self.assertEqual(srv.handoff_emit(target)["written"], [])
 
     def test_restated_register_tripwire_kinds(self):
         """C22: unlabeled restatement flagged with a rewrite; labeled snapshots get

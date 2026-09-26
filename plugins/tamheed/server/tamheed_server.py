@@ -3473,8 +3473,27 @@ def _normalized_prompt(text: str) -> str:
     return "\n".join(ln.rstrip() for ln in lines).strip()
 
 
-_STALE_BLOCK_RE = re.compile(
-    r"\n?<!-- tamheed:stale-warning -->.*?<!-- /tamheed:stale-warning -->\n?", re.S)
+_STALE_BLOCK_RE = re.compile(   # plan 130: CRLF-tolerant, so an editor-saved file strips clean
+    r"\r?\n?<!-- tamheed:stale-warning -->.*?<!-- /tamheed:stale-warning -->\r?\n?", re.S)
+# Plan 130 (v5.2, the field's FB-024): the block names what the scan covers since v5.1 —
+# agent-control files, prompt files and skill files — not "v1 references" and "the v1 tree".
+_STALE_BLOCK = ("\n<!-- tamheed:stale-warning -->\n"
+                "> **Stale references detected** in this project's agent-control files, prompt "
+                "files or skill files — see `stale_references` in the handoff_emit result "
+                "(file:line and the replacement). Fix them and re-run handoff_emit: this "
+                "warning removes itself once the scan is clean.\n"
+                "<!-- /tamheed:stale-warning -->\n")
+
+
+def _strip_stale_block(text: str) -> str:
+    """Plan 130 (v5.2, the field's FB-024): remove the tool-owned stale-warning block and
+    leave the file's own bytes. The tool appends the block as "\\n<!-- … -->\\n" at the TAIL,
+    so a tail match is removed whole — the 5.1 `sub("\\n")` left one extra newline per stale
+    emit, and a stale→clean cycle ended two blank lines longer than it began. A block found
+    elsewhere keeps one newline so its neighbours do not join.
+    ponytail: whitespace AFTER a tail block (an operator's trailing newline) leaves one blank
+    line once and is stable thereafter; the tool never writes that shape."""
+    return _STALE_BLOCK_RE.sub(lambda m: "" if m.end() == len(text) else "\n", text)
 
 # Plan 027: the operating note's managed span (any version — v-bump = an update).
 _NOTE_BLOCK_RE = re.compile(r"<!-- tamheed:note v\d+ -->.*?<!-- /tamheed:note -->", re.S)
@@ -3903,7 +3922,8 @@ def handoff_emit(target_dir: str, subdir: str = "handoff", force: bool = False,
     existing = claude_md.read_text(encoding="utf-8") if claude_md.exists() else ""
     # Marker-managed warning block (C20/B2): rebuilt on EVERY emit — added while the scan
     # finds stale references, REMOVED once it is clean.
-    content = _STALE_BLOCK_RE.sub("\n", existing)
+    content = _strip_stale_block(existing)
+    block_here = bool(stale)   # plan 130: the block lives beside the note, wherever that is
     # Plan 027: the operating note is marker-managed too (v1 was append-once and could
     # never receive updates). A v1 note (heading, no markers) has no terminator to
     # bound a safe machine edit — warned, never touched; one manual deletion upgrades.
@@ -3938,36 +3958,45 @@ def handoff_emit(target_dir: str, subdir: str = "handoff", force: bool = False,
         content = _apply_note(content, claude_md)
     elif import_re.search(content):
         pkg_md = PACKAGE_ROOT / _CURRENT_NAME / "CLAUDE.md"
-        pkg_existing = (pkg_md.read_text(encoding="utf-8")
-                        if pkg_md.exists() else "")
+        pkg_raw = pkg_md.read_text(encoding="utf-8") if pkg_md.exists() else ""
+        # Plan 130 (the field's FB-024): the stale-warning block lives beside the note — in
+        # the PACKAGE's CLAUDE.md here, never in the root file this tool does not own (5.1
+        # appended it to the root while this warning said the root was untouched). Both
+        # sides are compared with the block stripped, so `rebuilt` speaks of the SPAN alone.
+        pkg_existing = _strip_stale_block(pkg_raw)
         pkg_content = _apply_note(pkg_existing, pkg_md)
         if _NOTE_BLOCK_RE.search(pkg_content) is None:
             pkg_content = pkg_existing + note  # pointer repo, first emission
         rebuilt = pkg_content != pkg_existing
-        if rebuilt:
+        block_was = pkg_raw != pkg_existing
+        if block_here:
+            pkg_content += _STALE_BLOCK
+        block_here = False
+        if pkg_content != pkg_raw:
             pkg_md.write_text(pkg_content, encoding="utf-8", newline="\n")
             emitted.append(str(pkg_md.resolve()))
+        block_txt = ("; the stale-warning block was added there" if stale and not block_was
+                     else "; the stale-warning block was removed there" if block_was and not stale
+                     else "")
         # Plan 107 (findings_30 Q1.4): say what happened - the old text claimed an update
         # over `written: []` on every idle re-emission
         warnings.append(
             f"{claude_md.resolve()} imports the package note"
             f" (@{_CURRENT_NAME}/CLAUDE.md) — the managed span lives at"
             f" {pkg_md.resolve()} and "
-            + ("was rebuilt there" if rebuilt else "is current there; nothing written")
-            + "; the root file was left untouched")
+            + ("was rebuilt there" if rebuilt else "is current there")
+            + block_txt
+            + ("" if rebuilt or block_txt else "; nothing written")
+            + ("; a 5.1-era stale-warning block was removed from the root file"
+               if content != existing else "; the root file was left untouched"))
     else:
         warnings.append(
             f"{claude_md.resolve()} carries a v1-era Tamheed operating note"
             " (the heading without the managed markers) — delete its"
             " '## Tamheed progress tracking' section and re-run handoff_emit;"
             " the marker-managed note self-updates thereafter")
-    if stale:
-        content += ("\n<!-- tamheed:stale-warning -->\n"
-                    "> **Stale v1 references detected** in this project's agent-control "
-                    "files — see `stale_references` in the handoff_emit result for "
-                    "file:line replacements. Apply them and freeze the v1 tree, then "
-                    "re-run handoff_emit: this warning removes itself once the scan is "
-                    "clean.\n<!-- /tamheed:stale-warning -->\n")
+    if block_here:
+        content += _STALE_BLOCK
     if content != existing:
         claude_md.write_text(content, encoding="utf-8", newline="\n")
         emitted.append("CLAUDE.md")

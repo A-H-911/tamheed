@@ -159,7 +159,11 @@ every file the skills table points at is scanned for stale sentences (`stale_ref
 restated-content scan gained two detectors — a lifecycle word beside an id or an id range
 (`status-claim`) and a paragraph naming six or more ids of one family (`id-dense`). The tool-owned
 spans are stripped before every scan, and in the pointer-import case the package's own `CLAUDE.md`
-is scanned too.
+is scanned too. Since v5.2 (plan 130, the field's FB-024) the self-retracting stale-warning block
+lives beside the note — in the package's `CLAUDE.md` when the root imports it — never in a file the
+tool does not own; its text names agent-control, prompt and skill files (the scan's scope since
+v5.1, not "v1 references"); the warning says when the block was added or removed there; and a
+stale → clean cycle leaves the file byte-identical to its clean state (5.1 left two newlines).
 
 **Package writes are working-tree changes (C31).** The canonical `data/` lives inside the
 project's git working tree, so uncommitted package writes are destroyed by

@@ -17,6 +17,13 @@ All notable changes to Tamheed are documented here. The format is based on
   with 38 of 4.9.0's 62 lines absent. Every non-blank line of the declared body is required now;
   each absent line is attributed to the release that introduced it (`missing_by_release`), the
   reason names the counts per release, and `delta_missing` stays beside it. Report-only, as before.
+- **`handoff_emit`'s stale-warning block: its home, its text, its removal** (plan 130, the field's
+  FB-024). In the pointer-import case the block was appended to the ROOT `CLAUDE.md` while the
+  emission's own warning said the root was left untouched; it now lives beside the note in the
+  package's `CLAUDE.md`, the warning names its add/remove separately from the span, and a 5.1-era
+  block left in the root is stripped once and said so. The text names agent-control, prompt and
+  skill files (the scan's scope), not "v1 references" and "the v1 tree". Removal is tail-aware:
+  a stale → clean cycle leaves the file byte-identical (5.1 left two extra newlines).
 
 ## [5.1.0] - 2026-09-26
 
