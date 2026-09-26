@@ -147,7 +147,21 @@ is the only wrong answer.
     carries every NOT NULL column); if upstream declined,
     `Rejected` on the operator's word; otherwise carry it and say so. Local-tool rows are
     registers and never appear here.
-19. Close the sweep: `progress_update([{"entry": "liveness sweep: <per-family tally —
+19. **Resume state behind the journal** (`handoff-current`, v5.1): the work-done and
+    transition entries written after the latest `handoff` journal entry — or every one of
+    them, when no handoff was ever written. The handoff is where a session stopped (resume
+    point, in-flight ids, what awaits the operator, verified facts with the query that
+    measured each); `package_open` / `server_info` return the latest one as the `resume`
+    block. Do not write one mid-sweep: this rule is answered at the END of the session —
+    `tamheed:session-handoff`, written LAST after the final write. A stale handoff is
+    corrected (`event_type: "correction"`, `corrects` naming it), never edited.
+20. **Stranded promoted lessons** (`lessons-stranded`, v5.1; emitted only when the package
+    has skill rows): Promoted lessons whose skill is Obsolete or Superseded with no pointer
+    to where its content lives now. The remedy is a POINTER on the skill row, on the
+    operator's word: `superseded_by` (a successor `SKL-` row) or `upstreamed_to` (the plugin
+    skill that absorbed it, such as `tamheed:package-writes`). The lessons stay Promoted —
+    `promoted_to` is immutable; the pointer is what makes them reachable again.
+21. Close the sweep: `progress_update([{"entry": "liveness sweep: <per-family tally —
     resolved / carried / escalated / awaiting operator>", "event_type": "note",
     "actor": "agent:<session>"}])`, then `readiness_check("package")` again and report
     the advisory delta plus everything now awaiting operator words (promotions,

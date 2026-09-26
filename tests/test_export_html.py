@@ -312,6 +312,27 @@ class ExportHtmlTest(unittest.TestCase):
 
     # -------------------------------------------- plan 027: readiness panel
 
+    def test_resume_section_renders_the_handoff_or_says_none(self):
+        """Plan 122 (v5.1): the Resume section renders the block the server passes — the
+        no-handoff state first (the demo has none), then the latest handoff with its
+        correction, escaped, and never a wall clock. A bare render (no block) says so."""
+        self._open_demo_copy()
+        out = self._export()
+        self.assertIn('<section id="resume">', out)
+        self.assertIn("No handoff written yet", out)
+        h = srv.progress_update([{"entry": "Resume at: the next slice <b>x</b>",
+                                  "event_type": "handoff", "actor": "agent:test"}])["ids"][0]
+        c = srv.progress_update([{"entry": "correction: slice is done", "event_type":
+                                  "correction", "corrects": h, "actor": "agent:test"}])["ids"][0]
+        out = self._export()
+        self.assertIn(f"Latest handoff: {h}", out)
+        self.assertIn("&lt;b&gt;x&lt;/b&gt;", out)          # esc(): stored text is data
+        self.assertNotIn("<b>x</b>", out)
+        self.assertIn(c, out)
+        self.assertIn("Corrections (read WITH the handoff)", out)
+        bare = viewer.render(srv._CURRENT.conn, srv.gate_run()["gates"], False, None)
+        self.assertIn("Resume state not evaluated for this export.", bare)
+
     def test_execution_readiness_panel(self):
         """Per-phase readiness (latest-verdict semantics) + declared human gates
         render in the execution section."""
@@ -364,7 +385,8 @@ class ExportHtmlTest(unittest.TestCase):
         self._open_demo_copy()
         out = self._export()
         anchors = [a for a, _title, _fn in viewer.SECTIONS]
-        self.assertEqual(anchors[:3], ["overview", "flow", "graph"])
+        # plan 122 (v5.1): Resume sits between the overview and the relations
+        self.assertEqual(anchors[:4], ["overview", "resume", "flow", "graph"])
         order = [out.index(f'<section id="{a}"') for a in anchors]
         self.assertEqual(order, sorted(order))          # C25 req 1: maintainer order
 

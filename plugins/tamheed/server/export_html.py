@@ -605,6 +605,52 @@ def _waived_cell(waived) -> str:
     return ", ".join(parts)
 
 
+def _resume(conn, gates, ready, readiness=None):
+    """Plan 122 (v5.1): the resume block the tools return, rendered for the operator — the
+    latest `handoff` journal entry with its correction chain, how far the journal moved
+    past it, what awaits the operator, the open slices. The server computes the block
+    (the same `_resume_block` package_open/server_info use) and passes it in; a bare
+    render has none and says so. Deterministic: stored text only, no wall clock."""
+    block = (readiness or {}).get("resume")
+    if not block:
+        return '<p class="empty">Resume state not evaluated for this export.</p>'
+    ho, behind = block.get("handoff"), block.get("handoff_behind", 0)
+    parts = []
+    if not ho:
+        parts.append('<p class="empty">No handoff written yet — the journal is the resume'
+                     ' state (/tamheed:orient-resume); write one with tamheed:session-handoff'
+                     f' before the next compaction. Work entries uncovered: {esc(behind)}.</p>')
+    else:
+        parts.append(f'<p class="ready">Latest handoff: {esc(ho.get("id"))}'
+                     f' ({esc(ho.get("occurred_at"))}, {esc(ho.get("actor"))}) —'
+                     f' {esc(behind)} work-done/transition entries since'
+                     f'{" (behind the journal)" if behind else ""}.</p>'
+                     f'<pre class="handoff">{esc(ho.get("entry"))}</pre>')
+        corr = ho.get("corrections") or []
+        if corr:
+            parts.append(_fold("Corrections (read WITH the handoff)", len(corr),
+                               _table(["id", "corrects", "entry"],
+                                      [(c.get("id"), c.get("corrects"), c.get("entry"))
+                                       for c in corr])))
+    fb = list(block.get("open_feedback") or [])
+    parts.append(f'<p>Awaiting upstream or the operator (feedback): '
+                 f'{esc(", ".join(fb)) if fb else "none"}</p>')
+    slices = block.get("slices_active") or []
+    if slices:
+        parts.append(_fold("Open slices (Approved / Review)", len(slices),
+                           _table(["slice", "title", "status"],
+                                  [(s.get("id"), s.get("title"), s.get("lifecycle_status"))
+                                   for s in slices])))
+    last = block.get("last_entries") or []
+    if last:
+        parts.append(_fold("Latest journal entries", len(last),
+                           _table(["id", "event", "at"],
+                                  [(e.get("id"), e.get("event_type"), e.get("occurred_at"))
+                                   for e in last])))
+    parts.append(f'<p class="freshness">Next: {esc(block.get("next"))}</p>')
+    return "".join(parts)
+
+
 def _readiness(conn, gates, ready, readiness=None):
     """The readiness report (plan 096): what readiness_check("package") says, rendered
     for the operator - status, severity, population (plan 069), discriminating (077),
@@ -838,6 +884,7 @@ def _gaps(conn, gates, ready, readiness=None):
 # raw registers last, warnings at the end.
 SECTIONS = [
     ("overview", "Overview", _overview),
+    ("resume", "Resume", _resume),            # plan 122 (v5.1): where the last session stopped
     ("flow", "Traceability flow", _flow),
     ("graph", "Relations graph", _graph),
     ("traceability", "Traceability", _traceability),

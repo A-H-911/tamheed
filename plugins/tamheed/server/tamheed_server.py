@@ -997,9 +997,79 @@ def _stored_package_version(pkg_dir: Path) -> str | None:
     return None
 
 
+_PE_NUM = "CAST(SUBSTR(id, 4) AS INTEGER)"   # PE-NNN → NNN (plan 057: never a string sort)
+_RESUME_ENTRY_CAP = 4000                       # chars of the handoff entry a block carries
+
+
+def _resume_block(conn, name: str, data_dir: Path | None = None) -> dict:
+    """Plan 122 (v5.1, findings_32 note 4): what an agent needs FOR FREE after a session
+    start, a clear or a compaction — the latest `handoff` journal entry with its
+    `correction` chain, how far the journal has moved past it, what awaits the operator
+    (open feedback), the open slices, the last three journal ids, the lock holder, and the
+    imperative next step. Pure SQL over a connection (no module globals): `package_open`,
+    `server_info` and the SessionStart hook (lockless `store.load`) all build the same
+    block. The package IS the state; this is a read of it, never a state file."""
+    ho = conn.execute(
+        "SELECT id, occurred_at, actor, entry FROM progress_entries WHERE event_type ="
+        f" 'handoff' ORDER BY {_PE_NUM} DESC LIMIT 1").fetchone()
+    handoff = None
+    if ho:
+        entry = str(ho[3] or "")
+        handoff = {"id": ho[0], "occurred_at": ho[1], "actor": ho[2],
+                   "entry": entry[:_RESUME_ENTRY_CAP],
+                   "truncated": len(entry) > _RESUME_ENTRY_CAP, "corrections": []}
+        frontier, seen = [ho[0]], set()
+        while frontier and len(handoff["corrections"]) < 20:   # the chain, depth-first
+            marks = ",".join("?" * len(frontier))
+            rows = conn.execute(
+                "SELECT id, entry, corrects FROM progress_entries WHERE corrects IN"
+                f" ({marks}) ORDER BY {_PE_NUM}", frontier).fetchall()
+            frontier = []
+            for cid, centry, corrects in rows:
+                if cid in seen:
+                    continue
+                seen.add(cid)
+                handoff["corrections"].append({"id": cid, "corrects": corrects,
+                                               "entry": str(centry or "")[:_RESUME_ENTRY_CAP]})
+                frontier.append(cid)
+    after = f" AND {_PE_NUM} > {int(str(ho[0])[3:])}" if ho else ""
+    behind = [r[0] for r in conn.execute(
+        "SELECT id FROM progress_entries WHERE event_type IN ('work-done', 'transition')"
+        f"{after} ORDER BY {_PE_NUM}").fetchall()]
+    open_fb = [r[0] for r in conn.execute(
+        "SELECT id FROM feedback WHERE lifecycle_status NOT IN ('Resolved', 'Rejected')"
+        " AND kind != 'local-tool' ORDER BY CAST(SUBSTR(id, 4) AS INTEGER)").fetchall()]
+    slices = [{"id": r[0], "title": r[1], "lifecycle_status": r[2]} for r in conn.execute(
+        "SELECT id, title, lifecycle_status FROM slices WHERE lifecycle_status IN"
+        " ('Approved', 'Review') ORDER BY CAST(SUBSTR(id, 4) AS INTEGER) LIMIT 10").fetchall()]
+    last = [{"id": r[0], "event_type": r[1], "occurred_at": r[2]} for r in conn.execute(
+        f"SELECT id, event_type, occurred_at FROM progress_entries ORDER BY {_PE_NUM} DESC"
+        " LIMIT 3").fetchall()]
+    lock = None
+    if data_dir is not None and (Path(data_dir) / store.LOCK_NAME).exists():
+        held = store._read_lock(Path(data_dir) / store.LOCK_NAME)
+        lock = {k: held.get(k) for k in ("pid", "host", "taken_at")}
+    if handoff and behind:
+        nxt = (f"Read handoff {handoff['id']} and its corrections, then note that"
+               f" {len(behind)} work-done/transition entries followed it — orient from the"
+               " journal for those, invoke tamheed:package-writes before your first write,"
+               " and write a fresh handoff (tamheed:session-handoff) before the next compaction")
+    elif handoff:
+        nxt = (f"Read handoff {handoff['id']} and its corrections first, then invoke"
+               " tamheed:package-writes before your first write")
+    else:
+        nxt = ("No handoff recorded: orient from the journal (/tamheed:orient-resume), invoke"
+               " tamheed:package-writes before your first write, and write a handoff"
+               " (tamheed:session-handoff) before the next compaction")
+    return {"package": name, "handoff": handoff, "handoff_behind": len(behind),
+            "open_feedback": open_fb, "slices_active": slices, "last_entries": last,
+            "lock": lock, "next": nxt, "skill": "tamheed:package-writes"}
+
+
 def package_open(name: str) -> dict:
     """Open an existing package (takes the single-writer lock). v4 (plan 031): a
-    pre-v4 package is REFUSED, never silently upgraded — migration is explicit."""
+    pre-v4 package is REFUSED, never silently upgraded — migration is explicit.
+    v5.1 (plan 122): the result carries the `resume` block — read it before any write."""
     global _CURRENT, _CURRENT_NAME
     if _CURRENT is not None:
         return _err(f"package '{_CURRENT_NAME}' is already open — package_close it first")
@@ -1025,7 +1095,8 @@ def package_open(name: str) -> dict:
         return _err(str(exc))
     _CURRENT, _CURRENT_NAME = s, name
     return {"ok": True, "package": name,
-            "package_root": str(Path(PACKAGE_ROOT).resolve())}
+            "package_root": str(Path(PACKAGE_ROOT).resolve()),
+            "resume": _resume_block(s.conn, name, pkg_dir / "data")}
 
 
 def package_close() -> dict:
@@ -2651,6 +2722,50 @@ def _readiness_report(conn, scope: str, scope_id: str | None) -> dict:
                 " pile up): distil shared themes into a skill (/tamheed:skill-promote —"
                 " promoted lessons graduate out of the note) or unpin what no"
                 " longer needs to bind every session" if over else ""))
+        # Plan 122 (v5.1, findings_32 note 4): the resume state is behind the journal.
+        # Entities = the work-done/transition entries no handoff covers (the latest
+        # handoff, or none at all); population = every such entry. A journal with no
+        # work yet measured nothing (indeterminate, the prompt-ids-resolve posture).
+        ho = conn.execute("SELECT id FROM progress_entries WHERE event_type = 'handoff'"
+                          f" ORDER BY {_PE_NUM} DESC LIMIT 1").fetchone()
+        after = f" AND {_PE_NUM} > {int(str(ho[0])[3:])}" if ho else ""
+        uncovered = [r[0] for r in conn.execute(
+            "SELECT id FROM progress_entries WHERE event_type IN ('work-done', 'transition')"
+            f"{after} ORDER BY {_PE_NUM}").fetchall()]
+        (worked,) = conn.execute("SELECT COUNT(*) FROM progress_entries WHERE event_type IN"
+                                 " ('work-done', 'transition')").fetchone()
+        rule("handoff-current", "advisory", uncovered[:_PROSE_ID_CAP],
+             ("work-done/transition entries written after the latest `handoff` journal entry"
+              f" ({ho[0]})" if ho else
+              "work-done/transition entries journalled with NO `handoff` entry at all")
+             + " — the resume state is behind the record: before a compaction, at session"
+             " end or on a handover, write a handoff LAST (`tamheed:session-handoff`: resume"
+             " point, in-flight ids, what awaits the operator, verified facts with the"
+             " query that measured each); a stale handoff is corrected (`corrects`), never"
+             " edited. The latest one is the `resume` block of package_open/server_info")
+        rules[-1]["population"] = {"table": "progress_entries", "rows": worked,
+                                   "scoped": False, "unit": "work entries"}
+        if worked == 0 and ho is None:
+            rules[-1]["status"] = "indeterminate"
+            rules[-1]["discriminating"] = False
+            rules[-1]["note"] += " — no work journalled yet: this rule measured nothing"
+        # Plan 122 (the field's FB-020): a retired project skill strands the Promoted
+        # lessons that point at it — promoted_to is immutable and no rule saw them. The
+        # pointer (a successor SKL- row, or `upstreamed_to` naming the plugin skill that
+        # absorbed it) is what passes the rule. Emitted only when the package HAS skills
+        # (the plan-079 posture); over an empty lessons table plan 077's logic applies.
+        if conn.execute("SELECT 1 FROM skills LIMIT 1").fetchone():
+            rule("lessons-stranded", "advisory",
+                 ids("SELECT l.id FROM lessons l JOIN skills s ON s.id = l.promoted_to"
+                     " WHERE l.lifecycle_status = 'Promoted'"
+                     " AND s.lifecycle_status IN ('Obsolete', 'Superseded')"
+                     " AND s.superseded_by IS NULL AND s.upstreamed_to IS NULL"
+                     " ORDER BY CAST(SUBSTR(l.id, 4) AS INTEGER)"),
+                 "Promoted lessons whose skill is retired (Obsolete/Superseded) with NO"
+                 " pointer to where its content lives now: set the skill row's"
+                 " `superseded_by` (a successor SKL- row) or `upstreamed_to` (the plugin"
+                 " skill that absorbed it, e.g. `tamheed:package-writes`) on the operator's"
+                 " word — the lessons stay Promoted; the pointer is what makes them reachable")
         gate_where, gate_params = "applies_to IS NULL", ()
     elif scope == "phase":
         rule("acs-met", "blocking",
@@ -4220,7 +4335,10 @@ def export_html(output: str | None = None) -> dict:
     # Plan 096: the page renders readiness_check("package") too, evaluated as of today
     # (two rules read the calendar; the page says so)
     readiness = {"report": _readiness_report(_CURRENT.conn, "package", None),
-                 "as_of": _now()[:10]}
+                 "as_of": _now()[:10],
+                 # plan 122: the Resume panel renders the same block the tools return
+                 "resume": _resume_block(_CURRENT.conn, _CURRENT_NAME,
+                                         PACKAGE_ROOT / _CURRENT_NAME / "data")}
     text = viewer.render(_CURRENT.conn, report["gates"], report["ready"], readiness)
     # Plan 081: stamp the package digest, so "is this page current?" is a string
     # comparison package_verify can answer without rendering anything. Deterministic:
@@ -4358,6 +4476,11 @@ def server_info(detail: bool = False) -> dict:
            "migrations_head": migrations[-1] if migrations else None,
            # plan 027 (B23): the numeric schema head (PRAGMA user_version contract)
            "schema_version": store.schema_version()}
+    if _CURRENT is not None:
+        # plan 122: after a compaction the package is still open, so this is the first
+        # call a resuming agent can make — it carries the same block package_open does
+        out["resume"] = _resume_block(_CURRENT.conn, _CURRENT_NAME,
+                                      PACKAGE_ROOT / _CURRENT_NAME / "data")
     if detail:
         prefixes = {tid: prefix for tid, _, prefix, _ in BASELINE_ENTITY_TYPES}
         out["entity_types"] = [

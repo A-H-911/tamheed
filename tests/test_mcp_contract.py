@@ -2013,6 +2013,83 @@ class McpContractTest(unittest.TestCase):
                                columns=["event_type"])["rows"][0]
         self.assertEqual(row["event_type"], "handoff")   # the 007 CHECK admits it
 
+    def test_resume_block_and_handoff_current(self):
+        """Plan 122 (v5.1, findings_32 note 4): package_open and server_info carry the
+        resume block; the latest handoff, its correction chain and the work journalled
+        after it are what a resuming agent gets for free; handoff-current follows."""
+        make_complete_package("demo")
+
+        def rule():
+            return next(r for r in srv.readiness_check("package")["rules"]
+                        if r["rule"] == "handoff-current")
+        info = srv.server_info()
+        self.assertIsNone(info["resume"]["handoff"])
+        self.assertEqual(info["resume"]["skill"], "tamheed:package-writes")
+        self.assertEqual(info["resume"]["package"], "demo")
+        self.assertIsNotNone(info["resume"]["lock"])          # the package is open
+        self.assertIn("pid", info["resume"]["lock"])
+        (worked,) = srv._CURRENT.conn.execute(
+            "SELECT COUNT(*) FROM progress_entries WHERE event_type IN"
+            " ('work-done', 'transition')").fetchone()
+        if worked == 0:
+            self.assertEqual(rule()["status"], "indeterminate")   # measured nothing
+        w1 = srv.progress_update([{"entry": "did a thing", "event_type": "work-done",
+                                   "actor": "agent:test"}])["ids"][0]
+        r = rule()
+        self.assertEqual(r["status"], "fail")
+        self.assertIn(w1, r["entities"])
+        self.assertEqual(r["population"]["unit"], "work entries")
+        h = srv.progress_update([{"entry": "Resume at: AC-002. In flight: WBS-1.",
+                                  "event_type": "handoff", "actor": "agent:test"}])["ids"][0]
+        self.assertEqual(rule()["status"], "pass")
+        block = srv.server_info()["resume"]
+        self.assertEqual(block["handoff"]["id"], h)
+        self.assertEqual(block["handoff_behind"], 0)
+        self.assertIn(h, block["next"])
+        self.assertEqual(block["last_entries"][0]["id"], h)
+        w2 = srv.progress_update([{"entry": "more", "event_type": "work-done",
+                                   "actor": "agent:test"}])["ids"][0]
+        c = srv.progress_update([{"entry": "correction: AC-002 was already Met",
+                                  "event_type": "correction", "corrects": h,
+                                  "actor": "agent:test"}])["ids"][0]
+        block = srv.server_info()["resume"]
+        self.assertEqual(block["handoff_behind"], 1)
+        self.assertEqual([x["id"] for x in block["handoff"]["corrections"]], [c])
+        self.assertIn("fresh handoff", block["next"])
+        r = rule()
+        self.assertEqual((r["status"], r["entities"]), ("fail", [w2]))
+        srv.package_close()
+        opened = srv.package_open("demo")
+        self.assertEqual(opened["resume"]["handoff"]["id"], h)   # the open carries it too
+        html = srv.export_html()
+        self.assertTrue(html["ok"], html)
+        page = (srv.PACKAGE_ROOT / "demo" / "review.html").read_text(encoding="utf-8")
+        self.assertIn('<section id="resume">', page)
+        self.assertIn(f"Latest handoff: {h}", page)
+
+    def test_lessons_stranded_passes_once_the_pointer_exists(self):
+        """Plan 122 (the field's FB-020): a retired skill strands its Promoted lessons until
+        the skill row points at a successor or at the plugin skill that absorbed it. The
+        rule is emitted only when the package has skill rows."""
+        make_complete_package("demo")
+        names = {r["rule"] for r in srv.readiness_check("package")["rules"]}
+        self.assertNotIn("lessons-stranded", names)            # no skills: not emitted
+        conn = srv._CURRENT.conn
+        conn.execute("INSERT INTO skills (id, name, title, lifecycle_status) VALUES"
+                     " ('SKL-001', 'writing-rows', 'Writing rows', 'Obsolete')")
+        conn.execute("INSERT INTO lessons (id, title, statement, kind, lifecycle_status,"
+                     " promoted_to) VALUES ('LL-001', 't', 's', 'improve', 'Promoted', 'SKL-001')")
+        conn.commit()
+
+        def rule():
+            return next(r for r in srv.readiness_check("package")["rules"]
+                        if r["rule"] == "lessons-stranded")
+        self.assertEqual((rule()["status"], rule()["entities"]), ("fail", ["LL-001"]))
+        conn.execute("UPDATE skills SET upstreamed_to = 'tamheed:package-writes'"
+                     " WHERE id = 'SKL-001'")
+        conn.commit()
+        self.assertEqual((rule()["status"], rule()["entities"]), ("pass", []))
+
     def test_work_bind_stamps_last_referenced(self):
         make_complete_package("demo")
         result = srv.work_bind("commit abc123", ["FR-001", "AC-001"])
@@ -4182,7 +4259,8 @@ class V4EngineTest(unittest.TestCase):
                           "requirements-wired", "lessons-confirmed",
                           "lessons-note-budget", "prose-ids-resolve",
                           "lessons-superseded-binding", "waivers-open-ended",
-                          "prompt-ids-resolve", "feedback-unanswered"):   # plans 093 (missed), 100
+                          "prompt-ids-resolve", "feedback-unanswered",   # plans 093 (missed), 100
+                          "handoff-current", "lessons-stranded"):        # plan 122 (v5.1)
             self.assertIn(rule_name, text, rule_name)
         self.assertIn("STOP for operator approval", text)
         self.assertIn("you NEVER author a `WVR-` row", text)
