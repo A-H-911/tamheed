@@ -100,8 +100,24 @@ next session asks again. Honour a ceremony's STOPs in the record as well as in y
 
 ---
 
+## What you cannot see
+
+**A permission prompt never appears in a tool result.** When the operator reports one, you can only
+infer its cause from their timing — four rounds of inference once failed where one word from them
+succeeded. Ask the operator to name the tool the prompt shows, and read any rule-validation warning
+the harness prints, before touching a permission setting. The prompts in front of deletion, pushing,
+merging and re-running a pipeline are the operator's last checkpoint before the actions the decision
+register spends most of its words governing: they are not faults to configure away.
+
+**Before anything destructive or outward, ask first — in words, not by attempting it.** Removing a
+lock, deleting a file another session may need, a force flag, a push, a rewrite of history, a stock
+refresh that deletes files: the interview precedes the attempt, with the exact command and what it
+destroys. An attempt that a prompt blocks looks, from your side, identical to one that ran.
+
 ## What this skill does NOT cover
 
+- **Where a session stopped, for the next one** — `tamheed:session-handoff` (re-put an unanswered
+  interview verbatim there; never reconstruct it).
 - **How to read and sweep the records before citing them** — `tamheed:reading-the-record`.
 - **What to record after the ruling** — the obligations table in this project's `CLAUDE.md` note.
 - **Whether to include a recommendation at all** — follow what the operator asks for in that round.

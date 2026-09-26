@@ -16,10 +16,21 @@ Invoke this (`/tamheed:orient-resume`) to re-orient an agent on the `<package>` 
 > the slash command names another (`$ARGUMENTS`). Recording obligations: the note's table.
 Orient yourself on this project's Tamheed package before doing anything else:
 
-1. `server_info` — confirm the server version and the resolved package root.
+0. **The resume block first.** The plugin's SessionStart hook prints it at every session
+   start, clear and compaction; `package_open` and `server_info` return it as `resume`. Read
+   the latest `handoff` entry WITH its corrections before anything else — it says where the
+   last session stopped, what awaits the operator and what not to redo. `handoff_behind`
+   counts the work-done/transition entries written after it: those you orient on from the
+   journal (step 4). No handoff at all: the journal is the resume state, and you write one
+   before this session ends (`tamheed:session-handoff`). When the hook already printed the
+   block, do not re-read what it showed — go to the steps it leaves open.
+1. `server_info` — confirm the server version and the resolved package root. **After a
+   compaction the package is still open** (the MCP process and the lock survive): this is
+   the first call, and it carries the resume block; skip step 2.
 2. `package_open("<package>")` — take the single-writer lock. If it refuses, the refusal
    says what the store observed about the holder; `package_unlock("<package>")` reports
    it. Removing a dead holder's lock (`confirm=true`) is the OPERATOR's word, never yours.
+   Its result carries the resume block too.
 3. `gate_run()` — note the verdict, any failing gate, and any G-TRACE warning.
 4. The lessons: `entity_query("lesson", status="Approved")` — confirmed lessons
    bind this session too (a large register pages: pass the result's `next_after`

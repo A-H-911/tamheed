@@ -149,11 +149,28 @@ id resolves, and the damage stays until someone reads it.
   operator's explicit words from an interview in this session (`tamheed:operator-interview`); the JSON
   boolean is the word, never a value you supply because the ceremony expects it.
 
+## 11. Never manufacture a status, and never trust a global rename
+
+- **A status is written from evidence, never to turn a rule green.** A row becomes `Implemented`,
+  `Met` or `Done` because the verdict, the binding or the operator's word exists — not because the
+  readiness rule that lists it would pass once it did. A sweep that flipped every work item in a
+  family to `Implemented` on the assumption that the work "must be done by now" was reverted as a
+  defect: manufactured status, and the register could no longer tell finished from assumed.
+  - *Tell:* the write you are about to make has no `audit_record`, no `work_bind` and no decision
+    behind it — only a rule it silences.
+- **A global rename skips every record that quotes the text as written.** Renaming an id, a title
+  or a term with a search-and-replace over the rows you know about leaves the quotations in other
+  families untouched — a decision clause that cites the old title, a journal entry that names the
+  old id in prose, a prompt file that repeats it. Sweep with `search=` across every family for the
+  OLD text after the rename, and read each hit (`tamheed:reading-the-record` step 3: two keys, not
+  one); `prose-ids-resolve` and `prompt-ids-resolve` catch a dangling id, never a stale sentence.
+
 ---
 
 ## What this skill does NOT cover
 
 - **What to record** — the obligations table in the note is authoritative; this file never restates it.
+- **Where a session stopped** — `tamheed:session-handoff` (the `handoff` journal entry, written last).
 - **Whether a record says what you think** — `tamheed:reading-the-record`.
 - **Whether a test, a measurement or a CI run proves what you claim** — `tamheed:test-evidence`,
   `tamheed:measurement-evidence`, `tamheed:ci-evidence`.

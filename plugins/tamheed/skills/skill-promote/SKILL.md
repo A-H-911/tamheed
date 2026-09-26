@@ -64,3 +64,25 @@ Work through this with the operator, in the `<package>` package:
    promoted LL- ids, then `package_close()`. Later revisions of the skill are
    the operator's hand-edits of the FILE; a re-distillation is a NEW `SKL-` row
    superseding the old (`superseded_by`), never an edit of this record.
+
+## After the ceremony — three cases the record must survive (v5.1)
+
+- **The file states a mechanism its lesson contradicts** (a distillation carried a sentence
+  the note itself had since corrected). The fix is the operator's hand-edit of the FILE plus a
+  `correction` journal entry (`event_type: "correction"`, `corrects` naming the `lesson-promoted`
+  entry, `subject_id` the `SKL-` row) — the skill row stays as it is. A re-distillation (a new
+  `SKL-` row, `superseded_by` on the old) is for a change in the lesson SET, never for a wrong
+  sentence. `tamheed:written-claims` step 7: fix the file, never annotate the pointer.
+- **A plugin skill now carries the same procedure** (a project skill and a `tamheed:<name>`
+  twin). Keep both while the project's instances add something the twin lacks; otherwise retire
+  the project row on the operator's word: `lifecycle_status: "Obsolete"` with `upstreamed_to`
+  naming the plugin skill (`tamheed:package-writes`). The Promoted lessons keep pointing at the
+  retired row — `promoted_to` is immutable — and the pointer is what keeps them reachable: the
+  `lessons-stranded` advisory names every Promoted lesson whose retired skill row has neither
+  `superseded_by` nor `upstreamed_to`. The note's "Skills distilled from lessons" line lists
+  Approved rows only, so a retired twin leaves it by itself. Delete or keep the file as the
+  operator says; the row is the record either way.
+- **The file drifted from the engine** (it names a tool, a flush or a rule that changed).
+  `handoff_emit` reports stale references inside every skill file the skills table points at
+  (`stale_references`, `file: <target_path>`), report-only: the file is operator-owned — put the
+  hits to the operator, edit on their word, journal the correction.

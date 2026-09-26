@@ -57,14 +57,29 @@ Run a read-only integrity check on the `<package>` Tamheed package:
    (this run resolves nothing).
 8. **Verify any recent repair**: if rows were repaired since the last check (a
    scale recovery, a title restore), re-read the affected rows in full
-   (`entity_query(<type>, ids=[...])` — the tool truncates no field) and re-derive
-   each expected value independently from its source (the stash, the backup) — a
-   repair whose only check is the hand that typed it is unverified. Report
-   mismatches as findings; fix nothing in this run.
-9. Report: verify verdict (+ digest), gate verdict, count anomalies, trace gaps and
+   (`entity_query(<type>, ids=[...])` with NO `columns` projection — the tool
+   truncates no field, and `omitted_columns` names anything a projection left out)
+   and re-derive each expected value independently from its source: the row's own
+   `custom_attributes` stash, or an `entity_export` snapshot for a set — never a
+   data file read by hand. For a repair made in THIS session the write itself
+   reports the delta: `changed_columns` gives `{column, old_len, new_len}` per
+   changed column, so a re-transmission that lost text shows as a length drop
+   instead of a quiet `ok` — re-derive from those lengths too. A repair whose only
+   check is the hand that typed it is unverified: a scale recovery built correctly by
+   script was re-typed by hand into the tool call and one row's probability flipped;
+   care did not catch it, the re-derivation did, in one line. Report mismatches as
+   findings; fix nothing in this run.
+9. **Confirm the lessons are live**, not merely recorded: `entity_query("lesson")` —
+   every Approved row that is pinned should render in the tool-owned note (the
+   `handoff_emit` result says what the note carries), Promoted rows should point at an
+   Approved skill row (or one with `superseded_by` / `upstreamed_to` set —
+   `lessons-stranded` names the rest), and `readiness_check`'s `lessons-confirmed`
+   should name only rows genuinely awaiting the operator. A lesson stuck Proposed for
+   many sessions is an un-run interview, not a decision — report it as one.
+10. Report: verify verdict (+ digest), gate verdict, count anomalies, trace gaps and
    edge residue, narrated and ungraded verdicts, buried rulings, staleness, unbound
-   commits, readiness blockers, repair-verification mismatches — then
-   `package_close()`. Change NOTHING in this run.
+   commits, readiness blockers, repair-verification mismatches, lessons not live —
+   then `package_close()`. Change NOTHING in this run.
 
 ## What a green run does not prove
 

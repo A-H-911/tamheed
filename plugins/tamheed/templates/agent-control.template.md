@@ -1,10 +1,11 @@
 ---
-status: Draft
-version: 0.1.0
-updated: <YYYY-MM-DD>
 owner: <name-or-role>
-generation: derived      # regenerated from the package each update cycle
 ---
+<!-- v5.1 (plan 124): no status/version/updated/generation fields. This file is hand-maintained
+     and nothing regenerates it; a version stamp or a "derived" claim on it is a promise without a
+     mechanism, and the field carried both for two months on a file edited by hand. Live state
+     arrives from the store at session start (the resume block); this file holds standing rules. -->
+
 
 # AGENTS.md — standing operating context for <project-name>
 
@@ -26,8 +27,12 @@ generation: derived      # regenerated from the package each update cycle
 - **The contract:** the Tamheed package `<package-name>` — charter and registers via
   `entity_query`, the human surface at `<package-name>/review.html`. Decisions in approved
   `DEC-`/`ADR-` rows are FINAL; do not re-litigate settled decisions.
-- **Where you are now:** `gate_run()` + `readiness_check(scope)` + the latest
-  `progress-entry` rows — never a stale copy in this file.
+- **Where you are now:** the `resume` block `package_open` / `server_info` return (the latest
+  `handoff` journal entry with its corrections — the plugin's SessionStart hook prints it), then
+  `gate_run()` + `readiness_check(scope)` + the latest `progress-entry` rows — never a stale copy
+  in this file. A status sentence written here ("phase N complete", "N criteria Met") goes stale
+  on the next write and then reads as current; `handoff_emit` reports such sentences and id-dense
+  paragraphs in this file (`restated_content`) so they can be replaced by the query.
 
 ## Invariants — never violate (a violation requires a new ADR)
 
@@ -64,6 +69,11 @@ generation: derived      # regenerated from the package each update cycle
 
 If you cannot record (lock held, package missing), STOP and tell the operator — do not
 proceed unrecorded.
+
+Before a compaction, at session end or on a handover, write a `handoff` journal entry LAST
+(`tamheed:session-handoff`: resume point, in-flight ids, what awaits the operator, verified facts
+with the query that measured each, what not to carry); the `handoff-current` advisory names a
+missing or stale one, and the next session reads it first.
 
 ## Operating conventions
 

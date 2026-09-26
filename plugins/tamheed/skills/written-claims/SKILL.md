@@ -66,6 +66,17 @@ The journal is append-only: `progress_update` with `event_type: correction` and 
 keeps both the wrong sentence and its retraction on the record. A finding is corrected the same way —
 a dated note beside it, never a silent rewrite.
 
+**7. Fix the file; never annotate the pointer.**
+When an index line, a memory pointer or a summary points at a file that says something wrong, the fix
+goes in the file. A disclaimer bolted onto the pointer — *"superseded, see …"* beside the link while
+the file keeps saying the wrong thing — leaves the wrong text in place for every reader who reaches
+the file another way, and reads as checked. The same rule for a distilled skill file that carries a
+mechanism its source lesson contradicts: correct the mechanism in the file (the operator's hand-edit,
+recorded by a `correction` journal entry naming the skill row), not a note in the index that it is
+wrong.
+- *Field evidence:* an index line carried *"SUPERSEDED by a later decision"* for weeks while the
+  file it pointed at kept the superseded rule; readers of the file never saw the index.
+
 ---
 
 ## What this skill does NOT cover

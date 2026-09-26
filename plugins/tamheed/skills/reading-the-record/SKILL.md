@@ -71,6 +71,24 @@ this second sweep finds sentences asserting that nothing did.
 Tense is invisible to a regex. *"Needed an operator decision"* followed by *"DECIDED"* is history,
 not an open question.
 
+**7. A premise you inherited is a claim, not a fact — check it against the thing itself.**
+A carried evaluation ("done, do not redo"), a capability judged present or absent from one file, a
+risk described as the price of a change: every number in it can be right and the premise still wrong,
+because it was checked against the wrong thing — and nothing downstream fails to tell you.
+- *A carried pick.* When a choice must satisfy a hard constraint (a security policy, a sandbox, an
+  offline install, a target runtime, a licence), find that constraint and ask whether the pick was
+  ever run against it. If not, run the smallest thing that exercises it — on every candidate in one
+  run, not only the pick — before you build on it. Testing only the pick concludes "the technique is
+  impossible here" when it was the pick that failed.
+- *A capability judged from one class.* Read its base types and look for a sibling that already
+  solves the problem before declaring a field or a behaviour absent; the file you read is only its
+  own declaration. An unused parameter is a question, not evidence.
+- *A cost carried as inherent.* Name the expensive thing and the property you are about to lose,
+  then ask whether the property is produced by the expensive thing or only bundled with it. Work
+  spread across every consumer to keep one property is the tell that the property has one owner.
+An ADR's amend list is the same instrument (step 4): check it against every row that quotes the
+subject, not only the rows it names.
+
 ---
 
 ## Before you call something stale
