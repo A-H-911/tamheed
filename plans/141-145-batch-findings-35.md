@@ -22,6 +22,8 @@ after a devil's-advocate review); the interview rulings R19–R26.
 | M6 | The installed plugin's hook in that same run | no line in the operator's trace: the plugin is disabled in the user settings here and enabled per project |
 | M7 | Headless sessions that received the field's block, 2026-09-26 13:48Z to 2026-09-27 02:36Z | six, each `sdk-cli` in the project's folder |
 | M8 | `python check.py` with the trace variable unset (plan 141) | ALL CHECKS PASSED; no line in the operator's trace inside the run's window |
+| M9 | Lab beat 26 (plan 144), first run | every assertion held in both phases; two sessions in one folder wrote lines with equal counts (`lines=6 chars=830`) and different `session=` tails; evidence `evidence/lab-continuation-report-144-2026-09-27.md` |
+| M10 | The stock guide's body against the 5.3.0 body, at the stamp | one line differs, the title |
 
 ## 1. What the field returned (no defect, no feedback row)
 
@@ -49,8 +51,8 @@ recommendations (`DEC-233`). A caution: the installed tree is CRLF on Windows.
 |---|---|---|
 | 141 | [The trace carries the session](141-trace-carries-the-session.md) | DONE `0be3a56` |
 | 142 | [Two absorbed lessons and the interview's default](142-two-lessons-and-the-interview-default.md) | DONE `983df9d` |
-| 143 | [Docs + diagrams sweep](143-docs-and-diagrams-sweep-findings-35.md) | IN PROGRESS |
-| 144 | [The version stamp, then lab beat 26 + evals](144-stamp-then-lab-beat-26.md) | PLANNED |
+| 143 | [Docs + diagrams sweep](143-docs-and-diagrams-sweep-findings-35.md) | DONE `5037176` |
+| 144 | [The version stamp, then lab beat 26 + evals](144-stamp-then-lab-beat-26.md) | DONE |
 | 145 | [Tag v5.4.0, the brief file, close-out](145-release-v540.md) | PLANNED |
 
 ## 4. The 5.3.0 brief's errors, owned (E1–E4), and the maintainer's own
@@ -79,3 +81,6 @@ recommendations (`DEC-233`). A caution: the installed tree is CRLF on Windows.
 5. The operator's trace file held five lines before the batch. Two are this machine's own sessions of
    03:22Z: one is attributed by the transcripts to a headless session in this repository's folder;
    the other cannot be attributed by its content. That is the condition R20 removes.
+6. Plan 144's first full gate was red on one contract test that assumed every release adds two
+   lines or more to the guide; 5.4.0 changes only its title. The test's assumption, not the
+   engine: fixed at the test before the commit.

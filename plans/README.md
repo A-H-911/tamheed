@@ -189,8 +189,8 @@ brief to the field project is a committed file, read by path:
 |---|---|---|---|
 | 141 | [The trace carries the session](141-trace-carries-the-session.md) | step 0 (the real event measured) | DONE — 2026-09-27 `0be3a56` |
 | 142 | [Two absorbed lessons and the interview's default](142-two-lessons-and-the-interview-default.md) | — | DONE — 2026-09-27 `983df9d` |
-| 143 | [Docs + diagrams sweep for v5.4.0](143-docs-and-diagrams-sweep-findings-35.md) | 141-142 | IN PROGRESS |
-| 144 | [The version stamp, then lab beat 26 + evals](144-stamp-then-lab-beat-26.md) | 143 + full gate | PLANNED |
+| 143 | [Docs + diagrams sweep for v5.4.0](143-docs-and-diagrams-sweep-findings-35.md) | 141-142 | DONE — 2026-09-27 `5037176` |
+| 144 | [The version stamp, then lab beat 26 + evals](144-stamp-then-lab-beat-26.md) | 143 + full gate (suites; lints; canonical; evals 3/3 incl. 2 new assertions) | DONE — 2026-09-27 (stamp before the beat; the scratch phase first; held on the first run) |
 | 145 | [Tag v5.4.0, the brief file, close-out](145-release-v540.md) | 144 | PLANNED |
 
 ### Field cycle findings_34 -- plans 136-140 -> v5.3.0 (2026-09-27; maintainer-executed)

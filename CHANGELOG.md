@@ -10,6 +10,8 @@ All notable changes to Tamheed are documented here. The format is based on
 
 ## [Unreleased]
 
+## [5.4.0] - 2026-09-27
+
 **MINOR — the findings_35 batch: the third field round on the resume surface (plans 141–145; field
 report findings_35).** The field ran 5.3.0 for a day and returned no defect and no feedback row.
 What came back was a trace line nobody could attribute, four brief errors, the operator's standing

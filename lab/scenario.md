@@ -713,6 +713,34 @@ must fire; the resulting package replaces `evals/sample-results/lab-tracker/pack
       handoff); `gate_run` ready; `package_verify()` green (`verified: true`, `dirty: []`, `foreign:
       []`, `review_current: true`); `package_close`; no `data/.lock` remains.
 
+26. **The v5.4.0 continuation — the third field round: the trace names its session.** The
+    package opens at `schema_version` 7 (no migration in 5.4.0) with the resume block naming beat
+    25's final handoff. The scratch phase runs FIRST, with hard assertions, so a failure stops the
+    beat before the fixture is touched; the fixture's note then quotes what the scratch phase
+    observed. The harness removes the operator's own `TAMHEED_HOOK_LOG` from every hook run and
+    aims the hook only at its own file.
+    ✔ TWO SESSIONS, ONE FOLDER (plan 141), scratch copy, pointer emit first: the hook run twice
+      with `source: startup` and two `session_id` values prints the SAME block both times and
+      appends two lines whose `source=… lines=N chars=N status=printed` parts are equal and whose
+      tails are ` session=<the first id>` and ` session=<the second id>`; the counts equal the
+      printed block's; neither line carries the entry's text or the handoff's id.
+    ✔ THE TOKEN RULE (plan 141), scratch copy: a `session_id` holding a newline, one holding a
+      space, a number and an absent one are each written ` session=-` on exactly one new line; a
+      `source` holding a newline is written `source=-`; a run with the variable unset appends
+      nothing and still prints the block.
+    ✔ THE EMISSION (plan 144): `handoff_emit(<scratch target>, refresh_stock=true)` reports
+      `refreshed: ["prompts/README.md"]` (the guide now reads `tamheed v5.4.0`), every scan empty,
+      no `skill` key; the second emit reports `CLAUDE.md` unchanged. `package_open` and
+      `server_info` still return `resume.lock.observed: "alive"`, `evidence: "held by this
+      session"`.
+    ✔ Close the beat with ONE `progress_update` note (actor `agent:lab-beat-26`, `event_type:
+      "note"`) quoting verbatim `each line ended session= followed by its own id`, `written
+      session=- on exactly one new line`, `tamheed v5.4.0`; THEN the final handoff (`event_type:
+      "handoff"`, written LAST — `handoff-current` reads `pass`); then `export_html` (review.html
+      carries the Resume section and the new latest handoff; it renders no lock, by design);
+      `gate_run` ready; `package_verify()` green (`verified: true`, `dirty: []`, `foreign: []`,
+      `review_current: true`); `package_close`; no `data/.lock` remains.
+
 **Pass bar:** every ✔ observed; `gate_run` ready (or failing ONLY on deliberately-open
 items the scenario names); the eval runner's lab checks green. `readiness_check` is
 expectedly NOT ready on the scenario's deliberately-open items (AC-003 and, since beat

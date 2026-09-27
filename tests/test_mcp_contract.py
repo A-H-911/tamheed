@@ -1516,12 +1516,20 @@ class McpContractTest(unittest.TestCase):
             srv.handoff_emit(target)                         # emits the current README
             readme = prompts / "README.md"
             releases = sorted(history["README.md"], key=srv._vkey)
-            latest, prev = releases[-1], releases[-2]
-            body = history["README.md"][latest].replace("{package}", "demo")
-            # a partial hand-merge: the previous release's body, the marker, and ONE added line
-            prev_body = history["README.md"][prev].replace("{package}", "demo")
-            added = [ln for ln in body.splitlines() if ln.strip()
-                     and ln.strip() not in {p.strip() for p in prev_body.splitlines()}]
+            # The newest release that ADDED two lines or more: a partial merge needs a line to
+            # leave out. A release whose only change to the guide is its title (5.4.0, plan
+            # 144) has a one-line delta - the previous body plus that line IS the whole merge,
+            # and the engine rightly verifies it.
+            for latest, prev in zip(reversed(releases), reversed(releases[:-1])):
+                body = history["README.md"][latest].replace("{package}", "demo")
+                # a partial hand-merge: the previous release's body, the marker, and ONE added line
+                prev_body = history["README.md"][prev].replace("{package}", "demo")
+                added = [ln for ln in body.splitlines() if ln.strip()
+                         and ln.strip() not in {p.strip() for p in prev_body.splitlines()}]
+                if len(added) >= 2:
+                    break
+            else:
+                self.fail("no release of the guide added two lines over its predecessor")
             readme.write_text(prev_body + f"\n<!-- tamheed:stock-merged {latest} -->\n"
                               + added[0] + "\n", encoding="utf-8")
             out = srv.handoff_emit(target)
