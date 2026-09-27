@@ -1,4 +1,4 @@
-# How to use this folder — the `package` prompt guide (tamheed v5.4.0)
+# How to use this folder — the `package` prompt guide (tamheed v5.5.0)
 
 This folder holds the **project's own prompts** for the `package` Tamheed package — plus
 this guide. Since v5.0.0 the stock scenarios are no longer files here: they are the tamheed
@@ -137,8 +137,10 @@ a summary: text that passed through a display is suspect wherever it came from. 
 generated repair payload, never re-type it (the hand is the untrusted transport), and end
 every multi-row repair with an independent verifier: re-read through the tools and re-derive each
 expected value from its source before calling the repair done. When execution teaches
-something durable, record a `lesson` row (`LL-`, born Proposed) — only lessons the
-OPERATOR approves bind future sessions (rendered into the CLAUDE.md note, pinned first);
+something durable, record a `lesson` row (`LL-`, born Proposed, its statement opening
+with the rule — the note prints a statement's opening only) — only lessons the
+OPERATOR approves bind future sessions; the CLAUDE.md note renders the pinned ones and
+the 10 highest-numbered unpinned ones, and the rest bind too and are read by query;
 the agent never approves its own lesson — the store REFUSES an approving or promoting
 upsert without `"operator_confirm": true`, your words, in every mode. Entity prose is
 screened for placeholder tokens (G-COMPLETE): to QUOTE a token like `TODO` in prose,

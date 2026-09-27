@@ -3360,6 +3360,9 @@ class V4EngineTest(unittest.TestCase):
         self.assertIn(f"unpinned fill of the {srv._NOTE_LESSONS_CAP} highest-numbered", liveness)
         self.assertIn(f"the lowest-numbered of the {srv._NOTE_LESSONS_CAP} out of the note",
                       liveness)
+        # plan 149: the stock guide states the same roster
+        self.assertIn(fill, " ".join((bundle / "prompts" / "README.md")
+                                     .read_text(encoding="utf-8").split()))
 
     def test_migrate_relocates_converted_file_out_of_data(self):
         """findings_22 §4: a `*.jsonl.converted` audit-trail file in the canonical

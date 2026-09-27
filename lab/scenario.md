@@ -741,6 +741,45 @@ must fire; the resulting package replaces `evals/sample-results/lab-tracker/pack
       `gate_run` ready; `package_verify()` green (`verified: true`, `dirty: []`, `foreign: []`,
       `review_current: true`); `package_close`; no `data/.lock` remains.
 
+27. **The v5.5.0 continuation — the fourth field round: two words.** The package opens at
+    `schema_version` 7 (no migration in 5.5.0) with the resume block naming beat 26's final
+    handoff. The status BINDS; the note's roster is what is RENDERED. The scratch phase runs
+    FIRST, with hard assertions; the fixture's note then quotes what it observed. The package has
+    one Approved lesson, so the roster's mechanics are exercised on the scratch copy only.
+    ✔ THE APPROVAL HINT (plan 146), scratch copy: approving a Proposed lesson by a full row
+      returns `next` reading `binds from this write and is RENDERED only once the always-loaded
+      note is rebuilt` and ending with the unchanged cap phrase (`only if pinned or among the 10
+      newest unpinned Approved rows - pin it to keep it visible`). An approval that omits a
+      stored column is refused as content drift: the stored content goes whole.
+    ✔ NO EMIT YET (plan 146), scratch copy: after two approvals and before any emit,
+      `export_html` marks three rows `rendered` while the note on disk lists one; the page says
+      why under the fold's title (`it is what the next handoff_emit renders`).
+    ✔ THE CUT (plans 146, 147), scratch copy: a statement that opens with its story renders
+      the story, cut to 177 characters and an ellipsis, and its rule is not in the line; a
+      statement that opens with its rule carries the rule in the line.
+    ✔ THE ELEVENTH (plan 146), scratch copy: with eleven unpinned Approved lessons the note
+      lists the ten highest-numbered, the oldest is absent, the footer reads `1 more Approved
+      lesson(s) bind too and are not rendered here`, the page marks ten rows `rendered` and the
+      oldest `not rendered`, and `entity_query("lesson", status="Approved")` still returns
+      eleven.
+    ✔ A PIN (plan 146), scratch copy: pinning the oldest on the operator's word changes
+      `pinned` alone; its `next` ends `pinned rows always render`; the note lists it first,
+      eleven lines, no footer.
+    ✔ A LATE LOW NUMBER (plan 147), scratch copy: a lesson numbered below the ten, approved
+      unpinned, is absent from the note and `not rendered` on the page, and the Approved query
+      returns it; `lessons-note-budget` reads `pass`.
+    ✔ THE EMISSION (plan 149): `handoff_emit(<scratch target>, refresh_stock=true)` reports
+      `refreshed: ["prompts/README.md"]` (the guide now reads `tamheed v5.5.0` and states the
+      roster), every scan empty; the note lists the one Approved lesson and has no footer; the
+      second emit reports `CLAUDE.md` unchanged.
+    ✔ Close the beat with ONE `progress_update` note (actor `agent:lab-beat-27`, `event_type:
+      "note"`) quoting verbatim `1 more Approved lesson(s) bind too and are not rendered here`
+      and `tamheed v5.5.0`; THEN the final handoff (`event_type: "handoff"`, written LAST —
+      `handoff-current` reads `pass`); then `export_html` (the Approved fold carries the column
+      `note (rendered at the next emit)` and marks the one row `rendered`); `gate_run` ready;
+      `package_verify()` green (`verified: true`, `dirty: []`, `foreign: []`, `review_current:
+      true`); `package_close`; no `data/.lock` remains.
+
 **Pass bar:** every ✔ observed; `gate_run` ready (or failing ONLY on deliberately-open
 items the scenario names); the eval runner's lab checks green. `readiness_check` is
 expectedly NOT ready on the scenario's deliberately-open items (AC-003 and, since beat

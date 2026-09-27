@@ -1,7 +1,7 @@
 # Tamheed v5.5.0 — the findings_36 batch: two words, the note's roster on the review page, three sentences
 
 Status: **IN PROGRESS** — index section "Field cycle findings_36" in [README.md](README.md).
-Commits: 146 `de49286`, 147 `ac6c96b`. Execution order: 146 → 147 → 148 → 149 → 150.
+Commits: 146 `de49286`, 147 `ac6c96b`, 148 `837865c`. Execution order: 146 → 147 → 148 → 149 → 150.
 
 Read-only evidence this record rests on: ACMP `findings_36.md` (`3071f1f4` → `27f63ae8`), the rows
 `LL-112` (edited, then Approved), `DEC-234` (Approved), the journal `PE-1512`..`PE-1522`, the 25
@@ -29,7 +29,9 @@ Every count is from one machine. Transcripts are created and pruned, so a count 
 | M7 | Two sessions in one folder with the same settings | the fresh one (18:31:57Z) ran the 5.4.0 hook. The one started 2026-09-26 compacted at 18:34:16Z and wrote nothing. After its restart it wrote a line carrying its own id (19:37:05Z) |
 | M8 | Reloads: the field's count against the maintainer's | 22 in its main transcript, 24 across all. Consistent |
 | M9 | Plan 146: the repo's exporter over a copy of the field package at `27f63ae8` (`p146_acmp.py`) | 30 rows in the Approved fold; the ten marked ids equal the ten its note lists; the calibration is caught |
-| M10 | `python check.py`, the trace variable unset, plans 146 and 147 | ALL CHECKS PASSED each time; no line in the operator's trace inside a run's window |
+| M10 | `python check.py`, the trace variable unset, plans 146 to 149 | ALL CHECKS PASSED each time; no line in the operator's trace inside a run's window |
+| M11 | The stock guide's body against the 5.4.0 body, at the stamp | five lines added, three gone: the title and the lesson sentence |
+| M12 | Lab beat 27 (plan 149) | held on the fourth run; runs 1 to 3 stopped in the scratch phase before the fixture was opened. Evidence `evidence/lab-continuation-report-149-2026-09-27.md` |
 
 ## 1. What the field returned (no defect, no feedback row)
 
@@ -62,8 +64,8 @@ the exporter; a regenerated `minimal-brief` page.
 |---|---|---|
 | 146 | [Two words in the engine, and the roster on the review page](146-two-words-and-the-note-roster.md) | DONE `de49286` |
 | 147 | [The two words and three sentences in the skills](147-the-two-words-and-three-sentences.md) | DONE `ac6c96b` |
-| 148 | [Docs + diagrams sweep for v5.5.0](148-docs-and-diagrams-sweep-findings-36.md) | DONE — this record's commit |
-| 149 | [The version stamp, then lab beat 27 + evals](149-stamp-then-lab-beat-27.md) | PLANNED |
+| 148 | [Docs + diagrams sweep for v5.5.0](148-docs-and-diagrams-sweep-findings-36.md) | DONE `837865c` |
+| 149 | [The version stamp, then lab beat 27 + evals](149-stamp-then-lab-beat-27.md) | DONE |
 | 150 | [Tag v5.5.0, the brief file, close-out](150-release-v550.md) | PLANNED |
 
 ## 4. The 5.4.0 brief's errors, owned, and the maintainer's own
@@ -105,3 +107,8 @@ the exporter; a regenerated `minimal-brief` page.
    boundary test went into 146 and the read-back into 147.
 6. A Promoted row needed its own hint sentence: under the new word the shared one would have called
    a never-rendered row rendered. An existing assertion caught the shape before the edit.
+7. Beat 27 stopped three times in its scratch phase. Twice the harness was wrong about the
+   engine's result shape: `changed_columns` is a list of objects, and it names the columns a row
+   SENT and changed, so an approval that sends no `confirmed_at` moves two. The third stop was
+   the engine refusing an approval that omitted a stored column as content drift. The scratch
+   phase running first is why the fixture was never touched by a failed run.
