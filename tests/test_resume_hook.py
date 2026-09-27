@@ -24,23 +24,32 @@ NOTE = ("\n## Tamheed progress tracking\n<!-- tamheed:note v5 -->\n\n"
         "<!-- /tamheed:note -->\n")
 
 
-def run_hook(project: Path, source: str = "", stdin_text: str | None = None) -> tuple[str, int]:
-    """Run main() in-process with CLAUDE_PROJECT_DIR set, capturing stdout."""
+def run_hook(project: Path, source: str = "", stdin_text: str | None = None,
+             session_id=None, trace: Path | None = None) -> tuple[str, int]:
+    """Run main() in-process with CLAUDE_PROJECT_DIR set, capturing stdout. The trace variable
+    is the OPERATOR's (plan 141): a machine that traces its real sessions has it set, so every
+    run here removes it and only `trace=` aims the hook at a file - a test's own."""
     buf = io.StringIO()
-    old_env, old_stdin = os.environ.get("CLAUDE_PROJECT_DIR"), sys.stdin
+    keys = ("CLAUDE_PROJECT_DIR", "TAMHEED_HOOK_LOG")
+    old_env, old_stdin = {k: os.environ.get(k) for k in keys}, sys.stdin
     os.environ["CLAUDE_PROJECT_DIR"] = str(project)
+    os.environ.pop("TAMHEED_HOOK_LOG", None)
+    if trace is not None:
+        os.environ["TAMHEED_HOOK_LOG"] = str(trace)
     if stdin_text is None:
-        stdin_text = json.dumps({"source": source}) if source else ""
+        event = {k: v for k, v in (("source", source), ("session_id", session_id)) if v}
+        stdin_text = json.dumps(event) if event else ""
     sys.stdin = io.StringIO(stdin_text)
     try:
         with contextlib.redirect_stdout(buf):
             code = hook.main([])
     finally:
         sys.stdin = old_stdin
-        if old_env is None:
-            os.environ.pop("CLAUDE_PROJECT_DIR", None)
-        else:
-            os.environ["CLAUDE_PROJECT_DIR"] = old_env
+        for k, v in old_env.items():
+            if v is None:
+                os.environ.pop(k, None)
+            else:
+                os.environ[k] = v
     return buf.getvalue(), code
 
 
@@ -162,19 +171,10 @@ class ResumeHookTest(unittest.TestCase):
                                "event_type": "handoff", "actor": "agent:one"}])
         log = self.project / "hook.log"
         missing = self.project / "never" / "hook.log"
-        old = os.environ.get("TAMHEED_HOOK_LOG")
-        try:
-            os.environ["TAMHEED_HOOK_LOG"] = str(missing)
-            run_hook(self.project, source="compact")
-            self.assertFalse(missing.exists())                   # nothing created
-            log.write_text("", encoding="utf-8")                 # the operator creates it
-            os.environ["TAMHEED_HOOK_LOG"] = str(log)
-            out, code = run_hook(self.project, source="compact")
-        finally:
-            if old is None:
-                os.environ.pop("TAMHEED_HOOK_LOG", None)
-            else:
-                os.environ["TAMHEED_HOOK_LOG"] = old
+        run_hook(self.project, source="compact", trace=missing)
+        self.assertFalse(missing.exists())                       # nothing created
+        log.write_text("", encoding="utf-8")                     # the operator creates it
+        out, code = run_hook(self.project, source="compact", trace=log)
         self.assertEqual(code, 0)
         self.assertIn(h, out)
         lines = log.read_text(encoding="utf-8").splitlines()
@@ -184,9 +184,67 @@ class ResumeHookTest(unittest.TestCase):
         self.assertIn(" status=printed", lines[0])
         self.assertNotIn("secret-word", lines[0])                # counts only
         self.assertNotIn(h, lines[0])
+        self.assertTrue(lines[0].endswith(" status=printed session=-"), lines[0])   # no id sent
         # unset: the same run writes nothing more
         run_hook(self.project, source="compact")
         self.assertEqual(len(log.read_text(encoding="utf-8").splitlines()), 1)
+
+    def test_a_run_never_writes_the_operators_own_trace(self):
+        """Plan 141 (v5.4): the machine this suite runs on may trace its real sessions -
+        TAMHEED_HOOK_LOG set in the user's settings, the file existing. A hook test must not
+        append to it: `run_hook` removes the variable unless `trace=` names a file, and puts
+        the operator's value back."""
+        self._package()
+        theirs = self.project / "operators.log"
+        theirs.write_text("their line\n", encoding="utf-8")
+        old = os.environ.get("TAMHEED_HOOK_LOG")
+        os.environ["TAMHEED_HOOK_LOG"] = str(theirs)
+        try:
+            out, code = run_hook(self.project, source="startup", session_id="abc")
+            self.assertEqual(os.environ.get("TAMHEED_HOOK_LOG"), str(theirs))   # restored
+        finally:
+            if old is None:
+                os.environ.pop("TAMHEED_HOOK_LOG", None)
+            else:
+                os.environ["TAMHEED_HOOK_LOG"] = old
+        self.assertEqual(code, 0)
+        self.assertTrue(out.startswith("tamheed resume"), out[:40])
+        self.assertEqual(theirs.read_text(encoding="utf-8"), "their line\n")
+
+    def test_trace_line_names_the_session_that_wrote_it(self):
+        """Plan 141 (v5.4, findings_35): a headless session another tool started in the
+        project folder printed the same block, so its trace line equalled the operator
+        session's replay to the character and a verdict was read from the wrong session.
+        The line now ends `session=<id>` - the event's `session_id`, the transcript's own
+        file name. Two sessions in one folder: equal counts, different tails. The id comes
+        from stdin, so anything but a plain token is written `-` (a newline in it would
+        forge a line); `source` follows the same rule."""
+        self._package()
+        self._journal([{"entry": "Resume at: AC-002.", "event_type": "handoff",
+                        "actor": "agent:one"}])
+        log = self.project / "hook.log"
+        log.write_text("", encoding="utf-8")
+        one, two = "4fe4a0dd-bf04-4c32-836d-94b34c81ca86", "04caef30-7785-450e-ad15-edaa46800a0f"
+        run_hook(self.project, source="startup", session_id=one, trace=log)
+        run_hook(self.project, source="startup", session_id=two, trace=log)
+        a, b = log.read_text(encoding="utf-8").splitlines()
+        self.assertTrue(a.endswith(f" status=printed session={one}"), a)
+        self.assertTrue(b.endswith(f" status=printed session={two}"), b)
+        counts = [ln.split(" source=")[1].split(" session=")[0] for ln in (a, b)]
+        self.assertEqual(counts[0], counts[1])             # the content attributes nothing
+        for bad in ("x\n2026-01-01T00:00:00+00:00 source=compact lines=1", "two words", "",
+                    "a" * 65, 17, ["x"], None):
+            before = len(log.read_text(encoding="utf-8").splitlines())
+            run_hook(self.project, trace=log,
+                     stdin_text=json.dumps({"source": "resume", "session_id": bad}))
+            after = log.read_text(encoding="utf-8").splitlines()
+            self.assertEqual(len(after), before + 1, bad)  # exactly one line, never two
+            self.assertTrue(after[-1].endswith(" status=printed session=-"), after[-1])
+        run_hook(self.project, trace=log,
+                 stdin_text=json.dumps({"source": "compact\nforged", "session_id": one}))
+        last = log.read_text(encoding="utf-8").splitlines()[-1]
+        self.assertIn(" source=- lines=", last)
+        self.assertTrue(last.endswith(f" session={one}"), last)
 
     def test_inject_shaped_handoff_is_withheld(self):
         self._package()
@@ -235,9 +293,10 @@ class ResumeHookTest(unittest.TestCase):
         self.assertEqual(len(out.splitlines()), 1)
         self.assertTrue(out.startswith("tamheed: resume unavailable ("), out)
 
-    def test_read_source_is_guarded(self):
+    def test_read_event_is_guarded(self):
         self._package()
-        for bad in ("", "not json", json.dumps({"no": "source"})):
+        for bad in ("", "not json", json.dumps({"no": "source"}), json.dumps(["a", "list"]),
+                    json.dumps("a string")):
             out, code = run_hook(self.project, stdin_text=bad)
             self.assertEqual(code, 0)
             self.assertTrue(out.startswith("tamheed resume"), out[:60])

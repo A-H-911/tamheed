@@ -11,7 +11,10 @@ the note in `<package>/CLAUDE.md` reaches it through `@<package>/CLAUDE.md`). Lo
 the store through `store.load`, never takes the writer lock, writes nothing. Screened: the
 handoff text is agent-authored prose entering an always-loaded surface, so `_INJECT_RE` (the
 G-INJECT screen) withholds it when it is instruction-shaped. Capped: at most MAX_LINES lines. Traced (opt-in,
-plan 136): TAMHEED_HOOK_LOG naming an EXISTING file gets one line of counts per run, never the entry.
+plan 136): TAMHEED_HOOK_LOG naming an EXISTING file gets one line of counts per run, never the entry;
+the line ends `session=<id>` (plan 141, v5.4) - the event's own `session_id`, which is also the
+transcript's file name, so a line names the session that wrote it. One rule for both event fields:
+a value that is absent or not a plain token is written `-`.
 Failure posture: one line, exit 0 — a hook must never cost the session.
 
 stdlib only, NO inline script metadata: `uv run --no-project` runs it on the interpreter uv
@@ -39,20 +42,28 @@ TITLE_CHARS = 60
 _NOTE_RE = re.compile(r"<!--\s*tamheed:note v(\d+)\s*-->(.*?)<!--\s*/tamheed:note\s*-->", re.S)
 _PKG_RE = re.compile(r"executes Tamheed package `([^`\n]+)`")
 _IMPORT_RE = re.compile(r"^@(\S+)", re.M)
+_TOKEN_RE = re.compile(r"[A-Za-z0-9._-]{1,64}")   # what an event field may put in the trace
+
+
+def read_event() -> dict:
+    """The event object from stdin - `source` (startup | resume | clear | compact | fork) and
+    `session_id` are what the hook uses - guarded so a manual terminal run never blocks and a
+    malformed event costs only the wording: {} on any failure."""
+    try:
+        if sys.stdin is None or sys.stdin.isatty():
+            return {}
+        raw = sys.stdin.read().lstrip("\ufeff").strip()
+        if not raw:
+            return {}
+        event = json.loads(raw)
+        return event if isinstance(event, dict) else {}
+    except (OSError, ValueError, AttributeError):
+        return {}
 
 
 def read_source() -> str:
-    """The event's `source` (startup | resume | clear | compact | fork) from stdin, guarded
-    so a manual terminal run never blocks and a malformed event costs only the wording."""
-    try:
-        if sys.stdin is None or sys.stdin.isatty():
-            return ""
-        raw = sys.stdin.read().lstrip("﻿").strip()
-        if not raw:
-            return ""
-        return str(json.loads(raw).get("source", "") or "")
-    except (OSError, ValueError, AttributeError):
-        return ""
+    """The event's `source` alone - kept for a caller written against 5.1-5.3 (plan 141)."""
+    return str(read_event().get("source", "") or "")
 
 
 def find_note(project: Path) -> tuple[Path, str] | None:
@@ -163,10 +174,12 @@ def main(argv: list[str] | None = None) -> int:
             except Exception:  # noqa: BLE001
                 pass
     args = list(sys.argv[1:] if argv is None else argv)
-    source, lines, status = "", [], "silent"
+    source, session, lines, status = "", None, [], "silent"
     try:
         project = Path(args[0] if args else os.environ.get("CLAUDE_PROJECT_DIR") or ".").resolve()
-        source = read_source()
+        event = read_event()
+        source = str(event.get("source", "") or "")
+        session = event.get("session_id")
         lines = build_lines(project, source)
         if lines:
             print("\n".join(lines))
@@ -174,16 +187,24 @@ def main(argv: list[str] | None = None) -> int:
     except Exception as exc:  # noqa: BLE001 — one line, never a failed session start
         print(f"tamheed: resume unavailable ({exc.__class__.__name__}: {str(exc)[:160]})")
         status = f"error:{exc.__class__.__name__}"
-    _trace(source, lines, status)
+    _trace(source, lines, status, session)
     return 0
 
 
-def _trace(source: str, lines: list[str], status: str) -> None:
+def _token(value) -> str:
+    """An event field as the trace may carry it: a plain token, else `-`. The event arrives on
+    stdin, so a value holding a newline or a space would otherwise forge a line."""
+    return value if isinstance(value, str) and _TOKEN_RE.fullmatch(value) else "-"
+
+
+def _trace(source: str, lines: list[str], status: str, session=None) -> None:
     """Plan 136 (v5.3, findings_34 A2): the field could not tell "the hook did not fire" from
     "it fired and its output was not delivered". Opt-in: when TAMHEED_HOOK_LOG names a file
     that ALREADY EXISTS (the operator creates it — a project's settings `env` block could
     otherwise aim this at any writable path), append ONE line of counts. Never the entry:
-    an always-loaded surface's text stays out of files the engine does not own."""
+    an always-loaded surface's text stays out of files the engine does not own.
+    Plan 141 (v5.4, findings_35): a headless session another tool starts in the same folder
+    prints the same block, so equal counts attribute nothing. The line ends `session=<id>`."""
     target = os.environ.get("TAMHEED_HOOK_LOG")
     if not target:
         return
@@ -195,8 +216,8 @@ def _trace(source: str, lines: list[str], status: str) -> None:
         text = "\n".join(lines)
         with path.open("a", encoding="utf-8") as fh:
             fh.write(f"{datetime.now(timezone.utc).isoformat(timespec='seconds')}"
-                     f" source={source or '-'} lines={len(lines)} chars={len(text)}"
-                     f" status={status}\n")
+                     f" source={_token(source)} lines={len(lines)} chars={len(text)}"
+                     f" status={status} session={_token(session)}\n")
     except Exception:  # noqa: BLE001 — the trace must never cost the session either
         pass
 
