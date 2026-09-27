@@ -176,6 +176,21 @@ devil's-advocate review; execution order is the row order below). Status values:
 | 089 | [Lab beat 18](089-lab-beat-18-findings-27.md) | 085-088 + full test (15/15 vs 0/15 on `v4.10.0`; 9 suites; selftest) | DONE `762b98b` — 9 new assertions, each failing on the pre-beat fixture; D-1 registry-sync unscripted, F-3 fixed |
 | 090 | [Release v4.11.0](090-release-v4110.md) — plan-058 recipe + the fixture follows the stamp | 089 | DONE — 2026-09-22, tag `v4.11.0` (SHA in the tag) |
 
+### Field cycle findings_34 -- plans 136-140 -> v5.3.0 (2026-09-27; maintainer-executed)
+
+Master record: [136-140-batch-findings-34.md](136-140-batch-findings-34.md) (the approved plan after a
+devil's-advocate review, 4 interview rulings R15–R18; execution order 136 → 137 → 138 → 139 → 140). The
+field returned no defect this round; the batch is two instruments, one hint, the carried rules' generic
+residue, and the docs the field falsified. Status values: PLANNED / IN PROGRESS / DONE.
+
+| # | Plan | Depends on | Status |
+|---|---|---|---|
+| 136 | [The observed lock, the render hint, the hook trace](136-observed-lock-render-hint-hook-log.md) | — | DONE — 2026-09-27 `b8e1f7c` |
+| 137 | [The residue: thirteen sentences from twelve partial rules, and E3](137-residue-sentences-and-e3.md) | — | DONE — 2026-09-27 `dbd81e1` |
+| 138 | [Docs + diagrams sweep for v5.3.0](138-docs-and-diagrams-sweep-findings-34.md) | 136-137 | DONE — 2026-09-27 |
+| 139 | [The version stamp, then lab beat 25 + evals](139-stamp-then-lab-beat-25.md) | 138 + full gate | PLANNED |
+| 140 | [Tag v5.3.0, the brief file, close-out](140-release-v530.md) | 139 | PLANNED |
+
 ### Field cycle findings_33 -- plans 129-135 -> v5.2.0 (2026-09-26; maintainer-executed)
 
 Master record: [129-135-batch-findings-33.md](129-135-batch-findings-33.md) (the approved plan after a

@@ -254,11 +254,12 @@ The package **is** the state: the relational store holds every register, narrati
 package row (profile, mode, iteration). `resume` = `package_open` + `entity_query` for where things
 stand — and since v5.1 the first read is free: `package_open` and `server_info` return a `resume`
 block (the latest `handoff` journal entry with its corrections, the work entries written after it,
-the open feedback and slices, the lock holder, the next step), and the plugin's SessionStart hook
+the open feedback and slices, the lock holder and what the store observed about it, the next step),
+and the plugin's SessionStart hook
 prints the same block into the model's context on every session start, clear and compaction. A
 session writes that handoff LAST before it stops (`tamheed:session-handoff`); `handoff-current`
 names one the journal has moved past. A tool result is the cue that loads a discipline skill (the
-field measured that nothing loads without one): since v5.2 every `entity_query` result names
+field measured that nothing loads without one): since v5.2 every successful `entity_query` result names
 `tamheed:reading-the-record` and any `handoff_emit` finding names `tamheed:written-claims`, beside
 the v5.1 cues on `package_open`/`server_info`, `audit_record`, `readiness_check` and the handoff
 write. There is no state file to reconcile; humans review through

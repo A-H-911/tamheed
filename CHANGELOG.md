@@ -10,6 +10,39 @@ All notable changes to Tamheed are documented here. The format is based on
 
 ## [Unreleased]
 
+**MINOR — the findings_34 batch: the second field round on the resume surface (plans 136–140; field
+report findings_34).** The field ran 5.2.0 for a day and returned no defect: every predicted class
+held, `FB-023`–`FB-025` closed, the thirteen carried lessons were approved after verified trims. What
+came back was seven brief errors, one contested docs claim (the hook on a plugin reload), one friction
+(a dead lock holder the block did not name) and the generic residue of the carried rules. No
+migration; `schema_version` stays 7.
+
+### Added
+- **The resume block says what the store observed about the lock's holder** (plan 136). `lock` carries
+  `observed` + `evidence` from the seam `package_unlock` reads; the hook's lock line prints the
+  observation and the operator's remedy (`not-running` → `package_unlock(confirm=true) on the
+  operator's word`). A lock held by this very session reads `alive` / `held by this session` with no
+  probe. After a process restart the field's hook had named a dead pid and said nothing about it.
+- **An opt-in hook trace** (plan 136): `TAMHEED_HOOK_LOG` naming a file the operator created gets one
+  counts-only line per run (source, lines, chars, status) — never the entry; a missing path gets
+  nothing. It tells a hook that did not run from one whose output was not delivered.
+- **Thirteen sentences from the field's partial carried rules** entered six discipline skills (plan
+  137): did-vs-found counts, a different quantity needs a different command, a substring proxy is
+  triage, scripts and messages travel as files not through the shell, a regex over a JSON-lines row
+  deletes rows, a watch command lies on an unfinished run, what a queue's green exercised, a blocking
+  readiness failure is real, a due-date liveness red is the control working, a migration's verdict
+  comes from executing, prompt-by-design and forbidden look identical.
+
+### Changed
+- **The lesson-approval hint names the render rule** (plan 136): pinned rows always render; an unpinned
+  Approved row renders only while among the 10 newest — pin it to keep it visible. Thirteen unpinned
+  approvals in the field had moved every rendered lesson behind "19 more". Approved only; Promoted
+  rows never render.
+- **Docs** (plan 138): `/reload-plugins` is documented now and quoted; the hook on a reload is no longer
+  called a mechanism (one delivery, then two non-deliveries; restart and compaction deliver every
+  time); the `entity_query` cue rides every SUCCESSFUL result; the render rule beside the approval;
+  the lock lifecycle and resume sequence diagrams carry the observation and the trace.
+
 ## [5.2.0] - 2026-09-26
 
 **MINOR — the findings_33 batch: the first field round on the resume surface (plans 129–135; field

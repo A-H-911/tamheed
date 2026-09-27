@@ -42,8 +42,11 @@ and `handoff_emit(target_dir)` wires the target project to the package (it copie
   never `data/*.jsonl`, never a pasted display — and a full-row status flip on a long row
   names the columns it did not mean to change (`expect_unchanged: [cols]`).
 - **The Lessons section** (plan 035): inside the same note span, the operator-**Approved** lessons
-  (`LL-` rows) render pinned-first — ALL pinned lessons appear, unpinned fill is capped at 10, and
-  the remainder is one `entity_query("lesson")` away. Proposed/Rejected rows never render, and the
+  (`LL-` rows) render pinned-first — ALL pinned lessons appear, unpinned fill is capped at 10 (the
+  highest-numbered), and the remainder is one `entity_query("lesson")` away. Approving a lesson
+  makes it BIND; it RENDERS only if pinned or among those 10 — since v5.3 the approval's `next`
+  says which, after thirteen unpinned approvals in the field moved every rendered lesson behind
+  "N more". Proposed/Rejected rows never render, and the
   section is screened by the same G-INJECT patterns as emitted prompts — a finding **blocks** the
   emit, naming the `LL-` row so the operator can supersede its wording. **Promoted** lessons leave
   the render too — full graduation (plan 036): a lesson distilled into a skill travels as the

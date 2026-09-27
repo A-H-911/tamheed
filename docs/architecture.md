@@ -233,9 +233,10 @@ sequenceDiagram
     S->>P: PE- appended (corrected later via corrects, never edited)
     Note over A2: /clear, a compaction, a new session
     H->>P: store.load (lockless, read-only)
-    H-->>A2: the resume block - plain stdout, G-INJECT screened, 40 lines max
+    H-->>A2: the resume block - plain stdout, G-INJECT screened, 40 lines max;<br/>the lock line carries the store's OBSERVATION of a foreign holder (v5.3)
+    Note over H: TAMHEED_HOOK_LOG (opt-in, v5.3): one counts-only line per run into a file the operator created
     A2->>S: server_info (or package_open on a fresh session)
-    S->>P: _resume_block: latest handoff + corrections, handoff_behind,<br/>open feedback, open slices, lock holder
+    S->>P: _resume_block: latest handoff + corrections, handoff_behind,<br/>open feedback, open slices, lock holder + observed (own lock: alive, no probe)
     S-->>A2: resume: {...}, skill: tamheed:package-writes
     A2->>S: readiness_check("package")
     S-->>A2: handoff-current: the work entries no handoff covers
@@ -252,10 +253,18 @@ lockless, screened, capped, and can never fail the session (one line, exit 0); i
 text because the plugin JSON-output path has a bug history. The review surface renders the same block
 as its Resume section. What v5.1 did NOT do: extend the obligations table (the handoff duty is a note
 sentence plus the advisory, so the marker stays `v5`), add a tool (19), or add a state file. v5.2
-(plans 129–135, the first field round on this surface) added two cues — every `entity_query` result
+(plans 129–135, the first field round on this surface) added two cues — every successful `entity_query` result
 and any `handoff_emit` finding name their skill, since the field measured that nothing loads without
 a result naming it — and the engine's `system:skill-guard` row on a skill row's lifecycle move; the
-hook prints up to 4,000 characters of the entry (the block's own cap).
+hook prints up to 4,000 characters of the entry (the block's own cap). v5.3 (plans 136–140, the
+second field round) made the block say what the store OBSERVED about the lock's holder — after a
+process restart the field's hook named a dead pid and the agent needed `package_unlock` to learn it
+was dead — through the same seam `package_unlock` reads (a lock held by this very session reads
+`alive` with no probe), and gave the hook an opt-in trace (`TAMHEED_HOOK_LOG`, counts only, an
+existing file only) because the field could not tell "the hook did not fire on a plugin reload"
+from "it fired and nothing was delivered"; the approval hint now says a lesson RENDERS only if pinned
+or among the 10 newest unpinned Approved rows (thirteen unpinned approvals had hidden every rendered
+lesson).
 
 **Self-containment is a hard requirement, not a preference.** Claude Code copies the plugin directory to a
 cache on install, so anything the skill reads or invokes at runtime must live inside `plugins/tamheed/` with
@@ -325,8 +334,8 @@ stateDiagram-v2
     [*] --> Free
     Free --> Held : package_open or package_create takes the lock
     Held --> Free : package_close
-    Held --> Orphaned : the writer dies - crash, closed terminal, plugin reload
-    Orphaned --> Observed : any refusal reports the holder, package_unlock reports it on demand
+    Held --> Orphaned : the writer dies - crash, closed terminal, process restart, plugin reload
+    Orphaned --> Observed : any refusal reports the holder, package_unlock reports it on demand,<br/>the resume block and the hook's lock line carry it on the next session (v5.3)
     Observed --> Free : package_unlock confirm=true - holder not-running or reused - journaled
     Observed --> Orphaned : alive or unobservable - refused, manual removal stays deliberate
 ```

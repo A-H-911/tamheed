@@ -167,7 +167,7 @@ taken against evidence read at the path, not from the report.
   byte-neutral. The block's text names the scan's scope (agent-control, prompt and skill files).
 - **D-CUES-2 — a tool result is the cue; the note is not.** Measured: no discipline skill loaded
   without a tool result naming it, and the always-loaded note naming all eight cued nothing. v5.1's
-  "phase-start tools only" ruling was revisited on that evidence: every `entity_query` result names
+  "phase-start tools only" ruling was revisited on that evidence: every successful `entity_query` result names
   `reading-the-record` (the row arrives with its cue), and `handoff_emit` names `written-claims`
   exactly when a scan found something to fix; the `entity_export` file, a script's input, never
   carries a cue. Rejected: naming skills on write results (the cue arrives after the write) and
@@ -184,3 +184,38 @@ of carrying a twin (one copy, no drift); the hook prints 25 lines / 4,000 charac
 (= the resume block's own cap); `lessons-stranded` measures the Promoted lessons; the brief to a
 field project is a committed file read by path, after paste damage in two consecutive cycles. Record:
 plan [`129-135-batch-findings-33.md`](../plans/129-135-batch-findings-33.md).
+
+## 15. Four rulings from the second field round on the resume surface (2026-09-27, v5.3)
+
+The field's second day on the surface (ACMP `findings_34`) returned no defect: every predicted class
+held, and what came back was seven brief errors, one contested docs claim, one friction and the
+residue of the carried rules. The rulings (R15–R18):
+
+- **D-LOCK-OBSERVED — the resume block says what the store observed about the holder.** After a
+  Claude Code process restart the hook read "lock file present (pid …)" and the agent needed
+  `package_unlock` to learn the pid was dead. The block now carries `observed` + `evidence` from the
+  same seam `package_unlock` reads; the hook prints the observation and the operator's remedy. A lock
+  held by the very session that asks reads `alive` / `held by this session` with no probe — three of
+  the block's four callers hold the lock themselves. Nothing is removed by a read.
+- **D-HOOK-LOG — an opt-in, counts-only trace.** The field could not tell "the hook did not fire on
+  `/reload-plugins`" from "it fired and its output was not delivered" (one reload delivered the block
+  on 5.1.0; two delivered nothing on 5.2.0; every restart and compaction delivered it). When
+  `TAMHEED_HOOK_LOG` names a file the operator created, the hook appends one line per run — source,
+  line and character counts, status — never the entry; a missing path gets nothing, because a
+  project's settings `env` block could otherwise aim the hook at any writable file. The docs stop
+  calling the reload a mechanism: a session restart is the route the block arrives by every time.
+- **D-RENDER-HINT — binding is not rendering, and the write says so.** Thirteen unpinned approvals
+  moved every lesson the note showed behind "19 more"; the approval's `next` had said "binds once the
+  note is rebuilt" and nothing about the roster. The hint now names the rule (pinned always; unpinned
+  only among the 10 newest Approved) — the roster rule itself is unchanged: pinning is the operator's
+  curation tool.
+- **D-RESIDUE — a partial rule's generic remainder enters the skill, one sentence each.** The field's
+  re-read of the 113 carried rules (95 quotes verified) found 26 partial; twelve carry a stack-neutral
+  remainder no skill stated, each re-read at the rule's own text. Thirteen sentences entered six
+  discipline skills (plan 137); the other fourteen partials and the 34 project rules stay the field's.
+
+Also decided without a diagram: `entity_query`'s cue rides every SUCCESSFUL result — a usage error is
+the caller's misuse, and "no such record" is an empty success, which is where the cue matters; the
+brief carries classes only, line counts included (its "21 lines" came from a copy; the field read 19);
+the next Q1 is measured in the first normal-work session that has read no brief. Record: plan
+[`136-140-batch-findings-34.md`](../plans/136-140-batch-findings-34.md).

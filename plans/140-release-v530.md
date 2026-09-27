@@ -1,0 +1,20 @@
+# Plan 140: tag v5.3.0, the brief file, close-out
+
+> Maintainer-executed, 2026-09-27. Batch map: [136-140-batch-findings-34.md](136-140-batch-findings-34.md).
+
+## Status
+
+- **Priority**: P1 - **Effort**: S - **Risk**: LOW - **PLANNED**
+
+## What this plan does
+
+1. The brief `briefs/acmp-5.3.0.md` (read by path; classes only, line counts included): E1–E7 of the
+   5.2.0 brief owned; the upgrade (tree equality; no migration; restart is the route; the trace recipe);
+   the predicted classes; the twelve absorbed remainders by anchor (the operator may trim those kept
+   index lines on their word); the Q1 protocol (the first normal-work session that read no brief);
+   `findings_35`'s questions.
+2. **The advisor reviews the brief AND the batch record BEFORE the close-out commit** (last cycle's
+   post-tag commit came from reviewing after the tag).
+3. The close-out commit (batch record EXECUTED, the brief, the index, this file) → push → CI green →
+   tag `v5.3.0` on it → push the tag → nothing after.
+4. The memory file `tamheed-v530-findings34-batch.md` + the MEMORY.md pointer (outside the repo).

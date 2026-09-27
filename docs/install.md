@@ -101,19 +101,27 @@ free copy after a compaction.
 
 Refreshing the marketplace only refreshes the catalog; the installed plugin is a second step, and
 the running MCP server keeps the old code until the plugin is reloaded (`/reload-plugins` —
-observed sufficient in the field for the MCP server — or a full Claude Code restart).
+observed sufficient in the field for the MCP server twice, on 5.1.0 and 5.2.0 — or a full Claude
+Code restart).
 
 ```text
 claude plugin marketplace update tamheed
 claude plugin update tamheed@tamheed      # "restart required to apply"
 ```
 
-Updated skills in a cached marketplace plugin arrive with `/reload-plugins` followed by
-`/reload-skills` — measured in the field on 5.1.0 (no restart; the model's skill listing showed the
-new set), and neither command is in Claude Code's published documentation, so a **session restart**
-remains the documented route. `/reload-plugins` re-reads hooks and MCP servers, and it fires the
-plugin's SessionStart hook as `SessionStart:resume` — the resume block appears right after the reload,
-not only at the next session start.
+Updated skills in a cached marketplace plugin arrive with `/reload-plugins` (documented since
+2026-09: "apply pending plugin changes to the running session without restarting it" — plugins,
+skills, hooks and MCP servers; closing the `/plugin` panel with pending changes runs it for you; a
+reload that would add or remove an MCP server is refused without `--force`) followed by
+`/reload-skills` (measured in the field on 5.1.0 — the model's skill listing showed the new set — and
+still undocumented). **The hook on a reload is not a mechanism you can rely on:** on 5.1.0 the reload
+delivered the resume block as `SessionStart:resume`; on 5.2.0 two reloads delivered nothing, while the
+next process restart and the next compaction delivered it whole. The reload route's context handling
+is reported inconsistent across builds (claude-code issues #61485, #87514, #37862, #63028 — adjacent
+reports, not this defect's cause). A **session restart** is the route the block arrives by every
+time; the opt-in trace above tells a hook that did not run from one whose output was not delivered.
+Claude Code's size cap on a hook's stdout is undocumented but exists (its changelog for 2.1.283
+counts "oversized outputs saved to a file"); a 3,615-character block was measured arriving whole.
 
 (In a session: `/plugin marketplace update tamheed`, then `/plugin` → Installed → tamheed → update.)
 Reload or restart, then check `~/.claude/plugins/cache/tamheed/tamheed/<version>/` exists. If the

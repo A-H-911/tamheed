@@ -244,7 +244,9 @@ itself records as a typed `forced-override` progress event. Audit verdicts carry
 chain** (`verified_by`, `verification_method`, `against_commit`); the progress journal is **typed
 events** corrected by compensating entries, never edited — since v5.1 a `handoff` entry says where a
 session stopped, and the latest one comes back as the **resume block** of `package_open` /
-`server_info` and through the plugin's SessionStart hook after every clear or compaction, with the
+`server_info` and through the plugin's SessionStart hook after every clear or compaction (its lock
+line says what the store observed about the holder, and an opt-in `TAMHEED_HOOK_LOG` traces each
+run in counts — v5.3), with the
 `handoff-current` advisory naming a handoff the journal has moved past (since v5.2 every `entity_query`
 result and any `handoff_emit` finding name the discipline skill to invoke, and a skill row's retirement
 is journalled by `system:skill-guard`); genuine ambiguity is recorded in place as
