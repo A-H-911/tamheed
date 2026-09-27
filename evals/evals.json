@@ -1830,7 +1830,7 @@
           "expect_exit": 0
         },
         {
-          "check": "The resume block carries the beat's final handoff, written LAST, with nothing journalled after it (plan 122).",
+          "check": "The resume block carries the beat's final handoff, written LAST, with nothing journalled after it (plans 122, 139).",
           "cmd": [
             "python",
             "evals/pkg_check.py",
@@ -1838,7 +1838,7 @@
             "{case_dir}/package"
           ],
           "expect_exit": 0,
-          "expect_substring": "handoff=PE-047 behind=0"
+          "expect_substring": "handoff=PE-049 behind=0"
         },
         {
           "check": "handoff-current passes on the recorded package - the journal did not move past the final handoff (plan 122).",
@@ -1915,13 +1915,13 @@
           "expect_exit": 0
         },
         {
-          "check": "The guide followed the 5.2.0 stamp: refresh_stock carried it to the body that names the entity_query cue (plans 131, 134).",
+          "check": "The guide followed the 5.3.0 stamp: refresh_stock carried it to the body that names the cue on every successful entity_query result (plans 137, 139).",
           "cmd": [
             "python",
             "evals/pkg_check.py",
             "grep-tree-present",
             "{case_dir}/package/prompts",
-            "tamheed v5.2.0"
+            "tamheed v5.3.0"
           ],
           "expect_exit": 0
         },
@@ -1952,7 +1952,7 @@
           "expect_exit": 0
         },
         {
-          "check": "Three handoff entries by now: beat 23's two and beat 24's final one, written LAST after the guard's row (plans 122, 134).",
+          "check": "Four handoff entries by now: beat 23's two, beat 24's and beat 25's final ones, each written LAST (plans 122, 134, 139).",
           "cmd": [
             "python",
             "evals/pkg_check.py",
@@ -1962,7 +1962,7 @@
             "--col",
             "event_type=handoff",
             "--min",
-            "3"
+            "4"
           ],
           "expect_exit": 0
         },
@@ -1974,6 +1974,45 @@
             "grep-file",
             "{case_dir}/package/review.html",
             "promoted lessons"
+          ],
+          "expect_exit": 0
+        },
+        {
+          "check": "The beat's note quotes the observed dead holder and the operator's remedy the hook printed on the scratch copy (plan 136).",
+          "cmd": [
+            "python",
+            "evals/pkg_check.py",
+            "grep-present",
+            "{case_dir}/package",
+            "holder observed not-running",
+            "--tables",
+            "progress_entries"
+          ],
+          "expect_exit": 0
+        },
+        {
+          "check": "The beat's note quotes the opt-in trace and what it carries: counts, never the entry (plan 136).",
+          "cmd": [
+            "python",
+            "evals/pkg_check.py",
+            "grep-present",
+            "{case_dir}/package",
+            "TAMHEED_HOOK_LOG",
+            "--tables",
+            "progress_entries"
+          ],
+          "expect_exit": 0
+        },
+        {
+          "check": "The beat's note quotes the render hint the approval carried on the scratch copy (plan 136).",
+          "cmd": [
+            "python",
+            "evals/pkg_check.py",
+            "grep-present",
+            "{case_dir}/package",
+            "10 newest unpinned Approved rows",
+            "--tables",
+            "progress_entries"
           ],
           "expect_exit": 0
         }

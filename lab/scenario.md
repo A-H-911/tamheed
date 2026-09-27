@@ -679,6 +679,37 @@ must fire; the resulting package replaces `evals/sample-results/lab-tracker/pack
       green (`verified: true`, `dirty: []`, `foreign: []`, `review_current: true`); `package_close`;
       no `data/.lock` remains.
 
+25. **The v5.3.0 continuation — the second field round: no defect, two instruments, one hint.** The
+    package opens at `schema_version` 7 (no migration in 5.3.0) with the resume block naming beat 24's
+    final handoff. The agent reads what the block now says about the lock, refreshes the guide to
+    5.3.0, and writes the real handoff LAST. The scratch phase fires what must never touch the
+    fixture: two lesson approvals (the render hint), a lock naming a pid no process holds (the
+    observed holder), and the hook's opt-in trace.
+    ✔ THE OBSERVED LOCK (plan 136): `package_open` and `server_info` return `resume.lock.observed:
+      "alive"`, `evidence: "held by this session"` (the session's own lock is never probed); on the
+      SCRATCH copy, with `data/.lock` naming pid 2147483648 (no process holds it), the hook's first
+      line reads `lock file present (pid 2147483648 …; holder observed not-running — package_unlock
+      (confirm=true) on the operator's word)`, exit 0, and the lock file is still there (a read
+      removes nothing).
+    ✔ THE TRACE (plan 136), scratch copy: the hook with `TAMHEED_HOOK_LOG` naming a path that does
+      not exist creates nothing; naming an existing empty file, one line `<utc> source=compact
+      lines=N chars=N status=printed` whose counts equal the printed block's, carrying none of the
+      entry's text; a run with the variable unset appends nothing more.
+    ✔ THE RENDER HINT (plan 136), scratch copy: approving `LL-002` unpinned returns `next` ending
+      `; it renders in the note only if pinned or among the 10 newest unpinned Approved rows - pin
+      it to keep it visible`; approving a fresh pinned lesson ends `; pinned rows always render`.
+    ✔ THE EMISSION (plans 137, 139): `handoff_emit(<scratch target>, refresh_stock=true)` reports
+      `refreshed: ["prompts/README.md"]` (the guide now reads `tamheed v5.3.0` and "every
+      successful `entity_query` result names"), every scan empty, no `skill` key; the second emit
+      reports `CLAUDE.md` unchanged.
+    ✔ Close the beat with ONE `progress_update` note (actor `agent:lab-beat-25`, `event_type:
+      "note"`) quoting verbatim `held by this session`, `holder observed not-running`,
+      `TAMHEED_HOOK_LOG`, `10 newest unpinned Approved rows`, `pinned rows always render`, `tamheed
+      v5.3.0`; THEN the final handoff (`event_type: "handoff"`, written LAST — `handoff-current`
+      reads `pass`); then `export_html` (review.html carries the Resume section and the new latest
+      handoff); `gate_run` ready; `package_verify()` green (`verified: true`, `dirty: []`, `foreign:
+      []`, `review_current: true`); `package_close`; no `data/.lock` remains.
+
 **Pass bar:** every ✔ observed; `gate_run` ready (or failing ONLY on deliberately-open
 items the scenario names); the eval runner's lab checks green. `readiness_check` is
 expectedly NOT ready on the scenario's deliberately-open items (AC-003 and, since beat

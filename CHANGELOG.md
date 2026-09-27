@@ -10,6 +10,8 @@ All notable changes to Tamheed are documented here. The format is based on
 
 ## [Unreleased]
 
+## [5.3.0] - 2026-09-27
+
 **MINOR — the findings_34 batch: the second field round on the resume surface (plans 136–140; field
 report findings_34).** The field ran 5.2.0 for a day and returned no defect: every predicted class
 held, `FB-023`–`FB-025` closed, the thirteen carried lessons were approved after verified trims. What

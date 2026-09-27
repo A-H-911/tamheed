@@ -1,4 +1,4 @@
-# How to use this folder — the `package` prompt guide (tamheed v5.2.0)
+# How to use this folder — the `package` prompt guide (tamheed v5.3.0)
 
 This folder holds the **project's own prompts** for the `package` Tamheed package — plus
 this guide. Since v5.0.0 the stock scenarios are no longer files here: they are the tamheed
@@ -61,7 +61,7 @@ verdict's evidence must survive), and `tamheed:session-handoff` (write the hando
 compaction, at session end or on a handover — it also answers to `/tamheed:session-handoff`).
 In a crowded host their descriptions may reach the model name-only; the tool results name the
 one to invoke — invoke it by name: `package_open`/`server_info` name `tamheed:package-writes`,
-every `entity_query` result names `tamheed:reading-the-record`, `readiness_check` names
+every successful `entity_query` result names `tamheed:reading-the-record`, `readiness_check` names
 `tamheed:operator-interview` on a blocking failure, `audit_record` names the evidence skill for
 the verdict's method, a handoff write names `tamheed:session-handoff`, and `handoff_emit` names
 `tamheed:written-claims` whenever a scan found something to fix (v5.2). The plugin's SessionStart hook
