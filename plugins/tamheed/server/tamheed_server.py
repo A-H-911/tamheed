@@ -1856,10 +1856,18 @@ def entity_upsert(entities: list[dict]) -> dict:
                     res["changed_columns"] = _changed_columns(names, cols, before_row, key)
                 if etype == "lesson" and (
                         cols.get("lifecycle_status") in ("Approved", "Promoted")):
-                    # Plan 068 (the field's DEF-107): binding is not rendering
-                    res["next"] = ("this lesson BINDS only once the always-loaded note"
-                                   " is rebuilt - run handoff_emit in this same batch"
-                                   " (the note is rebuilt by nothing else)")
+                    # Plan 068 (the field's DEF-107): binding is not rendering. Plan 146
+                    # (v5.5, R34) makes the hint say it in the two words: the STATUS binds,
+                    # from this write; the note's roster is what is RENDERED. A Promoted
+                    # row is never rendered - its skill file carries it.
+                    res["next"] = (
+                        ("this lesson binds from this write and is RENDERED only once the"
+                         " always-loaded note is rebuilt"
+                         if cols.get("lifecycle_status") == "Approved" else
+                         "this lesson binds from this write; the always-loaded note names"
+                         " its skill only once it is rebuilt")
+                        + " - run handoff_emit in this same batch"
+                          " (the note is rebuilt by nothing else)")
                     if cols.get("lifecycle_status") == "Approved":
                         # Plan 136 (v5.3, findings_34 E2): binding is not rendering — the
                         # note shows every pinned Approved row plus the 10 newest unpinned
@@ -2788,7 +2796,8 @@ def _readiness_report(conn, scope: str, scope_id: str | None) -> dict:
              + (" — past it (an always-loaded surface degrades as instructions"
                 " pile up): distil shared themes into a skill (/tamheed:skill-promote —"
                 " promoted lessons graduate out of the note) or unpin what no"
-                " longer needs to bind every session" if over else ""))
+                # plan 146 (R34): unpinning changes what is rendered, never what binds
+                " longer needs to be rendered for every session" if over else ""))
         # Plan 122 (v5.1, findings_32 note 4): the resume state is behind the journal.
         # Entities = the work-done/transition entries no handoff covers (the latest
         # handoff, or none at all); population = every such entry. A journal with no
@@ -3576,6 +3585,12 @@ _NOTE_LESSONS_CAP = 10  # unpinned fill only — ALL pinned lessons render (cura
 # rendered lines past this position are named as promotion candidates. Advisory
 # only: the pin stays the operator's choice; its cost stops being invisible.
 _NOTE_LESSONS_CEILING = 20
+# Plan 146 (v5.5, findings_36): the note prints a flattened statement whole up to
+# _NOTE_LINE_MAX characters and cuts a longer one to its first _NOTE_LINE_CUT plus an
+# ellipsis. Named because the skills now TEACH the two numbers (a lesson opens with its
+# rule) and a test reads them back out of the shipped text.
+_NOTE_LINE_MAX = 180
+_NOTE_LINE_CUT = 177
 
 
 def _note_lesson_rows(conn) -> list[tuple]:
@@ -3640,8 +3655,8 @@ def _note_lessons_section() -> tuple[str, list[dict]]:
             findings.append({"lesson": lid, "pattern": m.group(0)[:60]})
         flat = " ".join(str(statement).split())
         flat = _defuse_note_text(flat)
-        if len(flat) > 180:
-            flat = flat[:177] + "..."
+        if len(flat) > _NOTE_LINE_MAX:
+            flat = flat[:_NOTE_LINE_CUT] + "..."
         tag = f"{kind}, pinned" if pin else kind
         if pending:
             # Plan 075: a correct supersession keeps the old opening, so two lines can
@@ -3654,7 +3669,10 @@ def _note_lessons_section() -> tuple[str, list[dict]]:
                     f", superseded by {shown_id} - pending its approval")
         lines.append(f"- **{lid}** [{tag}] {flat}\n")
     rest = approved - len(shown)
-    more = (f"\n{rest} more Approved lesson(s): `entity_query(\"lesson\")`.\n"
+    # Plan 146 (v5.5, R35): the heading says the listed rows bind; the rows behind this
+    # footer bind too - the status binds, the roster is only what is rendered here.
+    more = (f"\n{rest} more Approved lesson(s) bind too and are not rendered here:"
+            " `entity_query(\"lesson\")`.\n"
             if rest else "")
     return ("\n### Lessons (operator-confirmed — these bind every session)\n\n"
             + "".join(lines) + more + skill_line), findings
@@ -4622,7 +4640,12 @@ def export_html(output: str | None = None) -> dict:
                  "as_of": _now()[:10],
                  # plan 122: the Resume panel renders the same block the tools return
                  "resume": _resume_block(_CURRENT.conn, _CURRENT_NAME,
-                                         PACKAGE_ROOT / _CURRENT_NAME / "data")}
+                                         PACKAGE_ROOT / _CURRENT_NAME / "data"),
+                 # plan 146 (v5.5, R29): the rows the note renders AT THE NEXT EMIT, from
+                 # the helper the note itself uses - computed here so the page imports
+                 # nothing and the two can never disagree
+                 "note_roster": {"ids": [r[0] for r in _note_lesson_rows(_CURRENT.conn)],
+                                 "cap": _NOTE_LESSONS_CAP}}
     text = viewer.render(_CURRENT.conn, report["gates"], report["ready"], readiness)
     # Plan 081: stamp the package digest, so "is this page current?" is a string
     # comparison package_verify can answer without rendering anything. Deterministic:

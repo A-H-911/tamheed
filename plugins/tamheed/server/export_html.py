@@ -512,15 +512,35 @@ def _lessons(conn, gates, ready, readiness=None):
             return (f"superseded by {succ} — RETIRE THIS ROW (operator)"
                     if succ_status in ("Approved", "Promoted")
                     else f"superseded by {succ} — pending its approval")
-        rows = [(lid, kind, "pinned" if pin else "", title, stmt, imf, imi,
-                 by, at, _tag(succ, sstat))
+        # Plan 146 (v5.5, findings_36, R29): the fold's title said every row here was
+        # rendered into the note; in the field 30 rows were listed and 10 rendered. The
+        # roster is the server's (the helper the note itself uses), passed in: this page
+        # imports nothing. It is computed from the STORE, so it is what the NEXT emit
+        # renders - the column and the sentence under the title say so.
+        roster = (readiness or {}).get("note_roster")
+        ids = set(roster["ids"]) if roster else None
+
+        def _roster_cell(lid):
+            if ids is None:
+                return "not evaluated"
+            return "rendered" if lid in ids else "not rendered"
+        rows = [(lid, kind, "pinned" if pin else "", _roster_cell(lid), title, stmt, imf,
+                 imi, by, at, _tag(succ, sstat))
                 for lid, kind, pin, title, stmt, imf, imi, by, at, succ, sstat in approved]
-        parts.append(_fold("Approved (rendered into the CLAUDE.md note — pinned"
-                           " always, newest fill the cap)", len(rows),
-                           _table(["id", "kind", "pinned", "title", "statement",
-                                   "impact if followed", "impact if ignored",
-                                   "confirmed by", "confirmed at", "supersession"], rows,
-                                  row_ids=True), anchor="lessons-approved"))
+        cap = f"the {roster['cap']} " if roster else "the "
+        parts.append(_fold("Approved (the CLAUDE.md note renders the pinned rows and "
+                           f"{cap}highest-numbered unpinned ones)", len(rows),
+                           '<p class="freshness">The note column is computed from the'
+                           " store: it is what the next handoff_emit renders. The note on"
+                           " disk differs until an emit has run since the last approval,"
+                           " and an emit the injection screen blocks renders nothing."
+                           " Rows marked not rendered are read by query.</p>"
+                           + _table(["id", "kind", "pinned",
+                                     "note (rendered at the next emit)", "title",
+                                     "statement", "impact if followed",
+                                     "impact if ignored", "confirmed by", "confirmed at",
+                                     "supersession"], rows,
+                                    row_ids=True), anchor="lessons-approved"))
     promoted = conn.execute(
         "SELECT l.id, l.kind, l.title, l.promoted_to, s.name, s.level"
         " FROM lessons l LEFT JOIN skills s ON s.id = l.promoted_to"

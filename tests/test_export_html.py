@@ -333,6 +333,43 @@ class ExportHtmlTest(unittest.TestCase):
         bare = viewer.render(srv._CURRENT.conn, srv.gate_run()["gates"], False, None)
         self.assertIn("Resume state not evaluated for this export.", bare)
 
+    def _approved_fold_cells(self, html: str) -> dict:
+        """id -> the roster cell of the Approved lessons fold (the column after `pinned`)."""
+        fold = html.split('id="lessons-approved"', 1)[1].split("</details>", 1)[0]
+        return dict(re.findall(
+            r'<tr id="(LL-\d+)"><td>LL-\d+</td><td>[^<]*</td><td>[^<]*</td><td>([^<]*)</td>',
+            fold))
+
+    def test_lessons_fold_marks_the_note_roster(self):
+        """Plan 146 (v5.5, findings_36, R29): the fold listed every Approved row under a
+        title saying they were rendered into the note - in the field 30 rows, 10 rendered.
+        The server computes the roster with the helper the note itself uses and passes the
+        ids; the page marks them. Marked ids == the ids the emitted note lists."""
+        srv.package_create("demo", "Demo", "rnd")
+        rows = [{"type": "lesson", "id": f"LL-{n:03d}", "title": f"t{n}",
+                 "statement": f"lesson number {n}", "kind": "improve",
+                 "lifecycle_status": "Approved", "confirmed_by": "operator:test",
+                 "operator_confirm": True} for n in range(1, 14)]
+        rows[1]["pinned"] = 1                                       # LL-002, low-numbered
+        self.assertTrue(srv.entity_upsert(rows)["ok"])
+        html = self._export()
+        cells = self._approved_fold_cells(html)
+        self.assertEqual(len(cells), 13)
+        marked = {lid for lid, cell in cells.items() if cell == "rendered"}
+        self.assertEqual({c for c in cells.values()}, {"rendered", "not rendered"})
+        # the block handoff_emit writes into the note, verbatim (the contract suite's
+        # test_note_lessons_section_renders_approved_only compares against a real emit)
+        section, findings = srv._note_lessons_section()
+        self.assertEqual(findings, [])
+        self.assertEqual(marked, set(re.findall(r"^- \*\*(LL-\d+)\*\*", section, re.M)))
+        self.assertEqual(marked, {"LL-002"} | {f"LL-{n:03d}" for n in range(4, 14)})
+        self.assertIn("rendered at the next emit", html)             # the header says WHEN
+        self.assertIn("the 10 highest-numbered unpinned ones", html)  # the fold's title
+        self.assertNotIn("rendered into the CLAUDE.md note", html)   # the old claim is gone
+        # with no server-computed state the column says so, as the Resume panel does
+        bare = viewer.render(srv._CURRENT.conn, srv.gate_run()["gates"], False, None)
+        self.assertEqual(set(self._approved_fold_cells(bare).values()), {"not evaluated"})
+
     def test_execution_readiness_panel(self):
         """Per-phase readiness (latest-verdict semantics) + declared human gates
         render in the execution section."""

@@ -9,6 +9,7 @@ export_html -> the missing-SDK error path (simulated ImportError) -> --selftest.
 import contextlib
 import io
 import json
+import re
 import sys
 import tempfile
 import unittest
@@ -937,10 +938,19 @@ class McpContractTest(unittest.TestCase):
                             note.index("lesson number 9"))
             # pinned(1) + cap(10 newest unpinned: 12..3) => LL-001 overflows
             self.assertNotIn("lesson number 1\n", note)
-            self.assertIn('1 more Approved lesson(s): `entity_query("lesson")`',
-                          note)
+            # Plan 146 (v5.5, R35): the rows behind the footer BIND too - the note says so
+            self.assertIn('1 more Approved lesson(s) bind too and are not rendered here:'
+                          ' `entity_query("lesson")`', note)
             second = srv.handoff_emit(target)
             self.assertIn("CLAUDE.md", second["unchanged"])          # byte-stable
+            # Plan 146 (v5.5, R29): the review page marks exactly the rows this note lists
+            page = Path(srv.export_html()["path"]).read_text(encoding="utf-8")
+            fold = page.split('id="lessons-approved"', 1)[1].split("</details>", 1)[0]
+            cells = dict(re.findall(r'<tr id="(LL-\d+)"><td>LL-\d+</td><td>[^<]*</td>'
+                                    r'<td>[^<]*</td><td>([^<]*)</td>', fold))
+            self.assertEqual({i for i, c in cells.items() if c == "rendered"},
+                             set(re.findall(r"^- \*\*(LL-\d+)\*\*", note, re.M)))
+            self.assertEqual(cells["LL-001"], "not rendered")
         # Plan 036 (full graduation): promote LL-002 (the pinned one) into a
         # skill — it leaves the note; the skills line survives and names it
         srv.entity_upsert([
@@ -3314,7 +3324,27 @@ class V4EngineTest(unittest.TestCase):
                                             "LL-001", "LL-028", "LL-027", "LL-026"])
         self.assertIn("28 lesson line(s)", rule["note"])
         self.assertIn("/tamheed:skill-promote", rule["note"])
+        # Plan 146 (v5.5, R34): unpinning changes what is RENDERED, never what binds
+        self.assertIn("no longer needs to be rendered for every session", rule["note"])
+        self.assertNotIn("bind every session", rule["note"])
         self.assertEqual(srv._NOTE_LESSONS_CEILING, 20)
+
+    def test_note_line_cut_is_the_named_constants(self):
+        """Plan 146 (v5.5, findings_36): the field worked out the note's cut by reading the
+        source, twice. The two numbers are constants now, and the boundary is pinned: a
+        flattened statement of _NOTE_LINE_MAX characters prints whole, one more is cut to
+        its first _NOTE_LINE_CUT and an ellipsis."""
+        self.assertEqual((srv._NOTE_LINE_MAX, srv._NOTE_LINE_CUT), (180, 177))
+        whole, over = "w" * srv._NOTE_LINE_MAX, "o" * (srv._NOTE_LINE_MAX + 1)
+        out = srv.entity_upsert([
+            {"type": "lesson", "id": f"LL-00{n}", "title": "t", "statement": text,
+             "kind": "improve", "lifecycle_status": "Approved", "confirmed_by": "op",
+             "operator_confirm": True} for n, text in ((1, whole), (2, over))])
+        self.assertTrue(out["ok"], out)
+        note, findings = srv._note_lessons_section()     # the block the emit writes verbatim
+        self.assertEqual(findings, [])
+        self.assertIn(f"- **LL-001** [improve] {whole}\n", note)
+        self.assertIn(f"- **LL-002** [improve] {'o' * srv._NOTE_LINE_CUT}...\n", note)
 
     def test_migrate_relocates_converted_file_out_of_data(self):
         """findings_22 §4: a `*.jsonl.converted` audit-trail file in the canonical
@@ -3614,6 +3644,11 @@ class V4EngineTest(unittest.TestCase):
                                       operator_confirm=True, confirmed_by="anas")])
         self.assertTrue(out["ok"], out)
         self.assertIn("handoff_emit", out["items"][0]["next"])
+        # Plan 146 (v5.5, R34): two words. The status BINDS, from this write; the note's
+        # roster is what is RENDERED, and only an emit rebuilds it.
+        self.assertIn("binds from this write and is RENDERED only once the always-loaded"
+                      " note is rebuilt", out["items"][0]["next"])
+        self.assertNotIn("BINDS only once", out["items"][0]["next"])
         # Plan 136 (v5.3, findings_34 E2): binding is not rendering. A pinned row always
         # renders; an unpinned one only while among the 10 newest — the hint says which.
         self.assertIn("pinned rows always render", out["items"][0]["next"])
@@ -3640,6 +3675,9 @@ class V4EngineTest(unittest.TestCase):
                                                   promoted_to="SKL-001")])
         self.assertTrue(promoted["ok"], promoted)
         self.assertNotIn("renders", promoted["items"][1]["next"])   # never rendered anyway
+        self.assertNotIn("RENDERED", promoted["items"][1]["next"])  # plan 146: its skill carries it
+        self.assertIn("names its skill only once it is rebuilt", promoted["items"][1]["next"])
+        self.assertIn("handoff_emit", promoted["items"][1]["next"])
         other = srv.entity_upsert([{"type": "defect", "id": "DEF-092", "title": "d",
                                     "severity": "low"}])
         self.assertNotIn("next", other["items"][0])                # lessons only
