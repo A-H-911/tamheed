@@ -59,8 +59,13 @@ repository or the package.
 **3. Ask clearly and simply, with examples.**
 One decision per question, plain language, and a concrete picture of what each option means in
 practice. Where an option carries a risk the operator has not seen, state it inside the option, not
-after the answer. Give a recommendation when the operator asks for one, and mark it as yours.
+after the answer. Mark ONE option as your recommendation, labelled as yours and with its deciding
+reason, unless the operator has turned recommendations off (step 6). A recommendation is a pick
+among options; it is never a verdict on a record or an approval — those stay the operator's words.
 - *Why:* the operator decides from the message itself; a vague option gets decided on your summary.
+  Bare options hand back the one judgement you were placed to make, and the operator then asks for it.
+- *Field evidence:* asked with bare options, an operator sent the question back twice — *come back
+  with a recommendation* — and then made it standing.
 
 **4. Quote the record, with its id — never the id alone.**
 Every entity you cite carries its own text where you cite it: title, the operative field (a deferred
@@ -107,6 +112,12 @@ next session asks again. Honour a ceremony's STOPs in the record as well as in y
   Re-put a ruling only when its premise has moved, and name the moved premise when you do; re-asking
   one whose premise stands is re-litigating. A route ruled once was re-asked when its premise changed
   and held — that was legitimate; asking a third time with nothing changed would not have been.
+- **A standing instruction about HOW to ask is not a banked answer.** When the operator rules on the
+  form of the interview — always recommend, never recommend, have the options reviewed first —
+  record it as a decision row in their own words and follow it until they replace it. It governs the
+  asking, never the answer. Carried only in memory, such a rule drifts: one was cited for weeks to a
+  decision whose text never stated it, by three later decisions and two memory files, each copying
+  the citation before it.
 
 ---
 
@@ -136,7 +147,6 @@ capabilities.
   interview verbatim there; never reconstruct it).
 - **How to read and sweep the records before citing them** — `tamheed:reading-the-record`.
 - **What to record after the ruling** — the obligations table in this project's `CLAUDE.md` note.
-- **Whether to include a recommendation at all** — follow what the operator asks for in that round.
 
 ---
 

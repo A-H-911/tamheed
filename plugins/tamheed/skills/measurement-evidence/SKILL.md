@@ -90,6 +90,12 @@ moves, and the number is true of a set that excludes the answer.
   quantity, run a different command.
 - **A substring proxy removes rows that NAME a thing without covering it**, and keeps for itself the
   judgement the script cannot make. Treat such a rule's output as triage, never as the worklist.
+- **EVERY item differing is as suspect as none differing.** A compare that reports a whole tree
+  changed, against a tree you have other reason to believe identical, measured the TRANSPORT — line
+  endings a checkout rewrote, an encoding, a path prefix — and not the content. Normalise what the
+  transport rewrites, prove the compare still catches a one-byte change, then read the result. Every
+  file of an installed tree, images included, once read as modified; each file's size gap equalled
+  its count of carriage returns.
 
 ## 4. Two sources agree?
 
@@ -102,6 +108,13 @@ moves, and the number is true of a set that excludes the answer.
   independence if both paths load the same artefact. But the relationship is asymmetric: two
   non-independent observations are weak evidence about *where* a fault lives and **strong** evidence
   that a change to their shared component worked.
+- **A match on VALUE is necessary and never sufficient when another producer can write the same
+  value.** A log line equal to your replay to the character proves WHAT was written, never WHO wrote
+  it: a background process started in the same place writes the identical line. Take the identity
+  from an instrument that carries one, and put it in the line when the line is yours to change. *No
+  other process ran* is a control you can keep only over processes you start. A verdict about an
+  operator's session was read from a line a background session had written in the same folder; it
+  reached a journal entry, a report and a memory file before the run's own control exposed it.
 
 ## 5. After the number is in your hand
 
