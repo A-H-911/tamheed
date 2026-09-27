@@ -33,6 +33,9 @@ rule on recommendations and a recipe caution. No migration; `schema_version` sta
   recommendation is never a verdict or an approval. A standing instruction about how to ask is a
   decision row in the operator's words, and it is not a banked answer.
 - **The trace writes `source` by the same token rule** (plan 141): 5.3.0 wrote it as it arrived.
+- **`package-writes` §1 names the approval as a full row** (plan 145): a move that must carry a
+  column of its own is not the cheap `substitute` status flip. A lesson's approval lands with its
+  `confirmed_by`; the engine refuses the substitute by name, and the skill now says so first.
 
 ### Fixed
 - **The hook tests no longer write into the operator's own trace file** (plan 141): on a machine

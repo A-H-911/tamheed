@@ -1,7 +1,9 @@
 # Tamheed v5.4.0 — the findings_35 batch: one field in the trace line, two lessons, the interview's default
 
-Status: **IN PROGRESS** — index section "Field cycle findings_35" in [README.md](README.md).
-Execution order: step 0, then 141 → 142 → 143 → 144 → 145.
+Status: **EXECUTED — v5.4.0 tagged on the release commit (this record's commit; CI green),
+2026-09-27** — index section "Field cycle findings_35" in [README.md](README.md). Commits: 141
+`0be3a56`, 142 `983df9d`, 143 `5037176`, 144 `85007b4`; 145 = the close-out commit that carries this
+record, the brief and the index. Execution order: step 0, then 141 → 142 → 143 → 144 → 145.
 
 Read-only evidence this record rests on: ACMP `findings_35.md` (`c814fdd8` → `3071f1f4`), the rows
 `LL-112` (Proposed), `DEC-233` (Approved), the journal `PE-1501`..`PE-1511`, all 25 feedback rows, the
@@ -24,6 +26,9 @@ after a devil's-advocate review); the interview rulings R19–R26.
 | M8 | `python check.py` with the trace variable unset (plan 141) | ALL CHECKS PASSED; no line in the operator's trace inside the run's window |
 | M9 | Lab beat 26 (plan 144), first run | every assertion held in both phases; two sessions in one folder wrote lines with equal counts (`lines=6 chars=830`) and different `session=` tails; evidence `evidence/lab-continuation-report-144-2026-09-27.md` |
 | M10 | The stock guide's body against the 5.3.0 body, at the stamp | one line differs, the title |
+| M11 | The field replay on the final bundle over a read-only copy at `3071f1f4` (`acmp_replay3.py`, second run, fresh copy) | every 5.3 class held: `server_info` 5.4.0 / 007 / 7; `package_verify` verified before any write; `resume` the latest handoff with two corrections listed, behind 0, `open_feedback []`; `lock` `alive` / `held by this session`; plain emit every scan empty, no `skill`, root unchanged, `diverged_stale_stock` README 5.3.0 (the copy rebuilt the note once: its path line differs); `refresh_stock` refreshed the guide, its title reading 5.4.0; `handoff-current` pass (365 work entries), `lessons-stranded` pass (75 promoted lessons), `feedback-unanswered` pass; an error `entity_query` carries no `skill`. **New:** `lessons-confirmed` FAILS while the field's one Proposed lesson stands; the hook after a compaction printed the latest handoff whole with its corrections line and the trace wrote `lines=20 chars=3167 status=printed session=<the id sent>`, counts equal to the block's; a second session in the folder wrote its own tail; a lock naming the field's dead pid 48276 read `holder observed not-running`, the lock file untouched |
+| M12 | Every Part B recipe of the brief, executed on that copy | a `substitute` on a Proposed lesson's `recommendation`: ok, `changed_columns` that column alone. Approval by `substitute` alone: refused (`attribution lands WITH approval`). Approval by `substitute` with `confirmed_by`: refused (`a substitute item carries only …`). Approval by a full row: ok, `changed_columns` status + `confirmed_by` + `confirmed_at`, a `lesson_audit` id, `next` carrying the render clause. The same edit AFTER approval: refused, immutable. A `substitute` on an Approved lesson's `statement` (the 5.3.0 brief's E1): refused, immutable. A `correction` on the latest handoff: ok; `handoff-current` stays pass; the hook lists its id |
+| M13 | `uv run … --selftest` on the final bundle | `mcp sdk: ok — 19/19 tools registered` |
 
 ## 1. What the field returned (no defect, no feedback row)
 
@@ -52,8 +57,8 @@ recommendations (`DEC-233`). A caution: the installed tree is CRLF on Windows.
 | 141 | [The trace carries the session](141-trace-carries-the-session.md) | DONE `0be3a56` |
 | 142 | [Two absorbed lessons and the interview's default](142-two-lessons-and-the-interview-default.md) | DONE `983df9d` |
 | 143 | [Docs + diagrams sweep](143-docs-and-diagrams-sweep-findings-35.md) | DONE `5037176` |
-| 144 | [The version stamp, then lab beat 26 + evals](144-stamp-then-lab-beat-26.md) | DONE |
-| 145 | [Tag v5.4.0, the brief file, close-out](145-release-v540.md) | PLANNED |
+| 144 | [The version stamp, then lab beat 26 + evals](144-stamp-then-lab-beat-26.md) | DONE `85007b4` |
+| 145 | [Tag v5.4.0, the brief file, close-out](145-release-v540.md) | DONE — the release commit; tag `v5.4.0` |
 
 ## 4. The 5.3.0 brief's errors, owned (E1–E4), and the maintainer's own
 
@@ -65,7 +70,8 @@ recommendations (`DEC-233`). A caution: the installed tree is CRLF on Windows.
 - **E4** a prediction named a moving row.
 - **The maintainer's own, not found by the field:** `install.md` and the 5.3.0 CHANGELOG entry said a
   reload had delivered the block on 5.1.0 (M3); `install.md` told the reader to infer "fired, not
-  delivered" from any trace line.
+  delivered" from any trace line; and the 5.3.0 brief's P3 said a `substitute` status flip approves a
+  lesson (E5 of the 5.4.0 brief) — it cannot, attribution lands with the approval (M12).
 
 ## 5. Execution notes (owned as they land)
 
@@ -84,3 +90,10 @@ recommendations (`DEC-233`). A caution: the installed tree is CRLF on Windows.
 6. Plan 144's first full gate was red on one contract test that assumed every release adds two
    lines or more to the guide; 5.4.0 changes only its title. The test's assumption, not the
    engine: fixed at the test before the commit.
+7. Plan 145's dry-run of the brief's recipes on the copy found that the approval recipe the
+   maintainer had written into the replay itself (a `substitute` on `lifecycle_status`) is refused
+   by name. It was about to enter the brief. The brief carries the full-row recipe, the two
+   refusals quoted, and the 5.3.0 brief's same error as E5; `package-writes` §1 gained the
+   sentence. The first replay run had also read its own failed approval as a success of the
+   step after it; the script was corrected and re-run on a fresh copy.
+8. The advisor reviewed the brief and this record before the close-out commit.

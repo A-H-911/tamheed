@@ -131,7 +131,7 @@ session transcript on the maintainer's machine: 24 reloads on Claude Code builds
 in three sessions of one project, and no `SessionStart` event of ANY plugin's hook within 30
 seconds of any of them. Where one followed within minutes it has its own cause on the record: a
 compaction the operator entered 5 seconds after the reload, and the restart described next. After
-the other 22 the next one came no sooner than 41 minutes later. The control: each of 19
+the other 22 the next one, where one followed at all, came no sooner than 41 minutes later. The control: each of 19
 compactions ran them. Versions of this page before 5.4.0 said a reload on
 5.1.0 delivered the resume block as `SessionStart:resume`. That delivery was a Claude Code
 **restart**: the reload's records carry build 2.1.282, and the `SessionStart:resume` 37 seconds

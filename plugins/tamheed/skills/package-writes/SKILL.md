@@ -38,6 +38,8 @@ id resolves, and the damage stays until someone reads it.
   fill a NULL.
 - **Read `changed_columns` after every write.** A length you did not intend is a lost paragraph.
   The cheapest correct status flip is `substitute` on `lifecycle_status` — zero transport, every guard.
+  A move that must carry a column of its own is NOT that flip: a lesson's approval lands with its
+  `confirmed_by`, and a substitute item carries no other column - so the approval is a full row.
 - **Trace edges are keyed** `(from, to, relation)`. A wrong edge is retired (`retire: true`, journaled)
   and the correct one written in the same batch; a new relation never replaces an old one by itself.
 - **Immutable-after-approval rows** (ADRs, approved acceptance criteria, approved lessons) are
