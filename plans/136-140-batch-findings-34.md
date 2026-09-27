@@ -76,4 +76,9 @@ reads the stored value directly; the test sends a partial approval of a pinned r
 `pinned rows always render`. Fixed in the close-out commit, before the tag — the reason the review
 moved ahead of the commit this cycle; (5) the same review added the trace's CONTROL to the brief and
 `install.md` (read the reload's "no line" only after a compaction has written one) and made the
-brief's trim count explicit (thirteen index lines for twelve rules; `CI-3 1860` trim-or-keep).
+brief's trim count explicit (thirteen index lines for twelve rules; `CI-3 1860` trim-or-keep);
+(6) the close-out commit's CI (run 36285044833) was RED on the four ubuntu jobs and green on the
+four Windows ones: the new hook test wrote a lock naming pid 2**31, which Linux's probe refuses as
+`unobservable` by design (bounded at 4194304 — a garbled lock must not land on a live pid) while
+Windows probes any DWORD. The test's pid choice, not the engine: the test now fixes the observation
+through the seam. The fix commit lands BEFORE the tag; the tag sits on it.

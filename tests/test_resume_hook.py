@@ -127,20 +127,26 @@ class ResumeHookTest(unittest.TestCase):
         """Plan 136 (v5.3, findings_34): after a Claude Code process restart the field's hook
         said "lock file present (pid 48276 …)" and the agent needed package_unlock to learn
         the holder was dead. The line now carries the store's observation of a FOREIGN lock
-        (a real pid no OS assigns: measured `not-running` in < 6 ms on Windows and Linux)
-        and names the operator's remedy; nothing is removed."""
+        and names the operator's remedy; nothing is removed. The observation itself goes
+        through the plan-064 seam (the hook imports the same module object): a real pid is
+        platform-bound (Linux refuses one past 4194304 as `unobservable` by design, Windows
+        probes any DWORD) - the first CI run of this test measured exactly that."""
         import store  # noqa: PLC0415
         self._package()
         lock = self.project / "pkg" / "data" / store.LOCK_NAME
-        lock.write_text(json.dumps({"pid": 2 ** 31, "host": socket.gethostname(),
+        lock.write_text(json.dumps({"pid": 48276, "host": socket.gethostname(),
                                     "taken_at": "2026-09-26T18:30:44+00:00"}),
                         encoding="utf-8")
+        seam = srv._observe_lock
+        srv._observe_lock = lambda p: {"outcome": "not-running", "pid": 48276,
+                                       "evidence": "no process with pid 48276"}
         try:
             out, code = run_hook(self.project, source="resume")
         finally:
+            srv._observe_lock = seam
             lock.unlink()
         self.assertEqual(code, 0)
-        self.assertIn("lock file present (pid 2147483648", out)
+        self.assertIn("lock file present (pid 48276", out)
         self.assertIn("holder observed not-running — package_unlock(confirm=true) on the"
                       " operator's word", out)
         self.assertTrue(lock.exists() is False)

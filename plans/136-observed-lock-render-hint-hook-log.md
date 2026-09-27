@@ -44,7 +44,9 @@
 session`); new `test_resume_block_observes_a_foreign_lock_holder` (seam fixed → `not-running`; seam
 raising → `unobservable` + class); `test_lesson_approval_says_the_note_is_rebuilt_only_by_handoff_emit`
 (pinned, unpinned, status-only flip, Promoted). `test_resume_hook`: the in-process holder line; new
-`test_dead_holder_is_observed_and_the_remedy_named` (pid 2**31; nothing removed); new
+`test_dead_holder_is_observed_and_the_remedy_named` (the seam fixed to `not-running` — the hook runs
+in-process and imports the same module object; a real pid 2**31 read `unobservable` on Linux, whose
+probe is bounded at 4194304 by design — the first CI run measured it; nothing removed); new
 `test_opt_in_trace_writes_counts_only_to_an_existing_file` (missing path → nothing; existing → one
 line; the entry's text absent; unset → nothing more).
 

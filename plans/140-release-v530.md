@@ -23,7 +23,8 @@
 
 The replay over a read-only copy of ACMP at `e88b051b` held on every class (batch record M2); the
 self-test registered 19/19; the advisor reviewed the brief and the batch record before the close-out
-commit; nothing landed after the tag.
+commit. That commit's CI was red on ubuntu (a test's pid past Linux's probe bound — batch record note 6);
+the fix commit landed before the tag and the tag sits on it; nothing landed after the tag.
 
 ## Owed housekeeping (the user's)
 
