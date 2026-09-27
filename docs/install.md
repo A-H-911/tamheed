@@ -73,6 +73,13 @@ open feedback and slices, the lock holder and the next step — into the model's
 nothing in a project whose `CLAUDE.md` (or one `@`-imported file) carries no tamheed note, withholds an
 instruction-shaped handoff, caps itself at 40 lines (up to 25 lines / 4,000 characters of the entry
 itself — the resume block's own cap, since v5.2), and on any failure prints one line and exits 0.
+Its lock line says what the store observed about the holder (v5.3): after a Claude Code process
+restart the previous server's pid is dead, and the line reads `holder observed not-running —
+package_unlock(confirm=true) on the operator's word`. **Tracing the hook (v5.3, opt-in):** create an
+empty file outside any package, set `TAMHEED_HOOK_LOG` to its path (your shell, or the `env` block of
+your USER settings), and every run appends one line — `<utc> source=<startup|resume|clear|compact|fork>
+lines=N chars=N status=printed|silent|error:<Class>` — never the entry's text. A line with no block
+in your context means the hook fired and the output was not delivered; no line means it did not run.
 Opt-out: disable the plugin for that project (`enabledPlugins`, the FB-022 recipe above) — that is
 the only per-plugin switch; `disableAllHooks` in the project's settings disables EVERY hook of every
 tool you run there, not just this one. If your

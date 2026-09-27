@@ -10,7 +10,8 @@ is found in `<project>/CLAUDE.md` or behind ONE level of `@path` import (a proje
 the note in `<package>/CLAUDE.md` reaches it through `@<package>/CLAUDE.md`). Lockless: reads
 the store through `store.load`, never takes the writer lock, writes nothing. Screened: the
 handoff text is agent-authored prose entering an always-loaded surface, so `_INJECT_RE` (the
-G-INJECT screen) withholds it when it is instruction-shaped. Capped: at most MAX_LINES lines.
+G-INJECT screen) withholds it when it is instruction-shaped. Capped: at most MAX_LINES lines. Traced (opt-in,
+plan 136): TAMHEED_HOOK_LOG naming an EXISTING file gets one line of counts per run, never the entry.
 Failure posture: one line, exit 0 — a hook must never cost the session.
 
 stdlib only, NO inline script metadata: `uv run --no-project` runs it on the interpreter uv
@@ -102,9 +103,16 @@ def build_lines(project: Path, source: str = "") -> list[str]:
         conn.close()
     lines: list[str] = []
     lock = block.get("lock")
+    # Plan 136 (v5.3): the block carries what the store observed about the holder — after a
+    # process restart the pid is usually dead, and the field needed package_unlock to learn it.
+    remedy = {"not-running": "package_unlock(confirm=true) on the operator's word",
+              "reused": "package_unlock(confirm=true) on the operator's word",
+              "alive": "the MCP server holds it while the package is open",
+              }.get(str(lock.get("observed")) if lock else "",
+                    "package_unlock reports the evidence")
     lock_s = (f"lock file present (pid {lock.get('pid')} on {lock.get('host')} since"
-              f" {lock.get('taken_at')}; the MCP server holds it while the package is open —"
-              " package_unlock reports the holder)" if lock else "unlocked")
+              f" {lock.get('taken_at')}; holder observed {lock.get('observed')} — {remedy})"
+              if lock else "unlocked")
     lines.append(f"tamheed resume — package `{name}` (schema {schema}) — {lock_s}")
     if source == "compact":
         lines.append("Context was compacted mid-session: this is state re-injection, not a"
@@ -155,14 +163,42 @@ def main(argv: list[str] | None = None) -> int:
             except Exception:  # noqa: BLE001
                 pass
     args = list(sys.argv[1:] if argv is None else argv)
+    source, lines, status = "", [], "silent"
     try:
         project = Path(args[0] if args else os.environ.get("CLAUDE_PROJECT_DIR") or ".").resolve()
-        lines = build_lines(project, read_source())
+        source = read_source()
+        lines = build_lines(project, source)
         if lines:
             print("\n".join(lines))
+            status = "printed"
     except Exception as exc:  # noqa: BLE001 — one line, never a failed session start
         print(f"tamheed: resume unavailable ({exc.__class__.__name__}: {str(exc)[:160]})")
+        status = f"error:{exc.__class__.__name__}"
+    _trace(source, lines, status)
     return 0
+
+
+def _trace(source: str, lines: list[str], status: str) -> None:
+    """Plan 136 (v5.3, findings_34 A2): the field could not tell "the hook did not fire" from
+    "it fired and its output was not delivered". Opt-in: when TAMHEED_HOOK_LOG names a file
+    that ALREADY EXISTS (the operator creates it — a project's settings `env` block could
+    otherwise aim this at any writable path), append ONE line of counts. Never the entry:
+    an always-loaded surface's text stays out of files the engine does not own."""
+    target = os.environ.get("TAMHEED_HOOK_LOG")
+    if not target:
+        return
+    try:
+        path = Path(target)
+        if not path.is_file():
+            return
+        from datetime import datetime, timezone  # noqa: PLC0415
+        text = "\n".join(lines)
+        with path.open("a", encoding="utf-8") as fh:
+            fh.write(f"{datetime.now(timezone.utc).isoformat(timespec='seconds')}"
+                     f" source={source or '-'} lines={len(lines)} chars={len(text)}"
+                     f" status={status}\n")
+    except Exception:  # noqa: BLE001 — the trace must never cost the session either
+        pass
 
 
 if __name__ == "__main__":

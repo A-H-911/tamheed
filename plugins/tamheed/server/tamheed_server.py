@@ -1049,8 +1049,21 @@ def _resume_block(conn, name: str, data_dir: Path | None = None) -> dict:
         " LIMIT 3").fetchall()]
     lock = None
     if data_dir is not None and (Path(data_dir) / store.LOCK_NAME).exists():
-        held = store._read_lock(Path(data_dir) / store.LOCK_NAME)
+        lock_path = Path(data_dir) / store.LOCK_NAME
+        held = store._read_lock(lock_path)
         lock = {k: held.get(k) for k in ("pid", "host", "taken_at")}
+        # Plan 136 (v5.3, findings_34): the field resumed after a process restart, read "lock
+        # file present (pid …)" and needed package_unlock to learn the holder was dead. The
+        # block now carries what the store OBSERVED. Three of four callers hold the lock
+        # themselves (package_open after __enter__, server_info while open): no probe there.
+        if held.get("pid") == os.getpid():
+            lock["observed"], lock["evidence"] = "alive", "held by this session"
+        else:
+            try:
+                seen = _observe_lock(lock_path)
+                lock["observed"], lock["evidence"] = seen["outcome"], seen["evidence"]
+            except Exception as exc:  # noqa: BLE001 — a read of state, never a failure
+                lock["observed"], lock["evidence"] = "unobservable", exc.__class__.__name__
     if handoff and behind:
         nxt = (f"Read handoff {handoff['id']} and its corrections, then note that"
                f" {len(behind)} work-done/transition entries followed it — orient from the"
@@ -1847,6 +1860,19 @@ def entity_upsert(entities: list[dict]) -> dict:
                     res["next"] = ("this lesson BINDS only once the always-loaded note"
                                    " is rebuilt - run handoff_emit in this same batch"
                                    " (the note is rebuilt by nothing else)")
+                    if cols.get("lifecycle_status") == "Approved":
+                        # Plan 136 (v5.3, findings_34 E2): binding is not rendering — the
+                        # note shows every pinned Approved row plus the 10 newest unpinned
+                        # ones; thirteen unpinned approvals in the field moved all sixteen
+                        # rendered lessons behind "N more". Approved only: a Promoted row
+                        # never renders (its skill file carries it).
+                        pinned = cols.get("pinned")
+                        if pinned is None and before_row is not None:
+                            pinned = before_row.get("pinned")
+                        res["next"] += ("; pinned rows always render" if pinned else
+                                        "; it renders in the note only if pinned or among"
+                                        " the 10 newest unpinned Approved rows - pin it to"
+                                        " keep it visible")
                     if cols.get("superseded_by"):       # Approved AND Promoted both bind
                         # Plan 075 (findings_26 s3): the pointer alone retires nothing
                         res["next"] = (

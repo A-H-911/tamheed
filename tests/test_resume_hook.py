@@ -5,6 +5,7 @@ import io
 import json
 import os
 import shutil
+import socket
 import sys
 import tempfile
 import unittest
@@ -117,8 +118,69 @@ class ResumeHookTest(unittest.TestCase):
         srv.package_open("pkg")
         out, _ = run_hook(self.project, source="resume")
         self.assertIn("lock file present (pid", out)
+        # Plan 136 (v5.3): the hook runs in-process here, so the holder IS this process
+        self.assertIn("holder observed alive — the MCP server holds it", out)
         srv.package_close()
         self.assertNotIn("lock file present", run_hook(self.project)[0])
+
+    def test_dead_holder_is_observed_and_the_remedy_named(self):
+        """Plan 136 (v5.3, findings_34): after a Claude Code process restart the field's hook
+        said "lock file present (pid 48276 …)" and the agent needed package_unlock to learn
+        the holder was dead. The line now carries the store's observation of a FOREIGN lock
+        (a real pid no OS assigns: measured `not-running` in < 6 ms on Windows and Linux)
+        and names the operator's remedy; nothing is removed."""
+        import store  # noqa: PLC0415
+        self._package()
+        lock = self.project / "pkg" / "data" / store.LOCK_NAME
+        lock.write_text(json.dumps({"pid": 2 ** 31, "host": socket.gethostname(),
+                                    "taken_at": "2026-09-26T18:30:44+00:00"}),
+                        encoding="utf-8")
+        try:
+            out, code = run_hook(self.project, source="resume")
+        finally:
+            lock.unlink()
+        self.assertEqual(code, 0)
+        self.assertIn("lock file present (pid 2147483648", out)
+        self.assertIn("holder observed not-running — package_unlock(confirm=true) on the"
+                      " operator's word", out)
+        self.assertTrue(lock.exists() is False)
+
+    def test_opt_in_trace_writes_counts_only_to_an_existing_file(self):
+        """Plan 136 (v5.3, findings_34 A2): the field could not tell "did not fire" from
+        "fired, not delivered". TAMHEED_HOOK_LOG names a file the OPERATOR created; the hook
+        appends one line of counts — never the entry (an always-loaded surface's text stays
+        out of foreign files) — and creates nothing when the path does not exist (a project's
+        settings `env` block could otherwise aim it anywhere)."""
+        self._package()
+        (h,) = self._journal([{"entry": "Resume at: AC-002.\nIn flight: WBS-1 secret-word.",
+                               "event_type": "handoff", "actor": "agent:one"}])
+        log = self.project / "hook.log"
+        missing = self.project / "never" / "hook.log"
+        old = os.environ.get("TAMHEED_HOOK_LOG")
+        try:
+            os.environ["TAMHEED_HOOK_LOG"] = str(missing)
+            run_hook(self.project, source="compact")
+            self.assertFalse(missing.exists())                   # nothing created
+            log.write_text("", encoding="utf-8")                 # the operator creates it
+            os.environ["TAMHEED_HOOK_LOG"] = str(log)
+            out, code = run_hook(self.project, source="compact")
+        finally:
+            if old is None:
+                os.environ.pop("TAMHEED_HOOK_LOG", None)
+            else:
+                os.environ["TAMHEED_HOOK_LOG"] = old
+        self.assertEqual(code, 0)
+        self.assertIn(h, out)
+        lines = log.read_text(encoding="utf-8").splitlines()
+        self.assertEqual(len(lines), 1, lines)
+        self.assertIn(" source=compact lines=", lines[0])
+        self.assertIn(f"lines={len(out.rstrip(chr(10)).splitlines())} chars=", lines[0])
+        self.assertIn(" status=printed", lines[0])
+        self.assertNotIn("secret-word", lines[0])                # counts only
+        self.assertNotIn(h, lines[0])
+        # unset: the same run writes nothing more
+        run_hook(self.project, source="compact")
+        self.assertEqual(len(log.read_text(encoding="utf-8").splitlines()), 1)
 
     def test_inject_shaped_handoff_is_withheld(self):
         self._package()

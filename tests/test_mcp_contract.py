@@ -2274,6 +2274,10 @@ class McpContractTest(unittest.TestCase):
         self.assertEqual(info["resume"]["package"], "demo")
         self.assertIsNotNone(info["resume"]["lock"])          # the package is open
         self.assertIn("pid", info["resume"]["lock"])
+        # Plan 136 (v5.3): the block says what the store observed. This session holds the
+        # lock, so no probe runs — "held by this session" is the answer by construction.
+        self.assertEqual(info["resume"]["lock"]["observed"], "alive")
+        self.assertEqual(info["resume"]["lock"]["evidence"], "held by this session")
         (worked,) = srv._CURRENT.conn.execute(
             "SELECT COUNT(*) FROM progress_entries WHERE event_type IN"
             " ('work-done', 'transition')").fetchone()
@@ -3602,9 +3606,71 @@ class V4EngineTest(unittest.TestCase):
                                       operator_confirm=True, confirmed_by="anas")])
         self.assertTrue(out["ok"], out)
         self.assertIn("handoff_emit", out["items"][0]["next"])
+        # Plan 136 (v5.3, findings_34 E2): binding is not rendering. A pinned row always
+        # renders; an unpinned one only while among the 10 newest — the hint says which.
+        self.assertIn("pinned rows always render", out["items"][0]["next"])
+        unpinned = srv.entity_upsert([dict(lesson, id="LL-002", lifecycle_status="Approved",
+                                           pinned=0, operator_confirm=True,
+                                           confirmed_by="anas")])
+        self.assertTrue(unpinned["ok"], unpinned)
+        self.assertIn("only if pinned or among the 10 newest unpinned Approved rows",
+                      unpinned["items"][0]["next"])
+        # a status-only flip sends no `pinned`: the stored row answers (LL-001 is pinned)
+        flip = srv.entity_upsert([{"type": "lesson", "id": "LL-001",
+                                   "substitute": {"lifecycle_status": ["Approved", "Approved"]},
+                                   "operator_confirm": True, "confirmed_by": "anas"}])
+        if flip["ok"]:                     # an idle re-send may be refused; the branch is the point
+            self.assertIn("pinned rows always render", flip["items"][0]["next"])
+        third = dict(lesson, id="LL-003", lifecycle_status="Approved", pinned=0,
+                     operator_confirm=True, confirmed_by="anas")
+        self.assertTrue(srv.entity_upsert([third])["ok"])      # promotion needs prior approval
+        skill = {"type": "skill", "id": "SKL-001", "name": "n", "title": "N", "level": "project"}
+        promoted = srv.entity_upsert([skill, dict(third, lifecycle_status="Promoted",
+                                                  promoted_to="SKL-001")])
+        self.assertTrue(promoted["ok"], promoted)
+        self.assertNotIn("renders", promoted["items"][1]["next"])   # never rendered anyway
         other = srv.entity_upsert([{"type": "defect", "id": "DEF-092", "title": "d",
                                     "severity": "low"}])
         self.assertNotIn("next", other["items"][0])                # lessons only
+
+    def test_resume_block_observes_a_foreign_lock_holder(self):
+        """Plan 136 (v5.3, findings_34): after a process restart the field read "lock file
+        present (pid …)" and needed package_unlock to learn the holder was dead. The block
+        now carries the store's observation of a FOREIGN lock — through the plan-064 seam,
+        so the test fixes what a real pid would make flaky; any probe failure reads
+        `unobservable`, never an error (the hook must never cost the session)."""
+        import store  # noqa: PLC0415
+        srv.package_close()                      # setUp opened "demo"; a foreign lock needs it closed
+        data = srv.PACKAGE_ROOT / "demo" / "data"
+        lock = data / store.LOCK_NAME
+        lock.write_text(json.dumps({"pid": 4000000, "host": "elsewhere",
+                                    "taken_at": "2026-09-26T18:30:44+00:00"}),
+                        encoding="utf-8")
+        conn = store.load(data)
+        try:
+            seam = srv._observe_lock
+            srv._observe_lock = lambda p: {"outcome": "not-running",
+                                           "evidence": "no process with pid 4000000"}
+            try:
+                block = srv._resume_block(conn, "demo", data)
+            finally:
+                srv._observe_lock = seam
+            self.assertEqual(block["lock"]["observed"], "not-running")
+            self.assertEqual(block["lock"]["evidence"], "no process with pid 4000000")
+            self.assertEqual(block["lock"]["pid"], 4000000)
+
+            def boom(_p):
+                raise RuntimeError("probe exploded")
+            srv._observe_lock = boom
+            try:
+                block = srv._resume_block(conn, "demo", data)
+            finally:
+                srv._observe_lock = seam
+            self.assertEqual(block["lock"]["observed"], "unobservable")
+            self.assertEqual(block["lock"]["evidence"], "RuntimeError")
+        finally:
+            conn.close()
+            lock.unlink()
 
     def test_every_readiness_rule_reports_the_population_it_measured(self):
         """Plan 069 (the field's "a green lessons-confirmed can mean NOTHING WAS

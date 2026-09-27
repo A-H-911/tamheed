@@ -32,7 +32,12 @@ report a problem.
   handoff text is withheld when the `G-INJECT` screen (`_INJECT_RE`) finds instruction-shaped text;
   the block is at most 40 lines and the entry at most 25 lines / 4,000 characters (v5.2: the resume
   block's own cap; 5.1 printed 2,000); any failure is one line and exit 0. Its output is plain text
-  (never JSON hook output). Opt-out: disable the plugin for that project (`enabledPlugins`) — the
+  (never JSON hook output). Its lock line reports the store's OBSERVATION of the holder (v5.3) and
+  removes nothing — `package_unlock(confirm=true)` stays the operator's word. Opt-in trace (v5.3,
+  plan 136): `TAMHEED_HOOK_LOG` names a file the OPERATOR created; the hook appends one line of
+  counts per run (source, line and character counts, status) and never the entry's text; a path
+  that does not exist gets nothing (a project's settings `env` block could otherwise aim the hook
+  at any writable file). Opt-out: disable the plugin for that project (`enabledPlugins`) — the
   only per-plugin switch; `disableAllHooks` disables every hook of every tool in that project, and
   Claude Code has no per-hook switch.
 
