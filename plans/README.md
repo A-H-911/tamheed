@@ -191,8 +191,8 @@ Status values: PLANNED / IN PROGRESS / DONE.
 | 146 | [Two words in the engine, and the roster on the review page](146-two-words-and-the-note-roster.md) | — | DONE — 2026-09-27 `de49286` |
 | 147 | [The two words and three sentences in the skills](147-the-two-words-and-three-sentences.md) | 146 | DONE — 2026-09-27 `ac6c96b` |
 | 148 | [Docs + diagrams sweep for v5.5.0](148-docs-and-diagrams-sweep-findings-36.md) | 146-147 | DONE — 2026-09-27 `837865c` |
-| 149 | [The version stamp, then lab beat 27 + evals](149-stamp-then-lab-beat-27.md) | 148 + full gate (suites; 13 lints; canonical; evals 3/3 incl. 4 new assertions) | DONE — 2026-09-27 (stamp before the beat; the scratch phase first; held on the fourth run, the first three stopped before the fixture) |
-| 150 | [Tag v5.5.0, the brief file, close-out](150-release-v550.md) | 149 | PLANNED |
+| 149 | [The version stamp, then lab beat 27 + evals](149-stamp-then-lab-beat-27.md) | 148 + full gate (suites; 13 lints; canonical; evals 3/3 incl. 4 new assertions) | DONE — 2026-09-27 (stamp before the beat; the scratch phase first; held on the fourth run, the first three stopped before the fixture) `5f4ffbb` |
+| 150 | [Tag v5.5.0, the brief file, close-out](150-release-v550.md) | 149 | DONE — 2026-09-27, tag `v5.5.0` on the release commit (CI green); the recipe of the brief ran on the copy first and names what it discharges |
 
 ### Field cycle findings_35 -- plans 141-145 -> v5.4.0 (2026-09-27; maintainer-executed)
 

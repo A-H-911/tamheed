@@ -1,7 +1,9 @@
 # Tamheed v5.5.0 — the findings_36 batch: two words, the note's roster on the review page, three sentences
 
-Status: **IN PROGRESS** — index section "Field cycle findings_36" in [README.md](README.md).
-Commits: 146 `de49286`, 147 `ac6c96b`, 148 `837865c`. Execution order: 146 → 147 → 148 → 149 → 150.
+Status: **EXECUTED — v5.5.0 tagged on the release commit (this record's commit; CI green),
+2026-09-27** — index section "Field cycle findings_36" in [README.md](README.md). Commits: 146
+`de49286`, 147 `ac6c96b`, 148 `837865c`, 149 `5f4ffbb`; 150 = the close-out commit that carries this
+record, the brief and the index. Execution order: 146 → 147 → 148 → 149 → 150.
 
 Read-only evidence this record rests on: ACMP `findings_36.md` (`3071f1f4` → `27f63ae8`), the rows
 `LL-112` (edited, then Approved), `DEC-234` (Approved), the journal `PE-1512`..`PE-1522`, the 25
@@ -31,6 +33,11 @@ Every count is from one machine. Transcripts are created and pruned, so a count 
 | M9 | Plan 146: the repo's exporter over a copy of the field package at `27f63ae8` (`p146_acmp.py`) | 30 rows in the Approved fold; the ten marked ids equal the ten its note lists; the calibration is caught |
 | M10 | `python check.py`, the trace variable unset, plans 146 to 149 | ALL CHECKS PASSED each time; no line in the operator's trace inside a run's window |
 | M11 | The stock guide's body against the 5.4.0 body, at the stamp | five lines added, three gone: the title and the lesson sentence |
+| M13 | The field replay on the final bundle over a copy at `27f63ae8` (`acmp_replay4.py`) | every 5.4 class held. New: the first plain emit wrote the package's note, and on the real package one line of it changes, the footer; the roster was the same ten rows before and after; the guide's refresh diff is its title and its lesson sentence; `review_current` read true before the export and after it, with the digest unchanged; the export rewrote the page, 927 bytes longer, and its ten marked rows equal the note's roster; the hook after a compaction printed the latest handoff whole, its trace line's counts equal and its tail the id sent |
+| M14 | The brief's one recipe, on that copy | a `correction` entry naming the latest handoff: ok; `handoff-current` stays pass; the resume block and the hook list both corrections |
+| M15 | The sweep of four families on the copy | eight hits in six sentences; three sentences are in the brief, three hits were read and left as true |
+| M16 | `uv run … --selftest` on the final bundle | `mcp sdk: ok (1.28.1) — 19/19 tools registered` |
+| M17 | The operator's trace file, start of execution to the close-out | 12 lines, the last at 19:37:05Z; every suite, beat and replay ran after 20:05Z; no line inside any window |
 | M12 | Lab beat 27 (plan 149) | held on the fourth run; runs 1 to 3 stopped in the scratch phase before the fixture was opened. Evidence `evidence/lab-continuation-report-149-2026-09-27.md` |
 
 ## 1. What the field returned (no defect, no feedback row)
@@ -65,8 +72,8 @@ the exporter; a regenerated `minimal-brief` page.
 | 146 | [Two words in the engine, and the roster on the review page](146-two-words-and-the-note-roster.md) | DONE `de49286` |
 | 147 | [The two words and three sentences in the skills](147-the-two-words-and-three-sentences.md) | DONE `ac6c96b` |
 | 148 | [Docs + diagrams sweep for v5.5.0](148-docs-and-diagrams-sweep-findings-36.md) | DONE `837865c` |
-| 149 | [The version stamp, then lab beat 27 + evals](149-stamp-then-lab-beat-27.md) | DONE |
-| 150 | [Tag v5.5.0, the brief file, close-out](150-release-v550.md) | PLANNED |
+| 149 | [The version stamp, then lab beat 27 + evals](149-stamp-then-lab-beat-27.md) | DONE `5f4ffbb` |
+| 150 | [Tag v5.5.0, the brief file, close-out](150-release-v550.md) | DONE — the release commit; tag `v5.5.0` |
 
 ## 4. The 5.4.0 brief's errors, owned, and the maintainer's own
 
@@ -112,3 +119,10 @@ the exporter; a regenerated `minimal-brief` page.
    SENT and changed, so an approval that sends no `confirmed_at` moves two. The third stop was
    the engine refusing an approval that omitted a stored column as content drift. The scratch
    phase running first is why the fixture was never touched by a failed run.
+8. The replay's first run stopped in its sweep, before the package was opened: it printed a
+   character the console's code page cannot encode. It ran again with UTF-8 output on the same
+   untouched copy.
+9. Plan 150's first count of the sweep read "three hits touched, five left". The hits are
+   eight in six sentences: five hits in three sentences touched, three hits left. Corrected
+   before the commit.
+10. The advisor reviewed the brief and this record before the close-out commit.
