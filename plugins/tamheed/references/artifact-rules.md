@@ -48,8 +48,12 @@ the separate handoff manifest (absorbed into the package manifest data).
 
 Audit verdicts, progress entries, and scope changes accrue during Stage 21 by their own rules.
 **Lessons** (`LL-`) join them: create one whenever execution teaches something durable (kind
-`improve` or `sustain`) — born Proposed; operator confirmation gates binding (only Approved
-lessons reach the executor's always-loaded note).
+`improve` or `sustain`) — born Proposed; operator confirmation gates binding: only an Approved
+lesson binds, and the executor's always-loaded note renders a roster of them (every pinned row
+and the 10 highest-numbered unpinned ones). **Open the statement with the rule.** The note
+prints the statement flattened to one line, whole at 180 characters or fewer and cut to its
+first 177 above that; nothing else of the row is printed, so a statement that opens with its
+story renders the story. Edit it while it is Proposed: an approved lesson is immutable.
 
 ## On-request
 

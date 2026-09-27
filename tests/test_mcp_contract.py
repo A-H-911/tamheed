@@ -3345,6 +3345,21 @@ class V4EngineTest(unittest.TestCase):
         self.assertEqual(findings, [])
         self.assertIn(f"- **LL-001** [improve] {whole}\n", note)
         self.assertIn(f"- **LL-002** [improve] {'o' * srv._NOTE_LINE_CUT}...\n", note)
+        # Plan 147: the shipped text teaches these numbers - read them back out of it
+        bundle = REPO_ROOT / "plugins" / "tamheed"
+        rules = " ".join((bundle / "references" / "artifact-rules.md")
+                         .read_text(encoding="utf-8").split())
+        self.assertIn(f"whole at {srv._NOTE_LINE_MAX} characters or fewer and cut to its first"
+                      f" {srv._NOTE_LINE_CUT} above that", rules)
+        fill = f"the {srv._NOTE_LESSONS_CAP} highest-numbered unpinned ones"
+        self.assertIn(fill, rules)
+        self.assertIn(fill, " ".join((bundle / "references" / "governance.md")
+                                     .read_text(encoding="utf-8").split()))
+        liveness = " ".join((bundle / "skills" / "register-liveness" / "SKILL.md")
+                            .read_text(encoding="utf-8").split())
+        self.assertIn(f"unpinned fill of the {srv._NOTE_LESSONS_CAP} highest-numbered", liveness)
+        self.assertIn(f"the lowest-numbered of the {srv._NOTE_LESSONS_CAP} out of the note",
+                      liveness)
 
     def test_migrate_relocates_converted_file_out_of_data(self):
         """findings_22 §4: a `*.jsonl.converted` audit-trail file in the canonical

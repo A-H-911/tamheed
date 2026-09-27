@@ -97,10 +97,16 @@ because it was checked against the wrong thing — and nothing downstream fails 
 An ADR's amend list is the same instrument (step 4): check it against every row that quotes the
 subject, not only the rows it names.
 
-**What binds a session is the tool-owned note's roster** — the lessons and skills the emitted
-`CLAUDE.md` note renders — never a lesson's register status, a list in a file, or a decision's text
-that names it. An Approved lesson binds nothing until the emit that renders it runs; do not infer
-that a lesson binds from anywhere but the note.
+**Read what is RENDERED from the note, and what BINDS from the store.** A lesson binds by its
+status, from the write that approves it. The emitted `CLAUDE.md` note renders a roster of them —
+every pinned Approved row and a capped fill of the highest-numbered unpinned ones — and only the
+emit rebuilds it. So an Approved lesson is rendered by no note until that emit has run, and one
+outside the roster is read only by query. Do not infer that a session has READ a lesson from its
+register status, a list in a file, or a decision's text that names it; and do not infer that a
+lesson stopped binding because the note no longer lists it.
+- *Field evidence:* an approved, pinned lesson reached no session for two days because the emit
+  ran in a later batch; and a lesson pushed out of the roster by a newer approval was recorded
+  as no longer binding, which the operator had never said.
 
 ---
 

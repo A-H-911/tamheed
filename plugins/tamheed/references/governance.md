@@ -99,8 +99,13 @@ Proposed decision as if Approved — this is a core safeguard.
 Rejected, Superseded, Obsolete — no Draft (a lesson is born Proposed, awaiting the
 operator's interview) and no Deferred (an undecided lesson keeps nagging via the
 `lessons-confirmed` advisory; Rejected is the decided-no, kept as evidence). **Only
-operator-Approved lessons bind future sessions** (rendered into the CLAUDE.md note, pinned
-lessons always), and **landing a lesson in Approved or Promoted — from any state,
+operator-Approved lessons bind future sessions.** Two words, never one for the other (v5.5):
+a lesson **binds** by its STATUS, from the write that approves it; it is **rendered** when the
+always-loaded CLAUDE.md note lists it - every pinned Approved row and the 10 highest-numbered
+unpinned ones, a roster only `handoff_emit` rebuilds. An Approved lesson outside that roster
+still binds, and reaches a session only by query (`entity_query("lesson",
+status="Approved")`); pinning, unpinning and promotion change what is rendered, never what
+binds. **Landing a lesson in Approved or Promoted — from any state,
 including birth — requires the operator's words**, mechanically: `entity_upsert` refuses
 without `"operator_confirm": true` (the flag is operator-words-only, the `force`
 doctrine), refuses any content drift on the transition (approval/promotion is not an

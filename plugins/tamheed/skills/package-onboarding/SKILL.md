@@ -35,7 +35,8 @@ Onboard yourself onto the `<package>` Tamheed package from zero:
    an `entity_export` file the tool wrote under `exports/` — never `data/*.jsonl`,
    never rows you pasted by hand.
 5. The lessons: `entity_query("lesson", status="Approved")` — operator-confirmed
-   lessons BIND you (the pinned ones also sit in this project's CLAUDE.md note);
+   lessons BIND you, every one (this project's CLAUDE.md note renders only the pinned
+   ones and the highest-numbered unpinned few; the rest reach you by this query);
    read them before writing code.
    Where it stands: `gate_run()`, `readiness_check("package")`, the last 10
    `progress-entry` / `audit-verdict` rows, and open `defect`/`deferred-work` rows.

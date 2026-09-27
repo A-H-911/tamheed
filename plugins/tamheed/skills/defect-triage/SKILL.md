@@ -41,6 +41,7 @@ BEFORE the fix, so the record survives even if the session dies mid-repair:
    ruling is a `decision` row (`DEC-`, `relates_to` the `DEF-`) — never prose inside
    the closed defect, where no decision sweep will ever find it.
 7. Did this defect teach a durable lesson (a class of mistake, not this one
-   instance)? Record a `lesson` row (`LL-`, born Proposed, kind improve) +
+   instance)? Record a `lesson` row (`LL-`, born Proposed, kind improve, the
+   statement opening with its rule) +
    `learned_from` edge to the `DEF-` — the operator confirms later.
 8. `gate_run()` — report the verdict delta.

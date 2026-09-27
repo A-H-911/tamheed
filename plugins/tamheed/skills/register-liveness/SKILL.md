@@ -112,7 +112,15 @@ is the only wrong answer.
     (`"operator_confirm": true`). `lessons-superseded-binding` names any Approved
     lesson still binding beside an approved successor. When several Approved lessons share a
     theme, offer PROMOTION: point the operator at `/tamheed:skill-promote` — the
-    distillation ceremony is its own interview. **STOP for the operator's words on
+    distillation ceremony is its own interview. Before you put an approval, do the two
+    things the operator cannot do for you. **Read the row's note line**: the note prints
+    the statement's opening only (`references/artifact-rules.md`), and a Proposed row can
+    still be edited to open with its rule — an Approved one cannot. **State the
+    approval's cost in the question** (step 15's roster): an unpinned approval carrying
+    the highest number pushes the lowest-numbered of the 10 out of the note; a pinned
+    approval pushes nothing out and adds a line; an unpinned approval numbered below the
+    10 is never rendered at all. A row pushed out still binds — it is no longer
+    rendered, and reaches a session only by query. **STOP for the operator's words on
     every lesson — you never self-approve, mechanically.**
 15. **Note budget** (`lessons-note-budget`): the always-loaded CLAUDE.md note renders
     EVERY pinned lesson plus an unpinned fill of the 10 highest-numbered Approved ones;
@@ -126,7 +134,8 @@ is the only wrong answer.
     pinned removals (promotions or unpins), and no unpinned retirement counts toward it.
     Put them to the operator: distil the shared themes into a skill
     (`/tamheed:skill-promote` — promoted lessons graduate out of the note) or unpin what
-    no longer needs to bind every session. Pinning stays their choice; the rule only
+    no longer needs to be rendered for every session (it still binds). Pinning stays their
+    choice; the rule only
     makes its cost visible.
 16. **Dangling references** (`prose-ids-resolve`): identifiers written in PROSE that
     resolve to no entity — `G-IDS` checks foreign keys and the index, never a sentence,

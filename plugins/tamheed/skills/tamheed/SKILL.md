@@ -218,7 +218,7 @@ on the operator's word, or by the engine when they approve its successor.
 `package_verify` proves the on-disk store canonical (per file, foreign files, a citable digest;
 `record=true` journals it as the server-appended `integrity-verified` event — the four
 server-witnessed journal kinds are refused from `progress_update`). Durable takeaways become
-`lesson` rows (born Proposed, a `learned_from` edge
+`lesson` rows (born Proposed, the statement opening with its rule, a `learned_from` edge
 to their source — only operator-Approved lessons bind future sessions). Approving or promoting a
 lesson is confirm-guarded: the write is refused without `"operator_confirm": true` on the
 operator's explicit words (content byte-identical, `confirmed_by` on the same write), and the

@@ -39,7 +39,8 @@ class CheckLintsTest(unittest.TestCase):
     def test_lints_pass_on_the_repo_copy(self):
         code, out = self._lint()
         self.assertIsNone(code, out)
-        self.assertGreaterEqual(out.count("lint:"), 11)
+        self.assertGreaterEqual(out.count("lint:"), 12)
+        self.assertIn("binding vocabulary", out)                  # lint 13 ran
 
     def test_version_mismatch_is_caught(self):
         rel = "plugins/tamheed/.claude-plugin/plugin.json"
@@ -91,6 +92,32 @@ class CheckLintsTest(unittest.TestCase):
             self.assertIn("Kestrel", out); self.assertIn("WBS-", out)
         finally:
             p.unlink(); p.parent.rmdir()
+
+    def test_blurred_binding_vocabulary_is_caught(self):
+        """Plan 147 (lint 13, v5.5, R34): the bundle shipped two meanings of "binds" for
+        three releases and no check saw it. The status binds; the note's roster is what
+        is rendered. A sentence that gates BINDING on the emit or the roster is refused -
+        and one that gates it on the operator's word is not."""
+        rel = "plugins/tamheed/skills/reading-the-record/SKILL.md"
+        p = self.copy / rel
+        original = p.read_text(encoding="utf-8")
+        try:
+            for blurred in ("An Approved lesson binds nothing until the emit\nthat renders it.",
+                            "this lesson BINDS only once the note is rebuilt",
+                            "unpin what no longer needs to bind every session",
+                            "What binds a session is the tool-owned note's roster"):
+                p.write_text(original + "\n" + blurred + "\n", encoding="utf-8")
+                code, out = self._lint()
+                self.assertEqual(code, 1, blurred)
+                self.assertIn("binding vocabulary", out)
+            # the controls: correct under R34, and a dated quote of the old text
+            p.write_text(original + "\nA proposed lesson binds nothing until the operator says"
+                         " so.\n\n> **Correction, 2026-09-27.** The hint said \"BINDS only once"
+                         " the note is rebuilt\".\n", encoding="utf-8")
+            code, out = self._lint()
+            self.assertIsNone(code, out)
+        finally:
+            self._restore(rel)
 
     def test_widened_mcp_pin_is_caught(self):
         rel = "plugins/tamheed/server/tamheed_server.py"

@@ -386,6 +386,35 @@ def gate_lint() -> None:
     print(f"lint: {len(list(skills_dir.glob('*/SKILL.md')))} plugin skill(s) well-formed,"
           " stack-neutral, placeholder paths resolve, menu contract holds")
 
+    # 13) the binding vocabulary (plan 147, v5.5, R34): two words. A lesson BINDS by its
+    #     status, from the write that approves it; the note's roster is what is RENDERED.
+    #     The bundle shipped both meanings of "binds" for three releases - governance said
+    #     status, one skill said the roster - and the field followed the skill. These are
+    #     the shapes that gate BINDING on the emit or the roster. A sentence that gates it
+    #     on the operator's word is correct and passes. Scope: the bundle's prose and
+    #     engine, and docs/*.md. Out of scope: the stock history (it quotes old releases),
+    #     dated records (plans/, CHANGELOG.md), and a blockquote line - a dated correction
+    #     quotes the text it corrects.
+    blurred = re.compile(
+        r"binds? nothing until the emit|BINDS only once|needs to bind every session"
+        r"|[Ww]hat binds (?:a|every) session is the[^.]{0,40}roster|roster of what binds")
+    bundle_root = REPO / "plugins" / "tamheed"
+    vocab_files = sorted(
+        p for p in list(bundle_root.rglob("*.md")) + list(bundle_root.rglob("*.py"))
+        + list((REPO / "docs").glob("*.md"))
+        if "__pycache__" not in p.parts)
+    vocab_problems = []
+    for p in vocab_files:
+        prose = " ".join(" ".join(
+            line for line in p.read_text(encoding="utf-8").splitlines()
+            if not line.lstrip().startswith(">")).split())
+        for m in blurred.finditer(prose):
+            vocab_problems.append(f"{p.relative_to(REPO).as_posix()}: {m.group(0)!r}")
+    if vocab_problems:
+        fail("binding vocabulary (plan 147): the status BINDS, the note's roster is what is"
+             " RENDERED - say which one a sentence means:\n  " + "\n  ".join(vocab_problems))
+    print(f"lint: binding vocabulary ({len(vocab_files)} files) keeps the two words apart")
+
 
 def gate_canonical() -> None:
     sys.path.insert(0, str(REPO / "plugins" / "tamheed" / "db"))

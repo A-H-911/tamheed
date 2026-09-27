@@ -79,6 +79,15 @@ false calibration story.
   between a ruling and its write-up is where the falsified sentence gets committed, and it is widest
   when the work is going well. Every artefact a decision touches moves in the same batch; the one
   you skip is the one the next session reads.
+- **An obligation is discharged in the family that made it.** A thing owed can be carried by a
+  handoff line, a decision's clause and a memory sentence at once; a journal correction answers
+  the handoff and leaves an approved decision clause owing. Before you choose the write, sweep
+  the decisions, the journal and the latest handoff for the obligation, and retire a decision's
+  clause by a decision row. A dry-run proves the write LANDS; it cannot prove the write
+  discharges what the record says is owed.
+  - *Field evidence:* a retired question was to be corrected on the handoff that named it, a
+    recipe that had run clean on a copy; the same question stood as a clause of an approved
+    ruling, and only a new ruling discharged it.
 
 **6. A correction is a new entry, never an edit.**
 The journal is append-only: `progress_update` with `event_type: correction` and `corrects: <PE-id>`

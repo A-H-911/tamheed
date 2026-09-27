@@ -36,7 +36,8 @@ Review the just-completed slice of the `<package>` Tamheed package:
 4. `progress_update` a closing entry for the slice (phase_id + slice_id set,
    event_type "transition", subject_id "<SL-x>", actor "agent:<session>").
 5. Anything this slice TAUGHT (a mistake's root fix, a practice to repeat): a
-   `lesson` row (`LL-`, born Proposed; kind improve|sustain) + a `learned_from`
+   `lesson` row (`LL-`, born Proposed; kind improve|sustain; the statement opens
+   with its rule) + a `learned_from`
    edge to the slice or defect — the operator confirms; only Approved binds.
    Anything discovered-but-deferred: a `deferred-work` row (severity + activation
    trigger), via `entity_upsert` — full rows.
