@@ -10,6 +10,38 @@ All notable changes to Tamheed are documented here. The format is based on
 
 ## [Unreleased]
 
+**MINOR — the findings_35 batch: the third field round on the resume surface (plans 141–145; field
+report findings_35).** The field ran 5.3.0 for a day and returned no defect and no feedback row.
+What came back was a trace line nobody could attribute, four brief errors, the operator's standing
+rule on recommendations and a recipe caution. No migration; `schema_version` stays 7.
+
+### Added
+- **The opt-in trace line names the session that wrote it** (plan 141): it ends `session=<id>`, the
+  event's own `session_id` and the file name of that session's transcript. A headless session
+  another tool started in the field's project folder had written a line equal to the operator
+  session's replay, and a verdict was read from it. The field comes after `status=`, so every
+  substring of the 5.3.0 line still matches. A value that is absent or not a plain token is `-`.
+- **Two lessons in `measurement-evidence`** (plan 142): a match on value is necessary and never
+  sufficient when another producer can write the same value; every item differing is as suspect as
+  none — the compare measured the transport.
+
+### Changed
+- **`operator-interview` recommends by default** (plan 142): one option is marked as the agent's
+  recommendation with its deciding reason, unless the operator turned recommendations off. A
+  recommendation is never a verdict or an approval. A standing instruction about how to ask is a
+  decision row in the operator's words, and it is not a banked answer.
+- **The trace writes `source` by the same token rule** (plan 141): 5.3.0 wrote it as it arrived.
+
+### Fixed
+- **The hook tests no longer write into the operator's own trace file** (plan 141): on a machine
+  that traces its real sessions every hook test appended a line to it.
+- **Docs, corrected** (plan 143): a plugin reload does not run `SessionStart` — 24 reloads measured,
+  none did. The 5.3.0 entry below and the install guide said one reload had delivered the resume
+  block on 5.1.0; that delivery was a Claude Code restart across a build change. The install guide
+  also told the reader to infer "fired, not delivered" from any line; a line is attributed by its
+  `session=`. New in the guide: the install tree check on LF-normalised bytes, and that a headless
+  session receives the block as any session does.
+
 ## [5.3.0] - 2026-09-27
 
 **MINOR — the findings_34 batch: the second field round on the resume surface (plans 136–140; field

@@ -204,6 +204,9 @@ residue of the carried rules. The rulings (R15–R18):
   line and character counts, status — never the entry; a missing path gets nothing, because a
   project's settings `env` block could otherwise aim the hook at any writable file. The docs stop
   calling the reload a mechanism: a session restart is the route the block arrives by every time.
+  > **Correction, 2026-09-27 (v5.4, §16 D-RELOAD-MEASURED).** "One reload delivered the block on
+  > 5.1.0" is false: that delivery was a Claude Code restart across a build change, 37 seconds
+  > after the reload. No reload has been observed to run the hook.
 - **D-RENDER-HINT — binding is not rendering, and the write says so.** Thirteen unpinned approvals
   moved every lesson the note showed behind "19 more"; the approval's `next` had said "binds once the
   note is rebuilt" and nothing about the roster. The hint now names the rule (pinned always; unpinned
@@ -219,3 +222,56 @@ the caller's misuse, and "no such record" is an empty success, which is where th
 brief carries classes only, line counts included (its "21 lines" came from a copy; the field read 19);
 the next Q1 is measured in the first normal-work session that has read no brief. Record: plan
 [`136-140-batch-findings-34.md`](../plans/136-140-batch-findings-34.md).
+> **Correction, 2026-09-27 (v5.4, §16 D-Q1-RETIRED).** That measurement cannot be made where the
+> note names the skills, which is every project since 5.0.0. Q1 is retired.
+
+## 16. Seven rulings from the third field round on the resume surface (2026-09-27, v5.4)
+
+The field's day on 5.3.0 (ACMP `findings_35`) returned no defect and no feedback row. What came
+back: a trace line nobody could attribute, four brief errors, the operator's standing rule on
+recommendations, and a recipe caution. The rulings (R19–R26; R19 is the version):
+
+- **D-TRACE-SESSION — the trace line names the session that wrote it.** A headless session another
+  tool started in the project folder printed the same block, so its line equalled the operator
+  session's replay to the character; a verdict about the operator's session was read from it and
+  reached a journal entry, a report and a memory file. The remedy removes the condition rather
+  than teaching around it: the line ends `session=<id>`, the event's own `session_id` and the
+  transcript's file name. Measured before the edit: a headless run on 2.1.283 delivers
+  `session_id` on `SessionStart`'s stdin, equal to the run's id. Not added: the working directory
+  and the entrypoint — the transcript named by the id carries both, and the entrypoint variable is
+  undocumented for hooks. Both stdin fields pass one token rule; anything else is written `-`.
+- **D-HEADLESS-PRINT — the hook prints in every session.** Six headless sessions in two days each
+  received the field's resume block. No documented field separates a summariser from a headless
+  worker that needs the block (a request to document such a signal was closed as not planned), so
+  the hook does not guess: it prints, and the docs say so. No opt-out variable either — it would
+  work only if the tool that starts the session set it.
+- **D-RELOAD-MEASURED — a plugin reload runs no `SessionStart` hook.** 24 reloads on builds
+  2.1.261–2.1.283, in three sessions of one project, and no `SessionStart` event of any plugin's
+  hook after any of them; each of 19 compactions ran them. The one delivery this record carried
+  (§15) was a restart: the reload's rows are on build 2.1.282, the `SessionStart:resume` 37 seconds
+  later is the first row on 2.1.283. One separate observation, not a mechanism: the first
+  `SessionStart` after the 5.3.0 reload ran the 5.3.0 hook with no restart between.
+- **D-Q1-RETIRED — "does a cue ALONE load a skill" is not a question a project can answer.** The
+  note has named the discipline skills since 5.0.0 and the hook's last line names one; the note,
+  the hook and the cue are designed to work together, and no project runs a cue without them.
+- **D-RECOMMEND-DEFAULT — an option set carries one recommendation, marked as the agent's.** The
+  operator sent bare options back twice asking for one and then made it standing; the rule it
+  replaced had lived in memory and was cited to a decision whose text never stated it. The skill's
+  default flips (the planning reference already offered a recommended default with each
+  question); a recommendation is never a verdict or an approval; a standing instruction on how to
+  ask is a decision row in the operator's words, and it is not a banked answer.
+- **D-TREE-CHECK — the install check is a documented recipe.** On Windows the marketplace clone
+  checks out with CRLF and a byte compare read every file different. The recipe compares through
+  git or on LF-normalised bytes. Not built: a forced line ending for the bundle (a renormalisation
+  of every clone) and a bundle digest in `server_info` (a new surface and a new release step for
+  what one command does).
+- **D-REVIEW-NO-LOCK — `review.html` renders no lock.** The lock's holder is run-time state; the
+  export is deterministic from stored text, and it runs under the exporting session's own lock,
+  so the line could only ever read "held by this session".
+
+Two lessons of the round entered `measurement-evidence` (a match on value attributes nothing when
+another producer can write the same value; every item differing is as suspect as none). Owned by
+the maintainer: the brief's trim recipe could not run on Approved lessons and had never been run
+on the copy; a prediction named a moving row. From this round a brief's every recipe runs on the
+copy first, and a prediction names a role ("the latest handoff"), never an id. Record: plan
+[`141-145-batch-findings-35.md`](../plans/141-145-batch-findings-35.md).

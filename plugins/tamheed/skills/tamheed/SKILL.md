@@ -256,7 +256,8 @@ stand — and since v5.1 the first read is free: `package_open` and `server_info
 block (the latest `handoff` journal entry with its corrections, the work entries written after it,
 the open feedback and slices, the lock holder and what the store observed about it, the next step),
 and the plugin's SessionStart hook
-prints the same block into the model's context on every session start, clear and compaction. A
+prints the same block into the model's context on every session start, resume, clear and
+compaction — never on a plugin reload (measured: after one, the block comes from `package_open`). A
 session writes that handoff LAST before it stops (`tamheed:session-handoff`); `handoff-current`
 names one the journal has moved past. A tool result is the cue that loads a discipline skill (the
 field measured that nothing loads without one): since v5.2 every successful `entity_query` result names

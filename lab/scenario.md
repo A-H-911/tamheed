@@ -687,13 +687,16 @@ must fire; the resulting package replaces `evals/sample-results/lab-tracker/pack
     observed holder), and the hook's opt-in trace.
     ✔ THE OBSERVED LOCK (plan 136): `package_open` and `server_info` return `resume.lock.observed:
       "alive"`, `evidence: "held by this session"` (the session's own lock is never probed); on the
-      SCRATCH copy, with `data/.lock` naming pid 2147483648 (no process holds it), the hook's first
+      SCRATCH copy, with `data/.lock` naming pid 2147483648 (no process holds it; HOST-BOUND — the
+      beat ran on Windows, whose probe reads any pid, while a Linux probe refuses one past 4194304
+      as `unobservable` by design: on such a host fix the observation through the seam), the hook's first
       line reads `lock file present (pid 2147483648 …; holder observed not-running — package_unlock
       (confirm=true) on the operator's word)`, exit 0, and the lock file is still there (a read
       removes nothing).
     ✔ THE TRACE (plan 136), scratch copy: the hook with `TAMHEED_HOOK_LOG` naming a path that does
       not exist creates nothing; naming an existing empty file, one line `<utc> source=compact
-      lines=N chars=N status=printed` whose counts equal the printed block's, carrying none of the
+      lines=N chars=N status=printed` (from 5.4 the line ends ` session=<id>`, item 26) whose counts
+      equal the printed block's, carrying none of the
       entry's text; a run with the variable unset appends nothing more.
     ✔ THE RENDER HINT (plan 136), scratch copy: approving `LL-002` unpinned returns `next` ending
       `; it renders in the note only if pinned or among the 10 newest unpinned Approved rows - pin

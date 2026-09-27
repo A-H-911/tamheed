@@ -176,6 +176,23 @@ devil's-advocate review; execution order is the row order below). Status values:
 | 089 | [Lab beat 18](089-lab-beat-18-findings-27.md) | 085-088 + full test (15/15 vs 0/15 on `v4.10.0`; 9 suites; selftest) | DONE `762b98b` — 9 new assertions, each failing on the pre-beat fixture; D-1 registry-sync unscripted, F-3 fixed |
 | 090 | [Release v4.11.0](090-release-v4110.md) — plan-058 recipe + the fixture follows the stamp | 089 | DONE — 2026-09-22, tag `v4.11.0` (SHA in the tag) |
 
+### Field cycle findings_35 -- plans 141-145 -> v5.4.0 (2026-09-27; maintainer-executed)
+
+Master record: [141-145-batch-findings-35.md](141-145-batch-findings-35.md) (the approved plan after a
+devil's-advocate review, 8 interview rulings R19–R26; step 0, then 141 → 142 → 143 → 144 → 145). The
+field returned no defect and no feedback row; the batch is one field in the trace line, two lessons,
+the interview's default, and the docs the maintainer's own transcript measurement corrected. The
+brief to the field project is a committed file, read by path:
+[briefs/acmp-5.4.0.md](briefs/acmp-5.4.0.md). Status values: PLANNED / IN PROGRESS / DONE.
+
+| # | Plan | Depends on | Status |
+|---|---|---|---|
+| 141 | [The trace carries the session](141-trace-carries-the-session.md) | step 0 (the real event measured) | DONE — 2026-09-27 `0be3a56` |
+| 142 | [Two absorbed lessons and the interview's default](142-two-lessons-and-the-interview-default.md) | — | DONE — 2026-09-27 `983df9d` |
+| 143 | [Docs + diagrams sweep for v5.4.0](143-docs-and-diagrams-sweep-findings-35.md) | 141-142 | IN PROGRESS |
+| 144 | [The version stamp, then lab beat 26 + evals](144-stamp-then-lab-beat-26.md) | 143 + full gate | PLANNED |
+| 145 | [Tag v5.4.0, the brief file, close-out](145-release-v540.md) | 144 | PLANNED |
+
 ### Field cycle findings_34 -- plans 136-140 -> v5.3.0 (2026-09-27; maintainer-executed)
 
 Master record: [136-140-batch-findings-34.md](136-140-batch-findings-34.md) (the approved plan after a

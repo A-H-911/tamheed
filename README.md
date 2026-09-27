@@ -222,7 +222,8 @@ recording-obligations table** — defect found → `DEF-` row *before* the fix; 
 `DW-` row with a trigger; any deviation → `SC-` row *first*; progress/audit/bind per unit;
 `readiness_check` before declaring anything done. Since v5 the HOW lives in the plugin's skills the
 note names (`tamheed:package-writes` before any write, `tamheed:reading-the-record` before citing a
-row, `tamheed:operator-interview` at every STOP, and since v5.1 `tamheed:session-handoff` before a
+row, `tamheed:operator-interview` at every STOP (since v5.4 every option set it puts to the
+operator carries one recommendation, marked as the agent's), and since v5.1 `tamheed:session-handoff` before a
 compaction — eight discipline skills, out of the `/` menu, named by the tool results as well as the
 note; the scenarios are the operator-invoked `/tamheed:<name>` slash skills) and the note carries no
 cheat-sheet. The plugin's SessionStart hook prints the package's resume block — the latest handoff —
@@ -246,7 +247,8 @@ events** corrected by compensating entries, never edited — since v5.1 a `hando
 session stopped, and the latest one comes back as the **resume block** of `package_open` /
 `server_info` and through the plugin's SessionStart hook after every clear or compaction (its lock
 line says what the store observed about the holder, and an opt-in `TAMHEED_HOOK_LOG` traces each
-run in counts — v5.3), with the
+run in counts — v5.3 — each line naming the session that wrote it since v5.4; a plugin reload runs
+no hook, so after one the block comes from `package_open`), with the
 `handoff-current` advisory naming a handoff the journal has moved past (since v5.2 every `entity_query`
 result and any `handoff_emit` finding name the discipline skill to invoke, and a skill row's retirement
 is journalled by `system:skill-guard`); genuine ambiguity is recorded in place as

@@ -37,7 +37,13 @@ report a problem.
   plan 136): `TAMHEED_HOOK_LOG` names a file the OPERATOR created; the hook appends one line of
   counts per run (source, line and character counts, status) and never the entry's text; a path
   that does not exist gets nothing (a project's settings `env` block could otherwise aim the hook
-  at any writable file). Opt-out: disable the plugin for that project (`enabledPlugins`) — the
+  at any writable file). The line ends `session=<id>` (v5.4, plan 141): the event's `session_id`,
+  already the file name of that session's transcript on the same machine, never the entry. The id
+  and `source` arrive on stdin, so each is written only when it is a plain token (`[A-Za-z0-9._-]`,
+  at most 64 characters) and `-` otherwise — a newline in either would forge a line. Every session
+  that runs the plugin's hook in a project receives the resume block, a headless session another
+  tool starts there included: Claude Code gives a hook no documented signal to tell them apart, and
+  the block is text the project's own files already hold. Opt-out: disable the plugin for that project (`enabledPlugins`) — the
   only per-plugin switch; `disableAllHooks` disables every hook of every tool in that project, and
   Claude Code has no per-hook switch.
 

@@ -78,10 +78,20 @@ restart the previous server's pid is dead, and the line reads `holder observed n
 package_unlock(confirm=true) on the operator's word`. **Tracing the hook (v5.3, opt-in):** create an
 empty file outside any package, set `TAMHEED_HOOK_LOG` to its path (your shell, or the `env` block of
 your USER settings), and every run appends one line — `<utc> source=<startup|resume|clear|compact|fork>
-lines=N chars=N status=printed|silent|error:<Class>` — never the entry's text. A line with no block
-in your context means the hook fired and the output was not delivered; no line means it did not run —
-read that only once a run you know delivers (a compaction) has written its line, which proves the
-variable reaches the hook at all.
+lines=N chars=N status=printed|silent|error:<Class> session=<id>` — never the entry's text. The
+`session=` tail (v5.4) is the event's own `session_id`, which is also the file name of that
+session's transcript under `~/.claude/projects/<project>/`; a value that is absent or not a plain
+token is written `-`. **Attribute a line by its `session=`, never by its counts:** every session
+that runs the plugin's hook in the folder prints the same block, and that includes headless
+sessions another tool starts there (a summariser, a scheduled run) — the field read a verdict about
+the operator's session from such a line, equal to a replay of the block to the character. A line
+carrying YOUR session's id with no block in your context means the hook ran and the output was not
+delivered; no line with your id means it did not run in your session — read that only once a run
+you know delivers (a compaction) has written a line with your id, which proves the variable reaches
+the hook at all. Every session in every project where the plugin is ENABLED appends a line (a
+project with no tamheed note writes `lines=0 chars=0 status=silent`); a project where it is
+disabled writes none. The file is yours to truncate. A headless session receives the resume block
+as any session does: Claude Code gives a hook no documented way to tell the two apart.
 Opt-out: disable the plugin for that project (`enabledPlugins`, the FB-022 recipe above) — that is
 the only per-plugin switch; `disableAllHooks` in the project's settings disables EVERY hook of every
 tool you run there, not just this one. If your
@@ -103,8 +113,8 @@ free copy after a compaction.
 
 Refreshing the marketplace only refreshes the catalog; the installed plugin is a second step, and
 the running MCP server keeps the old code until the plugin is reloaded (`/reload-plugins` —
-observed sufficient in the field for the MCP server twice, on 5.1.0 and 5.2.0 — or a full Claude
-Code restart).
+observed sufficient in the field for the MCP server three times, on 5.1.0, 5.2.0 and 5.3.0 — or a
+full Claude Code restart).
 
 ```text
 claude plugin marketplace update tamheed
@@ -116,17 +126,30 @@ Updated skills in a cached marketplace plugin arrive with `/reload-plugins` (doc
 skills, hooks and MCP servers; closing the `/plugin` panel with pending changes runs it for you; a
 reload that would add or remove an MCP server is refused without `--force`) followed by
 `/reload-skills` (measured in the field on 5.1.0 — the model's skill listing showed the new set — and
-still undocumented). **The hook on a reload is not a mechanism you can rely on:** on 5.1.0 the reload
-delivered the resume block as `SessionStart:resume`; on 5.2.0 two reloads delivered nothing, while the
-next process restart and the next compaction delivered it whole. The reload route's context handling
-is reported inconsistent across builds (claude-code issues #61485, #87514, #37862, #63028 — adjacent
-reports, not this defect's cause). A **session restart** is the route the block arrives by every
-time; the opt-in trace above tells a hook that did not run from one whose output was not delivered.
+still undocumented). **A plugin reload does not run `SessionStart`.** Measured 2026-09-27 over every
+session transcript on the maintainer's machine: 24 reloads on Claude Code builds 2.1.261 to 2.1.283,
+in three sessions of one project, and no `SessionStart` event of ANY plugin's hook within 30
+seconds of any of them. Where one followed within minutes it has its own cause on the record: a
+compaction the operator entered 5 seconds after the reload, and the restart described next. After
+the other 22 the next one came no sooner than 41 minutes later. The control: each of 19
+compactions ran them. Versions of this page before 5.4.0 said a reload on
+5.1.0 delivered the resume block as `SessionStart:resume`. That delivery was a Claude Code
+**restart**: the reload's records carry build 2.1.282, and the `SessionStart:resume` 37 seconds
+later is that session's first record on 2.1.283. What a reload does do for the hook was observed
+once (2.1.283): the first `SessionStart` after the 5.3.0 reload ran the 5.3.0 hook, with no restart
+between. So after an upgrade by reload the block reaches the agent through `package_open` /
+`server_info` (the same block), and through the hook at the next restart, resume, clear or
+compaction. A build newer than those measured may differ; the trace's `session=` settles it in one
+line.
 Claude Code's size cap on a hook's stdout is undocumented but exists (its changelog for 2.1.283
 counts "oversized outputs saved to a file"); a 3,615-character block was measured arriving whole.
 
 (In a session: `/plugin marketplace update tamheed`, then `/plugin` → Installed → tamheed → update.)
-Reload or restart, then check `~/.claude/plugins/cache/tamheed/tamheed/<version>/` exists. If the
+Reload or restart, then check `~/.claude/plugins/cache/tamheed/tamheed/<version>/` exists. To check
+the installed tree against a release tag, compare through git or on LF-normalised bytes, and leave
+out the run-time folders (`__pycache__/`, `.in_use/`): on Windows the marketplace clone checks out
+with CRLF, and a byte compare then reads EVERY file as different (the field measured 86 of 86,
+each file's size gap equal to its count of carriage returns). If the
 tools are unreachable afterwards, run the self-test before diagnosing anything else — it
 registers the whole tool surface and exits 1 on failure:
 `uv run <that cache dir>/server/tamheed_server.py --selftest`. Prefer the interpreter the LIVE

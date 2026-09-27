@@ -19,8 +19,12 @@ It writes nothing and takes no lock. Its lock line carries what the store OBSERV
 (v5.3, plan 136: `holder observed not-running — package_unlock(confirm=true) on the operator's word`
 after a process restart; `alive` while a server holds the package). Opt-in trace (v5.3): when
 `TAMHEED_HOOK_LOG` names a file that already exists, the hook appends one line of counts per run
-(`source=… lines=… chars=… status=printed|silent|error:…`) — never the entry — so a field can tell
-"did not fire" from "fired, not delivered".
+(`source=… lines=… chars=… status=printed|silent|error:… session=<id>`) — never the entry — so a
+field can tell "did not fire" from "fired, not delivered". The `session=` tail (v5.4, plan 141) is
+the event's `session_id`, the transcript's own file name: a line is attributed by it, never by its
+counts, because every session started in the folder — a headless one another tool starts included
+— prints the same block. A plugin reload runs no `SessionStart` hook (measured: 24 reloads, none);
+after one, `package_open` and `server_info` return the block.
 
 ## Install & launch
 

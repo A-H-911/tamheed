@@ -231,10 +231,10 @@ sequenceDiagram
     participant A2 as session N+1 (agent)
     A1->>S: progress_update(event_type="handoff") - written LAST
     S->>P: PE- appended (corrected later via corrects, never edited)
-    Note over A2: /clear, a compaction, a new session
+    Note over A2: /clear, a compaction, a resume, a new session - never a plugin reload (v5.4, measured)
     H->>P: store.load (lockless, read-only)
     H-->>A2: the resume block - plain stdout, G-INJECT screened, 40 lines max;<br/>the lock line carries the store's OBSERVATION of a foreign holder (v5.3)
-    Note over H: TAMHEED_HOOK_LOG (opt-in, v5.3): one counts-only line per run into a file the operator created
+    Note over H: TAMHEED_HOOK_LOG (opt-in, v5.3): one counts-only line per run into a file the operator created;<br/>the line ends with the session's id (v5.4), so it names the session that wrote it
     A2->>S: server_info (or package_open on a fresh session)
     S->>P: _resume_block: latest handoff + corrections, handoff_behind,<br/>open feedback, open slices, lock holder + observed (own lock: alive, no probe)
     S-->>A2: resume: {...}, skill: tamheed:package-writes
@@ -264,7 +264,12 @@ was dead — through the same seam `package_unlock` reads (a lock held by this v
 existing file only) because the field could not tell "the hook did not fire on a plugin reload"
 from "it fired and nothing was delivered"; the approval hint now says a lesson RENDERS only if pinned
 or among the 10 newest unpinned Approved rows (thirteen unpinned approvals had hidden every rendered
-lesson).
+lesson). v5.4 (plans 141–145, the third field round) put the session's id in the trace line: a
+headless session another tool started in the project folder printed the same block, so its line
+equalled the operator session's replay and a verdict was read from the wrong session. The same
+round measured that a plugin reload runs no `SessionStart` hook at all (24 reloads, none; the one
+delivery recorded earlier was a restart), so the routes in the diagram are a start, a resume, a
+clear and a compaction — after a reload the block comes from `package_open` / `server_info`.
 
 **Self-containment is a hard requirement, not a preference.** Claude Code copies the plugin directory to a
 cache on install, so anything the skill reads or invokes at runtime must live inside `plugins/tamheed/` with
