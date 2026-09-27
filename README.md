@@ -247,8 +247,9 @@ events** corrected by compensating entries, never edited — since v5.1 a `hando
 session stopped, and the latest one comes back as the **resume block** of `package_open` /
 `server_info` and through the plugin's SessionStart hook after every clear or compaction (its lock
 line says what the store observed about the holder, and an opt-in `TAMHEED_HOOK_LOG` traces each
-run in counts — v5.3 — each line naming the session that wrote it since v5.4; a plugin reload runs
-no hook, so after one the block comes from `package_open`), with the
+run in counts — v5.3 — each line naming the session that wrote it since v5.4, written by every
+session that loaded the plugin; a plugin reload runs no hook, so after one the block comes from
+`package_open`), with the
 `handoff-current` advisory naming a handoff the journal has moved past (since v5.2 every `entity_query`
 result and any `handoff_emit` finding name the discipline skill to invoke, and a skill row's retirement
 is journalled by `system:skill-guard`); genuine ambiguity is recorded in place as
@@ -267,9 +268,11 @@ proves the on-disk store canonical, per file, with a citable digest (journaled a
 `integrity-verified` event on the operator's words — the four server-witnessed journal kinds are
 refused from `progress_update`). Execution
 also feeds a **lessons-learned register**: `LL-` rows (both polarities — *improve* and *sustain*) born
-`Proposed` by the executing agent and confirmed by the operator, with **only Approved lessons** rendered
-into the always-loaded `CLAUDE.md` note (pinned lessons first, unpinned capped, the rest one
-`entity_query` away; past the note's curation ceiling the `lessons-note-budget` advisory names the
+`Proposed` by the executing agent and confirmed by the operator. **Only Approved lessons bind**; the
+always-loaded `CLAUDE.md` note renders the pinned ones and the 10 highest-numbered unpinned ones, and
+the rest bind too, one `entity_query` away (since v5.5 the note's footer says so and `review.html`
+marks which rows the next emit renders; a statement opens with its rule, because the note prints
+its opening only; past the note's curation ceiling the `lessons-note-budget` advisory names the
 promotion candidates). A lesson can never confirm itself: the write that lands one in Approved or
 Promoted is mechanically refused unless it carries the operator's explicit `operator_confirm` — the
 `force` doctrine applied to memory. Lessons that keep earning their keep graduate into **skills** via

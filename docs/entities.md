@@ -1052,12 +1052,15 @@ stateDiagram-v2
 What BINDS is the status, never a pointer (v4.10): the always-loaded note and the
 `status="Approved"` query both read `lifecycle_status`, so a lesson stops binding only when it
 leaves `Approved`/`Promoted` — on the operator's word, or by the engine when the operator
-approves the lesson that supersedes it.
+approves the lesson that supersedes it. Two words since v5.5: a lesson **binds** by that status;
+it is **rendered** when the note's roster lists it (every pinned Approved row and the 10
+highest-numbered unpinned ones, rebuilt only by `handoff_emit`). A row outside the roster still
+binds and is read by query.
 
 ```mermaid
 stateDiagram-v2
     [*] --> Proposed : recorded by the agent - binds nothing
-    Proposed --> Approved : operator_confirm - binds every session
+    Proposed --> Approved : operator_confirm - binds from the write, rendered at the next emit if in the roster
     Proposed --> Rejected : free - it never bound
     Approved --> Promoted : operator_confirm - distilled into a skill
     Approved --> Superseded : the successor it points at is approved - engine, journaled
@@ -1092,7 +1095,9 @@ session without being asked for.
 something durable — a `learned_from` edge names the source (defect, decision, risk, slice,
 wbs-item, or progress-entry — exactly those six targets; `relates_to` covers everything
 else). The operator's confirmation interview moves each row to Approved or Rejected; only
-**operator-Approved** lessons render into the executing agent's always-loaded note.
+**operator-Approved** lessons bind, and the executing agent's always-loaded note renders a roster
+of them. A statement opens with its rule: the note prints its opening only (whole at 180
+characters or fewer, cut to its first 177 above that).
 
 **Create / update / retire.** The agent creates freely — a lesson is born `Proposed` and
 binds nothing until the operator says so. The Reflexion line of agent-memory research names
@@ -1132,7 +1137,9 @@ v4.5 the ceiling has a nag: the field register grew to 57 Approved lessons with 
 and none promoted — 57 lines in the always-loaded note — so the `lessons-note-budget`
 advisory names, in the note's own render order, every lesson rendering past position 20 as
 a promotion candidate (`/tamheed:skill-promote`, or unpin). Pinning stays the operator's choice;
-its cost stops being invisible.
+its cost stops being invisible. Since v5.5 the review page's Lessons section marks each Approved
+row `rendered` or `not rendered` at the next emit, and the note's footer says the rows behind it
+bind too.
 
 **Related mechanics.** The `lessons-confirmed` package advisory (Proposed rows awaiting
 the operator interview) and `lessons-note-budget` (the curation-ceiling nag; the note and

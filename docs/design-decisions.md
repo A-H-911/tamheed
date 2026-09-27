@@ -212,6 +212,9 @@ residue of the carried rules. The rulings (R15–R18):
   note is rebuilt" and nothing about the roster. The hint now names the rule (pinned always; unpinned
   only among the 10 newest Approved) — the roster rule itself is unchanged: pinning is the operator's
   curation tool.
+  > **Correction, 2026-09-27 (v5.5, §17 D-TWO-WORDS).** The 5.3.0 hint named the roster and kept
+  > its first clause, which still gated BINDING on the rebuild. Since 5.5.0 it reads that a lesson
+  > binds from the write and is rendered only once the note is rebuilt.
 - **D-RESIDUE — a partial rule's generic remainder enters the skill, one sentence each.** The field's
   re-read of the 113 carried rules (95 quotes verified) found 26 partial; twelve carry a stack-neutral
   remainder no skill stated, each re-read at the rule's own text. Thirteen sentences entered six
@@ -245,12 +248,19 @@ recommendations, and a recipe caution. The rulings (R19–R26; R19 is the versio
   worker that needs the block (a request to document such a signal was closed as not planned), so
   the hook does not guess: it prints, and the docs say so. No opt-out variable either — it would
   work only if the tool that starts the session set it.
+  > **Correction, 2026-09-27 (v5.5, §17 D-WHO-WRITES).** "Every session" is too wide. The hook
+  > prints in every session that LOADED the plugin. Sessions a tool started through the Agent
+  > SDK's Python entry loaded none on the measured machine, and a session started before an
+  > upgrade keeps the hook it loaded until a reload or a restart.
 - **D-RELOAD-MEASURED — a plugin reload runs no `SessionStart` hook.** 24 reloads on builds
   2.1.261–2.1.283, in three sessions of one project, and no `SessionStart` event of any plugin's
   hook after any of them; each of 19 compactions ran them. The one delivery this record carried
   (§15) was a restart: the reload's rows are on build 2.1.282, the `SessionStart:resume` 37 seconds
   later is the first row on 2.1.283. One separate observation, not a mechanism: the first
   `SessionStart` after the 5.3.0 reload ran the 5.3.0 hook with no restart between.
+  > **Correction, 2026-09-27 (v5.5).** That observation is documented behaviour: Claude Code's
+  > plugin loading reference says a reload switches hooks to the new version's path. That a
+  > reload fires no `SessionStart` stays a measurement; no page states it.
 - **D-Q1-RETIRED — "does a cue ALONE load a skill" is not a question a project can answer.** The
   note has named the discipline skills since 5.0.0 and the hook's last line names one; the note,
   the hook and the cue are designed to work together, and no project runs a cue without them.
@@ -275,3 +285,61 @@ the maintainer: the brief's trim recipe could not run on Approved lessons and ha
 on the copy; a prediction named a moving row. From this round a brief's every recipe runs on the
 copy first, and a prediction names a role ("the latest handoff"), never an id. Record: plan
 [`141-145-batch-findings-35.md`](../plans/141-145-batch-findings-35.md).
+
+## 17. Nine rulings from the fourth field round (2026-09-27, v5.5)
+
+The field's day on 5.4.0 (ACMP `findings_36`) returned no defect and no feedback row. Every
+predicted class held, and the `session=` tail told two sessions apart that had printed one block 75
+seconds apart. What came back: one false docs sentence, three brief errors, and two rounds lost to
+the note's render rule. The maintainer's review of its own plan found a fourth thing the field had
+not reported: the bundle defined "binds" two ways. The rulings (R27–R35; R27 is the version):
+
+- **D-TWO-WORDS — the status binds; the note's roster is what is rendered.** `governance.md` said
+  status is the single truth for what binds. `reading-the-record` (5.2.0) said the roster binds,
+  "never a lesson's register status", a sentence absorbed from a field rule about an emit that ran
+  two days late. The field followed the skill and recorded a lesson pushed out of the roster as one
+  that "no longer binds", which the operator had never said. One word cannot carry both: a status
+  the operator alone moves, and a roster an approval of another row changes. **Binds** is the
+  status, from the write that approves it, retired only on the operator's word. **Rendered** is
+  the roster: every pinned Approved row and the 10 highest-numbered unpinned ones, rebuilt only by
+  the emit. A lesson outside the roster still binds and is read only by query. Three engine
+  strings moved: the approval hint's first clause, the note's footer (the rows behind it "bind too
+  and are not rendered here"), and the note-budget advisory. Lint 13 refuses a sentence that gates
+  binding on the emit or the roster. Rejected: the roster binds — an eleventh unpinned approval
+  would unbind the oldest with no word from the operator, against the 2026-09-21 ruling that what
+  binds is retired on the operator's word.
+- **D-NOTE-ROSTER-COLUMN — the review page marks what the next emit renders.** Its fold had listed
+  every Approved lesson under "rendered into the CLAUDE.md note"; in the field 30 were listed and
+  10 rendered. The server computes the roster with the helper the note itself uses and passes the
+  ids; the page imports nothing. The column is computed from the store, so it says "at the next
+  emit": the note on disk differs until an emit has run, and a blocked emit renders nothing. Not
+  built: a read of the note on disk — the emit's target is the caller's, and the exporter does not
+  know it.
+- **D-WHO-WRITES — who writes a trace line is stated as a count.** The 5.4.0 guide said every
+  session in an enabling project appends a line. Measured: every interactive and headless
+  command-line session that loaded the plugin did; over six hundred sessions started through the
+  Agent SDK's Python entry listed no plugin to their models and wrote none. Their transcripts hold
+  no hook row of ANY event, so "ran no hook" cannot be read from them; the listing is the
+  instrument that can. No cause is stated: whether an SDK session loads settings is its caller's
+  choice. A hook run with no output leaves no transcript row.
+- **D-RULE-FIRST — a lesson's statement opens with its rule.** The note prints the statement
+  flattened, whole at 180 characters or fewer and cut to its first 177 above that. The field
+  worked the cut out of the server's source twice. The two numbers are named constants now, and a
+  test reads them back out of the shipped text.
+- **D-APPROVAL-COST — an approval's cost is stated in the question.** Three cases: the
+  highest-numbered unpinned approval pushes the lowest of the ten out; a pinned approval pushes
+  nothing out; an unpinned approval numbered below the ten is never rendered.
+- **D-DISCHARGE — an obligation is discharged in the family that made it.** The 5.4.0 brief
+  retired a question by a correction on the handoff that named it. The recipe had run clean on a
+  copy. The question also stood as a clause of an approved ruling, and the field wrote a new
+  ruling. A dry-run proves a write lands; it cannot prove the write discharges what is owed.
+- **D-NO-RESULT-KEY — no tool result gains a key.** Considered: a lesson write returning its note
+  line, and an approval naming the row it pushes out. The second arrives after the operator has
+  ruled. The rule is one sentence an agent can apply before the question, and the review page
+  shows the outcome.
+
+Owned by the maintainer: the roster sentence shipped in 5.2.0 against `governance.md`, with no
+check to see it; the false trace sentence, written by the 5.4.0 sweep; the 5.4.0 brief's sweep of
+the field's memory files only, which is how the question's second carrier was missed; and four
+statements in this round's own plan that direct inspection overturned. Record: plan
+[`146-150-batch-findings-36.md`](../plans/146-150-batch-findings-36.md).

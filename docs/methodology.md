@@ -244,8 +244,10 @@ The handoff loop also *learns*. When execution teaches something durable, the ex
 **lesson** (`LL-`, kind *improve* or *sustain*) born *Proposed*, linked via `learned_from` to whatever
 taught it — a defect, decision, risk, slice, work item, or progress entry. The operator interviews the
 pending set (the `lessons-confirmed` advisory nags until every lesson is decided) and approves, rejects,
-or pins each one; **only operator-Approved lessons** render into the executing agent's always-loaded
-`CLAUDE.md` note. The gate is the design: an agent persisting an unvetted — possibly wrong — lesson is the
+or pins each one; **only operator-Approved lessons bind**, and the executing agent's always-loaded
+`CLAUDE.md` note renders a roster of them — every pinned one and the 10 highest-numbered unpinned
+ones; the rest bind too and are read by query (two words since v5.5: a status *binds*, the roster is
+what is *rendered*). The gate is the design: an agent persisting an unvetted — possibly wrong — lesson is the
 known failure mode of agent memory, so a lesson binds future sessions only after a human says it should —
 and mechanically so: the write that lands a lesson in Approved (or Promoted) is refused without the
 operator's explicit confirmation carried on it. The always-loaded note is a scarce surface, so the

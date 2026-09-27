@@ -22,8 +22,9 @@ after a process restart; `alive` while a server holds the package). Opt-in trace
 (`source=… lines=… chars=… status=printed|silent|error:… session=<id>`) — never the entry — so a
 field can tell "did not fire" from "fired, not delivered". The `session=` tail (v5.4, plan 141) is
 the event's `session_id`, the transcript's own file name: a line is attributed by it, never by its
-counts, because every session started in the folder — a headless one another tool starts included
-— prints the same block. A plugin reload runs no `SessionStart` hook (measured: 24 reloads, none);
+counts, because every session that loaded the plugin in the folder — a headless one another tool
+starts included — prints the same block (a session started with no settings loaded, as an Agent
+SDK caller may choose, loads no plugin and runs no hook; v5.5, measured). A plugin reload runs no `SessionStart` hook (measured: 24 reloads, none);
 after one, `package_open` and `server_info` return the block.
 
 ## Install & launch

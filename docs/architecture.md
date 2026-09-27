@@ -163,7 +163,8 @@ sequenceDiagram
 ```
 
 The operator never proofreads JSONL: human review happens through `review.html` — since v4.12 with a
-Readiness section and a Feedback section beside the registers (D-REVIEW — HTML is the
+Readiness section and a Feedback section beside the registers, and since v5.5 with each Approved
+lesson marked `rendered` or `not rendered` in the note at the next emit (D-REVIEW — HTML is the
 only human surface, deterministic and committed alongside the data). The executing agent never edits
 package files: progress enters through `progress_update`/`audit_record`/`work_bind`, and status cascades
 (AC verdicts → requirement lifecycle) fire inside the same transaction.
@@ -234,7 +235,7 @@ sequenceDiagram
     Note over A2: /clear, a compaction, a resume, a new session - never a plugin reload (v5.4, measured)
     H->>P: store.load (lockless, read-only)
     H-->>A2: the resume block - plain stdout, G-INJECT screened, 40 lines max;<br/>the lock line carries the store's OBSERVATION of a foreign holder (v5.3)
-    Note over H: TAMHEED_HOOK_LOG (opt-in, v5.3): one counts-only line per run into a file the operator created;<br/>the line ends with the session's id (v5.4), so it names the session that wrote it
+    Note over H: TAMHEED_HOOK_LOG (opt-in, v5.3): one counts-only line per run into a file the operator created;<br/>the line ends with the session's id (v5.4), so it names the session that wrote it;<br/>only a session that loaded the plugin runs the hook (v5.5, measured)
     A2->>S: server_info (or package_open on a fresh session)
     S->>P: _resume_block: latest handoff + corrections, handoff_behind,<br/>open feedback, open slices, lock holder + observed (own lock: alive, no probe)
     S-->>A2: resume: {...}, skill: tamheed:package-writes
@@ -270,6 +271,14 @@ equalled the operator session's replay and a verdict was read from the wrong ses
 round measured that a plugin reload runs no `SessionStart` hook at all (24 reloads, none; the one
 delivery recorded earlier was a restart), so the routes in the diagram are a start, a resume, a
 clear and a compaction — after a reload the block comes from `package_open` / `server_info`.
+v5.5 (plans 146–150, the fourth field round) separated two words the bundle had used as one: a
+lesson BINDS by its status, from the write that approves it, and is RENDERED when the note's
+roster lists it. The field had recorded a lesson pushed out of the roster as no longer binding,
+following a skill sentence that contradicted the governance reference. The approval hint, the
+note's footer and the note-budget advisory say which word they mean, the review page marks the
+roster, and a lint keeps the two apart. The same round corrected who writes a trace line: a
+session that loaded the plugin, which sessions started through the Agent SDK's Python entry on
+the measured machine had not.
 
 **Self-containment is a hard requirement, not a preference.** Claude Code copies the plugin directory to a
 cache on install, so anything the skill reads or invokes at runtime must live inside `plugins/tamheed/` with

@@ -10,6 +10,47 @@ All notable changes to Tamheed are documented here. The format is based on
 
 ## [Unreleased]
 
+**MINOR — the findings_36 batch: the fourth field round (plans 146–150; field report
+findings_36).** The field ran 5.4.0 for a day and returned no defect and no feedback row; every
+predicted class held. What came back was one false docs sentence, three brief errors and two
+rounds lost to the note's render rule. The maintainer's review found one more: the bundle defined
+"binds" two ways. No migration; `schema_version` stays 7. **Three strings an agent reads change,
+named first.**
+
+### Changed
+- **Two words: the status BINDS, the note's roster is what is RENDERED** (plans 146, 147). The
+  approval hint's first clause reads "this lesson binds from this write and is RENDERED only once
+  the always-loaded note is rebuilt"; a Promoted row has its own sentence. Its cap phrase is
+  unchanged. The note's footer reads "N more Approved lesson(s) bind too and are not rendered
+  here", so **a package whose Approved lessons exceed the roster has its note rewritten at the
+  next `handoff_emit`**. The `lessons-note-budget` advisory says "unpin what no longer needs to
+  be rendered for every session". `governance.md` defines the two words;
+  `reading-the-record` no longer says the roster binds.
+- **`review.html` marks the rows the note renders at the next emit** (plan 146). The Approved
+  lessons fold gains a column (`rendered`, `not rendered`) and a title that names the rule. It
+  had listed every Approved row as rendered into the note. The first `export_html` after the
+  upgrade rewrites the page with no data moved; `review_current` compares a digest and stays
+  true until then.
+
+### Added
+- **Three sentences in the skills** (plan 147): a lesson's statement opens with its rule, because
+  the note prints its opening only (whole at 180 characters or fewer, cut to its first 177 above
+  that); an approval's cost is stated in the question, three cases; an obligation is discharged
+  in the family that made it — a dry-run proves a write lands, not that it discharges what is
+  owed.
+- **Lint 13, the binding vocabulary** (plan 147): a sentence that gates binding on the emit or on
+  the roster fails the gate. The note's cut is two named constants, read back out of the shipped
+  text by a test.
+
+### Fixed
+- **Docs, corrected** (plan 148): the install guide said every session in a project that enables
+  the plugin appends a trace line. A session writes one when it LOADED the plugin: sessions
+  another tool started through the Agent SDK's Python entry had not, on the measured machine, and
+  a session started before an upgrade keeps the hook it loaded. New in the guide: the transcript
+  cross-check, and that a run with no output leaves no transcript row. What a reload does for
+  the hook is cited from Claude Code's plugin loading reference; the 5.4.0 entry below called it
+  one observation.
+
 ## [5.4.0] - 2026-09-27
 
 **MINOR — the findings_35 batch: the third field round on the resume surface (plans 141–145; field

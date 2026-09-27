@@ -42,7 +42,9 @@ report a problem.
   and `source` arrive on stdin, so each is written only when it is a plain token (`[A-Za-z0-9._-]`,
   at most 64 characters) and `-` otherwise — a newline in either would forge a line. Every session
   that runs the plugin's hook in a project receives the resume block, a headless session another
-  tool starts there included: Claude Code gives a hook no documented signal to tell them apart, and
+  tool starts there included (a session runs the hook when it LOADED the plugin; one a tool
+  starts with no settings loaded, as an Agent SDK caller may choose, loads none — v5.5, measured):
+  Claude Code gives a hook no documented signal to tell them apart, and
   the block is text the project's own files already hold. Opt-out: disable the plugin for that project (`enabledPlugins`) — the
   only per-plugin switch; `disableAllHooks` disables every hook of every tool in that project, and
   Claude Code has no per-hook switch.

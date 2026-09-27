@@ -88,10 +88,24 @@ the operator's session from such a line, equal to a replay of the block to the c
 carrying YOUR session's id with no block in your context means the hook ran and the output was not
 delivered; no line with your id means it did not run in your session — read that only once a run
 you know delivers (a compaction) has written a line with your id, which proves the variable reaches
-the hook at all. Every session in every project where the plugin is ENABLED appends a line (a
-project with no tamheed note writes `lines=0 chars=0 status=silent`); a project where it is
-disabled writes none. The file is yours to truncate. A headless session receives the resume block
-as any session does: Claude Code gives a hook no documented way to tell the two apart.
+the hook at all. **Who writes a line (v5.5, measured on one machine, Claude Code builds 2.1.204
+to 2.1.283):** a session that LOADED the plugin, in a project that enables it, running a hook of
+5.3.0 or later. Every interactive and every headless command-line session there did. Sessions
+another tool started through the Agent SDK's Python entry did not: over six hundred of them, and
+not one listed a plugin's skill to its model, so no plugin hook was there to run. Whether an SDK
+session loads a project's settings is its caller's choice (the SDK's `settingSources` option), so
+this page promises neither. A running session keeps the plugin version it loaded until a reload
+or a restart (Claude Code's plugin loading reference: "The running session keeps the versions it
+loaded"), so a session started before 5.3.0 was installed writes no line until then. A project
+with no tamheed note writes `lines=0 chars=0 status=silent`; a project where the plugin is
+disabled writes none. **Cross-check in the transcript:** `~/.claude/projects/<project>/<id>.jsonl`
+holds a `SessionStart` hook row whose `command` is the hook's status message ("tamheed: reading
+the package's resume state...") within about a second of a `printed` line. A `silent` run leaves
+NO row: no transcript on the measured machine holds a hook row whose stdout and stderr are both
+empty, so for a silent line the tail is the only attribution. Versions of this page before 5.5.0
+said every session in an enabling project appends a line; that was a rule, not a count. The file
+is yours to truncate. A headless session that loads the plugin receives the resume block as any
+session does: Claude Code gives a hook no documented way to tell the two apart.
 Opt-out: disable the plugin for that project (`enabledPlugins`, the FB-022 recipe above) — that is
 the only per-plugin switch; `disableAllHooks` in the project's settings disables EVERY hook of every
 tool you run there, not just this one. If your
@@ -135,9 +149,12 @@ the other 22 the next one, where one followed at all, came no sooner than 41 min
 compactions ran them. Versions of this page before 5.4.0 said a reload on
 5.1.0 delivered the resume block as `SessionStart:resume`. That delivery was a Claude Code
 **restart**: the reload's records carry build 2.1.282, and the `SessionStart:resume` 37 seconds
-later is that session's first record on 2.1.283. What a reload does do for the hook was observed
-once (2.1.283): the first `SessionStart` after the 5.3.0 reload ran the 5.3.0 hook, with no restart
-between. So after an upgrade by reload the block reaches the agent through `package_open` /
+later is that session's first record on 2.1.283. What a reload does do for the hook is documented
+(Claude Code's plugin loading reference: after an update, hook commands "keep using the previous
+version's path. Run `/reload-plugins` to switch hooks, MCP servers, and LSP servers to the new
+path") and was observed once (2.1.283): the first `SessionStart` after the 5.3.0 reload ran the
+5.3.0 hook, with no restart between. Whether a reload FIRES `SessionStart` is stated on no page;
+the 24 reloads above are the evidence. So after an upgrade by reload the block reaches the agent through `package_open` /
 `server_info` (the same block), and through the hook at the next restart, resume, clear or
 compaction. A build newer than those measured may differ; the trace's `session=` settles it in one
 line.

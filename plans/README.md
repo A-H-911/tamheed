@@ -176,6 +176,24 @@ devil's-advocate review; execution order is the row order below). Status values:
 | 089 | [Lab beat 18](089-lab-beat-18-findings-27.md) | 085-088 + full test (15/15 vs 0/15 on `v4.10.0`; 9 suites; selftest) | DONE `762b98b` — 9 new assertions, each failing on the pre-beat fixture; D-1 registry-sync unscripted, F-3 fixed |
 | 090 | [Release v4.11.0](090-release-v4110.md) — plan-058 recipe + the fixture follows the stamp | 089 | DONE — 2026-09-22, tag `v4.11.0` (SHA in the tag) |
 
+### Field cycle findings_36 -- plans 146-150 -> v5.5.0 (2026-09-27; maintainer-executed)
+
+Master record: [146-150-batch-findings-36.md](146-150-batch-findings-36.md) (the approved plan after a
+devil's-advocate review, 9 interview rulings R27–R35; execution order 146 → 147 → 148 → 149 → 150). The
+field returned no defect and no feedback row; the batch is two words the bundle had used as one
+(a lesson binds by its status, the note's roster is what is rendered), the roster on the review page,
+three sentences in the skills, and the docs the maintainer's own measurement corrected. The brief to
+the field project is a committed file, read by path: [briefs/acmp-5.5.0.md](briefs/acmp-5.5.0.md).
+Status values: PLANNED / IN PROGRESS / DONE.
+
+| # | Plan | Depends on | Status |
+|---|---|---|---|
+| 146 | [Two words in the engine, and the roster on the review page](146-two-words-and-the-note-roster.md) | — | DONE — 2026-09-27 `de49286` |
+| 147 | [The two words and three sentences in the skills](147-the-two-words-and-three-sentences.md) | 146 | DONE — 2026-09-27 `ac6c96b` |
+| 148 | [Docs + diagrams sweep for v5.5.0](148-docs-and-diagrams-sweep-findings-36.md) | 146-147 | DONE — 2026-09-27 |
+| 149 | [The version stamp, then lab beat 27 + evals](149-stamp-then-lab-beat-27.md) | 148 + full gate | PLANNED |
+| 150 | [Tag v5.5.0, the brief file, close-out](150-release-v550.md) | 149 | PLANNED |
+
 ### Field cycle findings_35 -- plans 141-145 -> v5.4.0 (2026-09-27; maintainer-executed)
 
 Master record: [141-145-batch-findings-35.md](141-145-batch-findings-35.md) (the approved plan after a
