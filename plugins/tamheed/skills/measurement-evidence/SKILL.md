@@ -50,6 +50,13 @@ over a clean set — and the empty case is silent by construction.
 - **A trigger that never fires, one that always fires, and one whose silence you cannot read are the
   same fault.** If an empty artefact is produced identically by *it ran and saw nothing* and by *it
   never ran*, you have no instrument. An instrument must deliver, not just fire — and report on itself.
+- **A cwd-relative path in a scanner reports a clean tree over ZERO files** when the pipeline runs the
+  script from another directory. Resolve paths from the script's own location and run it the way the
+  pipeline runs it, not only from the repository root.
+- **A script passed inline through a shell is not the script you wrote.** The shell rewrites escapes
+  and reads flags out of quoted text, and the mangled instrument returns zero over a set it never read.
+  Write the script to a file with the editor and run the file; a zero that contradicts a count you
+  already know is a broken instrument, not a finding.
 
 ## 3. Is it the RIGHT subject?
 
@@ -75,6 +82,14 @@ moves, and the number is true of a set that excludes the answer.
   scoping query can return several rows — every active slice, every open item — run the check on
   every row it returns; a command written for one silently adjudicates one and leaves the rest
   unasked, and nothing downstream says so.
+- **A count of what an instrument DID is not a count of what it FOUND.** Two catches and one
+  confirmation are three uses of the instrument and two findings; a sentence that carries the three as
+  findings propagates a wrong number into every artefact that quotes it.
+- **An instrument measures the quantity it counts and nothing else.** A scanner's candidate-line count
+  is not a render-site count, and a line count is not an instance count; before stating a different
+  quantity, run a different command.
+- **A substring proxy removes rows that NAME a thing without covering it**, and keeps for itself the
+  judgement the script cannot make. Treat such a rule's output as triage, never as the worklist.
 
 ## 4. Two sources agree?
 

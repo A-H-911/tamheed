@@ -35,6 +35,9 @@ the PR-head run and can read all-green while the branch is red.
   filter on failures steps straight over: a gating secret scan hit its own timeout and was cancelled
   while the build workflow on the same commit said success, so the trunk read green with its gate
   never evaluated.
+- **A watch command can report success on an UNFINISHED run.** Poll the run's status until it reads
+  completed, then read its conclusion; and any transport failure on the way — a gateway error, a
+  handshake timeout — is UNKNOWN, never a pass. Re-read before acting on it.
 
 **2. Decide which event you are reasoning about before predicting whether anything runs.**
 On a direct push, a path filter is checked against that push, so a package-only commit may run
@@ -67,6 +70,10 @@ belongs to code, tests AND build configuration.
   reached with the other branch's dependencies still on disk.
 - **Verify candidate changes one at a time against the current trunk**, so every failure has a single
   cause; a batch merge shows a later red as an unrelated-looking flake and a regression with no cause.
+- **Judge what a queue's green actually exercised for each item in it.** A green over a tool no
+  workflow, script or deploy file invokes is evidence of nothing; a green over a package that moves the
+  gate's own measurement is insufficient; only a green over a path the pipeline exercises is evidence —
+  and each dependency update needs its own.
 
 **5. Bound and prove any poll loop before backgrounding it.**
 Run the predicate once in the foreground and read the value it produces. Bound every loop by an

@@ -123,6 +123,9 @@ id resolves, and the damage stays until someone reads it.
   file the chain should have written: a commit took a stale message file from another session, with
   correct files and no error anywhere. Write the message to a unique path, remove it afterwards, and
   read the commit's subject back.
+- A multi-line message or body reaches a command only from a file the editor wrote: a stdin heredoc
+  or an inline literal is rewritten by the shell, and a flag inside a quoted message can be read as
+  the command's own. Write the file, pass its path, and read the subject back.
 
 ## 8. Set a scope change to `Merged` last
 
@@ -164,6 +167,14 @@ id resolves, and the damage stays until someone reads it.
   defect: manufactured status, and the register could no longer tell finished from assumed.
   - *Tell:* the write you are about to make has no `audit_record`, no `work_bind` and no decision
     behind it — only a rule it silences.
+- **An advisory failure is normal and is not a task; a BLOCKING failure names its row and is a real
+  finding.** Ask the readiness check every time and expect neither answer — a line that said "expect
+  not ready" stayed true for days after the row it rested on had closed. Never clear a blocking failure
+  by softening a defect's severity or converting its kind; a close is an evidenced disposition, not a
+  re-grading.
+- **A liveness field that carries a due date goes red as dates pass, and that is the control
+  working.** Re-validate the row and write the new date from that act; clearing or moving a date to
+  restore the amber re-blinds the control.
 - **A global rename skips every record that quotes the text as written.** Renaming an id, a title
   or a term with a search-and-replace over the rows you know about leaves the quotations in other
   families untouched — a decision clause that cites the old title, a journal entry that names the

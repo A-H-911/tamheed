@@ -124,6 +124,12 @@ lock, deleting a file another session may need, a force flag, a push, a rewrite 
 refresh that deletes files: the interview precedes the attempt, with the exact command and what it
 destroys. An attempt that a prompt blocks looks, from your side, identical to one that ran.
 
+**For an act that is NOT destructive, a prompt-by-design and a forbidden act look identical too.** An
+untried action and a blocked one leave the same trace — none. The only way to learn which it is is to
+try it and let the operator answer; never generalise one refusal into a boundary on what you can do,
+and never write such a boundary into a record untested — no sweep finds a false claim about your own
+capabilities.
+
 ## What this skill does NOT cover
 
 - **Where a session stopped, for the next one** — `tamheed:session-handoff` (re-put an unanswered

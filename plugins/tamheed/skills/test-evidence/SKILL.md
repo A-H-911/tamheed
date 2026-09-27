@@ -82,6 +82,10 @@ Ask of any limit, constraint or transactional guarantee: **has this ever run aga
 enforces it?** The failure presents at the wrong layer — a discarded write surfaces as a not-found that
 reads like a routing fault, and the seeding call that caused it is the one line that reported success.
 
+**A migration's verdict comes from executing it, never from building.** A solution that builds clean
+and formats clean can still fail most of its tests at runtime, twice, for unrelated causes a stricter
+framework version refuses; a build is a claim about compilation only.
+
 ## 6. Can this test damage the ones after it?
 
 A test that times out **never reaches its cleanup**, so any global it installed — a stubbed clock, a

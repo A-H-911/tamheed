@@ -42,7 +42,10 @@ unsourced — say so explicitly rather than letting it set the scope of the work
 Fetch the row (`entity_query(type, id=…)`) and read the column you are making a claim about. A
 substring search across a row can match text preserved in `custom_attributes` (historical wording is
 often kept there on purpose), so a search reports the old text as present and reads as though an
-amendment failed. *The field is the instrument; the search over the row is not.*
+amendment failed. *The field is the instrument; the search over the row is not.* And read the store
+through the tools, never with a regular expression over its JSON-lines files: a pattern that stops at
+the first closing brace loses every row whose free-text attributes hold a nested object — it does not
+undercount, it DELETES the rows that would have changed the answer.
 
 **3. Sweep with two keys, not one.**
 - By identifier (`search=<id>`) — finds rows that name the thing you changed.
