@@ -33,8 +33,10 @@
   any writable file). Any trace failure is swallowed.
 - The approval hint (`entity_upsert`, Approved only): `; pinned rows always render` or `; it renders
   in the note only if pinned or among the 10 newest unpinned Approved rows - pin it to keep it
-  visible`; `pinned` falls back to the stored row when a status-only write omits it. Promoted rows
-  keep the old text (they never render).
+  visible`; when the write omits `pinned` (a partial row preserves it by omission) the hint reads the
+  STORED value — the write's pre-image selects only the sent columns, which the advisor's review
+  before the close-out commit caught once the test was made deterministic. Promoted rows keep the
+  old text (they never render).
 
 ## Tests
 

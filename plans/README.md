@@ -181,15 +181,16 @@ devil's-advocate review; execution order is the row order below). Status values:
 Master record: [136-140-batch-findings-34.md](136-140-batch-findings-34.md) (the approved plan after a
 devil's-advocate review, 4 interview rulings R15–R18; execution order 136 → 137 → 138 → 139 → 140). The
 field returned no defect this round; the batch is two instruments, one hint, the carried rules' generic
-residue, and the docs the field falsified. Status values: PLANNED / IN PROGRESS / DONE.
+residue, and the docs the field falsified. The brief to the field project is a committed file, read
+by path: [briefs/acmp-5.3.0.md](briefs/acmp-5.3.0.md). Status values: PLANNED / IN PROGRESS / DONE.
 
 | # | Plan | Depends on | Status |
 |---|---|---|---|
 | 136 | [The observed lock, the render hint, the hook trace](136-observed-lock-render-hint-hook-log.md) | — | DONE — 2026-09-27 `b8e1f7c` |
 | 137 | [The residue: thirteen sentences from twelve partial rules, and E3](137-residue-sentences-and-e3.md) | — | DONE — 2026-09-27 `dbd81e1` |
-| 138 | [Docs + diagrams sweep for v5.3.0](138-docs-and-diagrams-sweep-findings-34.md) | 136-137 | DONE — 2026-09-27 |
-| 139 | [The version stamp, then lab beat 25 + evals](139-stamp-then-lab-beat-25.md) | 138 + full gate | PLANNED |
-| 140 | [Tag v5.3.0, the brief file, close-out](140-release-v530.md) | 139 | PLANNED |
+| 138 | [Docs + diagrams sweep for v5.3.0](138-docs-and-diagrams-sweep-findings-34.md) | 136-137 | DONE — 2026-09-27 `5b9d2ec` |
+| 139 | [The version stamp, then lab beat 25 + evals](139-stamp-then-lab-beat-25.md) | 138 + full gate (suites; lints; canonical; evals 3/3 incl. 3 new assertions) | DONE — 2026-09-27 `87bdb1d` (stamp before the beat; the ACMP replay on the final bundle held) |
+| 140 | [Tag v5.3.0, the brief file, close-out](140-release-v530.md) | 139 | DONE — 2026-09-27, tag `v5.3.0` on the release commit (CI green); the brief is a committed file read by path |
 
 ### Field cycle findings_33 -- plans 129-135 -> v5.2.0 (2026-09-26; maintainer-executed)
 

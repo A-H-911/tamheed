@@ -1867,8 +1867,12 @@ def entity_upsert(entities: list[dict]) -> dict:
                         # rendered lessons behind "N more". Approved only: a Promoted row
                         # never renders (its skill file carries it).
                         pinned = cols.get("pinned")
-                        if pinned is None and before_row is not None:
-                            pinned = before_row.get("pinned")
+                        if pinned is None:
+                            # a partial row preserves `pinned` by omission, and the pre-image
+                            # above selects only the SENT columns - read the stored value
+                            got = conn.execute("SELECT pinned FROM lessons WHERE id = ?",
+                                               (cols.get("id"),)).fetchone()
+                            pinned = got[0] if got else None
                         res["next"] += ("; pinned rows always render" if pinned else
                                         "; it renders in the note only if pinned or among"
                                         " the 10 newest unpinned Approved rows - pin it to"

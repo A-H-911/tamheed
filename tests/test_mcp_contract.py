@@ -3615,12 +3615,15 @@ class V4EngineTest(unittest.TestCase):
         self.assertTrue(unpinned["ok"], unpinned)
         self.assertIn("only if pinned or among the 10 newest unpinned Approved rows",
                       unpinned["items"][0]["next"])
-        # a status-only flip sends no `pinned`: the stored row answers (LL-001 is pinned)
-        flip = srv.entity_upsert([{"type": "lesson", "id": "LL-001",
-                                   "substitute": {"lifecycle_status": ["Approved", "Approved"]},
-                                   "operator_confirm": True, "confirmed_by": "anas"}])
-        if flip["ok"]:                     # an idle re-send may be refused; the branch is the point
-            self.assertIn("pinned rows always render", flip["items"][0]["next"])
+        # a write that OMITS `pinned` (the content columns + the status, as a partial row): the
+        # stored row answers - LL-001 is pinned, so the clause must not read it as unpinned
+        partial = srv.entity_upsert([{"type": "lesson", "id": "LL-001", "title": "t",
+                                      "statement": "s", "kind": "improve",
+                                      "lifecycle_status": "Approved",
+                                      "operator_confirm": True, "confirmed_by": "anas"}])
+        self.assertTrue(partial["ok"], partial)
+        self.assertNotIn("pinned", partial["items"][0].get("changed_columns", []))
+        self.assertIn("pinned rows always render", partial["items"][0]["next"])
         third = dict(lesson, id="LL-003", lifecycle_status="Approved", pinned=0,
                      operator_confirm=True, confirmed_by="anas")
         self.assertTrue(srv.entity_upsert([third])["ok"])      # promotion needs prior approval

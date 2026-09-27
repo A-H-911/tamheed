@@ -79,7 +79,9 @@ package_unlock(confirm=true) on the operator's word`. **Tracing the hook (v5.3, 
 empty file outside any package, set `TAMHEED_HOOK_LOG` to its path (your shell, or the `env` block of
 your USER settings), and every run appends one line — `<utc> source=<startup|resume|clear|compact|fork>
 lines=N chars=N status=printed|silent|error:<Class>` — never the entry's text. A line with no block
-in your context means the hook fired and the output was not delivered; no line means it did not run.
+in your context means the hook fired and the output was not delivered; no line means it did not run —
+read that only once a run you know delivers (a compaction) has written its line, which proves the
+variable reaches the hook at all.
 Opt-out: disable the plugin for that project (`enabledPlugins`, the FB-022 recipe above) — that is
 the only per-plugin switch; `disableAllHooks` in the project's settings disables EVERY hook of every
 tool you run there, not just this one. If your
