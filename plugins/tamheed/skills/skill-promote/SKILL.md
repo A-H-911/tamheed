@@ -58,10 +58,11 @@ Work through this with the operator, in the `<package>` package:
      `lesson-promoted` audit event itself.
 6. Verify the graduation: `handoff_emit` — the promoted lessons leave the
    CLAUDE.md note; the "Skills distilled from lessons" line names the new skill
-   with its level. `export_html()` — the Lessons section shows the Promoted
-   subsection. `readiness_check("package")` — clean.
+   with its level. `readiness_check("package")` — clean.
 7. Close: `progress_update` a note entry naming the skill, the level, and the
-   promoted LL- ids, then `package_close()`. Later revisions of the skill are
+   promoted LL- ids; THEN `export_html()` — the Lessons section shows the Promoted
+   subsection, and the page carries the closing note (the export follows the last
+   write); then `package_close()`. Later revisions of the skill are
    the operator's hand-edits of the FILE; a re-distillation is a NEW `SKL-` row
    superseding the old (`superseded_by`), never an edit of this record.
 

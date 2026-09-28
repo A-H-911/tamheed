@@ -88,6 +88,15 @@ false calibration story.
   - *Field evidence:* a retired question was to be corrected on the handoff that named it, a
     recipe that had run clean on a copy; the same question stood as a clause of an approved
     ruling, and only a new ruling discharged it.
+- **A ruling that changes what a word means is swept by the word, not by the phrasings you
+  expect.** Grep the word's every form, word-bounded, and read each hit: a list of phrasings
+  misses the negated one. Sweep every file a session reads before acting — the kickoff prompts,
+  the operating notes, the memory files — beside the registers. A dated record keeps its text:
+  ONE reading rule in a decision row says how the old word reads now and names the rows it
+  covers. A live file is reworded in the same change.
+  - *Field evidence:* a sweep built from five phrasings of the old sense passed a memory line
+    that negated the verb, and never opened the kickoff prompt every session reads; fourteen
+    dated rows were then covered by one reading rule instead of fourteen corrections.
 
 **6. A correction is a new entry, never an edit.**
 The journal is append-only: `progress_update` with `event_type: correction` and `corrects: <PE-id>`

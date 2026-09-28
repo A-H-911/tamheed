@@ -42,7 +42,9 @@ Close out the release against the `<package>` Tamheed package:
    explicit decision, upsert the gate row's `outcome` (Go/Hold/Redirect/Kill), and
    record it as a `progress_update` (event_type "gate-decision", subject_id the
    `GATE-` id).
-6. `gate_run()` must pass; `export_html()` — the review surface ships with the release.
+6. `gate_run()` must pass.
 7. Release notes from `entity_query("progress-entry")` since the last release;
    `work_bind` the release tag/commit to the phase and headline entities.
-8. `package_close()` and commit the package `data/` with the release.
+8. `export_html()` — the review surface ships with the release, exported AFTER the
+   bind so the page carries it; `package_verify()` reads `review_current: true`.
+   Then `package_close()` and commit the package `data/` and the page with the release.

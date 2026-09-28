@@ -42,7 +42,8 @@ Close phase `<PH-x>` of the `<package>` Tamheed package:
    item ask the operator for a `WVR-` waiver. `"force": true` overrides the whole
    transition and exists ONLY for the operator's explicit words; if forced, the
    server writes the FORCED audit row itself.
-7. `gate_run()`, `export_html()` (the phase readiness panel should now show the exit),
-   a closing `progress_update` summarizing the phase (event_type "transition",
-   subject_id "<PH-x>", actor "agent:<session>"), then `package_close()` and
-   commit `data/`.
+7. `gate_run()`, a closing `progress_update` summarizing the phase (event_type
+   "transition", subject_id "<PH-x>", actor "agent:<session>"), THEN `export_html()`
+   (the phase readiness panel should now show the exit, and the page carries the
+   closing entry — the export follows the last write), then `package_close()` and
+   commit `data/` with the page.

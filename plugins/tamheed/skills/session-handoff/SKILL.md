@@ -54,12 +54,19 @@ truncation marker and has to query for the rest — in this order:
 
 ## The rules
 
-- **Write it LAST.** After the session's final package write, `gate_run` and `export_html` — never
+- **Write it LAST.** After the session's final package write and `gate_run` — never
   from a snapshot taken earlier in the session. A handoff written before the last verdict landed
   went to the remote claiming criteria still open that were already Met, and sent the next session
-  to close them again.
+  to close them again. The review page is exported AFTER it, not before: the handoff is itself a
+  write.
 - **Quote live numbers from a query made after the last write**, never from memory of earlier in
   the session (`tamheed:measurement-evidence`).
+- **A line carried from the previous handoff is re-measured or marked carried.** Copying an
+  awaiting item forward claims that it still stands. Re-read it at its source — a row through the
+  tools, a thing outside the store (a change request, a pipeline run, a meeting) where it lives —
+  or write `carried, not re-measured` beside it, so the next session knows which lines nobody
+  checked. *Field evidence:* two handoffs in a row named a change request that had been closed
+  and replaced by another before the first of them was written.
 - **Ids, never pasted rows.** The rows are live; a copy rots. Name them and say what to read.
 - **A stale handoff is corrected, never edited.** The journal is append-only: `progress_update`
   with `event_type: "correction"` and `corrects: "<the handoff's PE-id>"`; the resume block returns
@@ -69,13 +76,16 @@ truncation marker and has to query for the rest — in this order:
 - **Nothing instruction-shaped.** The entry is printed into the next session's context by the hook
   and screened by the injection gate; an entry the screen withholds reaches nobody. Write state, not
   commands to a reader.
-- **Status moves first, the handoff, then the commit, then the bind.** A feedback row's or a
-  skill row's status move is journalled by the engine as a `transition` and counts against
-  `handoff-current` exactly like your own work-done entries — write those BEFORE the handoff.
-  After it: commit the package `data/` with the rest of the close-out (`tamheed:package-writes`;
-  an uncommitted handoff is destroyed by the next `git checkout`), then `work_bind` that commit —
-  a bind is journalled as a `note`, so the handoff stays current and the commit stays bound. A
-  field close-out that skipped the bind left its own handoff commit unrecorded.
+- **Status moves first, the handoff, then the commit, then the bind, then the export.** A feedback
+  row's or a skill row's status move is journalled by the engine as a `transition` and counts
+  against `handoff-current` exactly like your own work-done entries — write those BEFORE the
+  handoff. After it: commit the package `data/` with the rest of the close-out
+  (`tamheed:package-writes`; an uncommitted handoff is destroyed by the next `git checkout`), then
+  `work_bind` that commit — a bind is journalled as a `note`, so the handoff stays current and the
+  commit stays bound. A field close-out that skipped the bind left its own handoff commit
+  unrecorded. Then `export_html`, and commit the bind with the page: the handoff and the bind are
+  both writes, and the page a project commits must carry them (`package_verify` reads
+  `review_current: true` before that commit).
 
 ## What this skill does NOT cover
 

@@ -54,4 +54,5 @@ Sync the `<package>` Tamheed package with the work just completed:
    trace-edge item — journaled) and the correct one written in the same batch;
    never leave the old edge beside its replacement.
 8. `gate_run()` — report the verdict delta (including `requirements_unwired`),
-   then `package_close()`.
+   then `package_close()`. A project that commits its review page exports it after
+   the last write of the sync and before the commit (`tamheed:package-writes`).

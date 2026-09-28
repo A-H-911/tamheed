@@ -65,7 +65,7 @@ file teaches AUTHORING project prompts:
 | `drift-register` | Work happened unrecorded: classify everything into DEF-/DW-/SC-first + progress/bindings |
 | `slice-review` | Slice completion: `entity_export` the ACs first (a committed slate quotes the file), audit ACs with evidence, bind commits, `readiness_check("slice")`, stop at the gate |
 | `phase-close` | Phase exit: phase-scope readiness blocking-clean, milestones, human GATE- confirmations, the guarded transition |
-| `release-close-out` | Package-scope readiness blocking-clean, human gates recorded, export, notes, close |
+| `release-close-out` | Package-scope readiness blocking-clean, human gates recorded, notes, bind, export, close |
 | `replan-deferred` | Deferred-work triggers review: SC- first, activate, wire edges, STOP on new scope |
 | `skill-promote` | Operator-run promotion interview: cluster Approved lessons → name/trigger/edge-cases/level → operator approves content → write the `SKILL.md` → `SKL-` row + `Promoted` flips (`operator_confirm`) |
 | `register-liveness` | Readiness advisories piling up — the amber-list sweep, run on a cadence (incl. `amends` merges, Merged-last, and the note-budget promotion candidates) |

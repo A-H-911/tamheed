@@ -87,6 +87,16 @@ id resolves, and the damage stays until someone reads it.
   dirties the tree AFTER it; if anything ran since your last commit, the tree is dirty again.
 - Prefer this order: code work on the branch → land it → commit package writes on the branch the
   package is tracked on → bind → commit the binding.
+- **A review page you commit is exported before the commit that carries it.** Every store write
+  makes the page stale — a closing entry, the handoff and a bind included — so `export_html` comes
+  after the last of them, and `package_verify` reads `review_current: true` right before that
+  commit. After a bind the order is bind → export → commit both, and that last commit stays
+  unbound: a bind names a commit, so binding it would stale the page again. `review_current` says
+  the page's DATA is the store's; `review_exported_by` names the release that exported it — after
+  an upgrade the first reads true over a page the older exporter wrote, and the first export
+  rewrites the page with no data moved.
+  *Field evidence:* a close-out committed its handoff beside a page exported before it, and the
+  page on the remote lacked that handoff until the next commit.
 - If the check catches something, commit it on the branch you are on before switching.
 - *Why:* the act of recording a commit dirties the tree, so the habit "commit before branching" can be
   followed and still be wrong. *Field evidence:* after a bind stamped a sha, six JSONL files rode onto

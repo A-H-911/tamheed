@@ -395,9 +395,15 @@ def gate_lint() -> None:
     #     engine, and docs/*.md. Out of scope: the stock history (it quotes old releases),
     #     dated records (plans/, CHANGELOG.md), and a blockquote line - a dated correction
     #     quotes the text it corrects.
+    #     Plan 152 (v5.6, findings_37): the NEGATED shape too - the field's memory said
+    #     approving a lesson "does NOT bind it" until the emit, and the shapes above passed
+    #     it. A negation of BIND followed, inside its own clause (the window stops at a full
+    #     stop, a semicolon and a colon), by the emit, the note or the roster.
     blurred = re.compile(
         r"binds? nothing until the emit|BINDS only once|needs to bind every session"
-        r"|[Ww]hat binds (?:a|every) session is the[^.]{0,40}roster|roster of what binds")
+        r"|[Ww]hat binds (?:a|every) session is the[^.]{0,40}roster|roster of what binds"
+        r"|(?:(?:does|do|did|will|would|can)\s+(?:not|NOT)|(?:doesn|don|didn|won)['’]t|never)"
+        r"\s+bind\b[^.;:]{0,80}?\b(?:emit|handoff_emit|note|roster|rendered|pinn)")
     bundle_root = REPO / "plugins" / "tamheed"
     vocab_files = sorted(
         p for p in list(bundle_root.rglob("*.md")) + list(bundle_root.rglob("*.py"))

@@ -119,6 +119,36 @@ class CheckLintsTest(unittest.TestCase):
         finally:
             self._restore(rel)
 
+    def test_negated_binding_vocabulary_is_caught(self):
+        """Plan 152 (lint 13, v5.6, findings_37): the field's memory said approving a lesson
+        "does NOT bind it" until the emit, and plan 147's shapes passed that sentence - they
+        held no negated form. A negation of BIND gated on the emit, the note or the roster is
+        refused; one gated on the operator's word is not, and the window never crosses a full
+        stop, a semicolon or a colon into the next clause."""
+        rel = "plugins/tamheed/skills/reading-the-record/SKILL.md"
+        p = self.copy / rel
+        original = p.read_text(encoding="utf-8")
+        try:
+            for blurred in ("approving and pinning a lesson does NOT bind it - `handoff_emit`"
+                            " in the SAME round",
+                            "an approved lesson does not bind until the emit has run",
+                            "a lesson doesn't bind\nuntil the note lists it"):
+                p.write_text(original + "\n" + blurred + "\n", encoding="utf-8")
+                code, out = self._lint()
+                self.assertEqual(code, 1, blurred)
+                self.assertIn("binding vocabulary", out)
+            p.write_text(
+                original + "\nA lesson does not bind until the operator approves it.\n"
+                "A Proposed lesson binds nothing and may be rejected freely.\n"
+                "A lesson does not bind until the operator approves it; the note renders it at"
+                " the next emit.\n"
+                "A lesson does not bind until the operator approves it. The note renders it"
+                " later.\n", encoding="utf-8")
+            code, out = self._lint()
+            self.assertIsNone(code, out)
+        finally:
+            self._restore(rel)
+
     def test_widened_mcp_pin_is_caught(self):
         rel = "plugins/tamheed/server/tamheed_server.py"
         p = self.copy / rel
