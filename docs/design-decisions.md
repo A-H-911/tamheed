@@ -350,7 +350,7 @@ The field's day on 5.5.0 (ACMP `findings_37`) returned no defect and no feedback
 predicted class it could exercise held. What came back: two brief errors, one question no
 instrument could answer, and three practices of the field's own that the skills did not yet
 state. The maintainer's review found a fourth thing the field had not reported: four step lists
-export the review page before their last journal write. The rulings (R36–R44):
+export the review page before their last journal write. The rulings (R36–R45):
 
 - **D-TRACE-VERSION — the trace line names the hook that wrote it.** The hook's two files are
   byte-identical at the 5.4.0 and 5.5.0 tags, and a running session keeps the hook it loaded, so
@@ -396,13 +396,21 @@ export the review page before their last journal write. The rulings (R36–R44):
 - **Not absorbed (R40).** A clause on the provenance of a ruling that arrived in a document, and
   a clause that a failed prediction is reported as measured: each was one field instance, and
   `operator-interview` and `measurement-evidence` already carry most of it.
-- **Not built.** A study of the review page's weight (the field's is 14.5 MB and nobody reported
-  a cost); a hook that walks up to find the note from a subfolder; a vocabulary scan at emit; a
-  line-ending pin for the bundle — a pull rewrites only the files it changes, so an installed
-  tree would hold mixed endings for a release.
+- **Not built.** A hook that walks up to find the note from a subfolder; a vocabulary scan at
+  emit; a line-ending pin for the bundle — a pull rewrites only the files it changes, so an
+  installed tree would hold mixed endings for a release.
+- **Not studied this release (R42): the review page's weight.** The field's page is 14.5 MB,
+  9.0 MB of it the registers. The ruling was given on the maintainer's sentence that the field
+  had reported no cost. The sweep for the brief then found a field memory line of 2026-08-05
+  that records pushes timing out and names the page, then 3 MB, as the cause. No findings file
+  carried it, and the maintainer had not swept the field's memory before asking. The question
+  was put again before the tag, with the line quoted and the moved premise named, and the
+  operator answered "R42 stands, the brief asks ACMP to measure (Recommended)" (R45). The
+  brief asks the field three questions, each with its instrument.
 
 Owned by the maintainer: the 5.5.0 brief's sweep, which matched phrasings and read no prompt;
 its ninth class, which the brief's own close-out order made impossible; a question asked before
 its instrument was named; and, in this round's own plan, a rule that could not be satisfied, a
-count that was wrong, and a claim that a review tool was unavailable after one failed call.
+count that was wrong, a claim that a review tool was unavailable after one failed call, and an
+option put to the operator on a premise the field's own memory contradicts.
 Record: plan [`151-155-batch-findings-37.md`](../plans/151-155-batch-findings-37.md).

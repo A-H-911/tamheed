@@ -1,7 +1,9 @@
 # Tamheed v5.6.0 — the findings_37 batch: the release named on two surfaces, the export anchored on the commit
 
-Status: **IN PROGRESS** — index section "Field cycle findings_37" in [README.md](README.md).
-Commits: 151 `e151e3d`, 152 `6bae045`, 153 `9db4b7c`. Execution order: 151 → 152 → 153 → 154 → 155.
+Status: **EXECUTED — v5.6.0 tagged on the release commit (this record's commit; CI green),
+2026-09-28** — index section "Field cycle findings_37" in [README.md](README.md). Commits: 151
+`e151e3d`, 152 `6bae045`, 153 `9db4b7c`, 154 `21a25f5`; 155 = the close-out commit that carries this
+record, the brief and the index. Execution order: 151 → 152 → 153 → 154 → 155.
 
 Read-only evidence this record rests on: ACMP `findings_37.md` (`27f63ae8` → `66ad54c4`), the rows
 `DEC-235` (Approved), the journal `PE-1523`..`PE-1531`, the 25 feedback rows and 112 lessons
@@ -17,7 +19,9 @@ devil's-advocate review); the interview rulings R36–R44.
 **Review.** The maintainer's first `advisor` call returned an error. A forked copy of the session
 reviewed the first slate; it is the same model, so it is a second reading. After the operator
 asked, a second `advisor` call answered and reviewed the export-order question, the key's name and
-revision 1 of the plan. The five options of the first interview were checked by the fork only.
+revision 1 of the plan. The first interview's four questions and their options were checked by
+the fork only. Before the close-out commit the advisor reviewed the brief and this record and
+returned four points; all four were acted on (execution note 7).
 
 ## 0. Measurements
 
@@ -36,6 +40,10 @@ Every count is from one machine and true at its run (`m37.py`, output in `m37.ou
 | M9 | `python check.py`, the trace variable unset, plans 151 to 154 | ALL CHECKS PASSED each time |
 | M10 | The stock guide's body against the 5.5.0 body, at the stamp | one line in, one line out: the title |
 | M11 | Lab beat 28 (plan 154), [the report](evidence/lab-continuation-report-154-2026-09-28.md) | held on its first run, the scratch phase first. Before the first export the keys read `review_current: true`, `review_exported_by: null`; after it `5.6.0`, the digest unchanged, a second export identical. A write after the export turned `review_current` false and the next export true. Both trace lines opened `version=5.6.0`; a bundle with no manifest wrote `version=-` |
+| M12 | The field replay on the final bundle over a copy at `66ad54c4` (`acmp_replay5.py`) | every 5.5 class held. New: before the first export the keys read `review_current` true and `review_exported_by` null; the export added one line to the page, the stamp, with the digest unchanged; a note after the export turned `review_current` false and the next export true; the hook's line opened `version=5.6.0`. The first plain emit wrote the note on the copy for two copy artefacts in one line; no string of the note changed |
+| M13 | The sweep by word on the copy | 102 live files and three register families; 37 hits, every one read; four sentences are in the brief |
+| M14 | `uv run … --selftest` on the final bundle | `mcp sdk: ok (1.28.1) — 19/19 tools registered` |
+| M15 | The operator's trace file, start of execution to the close-out | 16 lines, the last at 04:53:14Z; every suite, beat and replay ran after 05:39Z; no line inside any window |
 
 ## 1. What the field returned (no defect, no feedback row)
 
@@ -53,7 +61,7 @@ prediction of the field's own, that a version marker follows the install, was re
 - **About Claude Code:** a session started in a subfolder loaded no plugin; an update leaves the
   old version folder on disk with a marker.
 
-## 2. Rulings (R36–R44, binding; R7–R35 stand)
+## 2. Rulings (R36–R45, binding; R7–R35 stand)
 
 | # | Ruling |
 |---|---|
@@ -66,6 +74,7 @@ prediction of the field's own, that a version marker follows the install, was re
 | R42 | The review page's weight is not studied this release. |
 | R43 | The commit is the anchor. The export precedes the commit that carries the page, and `package_verify` reads `review_current` true right before it. After a bind: bind, export, commit both; that commit stays unbound. Five step lists follow it. R43 widens R39's second sentence. |
 | R44 | The key is `review_exported_by`. R44 replaces the name in R37's option text. |
+| R45 | R42 stands for 5.6.0. It was put again before the tag, because its premise had moved: the option had said the field did not complain, and the field's memory records pushes timing out on the page. The operator's answer: "R42 stands, the brief asks ACMP to measure (Recommended)". |
 
 MINOR is not a ruling: it is the repo's rule (additive = MINOR). The meta's name,
 `tamheed-version`, is the maintainer's choice beside `tamheed-digest`.
@@ -77,8 +86,8 @@ MINOR is not a ruling: it is the repo's rule (additive = MINOR). The meta's name
 | 151 | [The version in the trace line and on the review page](151-the-version-in-the-trace-and-on-the-page.md) | DONE `e151e3d` |
 | 152 | [The export before the commit, two sentences, lint 13's negated shape](152-the-export-before-the-commit-and-two-sentences.md) | DONE `6bae045` |
 | 153 | [Docs + diagrams sweep for v5.6.0](153-docs-and-diagrams-sweep-findings-37.md) | DONE `9db4b7c` |
-| 154 | [The version stamp, then lab beat 28 + evals](154-stamp-then-lab-beat-28.md) | DONE |
-| 155 | [Tag v5.6.0, the brief file, close-out](155-release-v560.md) | PLANNED |
+| 154 | [The version stamp, then lab beat 28 + evals](154-stamp-then-lab-beat-28.md) | DONE `21a25f5` |
+| 155 | [Tag v5.6.0, the brief file, close-out](155-release-v560.md) | DONE — the release commit; tag `v5.6.0` |
 
 ## 4. The 5.5.0 brief's errors, owned, and the maintainer's own
 
@@ -105,6 +114,7 @@ MINOR is not a ruling: it is the repo's rule (additive = MINOR). The meta's name
 | W41 | A line on the field's open change request read as measured. | unlabelled source |
 | W42 | The field's scripts were assumed to survive a new field in the line. | hidden assumption |
 | W43 | The stamp's value and the hook's manifest read had no failure posture. | missing guard |
+| W44 | The option on the page's weight said the field had not complained. The field's memory records pushes timing out and names the page. The maintainer had swept the findings file and the diff, not the memory, before asking. | an option on a premise not checked |
 
 ## 5. Execution notes (owned as they land)
 
@@ -115,3 +125,18 @@ MINOR is not a ruling: it is the repo's rule (additive = MINOR). The meta's name
    it. The entry was reworded. The lint's first catch was the maintainer's own prose.
 3. Plan 153's first edit of the upgrade steps put its sentences between a claim and the
    parenthesis that belonged to it. Moved before the commit.
+4. Plan 153's record said the old line shape had no hit outside the CHANGELOG. It has one, the
+   pass bar of lab beat 25. Corrected in the record before its commit; the pass bar points at
+   item 28.
+5. The replay's raw output quotes the field's own text. It was written beside the scripts and
+   removed before the commit; the classes are in plan 155.
+6. The sweep for the brief found the field memory line that contradicts the premise of R42
+   (W44). The maintainer first wrote that the ruling "stands until the operator re-puts it"
+   and meant to tell the operator in the closing report. The advisor pointed out that the
+   operator cannot re-put what they have not been told. The question was put before the
+   commit, with the line quoted (R45).
+7. The advisor reviewed the brief and this record before the close-out commit and returned
+   four points: R42 to be put again; a false count in the lab report ("12 lines at the batch's
+   start": the file held 16 before the batch ran anything), corrected by a dated note beside
+   it; two loose sentences in this record; one wording in the brief that read the maintainer's
+   own session as the field's. All four were acted on.

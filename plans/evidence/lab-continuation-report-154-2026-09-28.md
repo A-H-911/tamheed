@@ -70,6 +70,10 @@
 
 ## The operator's trace file
 
-12 lines at the batch's start and 16 now; the four new ones are the field's and the
-maintainer's own sessions, the last at 04:53:14Z. Every suite, beat and gate of this batch ran
-after 05:39Z. No line falls inside a run's window.
+16 lines when the cycle's first read was taken and 16 at the close, the last at 04:53:14Z. Every
+suite, beat and gate of this batch ran after 05:39Z. No line falls inside a run's window.
+
+> **Corrected 2026-09-28, in the close-out commit.** This section first read "12 lines at the
+> batch's start and 16 now; the four new ones are the field's and the maintainer's own sessions".
+> Twelve was the count at the end of the previous cycle. The file held 16 before this batch ran
+> anything. The conclusion did not move; the premise was wrong. The advisor caught it.
