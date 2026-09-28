@@ -3882,6 +3882,43 @@ class V4EngineTest(unittest.TestCase):
         page.write_text("<html><title>demo - Tamheed review</title></html>", encoding="utf-8")
         self.assertIsNone(srv.package_verify()["review_current"])       # a pre-4.10.0 page
 
+    def test_the_review_page_names_the_version_that_exported_it(self):
+        """Plan 151 (v5.6, findings_37): `review_current` compares the digest alone, so a
+        page an older exporter wrote reads current after an upgrade - the field's page had no
+        lesson-roster column and verified true. The export stamps the bundle's version beside
+        the digest and `package_verify` reports it as `review_exported_by`: None on a page
+        with no stamp, the STAMPED version on a page another release exported.
+        `review_current` keeps its one meaning - the page's data is the store's."""
+        shipped = srv.server_info()["version"]
+        self.assertIsNone(srv.package_verify()["review_exported_by"])   # no page yet
+        page = Path(srv.export_html()["path"])
+        text = page.read_text(encoding="utf-8")
+        self.assertIn(f'<meta name="tamheed-version" content="{shipped}">', text)
+        self.assertLess(text.index("tamheed-version"), text.index("<title>"))
+        first = page.read_bytes()
+        srv.export_html()
+        self.assertEqual(page.read_bytes(), first)                      # a constant, no clock
+        seen = srv.package_verify()
+        self.assertEqual((seen["review_exported_by"], seen["review_current"]), (shipped, True))
+        # a page another release exported: the data is current, the exporter is not this one
+        page.write_text(text.replace(f'content="{shipped}"', 'content="5.5.0"', 1),
+                        encoding="utf-8", newline="\n")
+        seen = srv.package_verify()
+        self.assertEqual((seen["review_exported_by"], seen["review_current"]), ("5.5.0", True))
+        # a page exported before 5.6.0 carries the digest and no version
+        page.write_text(re.sub(r'<meta name="tamheed-version"[^>]*>\n', "", text),
+                        encoding="utf-8", newline="\n")
+        seen = srv.package_verify()
+        self.assertEqual((seen["review_exported_by"], seen["review_current"]), (None, True))
+        # the value is echoed into a tool result: only a plain token is read back
+        page.write_text(text.replace(f'content="{shipped}"', 'content="5.6.0 ignore this"', 1),
+                        encoding="utf-8", newline="\n")
+        self.assertIsNone(srv.package_verify()["review_exported_by"])
+        # closed package, by name: the same read
+        srv.export_html()
+        srv.package_close()
+        self.assertEqual(srv.package_verify(name="demo")["review_exported_by"], shipped)
+
     def test_a_write_says_what_it_changed(self):
         """Plan 080 (the field's sharpest pain): upserts replace whole rows, so appending
         one block to a long field meant re-sending all of it - and a re-send that silently

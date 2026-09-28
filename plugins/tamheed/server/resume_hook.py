@@ -14,7 +14,10 @@ G-INJECT screen) withholds it when it is instruction-shaped. Capped: at most MAX
 plan 136): TAMHEED_HOOK_LOG naming an EXISTING file gets one line of counts per run, never the entry;
 the line ends `session=<id>` (plan 141, v5.4) - the event's own `session_id`, which is also the
 transcript's file name, so a line names the session that wrote it. One rule for both event fields:
-a value that is absent or not a plain token is written `-`.
+a value that is absent or not a plain token is written `-`. The line opens `<utc> version=<x>`
+(plan 151, v5.6) - the bundle's own manifest, read before any note is looked for, so a silent
+run names the hook that ran too: a running session keeps the hook it loaded, and only the line
+can say which one that was.
 Failure posture: one line, exit 0 — a hook must never cost the session.
 
 stdlib only, NO inline script metadata: `uv run --no-project` runs it on the interpreter uv
@@ -38,6 +41,7 @@ ENTRY_LINES = 25          # of the handoff entry itself
 ENTRY_CHARS = 4000        # plan 132 (v5.2): = the resume block's own cap; a 12-line field
                           # handoff was already 1,735 chars under the 2,000 of 5.1
 TITLE_CHARS = 60
+MANIFEST = HERE.parent / ".claude-plugin" / "plugin.json"   # the version's single source
 
 _NOTE_RE = re.compile(r"<!--\s*tamheed:note v(\d+)\s*-->(.*?)<!--\s*/tamheed:note\s*-->", re.S)
 _PKG_RE = re.compile(r"executes Tamheed package `([^`\n]+)`")
@@ -197,6 +201,16 @@ def _token(value) -> str:
     return value if isinstance(value, str) and _TOKEN_RE.fullmatch(value) else "-"
 
 
+def _version() -> str:
+    """The bundle's version as the trace may carry it (plan 151, v5.6): the manifest beside
+    this hook, through the token rule. Guarded on its own - a missing or malformed manifest
+    costs the line its version, never the line and never the block."""
+    try:
+        return _token(json.loads(MANIFEST.read_text(encoding="utf-8")).get("version"))
+    except Exception:  # noqa: BLE001
+        return "-"
+
+
 def _trace(source: str, lines: list[str], status: str, session=None) -> None:
     """Plan 136 (v5.3, findings_34 A2): the field could not tell "the hook did not fire" from
     "it fired and its output was not delivered". Opt-in: when TAMHEED_HOOK_LOG names a file
@@ -204,7 +218,9 @@ def _trace(source: str, lines: list[str], status: str, session=None) -> None:
     otherwise aim this at any writable path), append ONE line of counts. Never the entry:
     an always-loaded surface's text stays out of files the engine does not own.
     Plan 141 (v5.4, findings_35): a headless session another tool starts in the same folder
-    prints the same block, so equal counts attribute nothing. The line ends `session=<id>`."""
+    prints the same block, so equal counts attribute nothing. The line ends `session=<id>`.
+    Plan 151 (v5.6, findings_37): the hook did not change between two releases and the field
+    could not tell their lines apart. The line opens `<utc> version=<x>`; the tail stays."""
     target = os.environ.get("TAMHEED_HOOK_LOG")
     if not target:
         return
@@ -216,6 +232,7 @@ def _trace(source: str, lines: list[str], status: str, session=None) -> None:
         text = "\n".join(lines)
         with path.open("a", encoding="utf-8") as fh:
             fh.write(f"{datetime.now(timezone.utc).isoformat(timespec='seconds')}"
+                     f" version={_version()}"
                      f" source={_token(source)} lines={len(lines)} chars={len(text)}"
                      f" status={status} session={_token(session)}\n")
     except Exception:  # noqa: BLE001 — the trace must never cost the session either

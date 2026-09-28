@@ -1149,6 +1149,11 @@ def package_verify(name: str | None = None, record: bool = False,
     two diverge and a disk-only round-trip would say "clean". With no package open,
     `name` is required and nothing is written.
 
+    Two keys read the review page's head: `review_current` (the digest stamped in the
+    page is the store's - its DATA is current) and `review_exported_by` (the version
+    that exported it, v5.6). After an upgrade the first reads true over a page the
+    older exporter wrote; the second names that release. None: no page, or no stamp.
+
     `record=true` (open package only, and only when verification PASSED) appends ONE
     `integrity-verified` journal row (actor system:package-verify) naming the digest
     — a citable fact. The row rewrites progress_entries.jsonl, so the digest is of
@@ -1188,17 +1193,22 @@ def package_verify(name: str | None = None, record: bool = False,
                    if csv_dir.is_dir() else [])
     # Plan 081: is the review page current? True/False against the digest export_html
     # stamped into it; None when there is no page, or no stamp (exported before 4.10.0).
-    review_current = None
+    # Plan 151 (v5.6): and which release exported it? The stamped version; None when there
+    # is no page or no stamp (exported before 5.6.0). It never moves `review_current`.
+    review_current = review_exported_by = None
     try:
         with (data.parent / "review.html").open(encoding="utf-8",
                                                 errors="replace") as fh:
-            head = fh.read(4096)          # the stamp sits in <head>; never the whole page
+            head = fh.read(4096)          # the stamps sit in <head>; never the whole page
         if m := re.search(r'<meta name="tamheed-digest" content="([0-9a-f]{64})">', head):
             review_current = m.group(1) == digest
+        if m := re.search(rf'<meta name="tamheed-version" content="({_VERSION_TOKEN})">', head):
+            review_exported_by = m.group(1)
     except OSError:
         pass
     report = {"ok": True, "package": name, "files": len(on_disk), "foreign": foreign,
               "foreign_csv": foreign_csv, "review_current": review_current,
+              "review_exported_by": review_exported_by,
               "digest": digest, "recorded": None}
     if expect is not None:
         # plan 067: "is this export/slate still current?" as a boolean. The digest is
@@ -4652,6 +4662,12 @@ def export_html(output: str | None = None) -> dict:
     # the same state gives the same digest, so two exports stay byte-identical.
     stamp = (f'<meta name="tamheed-digest" content="'
              f'{_canonical_digest(_dump_open_connection())}">\n')
+    # Plan 151 (v5.6, findings_37): and the version that exported it. The digest says the
+    # page's DATA is current; it cannot say an older exporter wrote the page. A constant of
+    # the release - no clock, no counter - so two exports stay byte-identical.
+    exported_by = str(_plugin_version())
+    if re.fullmatch(_VERSION_TOKEN, exported_by):
+        stamp += f'<meta name="tamheed-version" content="{exported_by}">\n'
     text = text.replace("<title>", stamp + "<title>", 1)
     path = Path(output) if output else PACKAGE_ROOT / _CURRENT_NAME / "review.html"
     if output:
@@ -4743,6 +4759,19 @@ def export_html(output: str | None = None) -> dict:
 _PACKAGE_ROW = ("name", "title", "profile", "mode", "iteration", "package_version",
                 "mvp_definition", "entry_point", "go_no_go", "created_at")
 _V1_DERIVED = ("mode", "profile", "created_at")   # export_html's annotation, as data
+# Plan 151 (v5.6): what a version may look like where it is stamped into a page and read
+# back into a tool result - a plain token, the hook's own rule for its trace line.
+_VERSION_TOKEN = r"[A-Za-z0-9._-]{1,64}"
+
+
+def _plugin_version() -> str:
+    """The single version source: the bundled plugin manifest (D-017-3). "unknown" on a
+    standalone copy without it."""
+    manifest = _SERVER_DIR.parent / ".claude-plugin" / "plugin.json"
+    try:
+        return json.loads(manifest.read_text(encoding="utf-8")).get("version", "unknown")
+    except (OSError, ValueError):
+        return "unknown"
 
 
 def server_info(detail: bool = False) -> dict:
@@ -4760,11 +4789,7 @@ def server_info(detail: bool = False) -> dict:
 
     Makes startup diagnosable (field-evidence C11: a wedged call and a slow cold start
     were indistinguishable) and gives field reports a citable version anchor (C16)."""
-    manifest = _SERVER_DIR.parent / ".claude-plugin" / "plugin.json"
-    try:  # single version source: the bundled plugin manifest (D-017-3)
-        version = json.loads(manifest.read_text(encoding="utf-8")).get("version", "unknown")
-    except (OSError, ValueError):
-        version = "unknown"  # standalone copy without the plugin manifest
+    version = _plugin_version()
     migrations = sorted(p.name for p in
                         (_SERVER_DIR.parent / "db" / "migrations").glob("[0-9]*.sql"))
     package = None
