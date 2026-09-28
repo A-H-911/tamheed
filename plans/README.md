@@ -176,6 +176,24 @@ devil's-advocate review; execution order is the row order below). Status values:
 | 089 | [Lab beat 18](089-lab-beat-18-findings-27.md) | 085-088 + full test (15/15 vs 0/15 on `v4.10.0`; 9 suites; selftest) | DONE `762b98b` — 9 new assertions, each failing on the pre-beat fixture; D-1 registry-sync unscripted, F-3 fixed |
 | 090 | [Release v4.11.0](090-release-v4110.md) — plan-058 recipe + the fixture follows the stamp | 089 | DONE — 2026-09-22, tag `v4.11.0` (SHA in the tag) |
 
+### Field cycle findings_38 -- plans 156-159 -> v5.6.1 (2026-09-28; maintainer-executed)
+
+Master record: [156-159-batch-findings-38.md](156-159-batch-findings-38.md) (the approved plan, revision
+3 after a devil's-advocate review, 5 interview rulings R46–R50; execution order 156 → 157 → 158 → 159).
+The field returned no defect, no feedback row and no numbered brief error; the batch is teaching and
+docs the maintainer's own review corrected: a limited read returns the lowest ids and never the
+newest rows, the close-out's last commit is unbound by rule, the review page's bytes hold on one UTC
+date, and a handoff says what is true when it is written. No engine behaviour changes. The brief to
+the field project is a committed file, read by path: [briefs/acmp-5.6.1.md](briefs/acmp-5.6.1.md).
+Status values: PLANNED / IN PROGRESS / DONE.
+
+| # | Plan | Depends on | Status |
+|---|---|---|---|
+| 156 | [What a limited read returns, the unbound commit, three sentences](156-what-a-limited-read-returns-and-the-unbound-commit.md) | — | DONE — 2026-09-28 `1be1305` |
+| 157 | [The page's date, and the docs sweep for v5.6.1](157-the-pages-date-and-docs-sweep-findings-38.md) | 156 | IN PROGRESS |
+| 158 | [The version stamp, then lab beat 29 + evals](158-stamp-then-lab-beat-29.md) | 157 + full gate | PLANNED |
+| 159 | [Tag v5.6.1, the brief file, close-out](159-release-v561.md) | 158 | PLANNED |
+
 ### Field cycle findings_37 -- plans 151-155 -> v5.6.0 (2026-09-28; maintainer-executed)
 
 Master record: [151-155-batch-findings-37.md](151-155-batch-findings-37.md) (the approved plan after a

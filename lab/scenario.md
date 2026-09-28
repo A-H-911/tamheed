@@ -796,7 +796,8 @@ must fire; the resulting package replaces `evals/sample-results/lab-tracker/pack
       `version=-`.
     ✔ THE FIRST EXPORT (plan 151), scratch copy: `export_html` rewrites the page with the digest
       unchanged; its head carries `<meta name="tamheed-version" content="5.6.0">` before the
-      title; `review_exported_by` reads `5.6.0`; a second export is byte-identical.
+      title; `review_exported_by` reads `5.6.0`; a second export is byte-identical (on one UTC
+      date: the page states the date its Readiness section was evaluated on, item 29).
     ✔ THE EXPORT PRECEDES THE COMMIT (plan 152), scratch copy: a journal write after the export
       turns `review_current` false; the next export turns it true.
     ✔ ANOTHER RELEASE'S PAGE (plan 151), scratch copy: a page stamped `5.5.0` reads

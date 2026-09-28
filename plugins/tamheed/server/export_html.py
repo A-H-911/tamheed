@@ -4,8 +4,11 @@ Reads the live SQLite connection (never re-parses text files) and renders ONE
 self-contained static HTML file. Security doctrine (W-V2-6, non-negotiable):
 every data-derived string passes esc(); no data-derived links, ever — URLs render
 as plain text, so javascript: schemes are inert; no JavaScript at all; restrictive
-CSP. Deterministic: same DB state => byte-identical HTML (every query is ordered;
-no wall clock — the C1 freshness stamp derives from stored timestamps).
+CSP. Deterministic: same DB state and same UTC date => byte-identical HTML (every
+query is ordered; the C1 freshness stamp derives from stored timestamps). The one
+clock is the date the Readiness section was evaluated on (plan 096), passed in by
+the server as `readiness["as_of"]`: on a later date that date moves, and a rule that
+reads the calendar may move its row.
 
 New entity families (plan 015) render automatically: the Registers section iterates
 ENTITY_TABLES; a new section = one entry in SECTIONS at the bottom of this file.

@@ -109,6 +109,8 @@ three-axis statuses and per-entity `last_referenced`, the traceability matrix, e
 gap/screening notes — as one self-contained static `review.html`: every data-derived string escaped, no
 JavaScript, no data-derived links, a restrictive CSP, and **deterministic output** (same DB state ⇒
 byte-identical file), so the export is committed alongside the data and its diffs are meaningful.
+*(Since v4.12 the identity holds on one UTC date: the Readiness section states the date it was
+evaluated on. See §19.)*
 
 ## 11. MCP-only interaction: the server is the capability's mechanical half *(v2 — D-MCP)*
 
@@ -276,8 +278,8 @@ recommendations, and a recipe caution. The rulings (R19–R26; R19 is the versio
   of every clone) and a bundle digest in `server_info` (a new surface and a new release step for
   what one command does).
 - **D-REVIEW-NO-LOCK — `review.html` renders no lock.** The lock's holder is run-time state; the
-  export is deterministic from stored text, and it runs under the exporting session's own lock,
-  so the line could only ever read "held by this session".
+  export is deterministic from stored text and the date of the export, and it runs under the
+  exporting session's own lock, so the line could only ever read "held by this session".
 
 Two lessons of the round entered `measurement-evidence` (a match on value attributes nothing when
 another producer can write the same value; every item differing is as suspect as none). Owned by
@@ -414,3 +416,56 @@ its instrument was named; and, in this round's own plan, a rule that could not b
 count that was wrong, a claim that a review tool was unavailable after one failed call, and an
 option put to the operator on a premise the field's own memory contradicts.
 Record: plan [`151-155-batch-findings-37.md`](../plans/151-155-batch-findings-37.md).
+
+## 19. Five rulings from the sixth field round (2026-09-28, v5.6.1)
+
+The field's day on 5.6.0 (ACMP `findings_38`) returned no defect and no feedback row. Every
+predicted class held, and the field numbered no brief error. What came back was smaller than in
+any earlier round: one condition the field added to a class of the brief, one misuse it classed
+as its own, and two sentences its advisor corrected in a handoff draft. The maintainer's review
+found the larger thing behind the misuse. The rulings (R46–R50):
+
+- **D-LIMIT-ORDER — a limited read returns the lowest ids.** `entity_query` returns rows in the
+  id's text order and `limit` cuts from the lowest. Three teaching texts had called a read
+  limited to ten rows "the last recorded activity" since 2026-07-22. The field typed an id into
+  `after_id` to mean "from this entry on", the same misreading. Run over the real journal ids,
+  the engine's order returns the ten lowest on the lab and on the field. The rule now stands in
+  the tool's description and in `package-writes`, with what to read instead: the resume block's
+  last entries, the `handoff-current` list read with `ids`, `audit_evidence` and `acs-met`.
+  Rejected: number order in `entity_query` — a contract test pins text order over ids of mixed
+  width, and the cut and the order must share one collation for a paged walk to be complete.
+  **Not built: a `newest` parameter.** No tool returns the last rows of a family, and the skill
+  says so; a hand-made method would be misused as the old line was.
+- **D-UNBOUND-BY-RULE — the close-out's last commit is no drift.** v5.6 anchored the export on
+  the commit, which leaves one commit unbound at every close-out: the one that carries a bind
+  with the exported page. Three audit lists called an unbound commit drift and carried no
+  discriminator, and one of them runs unattended. They now point at the classifying rule of
+  `package-writes`, which names that commit. Not built: a lint over the lists.
+- **D-PAGE-DATE — the page's identity holds on one date.** Since v4.12 the Readiness section
+  states the UTC date it was evaluated on, because two of its rules read the calendar. Four
+  sentences went on promising the same bytes from the store's state alone, one of them "no wall
+  clock". The field supplied the missing condition in its own prediction. The sentences are
+  corrected, and a test pins that two dates over one store differ in the date and nowhere else.
+  `review_current` compares the store's digest and is unaffected. Rejected: a date derived from
+  the store's last write — the section would then disagree with `readiness_check` run today.
+  The exporter already takes the date as an input, which is the practice the Reproducible
+  Builds project describes for a build's clock.
+- **D-HANDOFF-TENSE — a handoff says what is true when it is written.** Since v5.6 its commit,
+  the bind and the export follow it. A draft in the field said a branch was pushed through
+  commits that did not exist yet.
+- **D-AUDIT-WRITES-NOTHING — the read-only audit exports outside the repository.** Its staleness
+  step ran a bare export, which rewrites the package's committed page and `csv/`. The
+  instrument is kept, the newest stored timestamp of every table, and the file goes to the
+  system's temporary folder.
+
+The release is a PATCH. The repo's texts name what a MINOR adds — an entity type, a template, a
+gate, a profile, a diagram kind, an entry point — and this release adds none; Semantic
+Versioning defines a patch as a change that "fixes incorrect behavior". The case against was
+named at the approval: two of the sentences are new rules.
+
+Owned by the maintainer: the three teaching lines, two months old; the four sentences on the
+page's bytes; a class of the 5.6.0 brief with a condition missing; an absence claim that rested
+on a copy blind to ignored files; the 5.6.0 order rule, shipped without a sweep of the lists
+that read binds; and, in this round's own plan, a count that was too low, a test weaker than its
+claim, a false "only", and a tool's result described as more than it returns.
+Record: plan [`156-159-batch-findings-38.md`](../plans/156-159-batch-findings-38.md).

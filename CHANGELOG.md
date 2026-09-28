@@ -10,6 +10,42 @@ All notable changes to Tamheed are documented here. The format is based on
 
 ## [Unreleased]
 
+**PATCH — the findings_38 batch: the sixth field round (plans 156–159; field report
+findings_38).** The field ran 5.6.0 and returned no defect, no feedback row and no numbered
+brief error; every class held. What this release corrects is teaching and docs, most of it
+found by the maintainer's own review. **No tool result, no store shape and no engine behaviour
+changes.** No migration; `schema_version` stays 7.
+
+### Fixed
+- **A limited read returns the lowest ids, never the newest rows** (plan 156). `entity_query`
+  returns rows in the id's text order and `limit` cuts from the lowest. Three teaching texts
+  had called `entity_query("progress-entry", limit=10)` "the last recorded activity" since
+  2026-07-22: `orient-resume`, `loop-iteration` and the follow-up template. It returns the ten
+  oldest entries. The tool's description and `package-writes` now state the order and what to
+  read instead: the resume block's `last_entries`, the `handoff-current` list read with `ids`,
+  `gate_run`'s `audit_evidence` and `readiness_check`'s `acs-met`. An id typed into `after_id`
+  is compared as text and never means "from this entry on". No tool returns the last rows of
+  a family, and the skill says so.
+- **The close-out's last commit is unbound by rule, not drift** (plan 156). 5.6.0 left one
+  commit unbound at every close-out, the one that carries a bind with the exported page.
+  `integrity-check`, `loop-iteration` and `drift-register` called an unbound commit drift with
+  no discriminator; they now point at the classifying rule of `package-writes`.
+- **The read-only audit writes nothing into the package** (plan 156): `integrity-check`
+  exports to a path outside the repository. A bare export rewrote the committed page and `csv/`.
+- **The review page's bytes hold on one UTC date** (plan 157). The Readiness section has stated
+  the date it was evaluated on since 4.12.0. Four sentences went on promising the same bytes
+  from the store's state alone. An export on a later date moves that date, and a rule that
+  reads the calendar may move its row. `review_current` is unaffected.
+
+### Added
+- **One rule in `session-handoff`** (plan 156): the handoff says what is true when it is
+  written; its commit, the bind and the export follow it and are named as following.
+- **One test** (plan 157): two dates over one store give pages that differ in the date and
+  nowhere else.
+- **Docs** (plan 157): what the trace line's `lines=` and `chars=` count, and which of the
+  copies of the block in a transcript row they equal; a line with no `version=` measured on one
+  session before and after its restart.
+
 ## [5.6.0] - 2026-09-28
 
 **MINOR — the findings_37 batch: the fifth field round (plans 151–155; field report

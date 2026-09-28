@@ -83,8 +83,13 @@ session=<id>` — never the entry's text. **`version=` (v5.6)** is the hook's ow
 the bundle's manifest before any note is looked for, so a silent line carries it too: a running
 session keeps the hook it loaded, and only the line says which one ran. A line with no
 `version=` was written by a hook older than 5.6.0; a value that is not a plain token is written
-`-`. The field sits right after the timestamp and not at the end, where a new key usually goes,
+`-`. Measured on one session (v5.6.1): before its restart it wrote a line with no `version=`
+while a new process in the same folder, 145 seconds earlier, wrote `version=5.6.0`; after the
+restart the same session id wrote `version=5.6.0`.
+The field sits right after the timestamp and not at the end, where a new key usually goes,
 because the tail is this line's documented instrument; read the line by key, never by position.
+`lines=` and `chars=` count the block as the hook printed it, joined by line feeds, with no
+trailing newline.
 The `session=` tail (v5.4) is the event's own `session_id`, which is also the file name of that
 session's transcript under `~/.claude/projects/<project>/`; a value that is absent or not a plain
 token is written `-`. **Attribute a line by its `session=`, never by its counts:** every session
@@ -113,7 +118,10 @@ loaded"), so a session started before 5.3.0 was installed writes no line until t
 with no tamheed note writes `lines=0 chars=0 status=silent`; a project where the plugin is
 disabled writes none, and neither does a session started below the folder that enables it. **Cross-check in the transcript:** `~/.claude/projects/<project>/<id>.jsonl`
 holds a `SessionStart` hook row whose `command` is the hook's status message ("tamheed: reading
-the package's resume state...") within about a second of a `printed` line. A `silent` run leaves
+the package's resume state...") within about a second of a `printed` line. That row holds the
+block more than once (v5.6.1, measured in the field): the hook's own output, the same with a
+trailing newline, and a copy wrapped for the model. The first is the one the line's counts
+equal, after line endings are normalised. A `silent` run leaves
 NO row: no transcript on the measured machine holds a hook row whose stdout and stderr are both
 empty, so for a silent line the tail is the only attribution. Versions of this page before 5.5.0
 said every session in an enabling project appends a line; that was a rule, not a count. The file
@@ -226,7 +234,9 @@ that is not the one in service.
    there.
 5. `export_html()` — `review.html` and `csv/` are derived and deterministic, so a release that
    changes rendering shows up as a one-time diff if you track them (4.8.0: formula-shaped CSV
-   cells are quote-prefixed, ids order numerically). Until that export `package_verify()` reads
+   cells are quote-prefixed, ids order numerically). The page also states the UTC date its
+   Readiness section was evaluated on, so the first export on a later date moves that line too
+   (v5.6.1: the same store on the same date gives the same bytes). Until that export `package_verify()` reads
    `review_current: true` over the page the OLDER release wrote — the key compares the digest
    stamped in the page, so it says the page's data is current and nothing about its exporter;
    `review_exported_by` (v5.6) names the release that exported it, and reads `null` on a page

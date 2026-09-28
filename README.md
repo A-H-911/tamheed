@@ -317,7 +317,7 @@ that row-level counts cannot see.
 | `package_create / package_open / package_close` | Lifecycle + single-writer lock (a refusal reports what was observed about the holder) |
 | `package_unlock(name, confirm?)` | Report a lock's holder; `confirm=true` (operator's words) removes a dead holder's lock, journaled |
 | `entity_upsert(entities[])` | Batch writes — full rows (or the NOT NULL columns: omitted columns of an existing row are preserved), per-item verdicts; `expect_unchanged` refuses transport drift on a sent column; `retire` removes a wrong edge; `substitute` changes one token without the row passing through the agent (refused when it would widen or compound); an update reports `changed_columns` with text lengths; a `feedback` row (`FB-`) exists on the operator's word and is journaled at every move; the header (`type: "package"`) names `go_no_go` only on the word |
-| `entity_query(type, …)` | Targeted rows + `total`; `after_id` pages, `ids` fetches a known set, `search` sweeps by keyword; a projection reports `omitted_columns`, a search reports which column `matched` |
+| `entity_query(type, …)` | Targeted rows + `total`, in the id's text order (`limit` cuts from the lowest, never the newest rows); `after_id` pages, `ids` fetches a known set, `search` sweeps by keyword; a projection reports `omitted_columns`, a search reports which column `matched` |
 | `trace_query(entity_id, …)` | Typed traceability links |
 | `gate_run()` | Mechanical quality-gate verdict incl. the blocking G-REL relation gate |
 | `readiness_check(scope, id?)` | Deep lifecycle readiness at a close boundary — "is this actually DONE?" |

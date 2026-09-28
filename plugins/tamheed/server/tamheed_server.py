@@ -4641,8 +4641,10 @@ def _csv_safe(value):
 def export_html(output: str | None = None) -> dict:
     """Export the self-contained static HTML review surface (the human review view).
 
-    Deterministic (same DB state => byte-identical file), so it is COMMITTED to the
-    package's repo by default: writes <package>/review.html unless `output` overrides."""
+    Deterministic (same DB state and same UTC date => byte-identical file: the Readiness
+    section states the date it was evaluated on, and two of its rules read the calendar),
+    so it is COMMITTED to the package's repo by default: writes <package>/review.html
+    unless `output` overrides."""
     if guard := _need_open():
         return guard
     import export_html as viewer

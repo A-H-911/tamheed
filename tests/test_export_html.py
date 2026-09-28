@@ -685,6 +685,22 @@ class ExportHtmlTest(unittest.TestCase):
         self.assertEqual(Path(first["path"]).read_bytes(),
                          Path(second["path"]).read_bytes())
 
+    def test_the_date_is_the_only_input_besides_the_store(self):
+        """Plan 157 (v5.6.1, findings_38): the page states the date its readiness panel was
+        evaluated on, so "same store => same bytes" holds on ONE date. One store, one fixed
+        report, two dates: the pages differ, and replacing the date makes them equal byte
+        for byte. render() is called directly - export_html reads the clock. The dates are
+        far in the future so that neither can occur in a stored timestamp."""
+        self._open_demo_copy()
+        conn, day_a, day_b = srv._CURRENT.conn, "2999-01-01", "2999-01-02"
+        gates = srv.gate_run()["gates"]
+        report = srv._readiness_report(conn, "package", None)
+        page_a, page_b = (viewer.render(conn, gates, False, {"report": report, "as_of": day})
+                          for day in (day_a, day_b))
+        self.assertEqual((page_a.count(day_a), page_b.count(day_b)), (1, 1))
+        self.assertNotEqual(page_a, page_b)
+        self.assertEqual(page_a.replace(day_a, day_b), page_b)
+
     def test_ids_render_in_numeric_order(self):
         """Plan 057: PH-5 before PH-9 before PH-10 everywhere in the document (never a
         string compare — demo already has PH-1..3, so use unused numbers). These new
