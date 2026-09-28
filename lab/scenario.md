@@ -816,6 +816,40 @@ must fire; the resulting package replaces `evals/sample-results/lab-tracker/pack
       true`, `dirty: []`, `foreign: []`, `review_current: true`, `review_exported_by:
       "5.6.0"`); `package_close`; no `data/.lock` remains.
 
+29. **The v5.6.1 continuation — the sixth field round: what a limited read returns, and the
+    page's date.** The package opens at `schema_version` 7 (no migration in 5.6.1) with the
+    resume block naming beat 28's final handoff. The scratch phase runs FIRST, with hard
+    assertions; the fixture's note then quotes what it observed.
+    ✔ BEFORE THE FIRST EXPORT: `package_verify("package")`, package closed, reads
+      `review_current: true` and `review_exported_by: "5.6.0"` over the page 5.6.0 exported.
+    ✔ THE FIRST EXPORT, scratch copy, before any write: the stamp's line changes from `5.6.0`
+      to `5.6.1` and the digest is unchanged. ONE line changes when the export runs on the
+      UTC date the page already carried, TWO on a later date (the line that holds the
+      Readiness section moves with its date).
+    ✔ WHAT A LIMITED READ RETURNS (plan 156), scratch copy:
+      `entity_query("progress-entry", limit=10)` returns the ten LOWEST ids of the journal;
+      the resume block's `last_entries` names the three highest; the two sets share no id.
+    ✔ THE WORK AFTER THE HANDOFF (plan 156), scratch copy: before any write `handoff_behind`
+      reads 0 and `handoff-current` names nothing; after ONE `work-done` entry the count reads
+      1, the rule names that entry, and `entity_query(ids=[...])` reads it back.
+    ✔ THE PAGE'S DATE (plan 157), scratch copy: the exporter's `render` run twice over one
+      store and one fixed report with two far-future dates; each date occurs once in its
+      page; the pages differ; one page with its date replaced equals the other byte for byte.
+    ✔ THE AUDIT WRITES NOTHING (plan 156), scratch copy: `export_html(output=<a path outside
+      the package>)` writes the page there and leaves the package's `review.html` and every
+      `csv/` file with the hash it had.
+    ✔ THE EMISSION (plan 158): `handoff_emit(<scratch target>, refresh_stock=true)` reports
+      `refreshed: ["prompts/README.md"]` (the guide now reads `tamheed v5.6.1`, its title the
+      only line changed), every scan empty; the second emit reports `CLAUDE.md` unchanged.
+    ✔ Close the beat with ONE `progress_update` note (actor `agent:lab-beat-29`, `event_type:
+      "note"`) quoting verbatim `a read limited to ten rows returned the ten lowest ids`, `two
+      dates over one store differed in the date and nowhere else`, `an export to a path
+      outside the package left the page and csv/ untouched` and `tamheed v5.6.1`; THEN the
+      final handoff (`event_type: "handoff"`, written LAST, naming the export and the checks
+      as FOLLOWING it); then `export_html`; `gate_run` ready; `package_verify()` green
+      (`verified: true`, `dirty: []`, `foreign: []`, `review_current: true`,
+      `review_exported_by: "5.6.1"`); `package_close`; no `data/.lock` remains.
+
 **Pass bar:** every ✔ observed; `gate_run` ready (or failing ONLY on deliberately-open
 items the scenario names); the eval runner's lab checks green. `readiness_check` is
 expectedly NOT ready on the scenario's deliberately-open items (AC-003 and, since beat

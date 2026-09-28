@@ -190,8 +190,8 @@ Status values: PLANNED / IN PROGRESS / DONE.
 | # | Plan | Depends on | Status |
 |---|---|---|---|
 | 156 | [What a limited read returns, the unbound commit, three sentences](156-what-a-limited-read-returns-and-the-unbound-commit.md) | — | DONE — 2026-09-28 `1be1305` |
-| 157 | [The page's date, and the docs sweep for v5.6.1](157-the-pages-date-and-docs-sweep-findings-38.md) | 156 | IN PROGRESS |
-| 158 | [The version stamp, then lab beat 29 + evals](158-stamp-then-lab-beat-29.md) | 157 + full gate | PLANNED |
+| 157 | [The page's date, and the docs sweep for v5.6.1](157-the-pages-date-and-docs-sweep-findings-38.md) | 156 | DONE — 2026-09-28 `1b3ce75` |
+| 158 | [The version stamp, then lab beat 29 + evals](158-stamp-then-lab-beat-29.md) | 157 + full gate (suites; 13 lints; canonical; evals 3/3 incl. 3 new assertions) | DONE — 2026-09-28 (stamp before the beat; the scratch phase first; held on the first run) |
 | 159 | [Tag v5.6.1, the brief file, close-out](159-release-v561.md) | 158 | PLANNED |
 
 ### Field cycle findings_37 -- plans 151-155 -> v5.6.0 (2026-09-28; maintainer-executed)

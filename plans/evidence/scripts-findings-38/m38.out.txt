@@ -1,0 +1,5 @@
+M24 lab: rows 57; id widths [6]; ORDER BY id LIMIT 10 -> PE-001..PE-010; newest by number -> ['PE-055', 'PE-056', 'PE-057']; shared ids 0
+M25 field: rows 1540; id widths [6, 7]; ORDER BY id LIMIT 10 -> PE-001..PE-010; newest by number -> ['PE-1538', 'PE-1539', 'PE-1540']; shared ids 0
+M26: project folders 6; transcript files 673; entity_query calls 1335; first 2026-08-29; last 2026-09-28; bare reads of progress-entry 0, of audit-verdict 0
+M29: page lines 296; 'Evaluated as of' occurs 1 time(s), on (line, chars) [(221, 4647)]; dated 2026-09-28
+M30: lines with a text ORDER BY id: 15 [1912, 2152, 2157, 2165, 2181, 2404, 2432, 2649, 2766, 2779, 2791, 2959, 3850, 3856, 3867]; of them carrying LIMIT: [2165, 2181]

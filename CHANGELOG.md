@@ -10,6 +10,8 @@ All notable changes to Tamheed are documented here. The format is based on
 
 ## [Unreleased]
 
+## [5.6.1] - 2026-09-28
+
 **PATCH — the findings_38 batch: the sixth field round (plans 156–159; field report
 findings_38).** The field ran 5.6.0 and returned no defect, no feedback row and no numbered
 brief error; every class held. What this release corrects is teaching and docs, most of it
