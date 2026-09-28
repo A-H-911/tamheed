@@ -1,7 +1,7 @@
 # Tamheed v5.6.0 — the findings_37 batch: the release named on two surfaces, the export anchored on the commit
 
 Status: **IN PROGRESS** — index section "Field cycle findings_37" in [README.md](README.md).
-Commits: 151 `e151e3d`, 152 `6bae045`. Execution order: 151 → 152 → 153 → 154 → 155.
+Commits: 151 `e151e3d`, 152 `6bae045`, 153 `9db4b7c`. Execution order: 151 → 152 → 153 → 154 → 155.
 
 Read-only evidence this record rests on: ACMP `findings_37.md` (`27f63ae8` → `66ad54c4`), the rows
 `DEC-235` (Approved), the journal `PE-1523`..`PE-1531`, the 25 feedback rows and 112 lessons
@@ -33,7 +33,9 @@ Every count is from one machine and true at its run (`m37.py`, output in `m37.ou
 | M6 | `review_current` named in | 13 lab lines; 0 eval assertions; 5 test lines before plan 151, 10 after |
 | M7 | Lint 13's negated pattern over the bundle and `docs/*.md`, and seven controls | 76 files, 0 hits; 7 of 7 controls as wanted |
 | M8 | `export_html` in the bundle's teaching text | 17 lines before plan 152, four step lists writing after the export; 18 after, none |
-| M9 | `python check.py`, the trace variable unset, plans 151 and 152 | ALL CHECKS PASSED each time |
+| M9 | `python check.py`, the trace variable unset, plans 151 to 154 | ALL CHECKS PASSED each time |
+| M10 | The stock guide's body against the 5.5.0 body, at the stamp | one line in, one line out: the title |
+| M11 | Lab beat 28 (plan 154), [the report](evidence/lab-continuation-report-154-2026-09-28.md) | held on its first run, the scratch phase first. Before the first export the keys read `review_current: true`, `review_exported_by: null`; after it `5.6.0`, the digest unchanged, a second export identical. A write after the export turned `review_current` false and the next export true. Both trace lines opened `version=5.6.0`; a bundle with no manifest wrote `version=-` |
 
 ## 1. What the field returned (no defect, no feedback row)
 
@@ -74,8 +76,8 @@ MINOR is not a ruling: it is the repo's rule (additive = MINOR). The meta's name
 |---|---|---|
 | 151 | [The version in the trace line and on the review page](151-the-version-in-the-trace-and-on-the-page.md) | DONE `e151e3d` |
 | 152 | [The export before the commit, two sentences, lint 13's negated shape](152-the-export-before-the-commit-and-two-sentences.md) | DONE `6bae045` |
-| 153 | [Docs + diagrams sweep for v5.6.0](153-docs-and-diagrams-sweep-findings-37.md) | DONE |
-| 154 | [The version stamp, then lab beat 28 + evals](154-stamp-then-lab-beat-28.md) | PLANNED |
+| 153 | [Docs + diagrams sweep for v5.6.0](153-docs-and-diagrams-sweep-findings-37.md) | DONE `9db4b7c` |
+| 154 | [The version stamp, then lab beat 28 + evals](154-stamp-then-lab-beat-28.md) | DONE |
 | 155 | [Tag v5.6.0, the brief file, close-out](155-release-v560.md) | PLANNED |
 
 ## 4. The 5.5.0 brief's errors, owned, and the maintainer's own

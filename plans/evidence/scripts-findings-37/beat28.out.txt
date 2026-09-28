@@ -1,0 +1,22 @@
+OBS B.before_first_export: {"review_current": true, "review_exported_by": null}
+OBS B.open.resume: {"handoff": "PE-053", "behind": 0}
+OBS B.hook.printed: "version=5.6.0 source=compact lines=7 chars=1152 status=printed session=28282828-aaaa-4bbb-8ccc-282828282828"
+OBS B.hook.silent: "version=5.6.0 source=startup lines=0 chars=0 status=silent session=28282828-aaaa-4bbb-8ccc-282828282828"
+OBS B.hook.no_manifest: "version=- source=resume lines=0 chars=0 status=silent session=28282828-aaaa-4bbb-8ccc-282828282828"
+OBS B.first_export: {"before": {"review_current": true, "review_exported_by": null}, "after": {"review_current": true, "review_exported_by": "5.6.0"}, "digest_moved": false, "second_export_identical": true}
+OBS B.write_after_export: {"after_the_write": {"review_current": false, "review_exported_by": "5.6.0"}, "after_the_export": {"review_current": true, "review_exported_by": "5.6.0"}}
+OBS B.other_release: {"stamped_5.5.0": {"review_current": true, "review_exported_by": "5.5.0"}, "not_a_token": {"review_current": true, "review_exported_by": null}}
+PHASE-B-DONE
+OBS A.before_first_export: {"review_current": true, "review_exported_by": null}
+OBS A.schema: {"schema_version": 7, "migrations_head": "007_handoff.sql", "version": "5.6.0"}
+OBS A.open.resume: {"handoff": "PE-053", "behind": 0, "skill": "tamheed:package-writes"}
+OBS A.emit.refreshed: ["prompts/README.md"]
+OBS A.emit.findings: {"stock_merged": [], "oversized_prompts": [], "stale_references": [], "restated_content": []}
+OBS A.guide: "tamheed v5.6.0"
+OBS A.emit2.unchanged: true
+OBS A.handoff: "PE-055"
+OBS A.handoff-current.final: "pass"
+OBS A.gate_run.ready: true
+OBS A.verify: {"verified": true, "dirty": [], "foreign": [], "review_current": true, "review_exported_by": "5.6.0"}
+OBS A.lock_gone: true
+DONE

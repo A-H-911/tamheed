@@ -10,6 +10,8 @@ All notable changes to Tamheed are documented here. The format is based on
 
 ## [Unreleased]
 
+## [5.6.0] - 2026-09-28
+
 **MINOR — the findings_37 batch: the fifth field round (plans 151–155; field report
 findings_37).** The field ran 5.5.0 for a day and returned no defect and no feedback row; every
 class it could exercise held. What came back was two brief errors, one question no instrument

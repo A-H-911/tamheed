@@ -190,8 +190,8 @@ Status values: PLANNED / IN PROGRESS / DONE.
 |---|---|---|---|
 | 151 | [The version in the trace line and on the review page](151-the-version-in-the-trace-and-on-the-page.md) | — | DONE — 2026-09-28 `e151e3d` |
 | 152 | [The export before the commit, two sentences, lint 13's negated shape](152-the-export-before-the-commit-and-two-sentences.md) | 151 | DONE — 2026-09-28 `6bae045` |
-| 153 | [Docs + diagrams sweep for v5.6.0](153-docs-and-diagrams-sweep-findings-37.md) | 151-152 | DONE — 2026-09-28 |
-| 154 | [The version stamp, then lab beat 28 + evals](154-stamp-then-lab-beat-28.md) | 153 + full gate | PLANNED |
+| 153 | [Docs + diagrams sweep for v5.6.0](153-docs-and-diagrams-sweep-findings-37.md) | 151-152 | DONE — 2026-09-28 `9db4b7c` |
+| 154 | [The version stamp, then lab beat 28 + evals](154-stamp-then-lab-beat-28.md) | 153 + full gate (suites; 13 lints; canonical; evals 3/3 incl. 4 new assertions) | DONE — 2026-09-28 (stamp before the beat; the scratch phase first; held on the first run) |
 | 155 | [Tag v5.6.0, the brief file, close-out](155-release-v560.md) | 154 | PLANNED |
 
 ### Field cycle findings_36 -- plans 146-150 -> v5.5.0 (2026-09-27; maintainer-executed)

@@ -695,7 +695,7 @@ must fire; the resulting package replaces `evals/sample-results/lab-tracker/pack
       removes nothing).
     ✔ THE TRACE (plan 136), scratch copy: the hook with `TAMHEED_HOOK_LOG` naming a path that does
       not exist creates nothing; naming an existing empty file, one line `<utc> source=compact
-      lines=N chars=N status=printed` (from 5.4 the line ends ` session=<id>`, item 26) whose counts
+      lines=N chars=N status=printed` (from 5.4 the line ends ` session=<id>`, item 26; from 5.6 it opens `<utc> version=<x>`, item 28) whose counts
       equal the printed block's, carrying none of the
       entry's text; a run with the variable unset appends nothing more.
     ✔ THE RENDER HINT (plan 136), scratch copy: approving `LL-002` unpinned returns `next` ending
@@ -779,6 +779,41 @@ must fire; the resulting package replaces `evals/sample-results/lab-tracker/pack
       `note (rendered at the next emit)` and marks the one row `rendered`); `gate_run` ready;
       `package_verify()` green (`verified: true`, `dirty: []`, `foreign: []`, `review_current:
       true`); `package_close`; no `data/.lock` remains.
+
+28. **The v5.6.0 continuation — the fifth field round: the release named on two surfaces.**
+    The package opens at `schema_version` 7 (no migration in 5.6.0) with the resume block naming
+    beat 27's final handoff. The scratch phase runs FIRST, with hard assertions; the fixture's
+    note then quotes what it observed.
+    ✔ BEFORE THE FIRST EXPORT (plan 151): `package_verify("package")`, package closed, reads
+      `review_current: true` and `review_exported_by: null` over the page the previous release
+      exported — its head carries the digest stamp and no version stamp.
+    ✔ THE TRACE LINE (plan 151), scratch copy: the hook on a project with the note and on an
+      empty folder appends two lines, each `<utc> version=5.6.0 source=… lines=N chars=N
+      status=… session=<the id sent>`, `printed` and `silent`; the printed line's counts equal
+      the block; the block's first line names no version.
+    ✔ NO MANIFEST (plan 151), scratch copy: a copy of the bundle without `.claude-plugin/`, its
+      hook run as its own process, exits 0, prints nothing and appends exactly one line reading
+      `version=-`.
+    ✔ THE FIRST EXPORT (plan 151), scratch copy: `export_html` rewrites the page with the digest
+      unchanged; its head carries `<meta name="tamheed-version" content="5.6.0">` before the
+      title; `review_exported_by` reads `5.6.0`; a second export is byte-identical.
+    ✔ THE EXPORT PRECEDES THE COMMIT (plan 152), scratch copy: a journal write after the export
+      turns `review_current` false; the next export turns it true.
+    ✔ ANOTHER RELEASE'S PAGE (plan 151), scratch copy: a page stamped `5.5.0` reads
+      `review_exported_by: "5.5.0"` and keeps `review_current: true`; a stamp that is not a plain
+      token reads `null`.
+    ✔ THE EMISSION (plan 154): `handoff_emit(<scratch target>, refresh_stock=true)` reports
+      `refreshed: ["prompts/README.md"]` (the guide now reads `tamheed v5.6.0`, its title the
+      only line changed), every scan empty; the second emit reports `CLAUDE.md` unchanged.
+    ✔ Close the beat with ONE `progress_update` note (actor `agent:lab-beat-28`, `event_type:
+      "note"`) quoting verbatim `version=5.6.0 on a printed run and on a silent one`,
+      `review_current true and review_exported_by null`, `a journal write after the export turned
+      review_current false` and `tamheed v5.6.0`; THEN the final handoff (`event_type:
+      "handoff"`, written LAST — `handoff-current` reads `pass`, and `review_current` reads
+      `false`, the handoff being a write); then `export_html` (the page carries the version
+      stamp and the new latest handoff); `gate_run` ready; `package_verify()` green (`verified:
+      true`, `dirty: []`, `foreign: []`, `review_current: true`, `review_exported_by:
+      "5.6.0"`); `package_close`; no `data/.lock` remains.
 
 **Pass bar:** every ✔ observed; `gate_run` ready (or failing ONLY on deliberately-open
 items the scenario names); the eval runner's lab checks green. `readiness_check` is
