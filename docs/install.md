@@ -77,9 +77,15 @@ Its lock line says what the store observed about the holder (v5.3): after a Clau
 restart the previous server's pid is dead, and the line reads `holder observed not-running —
 package_unlock(confirm=true) on the operator's word`. **Tracing the hook (v5.3, opt-in):** create an
 empty file outside any package, set `TAMHEED_HOOK_LOG` to its path (your shell, or the `env` block of
-your USER settings), and every run appends one line — `<utc> source=<startup|resume|clear|compact|fork>
-lines=N chars=N status=printed|silent|error:<Class> session=<id>` — never the entry's text. The
-`session=` tail (v5.4) is the event's own `session_id`, which is also the file name of that
+your USER settings), and every run appends one line — `<utc> version=<x>
+source=<startup|resume|clear|compact|fork> lines=N chars=N status=printed|silent|error:<Class>
+session=<id>` — never the entry's text. **`version=` (v5.6)** is the hook's own release, read from
+the bundle's manifest before any note is looked for, so a silent line carries it too: a running
+session keeps the hook it loaded, and only the line says which one ran. A line with no
+`version=` was written by a hook older than 5.6.0; a value that is not a plain token is written
+`-`. The field sits right after the timestamp and not at the end, where a new key usually goes,
+because the tail is this line's documented instrument; read the line by key, never by position.
+The `session=` tail (v5.4) is the event's own `session_id`, which is also the file name of that
 session's transcript under `~/.claude/projects/<project>/`; a value that is absent or not a plain
 token is written `-`. **Attribute a line by its `session=`, never by its counts:** every session
 that runs the plugin's hook in the folder prints the same block, and that includes headless
@@ -90,7 +96,14 @@ delivered; no line with your id means it did not run in your session — read th
 you know delivers (a compaction) has written a line with your id, which proves the variable reaches
 the hook at all. **Who writes a line (v5.5, measured on one machine, Claude Code builds 2.1.204
 to 2.1.283):** a session that LOADED the plugin, in a project that enables it, running a hook of
-5.3.0 or later. Every interactive and every headless command-line session there did. Sessions
+5.3.0 or later. Enablement is read where the session STARTS: Claude Code's settings page says it
+"reads the shared .claude/settings.json from the session's primary working directory, so to use
+a file committed at the repository root, start Claude Code there". A session started in a
+subfolder of an enabling project therefore loads no plugin. The field saw it once (v5.6): another
+tool's headless session inherited a shell that had moved into a scratch folder, listed no
+plugin's skill to its model, and wrote no line — so a missing line does not show that such a
+session did not run. The field confirmed the rule with its own method, the skill listing in each
+transcript. Every interactive and every headless command-line session there did. Sessions
 another tool started through the Agent SDK's Python entry did not: over six hundred of them, and
 not one listed a plugin's skill to its model, so no plugin hook was there to run. Whether an SDK
 session loads a project's settings is its caller's choice (the SDK's `settingSources` option), so
@@ -98,7 +111,7 @@ this page promises neither. A running session keeps the plugin version it loaded
 or a restart (Claude Code's plugin loading reference: "The running session keeps the versions it
 loaded"), so a session started before 5.3.0 was installed writes no line until then. A project
 with no tamheed note writes `lines=0 chars=0 status=silent`; a project where the plugin is
-disabled writes none. **Cross-check in the transcript:** `~/.claude/projects/<project>/<id>.jsonl`
+disabled writes none, and neither does a session started below the folder that enables it. **Cross-check in the transcript:** `~/.claude/projects/<project>/<id>.jsonl`
 holds a `SessionStart` hook row whose `command` is the hook's status message ("tamheed: reading
 the package's resume state...") within about a second of a `printed` line. A `silent` run leaves
 NO row: no transcript on the measured machine holds a hook row whose stdout and stderr are both
@@ -162,7 +175,14 @@ Claude Code's size cap on a hook's stdout is undocumented but exists (its change
 counts "oversized outputs saved to a file"); a 3,615-character block was measured arriving whole.
 
 (In a session: `/plugin marketplace update tamheed`, then `/plugin` → Installed → tamheed → update.)
-Reload or restart, then check `~/.claude/plugins/cache/tamheed/tamheed/<version>/` exists. To check
+Reload or restart, then check `~/.claude/plugins/cache/tamheed/tamheed/<version>/` exists. That
+folder says the release is INSTALLED, never that a session runs it: the previous version's folder
+stays beside it (Claude Code's plugin loading reference: an update "writes an .orphaned_at marker
+into the previous version directory. It removes that directory in a background cleanup 14 days
+later, so a session that already loaded the old version keeps running"). Three readings say what
+runs (v5.6): `server_info()` names the MCP server's version, a trace line's `version=` the
+hook's, and `package_verify()`'s `review_exported_by` the release that exported the review page.
+To check
 the installed tree against a release tag, compare through git or on LF-normalised bytes, and leave
 out the run-time folders (`__pycache__/`, `.in_use/`): on Windows the marketplace clone checks out
 with CRLF, and a byte compare then reads EVERY file as different (the field measured 86 of 86,
@@ -206,7 +226,12 @@ that is not the one in service.
    there.
 5. `export_html()` — `review.html` and `csv/` are derived and deterministic, so a release that
    changes rendering shows up as a one-time diff if you track them (4.8.0: formula-shaped CSV
-   cells are quote-prefixed, ids order numerically). `data/*.jsonl` must not change from an idle
+   cells are quote-prefixed, ids order numerically). Until that export `package_verify()` reads
+   `review_current: true` over the page the OLDER release wrote — the key compares the digest
+   stamped in the page, so it says the page's data is current and nothing about its exporter;
+   `review_exported_by` (v5.6) names the release that exported it, and reads `null` on a page
+   exported before 5.6.0. Export after the LAST write of the close-out and before the commit that
+   carries the page (`tamheed:package-writes`). `data/*.jsonl` must not change from an idle
    open and close; `package_verify()` confirms it.
 
 ## Claude Code — manual / standalone

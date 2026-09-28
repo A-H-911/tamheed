@@ -247,8 +247,8 @@ events** corrected by compensating entries, never edited — since v5.1 a `hando
 session stopped, and the latest one comes back as the **resume block** of `package_open` /
 `server_info` and through the plugin's SessionStart hook after every clear or compaction (its lock
 line says what the store observed about the holder, and an opt-in `TAMHEED_HOOK_LOG` traces each
-run in counts — v5.3 — each line naming the session that wrote it since v5.4, written by every
-session that loaded the plugin; a plugin reload runs no hook, so after one the block comes from
+run in counts — v5.3 — each line naming the session that wrote it since v5.4 and the hook's
+release since v5.6, written by every session that loaded the plugin; a plugin reload runs no hook, so after one the block comes from
 `package_open`), with the
 `handoff-current` advisory naming a handoff the journal has moved past (since v5.2 every `entity_query`
 result and any `handoff_emit` finding name the discipline skill to invoke, and a skill row's retirement
@@ -323,7 +323,7 @@ that row-level counts cannot see.
 | `readiness_check(scope, id?)` | Deep lifecycle readiness at a close boundary — "is this actually DONE?" |
 | `progress_update / audit_record / work_bind` | The execution-tracking loop |
 | `package_migrate / package_adopt` | Staged in-place v3→v4 conversion / brownfield onboarding |
-| `package_verify(name?, record?, expect?)` | The canonical round-trip as a tool — per-file byte-equality, foreign files, a citable digest; `expect=` answers "is this slate still current", `review_current` whether `review.html` is |
+| `package_verify(name?, record?, expect?)` | The canonical round-trip as a tool — per-file byte-equality, foreign files, a citable digest; `expect=` answers "is this slate still current", `review_current` whether `review.html` is, `review_exported_by` which release exported it (v5.6) |
 | `entity_export(path, tool?, args?)` | A read tool's WHOLE result as a digest-stamped JSON file under `exports/` — the sanctioned read for committed scripts that quote the store |
 | `handoff_emit / export_html` | Executor wiring + the HTML review surface |
 

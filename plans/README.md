@@ -176,6 +176,24 @@ devil's-advocate review; execution order is the row order below). Status values:
 | 089 | [Lab beat 18](089-lab-beat-18-findings-27.md) | 085-088 + full test (15/15 vs 0/15 on `v4.10.0`; 9 suites; selftest) | DONE `762b98b` — 9 new assertions, each failing on the pre-beat fixture; D-1 registry-sync unscripted, F-3 fixed |
 | 090 | [Release v4.11.0](090-release-v4110.md) — plan-058 recipe + the fixture follows the stamp | 089 | DONE — 2026-09-22, tag `v4.11.0` (SHA in the tag) |
 
+### Field cycle findings_37 -- plans 151-155 -> v5.6.0 (2026-09-28; maintainer-executed)
+
+Master record: [151-155-batch-findings-37.md](151-155-batch-findings-37.md) (the approved plan after a
+devil's-advocate review, 9 interview rulings R36–R44; execution order 151 → 152 → 153 → 154 → 155). The
+field returned no defect and no feedback row; the batch is the release named on two surfaces that
+could not say it (the trace line, the review page), the export anchored on the commit in five step
+lists, two sentences in the skills, and lint 13's negated shape. The brief to the field project is a
+committed file, read by path: [briefs/acmp-5.6.0.md](briefs/acmp-5.6.0.md).
+Status values: PLANNED / IN PROGRESS / DONE.
+
+| # | Plan | Depends on | Status |
+|---|---|---|---|
+| 151 | [The version in the trace line and on the review page](151-the-version-in-the-trace-and-on-the-page.md) | — | DONE — 2026-09-28 `e151e3d` |
+| 152 | [The export before the commit, two sentences, lint 13's negated shape](152-the-export-before-the-commit-and-two-sentences.md) | 151 | DONE — 2026-09-28 `6bae045` |
+| 153 | [Docs + diagrams sweep for v5.6.0](153-docs-and-diagrams-sweep-findings-37.md) | 151-152 | DONE — 2026-09-28 |
+| 154 | [The version stamp, then lab beat 28 + evals](154-stamp-then-lab-beat-28.md) | 153 + full gate | PLANNED |
+| 155 | [Tag v5.6.0, the brief file, close-out](155-release-v560.md) | 154 | PLANNED |
+
 ### Field cycle findings_36 -- plans 146-150 -> v5.5.0 (2026-09-27; maintainer-executed)
 
 Master record: [146-150-batch-findings-36.md](146-150-batch-findings-36.md) (the approved plan after a

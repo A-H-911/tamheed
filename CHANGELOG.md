@@ -10,6 +10,46 @@ All notable changes to Tamheed are documented here. The format is based on
 
 ## [Unreleased]
 
+**MINOR — the findings_37 batch: the fifth field round (plans 151–155; field report
+findings_37).** The field ran 5.5.0 for a day and returned no defect and no feedback row; every
+class it could exercise held. What came back was two brief errors, one question no instrument
+could answer, and three practices the skills did not yet state. The maintainer's review found
+one more: four step lists exported the review page before their last journal write. No
+migration; `schema_version` stays 7. **What a reader of a tool result or a log line sees change
+is named first.**
+
+### Changed
+- **The trace line opens `<utc> version=<x>`** (plan 151): the hook's own release, read from the
+  bundle's manifest, on a printed and on a silent line. The tail is still `session=<id>`. A
+  script that takes `source=` by POSITION breaks; read the line by key. A line with no
+  `version=` was written by a hook older than 5.6.0, which a session that has not reloaded
+  still runs.
+- **Three ceremonies change their step order** (plan 152): `phase-close` exports after its
+  closing entry, `release-close-out` after its bind, `skill-promote` after its closing note.
+  `session-handoff` no longer says to export before the handoff. The rule is one bullet in
+  `package-writes`: the export precedes the commit that carries the page, and
+  `package_verify` reads `review_current: true` right before it; after a bind the order is
+  bind, export, commit both.
+
+### Added
+- **`package_verify` reports `review_exported_by`** (plan 151): the release that exported the
+  review page, from a `<meta name="tamheed-version">` stamp `export_html` now writes beside the
+  digest. `null` on a page exported before 5.6.0. `review_current` keeps its meaning, so after
+  an upgrade it still reads `true` over the older page; the first export rewrites the page with
+  no data moved.
+- **Two sentences in the skills** (plan 152): a line carried from the previous handoff is
+  re-measured at its source or marked carried; a ruling that changes what a word means is
+  swept by the word, every hit read, in every file a session reads before acting, with ONE
+  reading rule for the dated records and the live files reworded.
+- **Lint 13 refuses the negated shape** (plan 152): a negation of "bind" gated on the emit, the
+  note or the roster.
+
+### Fixed
+- **Docs, corrected** (plan 153): enablement is read from the folder a session starts in
+  (cited), so a session started in a subfolder of an enabling project loads no plugin and
+  writes no line; a version folder in the cache says a release is installed, never that a
+  session runs it (the previous folder stays 14 days, cited).
+
 ## [5.5.0] - 2026-09-27
 
 **MINOR — the findings_36 batch: the fourth field round (plans 146–150; field report

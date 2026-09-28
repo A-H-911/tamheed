@@ -40,7 +40,11 @@ report a problem.
   at any writable file). The line ends `session=<id>` (v5.4, plan 141): the event's `session_id`,
   already the file name of that session's transcript on the same machine, never the entry. The id
   and `source` arrive on stdin, so each is written only when it is a plain token (`[A-Za-z0-9._-]`,
-  at most 64 characters) and `-` otherwise — a newline in either would forge a line. Every session
+  at most 64 characters) and `-` otherwise — a newline in either would forge a line. The line opens `<utc> version=<x>`
+  (v5.6, plan 151): the hook's own release, read from the bundle's manifest, under the same token
+  rule. The review page carries the same value as `<meta name="tamheed-version">`, written only
+  when it is a plain token and read back by an exact pattern, because `package_verify` echoes it
+  into a tool result. Every session
   that runs the plugin's hook in a project receives the resume block, a headless session another
   tool starts there included (a session runs the hook when it LOADED the plugin; one a tool
   starts with no settings loaded, as an Agent SDK caller may choose, loads none — v5.5, measured):

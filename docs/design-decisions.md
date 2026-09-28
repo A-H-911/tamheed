@@ -343,3 +343,66 @@ check to see it; the false trace sentence, written by the 5.4.0 sweep; the 5.4.0
 the field's memory files only, which is how the question's second carrier was missed; and four
 statements in this round's own plan that direct inspection overturned. Record: plan
 [`146-150-batch-findings-36.md`](../plans/146-150-batch-findings-36.md).
+
+## 18. Nine rulings from the fifth field round (2026-09-28, v5.6)
+
+The field's day on 5.5.0 (ACMP `findings_37`) returned no defect and no feedback row. Every
+predicted class it could exercise held. What came back: two brief errors, one question no
+instrument could answer, and three practices of the field's own that the skills did not yet
+state. The maintainer's review found a fourth thing the field had not reported: four step lists
+export the review page before their last journal write. The rulings (R36–R44):
+
+- **D-TRACE-VERSION — the trace line names the hook that wrote it.** The hook's two files are
+  byte-identical at the 5.4.0 and 5.5.0 tags, and a running session keeps the hook it loaded, so
+  the field could not say which hook had written a line. The line opens `<utc> version=<x>`, read
+  from the bundle's manifest by the hook itself, before any note is looked for: the hook imports
+  the server only once a note is found, and a silent line must carry the version too. The value
+  passes the token rule the session id passes. **The placement departs from a common convention**
+  for `key=value` lines, which appends a new key at the end: the tail is documented in two
+  releases, pinned by four assertions, and taught to the field as its instrument. The cost is a
+  reader that takes `source=` by position. Rejected: the version in the resume block — it would
+  move every session's character count for a fact the agent reads from `server_info`.
+- **D-EXPORTED-BY — the review page names the release that exported it.** `review_current`
+  compares the digest stamped in the page with the store's. After the upgrade it read true over a
+  page with no roster column. The export stamps `<meta name="tamheed-version">` beside the digest,
+  through the same `replace`, so the page module still imports nothing from the server; the stamp
+  is a constant of the release, no clock and no counter, so two exports stay byte-identical.
+  `package_verify` reports it as `review_exported_by`, `None` with no stamp. Rejected:
+  `review_current` going false on a page another release exported — thirteen lab lines and the
+  contract test read it as "the page's data is current", and every upgrade would read stale.
+  The key is not called "rendered by": v5.5 gave that word to the note's roster. A custom meta
+  name is the HTML Standard's own allowance ("Anyone can create and use their own extensions to
+  the predefined set of metadata names"), and it is read by an exact pattern.
+- **D-EXPORT-BEFORE-COMMIT — the commit is the anchor, not the ceremony.** Any store write makes
+  the page stale. `session-handoff` said to write the handoff after the export; `phase-close`
+  exported before its closing entry, `release-close-out` before its bind, `skill-promote` before
+  its closing note. The field's handoff commit carried a page without its handoff. One rule, in
+  `package-writes`: the export precedes the commit that carries the page, and `package_verify`
+  reads `review_current: true` right before it; after a bind the order is bind, export, commit
+  both, and that commit stays unbound. Rejected: "no write follows the export" — a bind names a
+  commit and must follow it. Not built: a lint that reads step order.
+- **D-WORD-RULING — a ruling that changes a word is swept by the word.** The field covered
+  fourteen dated rows with one reading rule in a decision row and reworded its live files. The
+  maintainer's sweep for the brief had matched five phrasings: it passed a memory line that
+  negated the verb and never opened the kickoff prompt. `written-claims` says: every form of the
+  word, word-bounded, every hit read, in every file a session reads before acting.
+- **D-CARRIED-LINE — a carried handoff line is re-measured or marked carried.** Two handoffs named
+  a change request that had been closed and replaced. The skill's rule on live numbers covered
+  figures, not a thing outside the store.
+- **D-LINT-NEGATED — lint 13 refuses the negated shape.** A memory line of the field's negated
+  the verb and gated it on the emit, and the v5.5 shapes passed it. The window stops at a full
+  stop, a semicolon and a colon: its first form hit a correct sentence joined to a clause about
+  the note. The lint refused this very entry in its first wording, which quoted the line.
+- **Not absorbed (R40).** A clause on the provenance of a ruling that arrived in a document, and
+  a clause that a failed prediction is reported as measured: each was one field instance, and
+  `operator-interview` and `measurement-evidence` already carry most of it.
+- **Not built.** A study of the review page's weight (the field's is 14.5 MB and nobody reported
+  a cost); a hook that walks up to find the note from a subfolder; a vocabulary scan at emit; a
+  line-ending pin for the bundle — a pull rewrites only the files it changes, so an installed
+  tree would hold mixed endings for a release.
+
+Owned by the maintainer: the 5.5.0 brief's sweep, which matched phrasings and read no prompt;
+its ninth class, which the brief's own close-out order made impossible; a question asked before
+its instrument was named; and, in this round's own plan, a rule that could not be satisfied, a
+count that was wrong, and a claim that a review tool was unavailable after one failed call.
+Record: plan [`151-155-batch-findings-37.md`](../plans/151-155-batch-findings-37.md).

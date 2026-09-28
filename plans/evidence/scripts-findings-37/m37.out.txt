@@ -1,0 +1,39 @@
+M3 installed 5.5.0: files=86 text=86 every-line-CRLF=86
+M4 bundle lines naming bind/binds/binding/bound: 152
+M5 field page: bytes=14525561 sections=11
+         1947  overview
+         4083  resume
+       836286  flow
+       897104  graph
+       182344  traceability
+      3331433  execution
+         5233  readiness
+        91968  lessons
+        49446  feedback
+      9033554  registers
+          246  gaps
+   head carries tamheed-digest: True
+   head carries tamheed-version: False
+M6 review_current lines in lab/scenario.md: 13
+M6 review_current lines in evals/evals.json: 0
+M6 review_current lines in tests/*.py: 10
+M7 negated pattern: controls 7 of 7 as wanted; files=76 hits=0
+   plugins/tamheed/skills/generate-report/SKILL.md:19: 1. `package_open("<package>")`, then `export_html()` — it writes
+   plugins/tamheed/skills/integrity-check/SKILL.md:50: 5. Check staleness: compare the freshness line in a fresh `export_html()` against
+   plugins/tamheed/skills/package-onboarding/SKILL.md:43: 6. The surfaces: `export_html()` and skim `review.html` — overview chips, the
+   plugins/tamheed/skills/package-writes/SKILL.md:6: progress_update, audit_record, work_bind, package_verify with record); before export_html or
+   plugins/tamheed/skills/package-writes/SKILL.md:85: flushes `data/*.jsonl`, and `export_html` / `handoff_emit` write package files beside it
+   plugins/tamheed/skills/package-writes/SKILL.md:91: makes the page stale — a closing entry, the handoff and a bind included — so `export_html` comes
+   plugins/tamheed/skills/phase-close/SKILL.md:46: "transition", subject_id "<PH-x>", actor "agent:<session>"), THEN `export_html()`
+   plugins/tamheed/skills/release-close-out/SKILL.md:48: 8. `export_html()` — the review surface ships with the release, exported AFTER the
+   plugins/tamheed/skills/session-handoff/SKILL.md:86: unrecorded. Then `export_html`, and commit the bind with the page: the handoff and the bind are
+   plugins/tamheed/skills/skill-promote/SKILL.md:63: promoted LL- ids; THEN `export_html()` — the Lessons section shows the Promoted
+   plugins/tamheed/skills/slice-review/SKILL.md:58: started). `export_html()` to refresh the committed review, report the verdict,
+   plugins/tamheed/references/artifact-catalog.md:177: | Review surface | `<package>/review.html` (+ `csv/`) | Derived | `export_html` — deterministic, zero-JS, committed |
+   plugins/tamheed/references/handoff.md:35: flushes `data/*.jsonl`, and `export_html` / `handoff_emit` write other package files — `work_bind`
+   plugins/tamheed/references/handoff.md:162: `file: "skill:<name> (<path>)"`), including the retired "export_html flushes" claim; and the
+   plugins/tamheed/templates/follow-up-prompts.template.md:89: `progress_update`. Then `gate_run()`, `export_html()`, and release notes from
+   plugins/tamheed/templates/follow-up-prompts.template.md:99: `export_html()` and read `review.html` — overview chips, execution progress, phase
+   plugins/tamheed/templates/package-readme.template.md:33: 1. **The human surface**: open `review.html` (regenerate with `export_html` — verdict
+   plugins/tamheed/prompts/README.md:198: FLUSHES `data/*.jsonl`, and `export_html` / `handoff_emit` write package files beside it —
+M8 export_html lines in the teaching text: 18

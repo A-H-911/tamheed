@@ -235,7 +235,7 @@ sequenceDiagram
     Note over A2: /clear, a compaction, a resume, a new session - never a plugin reload (v5.4, measured)
     H->>P: store.load (lockless, read-only)
     H-->>A2: the resume block - plain stdout, G-INJECT screened, 40 lines max;<br/>the lock line carries the store's OBSERVATION of a foreign holder (v5.3)
-    Note over H: TAMHEED_HOOK_LOG (opt-in, v5.3): one counts-only line per run into a file the operator created;<br/>the line ends with the session's id (v5.4), so it names the session that wrote it;<br/>only a session that loaded the plugin runs the hook (v5.5, measured)
+    Note over H: TAMHEED_HOOK_LOG (opt-in, v5.3): one counts-only line per run into a file the operator created;<br/>the line ends with the session's id (v5.4), so it names the session that wrote it,<br/>and opens with the hook's release (v5.6), so it names the hook that ran;<br/>only a session that loaded the plugin runs the hook (v5.5, measured)
     A2->>S: server_info (or package_open on a fresh session)
     S->>P: _resume_block: latest handoff + corrections, handoff_behind,<br/>open feedback, open slices, lock holder + observed (own lock: alive, no probe)
     S-->>A2: resume: {...}, skill: tamheed:package-writes
@@ -279,6 +279,14 @@ note's footer and the note-budget advisory say which word they mean, the review 
 roster, and a lint keeps the two apart. The same round corrected who writes a trace line: a
 session that loaded the plugin, which sessions started through the Agent SDK's Python entry on
 the measured machine had not.
+v5.6 (plans 151–155, the fifth field round) named the release on two surfaces that could not say
+it. The hook's two files were byte-identical at two tags, so a trace line of the old hook read as
+a line of the new one: the line now opens with the hook's release, read from the bundle's
+manifest. `review_current` compares a digest, so a page the older exporter wrote read current
+after the upgrade: the export stamps its release beside the digest and `package_verify` reports
+it as `review_exported_by`. The same round anchored the close-out on the commit: the export
+precedes the commit that carries the page, after the handoff and after a bind, so the diagram's
+"written LAST" names the last journal entry and the export follows it.
 
 **Self-containment is a hard requirement, not a preference.** Claude Code copies the plugin directory to a
 cache on install, so anything the skill reads or invokes at runtime must live inside `plugins/tamheed/` with
