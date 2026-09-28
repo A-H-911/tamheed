@@ -66,6 +66,19 @@ id resolves, and the damage stays until someone reads it.
   known set verbatim with `ids`; sweep by keyword with `search` (the result says which column
   `matched`, and `search` + `context` returns true `occurrences` — the census instrument over the
   journal); a `columns` projection says what it `omitted_columns`.
+- **Rows come in the id's TEXT order, and `limit` cuts from the lowest.** A limited read returns
+  the first ids of the family, never the newest rows, and ids of different widths interleave: a
+  four-digit id sorts among the three-digit ones. `after_id` takes the result's `next_after`; an id
+  you type there is compared as text and never means "from this entry on". What to read instead:
+  - the newest journal entries: the `resume` block's `last_entries` (three) and `handoff_behind`
+    (a count); `readiness_check`'s `handoff-current` names the work entries written after the
+    latest handoff, up to its cap of 50 — read them with `ids`;
+  - the verdicts: `gate_run`'s `audit_evidence` (three counts over each active criterion's latest
+    verdict, with the narrated and the ungraded ids) and `readiness_check`'s `acs-met` list.
+  No tool returns "the last ten rows" of a family.
+  *Field evidence:* three teaching texts called a read limited to ten rows "the last recorded
+  activity" for two months; on a journal of fifteen hundred entries it returned the first ten. A
+  typed cursor meant as "from this entry on" returned entries hundreds of numbers older.
 - `trace_query(entity_id, direction, relation?)` for typed links; `server_info()` for the version, the
   root and the package header; `package_verify()` proves the on-disk store canonical (per-file
   byte-equality, foreign files, a citable digest); `record=true` (open package, passing verification)
@@ -153,6 +166,8 @@ id resolves, and the damage stays until someone reads it.
 
 - A commit whose whole content is a package write cannot cite its own sha. Never report the raw
   "unreferenced commits" set.
+- The close-out's last commit is one of them BY RULE: it carries a bind with the exported review
+  page (§4), and it stays unbound. It is not drift, and no audit, loop or drift pass binds it.
 - Match shas mechanically, not from commit messages: for each unreferenced commit, `git show
   --name-only` and bucket by path — the package directory (expected), docs, notes or other
   non-source files (out of scope), source or tests (a real candidate). Flag only the last bucket.

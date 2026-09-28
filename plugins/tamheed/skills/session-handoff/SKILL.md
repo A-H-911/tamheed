@@ -61,6 +61,11 @@ truncation marker and has to query for the rest — in this order:
   write.
 - **Quote live numbers from a query made after the last write**, never from memory of earlier in
   the session (`tamheed:measurement-evidence`).
+- **The handoff says what is true when it is written.** Its own commit, the bind and the export
+  come AFTER it, so it names them as following and never as done — no sha of a commit not yet
+  made, no "pushed", no "the page is current". The next session reads the commit from git and
+  the page from `package_verify`. *Field evidence:* a draft said the branch was pushed through
+  commits that did not exist yet, and called one step done and remaining in the same sentence.
 - **A line carried from the previous handoff is re-measured or marked carried.** Copying an
   awaiting item forward claims that it still stands. Re-read it at its source — a row through the
   tools, a thing outside the store (a change request, a pipeline run, a meeting) where it lives —

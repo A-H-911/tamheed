@@ -19,8 +19,10 @@ Register every piece of drift between reality and the `<package>` Tamheed packag
 
 1. `package_open("<package>")` if not already open.
 2. Enumerate what the package doesn't know: `git log --oneline -20` vs the recorded
-   `work_bind` refs; work done, decisions taken, problems found — list them ALL
-   before writing anything.
+   `work_bind` refs, each unreferenced commit classified by `git show --name-only`
+   (`tamheed:package-writes` §9) — a commit whose whole content is a package write, the
+   close-out's last commit included, is unbound by rule and is not an orphan; work done,
+   decisions taken, problems found — list them ALL before writing anything.
 3. Classify and register each item, in this order:
    - a bug that exists → `defect` row (`DEF-`, status Open, `found_in`);
    - needed work that is out of scope → `deferred-work` row (`DW-`) with severity and

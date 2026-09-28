@@ -2085,7 +2085,10 @@ def entity_query(type: str, id: str | None = None, status: str | None = None,
     `limit` truncates ROWS (never fields — there is NO field truncation anywhere in
     the query path; a payload cap is the CLIENT's, and a family of long-text rows
     will hit it); `total` is the exact size of the filtered set, so truncation is
-    never silent. To reach past a cut (findings_22 §1, plan 039): page with
+    never silent. Rows come in the id's TEXT order and `limit` cuts from the lowest:
+    a limited read returns the first ids, never the newest rows (the `resume` block
+    of `package_open` / `server_info` carries the newest journal entries). To reach
+    past a cut (findings_22 §1, plan 039): page with
     `after_id` (keyset — rows with id > after_id in the same byte order as the
     result; the result's `next_after` is the cursor for the next page, null on the
     last page); fetch a known set with `ids` (in id order, not request order —

@@ -60,10 +60,12 @@ the affected decision (`DEC-/ADR-`) and risk status, then continue Phase `PH-x`.
 
 ### Fresh-session refresher
 You are resuming **<project-name>** in a new session (or after a context clear/compaction).
-Orient through the package, not from memory: `package_open("<package>")`, `gate_run()`, then
-`entity_query("progress-entry", limit=10)` and `entity_query("audit-verdict", limit=10)` for
-the last recorded activity (a longer read pages: pass the result's `next_after` back as
-`after_id`; never read `data/*.jsonl` to dodge a payload cap). **Cross-check git**: `git log
+Orient through the package, not from memory: `package_open("<package>")` — its `resume` block
+carries the latest handoff and the three newest journal entries — then `gate_run()` (its
+`audit_evidence` reads each active criterion's latest verdict). For the last recorded activity
+read those entries with `entity_query("progress-entry", ids=[...])`, never with a bare `limit`:
+rows come in the id's text order, so a limited read returns the OLDEST rows (never read
+`data/*.jsonl` to dodge a payload cap). **Cross-check git**: `git log
 --oneline -15` against the recorded `work_bind` refs — classify each unreferenced commit by
 `git show --name-only` (package-only writes cannot cite their own sha; only source-touching
 commits are candidates), flag those, and do not invent verdicts for them. Summarize current phase/slice, last completed `WBS-`, the

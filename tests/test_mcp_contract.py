@@ -2961,6 +2961,11 @@ class V4EngineTest(unittest.TestCase):
         for needle in ("NO field truncation", "after_id", "`ids`", "search",
                        "`total` is the exact"):
             self.assertIn(needle, doc)
+        # plan 156 (v5.6.1, findings_38): three teaching lines sold a limited read as "the
+        # last recorded activity"; it returns the LOWEST ids, and the description says so
+        self.assertIn("never the newest rows", doc)
+        self.assertEqual([r["id"] for r in srv.entity_query(
+            "risk", limit=2, columns=["id"])["rows"]], ["RISK-001", "RISK-002"])
 
     def test_audit_evidence_names_narrated_ids(self):
         """findings_22 §3 named the ids; findings_23 §2 (plan 040) fixed the

@@ -47,12 +47,19 @@ Run a read-only integrity check on the `<package>` Tamheed package:
    rows too (`entity_query("defect", status="Fixed", search="operator")` and the
    closed `deferred-work` rows): a decision recorded inside a closed defect is
    invisible to every decision-register sweep — report each as a missing `DEC-`.
-5. Check staleness: compare the freshness line in a fresh `export_html()` against
-   `git log -1` — if git is ahead of the package's recorded activity, the package
-   is stale; recommend a progress sync.
+5. Check staleness: export to a path OUTSIDE the repository, in the system's temporary
+   folder — `export_html(output="<that folder>/review.html")` — and compare the freshness
+   line of the file at the result's `path` against `git log -1`: if git is ahead of the
+   package's recorded activity, the package is stale; recommend a progress sync. A bare
+   `export_html()` rewrites the package's committed page and `csv/`, and this run changes
+   nothing.
 6. **Cross-check git against the bindings**: `git log --oneline -15` vs the recorded
-   `work_bind` refs — list package-relevant commits with no recorded binding (drift;
-   recommend `/tamheed:drift-register`). Do NOT invent records for them.
+   `work_bind` refs, each unreferenced commit classified by `git show --name-only`
+   (`tamheed:package-writes` §9). A commit whose whole content is a package write — the
+   close-out's last commit, a bind with the exported page, included — is unbound by rule:
+   list only the commits that touch source or tests (drift; recommend
+   `/tamheed:drift-register`), and state the discriminator even when the list is empty.
+   Do NOT invent records for them.
 7. `readiness_check("package")` — report the blocking/advisory findings as data
    (this run resolves nothing).
 8. **Verify any recent repair**: if rows were repaired since the last check (a

@@ -29,7 +29,8 @@ owner: <name-or-role>
   `DEC-`/`ADR-` rows are FINAL; do not re-litigate settled decisions.
 - **Where you are now:** the `resume` block `package_open` / `server_info` return (the latest
   `handoff` journal entry with its corrections — the plugin's SessionStart hook prints it), then
-  `gate_run()` + `readiness_check(scope)` + the latest `progress-entry` rows — never a stale copy
+  `gate_run()` + `readiness_check(scope)` + the newest journal entries the block names
+  (`last_entries`; a read cut by `limit` returns the OLDEST rows) — never a stale copy
   in this file. A status sentence written here ("phase N complete", "N criteria Met") goes stale
   on the next write and then reads as current; `handoff_emit` reports such sentences and id-dense
   paragraphs in this file (`restated_content`) so they can be replaced by the query.

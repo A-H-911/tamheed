@@ -62,14 +62,14 @@ file teaches AUTHORING project prompts:
 | `slice-kickoff` | Start the next open slice plan-first (STOP for approval, then AC-first execution) |
 | `progress-sync` | Record completed work: progress entries, bindings, evidenced verdicts, typed scope changes |
 | `defect-triage` | A bug surfaced: `DEF-` row BEFORE the fix, then fix/audit/bind/close the loop |
-| `drift-register` | Work happened unrecorded: classify everything into DEF-/DW-/SC-first + progress/bindings |
+| `drift-register` | Work happened unrecorded: classify everything into DEF-/DW-/SC-first + progress/bindings (a commit whose whole content is a package write is unbound by rule, never an orphan) |
 | `slice-review` | Slice completion: `entity_export` the ACs first (a committed slate quotes the file), audit ACs with evidence, bind commits, `readiness_check("slice")`, stop at the gate |
 | `phase-close` | Phase exit: phase-scope readiness blocking-clean, milestones, human GATE- confirmations, the guarded transition |
 | `release-close-out` | Package-scope readiness blocking-clean, human gates recorded, notes, bind, export, close |
 | `replan-deferred` | Deferred-work triggers review: SC- first, activate, wire edges, STOP on new scope |
 | `skill-promote` | Operator-run promotion interview: cluster Approved lessons → name/trigger/edge-cases/level → operator approves content → write the `SKILL.md` → `SKL-` row + `Promoted` flips (`operator_confirm`) |
 | `register-liveness` | Readiness advisories piling up — the amber-list sweep, run on a cadence (incl. `amends` merges, Merged-last, and the note-budget promotion candidates) |
-| `integrity-check` | Read-only audit: `package_verify` (the canonical round-trip, foreign files, digest), gates, counts, trace spot-checks, narrated + ungraded verdicts by id, rulings buried in closed rows, staleness + unbound commits — reads through the tool (`after_id`/`ids`/`search`), never the files |
+| `integrity-check` | Read-only audit: `package_verify` (the canonical round-trip, foreign files, digest), gates, counts, trace spot-checks, narrated + ungraded verdicts by id, rulings buried in closed rows, staleness (an export to a path outside the repository) + source-touching commits with no binding — reads through the tool (`after_id`/`ids`/`search`), never the files |
 | `generate-report` | Export + how to read `review.html` (nav, folded tables, freshness) |
 | `loop-iteration` | Fully-auto: ONE unattended pass ending in the machine-parseable `ITERATION:` block |
 | `loop-guard` | Fully-auto: the stop conditions — scope decisions and forced transitions always need a human |

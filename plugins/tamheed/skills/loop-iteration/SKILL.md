@@ -19,10 +19,15 @@ conditions override everything here.
 > the slash command names another (`$ARGUMENTS`). Recording obligations: the note's table.
 Execute ONE iteration against the `<package>` Tamheed package, no pauses:
 
-1. Orient: `server_info` → `package_open("<package>")` → `gate_run()` →
-   `entity_query("progress-entry", limit=10)` and `git log --oneline -10` cross-check
-   (unbound package-relevant commits are drift — register them via the drift-register
-   steps, `${CLAUDE_PLUGIN_ROOT}/skills/drift-register/SKILL.md`, before new work).
+1. Orient: `server_info` → `package_open("<package>")` (its `resume` block names the
+   latest handoff and the three newest journal entries — never a read cut by `limit`,
+   which returns the OLDEST rows) → `gate_run()` → `git log --oneline -10` cross-check,
+   classifying each unreferenced commit by `git show --name-only` (`tamheed:package-writes`
+   §9): a commit whose whole content is a package write — the close-out's last commit, a
+   bind with the exported page, included — is unbound by rule and is NEVER bound here;
+   only a commit that touches source or tests is drift — register it via the
+   drift-register steps, `${CLAUDE_PLUGIN_ROOT}/skills/drift-register/SKILL.md`, before
+   new work.
 2. Check the brakes: evaluate every loop-guard stop condition. Any of them true →
    record the reason as a final `progress_update`, `package_close()`, and emit the
    ITERATION block with `stop=<reason>` — do nothing else.

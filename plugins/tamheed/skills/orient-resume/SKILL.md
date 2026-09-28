@@ -43,8 +43,12 @@ Orient yourself on this project's Tamheed package before doing anything else:
    word (interview, never decide); Confirmed rows not yet Reported are owed to upstream
    (`entity_export("feedback.json", args={"type": "feedback"})` into the findings).
    A function you find missing this session is a new `FB-` row, never a script.
-   Recent state: `entity_query("progress-entry", limit=10)` and
-   `entity_query("audit-verdict", limit=10)` — what was the last recorded activity?
+   Recent state — what was the last recorded activity? The resume block's `last_entries`
+   names the three newest journal entries, and `readiness_check`'s `handoff-current` the
+   work entries written after the latest handoff: read them with
+   `entity_query("progress-entry", ids=[...])`. The verdicts: `audit_evidence` in step 3's
+   `gate_run` result. Never a read cut by `limit`: rows come in the id's text order, so it
+   returns the OLDEST rows (`tamheed:package-writes` §3).
 5. **Cross-check git against the package** (the package is the state; git is the
    evidence): run `git log --oneline -15` and match each commit's short AND full sha
    against the recorded `work_bind` refs mechanically (`entity_query("progress-entry",
