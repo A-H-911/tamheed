@@ -66,10 +66,13 @@ id resolves, and the damage stays until someone reads it.
   known set verbatim with `ids`; sweep by keyword with `search` (the result says which column
   `matched`, and `search` + `context` returns true `occurrences` — the census instrument over the
   journal); a `columns` projection says what it `omitted_columns`.
-- **Rows come in the id's TEXT order, and `limit` cuts from the lowest.** A limited read returns
-  the first ids of the family, never the newest rows, and ids of different widths interleave: a
-  four-digit id sorts among the three-digit ones. `after_id` takes the result's `next_after`; an id
-  you type there is compared as text and never means "from this entry on". What to read instead:
+- **Rows come in id order — by prefix, then by the id's first number — and `limit` cuts from the
+  lowest.** A limited read returns the first ids of the family, never the newest rows. `after_id`
+  returns the rows AFTER an id in that same order: the result's `next_after`, or an id you type,
+  which need not name a row (the cut excludes the id itself: to read from an entry on, type the
+  id one below it). Only an id's FIRST number counts; what follows it orders as text, so under
+  one leading number a dotted id's tenth part comes before its second. For recent state, what
+  to read:
   - the newest journal entries: the `resume` block's `last_entries` (three) and `handoff_behind`
     (a count); `readiness_check`'s `handoff-current` names the work entries written after the
     latest handoff, up to its cap of 50 — read them with `ids`;
@@ -77,8 +80,17 @@ id resolves, and the damage stays until someone reads it.
     verdict, with the narrated and the ungraded ids) and `readiness_check`'s `acs-met` list.
   No tool returns "the last ten rows" of a family.
   *Field evidence:* three teaching texts called a read limited to ten rows "the last recorded
-  activity" for two months; on a journal of fifteen hundred entries it returned the first ten. A
-  typed cursor meant as "from this entry on" returned entries hundreds of numbers older.
+  activity" for two months; on a journal of fifteen hundred entries it returned the first ten.
+  Until v5.7 the order was the id's text order: a typed `after_id` returned entries hundreds of
+  numbers older, and once it dropped three matching entries with no sign in the result.
+- **The two journal tools take the keys they name, and refuse any other.** `progress_update`
+  items: `entry` (required), `event_type`, `subject_id`, `actor`, `corrects`, `phase_id`,
+  `slice_id`. `audit_record` items: `ac_id` and `verdict` (required), `evidence`, `verified_by`,
+  `verification_method`, `against_commit`. The server assigns the id and the time. A key outside
+  the list refuses the whole batch by name and writes nothing.
+  *Field evidence:* until v5.7 such a key was dropped in silence. One journal write lost its
+  attributes on a write that returned `ok`, and `summary` sent for `entry` came back as the
+  database's own error.
 - `trace_query(entity_id, direction, relation?)` for typed links; `server_info()` for the version, the
   root and the package header; `package_verify()` proves the on-disk store canonical (per-file
   byte-equality, foreign files, a citable digest); `record=true` (open package, passing verification)

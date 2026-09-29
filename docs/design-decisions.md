@@ -469,3 +469,79 @@ on a copy blind to ignored files; the 5.6.0 order rule, shipped without a sweep 
 that read binds; and, in this round's own plan, a count that was too low, a test weaker than its
 claim, a false "only", and a tool's result described as more than it returns.
 Record: plan [`156-159-batch-findings-38.md`](../plans/156-159-batch-findings-38.md).
+
+**A correction of §19, dated 2026-09-29.** D-LIMIT-ORDER says the rule "now stands in the
+tool's description". It stood in `entity_query`'s docstring, which no client receives: the
+server registers the second element of each `TOOLS` entry. The rule reached sessions through
+`package-writes` and the other teaching texts, never through the tool. §20 records what changed.
+The same entry lists number order in `entity_query` as rejected, for two reasons. §20 answers
+both and reverses it.
+
+## 20. Five rulings from the seventh field round, the closing one (2026-09-29, v5.7)
+
+The field's session on 5.6.1 (ACMP `findings_39`) returned no defect, no feedback row and no
+numbered brief error. Every class held. It reported one read worth more than the rest: a typed
+`after_id` that had dropped three matching entries on 2026-09-11 with no sign in the result.
+The maintainer's review added a census of the field's 5,226 tool calls and one error of its own,
+the largest of the round. The rulings (R51–R55):
+
+- **D-ONE-ID-ORDER — the query tool takes the review page's order.** The page has ordered ids
+  by prefix, then the id's first number, then the id since plan 057. `entity_query` ordered the
+  same families as text. It now orders and cuts by the page's rule, and one function serves
+  both: it lives in the server and the page imports it. §19 rejected this for two reasons.
+  *A contract test pins text order*: the test described the old behaviour and argued nothing
+  for it. *The cut and the order must share one collation for a walk to be complete*: true, and
+  met. The cut is the order's own comparison. It is written as three OR branches over the
+  tuple (prefix, number, id) and not as a row-value comparison, so a reader finds no tuple in
+  the statement. SQLite computes the bound's prefix and number with the order's expressions;
+  Python computes no key, because a second implementation could part from SQLite's cast on a
+  string no family holds. **The ceiling:** only an id's first number counts, and what follows
+  it orders as text, so under one leading number a dotted id's tenth part precedes its second.
+  The page has always ordered them so. Rejected: full natural order, which would move the
+  committed page of every package that holds such ids. Not built: a descending read (R50
+  stands). Unchanged: the canonical JSONL and the CSV, which are committed bytes, and the
+  eleven id lists of the gates and the readiness rules, which choose no rows.
+- **D-REFUSE-THE-UNKNOWN-KEY — a journal tool refuses what it does not take.**
+  `progress_update` and `audit_record` read the keys they knew and dropped the rest. In the
+  field one write lost its attributes on a result that said `ok`. An item that is no object,
+  an item with a key outside the list, and an item without a key the store requires are now
+  refused by name, before any insert. The refusal adds no rule of its own: an empty entry is
+  a value, and a vocabulary is the store's check to refuse. A null optional key means an
+  absent one. Rejected: a typed item schema, which would put the keys where the SDK refuses
+  them. The contract suite runs without the SDK, so nothing in the gate would test that
+  refusal. Not built: the valid set in the "unknown columns" message, whose last refusal in
+  the field was on 2026-09-21.
+- **D-DESCRIPTION-IS-REGISTERED — what a client reads is the registered text.** The server
+  passes the second element of each `TOOLS` entry to the SDK as the tool's description. A
+  docstring is the maintainers' text. Since v4.4 the changelog had credited docstrings with
+  teaching sessions, and v5.6.1 shipped a rule in one and called it the description. Three
+  tools now register a short contract: the order for `entity_query`, the item keys for the two
+  journal tools, each built from the constant the refusal reads. The client's cap is 2,048
+  characters, so the texts are short and lead with what matters. The selftest compares what
+  the SDK lists with the registry, in CI and wherever the suite runs with the SDK present.
+  Not built: contracts for the other sixteen tools, and server instructions, a field the
+  server has never set.
+- **D-REPORT-A-FAILURE — the field reports what fails, through the package.** Seven rounds
+  asked the field for a report after each release. From this release a brief lists the
+  classes with their conditions, the field checks them in an ordinary session, and a class
+  that fails becomes a feedback row: written `Proposed`, confirmed on the operator's word.
+  No report is asked when nothing fails.
+- **D-CENSUS-HORIZON — a count over a pruned store names its horizon.** The harness sweeps
+  old session records. Four counts of the same folders in two days read 685, 673, 667 and
+  678, the third taken by the field and the first three with the same count of calls.
+  `measurement-evidence` says what to state beside such a count. No number of days is taught:
+  the vendor's own sentence on the sweep was not located, only reports in its tracker.
+
+The release is a MINOR. A public result's order changes, two tools grow stricter and three
+descriptions grow. None touches the store's shape, the identifier scheme or the handoff
+contract, which are this repo's triggers for a MAJOR. The case against was named at the
+approval: a caller that relied on text order, or that passed an ignored key, meets a change.
+The repo's suites hold no such caller; the field held one such write.
+
+Owned by the maintainer: the rule shipped in a docstring and called delivered; a census that
+counted any read with `after_id` as safe and never looked inside the class; the recommendation
+to leave `after_id` to teaching, one round before the field measured the drop; the 5.6.1
+brief's row that left out `csv/`; a front door that named a key loosely; and, in this round's
+own plans, the docstring error repeated, a pattern search called a census, and "no committed
+byte moves" said of a release that reorders an exported file.
+Record: plan [`160-164-batch-findings-39.md`](../plans/160-164-batch-findings-39.md).

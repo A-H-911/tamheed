@@ -4734,7 +4734,9 @@ def export_html(output: str | None = None) -> dict:
     Deterministic (same DB state and same UTC date => byte-identical file: the Readiness
     section states the date it was evaluated on, and two of its rules read the calendar),
     so it is COMMITTED to the package's repo by default: writes <package>/review.html
-    unless `output` overrides."""
+    unless `output` overrides. The per-table `csv/` folder is written BESIDE the page at
+    any `output` (the page's links are relative); in a caller-chosen folder nothing is
+    ever removed."""
     if guard := _need_open():
         return guard
     import export_html as viewer

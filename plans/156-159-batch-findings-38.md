@@ -98,6 +98,14 @@ Named at the approval and approved with the plan: the number 5.6.1; one sentence
 | [158](158-stamp-then-lab-beat-29.md) | the stamp, lab beat 29, evals | `e6fe055` |
 | [159](159-release-v561.md) | the replay, the sweep, the brief, the tag | the close-out commit |
 
+> **Correction, 2026-09-29 (findings_39, O13).** The row of plan 156 says the order rule
+> went into "the tool's description". It went into `entity_query`'s docstring. The server
+> registers the second element of each `TOOLS` entry as the description, and a docstring
+> reaches no client, so that sentence reached no session. The skills and the templates did.
+> The design plan of this batch, in its weakness W63 and at its approval, called the
+> docstring "the text every client shows"; that was false. Corrected in v5.7.0, plan 160:
+> [160-164-batch-findings-39.md](160-164-batch-findings-39.md).
+
 ## 4. Errors owned
 
 | # | Error | Age | Where it is corrected |

@@ -66,6 +66,12 @@ moves, and the number is true of a set that excludes the answer.
 - **State the denominator out loud and ask what it excludes**: which file types, directories,
   spellings, quoting. Report it with the finding — *"twelve of fourteen paged reads"*, not *"twelve
   uncapped reads"*.
+- **A census over a store that something else prunes holds for the day it was taken.** State its
+  horizon beside the count: the oldest and the newest item it read. "Never" over such a store
+  means "not within the horizon". A count of session records read 685, 673, 667 and 678 on four
+  runs in two days, the first three with one and the same count of calls inside them: the
+  harness swept old records and wrote new ones between the runs, and nothing in the counts
+  said so.
 - **A zero is the most dangerous result**, because absence is what people act on. When a scan returns
   zero for something a record claims exists, treat the **scan** as the prime suspect before the record.
 - **Choose a control spelled the same way as the term under test**, and **from OUTSIDE the scope you

@@ -64,7 +64,7 @@ Orient through the package, not from memory: `package_open("<package>")` — its
 carries the latest handoff and the three newest journal entries — then `gate_run()` (its
 `audit_evidence` reads each active criterion's latest verdict). For the last recorded activity
 read those entries with `entity_query("progress-entry", ids=[...])`, never with a bare `limit`:
-rows come in the id's text order, so a limited read returns the OLDEST rows (never read
+rows come in id order and `limit` cuts from the lowest, so a limited read returns the OLDEST rows (never read
 `data/*.jsonl` to dodge a payload cap). **Cross-check git**: `git log
 --oneline -15` against the recorded `work_bind` refs — classify each unreferenced commit by
 `git show --name-only` (package-only writes cannot cite their own sha; only source-touching

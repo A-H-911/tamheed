@@ -198,7 +198,7 @@ picks, never database rows; `handoff_emit(target_dir)` screens every package pro
 note carrying the mandatory recording-obligations table. See `references/handoff.md`.
 
 **Update cycles (stage 21).** The executing agent (or operator) calls `progress_update` (typed
-events: event_type/subject/actor), `audit_record` (evidence + verified_by + verification_method +
+events: `event_type`, `subject_id`, `actor`; a key the tool does not take is refused), `audit_record` (evidence + verified_by + verification_method +
 against_commit — an evidenced verdict beats a narrated one), and `work_bind`
 ("this commit satisfies FR-x/AC-y/SL-z"). Verdicts cascade: all ACs of a requirement `Met` →
 the requirement auto-advances. Scope changes follow the D-UPDATE flow in `references/modes.md` —

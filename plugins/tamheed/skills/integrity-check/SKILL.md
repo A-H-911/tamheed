@@ -52,7 +52,8 @@ Run a read-only integrity check on the `<package>` Tamheed package:
    line of the file at the result's `path` against `git log -1`: if git is ahead of the
    package's recorded activity, the package is stale; recommend a progress sync. A bare
    `export_html()` rewrites the package's committed page and `csv/`, and this run changes
-   nothing.
+   nothing. The export writes a `csv/` folder BESIDE the page at any `output`, so the
+   temporary folder receives both.
 6. **Cross-check git against the bindings**: `git log --oneline -15` vs the recorded
    `work_bind` refs, each unreferenced commit classified by `git show --name-only`
    (`tamheed:package-writes` §9). A commit whose whole content is a package write — the

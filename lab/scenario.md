@@ -849,6 +849,43 @@ must fire; the resulting package replaces `evals/sample-results/lab-tracker/pack
       as FOLLOWING it); then `export_html`; `gate_run` ready; `package_verify()` green
       (`verified: true`, `dirty: []`, `foreign: []`, `review_current: true`,
       `review_exported_by: "5.6.1"`); `package_close`; no `data/.lock` remains.
+30. **The v5.7.0 continuation — the seventh field round: one id order, and the write tools
+    refuse what they do not take.** The package opens at `schema_version` 7 (no migration in
+    5.7.0) with the resume block naming beat 29's final handoff. The scratch phase runs FIRST,
+    with hard assertions; the fixture's note then quotes what it observed.
+    ✔ BEFORE THE FIRST EXPORT: `package_verify("package")`, package closed, reads
+      `review_current: true` and `review_exported_by: "5.6.1"` over the page 5.6.1 exported.
+    ✔ THE FIRST EXPORT, scratch copy, before any write: the stamp's line changes from `5.6.1`
+      to `5.7.0` and the digest is unchanged. ONE line changes on the UTC date the page
+      carried, TWO on a later date, and no other: the page held the id order already.
+    ✔ THE ORDER (plan 160), scratch copy. The lab's ids are all of one width, so a check on
+      them would pass under either order: two risks of two widths, `RISK-998` and
+      `RISK-1000`, are written FIRST. Then `entity_query("risk")` returns the family in number
+      order; `after_id="RISK-998"` returns `RISK-1000`, where the ids compared as text return
+      nothing; a bound that names no row (`RISK-999`) returns the rows after it; a walk at
+      `limit=2` is complete; `entity_query("progress-entry", limit=10)` still returns the ten
+      lowest ids, none of them among the resume block's `last_entries`.
+    ✔ THE REFUSALS (plan 161), scratch copy: `progress_update` with `summary` for `entry`,
+      with `custom_attributes`, with no `entry`, with one bad item of two, and with an item
+      that is no object; `audit_record` with a key it does not take and with no `verdict`.
+      Each is refused in words — never the database's raw text — naming the key and the keys
+      the tool takes; the journal's and the verdicts' counts hold and the digest does not move.
+    ✔ THE DESCRIPTIONS (plans 160, 161): the registered description of each of the two write
+      tools names every key of its constant and fits the client's cap.
+    ✔ THE AUDIT'S EXPORT (plan 162), scratch copy: `export_html(output=<a path outside the
+      package>)` writes the page there with `csv/` BESIDE it, the same files by name as the
+      package's; the package's `review.html` and every `csv/` file keep the hash they had.
+    ✔ THE EMISSION (plan 163): `handoff_emit(<scratch target>, refresh_stock=true)` reports
+      `refreshed: ["prompts/README.md"]` (the guide now reads `tamheed v5.7.0`, its title the
+      only line changed), every scan empty; the second emit reports `CLAUDE.md` unchanged.
+    ✔ Close the beat with ONE `progress_update` note (actor `agent:lab-beat-30`, `event_type:
+      "note"`) quoting verbatim `a bound typed after RISK-998 returned RISK-1000`, `a key the
+      tool does not take was refused by name and nothing was written`, `an export to a path
+      outside the package wrote csv/ beside it` and `tamheed v5.7.0`; THEN the final handoff
+      (`event_type: "handoff"`, written LAST, naming the export and the checks as FOLLOWING
+      it); then `export_html`; `gate_run` ready; `package_verify()` green (`verified: true`,
+      `dirty: []`, `foreign: []`, `review_current: true`, `review_exported_by: "5.7.0"`);
+      `package_close`; no `data/.lock` remains.
 
 **Pass bar:** every ✔ observed; `gate_run` ready (or failing ONLY on deliberately-open
 items the scenario names); the eval runner's lab checks green. `readiness_check` is

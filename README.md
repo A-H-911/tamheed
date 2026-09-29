@@ -317,11 +317,11 @@ that row-level counts cannot see.
 | `package_create / package_open / package_close` | Lifecycle + single-writer lock (a refusal reports what was observed about the holder) |
 | `package_unlock(name, confirm?)` | Report a lock's holder; `confirm=true` (operator's words) removes a dead holder's lock, journaled |
 | `entity_upsert(entities[])` | Batch writes — full rows (or the NOT NULL columns: omitted columns of an existing row are preserved), per-item verdicts; `expect_unchanged` refuses transport drift on a sent column; `retire` removes a wrong edge; `substitute` changes one token without the row passing through the agent (refused when it would widen or compound); an update reports `changed_columns` with text lengths; a `feedback` row (`FB-`) exists on the operator's word and is journaled at every move; the header (`type: "package"`) names `go_no_go` only on the word |
-| `entity_query(type, …)` | Targeted rows + `total`, in the id's text order (`limit` cuts from the lowest, never the newest rows); `after_id` pages, `ids` fetches a known set, `search` sweeps by keyword; a projection reports `omitted_columns`, a search reports which column `matched` |
+| `entity_query(type, …)` | Targeted rows + `total`, in id order — prefix, then the id's first number, the review page's rule since v5.7 (`limit` cuts from the lowest, never the newest rows); `after_id` returns the rows after an id, typed or taken from `next_after`; `ids` fetches a known set, `search` sweeps by keyword; a projection reports `omitted_columns`, a search reports which column `matched` |
 | `trace_query(entity_id, …)` | Typed traceability links |
 | `gate_run()` | Mechanical quality-gate verdict incl. the blocking G-REL relation gate |
 | `readiness_check(scope, id?)` | Deep lifecycle readiness at a close boundary — "is this actually DONE?" |
-| `progress_update / audit_record / work_bind` | The execution-tracking loop |
+| `progress_update / audit_record / work_bind` | The execution-tracking loop; since v5.7 the first two refuse an item key they do not take, by name, and their registered descriptions name the keys |
 | `package_migrate / package_adopt` | Staged in-place v3→v4 conversion / brownfield onboarding |
 | `package_verify(name?, record?, expect?)` | The canonical round-trip as a tool — per-file byte-equality, foreign files, a citable digest; `expect=` answers "is this slate still current", `review_current` whether `review.html` is, `review_exported_by` which release exported it (v5.6) |
 | `entity_export(path, tool?, args?)` | A read tool's WHOLE result as a digest-stamped JSON file under `exports/` — the sanctioned read for committed scripts that quote the store |

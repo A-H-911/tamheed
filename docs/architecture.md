@@ -92,7 +92,12 @@ is open, and a sha256 digest of the canonical files that `record=true` journals 
 (tamper-evidence proper — a hash chain, signatures, an external anchor — is deliberately out of scope).
 The read side matches: `entity_query` pages (`after_id`/`next_after`), fetches known sets (`ids`), and
 sweeps by keyword (`search`), so a register of any size is reachable through the tool and the files
-stay what they are — the canonical form, never the read path. A committed script that must quote
+stay what they are — the canonical form, never the read path. Since v5.7 it orders ids by the
+review page's rule — prefix, then the id's first number — and the two are one function. **What a
+client knows of a tool is its registered description**, the second element of the server's `TOOLS`
+entry; a docstring reaches no client, and the client caps a description at 2,048 characters. Three
+tools register a contract there (`entity_query`, `progress_update`, `audit_record`), and the selftest
+compares what the SDK lists with the registry. A committed script that must quote
 the store byte-exact — a review slate, a docket — has the same rule and its own route (v4.7,
 findings_24): **`entity_export`** writes a read tool's whole result to a deterministic,
 digest-stamped JSON file under `<package>/exports/`, and the script quotes from that file; the

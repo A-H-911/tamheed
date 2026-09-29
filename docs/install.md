@@ -243,6 +243,17 @@ that is not the one in service.
    exported before 5.6.0. Export after the LAST write of the close-out and before the commit that
    carries the page (`tamheed:package-writes`). `data/*.jsonl` must not change from an idle
    open and close; `package_verify()` confirms it.
+6. **What a session meets at 5.7.0** — no migration, no store shape change, and the page, the
+   CSV and the JSONL keep their order:
+   - `entity_query` returns rows in the review page's order (prefix, then the id's first
+     number). Only a family whose ids have different widths, or a dotted tail, shows a
+     different order than before; an `entity_export` that wraps the tool follows it. A script
+     that reads an export by position, and not by id, is the one thing to check.
+   - `progress_update` and `audit_record` refuse an item key they do not take. A write that
+     used to pass with an ignored key is refused by name, and nothing is written.
+   - The descriptions of those three tools name the rule and the keys. A client shows them
+     only after the reload: read the tool's description in the client's own tool listing.
+     What a client receives is the REGISTERED description, never a docstring.
 
 ## Claude Code — manual / standalone
 

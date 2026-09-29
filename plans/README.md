@@ -176,6 +176,26 @@ devil's-advocate review; execution order is the row order below). Status values:
 | 089 | [Lab beat 18](089-lab-beat-18-findings-27.md) | 085-088 + full test (15/15 vs 0/15 on `v4.10.0`; 9 suites; selftest) | DONE `762b98b` — 9 new assertions, each failing on the pre-beat fixture; D-1 registry-sync unscripted, F-3 fixed |
 | 090 | [Release v4.11.0](090-release-v4110.md) — plan-058 recipe + the fixture follows the stamp | 089 | DONE — 2026-09-22, tag `v4.11.0` (SHA in the tag) |
 
+### Field cycle findings_39 -- plans 160-164 -> v5.7.0 (2026-09-29; maintainer-executed) -- the closing round
+
+Master record: [160-164-batch-findings-39.md](160-164-batch-findings-39.md) (the approved plan, revision
+3 after two devil's-advocate reviews, 5 interview rulings R51–R55; execution order 160 → 161 → 162 → 163
+→ 164). The field returned no defect, no feedback row and no numbered brief error. It reported one read
+that had dropped rows in silence. The batch: `entity_query` takes the review page's id order, the two
+journal tools refuse an item key they do not take, and three tools register a contract where a client
+reads it. The round's largest finding is the maintainer's own: v5.6.1 shipped a rule in a docstring and
+called it the tool's description; a docstring reaches no client. No migration. By R53 this is the last
+round that asks the field for a report: [briefs/acmp-5.7.0.md](briefs/acmp-5.7.0.md).
+Status values: PLANNED / IN PROGRESS / DONE.
+
+| # | Plan | Depends on | Status |
+|---|---|---|---|
+| 160 | [The query tool takes the page's order, and says so to the client](160-the-pages-order-in-the-query-tool.md) | — | DONE — 2026-09-29 `67a537d` |
+| 161 | [Two write tools refuse an unknown key, and name their keys to the client](161-the-write-tools-refuse-an-unknown-key.md) | 160 | DONE — 2026-09-29 `2607652` |
+| 162 | [Teaching, docs and the corrections of 5.6.1](162-teaching-docs-and-the-corrections-of-561.md) | 161 | IN PROGRESS |
+| 163 | [The version stamp, then lab beat 30 + evals](163-stamp-then-lab-beat-30.md) | 162 + full gate | PLANNED |
+| 164 | [Tag v5.7.0, the brief file, close-out, housekeeping](164-release-v570.md) | 163 | PLANNED |
+
 ### Field cycle findings_38 -- plans 156-159 -> v5.6.1 (2026-09-28; maintainer-executed)
 
 Master record: [156-159-batch-findings-38.md](156-159-batch-findings-38.md) (the approved plan, revision

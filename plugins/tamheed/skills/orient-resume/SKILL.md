@@ -47,8 +47,8 @@ Orient yourself on this project's Tamheed package before doing anything else:
    names the three newest journal entries, and `readiness_check`'s `handoff-current` the
    work entries written after the latest handoff: read them with
    `entity_query("progress-entry", ids=[...])`. The verdicts: `audit_evidence` in step 3's
-   `gate_run` result. Never a read cut by `limit`: rows come in the id's text order, so it
-   returns the OLDEST rows (`tamheed:package-writes` §3).
+   `gate_run` result. Never a read cut by `limit`: rows come in id order and `limit` cuts
+   from the lowest, so it returns the OLDEST rows (`tamheed:package-writes` §3).
 5. **Cross-check git against the package** (the package is the state; git is the
    evidence): run `git log --oneline -15` and match each commit's short AND full sha
    against the recorded `work_bind` refs mechanically (`entity_query("progress-entry",

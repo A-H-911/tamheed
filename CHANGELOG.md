@@ -10,6 +10,67 @@ All notable changes to Tamheed are documented here. The format is based on
 
 ## [Unreleased]
 
+**MINOR — the findings_39 batch: the seventh field round, and the closing one (plans 160–164;
+field report findings_39).** The field ran 5.6.1 and returned no defect, no feedback row and
+no numbered brief error; every class held. What this release changes comes from one read the
+field measured and from the maintainer's own census of the field's tool calls. Two tools
+change what they return or accept, and three registered descriptions grow. **No store shape
+changes.** No migration; `schema_version` stays 7. The canonical JSONL, the CSV and the
+review page keep their order.
+
+### Changed
+- **`entity_query` orders and cuts by the review page's rule** (plan 160): prefix, then the
+  id's first number, then the id. Until now it ordered ids as text. A field read typed an id
+  into `after_id` and lost three matching rows with no sign in the result, because a
+  four-digit id sorts before a three-digit one as text. `after_id` now returns the rows after
+  an id by number, whether the caller typed it or took it from `next_after`, and the id need
+  not name a row. `limit` still cuts from the lowest, so a limited read never returns the
+  newest rows. Only an id's first number counts: what follows it orders as text, as on the
+  page. **What moves for a caller:** the row order of a family whose ids have different
+  widths or a dotted tail, in `entity_query` and in an `entity_export` that wraps it. A
+  cursor taken before the upgrade is an id and stays valid; a walk stays complete.
+- **`progress_update` and `audit_record` refuse an item key they do not take** (plan 161).
+  Until now a key outside the tool's list was dropped in silence, and a missing `entry` came
+  back as the database's raw text. The batch is refused by name, with the keys the tool
+  takes, and nothing is written. `id` and `occurred_at` are among the refused keys; the
+  server assigns both and never honoured a caller's. A null `event_type` takes the default,
+  as a null already did on every other optional key. The refusal adds no rule: an empty
+  `entry` is written as before. **What moves for a caller:** a write that passed with an
+  ignored key is refused.
+- **Three tools register a contract where a client reads it** (plans 160, 161):
+  `entity_query` states its order and what `limit` and `after_id` do; `progress_update` and
+  `audit_record` name their item keys, built from the constants the refusal reads. The other
+  sixteen descriptions keep their one line.
+- **The selftest compares what the SDK lists with the registry** (plan 160), and holds every
+  description under the client's cap of 2,048 characters. CI's smoke job runs it, and so
+  does the suite on a machine whose Python has the SDK.
+
+### Fixed
+- **A correction of 5.6.1, dated 2026-09-29.** The 5.6.1 entry below says "The tool's
+  description and `package-writes` now state the order". The rule stood in `entity_query`'s
+  DOCSTRING. The server registers the second element of each `TOOLS` entry as the tool's
+  description, and has since its first commit; a docstring reaches no client. The sentence
+  reached no session. `package-writes`, `orient-resume`, `loop-iteration` and the two
+  templates did reach them. The test that pinned the phrase read the docstring, so it passed
+  while the claim was false. The rule is registered now, and the test reads the registered
+  text.
+- **The front door names the journal's keys exactly** (plan 162). It said
+  "event_type/subject/actor"; the key is `subject_id`.
+- **`csv/` is written beside the page at any `output`** (plan 162): `export_html`'s
+  docstring, the read-only audit's staleness step and the server README say so. The 5.6.1
+  brief's row on an outside export had left it out, and the field noted it.
+
+### Added
+- **`measurement-evidence`: a census states its horizon** (plan 162). A count over a store
+  that something else prunes holds for the day it was taken.
+
+### Not changed, on purpose
+- No descending read: no tool returns the newest rows first. The resume block names the
+  three newest journal entries, and a typed `after_id` now reads from any entry on.
+- Full natural order. Only an id's first number counts.
+- The message of "unknown columns", and the descriptions of the other sixteen tools.
+- The eleven id lists of the gates and the readiness rules, in text order. None chooses rows.
+
 ## [5.6.1] - 2026-09-28
 
 **PATCH — the findings_38 batch: the sixth field round (plans 156–159; field report
