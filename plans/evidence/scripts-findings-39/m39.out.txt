@@ -1,0 +1,18 @@
+field head 24e59125: families with ids 27; each walks complete in the page's order and equals the independent key
+M41: families where text order and the page's order differ: ['progress_entries', 'wbs_items']
+M59: families whose ids carry more than one number (count of rows): {'wbs_items': (221, 261)}
+M38: transcript files 678; tamheed calls 5226; results paired 5226; refusals or errors 251; first 2026-08-29T03:58:38; last 2026-09-28T21:34:39
+M39: per day, calls and refusals: 2026-08-29 127/11; 2026-08-30 64/4; 2026-08-31 97/8; 2026-09-01 138/8; 2026-09-02 78/3; 2026-09-03 158/17; 2026-09-04 139/14; 2026-09-05 112/5; 2026-09-06 263/13; 2026-09-07 423/14; 2026-09-08 111/5; 2026-09-09 294/19; 2026-09-10 181/5; 2026-09-11 161/6; 2026-09-12 210/4; 2026-09-13 225/4; 2026-09-14 231/2; 2026-09-15 255/0; 2026-09-16 142/6; 2026-09-17 214/22; 2026-09-18 106/17; 2026-09-19 112/17; 2026-09-20 163/13; 2026-09-21 223/12; 2026-09-22 85/3; 2026-09-23 260/8; 2026-09-24 136/2; 2026-09-25 92/1; 2026-09-26 127/2; 2026-09-27 133/1; 2026-09-28 166/5
+M45: 'unknown columns' refusals of entity_query 44, last on 2026-09-21; items of entity_upsert refused for unknown columns 24, last on 2026-09-20
+M42: journal items written 453, refused 19; verdict items written 43, refused 9; written with a key the tool dropped: [('2026-09-07', 'progress_update', ['custom_attributes'])]; 'NOT NULL ... entry' errors on ['2026-09-03', '2026-09-28']
+the `after_id` calls where the text cut and the page's cut part, as classes:
+  2026-09-11 progress-entry after PE-950 limit 3 searched=True status=False text=2 page=3 dropped=['PE-1033'] over-reached=0
+  2026-09-15 wbs-item after WBS-39.99 limit 200 searched=True status=False text=72 page=59 dropped=[] over-reached=13
+  2026-09-17 progress-entry after PE-1204 limit 12 searched=False status=False text=12 page=4 dropped=['PE-1329'] over-reached=9
+  2026-09-23 progress-entry after PE-1345 limit 10 searched=False status=False text=10 page=5 dropped=[] over-reached=5
+  2026-09-27 progress-entry after PE-1500 limit 100 searched=False status=False text=100 page=5 dropped=[] over-reached=95
+  2026-09-27 progress-entry after PE-1495 limit 100 searched=True status=False text=8 page=2 dropped=[] over-reached=6
+  2026-09-28 progress-entry after PE-1499 limit 100 searched=True status=False text=100 page=15 dropped=[] over-reached=85
+  2026-09-28 progress-entry after PE-1499 limit 100 searched=True status=False text=62 page=5 dropped=[] over-reached=57
+  2026-09-28 progress-entry after PE-999 limit 5 searched=True status=False text=0 page=5 dropped=['PE-1033', 'PE-1037', 'PE-1054', 'PE-1080', 'PE-1095'] over-reached=0
+`after_id` calls replayed 83; the two cuts agree on 74; per family {'defect': 22, 'adr': 3, 'progress-entry': 14, 'slice': 1, 'lesson': 10, 'decision': 10, 'narrative-document': 1, 'acceptance-criterion': 4, 'wbs-item': 5, 'scope-change': 7, 'document-section': 1, 'deferred-work': 3, 'open-question': 2}

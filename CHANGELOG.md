@@ -10,6 +10,8 @@ All notable changes to Tamheed are documented here. The format is based on
 
 ## [Unreleased]
 
+## [5.7.0] - 2026-09-29
+
 **MINOR — the findings_39 batch: the seventh field round, and the closing one (plans 160–164;
 field report findings_39).** The field ran 5.6.1 and returned no defect, no feedback row and
 no numbered brief error; every class held. What this release changes comes from one read the

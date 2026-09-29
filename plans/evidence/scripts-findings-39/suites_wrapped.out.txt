@@ -1,0 +1,15 @@
+  test_adopt_sample              ran    9  failures+errors 0
+  test_check_lints               ran    8  failures+errors 0
+  test_db_roundtrip              ran   16  failures+errors 0
+  test_eval_runner               ran    9  failures+errors 0
+  test_export_html               ran   42  failures+errors 0
+  test_mcp_contract              ran  192  failures+errors 0
+  test_migrate_v3to4             ran   17  failures+errors 0
+  test_resume_hook               ran   15  failures+errors 0
+  test_scratch_diff              ran   11  failures+errors 0
+  test_store_migrations          ran   10  failures+errors 0
+suites 10; tests run 329; failures+errors 0
+calls seen: {'audit_record': 17, 'progress_update': 54}
+  progress_update keys sent: {'entry': 54, 'event_type': 42, 'corrects': 5, 'actor': 25, 'phase_id': 2, 'subject_id': 5, 'summary': 1, 'custom_attributes': 1, 'note': 1, 'id': 1, 'slice_id': 2}
+  audit_record keys sent: {'ac_id': 19, 'verdict': 19, 'verified_by': 6, 'verification_method': 8, 'evidence': 13, 'against_commit': 3, 'notes': 1}
+sent outside the tool's keys, or no object at all (each is a DELIBERATE refusal test once plan 161 has landed): {('progress_update', 'key summary'): 1, ('progress_update', 'key custom_attributes'): 1, ('progress_update', 'key id'): 1, ('progress_update', 'key note'): 1, ('progress_update', 'an item is str'): 1, ('audit_record', 'key notes'): 1, ('audit_record', 'an item is list'): 1}

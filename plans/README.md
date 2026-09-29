@@ -192,8 +192,8 @@ Status values: PLANNED / IN PROGRESS / DONE.
 |---|---|---|---|
 | 160 | [The query tool takes the page's order, and says so to the client](160-the-pages-order-in-the-query-tool.md) | — | DONE — 2026-09-29 `67a537d` |
 | 161 | [Two write tools refuse an unknown key, and name their keys to the client](161-the-write-tools-refuse-an-unknown-key.md) | 160 | DONE — 2026-09-29 `2607652` |
-| 162 | [Teaching, docs and the corrections of 5.6.1](162-teaching-docs-and-the-corrections-of-561.md) | 161 | IN PROGRESS |
-| 163 | [The version stamp, then lab beat 30 + evals](163-stamp-then-lab-beat-30.md) | 162 + full gate | PLANNED |
+| 162 | [Teaching, docs and the corrections of 5.6.1](162-teaching-docs-and-the-corrections-of-561.md) | 161 | DONE — 2026-09-29 `399d688` |
+| 163 | [The version stamp, then lab beat 30 + evals](163-stamp-then-lab-beat-30.md) | 162 + full gate (suites; 13 lints; canonical; evals 3/3 incl. 3 new assertions) | DONE — 2026-09-29 (stamp before the beat; the beat held on its second run) |
 | 164 | [Tag v5.7.0, the brief file, close-out, housekeeping](164-release-v570.md) | 163 | PLANNED |
 
 ### Field cycle findings_38 -- plans 156-159 -> v5.6.1 (2026-09-28; maintainer-executed)

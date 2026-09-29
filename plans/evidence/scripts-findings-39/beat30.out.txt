@@ -1,0 +1,21 @@
+OBS B.before_first_export: {"review_current": true, "review_exported_by": "5.6.1"}
+OBS B.open.resume: {"handoff": "PE-057", "behind": 0}
+OBS B.first_export: {"lines_changed": 2, "same_utc_date": false, "page_dated": "2026-09-28", "today": "2026-09-29", "after": {"review_current": true, "review_exported_by": "5.7.0"}, "digest_moved": false}
+OBS B.order: {"risks_in_number_order": true, "after_RISK-998_returned": ["RISK-1000"], "the_text_cut_would_return": [], "a_bound_that_names_no_row": ["RISK-1000"], "a_walk_at_limit_2_is_complete": true, "limit_10_on_the_journal": ["PE-001", "PE-010"]}
+OBS B.refusals: {"refused": 7, "rows_written": 0, "digest_moved": false, "the_descriptions_name_every_key": true}
+OBS B.export_outside: {"package_files_unchanged": 27, "csv_files_beside_the_output": 26, "the_outside_page_equals_the_package_page": true}
+PHASE-B-DONE
+OBS A.before_first_export: {"review_current": true, "review_exported_by": "5.6.1"}
+OBS A.schema: {"schema_version": 7, "migrations_head": "007_handoff.sql", "version": "5.7.0"}
+OBS A.open.resume: {"handoff": "PE-057", "behind": 0, "skill": "tamheed:package-writes"}
+OBS A.emit.refreshed: ["prompts/README.md"]
+OBS A.emit.findings: {"stock_merged": [], "oversized_prompts": [], "stale_references": [], "restated_content": []}
+OBS A.guide: "tamheed v5.7.0"
+OBS A.emit2.unchanged: true
+OBS A.handoff: "PE-059"
+OBS A.handoff-current.final: "pass"
+OBS A.page_date: {"before": "2026-09-28", "after": "2026-09-29"}
+OBS A.gate_run.ready: true
+OBS A.verify: {"verified": true, "dirty": [], "foreign": [], "review_current": true, "review_exported_by": "5.7.0"}
+OBS A.lock_gone: true
+DONE
