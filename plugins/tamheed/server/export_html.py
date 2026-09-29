@@ -21,7 +21,7 @@ import math
 import sqlite3
 from pathlib import Path
 
-from tamheed_server import ENTITY_TABLES
+from tamheed_server import ENTITY_TABLES, _by_id   # plan 160: the ONE id order
 
 CSS_PATH = Path(__file__).with_name("viewer.css")
 _CSP = "default-src 'none'; style-src 'unsafe-inline'"
@@ -41,12 +41,8 @@ def _cols(conn: sqlite3.Connection, table: str) -> list[str]:
     return [row[1] for row in conn.execute(f"PRAGMA table_info({table})")]
 
 
-# Plan 057: ids order by (prefix, number) — string order breaks at PH-10 and PE-1000 (this
-# repo's recorded bug class, plans 025/027). CAST of a non-numeric tail is 0, then `id`
-# breaks the tie deterministically.
-def _by_id(col: str = "id") -> str:
-    return (f"SUBSTR({col}, 1, INSTR({col}, '-')), "
-            f"CAST(SUBSTR({col}, INSTR({col}, '-') + 1) AS INTEGER), {col}")
+# Plan 057: ids order by (prefix, number, id) — `_by_id()` is the server's (plan 160: the
+# query tool orders by the same rule, so the function lives there and is imported above).
 
 
 def _id_key(nid: str) -> tuple:

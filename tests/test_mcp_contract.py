@@ -2564,6 +2564,8 @@ class McpContractTest(unittest.TestCase):
         else:                                               # SDK present: registration counted
             self.assertEqual(code, 0, out)
             self.assertIn(f"{len(srv.TOOLS)}/{len(srv.TOOLS)} tools registered", out)
+            # plan 160: ...and the REAL SDK's listing equals TOOLS, under the client's cap
+            self.assertIn(f"{len(srv.TOOLS)}/{len(srv.TOOLS)} descriptions as listed", out)
 
     def test_selftest_fails_when_a_tool_does_not_register(self):
         """Plan 047: registration is where the SDK validates signatures."""
@@ -2574,6 +2576,48 @@ class McpContractTest(unittest.TestCase):
                 code = srv.main(["--selftest"])
         self.assertEqual(code, 1)
         self.assertIn("registration FAILED", stdout.getvalue())
+
+    def _selftest_over(self, listed):
+        """Run the selftest over an app whose SDK listing is `listed` — (name,
+        description) pairs. SDK-free: the app and the version probe are stand-ins."""
+        import types
+        from unittest import mock
+
+        class App:
+            async def list_tools(self):
+                return [types.SimpleNamespace(name=n, description=d) for n, d in listed]
+
+        stdout = io.StringIO()
+        with mock.patch.object(srv, "_build_app", return_value=App()), \
+                mock.patch.object(srv, "_mcp_version", return_value="test"), \
+                contextlib.redirect_stdout(stdout):
+            code = srv.main(["--selftest"])
+        return code, stdout.getvalue()
+
+    def test_selftest_compares_the_listed_descriptions(self):
+        """Plan 160 (v5.7, O13): what the SDK LISTS is what a client receives — the
+        selftest compares it with TOOLS and with the client's cap. THIS test proves the
+        comparison's logic over a stand-in app, SDK-free. The REAL listing is compared
+        where the SDK is present: CI's smoke job (`uv run … --selftest`), and
+        test_selftest_reports_sdk_availability on a machine whose Python has the SDK."""
+        listed = [(n, d) for n, (_, d) in srv.TOOLS.items()]
+        code, out = self._selftest_over(listed)
+        self.assertEqual(code, 0, out)
+        self.assertIn(f"{len(srv.TOOLS)}/{len(srv.TOOLS)} tools registered", out)
+        self.assertIn(f"{len(srv.TOOLS)}/{len(srv.TOOLS)} descriptions as listed", out)
+        # one listed description differs from the registry: named, exit 1
+        code, out = self._selftest_over(
+            [(n, d + " (altered)" if n == "entity_query" else d) for n, d in listed])
+        self.assertEqual(code, 1)
+        self.assertIn("description differs from TOOLS: entity_query", out)
+        # one passes the client's cap: named, exit 1
+        from unittest import mock
+        with mock.patch.object(srv, "_DESCRIPTION_CAP", 10):
+            code, out = self._selftest_over(listed)
+        self.assertEqual(code, 1)
+        over = next(ln for ln in out.splitlines() if "over the client's cap:" in ln)
+        for name in srv.TOOLS:                              # every one is over a cap of 10
+            self.assertIn(name, over)
 
     def test_selftest_lists_full_tool_surface(self):
         stdout = io.StringIO()
@@ -2891,10 +2935,12 @@ class V4EngineTest(unittest.TestCase):
     # ------------------------------------------------- plan 039 (findings_22 / C43)
 
     def test_entity_query_keyset_paging_over_mixed_width_ids(self):
-        """findings_22 §1: `after_id` pages in the SAME byte order as ORDER BY id, so
-        a walk at limit=1 over mixed-width ids (RISK-999 sorts AFTER RISK-1001 as
-        text) is complete — union == all, zero duplicates, `total` constant,
-        `next_after` null only on the last page."""
+        """findings_22 §1: `after_id` pages in the SAME order as the result, so a walk
+        at limit=1 over mixed-width ids is complete — union == all, zero duplicates,
+        `total` constant, `next_after` null only on the last page. Plan 160 (v5.7,
+        R51): that order is the review page's — prefix, number, id — so RISK-999
+        comes BEFORE RISK-1000 (as text it sorted after RISK-1001, and a typed bound
+        silently dropped rows in the field, findings_39 §3)."""
         srv.entity_upsert([{"type": "risk", "id": i, "title": "t"}
                            for i in ("RISK-002", "RISK-999", "RISK-1000", "RISK-1001")])
         seen, cursor, pages = [], None, 0
@@ -2911,13 +2957,13 @@ class V4EngineTest(unittest.TestCase):
                 break
             self.assertEqual(cursor, seen[-1])             # the cursor IS the last id
         self.assertEqual(pages, 5)
-        self.assertEqual(seen, ["RISK-001", "RISK-002", "RISK-1000", "RISK-1001",
-                                "RISK-999"])               # byte order, no gaps/dupes
+        self.assertEqual(seen, ["RISK-001", "RISK-002", "RISK-999", "RISK-1000",
+                                "RISK-1001"])              # number order, no gaps/dupes
         # a page that exactly exhausts the set still says "last" (no phantom page)
         out = srv.entity_query("risk", limit=5)
         self.assertEqual((out["count"], out["next_after"]), (5, None))
         out = srv.entity_query("risk", limit=4)
-        self.assertEqual((out["count"], out["next_after"]), (4, "RISK-1001"))
+        self.assertEqual((out["count"], out["next_after"]), (4, "RISK-1000"))
         # paging without `id` in the selected columns still yields a cursor
         out = srv.entity_query("risk", columns=["title"], limit=2)
         self.assertEqual(out["next_after"], "RISK-002")
@@ -2966,6 +3012,88 @@ class V4EngineTest(unittest.TestCase):
         self.assertIn("never the newest rows", doc)
         self.assertEqual([r["id"] for r in srv.entity_query(
             "risk", limit=2, columns=["id"])["rows"]], ["RISK-001", "RISK-002"])
+
+    # ------------------------------------------------- plan 160 (v5.7, findings_39)
+
+    def test_entity_query_orders_and_cuts_by_the_pages_rule(self):
+        """R51: the tool's order and its `after_id` cut are the review page's rule —
+        prefix, number, id. A bound typed by the caller returns the rows AFTER that id
+        by number, whether or not a row carries it; under text order the same read
+        dropped every wider id in silence (the field, 2026-09-11)."""
+        import export_html as viewer
+        self.assertIs(viewer._by_id, srv._by_id)            # one function, never a twin
+        out = srv.entity_upsert(
+            [{"type": "risk", "id": i, "title": f"gate {i}"}
+             for i in ("RISK-002", "RISK-999", "RISK-1000", "RISK-1001")]
+            + [{"type": "wbs-item", "id": i, "title": "w", "slice_id": "SL-001"}
+               for i in ("WBS-2", "WBS-10", "WBS-1.2", "WBS-1.10")])
+        self.assertTrue(out["ok"], out)
+        ids = lambda res: [r["id"] for r in res["rows"]]
+        # a bound that names no row
+        out = srv.entity_query("risk", after_id="RISK-998", columns=["id"])
+        self.assertEqual(ids(out), ["RISK-999", "RISK-1000", "RISK-1001"])
+        self.assertEqual(out["total"], 5)                   # the filtered set, uncut
+        # the field's shape: search + a typed bound + a limit
+        out = srv.entity_query("risk", search="gate", after_id="RISK-950", limit=2,
+                               columns=["id"])
+        self.assertEqual(ids(out), ["RISK-999", "RISK-1000"])
+        self.assertEqual(out["next_after"], "RISK-1000")
+        self.assertEqual(list(out["matched"]), ["RISK-999", "RISK-1000"])
+        # ...and with `id` projected away, `matched` still names the RETURNED rows
+        out = srv.entity_query("risk", search="gate", after_id="RISK-950", limit=2,
+                               columns=["title"])
+        self.assertEqual(list(out["matched"]), ["RISK-999", "RISK-1000"])
+        self.assertEqual(out["next_after"], "RISK-1000")
+        # the tool's order IS the page's, the ceiling included: only an id's FIRST
+        # number counts, what follows it orders as text
+        page = [r[0] for r in srv._CURRENT.conn.execute(
+            f"SELECT id FROM wbs_items ORDER BY {viewer._by_id()}")]
+        self.assertEqual(ids(srv.entity_query("wbs-item", columns=["id"])), page)
+        self.assertEqual(page, ["WBS-1", "WBS-1.10", "WBS-1.2", "WBS-2", "WBS-10"])
+        self.assertEqual(ids(srv.entity_query("wbs-item", after_id="WBS-1.2",
+                                              columns=["id"])), ["WBS-2", "WBS-10"])
+
+    def test_the_cut_agrees_with_the_order_on_any_string(self):
+        """The keyset cut must be the order's own comparison, or a walk drops or
+        repeats rows. A store holds only ids its CHECKs admit, but a BOUND is any
+        string a caller types — so the pair is proven over a scratch table of strings
+        no family could hold: for every position, the rows after that id are exactly
+        the rest of the order."""
+        import sqlite3
+        strings = ["PE-1", "PE-01", "PE-001", "PE-10", "PE-9", "PE-1000", "PE-999",
+                   "noprefix", "42", "X--5", "X-5", "WBS-1.10", "WBS-1.2", "WBS-1",
+                   "MTG-2026-061", "MTG-2026-7", "pe-5", "PE-", "-7",
+                   "PE-99999999999999999999999", "PE-99999999999999999999998",
+                   "NFR-002", "FR-010", "ADR-0049", "ADR-50", "É-3", "PE-5 ", " PE-5"]
+        conn = sqlite3.connect(":memory:")
+        conn.execute("CREATE TABLE t (id TEXT PRIMARY KEY)")
+        conn.executemany("INSERT INTO t VALUES (?)", [(s,) for s in strings])
+        order = [r[0] for r in conn.execute(f"SELECT id FROM t ORDER BY {srv._by_id()}")]
+        self.assertEqual(sorted(order), sorted(strings))
+        cut, binds = srv._after_id()
+        for at, bound in enumerate(order):
+            after = [r[0] for r in conn.execute(
+                f"SELECT id FROM t WHERE {cut} ORDER BY {srv._by_id()}", [bound] * binds)]
+            self.assertEqual(after, order[at + 1:], bound)
+        for absent, first in (("PE-998", "PE-999"), ("PE-0", "PE-001"), ("", "noprefix")):
+            row = conn.execute(f"SELECT id FROM t WHERE {cut} ORDER BY {srv._by_id()}"
+                               " LIMIT 1", [absent] * binds).fetchone()
+            self.assertEqual(row[0], first, absent)
+
+    def test_the_registered_description_is_what_the_client_receives(self):
+        """O13 (findings_39): the server registers TOOLS[name][1], never the docstring —
+        v5.6.1 put the order rule in a docstring and called it the tool's description;
+        it reached no client. The rule is pinned HERE, on the registered text, and every
+        registered description fits the client's cap (Claude Code truncates at 2,048
+        characters). That the SDK serves this text UNCHANGED is the selftest's claim,
+        not this test's."""
+        desc = srv.TOOLS["entity_query"][1]
+        for needle in ("id order", "prefix", "never returns the newest rows",
+                       "`after_id`", "`next_after`", "`total`"):
+            self.assertIn(needle, desc)
+        self.assertEqual(srv._DESCRIPTION_CAP, 2048)
+        for name, (_, text) in srv.TOOLS.items():
+            self.assertLessEqual(len(text), srv._DESCRIPTION_CAP, name)
 
     def test_audit_evidence_names_narrated_ids(self):
         """findings_22 §3 named the ids; findings_23 §2 (plan 040) fixed the

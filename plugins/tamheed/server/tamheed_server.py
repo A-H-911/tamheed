@@ -998,6 +998,40 @@ def _stored_package_version(pkg_dir: Path) -> str | None:
 
 
 _PE_NUM = "CAST(SUBSTR(id, 4) AS INTEGER)"   # PE-NNN → NNN (plan 057: never a string sort)
+
+
+# Plan 057: ids order by (prefix, number) — string order breaks at PH-10 and PE-1000 (this
+# repo's recorded bug class, plans 025/027). CAST takes the longest integer prefix of the
+# tail and 0 when there is none, then `id` breaks the tie deterministically — so only an
+# id's FIRST number counts, and what follows it orders as text (WBS-1.10 before WBS-1.2).
+# Plan 160 (v5.7, R51): the rule lives HERE and the review page imports it, so
+# entity_query and the page can never order one family two ways.
+def _id_prefix(col: str) -> str:
+    return f"SUBSTR({col}, 1, INSTR({col}, '-'))"
+
+
+def _id_number(col: str) -> str:
+    return f"CAST(SUBSTR({col}, INSTR({col}, '-') + 1) AS INTEGER)"
+
+
+def _by_id(col: str = "id") -> str:
+    return f"{_id_prefix(col)}, {_id_number(col)}, {col}"
+
+
+def _after_id(col: str = "id") -> tuple[str, int]:
+    """The keyset cut that agrees with _by_id(): the rows strictly AFTER a bound id.
+
+    Returns the SQL and how many times the id is bound. SQLite computes the bound's
+    prefix and number with the order's OWN expressions — a second implementation of the
+    key (in Python) could part from CAST on a string no family holds, and a cut that
+    disagrees with its order drops or repeats rows. Written as three OR branches, not a
+    row-value comparison."""
+    p, n, bp, bn = _id_prefix(col), _id_number(col), _id_prefix("?"), _id_number("?")
+    sql = (f"({p} > {bp} OR ({p} = {bp} AND {n} > {bn})"
+           f" OR ({p} = {bp} AND {n} = {bn} AND {col} > ?))")
+    return sql, sql.count("?")
+
+
 _PROMPT_MAX_LINES = 300        # plan 125: a project prompt past either limit carries state
 _PROMPT_MAX_BYTES = 24_576     # bytes (UTF-8), not characters
 _RESUME_ENTRY_CAP = 4000                       # chars of the handoff entry a block carries
@@ -2085,19 +2119,23 @@ def entity_query(type: str, id: str | None = None, status: str | None = None,
     `limit` truncates ROWS (never fields — there is NO field truncation anywhere in
     the query path; a payload cap is the CLIENT's, and a family of long-text rows
     will hit it); `total` is the exact size of the filtered set, so truncation is
-    never silent. Rows come in the id's TEXT order and `limit` cuts from the lowest:
-    a limited read returns the first ids, never the newest rows (the `resume` block
-    of `package_open` / `server_info` carries the newest journal entries). To reach
-    past a cut (findings_22 §1, plan 039): page with
-    `after_id` (keyset — rows with id > after_id in the same byte order as the
-    result; the result's `next_after` is the cursor for the next page, null on the
-    last page); fetch a known set with `ids` (in id order, not request order —
+    never silent. Rows come in id order — prefix, then the id's first number, then
+    the id (plan 160, v5.7: the review page's rule; before it, TEXT order) — and
+    `limit` cuts from the lowest: a limited read returns the first ids,
+    never the newest rows (the `resume` block of `package_open` / `server_info`
+    carries the newest journal entries). To reach past a cut (findings_22 §1, plan
+    039): page with `after_id` (keyset — the rows AFTER that id in the result's own
+    order; pass the result's `next_after`, the cursor for the next page and null on
+    the last, or an id you type: it need not name a row); fetch a known set with
+    `ids` (in id order, not request order —
     absent ids are simply missing, `total` tells); narrow with `columns`, `status`,
     or `search` (case-insensitive substring over the family's TEXT columns — the
     keyword sweep; the result's `matched` names the columns that hit, and with
     `context=N` its `occurrences` is a census — exact counts per column and up to five
     snippets of N characters either side, plan 092). `id` is the single-row form and
-    combines with none of `after_id`/`ids`."""
+    combines with none of `after_id`/`ids`. NO CLIENT RECEIVES THIS TEXT: the server
+    registers TOOLS["entity_query"][1] (findings_39, O13) — a rule a caller must know
+    goes there, and the contract test pins it there."""
     if guard := _need_open():
         return guard
     table = ENTITY_TABLES.get(type)
@@ -2148,13 +2186,17 @@ def entity_query(type: str, id: str | None = None, status: str | None = None,
     total = _CURRENT.conn.execute(
         f"SELECT COUNT(*) FROM {table}{where_sql}", params).fetchone()[0]
     page_params = list(params)
+    # Plan 160 (v5.7, R51): paging is complete iff the cut and the order AGREE — they
+    # never had to be text. Both are the review page's rule now (_by_id / _after_id);
+    # under text order a bound typed by the caller dropped every wider id in silence
+    # (the field, 2026-09-11: after_id "PE-950" skipped PE-1033, PE-1037, PE-1054).
+    order = _by_id()
     if after_id is not None:
-        # Same BINARY collation as ORDER BY id (no COLLATE anywhere in the DDL) —
-        # paging is complete iff the cut and the order agree; never CAST here.
-        where_sql += (" AND " if where_sql else " WHERE ") + "id > ?"
-        page_params.append(after_id)
+        cut, binds = _after_id()
+        where_sql += (" AND " if where_sql else " WHERE ") + cut
+        page_params.extend([after_id] * binds)
     limit = max(int(limit), 0)
-    sql = (f"SELECT {', '.join(cols)} FROM {table}{where_sql} ORDER BY id"
+    sql = (f"SELECT {', '.join(cols)} FROM {table}{where_sql} ORDER BY {order}"
            f" LIMIT {limit + 1}")  # one extra row decides next_after exactly
     fetched = _CURRENT.conn.execute(sql, page_params).fetchall()
     rows = [dict(zip(cols, r)) for r in fetched[:limit]]
@@ -2162,8 +2204,8 @@ def entity_query(type: str, id: str | None = None, status: str | None = None,
     if len(fetched) > limit and rows:
         last = fetched[limit - 1]
         next_after = last[cols.index("id")] if "id" in cols else _CURRENT.conn.execute(
-            f"SELECT id FROM {table}{where_sql} ORDER BY id LIMIT 1 OFFSET {limit - 1}",
-            page_params).fetchone()[0]
+            f"SELECT id FROM {table}{where_sql} ORDER BY {order}"
+            f" LIMIT 1 OFFSET {limit - 1}", page_params).fetchone()[0]
     out = {"ok": True, "rows": rows, "count": len(rows), "total": total,
            "next_after": next_after}
     # Plan 131 (v5.2, findings_33 Q1): the row arrives with its cue. Measured in the field: no
@@ -2178,15 +2220,16 @@ def entity_query(type: str, id: str | None = None, status: str | None = None,
     if search is not None and rows and "id" in _columns(table):
         ids_now = [r["id"] for r in rows] if "id" in cols else [
             r[0] for r in _CURRENT.conn.execute(
-                f"SELECT id FROM {table}{where_sql} ORDER BY id LIMIT {limit}",
+                f"SELECT id FROM {table}{where_sql} ORDER BY {order} LIMIT {limit}",
                 page_params)]
         marks = ", ".join(f"({c} LIKE ? ESCAPE '\\')" for c in text_cols)
-        hits = _CURRENT.conn.execute(
+        found = {h[0]: h for h in _CURRENT.conn.execute(
             f"SELECT id, {marks} FROM {table} WHERE id IN"
             f" ({', '.join('?' * len(ids_now))})",
-            [needle] * len(text_cols) + ids_now).fetchall()
+            [needle] * len(text_cols) + ids_now)}
+        hits = [found[i] for i in ids_now if i in found]    # the RETURNED rows' order
         out["matched"] = {h[0]: [c for c, hit in zip(text_cols, h[1:]) if hit]
-                          for h in sorted(hits)}
+                          for h in hits}
         if context is not None and hits:
             # Plan 092 (the field's FB-003): a CENSUS - how many times, in what words.
             # Exact counts on the RAW needle (never the LIKE-escaped one), ASCII-only
@@ -2197,7 +2240,7 @@ def entity_query(type: str, id: str | None = None, status: str | None = None,
             probe = re.compile(re.escape(str(search)), re.IGNORECASE | re.ASCII)
             occurrences: dict[str, dict] = {}
             budget = _SNIPPET_BUDGET
-            for h in sorted(hits):
+            for h in hits:
                 cols_hit = [c for c, hit in zip(text_cols, h[1:]) if hit]
                 if not cols_hit:
                     continue
@@ -4832,6 +4875,19 @@ def server_info(detail: bool = False) -> dict:
 
 # --------------------------------------------------------------------------- server plumbing
 
+# Findings_39 (O13): THIS is the text a client receives — the second element, passed to
+# the SDK as `description`; a docstring reaches no client. Claude Code truncates a tool
+# description at 2,048 characters, so a rule a caller must know goes here, short, with
+# the critical words first. The contract test pins it and the selftest compares it with
+# what the SDK lists.
+_DESCRIPTION_CAP = 2048
+_ENTITY_QUERY_DESC = (
+    "Query one entity family with targeted columns. Rows come in id order: by prefix,"
+    " then by the id's first number, then by id. `limit` cuts from the lowest, so a"
+    " limited read never returns the newest rows. `after_id` returns the rows after"
+    " that id in the same order: pass the result's `next_after`, or an id you type (it"
+    " need not name a row). `total` is the size of the filtered set, uncut.")
+
 TOOLS = {
     "server_info": (server_info, "Report server version, resolved package root, store state"),
     "package_create": (package_create, "Create a package under the package root (takes the lock)"),
@@ -4841,7 +4897,7 @@ TOOLS = {
                        " a lock whose holder was observed dead, and journals it"),
     "package_close": (package_close, "Write back canonical text and release the lock"),
     "entity_upsert": (entity_upsert, "Batch upsert entities in one transaction; per-item verdicts"),
-    "entity_query": (entity_query, "Query one entity family with targeted columns"),
+    "entity_query": (entity_query, _ENTITY_QUERY_DESC),
     "trace_query": (trace_query, "Traverse typed trace edges from/to an entity"),
     "gate_run": (gate_run, "Run the mechanical quality gates; returns the gate report"),
     "readiness_check": (readiness_check,
@@ -4899,11 +4955,28 @@ def selftest() -> int:
     try:
         import asyncio
         app = _build_app()
-        registered = [t.name for t in asyncio.run(app.list_tools())]
+        listed = {t.name: t.description for t in asyncio.run(app.list_tools())}
+        registered = list(listed)
         missing = sorted(set(TOOLS) - set(registered))
         print(f"mcp sdk: ok ({_mcp_version()}) — {len(registered)}/{len(TOOLS)} tools registered")
         if missing:
             print(f"  NOT registered: {', '.join(missing)}")
+            return 1
+        # Plan 160 (v5.7, O13): what the SDK LISTS is what a client receives. v5.6.1
+        # shipped a rule in a docstring and called it the description — nothing compared
+        # the two. Compare, and hold the client's cap.
+        differs = sorted(n for n, (_, d) in TOOLS.items() if listed.get(n) != d)
+        over = sorted(n for n, d in listed.items()
+                      if len(d or "") > _DESCRIPTION_CAP)
+        print(f"descriptions: {len(TOOLS) - len(differs)}/{len(TOOLS)} descriptions as"
+              f" listed by the SDK — longest"
+              f" {max((len(d or '') for d in listed.values()), default=0)} characters"
+              f" (the client's cap: {_DESCRIPTION_CAP})")
+        if differs:
+            print(f"  description differs from TOOLS: {', '.join(differs)}")
+        if over:
+            print(f"  over the client's cap: {', '.join(over)}")
+        if differs or over:
             return 1
     except ImportError as exc:
         print(f"mcp sdk: UNAVAILABLE for serving ({exc})")
