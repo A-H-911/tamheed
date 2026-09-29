@@ -298,6 +298,40 @@ _SERVER_ONLY_EVENTS = {
     "integrity-verified": "package_verify(record=true)",
 }
 
+# Plan 161 (v5.7, findings_39, R52/R55): the keys an ITEM of the two journal tools takes.
+# ONE constant per tool feeds the refusal, the registered description and the tests - the
+# schema a client receives for an item says "any object", so these are the only places the
+# keys are told, and they cannot part. Until 5.7 a key outside the list was DROPPED in
+# silence: the field lost a `custom_attributes`, and `summary` sent for `entry` came back
+# as sqlite's raw NOT NULL text.
+_PROGRESS_KEYS = ("entry", "event_type", "subject_id", "actor", "corrects", "phase_id",
+                  "slice_id")
+_PROGRESS_REQUIRED = ("entry",)
+_VERDICT_KEYS = ("ac_id", "verdict", "evidence", "verified_by", "verification_method",
+                 "against_commit")
+_VERDICT_REQUIRED = ("ac_id", "verdict")
+
+
+def _item_error(item, takes: tuple, required: tuple) -> str | None:
+    """What an item of a journal tool may not be: no object, an object with a key the
+    tool does not take, or one without a key the STORE requires (NOT NULL). It adds no
+    rule of its own - an empty string is a value, and a vocabulary is the store's CHECK
+    to refuse - it says in words what used to be dropped or came back as raw sqlite."""
+    if not isinstance(item, dict):
+        return (f"an item is an object with the keys {', '.join(takes)} — this one is"
+                f" {type(item).__name__}, not an object")
+    if unknown := sorted(str(k) for k in set(item) - set(takes)):
+        return (f"unknown key(s) {unknown} — an item takes {', '.join(takes)}; a key"
+                " outside that list is refused, never dropped")
+    for key in required:
+        if item.get(key) is None:
+            return f"`{key}` is required — an item takes {', '.join(takes)}"
+    return None
+
+
+def _keys_told(takes: tuple, required: tuple) -> str:
+    return ", ".join(f"{k} (required)" if k in required else k for k in takes)
+
 
 def _caller_journal_error(row: dict) -> str | None:
     """What a CALLER may not write into the journal (plan 086, security review;
@@ -3066,15 +3100,20 @@ def progress_update(entries: list[dict]) -> dict:
     edited, and a corrected entry is collapsed under its correction in review.html.
     `entry` text is EXEMPT from G-COMPLETE's placeholder screen (findings_21/C42:
     a report of what happened is never "unfinished" — and an append-only row that
-    failed a content gate could never be repaired)."""
+    failed a content gate could never be repaired). Plan 161 (v5.7): a key outside
+    the item's list is refused, never dropped, and a missing `entry` is refused in
+    words (_PROGRESS_KEYS — the registered description is built from it; no client
+    receives this text)."""
     if guard := _need_open():
         return guard
     if not isinstance(entries, list) or not entries:
         return _err("entries must be a non-empty array")
     # Plan 039 (findings_22, C43): server-only events are refused from callers —
     # the batch is one transaction, so one offending item refuses the whole batch.
+    # Plan 161: and so is an item the tool does not take, BEFORE anything is written.
     for i, e in enumerate(entries):
-        if msg := _caller_journal_error(e if isinstance(e, dict) else {}):
+        if msg := (_item_error(e, _PROGRESS_KEYS, _PROGRESS_REQUIRED)
+                   or _caller_journal_error(e)):
             return _err(f"entries[{i}]: {msg}. Batch NOT applied.")
     conn = _CURRENT.conn
     ids = []
@@ -3085,7 +3124,9 @@ def progress_update(entries: list[dict]) -> dict:
                 "INSERT INTO progress_entries (id, event_type, entry, subject_id,"
                 " actor, corrects, phase_id, slice_id, occurred_at)"
                 " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                (pe_id, e.get("event_type", "note"), e.get("entry"),
+                # a NULL event_type means an absent one, like every other optional key
+                (pe_id, e.get("event_type") if e.get("event_type") is not None
+                 else "note", e.get("entry"),
                  e.get("subject_id"), e.get("actor"), e.get("corrects"),
                  e.get("phase_id"), e.get("slice_id"), _now()),
             )
@@ -3096,7 +3137,7 @@ def progress_update(entries: list[dict]) -> dict:
     if err := _commit():
         return err
     out = {"ok": True, "ids": ids}
-    if any(isinstance(e, dict) and e.get("event_type") == "handoff" for e in entries):
+    if any(e.get("event_type") == "handoff" for e in entries):
         out["skill"] = "tamheed:session-handoff"  # plan 120: the result names the discipline
     return out
 
@@ -3130,11 +3171,17 @@ def audit_record(verdicts: list[dict]) -> dict:
     engine can audit is worth more than a Met it must take on faith. The requirement
     auto-advance trigger cascades in the same transaction (C4), on LATEST-verdict
     semantics. `evidence` text is EXEMPT from G-COMPLETE's placeholder screen
-    (findings_21/C42: append-only report text, never "unfinished" plan prose)."""
+    (findings_21/C42: append-only report text, never "unfinished" plan prose). Plan 161
+    (v5.7): a key outside the item's list is refused, never dropped, and a missing
+    `ac_id` or `verdict` is refused in words (_VERDICT_KEYS — the registered
+    description is built from it; no client receives this text)."""
     if guard := _need_open():
         return guard
     if not isinstance(verdicts, list) or not verdicts:
         return _err("verdicts must be a non-empty array")
+    for i, v in enumerate(verdicts):
+        if msg := _item_error(v, _VERDICT_KEYS, _VERDICT_REQUIRED):
+            return _err(f"verdicts[{i}]: {msg}. Batch NOT applied.")
     conn = _CURRENT.conn
     iteration = conn.execute("SELECT iteration FROM packages LIMIT 1").fetchone()
     ids = []
@@ -4887,6 +4934,16 @@ _ENTITY_QUERY_DESC = (
     " limited read never returns the newest rows. `after_id` returns the rows after"
     " that id in the same order: pass the result's `next_after`, or an id you type (it"
     " need not name a row). `total` is the size of the filtered set, uncut.")
+_PROGRESS_UPDATE_DESC = (
+    "Append progress entries (execution tracking), one transaction. Each item is an"
+    f" object with these keys: {_keys_told(_PROGRESS_KEYS, _PROGRESS_REQUIRED)}. A key"
+    " outside this list is refused and nothing is written. `event_type` defaults to"
+    " note; the server assigns the id and the time.")
+_AUDIT_RECORD_DESC = (
+    "Record AC verdicts, optionally evidence-bound, one transaction. Each item is an"
+    f" object with these keys: {_keys_told(_VERDICT_KEYS, _VERDICT_REQUIRED)}. A key"
+    " outside this list is refused and nothing is written. The server assigns the id"
+    " and the time.")
 
 TOOLS = {
     "server_info": (server_info, "Report server version, resolved package root, store state"),
@@ -4902,8 +4959,8 @@ TOOLS = {
     "gate_run": (gate_run, "Run the mechanical quality gates; returns the gate report"),
     "readiness_check": (readiness_check,
                         "Lifecycle readiness at a close boundary (package/phase/slice)"),
-    "progress_update": (progress_update, "Append progress entries (execution tracking)"),
-    "audit_record": (audit_record, "Record AC verdicts, optionally evidence-bound"),
+    "progress_update": (progress_update, _PROGRESS_UPDATE_DESC),
+    "audit_record": (audit_record, _AUDIT_RECORD_DESC),
     "work_bind": (work_bind, "Bind a commit/PR to the entities it satisfies (stamps last_referenced)"),
     "handoff_emit": (handoff_emit, "Emit handoff prompts + executor MCP config (injection-screened)"),
     "package_migrate": (package_migrate, "Migrate a v2/v3 package in place to the v4 store (staged: preview, then confirm)"),

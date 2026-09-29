@@ -3095,6 +3095,96 @@ class V4EngineTest(unittest.TestCase):
         for name, (_, text) in srv.TOOLS.items():
             self.assertLessEqual(len(text), srv._DESCRIPTION_CAP, name)
 
+    # ------------------------------------------------- plan 161 (v5.7, findings_39)
+
+    def test_the_write_tools_refuse_a_key_they_do_not_take(self):
+        """R52: progress_update and audit_record read the keys they know; every other
+        key used to be DROPPED in silence. The field: one journal write lost its
+        `custom_attributes`, and `summary` sent for `entry` came back as sqlite's
+        'NOT NULL constraint failed' — on a tool whose item keys no client could see.
+        Now the item is refused by name, with the keys the tool takes, and the batch
+        writes nothing."""
+        rows = lambda: (srv.entity_query("progress-entry", limit=1)["total"],
+                        srv.entity_query("audit-verdict", limit=1)["total"])
+        held = rows()
+        refused = lambda out: (self.assertFalse(out["ok"], out),
+                               self.assertNotIn("constraint failed", out["error"]),
+                               self.assertIn("NOT applied", out["error"]),
+                               out["error"])[-1]
+        err = refused(srv.progress_update([{"summary": "what happened",
+                                            "event_type": "work-done"}]))
+        self.assertIn("entries[0]", err)
+        self.assertIn("'summary'", err)
+        for key in srv._PROGRESS_KEYS:
+            self.assertIn(key, err)
+        err = refused(srv.progress_update([{"entry": "x",
+                                            "custom_attributes": {"ref": "abc1234"}}]))
+        self.assertIn("'custom_attributes'", err)
+        # one bad item refuses the whole batch, and names WHICH item
+        err = refused(srv.progress_update([{"entry": "good"},
+                                           {"entry": "bad", "note": "n", "id": "PE-900"}]))
+        self.assertIn("entries[1]", err)
+        self.assertIn("['id', 'note']", err)
+        # a missing required key, in words — absent or null
+        for item in ({"event_type": "note"}, {"entry": None}):
+            self.assertIn("`entry` is required", refused(srv.progress_update([item])))
+        # an item that is no object
+        self.assertIn("not an object", refused(srv.progress_update(["a sentence"])))
+        err = refused(srv.audit_record([{"ac_id": "AC-001", "verdict": "Met",
+                                         "notes": "n"}]))
+        self.assertIn("verdicts[0]", err)
+        self.assertIn("'notes'", err)
+        for key in srv._VERDICT_KEYS:
+            self.assertIn(key, err)
+        self.assertIn("`verdict` is required",
+                      refused(srv.audit_record([{"ac_id": "AC-001"}])))
+        self.assertIn("`ac_id` is required",
+                      refused(srv.audit_record([{"verdict": "Met"}])))
+        self.assertIn("not an object", refused(srv.audit_record([["AC-001", "Met"]])))
+        self.assertEqual(rows(), held)                     # nothing was written
+        # every key the tools take still lands, and the store's own rules are untouched:
+        # an EMPTY entry is written as before (no new rule rides on the refusal), and a
+        # value outside a vocabulary is still the store's CHECK to refuse
+        self.assertTrue(srv.progress_update([
+            {"entry": "e", "event_type": "note", "subject_id": "AC-001",
+             "actor": "agent:t", "corrects": None, "phase_id": "PH-1",
+             "slice_id": "SL-001"}, {"entry": ""}])["ok"])
+        self.assertTrue(srv.audit_record([
+            {"ac_id": "AC-001", "verdict": "Met", "evidence": "run 1",
+             "verified_by": "agent", "verification_method": "inspection",
+             "against_commit": "abc1234"}])["ok"])
+        self.assertEqual(rows(), (held[0] + 2, held[1] + 1))
+        self.assertIn("CHECK constraint failed",
+                      srv.progress_update([{"entry": "e", "event_type": "nope"}])["error"])
+        # a NULL optional key means an absent one - `event_type` too, which has a default
+        # (the review of plan 161 found it still reached sqlite's raw NOT NULL text)
+        out = srv.progress_update([{"entry": "null means absent", "event_type": None,
+                                    "actor": None, "subject_id": None}])
+        self.assertTrue(out["ok"], out)
+        row = srv.entity_query("progress-entry", id=out["ids"][0])["rows"][0]
+        self.assertEqual((row["event_type"], row["actor"]), ("note", None))
+        self.assertTrue(srv.audit_record([{"ac_id": "AC-001", "verdict": "Met",
+                                           "evidence": None, "verified_by": None}])["ok"])
+
+    def test_the_write_tools_name_their_keys_to_the_client(self):
+        """R55: the schema a client receives for an item says 'any object', so the
+        REGISTERED description is the one place it can read the keys. This test proves
+        the description NAMES every key of the constant the refusal reads, in the
+        constant's order and with the required ones marked. That it is BUILT from that
+        constant is the source's structure (`_keys_told`), which no test can observe."""
+        for tool, takes, required in (
+                ("progress_update", srv._PROGRESS_KEYS, srv._PROGRESS_REQUIRED),
+                ("audit_record", srv._VERDICT_KEYS, srv._VERDICT_REQUIRED)):
+            desc = srv.TOOLS[tool][1]
+            self.assertIn(srv._keys_told(takes, required), desc)
+            for key in takes:
+                self.assertIn(f"{key} (required)" if key in required else key, desc)
+            self.assertIn("is refused", desc)
+            self.assertLessEqual(len(desc), srv._DESCRIPTION_CAP)
+            self.assertIn("refused, never dropped", getattr(srv, tool).__doc__)
+        self.assertEqual(srv._PROGRESS_REQUIRED, ("entry",))
+        self.assertEqual(srv._VERDICT_REQUIRED, ("ac_id", "verdict"))
+
     def test_audit_evidence_names_narrated_ids(self):
         """findings_22 §3 named the ids; findings_23 §2 (plan 040) fixed the
         POPULATION: each ACTIVE AC's LATEST verdict (the acs-met population), split
