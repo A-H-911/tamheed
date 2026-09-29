@@ -25,8 +25,8 @@
 - **v5.6.1 put its rule where no client reads.** The server registers the second element of
   `TOOLS` as each tool's description. It has done so since its first commit. A docstring
   reaches no client. The sentence v5.6.1 added to `entity_query`'s docstring was called "the
-  tool's description" in the changelog, the design record and the batch record. It reached no
-  session. Its test pinned the docstring, so it passed while the claim was false.
+  tool's description" in the changelog, the design record and the batch record. No client
+  received it as one. Its test pinned the docstring, so it passed while the claim was false.
 
 ## The rulings (R51, R55)
 

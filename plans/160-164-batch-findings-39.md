@@ -14,7 +14,7 @@ the operator's word (`DEC-237`). Its handoff follows the tense rule 5.6.1 taught
 
 | # | Finding | Source |
 |---|---|---|
-| 1 | v5.6.1 shipped its order rule in a docstring and called it the tool's description. A client receives the registered description, the second element of each `TOOLS` entry. The rule reached no session | the maintainer's review; this session's own client |
+| 1 | v5.6.1 shipped its order rule in a docstring and called it the tool's description. A client receives the registered description, the second element of each `TOOLS` entry. No client received the rule as a description | the maintainer's review; this session's own client |
 | 2 | A typed `after_id` dropped three matching rows in silence on 2026-09-11 | `findings_39` §3; reproduced (M40) |
 | 3 | The review page has ordered ids by number since plan 057; the query tool ordered them as text | `export_html.py`, read |
 | 4 | `progress_update` and `audit_record` dropped unknown keys in silence; no client could see the keys they take | the maintainer's census (M42) |
@@ -77,8 +77,11 @@ Instruments: `plans/evidence/scripts-findings-39/m39.py` and `suites_wrapped.py`
 | M57 | Docstring lengths | `entity_upsert` 3,381 characters; every other under 1,800. No client receives them |
 | M58 | The ten suites, run with both tools wrapped | before plan 161: 323 tests, 56 calls, no unknown key. After it: 329 tests, none failing, 54 and 17 calls; the keys outside the lists are the seven cases of the new test |
 | M59 | Field ids that carry more than one number | the work items alone: 221 of 261 |
-| M60 | How the field's four generators walk exported rows, by their matching lines | by id, sorted by their own numeric comparator; one walks deferred work in file order, a family whose order does not move |
+| M60 | How the field's generators walk exported rows, by their matching lines | three import the shared reader of exports at `24e59125`; the reader's comment says four, and the plan repeated it. By id, sorted by their own numeric comparator; one walks deferred work in file order, a family whose order does not move. No line reads a row by position |
 | M61 | One page of 100 on the field's journal of 1,546 entries | 0.6 ms under the page's cut; 0.03 ms under the text cut. A full walk at `limit=100`: 12 ms; 2 ms. A bound of a million characters: 2 ms |
+| M63 | The replay over a fresh copy of the field package at `24e59125`, 05:31:06Z to 05:31:17Z | every class held; plan 164 lists them |
+| M64 | Every `after_id` call in the field's transcripts, run through the shipped engine on the copy | 86 calls, 15 on the journal: 83 that succeeded in the field and 3 its engine had refused, two for unknown columns and one for a closed package, each read from its own result. Each equals the independent cut. None parts |
+| M65 | A full walk of the journal at `limit=100` through the real tool, best of 20 | 6.0 ms on 5.7.0; 0.9 ms on 5.6.1. An unlimited read ends at `PE-1546` on 5.7.0 and ended at `PE-999` on 5.6.1 |
 | M62 | The registered descriptions | 387, 311 and 300 characters. All 19 as the SDK lists them equal the registry, on SDK 1.28.1 under `uv run` and on 1.27.2 in this machine's plain Python |
 
 ### 4.1 Every `after_id` call the field made, replayed under both cuts (W113)
@@ -128,6 +131,8 @@ record does not settle it.
 | O12 | The maintainer recommended teaching only for `after_id`, and recorded number order as rejected, one round before the field measured a silent drop. The page had held the rule since plan 057 | 5.6.1 | plan 160; the design record §20 |
 | O13 | "The rule stands in the tool's description." It stood in a docstring no client receives. Two approval records called the docstring "the text every client shows", and the test pinned the wrong text | 5.6.1. The belief is older: the changelog credits a docstring with teaching in 4.4.2, 4.5.0 and 4.7.0, and the one-line descriptions date from the server's first commit (`eb9f252`, 2026-07-17) | plans 160, 161, 162 |
 | O14 | The front door named a journal key loosely, and the engine dropped whatever was sent under a wrong name | older than 5.0.0 | plans 161, 162 |
+| O16 | The records of plans 160 and 162 said the docstring's sentence "reached no session". A session can open the server's file, and one of the field's memory files quotes a docstring. What is shown is narrower: no client receives a docstring as a description | this round | narrowed at four sites in plan 164 |
+| O17 | The plan and this record said four generators of the field read exports. The number came from a comment in the field's shared reader. Three import it | this round | the brief; M60 |
 | O15 | In this round's own plans: revision 1 repeated O13; revision 2 called a pattern search a census of callers, and said no committed byte moves of a release that reorders an exported file | this round | the plan's weaknesses W92, W105, W107 |
 
 ## 7. Execution notes (owned as they land)
@@ -160,7 +165,24 @@ record does not settle it.
 8. **The census's count of "unknown columns" was loose at first.** It read 69, then 58 when
    the script was written down, because the two counts cut the result text differently. The
    script now counts the two tools apart: 44 and 24.
-9. **This record says "CI green" and "tagged" before either exists**, as the close-out records
+9. **Beat 30 held on its second run.** The first stopped in the scratch phase on an assertion
+   of the harness: it replaced every occurrence of the old date in a line of 4,647
+   characters that holds that date as a stored value too. The pages differed in the stamp
+   and the stated date only. The fixture was not touched.
+10. **Two scripts passed through the shell were mangled**, in their backslashes, and failed
+    before they ran. Both were written to files with the editor. The rule is three rounds
+    old.
+11. **A removal was refused by the harness's safety check**: the copy command began by
+    clearing its target through a shell variable. Nothing ran. The copies went to folder
+    names that did not exist, and nothing was removed.
+12. **The brief's claims were checked before it was committed**, and one was wrong (O17).
+13. **The advisor's review before the close-out commit returned three points, all acted
+    on.** The cause this record gave for three refused calls was a guess, and partly
+    wrong: each is now read from its own result. A line of the plans index carried a
+    stray parenthesis. Two sentences of the brief were loose: one dated the field's read
+    after the release that followed it, and one described the page's second changed line
+    as its date alone, where the line holds the whole Readiness section.
+14. **This record says "CI green" and "tagged" before either exists**, as the close-out records
    before it did. If CI is red, a new commit corrects the record and the tag waits.
 
 ## 8. What was not built, and why

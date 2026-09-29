@@ -51,9 +51,10 @@ review page keep their order.
 - **A correction of 5.6.1, dated 2026-09-29.** The 5.6.1 entry below says "The tool's
   description and `package-writes` now state the order". The rule stood in `entity_query`'s
   DOCSTRING. The server registers the second element of each `TOOLS` entry as the tool's
-  description, and has since its first commit; a docstring reaches no client. The sentence
-  reached no session. `package-writes`, `orient-resume`, `loop-iteration` and the two
-  templates did reach them. The test that pinned the phrase read the docstring, so it passed
+  description, and has since its first commit; a docstring reaches no client as a
+  description. A session met the sentence only if it opened the server's file.
+  `package-writes`, `orient-resume`, `loop-iteration` and the two templates reached
+  every session that loaded them. The test that pinned the phrase read the docstring, so it passed
   while the claim was false. The rule is registered now, and the test reads the registered
   text.
 - **The front door names the journal's keys exactly** (plan 162). It said
