@@ -675,6 +675,65 @@ class ExportHtmlTest(unittest.TestCase):
 
     # -------------------------------------------------------- (c) determinism
 
+    # ------------------------------------------------ (d) one row per line (plan 166)
+
+    @staticmethod
+    def _one_per_line(html: str, where: str) -> None:
+        """Plan 166 (v5.8): every table row and every graph element on its own line, so a
+        diff of the page carries the changed rows and not the whole table. A field page
+        held its journal table and both graphs on single lines of 840-912 KB that moved
+        on every export: about 4 MB of patch text per export, the whole cost of a
+        history scanner that reads `git log -p`."""
+        lines = html.split("\n")
+        for ln in lines:
+            assert ln.count("</tr>") <= 1, f"{where}: two rows on one line: {ln[:80]!r}"
+            assert ln.count("<path ") <= 1, f"{where}: two paths on one line: {ln[:80]!r}"
+            assert ln.count("<g class=") <= 1, f"{where}: two groups on one line"
+            assert ln.count("<text ") <= 1, f"{where}: two labels on one line"
+            assert ln.count("<a ") <= 1, f"{where}: two nodes on one line"
+        assert html.count('<tr id="') == html.count('\n<tr id="'), where
+        assert html.count("<tbody>") == html.count("\n<tbody>\n"), where
+
+    def test_each_row_and_graph_element_starts_its_own_line(self):
+        self._open_demo_copy()
+        srv.progress_update([{"entry": "RESUME AT: the slice\nIN FLIGHT: two rows",
+                              "event_type": "handoff"}])
+        html = self._export()
+        self._one_per_line(html, "demo")
+        # the inline radio/label runs and the handoff's <pre> are untouched: a newline
+        # between inline elements would render as a space, and the entry is shown verbatim
+        self.assertIn('</label><input type="radio"', html)
+        self.assertIn('<pre class="handoff">RESUME AT: the slice\nIN FLIGHT: two rows</pre>',
+                      html)
+        self.assertTrue(html.startswith(srv._HTML_PROLOGUE))
+        old = viewer._G_AGG_LIMIT
+        viewer._G_AGG_LIMIT = 5                           # the aggregate graph path too
+        try:
+            self._one_per_line(self._export(), "aggregate")
+        finally:
+            viewer._G_AGG_LIMIT = old
+
+    def test_a_journal_write_moves_only_its_own_lines(self):
+        """After one journal write (no new node, no new edge) the lines of the new page
+        absent from the old hold no pre-existing row and stay small: the eleven freshness
+        paragraphs, the fold summaries, the resume rows and the readiness table move, so
+        the added LINES are many and no line count is asserted — the bytes are."""
+        self._open_demo_copy()
+        before = self._export(str(srv.PACKAGE_ROOT / "a.html"))
+        ids = {r["id"] for r in srv.entity_query("progress-entry", limit=5000)["rows"]}
+        out = srv.progress_update([{"entry": "one more note, written after the first export"}])
+        self.assertTrue(out["ok"], out)
+        after = self._export(str(srv.PACKAGE_ROOT / "b.html"))
+        old = set(before.split("\n"))
+        added = [ln for ln in after.split("\n") if ln not in old]
+        self.assertTrue(added)
+        for ln in added:
+            for pe in ids:
+                self.assertNotIn(f'<tr id="{pe}">', ln)
+        # measured on this fixture: 27 lines, 6,170 bytes, the longest 1,720 characters
+        self.assertLess(sum(len(ln.encode("utf-8")) for ln in added), 12_000)
+        self.assertLess(max(len(ln) for ln in added), 4_000)
+
     def test_exports_are_byte_identical(self):
         self._open_demo_copy()
         first = srv.export_html(str(srv.PACKAGE_ROOT / "a.html"))

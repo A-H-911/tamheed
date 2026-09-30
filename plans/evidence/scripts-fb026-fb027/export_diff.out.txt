@@ -1,0 +1,8 @@
+# 2026-09-30, field copy at d47d9938, engine = the plan-166 working tree (5.8.0)
+verify before: True True 5.7.0
+first export numstat: 26395	2005	tamheed-package/review.html
+first export patch bytes: 20175408
+csv changed: none
+second export numstat: 20	17	tamheed-package/review.html
+second export patch bytes: 34191
+second export added lines: 20 added bytes: 5727 max line: 2511

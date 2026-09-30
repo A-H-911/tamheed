@@ -65,21 +65,25 @@ def _fold(title: str, count: int, inner: str, anchor: str | None = None,
     unit = "row" if count == 1 else "rows"
     aid = f' id="{esc(anchor)}"' if anchor else ""
     dl = (f' <a class="csv" href="csv/{esc(csv)}.csv" download>CSV</a>' if csv else "")
-    return (f"<details{aid}><summary>{esc(title)} ({count} {unit}){dl}</summary>"
+    return (f"<details{aid}><summary>{esc(title)} ({count} {unit}){dl}</summary>\n"
             f"{inner}</details>")
 
 
 def _table(headers, rows, row_ids: bool = False) -> str:
+    """Plan 166 (v5.8): one row per line. A field page held its journal table on one line of
+    840 KB that moved on every export — about 4 MB of patch text each time, the whole cost
+    of a history scanner reading `git log -p`. Whitespace between table rows is nothing to
+    a browser; to a diff it is everything."""
     head = "".join(f"<th>{esc(h)}</th>" for h in headers)
-    body = "".join(
+    body = "\n".join(
         # row_ids: column 0 is a globally unique entity id (entity_index PK) — the <tr>
         # anchor is the jump target for graph node links; same esc() as the hrefs, so
         # link and target match byte-for-byte even for pathological ids (C25).
         (f'<tr id="{esc(row[0])}">' if row_ids else "<tr>")
         + "".join(f"<td>{esc(cell)}</td>" for cell in row) + "</tr>" for row in rows
     )
-    return (f'<div class="tablewrap"><table><thead><tr>{head}</tr></thead>'
-            f"<tbody>{body}</tbody></table></div>")
+    return (f'<div class="tablewrap"><table><thead><tr>{head}</tr></thead>\n'
+            f"<tbody>\n{body}\n</tbody></table></div>")
 
 
 def _freshness(conn: sqlite3.Connection) -> str:
@@ -244,7 +248,7 @@ def _graph_full(nodes, edges) -> str:
             f'<circle cx="{x:.1f}" cy="{y:.1f}" r="{r:.1f}" '
             f'class="g{fi % 12}{ring}"/><title>{esc(nid)} ({esc(fam)}, '
             f'{deg.get(nid, 0)} edge(s))</title></a>'
-            f'{"".join(incident.get(nid, []))}</g>')
+            f'{"".join(chr(10) + p for p in incident.get(nid, []))}</g>')
     return _graph_svg(half, edge_parts, node_parts, label_parts, "arrow")
 
 
@@ -254,11 +258,12 @@ def _graph_svg(half: float, edge_parts, node_parts, label_parts,
     # the default (Fit) shows ALL nodes; the CSS zoom radios scale width 100%..800%.
     d = f"{2 * half:.0f}"
     defs = _marker(marker_id) if marker_id else ""
+    # Plan 166 (v5.8): one element per line (whitespace between SVG siblings is inert).
     return (f'<svg class="graph" viewBox="{-half:.0f} {-half:.0f} {d} {d}" '
-            f'xmlns="http://www.w3.org/2000/svg">{defs}'
-            f'<g class="edges">{"".join(edge_parts)}</g>'
-            f'<g class="nodes">{"".join(node_parts)}</g>'
-            f'<g class="labels">{"".join(label_parts)}</g></svg>')
+            f'xmlns="http://www.w3.org/2000/svg">{defs}\n'
+            f'<g class="edges">\n{chr(10).join(edge_parts)}\n</g>\n'
+            f'<g class="nodes">\n{chr(10).join(node_parts)}\n</g>\n'
+            f'<g class="labels">\n{chr(10).join(label_parts)}\n</g></svg>')
 
 
 def _graph_agg(nodes, edges) -> str:
@@ -443,14 +448,14 @@ def _flow(conn, gates, ready, readiness=None):
             f'<circle cx="{x:.1f}" cy="{y:.1f}" r="4" '
             f'class="g{fi % 12}{ring}"/><text x="{x + 8:.1f}" y="{y + 3:.1f}">'
             f"{esc(nid)}</text><title>{esc(nid)} ({esc(fam)})</title></a>"
-            f'{"".join(incident.get(nid, []))}</g>')
+            f'{"".join(chr(10) + p for p in incident.get(nid, []))}</g>')
     width = 40 + len(live) * _LANE_W
     height = 50 + max(len(lane) for _t, lane in live) * _ROW_H
     svg = (f'<svg class="graph flow" viewBox="0 0 {width} {height}" '
-           f'xmlns="http://www.w3.org/2000/svg">{_marker("arrowf")}'
-           f'<g class="edges">{"".join(edge_parts)}</g>'
-           f'<g class="nodes">{"".join(node_parts)}</g>'
-           f'<g class="labels">{"".join(header_parts)}</g></svg>')
+           f'xmlns="http://www.w3.org/2000/svg">{_marker("arrowf")}\n'
+           f'<g class="edges">\n{chr(10).join(edge_parts)}\n</g>\n'
+           f'<g class="nodes">\n{chr(10).join(node_parts)}\n</g>\n'
+           f'<g class="labels">\n{chr(10).join(header_parts)}\n</g></svg>')
     rels = _rel_filter("fr", (r for _f, _t, r in edges))
     # Plan 028 (C34 §5.2): unwired requirements are EXACTLY the ones this view cannot
     # draw — say so in the lead instead of letting the picture read rosier than reality.
@@ -926,7 +931,7 @@ def render(conn: sqlite3.Connection, gates: dict, ready: bool,
     freshness = _freshness(conn)
     sections = "\n".join(
         f'<section id="{anchor}"><h2>{esc(title)}</h2>'
-        f'<p class="freshness">Freshness: {esc(freshness)}</p>{fn(conn, gates, ready, readiness)}</section>'
+        f'<p class="freshness">Freshness: {esc(freshness)}</p>\n{fn(conn, gates, ready, readiness)}</section>'
         for anchor, title, fn in SECTIONS)
     css = CSS_PATH.read_text(encoding="utf-8")
     # C18: sticky in-page navigation. These are the ONLY anchors in the export — all

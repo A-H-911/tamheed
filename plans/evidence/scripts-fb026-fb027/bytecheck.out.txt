@@ -1,0 +1,13 @@
+# 2026-09-30: the same store rendered by the v5.7.0 tag's engine and by the plan-166 tree
+# ACMP copy at d47d9938
+removed 1 handoff-repeated row(s) from the 5.8.0 page (plan 165's), Rules 28 -> 27
+5.7.0 page: 14,644,819 bytes, 35,884 lines; 5.8.0 page: 14,669,208 bytes, 60,273 lines
+EQUAL after the newlines between tags are removed and the stamp replaced
+# the lab fixture at 5.7.0
+removed 1 handoff-repeated row(s) from the 5.8.0 page (plan 165's), Rules 29 -> 28
+5.7.0 page: 214,488 bytes, 295 lines; 5.8.0 page: 215,274 bytes, 1,081 lines
+EQUAL after the newlines between tags are removed and the stamp replaced
+# the browser (Playwright, Chromium), every <details> opened, plan 165's row removed from the 5.8.0 page:
+# lab: elements 4,329 = 4,329; <tr> 428 = 428; <path> 182 = 182; innerText 129,283 chars, equal but for "Rules (28 rows)" / "(29 rows)"; scroll height 5,169 = 5,169
+# ACMP: elements 111,576 = 111,576; <tr> 11,915 = 11,915; <path> 10,340 = 10,340; innerText 12,020,187 chars, SHA-256 equal; scroll height 5,949,160 = 5,949,160
+# full-page screenshots of the lab page (pages-166/): same size 3491x5169; 64 pixels differ in one 9x11 region, the digit of "Rules (28 rows)" -> "(29 rows)"
