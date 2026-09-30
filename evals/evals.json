@@ -1838,7 +1838,7 @@
             "{case_dir}/package"
           ],
           "expect_exit": 0,
-          "expect_substring": "handoff=PE-061 behind=0"
+          "expect_substring": "handoff=PE-063 behind=0"
         },
         {
           "check": "handoff-current passes on the recorded package - the journal did not move past the final handoff (plan 122).",
@@ -1915,13 +1915,13 @@
           "expect_exit": 0
         },
         {
-          "check": "The guide followed the 5.8.0 stamp: refresh_stock carried it to the shipped body, whose history key landed with the stamp (plan 168).",
+          "check": "The guide followed the 5.8.1 stamp: refresh_stock carried it to the shipped body, whose history key landed with the stamp (plans 168, 173).",
           "cmd": [
             "python",
             "evals/pkg_check.py",
             "grep-tree-present",
             "{case_dir}/package/prompts",
-            "tamheed v5.8.0"
+            "tamheed v5.8.1"
           ],
           "expect_exit": 0
         },
@@ -2095,7 +2095,7 @@
             "evals/pkg_check.py",
             "grep-file",
             "{case_dir}/package/review.html",
-            "<meta name=\"tamheed-version\" content=\"5.8.0\">"
+            "<meta name=\"tamheed-version\" content=\"5.8.1\">"
           ],
           "expect_exit": 0
         },
@@ -2217,7 +2217,7 @@
           "expect_exit": 0
         },
         {
-          "check": "handoff-repeated is emitted (the journal holds ten handoffs) and passes: the recorded final handoff repeats no line of the two before it (plan 165).",
+          "check": "handoff-repeated is emitted (the journal holds eleven handoffs) and passes: the recorded final handoff repeats no line of the two before it (plans 165, 173).",
           "cmd": [
             "python",
             "evals/pkg_check.py",
@@ -2235,7 +2235,33 @@
             "evals/pkg_check.py",
             "grep-file",
             "{case_dir}/package/review.html",
-            "\n<tr id=\"PE-061\">"
+            "\n<tr id=\"PE-063\">"
+          ],
+          "expect_exit": 0
+        },
+        {
+          "check": "The beat's note quotes the 5.8.1 correction (a reload restarts the server, not what the session lists) and names the real-agent acceptance report (plans 170, 172, 173).",
+          "cmd": [
+            "python",
+            "evals/pkg_check.py",
+            "grep-present",
+            "{case_dir}/package",
+            "a reload restarts the server, not what the session lists",
+            "--tables",
+            "progress_entries"
+          ],
+          "expect_exit": 0
+        },
+        {
+          "check": "The beat's note names the evidence path of the real-agent runs (plan 172).",
+          "cmd": [
+            "python",
+            "evals/pkg_check.py",
+            "grep-present",
+            "{case_dir}/package",
+            "plans/evidence/lab-acceptance-report-2026-09-30.md",
+            "--tables",
+            "progress_entries"
           ],
           "expect_exit": 0
         },

@@ -1,3 +1,4 @@
+# third run of the a1 check; the FAIL below is this script's own lock from its two earlier crashes (the first run read `closed-no-lock: PASS "lock present: False"`), owned in the report §1
 CHECK closed-no-lock: FAIL "lock present: True"
 CHECK oq-owner-due: PASS "3 OQ rows with owner+due_by"
 CHECK marker-in-requirement: PASS ["FR-006"]

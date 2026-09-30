@@ -32,6 +32,19 @@ No engine change; no migration; `schema_version` stays 7.
   fetched when its client process started, that `server_info` names the server that
   answers, and that after an update only a client process started after it lists the new
   text — said to the operator, never read as the server.
+- **The lab, driven by a real agent (plan 172, rulings R60/R61):** the scenario's items 1–9
+  run end to end by Opus 5.5, headless (Claude Code 2.1.286, `--plugin-dir` on the working
+  tree, `--permission-mode dontAsk` with an allow list), a fresh run from the seed and four
+  sessions on a copy of the fixture — every mechanism fired through the plugin's own path, 38
+  predicates by `labrun_check.py` pass, 17 engine refusals all constraints or guards, no
+  engine defect. `lab/README.md`'s honesty limit re-measured: headless permission modes do not
+  block the MCP path; what a headless run still cannot do is stated. Measured on the way and
+  written into the install guide: a `claude -p --resume` is a new client process and a new
+  MCP server (the package closes; a session that ends with `package_close` leaves no lock).
+  Evidence: `plans/evidence/lab-acceptance-report-2026-09-30.md`; the harness under
+  `plans/evidence/scripts-fb028/`. Beat 32 (plan 173) carries the fixture to 5.8.1: the guide
+  refreshed, note PE-062 quoting the correction and the evidence path, handoff PE-063 LAST,
+  the page stamped 5.8.1; evals: six re-aimed, two added.
 
 Record: [`plans/170-174-batch-fb028.md`](plans/170-174-batch-fb028.md).
 

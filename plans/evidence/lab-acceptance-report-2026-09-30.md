@@ -11,7 +11,7 @@ process. The packages stay in the session's scratchpad (`lab-run-A/`, `lab-run-B
 run is committed except this report, the harness and its outputs. The transcripts
 (`~/.claude/projects/<ws slug>/<sid>.jsonl`, copied beside each result under `runs/`) are the
 record; §4 quotes them. **Cost:** A1 $2.03, A2 $12.44 (twelve processes), B1 $0.80, B2 $0.77,
-B3 $1.06, B4 $1.69, the probe $2.14 — $20.93 in all, inside the approved 20 + 15 + 4×8 plus the
+B3 $1.06, B4 $1.69, the probe $1.61 (four sessions; probes 2–4 are one) — $20.40 in all, inside the approved 20 + 15 + 4×8 plus the
 probe.
 
 **The result in one line:** every mechanism the scenario's items 1–9 name fired under a real
@@ -143,8 +143,8 @@ One block per session: the build, the model, the slash commands typed, the calls
 denials of every turn, the hook rows, every engine refusal verbatim (`"ok": false`), and the
 agent's final report verbatim. Totals: A2 alone made 65 Bash calls, 49 `entity_query`, 35
 `entity_upsert`, 17 `progress_update`, 13 `gate_run`, 12 `package_open`, 11 Skill loads
-(`package-writes`, `session-handoff`, `reading-the-record`, `test-evidence` — the model-invocable
-skills, loaded by the agent itself), 9 `readiness_check`. Engine refusals across the runs: 17 (15 `entity_upsert`, 2 `entity_query`),
+(`tamheed:package-writes` ten times, `tamheed:session-handoff` once — model-invocable skills the
+agent loaded itself, read from the `Skill` tool_use rows), 9 `readiness_check`. Engine refusals across the runs: 17 (15 `entity_upsert`, 2 `entity_query`),
 every one a constraint or a guard, every one answered by the agent re-reading and re-sending
 (none by dropping the write). A `"ok": false` never came from a bug: unknown columns (a title on a
 scope change, `impacts` on a lesson, `terms` on a waiver, `status` on a query), NOT NULL columns,
@@ -155,7 +155,7 @@ approval-is-not-an-edit rule, the substitute-vs-force rule, the two readiness gu
 
 | # | Finding | Class | What follows |
 |---|---|---|---|
-| 1 | A slice with every criterion Met and a **recorded omission of the wbs family** still reads `wbs-done: indeterminate`, so it cannot reach Implemented without a work-item row, a waiver or force. The deferred-work rules read an omission as a deliberate zero (v5.0.0); the scoped `wbs-done`/`acs-met` rules (`empty_note`) do not read the omissions table. The agent's route — one honest work-item row on the operator's word — was right, and the plan 049 doctrine says a rule with no candidate rows measured nothing | engine or teaching — **put to the operator** | a ruling: honour the omission in the scoped rules (engine, a test first), or teach that a slice needs at least one work item (skill sentence) |
+| 1 | A slice with every criterion Met and a **recorded omission of the wbs family** still reads `wbs-done: indeterminate`, so it cannot reach Implemented without a work-item row, a waiver or force. By design: the readiness wrapper reads a recorded omission as a deliberate zero only for an UNSCOPED rule over an empty family (plan 077, the maintainer's ruling of 2026-09-21); "a scoped zero reads indeterminate by plan 049" is written in the engine beside it. The lab shows that doctrine's cost on a real slice; the agent's route — one honest work-item row on the operator's word — was right | a ruling — **put to the operator** | keep the plan 049/077 doctrine and teach that a slice closes on at least one bound work item (a skill sentence), or let a recorded family omission read as a deliberate zero at slice and phase scope too (engine, a test first, outside a PATCH) |
 | 2 | `orient-resume` step 1 says "after a compaction the package is still open (the MCP process and the lock survive)". True for a compaction; a `-p --resume` (and any new client process) restarts the server: the package is closed and the lock names a dead process. The lab agents met this on every turn and handled it (observe → refuse → the word → unlock, journaled), but the sentence does not name the case | teaching | one clause in step 1 (plan 174's brief names it for ACMP; the skill edit is the operator's call) |
 | 3 | The operator's script said a gate outcome is "pass"; the store's values are Go/Hold/Redirect/Kill | harness (the maintainer's words) | `run-words.md` corrected in place |
 | 4 | Chained shell commands are denied under `dontAsk` with prefix rules; the model chains by default | harness | the words say one plain command per call |

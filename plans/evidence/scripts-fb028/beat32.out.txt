@@ -1,0 +1,16 @@
+OBS B.before: {"review_current": true, "review_exported_by": "5.8.0"}
+OBS B.open.resume: {"handoff": "PE-061", "behind": 0}
+OBS B.guide: {"refreshed": ["prompts/README.md"], "title": "tamheed v5.8.1"}
+OBS B.rule.re-dated-lines: {"status": "pass", "handoffs": 13}
+OBS B.page: {"stamp": "5.8.1", "date": "2026-09-30"}
+PHASE-B-DONE
+OBS A.before: {"review_current": true, "review_exported_by": "5.8.0"}
+OBS A.schema: {"schema_version": 7, "migrations_head": "007_handoff.sql", "version": "5.8.1"}
+OBS A.open.resume: {"handoff": "PE-061", "behind": 0}
+OBS A.guide: "tamheed v5.8.1"
+OBS A.handoff: "PE-063"
+OBS A.handoffs: 11
+OBS A.page: {"date_before": "2026-09-30", "date_after": "2026-09-30", "lines_before": 1088, "lines_after": 1094}
+OBS A.gate_run.ready: true
+OBS A.verify: {"verified": true, "dirty": [], "foreign": [], "review_current": true, "review_exported_by": "5.8.1"}
+OBS A.lock_gone: true

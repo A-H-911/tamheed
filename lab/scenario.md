@@ -920,6 +920,31 @@ must fire; the resulting package replaces `evals/sample-results/lab-tracker/pack
       green (`verified: true`, `dirty: []`, `foreign: []`, `review_current: true`,
       `review_exported_by: "5.8.0"`); `package_close`; no `data/.lock` remains.
 
+32. **The v5.8.1 continuation — the ninth field round: the reload that restarts the server
+    and not what the session lists, and the lab driven by a real agent.** No engine change in
+    5.8.1: the package opens at `schema_version` 7 with the resume block naming beat 31's final
+    handoff. The scratch phase runs FIRST; the fixture's note then quotes the cycle's evidence.
+    ✔ BEFORE THE FIRST EXPORT: `package_verify("package")`, package closed, reads
+      `review_current: true` and `review_exported_by: "5.8.0"`.
+    ✔ THE EMISSION (plan 171's stamp): `handoff_emit(<scratch copy>, refresh_stock=true)`
+      reports `refreshed: ["prompts/README.md"]` (the guide now reads `tamheed v5.8.1`, its
+      title the only line changed).
+    ✔ THE RULE UNDER THE AGENTS' PATTERN (plan 172), scratch copy: three handoffs whose
+      awaiting-the-operator line is re-read and re-dated each time share no line, and
+      `handoff-repeated` PASSES with its population three larger — the pattern the real agents
+      followed in the acceptance runs, where the rule fired only on a line none had re-measured.
+    ✔ THE PAGE: the export on 5.8.1 stamps the release; the store's digest does not move.
+    ✔ THE REAL-AGENT RUNS (plan 172, evidence `plans/evidence/lab-acceptance-report-2026-09-30.md`):
+      items 1–9 driven end to end by Opus 5.5, headless, through the plugin's own path against
+      the working tree (a fresh run from the seed; four sessions on a copy of this fixture);
+      every predicate of `labrun_check.py` pass; no engine defect.
+    ✔ Close the beat with ONE `progress_update` note (actor `agent:lab-beat-32`, `event_type:
+      "note"`) quoting verbatim `a reload restarts the server, not what the session lists` and
+      the evidence path; THEN the final handoff (`event_type: "handoff"`, written LAST, sharing
+      no line with the two before it); then `export_html`; `gate_run` ready; `package_verify()`
+      green (`verified: true`, `dirty: []`, `foreign: []`, `review_current: true`,
+      `review_exported_by: "5.8.1"`); `package_close`; no `data/.lock` remains.
+
 **Pass bar:** every ✔ observed; `gate_run` ready (or failing ONLY on deliberately-open
 items the scenario names); the eval runner's lab checks green. `readiness_check` is
 expectedly NOT ready on the scenario's deliberately-open items (AC-003 and, since beat
