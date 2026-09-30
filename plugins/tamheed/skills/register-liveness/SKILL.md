@@ -164,13 +164,21 @@ is the only wrong answer.
     block. Do not write one mid-sweep: this rule is answered at the END of the session —
     `tamheed:session-handoff`, written LAST after the final write. A stale handoff is
     corrected (`event_type: "correction"`, `corrects` naming it), never edited.
-20. **Stranded promoted lessons** (`lessons-stranded`, v5.1; emitted only when the package
+20. **Handoff lines carried unread** (`handoff-repeated`, v5.8; emitted once the journal
+    holds three handoffs): the lines of the latest handoff that stood word for word through
+    three handoffs in a row, named by line number (the hook's numbering) with the handoff
+    each first stood in. A line copied forward claims it still stands — one field line
+    re-put an interview through eight handoffs after the operator had answered it. Do not
+    reword to clear the rule: re-measure each named line at its source and against the
+    rulings given since, then write it with what you read and the date, or move it to the
+    row it rests on (`tamheed:session-handoff`). The count reads wording, never truth.
+21. **Stranded promoted lessons** (`lessons-stranded`, v5.1; emitted only when the package
     has skill rows): Promoted lessons whose skill is Obsolete or Superseded with no pointer
     to where its content lives now. The remedy is a POINTER on the skill row, on the
     operator's word: `superseded_by` (a successor `SKL-` row) or `upstreamed_to` (the plugin
     skill that absorbed it, such as `tamheed:package-writes`). The lessons stay Promoted —
     `promoted_to` is immutable; the pointer is what makes them reachable again.
-21. Close the sweep: `progress_update([{"entry": "liveness sweep: <per-family tally —
+22. Close the sweep: `progress_update([{"entry": "liveness sweep: <per-family tally —
     resolved / carried / escalated / awaiting operator>", "event_type": "note",
     "actor": "agent:<session>"}])`, then `readiness_check("package")` again and report
     the advisory delta plus everything now awaiting operator words (promotions,

@@ -1,0 +1,3 @@
+12 ('after a resume', 'not re-recorded')
+88 ('same context', 'not re-recorded')
+[('C:/Users/ahammo/.claude/projects\\C--Users-aha', '2026-09-10T16:38:58', '_tamheed_tamheed__entity_query', False), ('C:/Users/ahammo/.claude/projects\\C--Users-aha', '2026-09-10T16:44:47', 'tamheed_tamheed__entity_export', False), ('C:/Users/ahammo/.claude/projects\\C--Users-aha', '2026-09-29T06:11:21', '_tamheed_tamheed__audit_record', False), ('C:/Users/ahammo/.claude/projects\\C--Users-aha', '2026-09-26T11:35:24', 'tamheed_tamheed__entity_export', False), ('C:/Users/ahammo/.claude/projects\\C--Users-aha', '2026-09-26T13:31:04', 'n_tamheed_tamheed__trace_query', False), ('C:/Users/ahammo/.claude/projects\\C--Users-aha', '2026-09-26T22:29:49', '_tamheed_tamheed__package_open', False)]

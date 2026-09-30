@@ -1069,6 +1069,48 @@ def _after_id(col: str = "id") -> tuple[str, int]:
 _PROMPT_MAX_LINES = 300        # plan 125: a project prompt past either limit carries state
 _PROMPT_MAX_BYTES = 24_576     # bytes (UTF-8), not characters
 _RESUME_ENTRY_CAP = 4000                       # chars of the handoff entry a block carries
+# Plan 165 (v5.8, the field's FB-027): calibrated on one project's 18 handoffs — three
+# handoffs named both lines the field lost two days before its own sweep did; 20 characters
+# keeps every awaiting item it wrote and drops the headings, which end with ':' anyway.
+_HANDOFF_REPEATED_AT = 3                       # handoffs in a row a line must stand through
+_HANDOFF_LINE_MIN = 20                         # characters, after whitespace collapses
+
+
+def _repeated_handoff_lines(conn) -> tuple[list[tuple[int, str, int]], int]:
+    """The lines of the LATEST handoff that stood word for word in the handoffs before it,
+    `_HANDOFF_REPEATED_AT` deep or more: `[(line_no, since_id, handoffs)]` in line order,
+    plus the journal's handoff count. Line numbers are 1-based over `str.splitlines()` of
+    the stored entry — the SessionStart hook's own numbering (it prints the first 25) —
+    and a blank line keeps its number. A line is compared after its whitespace runs
+    collapse; headings (ending with ':') and lines under `_HANDOFF_LINE_MIN` characters are
+    not read. Handoff entries only, never their correction chain: a retracted line that
+    is still repeated counts. Wording is what is compared — a reworded line resets.
+    Each entry is read to `_RESUME_ENTRY_CAP` characters, what the resume block and the
+    hook carry of it (the skill's own cap), so the journal's size bounds the cost: every
+    entry is parsed once, and the walk is a dict lookup per line and handoff."""
+    rows = conn.execute("SELECT id, entry FROM progress_entries WHERE event_type ="
+                        f" 'handoff' ORDER BY {_PE_NUM} DESC").fetchall()
+    if len(rows) < _HANDOFF_REPEATED_AT:
+        return [], len(rows)
+
+    def lines(entry):
+        out = {}
+        for n, raw in enumerate(str(entry or "")[:_RESUME_ENTRY_CAP].splitlines(), 1):
+            key = " ".join(raw.split())
+            if len(key) >= _HANDOFF_LINE_MIN and not key.endswith(":"):
+                out.setdefault(key, n)               # a line repeated within one entry: first
+        return out
+    parsed = [(hid, lines(entry)) for hid, entry in rows]   # once per entry
+    found = []
+    for key, n in sorted(parsed[0][1].items(), key=lambda kv: kv[1]):
+        depth, since = 1, parsed[0][0]
+        for hid, keys in parsed[1:]:
+            if key not in keys:
+                break
+            depth, since = depth + 1, hid
+        if depth >= _HANDOFF_REPEATED_AT:
+            found.append((n, since, depth))
+    return found, len(rows)
 
 
 def _resume_block(conn, name: str, data_dir: Path | None = None) -> dict:
@@ -2915,6 +2957,41 @@ def _readiness_report(conn, scope: str, scope_id: str | None) -> dict:
             rules[-1]["status"] = "indeterminate"
             rules[-1]["discriminating"] = False
             rules[-1]["note"] += " — no work journalled yet: this rule measured nothing"
+        # Plan 165 (v5.8, the field's FB-027): a handoff line copied forward claims it still
+        # stands, and the mark `carried, not re-measured` moved the re-measurement onto the
+        # next reader, who carried it again — one line travelled eight handoffs past its
+        # answer. Entities = the handoff each repeated line first stood in; the note carries
+        # line numbers (never the lines: agent prose stays off the readiness surfaces).
+        # Emitted only once the journal holds three handoffs (the plan-079 posture).
+        repeated, handoffs_n = _repeated_handoff_lines(conn)
+        if handoffs_n >= _HANDOFF_REPEATED_AT:
+            # journal order without parsing the id: the deeper a line stood, the older
+            # its first handoff (security review: `int(id[3:])` would raise on `PE-1x`,
+            # which the store's GLOB admits)
+            since = [s for _n, s, _c in sorted(repeated, key=lambda t: -t[2])]
+            since = list(dict.fromkeys(since))
+            by_since = {}
+            for n, s, c in repeated:
+                by_since.setdefault((s, c), []).append(n)
+            latest = conn.execute("SELECT id FROM progress_entries WHERE event_type ="
+                                  f" 'handoff' ORDER BY {_PE_NUM} DESC LIMIT 1").fetchone()[0]
+            detail = "; ".join(
+                f"line{'s' if len(ns) > 1 else ''} {', '.join(str(n) for n in ns)} of {latest}"
+                f" since {s} ({c} handoffs)" for (s, c), ns in by_since.items())
+            rule("handoff-repeated", "advisory", since,
+                 f"lines of the latest handoff that stood word for word through"
+                 f" {_HANDOFF_REPEATED_AT} handoffs in a row (line numbers over the entry's"
+                 " lines, 1-based — the SessionStart hook prints the first 25, entity_query"
+                 " by id shows the rest; headings ending"
+                 f" with ':' and lines under {_HANDOFF_LINE_MIN} characters are not read)"
+                 " — a line copied forward claims it still stands: re-measure each at its"
+                 " source and against the rulings given since, then write it with what you"
+                 " read and the date, or drop it to the row it rests on"
+                 " (`tamheed:session-handoff`). A reworded line resets this count: the rule"
+                 " reads wording, never truth",
+                 extra=f"; {detail}" if detail else None)
+            rules[-1]["population"] = {"table": "progress_entries", "rows": handoffs_n,
+                                       "scoped": False, "unit": "handoffs"}
         # Plan 122 (the field's FB-020): a retired project skill strands the Promoted
         # lessons that point at it — promoted_to is immutable and no rule saw them. The
         # pointer (a successor SKL- row, or `upstreamed_to` naming the plugin skill that

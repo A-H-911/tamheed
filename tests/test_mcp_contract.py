@@ -2399,6 +2399,111 @@ class McpContractTest(unittest.TestCase):
                   if r["rule"] == "handoff-current")
         self.assertEqual((hc["status"], hc["entities"]), ("fail", [pe]))   # behind by one
 
+    def test_handoff_repeated_names_the_lines_that_stood_through_three_handoffs(self):
+        """Plan 165 (v5.8, the field's FB-027): a handoff line copied forward claims it still
+        stands. The advisory names the lines of the LATEST handoff that stood word for word
+        through three handoffs in a row: entities = the handoff each line first appeared in,
+        the note = the line numbers (1-based over `str.splitlines()`, the hook's own numbering)
+        and the count. A reworded line resets the count — the rule reads wording, not truth."""
+        make_complete_package("demo")
+
+        def rule():
+            return next((r for r in srv.readiness_check("package")["rules"]
+                         if r["rule"] == "handoff-repeated"), None)
+
+        def handoff(text):
+            out = srv.progress_update([{"entry": text, "event_type": "handoff",
+                                        "actor": "agent:test"}])
+            self.assertTrue(out["ok"], out)
+            return out["ids"][0]
+        self.assertIsNone(rule())                          # no handoff: nothing to measure
+        first = handoff("RESUME AT: the slice ceremony, step 3\n"
+                        "AWAITING THE OPERATOR:\n"
+                        "- the order of the work items in the plan's work order\n"
+                        "\n"
+                        "short line\n"
+                        "VERIFIED FACTS: gate_run all pass at 09:00")
+        handoff("RESUME AT: the slice ceremony, step 4\n"
+                "AWAITING THE OPERATOR:\n"
+                "- the order of the work items   in the plan's work order\n"
+                "short line\n"
+                "VERIFIED FACTS: gate_run all pass at 10:00")
+        self.assertIsNone(rule())                          # two handoffs: still absent
+        third = handoff("RESUME AT: the slice ceremony, step 5\n"
+                        "AWAITING THE OPERATOR:\n"
+                        "\n"
+                        "- the order of the work items in the plan's work order\n"
+                        "short line\n"
+                        "VERIFIED FACTS: gate_run all pass at 11:00")
+        r = rule()
+        self.assertIsNotNone(r)
+        self.assertEqual((r["severity"], r["status"], r["entities"]),
+                         ("advisory", "fail", [first]))
+        # line 4 of the third handoff (a blank line keeps its number), since the first, 3 deep;
+        # the heading (ends with ':') and the 10-character line never count; whitespace runs
+        # collapse before the compare
+        self.assertIn(f"line 4 of {third} since {first} (3 handoffs)", r["note"])
+        self.assertNotIn("line 2", r["note"])
+        self.assertNotIn("line 5", r["note"])
+        self.assertEqual(r["population"], {"table": "progress_entries", "rows": 3,
+                                           "scoped": False, "unit": "handoffs"})
+        report = srv.readiness_check("package")
+        self.assertNotIn("handoff-repeated",                 # advisory: never in the verdict
+                         [r["rule"] for r in report["rules"]
+                          if r["severity"] == "blocking" and r["status"] == "fail"])
+        handoff("RESUME AT: the slice ceremony, step 6\n"
+                "AWAITING THE OPERATOR:\n"
+                "- the order of the work items: re-measured 2026-09-30 against the plan row,"
+                " still open\n"
+                "short line\n"
+                "VERIFIED FACTS: gate_run all pass at 12:00")
+        r = rule()
+        self.assertEqual((r["status"], r["entities"]), ("pass", []))
+        self.assertNotIn("the order of the work items", r["note"])   # no line text, ever
+
+    def test_handoff_repeated_needs_an_unbroken_run(self):
+        """A line that stood in handoffs 1, 2 and 4 but not 3 did not travel: the walk stops
+        at the first handoff that lacks it (a `continue` for the `break` would pass every
+        consecutive fixture). An empty handoff breaks a run the same way, and journal
+        entries of other kinds between handoffs are not read."""
+        make_complete_package("demo")
+        line = "- the roster proof, put to the operator on day one"
+
+        def rule():
+            return next((r for r in srv.readiness_check("package")["rules"]
+                         if r["rule"] == "handoff-repeated"), None)
+        for text in (line, line, "RESUME AT: something else entirely today", line):
+            srv.progress_update([{"entry": "a work note between handoffs, long enough to count",
+                                  "event_type": "work-done"}])
+            srv.progress_update([{"entry": text, "event_type": "handoff"}])
+        self.assertEqual((rule()["status"], rule()["entities"]), ("pass", []))
+        for text in (line, ""):
+            srv.progress_update([{"entry": text, "event_type": "handoff"}])
+        self.assertEqual((rule()["status"], rule()["entities"]), ("pass", []))
+
+    def test_handoff_repeated_dedupes_the_first_handoff_and_orders_it(self):
+        """Several lines that first stood in the same handoff name it once; the entities
+        come in journal order and the note lists every line."""
+        make_complete_package("demo")
+        base = "AWAITING THE OPERATOR:\n- question one, put on the first day\n- question two, put on the first day\n"
+        ids = [srv.progress_update([{"entry": base + f"VERIFIED FACTS: run {i}",
+                                     "event_type": "handoff"}])["ids"][0] for i in range(3)]
+        r = next(r for r in srv.readiness_check("package")["rules"]
+                 if r["rule"] == "handoff-repeated")
+        self.assertEqual(r["entities"], [ids[0]])
+        self.assertIn(f"lines 2, 3 of {ids[2]} since {ids[0]} (3 handoffs)", r["note"])
+        # a second line that starts later names a second handoff, after the first, in
+        # journal order — past PE-9, where a text sort would put PE-10 first
+        more = [srv.progress_update([{"entry": base + "- question three, put later on\n"
+                                       f"VERIFIED FACTS: run {i}",
+                                       "event_type": "handoff"}])["ids"][0]
+                for i in range(3, 12)]
+        r = next(r for r in srv.readiness_check("package")["rules"]
+                 if r["rule"] == "handoff-repeated")
+        self.assertEqual(r["entities"], [ids[0], more[0]])
+        self.assertIn(f"lines 2, 3 of {more[-1]} since {ids[0]} (12 handoffs);"
+                      f" line 4 of {more[-1]} since {more[0]} (9 handoffs)", r["note"])
+
     def test_work_bind_stamps_last_referenced(self):
         make_complete_package("demo")
         result = srv.work_bind("commit abc123", ["FR-001", "AC-001"])
@@ -4940,7 +5045,8 @@ class V4EngineTest(unittest.TestCase):
                           "lessons-note-budget", "prose-ids-resolve",
                           "lessons-superseded-binding", "waivers-open-ended",
                           "prompt-ids-resolve", "feedback-unanswered",   # plans 093 (missed), 100
-                          "handoff-current", "lessons-stranded"):        # plan 122 (v5.1)
+                          "handoff-current", "lessons-stranded",         # plan 122 (v5.1)
+                          "handoff-repeated"):                           # plan 165 (v5.8)
             self.assertIn(rule_name, text, rule_name)
         self.assertIn("STOP for operator approval", text)
         self.assertIn("you NEVER author a `WVR-` row", text)

@@ -1,0 +1,81 @@
+== 5bc5eab5
+   2026-09-29T05:48:50 .. 05:49:13 start SessionStart x6
+   2026-09-29T05:49:14 .. 05:49:14 delta added=309 readded=0 removed=0 x1
+   2026-09-29T05:52:34 .. 05:52:34 record OLD x1
+   2026-09-29T05:53:57 .. 05:54:18 start SessionStart x5
+   2026-09-29T05:54:18 .. 05:54:18 delta added=28 readded=0 removed=0 x1
+   2026-09-29T05:58:21 .. 05:58:21 server_info 5.6.1 x1
+   2026-09-29T06:09:37 .. 06:09:59 start SessionStart x5
+   2026-09-29T06:11:25 .. 06:11:25 server_info 5.7.0 x1
+   2026-09-29T08:08:46 .. 08:09:09 start SessionStart x6
+   2026-09-29T20:33:02 .. 20:33:02 compact compact_boundary x1
+   2026-09-29T20:32:43 .. 20:32:43 delta added=337 readded=0 removed=0 x1
+   2026-09-29T20:32:43 .. 20:33:02 start SessionStart x6
+   2026-09-29T20:39:35 .. 20:39:35 record NEW x1
+   2026-09-29T20:39:38 .. 20:39:38 delta added=0 readded=0 removed=0 x1
+== 61baf644
+   2026-09-25T18:05:54 .. 18:06:09 start SessionStart x5
+   2026-09-25T18:06:56 .. 18:06:56 delta added=65 readded=0 removed=0 x1
+   2026-09-25T18:08:59 .. 18:08:59 server_info 5.0.0 x1
+   2026-09-26T10:17:48 .. 10:17:48 server_info 5.1.0 x1
+   2026-09-26T14:15:38 .. 14:15:38 compact compact_boundary x1
+   2026-09-26T14:15:23 .. 14:15:23 delta added=65 readded=0 removed=0 x1
+   2026-09-26T14:15:23 .. 14:15:38 start SessionStart x5
+   2026-09-26T14:17:37 .. 14:17:37 delta added=0 readded=0 removed=0 x1
+   2026-09-26T15:24:49 .. 15:24:49 server_info 5.1.0 x1
+   2026-09-26T15:29:10 .. 15:29:10 server_info 5.2.0 x1
+   2026-09-26T21:51:54 .. 21:52:07 start SessionStart x5
+   2026-09-27T00:13:18 .. 00:13:18 compact compact_boundary x1
+   2026-09-27T00:13:03 .. 00:13:03 delta added=63 readded=0 removed=0 x1
+   2026-09-27T00:13:03 .. 00:13:18 start SessionStart x5
+   2026-09-27T00:15:13 .. 00:15:13 delta added=0 readded=0 removed=21 x1
+   2026-09-27T00:15:39 .. 00:15:39 server_info 5.1.0 x1
+   2026-09-27T00:59:18 .. 00:59:18 server_info 5.2.0 x1
+   2026-09-27T01:02:11 .. 01:02:59 server_info 5.3.0 x2
+   2026-09-27T03:25:18 .. 03:25:18 compact compact_boundary x1
+   2026-09-27T03:25:01 .. 03:25:01 delta added=63 readded=0 removed=0 x1
+   2026-09-27T03:25:01 .. 03:25:18 start SessionStart x5
+   2026-09-27T03:26:39 .. 03:26:39 delta added=0 readded=0 removed=0 x1
+   2026-09-27T03:26:51 .. 03:26:51 server_info 5.2.0 x1
+   2026-09-27T04:20:42 .. 04:20:42 delta added=2 readded=0 removed=0 x1
+   2026-09-27T04:40:02 .. 04:46:48 server_info 5.4.0 x2
+   2026-09-27T18:34:34 .. 18:34:34 compact compact_boundary x1
+   2026-09-27T18:34:16 .. 18:34:16 delta added=65 readded=0 removed=0 x1
+   2026-09-27T18:34:16 .. 18:34:34 start SessionStart x5
+   2026-09-27T18:42:26 .. 18:42:26 delta added=0 readded=0 removed=0 x1
+   2026-09-27T18:58:15 .. 18:58:15 server_info 5.2.0 x1
+   2026-09-27T19:37:05 .. 19:37:25 start SessionStart x5
+   2026-09-27T19:37:25 .. 19:37:25 delta added=265 readded=0 removed=0 x1
+   2026-09-27T20:34:48 .. 20:40:22 server_info 5.5.0 x2
+   2026-09-28T04:53:30 .. 04:53:30 compact compact_boundary x1
+   2026-09-28T04:53:13 .. 04:53:13 delta added=330 readded=0 removed=0 x1
+   2026-09-28T04:53:13 .. 04:53:30 start SessionStart x5
+   2026-09-28T04:55:28 .. 04:55:28 delta added=0 readded=0 removed=0 x1
+   2026-09-28T05:06:16 .. 05:06:16 server_info 5.4.0 x1
+   2026-09-28T06:01:29 .. 06:07:10 server_info 5.6.0 x2
+   2026-09-28T08:12:42 .. 08:12:42 compact compact_boundary x1
+   2026-09-28T08:12:23 .. 08:12:23 delta added=330 readded=0 removed=0 x1
+   2026-09-28T08:12:23 .. 08:12:42 start SessionStart x5
+   2026-09-28T08:15:25 .. 08:15:25 delta added=0 readded=0 removed=0 x1
+   2026-09-28T08:21:20 .. 08:21:20 server_info 5.4.0 x1
+   2026-09-28T09:14:43 .. 09:14:58 start SessionStart x5
+   2026-09-28T09:14:59 .. 09:14:59 delta added=0 readded=0 removed=186 x1
+   2026-09-28T09:15:20 .. 09:15:20 delta added=55 readded=55 removed=0 x1
+   2026-09-28T09:15:29 .. 09:15:29 delta added=103 readded=103 removed=0 x1
+   2026-09-28T09:15:56 .. 09:15:56 delta added=0 readded=0 removed=0 x1
+   2026-09-28T09:16:19 .. 09:16:19 server_info 5.6.0 x1
+   2026-09-28T09:50:44 .. 10:00:07 server_info 5.6.1 x2
+   2026-09-28T21:38:26 .. 21:38:26 compact compact_boundary x1
+   2026-09-28T21:38:07 .. 21:38:07 delta added=263 readded=0 removed=0 x1
+   2026-09-28T21:38:08 .. 21:38:26 start SessionStart x5
+   2026-09-28T21:39:09 .. 21:39:09 delta added=0 readded=0 removed=39 x1
+   2026-09-28T22:54:45 .. 22:54:45 record OLD x1
+   2026-09-29T05:21:33 .. 05:31:19 server_info 5.7.0 x2
+   2026-09-30T16:23:10 .. 16:23:37 start SessionStart x5
+   2026-09-30T16:26:41 .. 16:26:41 compact compact_boundary x1
+   2026-09-30T16:26:23 .. 16:26:23 delta added=139 readded=0 removed=0 x1
+   2026-09-30T16:26:24 .. 16:26:41 start SessionStart x5
+   2026-09-30T16:33:33 .. 16:33:33 delta added=18 readded=0 removed=0 x1
+   2026-09-30T16:33:52 .. 16:33:52 record NEW x1
+   2026-09-30T16:34:17 .. 16:34:17 delta added=159 readded=0 removed=0 x1
+   2026-09-30T16:37:06 .. 16:37:06 server_info 5.7.0 x1
