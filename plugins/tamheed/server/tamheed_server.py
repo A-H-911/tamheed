@@ -5013,16 +5013,18 @@ _ENTITY_QUERY_DESC = (
     " limited read never returns the newest rows. `after_id` returns the rows after"
     " that id in the same order: pass the result's `next_after`, or an id you type (it"
     " need not name a row). `total` is the size of the filtered set, uncut.")
+# Plan 167 (v5.8): the argument is named — one field call sent `items` for `verdicts`
+# under the 5.7.0 text, which spoke of "each item" and named no argument.
 _PROGRESS_UPDATE_DESC = (
-    "Append progress entries (execution tracking), one transaction. Each item is an"
-    f" object with these keys: {_keys_told(_PROGRESS_KEYS, _PROGRESS_REQUIRED)}. A key"
-    " outside this list is refused and nothing is written. `event_type` defaults to"
-    " note; the server assigns the id and the time.")
+    "Append progress entries (execution tracking), one transaction. `entries` is a"
+    f" list; each entry is an object with these keys: {_keys_told(_PROGRESS_KEYS, _PROGRESS_REQUIRED)}."
+    " A key outside this list is refused and nothing is written. `event_type` defaults"
+    " to note; the server assigns the id and the time.")
 _AUDIT_RECORD_DESC = (
-    "Record AC verdicts, optionally evidence-bound, one transaction. Each item is an"
-    f" object with these keys: {_keys_told(_VERDICT_KEYS, _VERDICT_REQUIRED)}. A key"
-    " outside this list is refused and nothing is written. The server assigns the id"
-    " and the time.")
+    "Record AC verdicts, optionally evidence-bound, one transaction. `verdicts` is a"
+    f" list; each verdict is an object with these keys: {_keys_told(_VERDICT_KEYS, _VERDICT_REQUIRED)}."
+    " A key outside this list is refused and nothing is written. The server assigns"
+    " the id and the time.")
 
 TOOLS = {
     "server_info": (server_info, "Report server version, resolved package root, store state"),

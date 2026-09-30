@@ -886,6 +886,39 @@ must fire; the resulting package replaces `evals/sample-results/lab-tracker/pack
       it); then `export_html`; `gate_run` ready; `package_verify()` green (`verified: true`,
       `dirty: []`, `foreign: []`, `review_current: true`, `review_exported_by: "5.7.0"`);
       `package_close`; no `data/.lock` remains.
+31. **The v5.8.0 continuation — the eighth field round: the lines a handoff carried unread,
+    and the page one row per line.** The package opens at `schema_version` 7 (no migration in
+    5.8.0) with the resume block naming beat 30's final handoff. The scratch phase runs FIRST,
+    with hard assertions; the fixture's note then quotes what it observed.
+    ✔ BEFORE THE FIRST EXPORT: `package_verify("package")`, package closed, reads
+      `review_current: true` and `review_exported_by: "5.7.0"` over the page 5.7.0 exported.
+    ✔ THE RULE (plan 165), scratch copy: `readiness_check("package")` carries
+      `handoff-repeated` (the fixture holds more than three handoffs, none repeating a line)
+      and it PASSES. Three handoffs are then written that share one line of twenty or more
+      characters, with a heading line (ending `:`) and a short line beside it; the rule FAILS
+      naming the first of the three as its entity and the shared line's number in the third
+      with `(3 handoffs)`; the heading and the short line are not named. A fourth handoff
+      that rewords the shared line with what was read and the date makes the rule PASS again.
+      No line of any handoff appears in the rule's note.
+    ✔ THE PAGE (plan 166), scratch copy: the first export re-flows the page — every `<tr id=`
+      starts its own line, no line holds two `</tr>` or two `<path`, and the page equals the
+      page the 5.7.0 engine renders from the same store on the same date once the newlines
+      between tags are removed and the stamp replaced; the `csv/` files keep their hashes.
+    ✔ THE DESCRIPTIONS (plan 167): the registered descriptions of `progress_update` and
+      `audit_record` name their argument (`entries`, `verdicts`) and every key of their
+      constant, and fit the client's cap.
+    ✔ THE EMISSION (plan 168): `handoff_emit(<scratch target>, refresh_stock=true)` reports
+      `refreshed: ["prompts/README.md"]` (the guide now reads `tamheed v5.8.0`, its title the
+      only line changed), every scan empty; the second emit reports `CLAUDE.md` unchanged.
+    ✔ Close the beat with ONE `progress_update` note (actor `agent:lab-beat-31`, `event_type:
+      "note"`) quoting verbatim `a line carried word for word through three handoffs was named
+      by number`, `a re-measured line cleared the rule`, `the page puts each row on its own
+      line and renders the same` and `tamheed v5.8.0`; THEN the final handoff (`event_type:
+      "handoff"`, written LAST, naming the export and the checks as FOLLOWING it, and sharing
+      no line with the two handoffs before it); then `export_html` (the fixture's page
+      re-flows once: its stamp, its date and its lines); `gate_run` ready; `package_verify()`
+      green (`verified: true`, `dirty: []`, `foreign: []`, `review_current: true`,
+      `review_exported_by: "5.8.0"`); `package_close`; no `data/.lock` remains.
 
 **Pass bar:** every ✔ observed; `gate_run` ready (or failing ONLY on deliberately-open
 items the scenario names); the eval runner's lab checks green. `readiness_check` is

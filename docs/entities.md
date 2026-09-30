@@ -993,8 +993,10 @@ column, never edges.
 
 **The resume surface (v5.1, plans 121–123).** A `handoff` entry is the typed place for "where this
 session stopped"; the engine returns the latest one with its correction chain as the `resume`
-block, the plugin's SessionStart hook prints it, and `handoff-current` names one that is behind
-the journal. The package stays the state — the block is a read of it, never a state file.
+block, the plugin's SessionStart hook prints it, `handoff-current` names one that is behind
+the journal, and `handoff-repeated` (v5.8) names the lines of the latest one that stood word for
+word through three handoffs — a line copied forward claims it still stands. The package stays
+the state — the block is a read of it, never a state file.
 
 ```mermaid
 flowchart LR
@@ -1005,6 +1007,8 @@ flowchart LR
     R -->|"SessionStart hook - plain stdout, screened, capped"| A
     J -->|"work-done / transition after the handoff"| C["handoff-current advisory - fail"]
     C -->|"tamheed:session-handoff"| S
+    J -->|"a line of the latest handoff, word for word in the two before it (v5.8)"| D["handoff-repeated advisory - fail: re-measure, then write what you read"]
+    D -->|"tamheed:session-handoff"| S
 ```
 
 **Purpose.** The append-only execution journal, typed (decision 11, event-sourcing-lite):

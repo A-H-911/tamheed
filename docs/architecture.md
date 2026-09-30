@@ -85,7 +85,8 @@ server-appended kinds (`forced-override`, `lesson-confirmed`, `lesson-promoted`,
 are refused from `progress_update` (v4.5), so a narrated "confirmed" or "verified" can never be
 journaled by hand. The caller-written `handoff` kind (v5.1) is the journal's newest use: where a
 session stopped, returned as the `resume` block and printed by the SessionStart hook (§4 below), with
-the `handoff-current` advisory naming a handoff the journal has moved past. And the store's byte-stability guarantee — an idle open→close is a zero-diff — is
+the `handoff-current` advisory naming a handoff the journal has moved past and `handoff-repeated` (v5.8)
+naming the lines of the latest one carried word for word through three handoffs. And the store's byte-stability guarantee — an idle open→close is a zero-diff — is
 exercised on demand by **`package_verify`**: the canonical round-trip reported per file, foreign files
 in `data/` named, an unloadable store reported as a finding, memory compared to disk when the package
 is open, and a sha256 digest of the canonical files that `record=true` journals as a citable fact
@@ -245,7 +246,7 @@ sequenceDiagram
     S->>P: _resume_block: latest handoff + corrections, handoff_behind,<br/>open feedback, open slices, lock holder + observed (own lock: alive, no probe)
     S-->>A2: resume: {...}, skill: tamheed:package-writes
     A2->>S: readiness_check("package")
-    S-->>A2: handoff-current: the work entries no handoff covers
+    S-->>A2: handoff-current: the work entries no handoff covers;<br/>handoff-repeated (v5.8): the lines of the latest handoff carried through three handoffs, by number
     A2->>S: entity_query(type, id)
     S-->>A2: rows + skill: tamheed:reading-the-record (v5.2 - the row arrives with its cue)
     A2->>S: handoff_emit(target)

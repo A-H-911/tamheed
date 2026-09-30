@@ -66,12 +66,24 @@ truncation marker and has to query for the rest — in this order:
   made, no "pushed", no "the page is current". The next session reads the commit from git and
   the page from `package_verify`. *Field evidence:* a draft said the branch was pushed through
   commits that did not exist yet, and called one step done and remaining in the same sentence.
-- **A line carried from the previous handoff is re-measured or marked carried.** Copying an
-  awaiting item forward claims that it still stands. Re-read it at its source — a row through the
-  tools, a thing outside the store (a change request, a pipeline run, a meeting) where it lives —
-  or write `carried, not re-measured` beside it, so the next session knows which lines nobody
-  checked. *Field evidence:* two handoffs in a row named a change request that had been closed
-  and replaced by another before the first of them was written.
+- **A line carried from the previous handoff is re-measured, or it says what it rests on.**
+  Copying an awaiting item forward claims that it still stands. Re-read it at its source — a
+  row through the tools, a thing outside the store (a change request, a pipeline run, a
+  meeting) where it lives — and against the rulings given since it was written: an answer
+  often lands in a decision row, not on the item. A line you cannot re-measure this session
+  carries `carried, not re-measured` with its source and the date it was last measured
+  (`… - carried, not re-measured; rests on the decision row, last read <date>`), so the next
+  session knows which lines nobody checked and where to look. **The mark lasts one
+  handoff.** A line that arrives already marked is re-measured before it is written again,
+  or it leaves the handoff for the row it rests on (an open question with an owner and a
+  date, which the liveness rules watch). `readiness_check`'s `handoff-repeated` advisory
+  names, by line number, the lines of the latest handoff that stood word for word through
+  three handoffs; do not reword a line to clear it — re-measure it and write what you read.
+  *Field evidence:* two handoffs in a row named a change request that had been closed and
+  replaced by another before the first of them was written; a marked line re-put an
+  operator interview through eight handoffs after the operator had answered it, and another
+  tracked a ruling that could never be executed — reading the code was the re-measurement,
+  and no handoff made it.
 - **Ids, never pasted rows.** The rows are live; a copy rots. Name them and say what to read.
 - **A stale handoff is corrected, never edited.** The journal is append-only: `progress_update`
   with `event_type: "correction"` and `corrects: "<the handoff's PE-id>"`; the resume block returns

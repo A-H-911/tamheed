@@ -250,7 +250,8 @@ line says what the store observed about the holder, and an opt-in `TAMHEED_HOOK_
 run in counts — v5.3 — each line naming the session that wrote it since v5.4 and the hook's
 release since v5.6, written by every session that loaded the plugin; a plugin reload runs no hook, so after one the block comes from
 `package_open`), with the
-`handoff-current` advisory naming a handoff the journal has moved past (since v5.2 every `entity_query`
+`handoff-current` advisory naming a handoff the journal has moved past and, since v5.8, `handoff-repeated`
+naming the lines of the latest handoff carried word for word through three handoffs (since v5.2 every `entity_query`
 result and any `handoff_emit` finding name the discipline skill to invoke, and a skill row's retirement
 is journalled by `system:skill-guard`); genuine ambiguity is recorded in place as
 `[NEEDS-CLARIFICATION: OQ-NNN]` markers that G-COMPLETE validates against live open questions. Typed

@@ -18,7 +18,8 @@ and the plugin's SessionStart hook prints the same block into the model's contex
 session start, clear and compaction (after a compaction the package is still open, so
 `server_info` is the first call; `package_open` refuses an open package). The handoff is a
 journal entry the agent writes LAST before it stops (`tamheed:session-handoff`); the
-`handoff-current` advisory names one the journal has moved past. The block is a read of the
+`handoff-current` advisory names one the journal has moved past, and `handoff-repeated` (v5.8) the
+lines of the latest one carried word for word through three handoffs. The block is a read of the
 store, never a state file — the doctrine above is unchanged.
 
 0. Read the handoff and its corrections; orient from the journal for the entries after it.

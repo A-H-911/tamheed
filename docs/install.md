@@ -254,6 +254,48 @@ that is not the one in service.
    - The descriptions of those three tools name the rule and the keys. A client shows them
      only after the reload: read the tool's description in the client's own tool listing.
      What a client receives is the REGISTERED description, never a docstring.
+     **Corrected 2026-09-30 (v5.8.0, the field's FB-026): "after the reload" is not enough.**
+     Claude Code records a loaded tool's definition in the session when the tool is first
+     loaded and keeps sending that record; a `--resume` keeps it too. A client shows a new
+     description in a context that loaded the tool AFTER the update: a new session, `/clear`,
+     or a compaction. Measured on 2,122 session transcripts (builds 2.1.267–2.1.283): a
+     loaded tool was recorded again 936 times after a compaction and 5 times without one;
+     100 re-selects of an already-loaded tool in the same context, 12 of them after a
+     `--resume`, re-recorded it 0 times. The field's session listed the 5.6.1 texts after
+     its `--resume` and the 5.7.0 texts after its next compaction; the wire (`tools/list`)
+     and a fresh `claude -p` listed the new texts throughout. The docs
+     (`code.claude.com/docs/en/sessions`, `/mcp`) state nothing on this; a newer build may
+     differ.
+7. **What a session meets at 5.8.0** — no migration, no store shape change, the CSV and the
+   JSONL unchanged:
+   - `readiness_check("package")` carries one more advisory, `handoff-repeated`, once the
+     journal holds three handoffs: the lines of the latest handoff that stood word for
+     word through three handoffs in a row, by line number. On a journal whose latest
+     handoff repeats nothing it passes; a fail names lines to re-measure, never blocks.
+   - **The review page re-flows once.** Every table row and every graph element now sits
+     on its own line, so the first export after the update rewrites most of the page: on a
+     field package of 14.7 MB, `git diff --numstat` read `26395` added and `2005` removed
+     (a 20 MB patch), `csv/` unchanged. Every later export after a journal write is small:
+     `20` added, `17` removed, a 34 KB patch on the same package, against about 4 MB of
+     added bytes per export before. A write that adds a node or an edge to the connected
+     graph still re-emits both graphs (every position moves), measured at 1.3 MB.
+     The rendered page is the same: the same store on the same date gives the same bytes
+     once the newlines between tags are removed, and a browser reads equal elements, text
+     and height. `package_verify()` reads `review_current: true` over the page 5.7.0 wrote
+     until that export, as before.
+   - **A project that tracks the page and scans its git history** — as one field project
+     does with a secret scanner over the full history — paid for those long lines: before
+     5.8.0 each export added about 4 MB of patch text, and a history scanner reads every
+     patch. Those past versions stay in history; 5.8.0 rewrites nothing. That project, under
+     its own ADR, skips the page's past versions in its history scan and scans the current
+     page in full beside all of `data/*.jsonl`; its ADR holds that a secret could appear in
+     a past page version only through the store, whose free-text fields are where one would
+     enter and which its scan still reads in full. That is the project's decision, its own
+     risk acceptance: tamheed neither recommends nor validates a narrowing. It reports the
+     measurement, and that from 5.8.0 on the per-export diff is small, so the cost sits in
+     the history already written.
+   - The descriptions of `progress_update` and `audit_record` now name their argument
+     (`entries` is a list; `verdicts` is a list). One field call had sent `items`.
 
 ## Claude Code — manual / standalone
 

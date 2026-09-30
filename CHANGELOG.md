@@ -8,7 +8,48 @@ All notable changes to Tamheed are documented here. The format is based on
 > original repository (<https://github.com/A-H-911/keystone>). Tamheed carries Keystone's full git
 > history; the Keystone repository stays frozen at 1.0.x for existing v1 packages.
 
-## [Unreleased]
+## [Unreleased] — becomes 5.8.0 at plan 168, when the five version surfaces move together (lint 8)
+
+**MINOR — the FB-026 / FB-027 cycle (plans 165–169).** The field ran 5.7.0 and returned two
+feedback rows, both questions, and no defect: FB-026 (class 9 of the brief read false in a
+session resumed after the update) and FB-027 (a handoff line marked carried travelled eight
+handoffs after its answer). The field's own secret-scan defect measured the review page's
+history as the whole cost; the maintainer measured why. No migration; `schema_version` stays 7.
+
+### Added
+- **`handoff-repeated`, an advisory readiness rule** (plan 165, ruling R56): once the journal
+  holds three handoffs, the lines of the latest handoff that stood word for word through
+  three handoffs in a row, named by line number (the SessionStart hook's numbering) with the
+  handoff each first stood in. Entities and integers only; no line of an entry reaches the
+  output. Replayed over the field's 18 handoffs it names both lines the field lost on the
+  third handoff, two days before the field's own sweep did. It reads wording, never truth: a
+  reworded line resets it. `session-handoff` now teaches that a carried line names its source
+  and the date it was last measured, and that the mark lasts one handoff; `orient-resume`
+  reads a marked line as a claim, not a fact; `register-liveness` gains step 20.
+
+### Changed
+- **The review page puts each table row and each graph element on its own line** (plan 166,
+  ruling R57). The generator had joined them with no newline: a field page held four lines
+  of 840–912 KB that moved on every export, about 4 MB of patch text each time, and its
+  history was the whole cost of a 15–32 minute secret scan (gitleaks reads `git log -p`).
+  Measured in git on a fresh field copy: the first export after the update re-flows the page
+  once (`26395` added, `2005` removed, a 20 MB patch, `csv/` unchanged); the next export
+  after a journal write is `20` added, `17` removed, 34 KB. The rendered page is the same:
+  equal bytes once the newlines between tags are removed, and in a browser equal elements,
+  rows, paths, text, height and pixels. A write that adds a node or an edge still re-emits
+  both graphs. **What moves for a project that tracks the page:** one large diff, once.
+- **`progress_update` and `audit_record` name their argument in the registered description**
+  (plan 167): "`entries` is a list; each entry …", "`verdicts` is a list; each verdict …".
+  One field call had sent `items` under the 5.7.0 text.
+
+### Fixed
+- **Docs (plan 167, ruling R58, the field's FB-026):** 5.7.0's install note, brief and design
+  record said the new descriptions show "after the reload". A client shows them in a context
+  that loaded the tool after the update — a new session, `/clear` or a compaction; a
+  `--resume` keeps the recorded text. Each site carries a dated correction beside the
+  sentence; the measurement is in `docs/install.md`.
+
+Record: [`plans/165-169-batch-fb026-fb027.md`](plans/165-169-batch-fb026-fb027.md).
 
 ## [5.7.0] - 2026-09-29
 
@@ -42,7 +83,11 @@ review page keep their order.
 - **Three tools register a contract where a client reads it** (plans 160, 161):
   `entity_query` states its order and what `limit` and `after_id` do; `progress_update` and
   `audit_record` name their item keys, built from the constants the refusal reads. The other
-  sixteen descriptions keep their one line.
+  sixteen descriptions keep their one line. **Corrected 2026-09-30 (v5.8.0, the field's
+  FB-026):** "where a client reads it" holds for a context that loaded the tool after the
+  update — a new session, `/clear` or a compaction. A session that had loaded the tool
+  before the update keeps the text it recorded, through a `--resume` too (measured on 2,122
+  transcripts; see `docs/install.md`).
 - **The selftest compares what the SDK lists with the registry** (plan 160), and holds every
   description under the client's cap of 2,048 characters. CI's smoke job runs it, and so
   does the suite on a machine whose Python has the SDK.

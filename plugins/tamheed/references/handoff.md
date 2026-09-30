@@ -149,7 +149,8 @@ undrifted.
 discipline skills and carries one sentence about the handoff: before a compaction, at session end
 or on a handover the agent writes a `handoff` journal entry LAST (`tamheed:session-handoff`); the
 latest one comes back as the `resume` block of `package_open`/`server_info` and through the
-plugin's SessionStart hook, and `handoff-current` names one the journal has moved past. The
+plugin's SessionStart hook, `handoff-current` names one the journal has moved past, and
+`handoff-repeated` (v5.8) the lines of the latest one carried word for word through three handoffs. The
 obligations table is unchanged (the marker stays `v5`; the span rebuilds once because its text
 changed). Four scans joined the emission, all report-only: a declared `<!-- tamheed:stock-merged
 X.Y.Z -->` marker is **verified** against the stock history (`stock_merged`: the release must

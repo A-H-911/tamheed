@@ -23,7 +23,9 @@ Orient yourself on this project's Tamheed package before doing anything else:
    counts the work-done/transition entries written after it: those you orient on from the
    journal (step 4). No handoff at all: the journal is the resume state, and you write one
    before this session ends (`tamheed:session-handoff`). When the hook already printed the
-   block, do not re-read what it showed — go to the steps it leaves open.
+   block, do not re-read what it showed — go to the steps it leaves open. A handoff line
+   marked `carried, not re-measured` is a claim about the past, not a fact: re-measure it at
+   its source before you act on it or put it to the operator.
 1. `server_info` — confirm the server version and the resolved package root. **After a
    compaction the package is still open** (the MCP process and the lock survive): this is
    the first call, and it carries the resume block; skip step 2.

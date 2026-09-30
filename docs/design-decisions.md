@@ -520,7 +520,11 @@ the largest of the round. The rulings (R51–R55):
   characters, so the texts are short and lead with what matters. The selftest compares what
   the SDK lists with the registry, in CI and wherever the suite runs with the SDK present.
   Not built: contracts for the other sixteen tools, and server instructions, a field the
-  server has never set.
+  server has never set. **Corrected 2026-09-30 (v5.8, the field's FB-026):** "what a client
+  reads" is what the client RECORDED when it first loaded the tool. Claude Code keeps that
+  record through a `--resume`; a new session, `/clear` or a compaction reads the server's
+  current text. The 5.7.0 brief's class 9 said "after the reload" and read false in the
+  field's resumed session (§21, D-RESUME-KEEPS-THE-RECORD).
 - **D-REPORT-A-FAILURE — the field reports what fails, through the package.** Seven rounds
   asked the field for a report after each release. From this release a brief lists the
   classes with their conditions, the field checks them in an ordinary session, and a class
@@ -545,3 +549,65 @@ brief's row that left out `csv/`; a front door that named a key loosely; and, in
 own plans, the docstring error repeated, a pattern search called a census, and "no committed
 byte moves" said of a release that reorders an exported file.
 Record: plan [`160-164-batch-findings-39.md`](../plans/160-164-batch-findings-39.md).
+
+## 21. Three rulings from the eighth field round, on two feedback rows (2026-09-30, v5.8)
+
+The field ran 5.7.0 and, by D-REPORT-A-FAILURE, wrote no report: two feedback rows came
+back, both questions on the operator's word (`FB-026`, `FB-027`), and one of its own defects
+measured the review page's history as the whole cost of its secret scan. Three rulings
+(R56–R58) on 2026-09-30; the record is `plans/165-169-batch-fb026-fb027.md`.
+
+- **D-HANDOFF-REPEATED — the engine names the handoff lines carried unread.** FB-027: a line
+  marked `carried, not re-measured` travelled eight handoffs after the operator had answered
+  it, under a rule that was followed — the mark moved the re-measurement onto the next
+  reader, who carried it again. Teaching alone had lost, so the ruling is a rule and the
+  teaching: `readiness_check` names, by line number, the lines of the latest handoff that
+  stood word for word through three handoffs in a row, with the handoff each first stood in;
+  the skill says a carried line names its source and the date last measured, and that the
+  mark lasts one handoff. Two constants from one project's 18 handoffs: three handoffs (both
+  lost lines are named at the third, two days before the field's sweep) and twenty
+  characters (keeps every awaiting item the field wrote, drops the headings, which end with
+  `:`). The ceiling, said in the rule's note: it reads wording, never truth; a reworded line
+  resets it — on the field's own case the verdicts line is named at three of its eight
+  positions because its punctuation moved twice. It reads handoff entries and not their
+  correction chain, so a retracted line that is still repeated counts. Why an advisory and
+  not the hook: the field reads `readiness_check` at every close-out, before it writes the
+  next handoff, which is the moment; the hook's caps and screen stay untouched. Why the name:
+  `deferred-work-carried` already means a `carries` edge, and the rule reads repetition.
+  Each entry is read to the resume block's own cap, so the journal's size bounds the cost.
+- **D-ONE-ROW-PER-LINE — the review page is a diff-friendly file.** The field's `DEF-224`
+  measured `review.html`'s history as the cost of a 15–32 minute secret scan (8m37s at two
+  CPUs against 14.4 s without it) and, under `ADR-0052`, skips the page's past versions. The
+  cause was the generator's: table rows and graph elements joined with no newline, so the
+  page held four lines of 840–912 KB — both graphs and the journal table twice — each
+  carrying a stamp or a count that moves on every export, about 4 MB of patch text each
+  time; gitleaks reads `git log -p`, and a scanner that reads patches pays for every changed
+  line's bytes. The fix is a newline between rows, between SVG siblings, after a fold's
+  summary and after a section's freshness paragraph — nowhere inside an inline run, a cell,
+  a `<text>` or the handoff's `<pre>`. Measured in git on a fresh field copy: the first
+  export re-flows the page once (26,395 added, 2,005 removed, 20 MB); the next export after a
+  journal write is 20 added, 17 removed, 34 KB. Proven the same page: equal bytes once the
+  newlines between tags are removed, and in a browser equal elements, rows, paths, text,
+  height and pixels. Not built: a smaller page (the journal renders twice by design,
+  `DEC-236` d4's weight), a stable graph geometry (a new node moves its neighbours: 1.3 MB on
+  the field's `3a6dd21b`), any change to `csv/` or the JSONL. Tamheed recommends no scan
+  narrowing; the install guide reports the field's route as the field's own decision.
+- **D-RESUME-KEEPS-THE-RECORD — a client shows the description it recorded.** FB-026: the
+  5.7.0 brief's class 9 read false in a session resumed after the update — it listed the
+  5.6.1 texts while the wire and a fresh client listed 5.7.0's. Measured on 2,122
+  transcripts: Claude Code writes a `deferred_tools_record` when a tool is first loaded; a
+  tool was recorded again 936 times after a compaction and 5 times without one; 100
+  re-selects of an already-recorded tool in the same context, 12 after a `--resume`,
+  re-recorded it 0 times. The vendor's docs state nothing on it. So the docs say "a context
+  that loaded the tool after the update" and, by ruling R58, nothing in the engine changes:
+  the record is the client's. Not built: `server_info` returning the descriptions.
+- **The number.** A new advisory in `readiness_check`'s output and a new page layout, and
+  two descriptions reworded to name their argument: MINOR. No store shape, identifier or
+  handoff-contract change; no migration.
+
+Owned by the maintainer: the 5.7.0 condition "after the reload", written without measuring
+a resumed session while the maintainer's own session held such a record (O18); the decline
+of a design-record note on the page's weight on the field's "not a cost today", one day
+before the field measured the cost, which was the generator's (O19); the 5.7.0 brief's
+optional generator check, never run (O20). Record: plan
+[`165-169-batch-fb026-fb027.md`](../plans/165-169-batch-fb026-fb027.md).

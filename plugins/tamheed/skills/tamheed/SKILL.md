@@ -259,7 +259,8 @@ and the plugin's SessionStart hook
 prints the same block into the model's context on every session start, resume, clear and
 compaction — never on a plugin reload (measured: after one, the block comes from `package_open`). A
 session writes that handoff LAST before it stops (`tamheed:session-handoff`); `handoff-current`
-names one the journal has moved past. A tool result is the cue that loads a discipline skill (the
+names one the journal has moved past, and `handoff-repeated` the lines of the latest one carried word
+for word through three handoffs, to re-measure before they are carried again. A tool result is the cue that loads a discipline skill (the
 field measured that nothing loads without one): since v5.2 every successful `entity_query` result names
 `tamheed:reading-the-record` and any `handoff_emit` finding names `tamheed:written-claims`, beside
 the v5.1 cues on `package_open`/`server_info`, `audit_record`, `readiness_check` and the handoff

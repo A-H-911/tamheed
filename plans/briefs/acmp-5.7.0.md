@@ -81,6 +81,7 @@ and the clause `DEC-237` put in `AGENTS.md:13` stays true.
 | 7 | `entity_query` with a typed `after_id` | the rows after that id by number | always |
 | 8 | `progress_update` with a key it does not take | `ok false`; the message names the key and the seven keys the tool takes; no row written | always |
 | 9 | the descriptions of `entity_query`, `progress_update`, `audit_record` | each states its rule or names its keys | after the reload. **Instrument: the tool's description as your client lists it**, never the server's file |
+| 9, corrected 2026-09-30 (v5.8.0, your FB-026) | the same three descriptions | the same | **in a context that loaded the tools after the update: a new session, `/clear` or a compaction.** A `--resume` keeps the text the session recorded before the update; the wire and a fresh client read the new text. Measured on 2,122 transcripts (`docs/install.md`, 5.8.0). The condition "after the reload" was the maintainer's error (O18); classes 1 and 10 are true as written |
 | 10 | the first trace line of the session after the reload | it opens `<utc> version=5.7.0` | the process reloaded or started after the update |
 
 **Measured on the copy with the shipped engine, for comparison:**
