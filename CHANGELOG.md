@@ -10,6 +10,30 @@ All notable changes to Tamheed are documented here. The format is based on
 
 ## [Unreleased]
 
+## [5.8.1] - 2026-10-01
+
+**PATCH — the FB-028 cycle and the real-agent lab run (plans 170–174).** The field ran 5.8.0
+and every engine class held; one class read false, and it was the 5.8.0 correction itself.
+No engine change; no migration; `schema_version` stays 7.
+
+### Fixed
+- **Docs (plan 170, ruling R59, the field's FB-028):** 5.8.0 said a client shows a new tool
+  description in "a new session, `/clear` or a compaction". A compaction re-records the
+  listing the client process built when it started, and `/reload-plugins` restarted the
+  server and the hooks without rebuilding that listing: after an update, a reload and a
+  compaction in one process (2.1.284), `server_info` answered 5.8.0 while the record and the
+  ToolSearch listing carried the 5.7.0 texts. The new text needs a client process started
+  after the update. Each site carries a dated correction; `docs/install.md` carries the
+  routes with their evidence and what the 5.8.0 census could not distinguish.
+
+### Changed
+- **`orient-resume` step 1** says that the descriptions and schemas a session lists were
+  fetched when its client process started, that `server_info` names the server that
+  answers, and that after an update only a client process started after it lists the new
+  text — said to the operator, never read as the server.
+
+Record: [`plans/170-174-batch-fb028.md`](plans/170-174-batch-fb028.md).
+
 ## [5.8.0] - 2026-09-30
 
 **MINOR — the FB-026 / FB-027 cycle (plans 165–169).** The field ran 5.7.0 and returned two
