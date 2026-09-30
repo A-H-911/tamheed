@@ -8,7 +8,9 @@ All notable changes to Tamheed are documented here. The format is based on
 > original repository (<https://github.com/A-H-911/keystone>). Tamheed carries Keystone's full git
 > history; the Keystone repository stays frozen at 1.0.x for existing v1 packages.
 
-## [Unreleased] — becomes 5.8.0 at plan 168, when the five version surfaces move together (lint 8)
+## [Unreleased]
+
+## [5.8.0] - 2026-09-30
 
 **MINOR — the FB-026 / FB-027 cycle (plans 165–169).** The field ran 5.7.0 and returned two
 feedback rows, both questions, and no defect: FB-026 (class 9 of the brief read false in a

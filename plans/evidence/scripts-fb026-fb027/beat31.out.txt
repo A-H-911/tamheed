@@ -1,0 +1,23 @@
+OBS B.before_first_export: {"review_current": true, "review_exported_by": "5.7.0"}
+OBS B.open.resume: {"handoff": "PE-059", "behind": 0}
+OBS B.rule.fixture: {"status": "pass", "handoffs": 9}
+OBS B.rule.fail: {"entities": ["PE-060"], "detail": "line 3 of PE-062 since PE-060 (3 handoffs)"}
+OBS B.rule.cleared: "pass"
+OBS B.page: {"bytecheck": "EQUAL after the newlines between tags are removed and the stamp replaced", "old_lines": 295, "new_lines": 1082, "csv_of_the_twin_untouched": true}
+OBS B.descriptions: {"progress_update": 333, "audit_record": 325}
+PHASE-B-DONE
+OBS A.before_first_export: {"review_current": true, "review_exported_by": "5.7.0"}
+OBS A.schema: {"schema_version": 7, "migrations_head": "007_handoff.sql", "version": "5.8.0"}
+OBS A.open.resume: {"handoff": "PE-059", "behind": 0, "skill": "tamheed:package-writes"}
+OBS A.emit.refreshed: ["prompts/README.md"]
+OBS A.emit.findings: {"stock_merged": [], "oversized_prompts": [], "stale_references": [], "restated_content": []}
+OBS A.guide: "tamheed v5.8.0"
+OBS A.emit2.unchanged: true
+OBS A.handoff: "PE-061"
+OBS A.handoff-current.final: "pass"
+OBS A.handoff-repeated.final: "pass"
+OBS A.page: {"date_before": "2026-09-29", "date_after": "2026-09-30", "lines_before": 295, "lines_after": 1088}
+OBS A.gate_run.ready: true
+OBS A.verify: {"verified": true, "dirty": [], "foreign": [], "review_current": true, "review_exported_by": "5.8.0"}
+OBS A.lock_gone: true
+DONE
