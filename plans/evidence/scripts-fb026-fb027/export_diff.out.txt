@@ -1,4 +1,4 @@
-# 2026-09-30, field copy at d47d9938, engine = the plan-166 working tree (5.8.0)
+# 2026-09-30, field copy at d47d9938, engine = the plan-166 working tree (still stamped 5.7.0: the final bundle reads one line more on each side, 26396 / 2006, because the stamp's line moves too - acmp_replay8.out.txt)
 verify before: True True 5.7.0
 first export numstat: 26395	2005	tamheed-package/review.html
 first export patch bytes: 20175408

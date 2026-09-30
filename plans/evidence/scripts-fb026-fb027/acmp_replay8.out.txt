@@ -1,0 +1,14 @@
+OBS field.head "d47d9938"
+OBS server_info {"version": "5.8.0", "migrations_head": "007_handoff.sql", "schema_version": 7}
+OBS verify.before {"verified": true, "review_current": true, "review_exported_by": "5.7.0"}
+OBS open.resume {"handoff": "PE-1577", "behind": 0}
+OBS handoff-repeated {"status": "pass", "entities": [], "population": 18}
+OBS advisories 23
+OBS export.first {"numstat": ["26396", "2006"], "patch_bytes": 20175886, "csv_changed": "none", "review_current": true, "exported_by": "5.8.0", "lines": 60274}
+OBS export.bytecheck ["removed 1 handoff-repeated row(s) from the 5.8.0 page (plan 165's), Rules 28 -> 27", "5.7.0 page: 14,644,819 bytes, 35,884 lines; 5.8.0 page: 14,669,208 bytes, 60,273 lines", "EQUAL after the newlines between tags are removed and the stamp replaced"]
+OBS feedback.moves {"results": [["FB-026", true, true, null, null], ["FB-027", true, true, null, null]], "rows_now": {"FB-026": ["Resolved", "5.8.0", "tamheed plans 165-169"], "FB-027": ["Resolved", "5.8.0", "tamheed plans 165-169"]}, "transitions_journalled": 4, "feedback-unanswered_names": [], "handoff-current_counts": ["PE-1579", "PE-1580", "PE-1581", "PE-1582"]}
+OBS export.second {"numstat": ["63", "51"], "patch_bytes": 62985, "added_lines": 63, "added_bytes": 17900, "longest_added_line": 2511}
+OBS emit.first_plain {"written": [".mcp.json", "C:\\Users\\ahammo\\AppData\\Local\\Temp\\claude\\C--Users-ahammo-Repos-tamheed\\61baf644-ae93-462d-9b9b-937175ee44fc\\scratchpad\\acmp-replay8\\tamheed-package\\CLAUDE.md"], "unchanged": ["CLAUDE.md"], "files_changed_in_the_copy": [" M tamheed-package/CLAUDE.md", "?? .mcp.json"], "note_names_the_rule": false}
+OBS hook.compact {"exit": 0, "lines": 29, "chars": 2723, "trace_opens": "version=5.8.0 source=compact", "trace_tail_is_session": true}
+OBS wire {"server_info": 57, "package_create": 56, "package_open": 55, "package_unlock": 121, "package_close": 46, "entity_upsert": 59, "entity_query": 387, "trace_query": 44, "gate_run": 57, "readiness_check": 61, "progress_update": 333, "audit_record": 325, "work_bind": 70, "handoff_emit": 63, "package_migrate": 80, "package_adopt": 60, "export_html": 55, "package_verify": 122, "entity_export": 123}
+DONE

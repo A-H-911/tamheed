@@ -176,6 +176,27 @@ devil's-advocate review; execution order is the row order below). Status values:
 | 089 | [Lab beat 18](089-lab-beat-18-findings-27.md) | 085-088 + full test (15/15 vs 0/15 on `v4.10.0`; 9 suites; selftest) | DONE `762b98b` — 9 new assertions, each failing on the pre-beat fixture; D-1 registry-sync unscripted, F-3 fixed |
 | 090 | [Release v4.11.0](090-release-v4110.md) — plan-058 recipe + the fixture follows the stamp | 089 | DONE — 2026-09-22, tag `v4.11.0` (SHA in the tag) |
 
+### Field cycle FB-026 / FB-027 -- plans 165-169 -> v5.8.0 (2026-09-30; maintainer-executed)
+
+Master record: [165-169-batch-fb026-fb027.md](165-169-batch-fb026-fb027.md) (the approved plan, revision
+2 after the maintainer's own devil's-advocate pass, the operator's strict review and three advisor calls;
+3 interview rulings R56–R58; execution order 165 → 166 → 167 → 168 → 169). By R53 the field wrote no
+report: two feedback rows came back, both questions (a resumed session kept the old descriptions; a
+handoff line carried eight handoffs past its answer), and the field's own secret-scan defect measured the
+review page's history as its whole cost. The batch: `handoff-repeated`, an advisory that names the lines
+of the latest handoff carried word for word through three handoffs; the review page one row per line
+(about 4 MB of patch text per export before, kilobytes after); the docs corrected on what a resumed
+session shows. No migration. Brief: [briefs/acmp-5.8.0.md](briefs/acmp-5.8.0.md).
+Status values: PLANNED / IN PROGRESS / DONE.
+
+| # | Plan | Depends on | Status |
+|---|---|---|---|
+| 165 | [`handoff-repeated`, the advisory](165-handoff-repeated-the-advisory.md) | — | DONE — 2026-09-30 `248166f` |
+| 166 | [The review page: one row per line](166-the-page-one-row-per-line.md) | 165 | DONE — 2026-09-30 `0c4917e` + `c9184c0` (one assertion corrected) |
+| 167 | [Teaching, docs and the corrections of 5.7.0](167-teaching-docs-and-the-corrections-of-570.md) | 166 | DONE — 2026-09-30 `cbec045` |
+| 168 | [The version stamp, then lab beat 31 + evals](168-stamp-then-lab-beat-31.md) | 167 + full gate (suites; 13 lints; canonical; evals 3/3 incl. 4 new assertions) | DONE — 2026-09-30 `2fe5289` (stamp before the beat; beat 31 held on its first run) |
+| 169 | [Tag v5.8.0, the brief file, close-out](169-release-v580.md) | 168 | DONE — 2026-09-30, tag `v5.8.0` on the release commit (CI green); the field closes its two rows and checks the classes in an ordinary session |
+
 ### Field cycle findings_39 -- plans 160-164 -> v5.7.0 (2026-09-29; maintainer-executed) -- the closing round
 
 Master record: [160-164-batch-findings-39.md](160-164-batch-findings-39.md) (the approved plan, revision

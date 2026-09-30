@@ -585,7 +585,7 @@ measured the review page's history as the whole cost of its secret scan. Three r
   line's bytes. The fix is a newline between rows, between SVG siblings, after a fold's
   summary and after a section's freshness paragraph — nowhere inside an inline run, a cell,
   a `<text>` or the handoff's `<pre>`. Measured in git on a fresh field copy: the first
-  export re-flows the page once (26,395 added, 2,005 removed, 20 MB); the next export after a
+  export re-flows the page once (26,396 added, 2,006 removed, 20 MB); the next export after a
   journal write is 20 added, 17 removed, 34 KB. Proven the same page: equal bytes once the
   newlines between tags are removed, and in a browser equal elements, rows, paths, text,
   height and pixels. Not built: a smaller page (the journal renders twice by design,

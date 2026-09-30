@@ -82,7 +82,7 @@ Instruments: `plans/evidence/scripts-findings-39/m39.py` and `suites_wrapped.py`
 | M63 | The replay over a fresh copy of the field package at `24e59125`, 05:31:06Z to 05:31:17Z | every class held; plan 164 lists them |
 | M64 | Every `after_id` call in the field's transcripts, run through the shipped engine on the copy | 86 calls, 15 on the journal: 83 that succeeded in the field and 3 its engine had refused, two for unknown columns and one for a closed package, each read from its own result. Each equals the independent cut. None parts |
 | M65 | A full walk of the journal at `limit=100` through the real tool, best of 20 | 6.0 ms on 5.7.0; 0.9 ms on 5.6.1. An unlimited read ends at `PE-1546` on 5.7.0 and ended at `PE-999` on 5.6.1 |
-| M62 | The registered descriptions | 387, 311 and 300 characters. All 19 as the SDK lists them equal the registry, on SDK 1.28.1 under `uv run` and on 1.27.2 in this machine's plain Python |
+| M62 | The registered descriptions | 387, 311 and 300 characters. All 19 as the SDK lists them equal the registry, on SDK 1.28.1 under `uv run` and on 1.27.2 in this machine's plain Python — **Since 5.8.0 (plan 167): 387, 333 and 325; the two journal descriptions name their argument** |
 
 ### 4.1 Every `after_id` call the field made, replayed under both cuts (W113)
 

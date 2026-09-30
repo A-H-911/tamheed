@@ -35,7 +35,7 @@ history as the whole cost; the maintainer measured why. No migration; `schema_ve
   of 840–912 KB that moved on every export, about 4 MB of patch text each time, and its
   history was the whole cost of a 15–32 minute secret scan (gitleaks reads `git log -p`).
   Measured in git on a fresh field copy: the first export after the update re-flows the page
-  once (`26395` added, `2005` removed, a 20 MB patch, `csv/` unchanged); the next export
+  once (`26396` added, `2006` removed, a 20 MB patch, `csv/` unchanged); the next export
   after a journal write is `20` added, `17` removed, 34 KB. The rendered page is the same:
   equal bytes once the newlines between tags are removed, and in a browser equal elements,
   rows, paths, text, height and pixels. A write that adds a node or an edge still re-emits

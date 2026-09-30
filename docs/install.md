@@ -256,7 +256,7 @@ that is not the one in service.
      What a client receives is the REGISTERED description, never a docstring.
      **Corrected 2026-09-30 (v5.8.0, the field's FB-026): "after the reload" is not enough.**
      Claude Code records a loaded tool's definition in the session when the tool is first
-     loaded and keeps sending that record; a `--resume` keeps it too. A client shows a new
+     loaded and keeps that record; a `--resume` keeps it too — the transcript shows what was recorded, not what the API received. A client shows a new
      description in a context that loaded the tool AFTER the update: a new session, `/clear`,
      or a compaction. Measured on 2,122 session transcripts (builds 2.1.267–2.1.283): a
      loaded tool was recorded again 936 times after a compaction and 5 times without one;
@@ -274,7 +274,7 @@ that is not the one in service.
      handoff repeats nothing it passes; a fail names lines to re-measure, never blocks.
    - **The review page re-flows once.** Every table row and every graph element now sits
      on its own line, so the first export after the update rewrites most of the page: on a
-     field package of 14.7 MB, `git diff --numstat` read `26395` added and `2005` removed
+     field package of 14.7 MB, `git diff --numstat` read `26396` added and `2006` removed
      (a 20 MB patch), `csv/` unchanged. Every later export after a journal write is small:
      `20` added, `17` removed, a 34 KB patch on the same package, against about 4 MB of
      added bytes per export before. A write that adds a node or an edge to the connected

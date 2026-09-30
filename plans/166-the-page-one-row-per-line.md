@@ -58,7 +58,7 @@ are untouched (a newline there would render).
   rows" → "29 rows". Full-page screenshots of the lab page (`plans/evidence/pages-166/`)
   differ in 64 pixels, one 9×11 region: that digit.
 - **The field's diff, measured in git** (`export_diff.py`): on a fresh copy, the first
-  5.8.0 export re-flows the page once — `26395` added, `2005` removed, a 20.2 MB patch,
+  5.8.0 export re-flows the page once — `26396` added, `2006` removed, a 20.2 MB patch (the plan-166 tree, stamped 5.7.0 still, read one line fewer: the stamp's line had not moved),
   `csv/` unchanged; the next export after one journal write: `20` added, `17` removed, a
   34,191-byte patch, 5,727 added bytes, longest added line 2,511 characters. Against about
   4 MB before.
