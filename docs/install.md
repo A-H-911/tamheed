@@ -156,7 +156,7 @@ for the tools were fetched when its client process started. After `claude plugin
 hook ran the new bundle, while the session's listing and the record it wrote after the
 compaction still carried the previous release's descriptions. Two cases, two builds: the field's
 (2.1.284) and the maintainer's replication on a second process and a second project the same
-day (2.1.285 on its rows; the same route, the record written 90 s after the boundary carrying
+day (2.1.285 on its rows; the same route, the record written 88 s after the boundary carrying
 the 5.7.0 text of `progress_update`, `server_info` 5.8.0, the trace line `version=5.8.0
 source=compact`). To list the new descriptions, start a new client process: a new session, or
 `claude --resume` from a fresh process followed by a compaction (§"What a session meets at
@@ -336,8 +336,14 @@ that is not the one in service.
 8. **What a session meets at 5.8.1** — nothing in the engine, the store, the CSV or the
    JSONL. The install note above and the design record carry the corrected condition for
    a description (FB-028); `orient-resume` says that the listing is the client process's and
-   `server_info` names the server that answers. The lab was driven by a real agent against
-   this release (`plans/evidence/`, the acceptance report dated 2026-10).
+   `server_info` names the server that answers. The lab was driven by a real agent (Opus 5.5,
+   headless, Claude Code 2.1.286) against this release, a fresh run from the seed and four
+   sessions on the fixture: `plans/evidence/lab-acceptance-report-2026-09-30.md`. One thing that
+   run measured and this guide now states: **a `claude -p --resume` is a new client process and a
+   new MCP server** — the package a previous turn left open is closed, and its lock names a
+   process that is gone (`package_unlock` reports it `not-running`; the removal is the
+   operator's word and is journaled). A session that ends with `package_close` leaves nothing to
+   unlock. A compaction in one interactive process is different: the server and the lock survive.
 
 ## Claude Code — manual / standalone
 

@@ -1,0 +1,16 @@
+CHECK closed-no-lock: FAIL "lock present: True"
+CHECK oq-owner-due: PASS "3 OQ rows with owner+due_by"
+CHECK marker-in-requirement: PASS ["FR-006"]
+CHECK g-complete-with-marker: PASS "pass"
+CHECK dec-promoted-to-adr-confirmed: PASS [["DEC-002", "ADR-0001"]]
+CHECK decisions-look-architectural-clean: PASS []
+CHECK one-phase-two-slices: PASS "1 phases, 2 slices"
+CHECK acs-bound-req-and-slice: PASS "8 ACs"
+CHECK tests-planned: PASS "7 tests"
+CHECK two-gates-ready-approval: PASS ["approval", "ready"]
+CHECK g-trace-pass: PASS "pass"
+CHECK acs-slice-bound-clean: PASS []
+CHECK gate-run-all-pass: PASS {}
+CHECK readiness-lists-blockers: PASS "ready=False"
+CHECK note-span-in-exec: PASS "C:\\Users\\ahammo\\AppData\\Local\\Temp\\claude\\C--Users-ahammo-Repos-tamheed\\61baf644-ae93-462d-9b9b-937175ee44fc\\scratchpad\\lab-run-A\\exec\\CLAUDE.md"
+RESULT FAILS ['closed-no-lock']

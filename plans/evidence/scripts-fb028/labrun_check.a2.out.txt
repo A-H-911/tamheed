@@ -1,0 +1,15 @@
+CHECK closed-no-lock: PASS "lock present: False"
+CHECK def-rows-with-severity: PASS [["DEF-001", "medium", "Fixed"], ["DEF-002", "low", "Open"], ["DEF-003", "medium", "Fixed"]]
+CHECK def-before-edit: PASS "A2 transcript: first DEF upsert call #None, first tracker.py edit call #56; git: defects.jsonl first in 9429b4f, tracker.py first changed after the seed in 55c680b"
+CHECK work-done-typed: PASS "8 work-done"
+CHECK av-agent-method-commit: PASS [["AV-001", "Met", "agent", "auto-test", "55c680b6"], ["AV-002", "Met", "agent", "auto-test", "55c680b6"], ["AV-003", "Met", "agent", "auto-test", "55c680b6"], ["AV-004", "Met", "agent", "auto-test", "55c680b6"], ["AV-005", "Met", "agent", "auto-test", "55c680b6"], ["AV-006", "Met", "agent", "auto-test", "80d940a3"], ["AV-007", "Met", "agent", "auto-test", "7dc08
+CHECK flaky-test-file-kept: PASS ""
+CHECK slices-review-or-implemented: PASS {"SL-001": "Implemented", "SL-002": "Implemented"}
+CHECK sc-merged: PASS [["SC-001", "Merged"]]
+CHECK scope-changes-merged-clean: PASS []
+CHECK waiver-and-defects-minor-waived: PASS [1, "waived"]
+CHECK forced-override-event: PASS [["PE-033", "SL-002", "system:transition-guard"]]
+CHECK gate-outcomes: PASS [["ready", "Go"], ["approval", "Go"]]
+CHECK gate-decision-events: PASS 2
+CHECK review-page: PASS "C:\\Users\\ahammo\\AppData\\Local\\Temp\\claude\\C--Users-ahammo-Repos-tamheed\\61baf644-ae93-462d-9b9b-937175ee44fc\\scratchpad\\lab-run-A\\exec\\lab-tracker\\review.html"
+RESULT ALL PASS

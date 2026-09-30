@@ -1,0 +1,10 @@
+CHECK closed-no-lock: PASS "lock present: False"
+CHECK four-plus-new-handoffs: PASS ["PE-064", "PE-067", "PE-070", "PE-073", "PE-074"]
+CHECK handoff-last: PASS "PE-074"
+CHECK feedback-row-confirmed: PASS [["FB-003", "Confirmed", "operator:lab"]]
+CHECK planted-oq-open-unanswered: PASS [["OQ-002", "Proposed", null]]
+CHECK planted-question-in-every-handoff: PASS {"by id": [true, true, true, true, true], "word for word (BOM)": [true, true, true, false, false]}
+CHECK lesson-approved-on-word: PASS [["LL-006", "Approved"]]
+CHECK handoff-repeated-fired-then-cleared: PASS [["2026-09-30T22:29:00.549Z", "fail", "\"PE-064\""], ["2026-09-30T22:29:26.360Z", "fail", "\"PE-064\""], ["2026-09-30T22:30:19.780Z", "fail", "\"PE-064\""], ["2026-09-30T22:31:01.246Z", "pass", ""]]
+CHECK review-exported-by-5.8.1: PASS [false, "5.8.1"]
+RESULT ALL PASS

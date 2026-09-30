@@ -74,10 +74,20 @@ by continuation, not from scratch.
 ## The honesty limit (read this before citing the lab as proof)
 
 The lab proves that every v4 mechanism **fires** under a real agent. It cannot prove
-**autonomous drift discharge** — a delegated agent defers to its parent, and headless
-permission modes block the MCP tool path (the findings_15/16 instrument lesson). The
-only valid instrument for that remains an interactive fresh session driven by a human
-operator on a real repo.
+**autonomous drift discharge** — a delegated agent defers to its parent. The older clause here
+("headless permission modes block the MCP tool path", the findings_15/16 instrument lesson of
+2026-08) was **re-measured on 2026-09-30 (Claude Code 2.1.286) and no longer holds**: a headless
+`claude -p` under `--permission-mode dontAsk` with `--allowedTools "mcp__plugin_tamheed_tamheed__*"`
+ran every write through the plugin's MCP server with no prompt, and a slash command given as the
+whole prompt loaded an operator-only skill. What a headless run still cannot do: it is a new client
+process per turn, so a `--resume` restarts the server and the package must be reopened (a session
+that ends without `package_close` leaves a lock naming a dead process); a slash command inside a
+longer prompt is not expanded; and the operator's words are scripted, so an interview point the
+script did not foresee is answered by a resume from a words file, never by a person in the loop.
+The full measurement: `plans/evidence/lab-acceptance-report-2026-09-30.md` (plan 172: a fresh run
+from the seed, items 1–9, driven by Opus 5.5 through the working-tree bundle; and four sessions on
+a copy of the fixture). The only valid instrument for autonomous drift discharge remains an
+interactive fresh session driven by a human operator on a real repo.
 
 A second, smaller limit: `handoff_emit` writes machine-specific absolute paths (the
 resolved server script and package root in `.mcp.json` for standalone installs, the
