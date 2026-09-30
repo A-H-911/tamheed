@@ -28,7 +28,12 @@ Orient yourself on this project's Tamheed package before doing anything else:
    its source before you act on it or put it to the operator.
 1. `server_info` — confirm the server version and the resolved package root. **After a
    compaction the package is still open** (the MCP process and the lock survive): this is
-   the first call, and it carries the resume block; skip step 2.
+   the first call, and it carries the resume block; skip step 2. The descriptions and
+   schemas this session lists for the tools were fetched when the client process started;
+   `server_info` names the server that answers. After a plugin update, only a client process
+   started after it lists the new text (a reload restarts the server, not the listing — field
+   measurement, 2026-09-30): say so to the operator rather than read the listing as the
+   server.
 2. `package_open("<package>")` — take the single-writer lock. If it refuses, the refusal
    says what the store observed about the holder; `package_unlock("<package>")` reports
    it. Removing a dead holder's lock (`confirm=true`) is the OPERATOR's word, never yours.

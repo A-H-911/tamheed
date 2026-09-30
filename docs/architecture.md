@@ -243,6 +243,7 @@ sequenceDiagram
     H-->>A2: the resume block - plain stdout, G-INJECT screened, 40 lines max;<br/>the lock line carries the store's OBSERVATION of a foreign holder (v5.3)
     Note over H: TAMHEED_HOOK_LOG (opt-in, v5.3): one counts-only line per run into a file the operator created;<br/>the line ends with the session's id (v5.4), so it names the session that wrote it,<br/>and opens with the hook's release (v5.6), so it names the hook that ran;<br/>only a session that loaded the plugin runs the hook (v5.5, measured)
     A2->>S: server_info (or package_open on a fresh session)
+    Note over A2,S: server_info names the server that answers; the tool descriptions the session lists<br/>were fetched when its client process started - a plugin reload restarts the server, not that listing (v5.8.1, one field case)
     S->>P: _resume_block: latest handoff + corrections, handoff_behind,<br/>open feedback, open slices, lock holder + observed (own lock: alive, no probe)
     S-->>A2: resume: {...}, skill: tamheed:package-writes
     A2->>S: readiness_check("package")

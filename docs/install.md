@@ -148,8 +148,15 @@ free copy after a compaction.
 
 Refreshing the marketplace only refreshes the catalog; the installed plugin is a second step, and
 the running MCP server keeps the old code until the plugin is reloaded (`/reload-plugins` —
-observed sufficient in the field for the MCP server three times, on 5.1.0, 5.2.0 and 5.3.0 — or a
-full Claude Code restart).
+observed sufficient in the field for the MCP server four times, on 5.1.0, 5.2.0, 5.3.0 and 5.8.0 — or a
+full Claude Code restart). **A reload is not sufficient for what the session lists** (the
+field's FB-028, 2026-09-30, Claude Code 2.1.284): the descriptions and schemas a session lists
+for the tools were fetched when its client process started. After `claude plugin update`,
+`/reload-plugins` and `/compact` in one process, `server_info` answered the new version and the
+hook ran the new bundle, while the session's listing and the record it wrote after the
+compaction still carried the previous release's descriptions. One case, one build. To list the
+new descriptions, start a new client process: a new session, or `claude --resume` from a fresh
+process followed by a compaction (§"What a session meets at 5.7.0", the corrected condition).
 
 ```text
 claude plugin marketplace update tamheed
@@ -266,6 +273,24 @@ that is not the one in service.
      and a fresh `claude -p` listed the new texts throughout. The docs
      (`code.claude.com/docs/en/sessions`, `/mcp`) state nothing on this; a newer build may
      differ.
+     **Corrected again 2026-10-01 (v5.8.1, the field's FB-028): "or a compaction" was wrong.**
+     A compaction re-records; it loads nothing. What it writes is the listing the client
+     process built when it started, and `/reload-plugins` did not rebuild that listing: after
+     the update, a reload and a compaction in one process (2.1.284), `server_info` and the
+     hook were on the new release while the record and the ToolSearch listing carried the
+     old descriptions (one case). The 936 re-records above could not have shown this: in
+     every counted case the listing and the server were equal, because no counted process
+     had reloaded across a description change (13 `/reload-plugins` commands in 7 sessions on
+     this machine, builds 2.1.261–2.1.284, counting the command's own row and not a tool
+     call that quotes it; one came after a description-changing update in a session that
+     had recorded the tool before it — the field's). The routes, each with its
+     evidence: a client process started after the update shows the new text in a fresh
+     context (the field's `claude -p`, verified); a process started after the update by
+     `--resume` shows its old record until a compaction and the new text after it (one case);
+     the same process after a reload shows the old text, before and after a compaction (one
+     case). What the vendor states: a reload reconnects a server whose configuration changed
+     (the plugin root moves with the version), and nothing on re-fetching the tool
+     definitions a session already lists. `/clear` was not measured.
 7. **What a session meets at 5.8.0** — no migration, no store shape change, the CSV and the
    JSONL unchanged:
    - `readiness_check("package")` carries one more advisory, `handoff-repeated`, once the
@@ -295,7 +320,14 @@ that is not the one in service.
      measurement, and that from 5.8.0 on the per-export diff is small, so the cost sits in
      the history already written.
    - The descriptions of `progress_update` and `audit_record` now name their argument
-     (`entries` is a list; `verdicts` is a list). One field call had sent `items`.
+     (`entries` is a list; `verdicts` is a list). One field call had sent `items`. A session
+     lists them in a client process started after the update (step 6's second correction);
+     the field read them on the wire, and in its reloaded process it read the 5.7.0 texts.
+8. **What a session meets at 5.8.1** — nothing in the engine, the store, the CSV or the
+   JSONL. The install note above and the design record carry the corrected condition for
+   a description (FB-028); `orient-resume` says that the listing is the client process's and
+   `server_info` names the server that answers. The lab was driven by a real agent against
+   this release (`plans/evidence/`, the acceptance report dated 2026-10).
 
 ## Claude Code — manual / standalone
 

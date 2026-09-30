@@ -56,6 +56,13 @@ times. The vendor's docs state nothing on this; a newer build than 2.1.283 may d
 (`tools/list`) and a fresh `claude -p` always show the server's current text, as your own
 controls did.
 
+> **Corrected 2026-10-01 (5.8.1, your FB-028): "or a compaction" was wrong.** A compaction
+> re-records the listing the client process built when it started; `/reload-plugins` restarted
+> the server and the hooks and left that listing (your session, 2.1.284 on the rows). The
+> new text shows in a client process started after the update: a new session, or
+> `claude --resume` from a fresh process followed by a compaction. The 5.8.1 brief states the
+> route and the counts; `docs/install.md` carries the correction beside the 5.8.0 one.
+
 **The page, and your history scan (your `DEF-224`, `ADR-0052`).** Each export used to add about
 4 MB of patch text, because the lines that moved were the long ones; gitleaks reads `git log -p`.
 From 5.8.0 the next export after a journal write adds kilobytes. Your past page versions stay in
@@ -73,7 +80,7 @@ recommends no narrowing; the install guide reports your route as your decision.
 | 4 | **the first `export_html`** | the page re-flows once: on the copy `git diff --numstat` read `26396 2006` and the patch 20.2 MB; `csv/` unchanged; `package_verify` then reads `review_current true`, `review_exported_by "5.8.0"`. Every `<tr id=` starts a line; no line holds two `</tr>` or two `<path` | the first export on 5.8.0 |
 | 5 | the same store rendered by 5.7.0 and by 5.8.0, same date | equal once the newlines between tags are removed and the stamp replaced (the maintainer's `bytecheck.py`; also equal in a browser: elements, rows, paths, text, height, pixels) | always |
 | 6 | the next export after a journal write | small: on the copy `20 17` lines and 34 KB after one note; `63 51` lines and 63 KB after the two feedback rows' four transitions and a note | the writes add no node and no edge to the connected graph; a write that does re-emits both graphs (every position moves), about 1.3 MB on your `3a6dd21b` |
-| 7 | the three descriptions, read in a context that loaded the tools after the update (a new session, `/clear` or a compaction), or on the wire | `entity_query` as 5.7.0 wrote it (387 characters); `progress_update` names `entries` (333); `audit_record` names `verdicts` (325) | a context that loaded the tools after the update |
+| 7 | the three descriptions, read in a context that loaded the tools after the update (a new session, `/clear` or a compaction), or on the wire — **read false on 2026-09-30 after a reload and a compaction in one process (your FB-028); corrected 2026-10-01: a client process started after the update** | `entity_query` as 5.7.0 wrote it (387 characters); `progress_update` names `entries` (333); `audit_record` names `verdicts` (325) | a context that loaded the tools after the update |
 | 8 | the first plain `handoff_emit` | writes nothing but the tool-owned artefacts, and the note changes in no string — on the copy the note differed in its path and its install-mode sentence only, because the copy runs outside the plugin | no string of the note changed |
 | 9 | the first trace line of the session after the reload | it opens `<utc> version=5.8.0` | the process reloaded or started after the update |
 
