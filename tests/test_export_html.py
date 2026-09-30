@@ -690,7 +690,7 @@ class ExportHtmlTest(unittest.TestCase):
             assert ln.count("<path ") <= 1, f"{where}: two paths on one line: {ln[:80]!r}"
             assert ln.count("<g class=") <= 1, f"{where}: two groups on one line"
             assert ln.count("<text ") <= 1, f"{where}: two labels on one line"
-            assert ln.count("<a ") <= 1, f"{where}: two nodes on one line"
+            assert ln.count("<circle") <= 1, f"{where}: two nodes on one line"
         assert html.count('<tr id="') == html.count('\n<tr id="'), where
         assert html.count("<tbody>") == html.count("\n<tbody>\n"), where
 

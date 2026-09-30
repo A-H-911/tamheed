@@ -63,7 +63,9 @@ are untouched (a newline there would render).
   34,191-byte patch, 5,727 added bytes, longest added line 2,511 characters. Against about
   4 MB before.
 - `ecc:python-reviewer`: no blocking finding; two MEDIUM on the tests, taken — `<text ` and
-  `<a ` joined per line too (the aggregate graph's nodes are bare `<a>` elements), the added
+  `<circle` joined per line too (the aggregate graph's nodes are bare `<a>` elements; the
+  reviewer's `<a ` count was wrong — the page's nav line holds eleven anchors — and the
+  first commit of this plan carried that failing assertion for one commit), the added
   line cap raised from 2,000 to 4,000 above the measured 1,720; a LOW hoisted a set out of a
   comprehension. It measured the demo fixture at 27 added lines, 6,170 bytes. It edited the
   test file for a print and reverted it, against its brief; the diff was re-read whole.
