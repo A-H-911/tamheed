@@ -1,4 +1,4 @@
-sessions with /reload-plugins: 7
+sessions with /reload-plugins: 8
 
 C--Users-ahammo-Repos-acmp\04c3c28a-ec2a-4f85-b06e-b4e042036d5c.jsonl  builds ['2.1.261', '2.1.263']  reloads 2  tamheed records 0
   reload   line 4283 2026-09-06T03:13:17 build 2.1.261
@@ -49,4 +49,14 @@ C--Users-ahammo-Repos-acmp\d37475be-d853-424d-a4bc-996b1e7f5e42.jsonl  builds ['
   record   line 72918 2026-09-27T02:38:45 build 2.1.283 text <=5.6.1
   record   line 74095 2026-09-27T11:48:37 build 2.1.283 text <=5.6.1
 
-reloads inside a session that spans a description-changing update: 1
+C--Users-ahammo-Repos-tamheed\61baf644-ae93-462d-9b9b-937175ee44fc.jsonl  builds ['2.1.282', '2.1.283', '2.1.285']  reloads 1  tamheed records 6
+  reload   line 34004 2026-09-30T21:25:49 build 2.1.285
+  record   line 24435 2026-09-28T22:54:45 build 2.1.283 text <=5.6.1
+  record   line 28072 2026-09-30T16:33:52 build 2.1.285 text 5.7.0
+  record   line 28277 2026-09-30T16:38:12 build 2.1.285 text ?
+  record   line 32391 2026-09-30T20:10:08 build 2.1.285 text 5.7.0
+  record   line 34090 2026-09-30T21:30:24 build 2.1.285 text 5.7.0
+  record   line 34138 2026-09-30T21:31:19 build 2.1.285 text ?
+  SPANS the 5.8.0 update: reload line 34004 2026-09-30T21:25:49; records after it: [(34090, '2026-09-30T21:30:24', '5.7.0'), (34138, '2026-09-30T21:31:19', '?')]
+
+reloads inside a session that spans a description-changing update: 2

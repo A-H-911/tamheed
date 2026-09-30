@@ -524,7 +524,7 @@ the largest of the round. The rulings (R51–R55):
   reads" is what the client RECORDED when it first loaded the tool. Claude Code keeps that
   record through a `--resume`; a new session, `/clear` or a compaction reads the server's
   current text. The 5.7.0 brief's class 9 said "after the reload" and read false in the
-  field's resumed session (§21, D-RESUME-KEEPS-THE-RECORD). *Corrected again 2026-10-01: a
+  field's resumed session (§21, D-RESUME-KEEPS-THE-RECORD). *Corrected again 2026-09-30 (v5.8.1): a
   compaction re-records the client process's listing, which a reload does not rebuild; the
   new text needs a client process started after the update (§22).*
 - **D-REPORT-A-FAILURE — the field reports what fails, through the package.** Seven rounds
@@ -603,7 +603,7 @@ measured the review page's history as the whole cost of its secret scan. Three r
   re-recorded it 0 times. The vendor's docs state nothing on it. So the docs say "a context
   that loaded the tool after the update" and, by ruling R58, nothing in the engine changes:
   the record is the client's. Not built: `server_info` returning the descriptions.
-  *Corrected 2026-10-01 (§22, FB-028): the condition's last clause, "or a compaction", was
+  *Corrected 2026-09-30 (§22, v5.8.1, FB-028): the condition's last clause, "or a compaction", was
   wrong — a compaction re-records the listing the client process built at its start.*
 - **The number.** A new advisory in `readiness_check`'s output and a new page layout, and
   two descriptions reworded to name their argument: MINOR. No store shape, identifier or
@@ -636,15 +636,21 @@ takes. One class read false, and it was the 5.8.0 correction itself.
   new text in a fresh context (the field's `claude -p`, verified); a process started after
   the update by `--resume` shows its old record until a compaction and the new text after it
   (one case, the 5.7.0 cycle); the same process after a reload shows the old text before and
-  after a compaction (one case). The maintainer's model, from these cases and labelled as
+  after a compaction (two cases and a control: the field's, and the maintainer's replication
+  the same day (R62) on a second process and a second project — a process started at 16:23Z,
+  before the update, whose compaction at 20:08Z without a reload left the trace line at
+  `version=5.7.0 source=compact` (the control); after `/reload-plugins` at 21:25:49Z and the
+  boundary at 21:28:56Z, `server_info` 5.8.0, the trace line `version=5.8.0 source=compact`,
+  and the first `deferred_tools_record` after the boundary, 88 s later, carrying the 5.7.0
+  text of `progress_update`; 2.1.285 on the rows). The maintainer's model, from these cases and labelled as
   such: the client builds its tool listing when its process starts, a compaction rewrites the
   record from that listing, and a reload rebuilt the server and the hooks but not the
   listing. The vendor states that a reload reconnects a server whose configuration changed
   and nothing on re-fetching the tool definitions a session already lists. **What the
   5.8.0 census could not see:** it counted re-records (936 after a compaction), and in every
-  counted case the listing and the server were equal; of 13 `/reload-plugins` commands in 7
-  sessions on this machine (2.1.261–2.1.284), one came after a description-changing update
-  in a session that had recorded the tool before it, the field's. By ruling R59 the
+  counted case the listing and the server were equal; of 14 `/reload-plugins` commands in 8
+  sessions on this machine (2.1.261–2.1.285), two came after a description-changing update
+  in a session that had recorded the tool before it: the field's and the replication. By ruling R59 the
   answer is the docs and one sentence in `orient-resume` (the listing is the process's;
   `server_info` names the server that answers); no engine change. The cost of a stale
   listing, measured: one refused call (the SDK's "Field required" on `items`), never an

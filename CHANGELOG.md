@@ -22,7 +22,8 @@ No engine change; no migration; `schema_version` stays 7.
   listing the client process built when it started, and `/reload-plugins` restarted the
   server and the hooks without rebuilding that listing: after an update, a reload and a
   compaction in one process (2.1.284), `server_info` answered 5.8.0 while the record and the
-  ToolSearch listing carried the 5.7.0 texts. The new text needs a client process started
+  ToolSearch listing carried the 5.7.0 texts; replicated the same day by the maintainer on a
+  second process and a second project (2.1.285, ruling R62). The new text needs a client process started
   after the update. Each site carries a dated correction; `docs/install.md` carries the
   routes with their evidence and what the 5.8.0 census could not distinguish.
 
@@ -73,7 +74,7 @@ history as the whole cost; the maintainer measured why. No migration; `schema_ve
   record said the new descriptions show "after the reload". A client shows them in a context
   that loaded the tool after the update — a new session, `/clear` or a compaction; a
   `--resume` keeps the recorded text. Each site carries a dated correction beside the
-  sentence; the measurement is in `docs/install.md`. *Corrected 2026-10-01 (5.8.1, the
+  sentence; the measurement is in `docs/install.md`. *Corrected 2026-09-30 (5.8.1, the
   field's FB-028): "or a compaction" was wrong — a compaction re-records the listing the
   client process built at its start, and `/reload-plugins` did not rebuild that listing.*
 
@@ -115,7 +116,7 @@ review page keep their order.
   FB-026):** "where a client reads it" holds for a context that loaded the tool after the
   update — a new session, `/clear` or a compaction. A session that had loaded the tool
   before the update keeps the text it recorded, through a `--resume` too (measured on 2,122
-  transcripts; see `docs/install.md`). *Corrected again 2026-10-01 (5.8.1, FB-028): not a
+  transcripts; see `docs/install.md`). *Corrected again 2026-09-30 (5.8.1, FB-028): not a
   compaction; a client process started after the update.*
 - **The selftest compares what the SDK lists with the registry** (plan 160), and holds every
   description under the client's cap of 2,048 characters. CI's smoke job runs it, and so

@@ -154,9 +154,13 @@ field's FB-028, 2026-09-30, Claude Code 2.1.284): the descriptions and schemas a
 for the tools were fetched when its client process started. After `claude plugin update`,
 `/reload-plugins` and `/compact` in one process, `server_info` answered the new version and the
 hook ran the new bundle, while the session's listing and the record it wrote after the
-compaction still carried the previous release's descriptions. One case, one build. To list the
-new descriptions, start a new client process: a new session, or `claude --resume` from a fresh
-process followed by a compaction (§"What a session meets at 5.7.0", the corrected condition).
+compaction still carried the previous release's descriptions. Two cases, two builds: the field's
+(2.1.284) and the maintainer's replication on a second process and a second project the same
+day (2.1.285 on its rows; the same route, the record written 90 s after the boundary carrying
+the 5.7.0 text of `progress_update`, `server_info` 5.8.0, the trace line `version=5.8.0
+source=compact`). To list the new descriptions, start a new client process: a new session, or
+`claude --resume` from a fresh process followed by a compaction (§"What a session meets at
+5.7.0", the corrected condition).
 
 ```text
 claude plugin marketplace update tamheed
@@ -273,22 +277,28 @@ that is not the one in service.
      and a fresh `claude -p` listed the new texts throughout. The docs
      (`code.claude.com/docs/en/sessions`, `/mcp`) state nothing on this; a newer build may
      differ.
-     **Corrected again 2026-10-01 (v5.8.1, the field's FB-028): "or a compaction" was wrong.**
+     **Corrected again 2026-09-30 (v5.8.1, the field's FB-028): "or a compaction" was wrong.**
      A compaction re-records; it loads nothing. What it writes is the listing the client
      process built when it started, and `/reload-plugins` did not rebuild that listing: after
      the update, a reload and a compaction in one process (2.1.284), `server_info` and the
      hook were on the new release while the record and the ToolSearch listing carried the
-     old descriptions (one case). The 936 re-records above could not have shown this: in
+     old descriptions (one case). The maintainer replicated it the same day on a second
+     process and a second project (2.1.285 on the rows; a process started before the update,
+     never reloaded until then, its trace line `version=5.7.0 source=compact` at 20:08Z as
+     the control): after `/reload-plugins` and `/compact`, `server_info` 5.8.0, the trace line
+     `version=5.8.0 source=compact`, and the first `deferred_tools_record` after the boundary
+     carrying the 5.7.0 text of `progress_update` (two cases and a control; the reload census
+     now 14 commands in 8 sessions). The 936 re-records above could not have shown this: in
      every counted case the listing and the server were equal, because no counted process
-     had reloaded across a description change (13 `/reload-plugins` commands in 7 sessions on
-     this machine, builds 2.1.261–2.1.284, counting the command's own row and not a tool
-     call that quotes it; one came after a description-changing update in a session that
-     had recorded the tool before it — the field's). The routes, each with its
-     evidence: a client process started after the update shows the new text in a fresh
-     context (the field's `claude -p`, verified); a process started after the update by
+     had reloaded across a description change (14 `/reload-plugins` commands in 8 sessions on
+     this machine, builds 2.1.261–2.1.285, counting the command's own row and not a tool
+     call that quotes it; two came after a description-changing update in a session that
+     had recorded the tool before it — the field's and the replication). The routes, each
+     with its evidence: a client process started after the update shows the new text in a
+     fresh context (the field's `claude -p`, verified); a process started after the update by
      `--resume` shows its old record until a compaction and the new text after it (one case);
-     the same process after a reload shows the old text, before and after a compaction (one
-     case). What the vendor states: a reload reconnects a server whose configuration changed
+     the same process after a reload shows the old text, before and after a compaction (two
+     cases). What the vendor states: a reload reconnects a server whose configuration changed
      (the plugin root moves with the version), and nothing on re-fetching the tool
      definitions a session already lists. `/clear` was not measured.
 7. **What a session meets at 5.8.0** — no migration, no store shape change, the CSV and the
