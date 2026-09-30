@@ -1,0 +1,14 @@
+OBS field.head "319d8c55"
+OBS server_info {"version": "5.8.1", "migrations_head": "007_handoff.sql", "schema_version": 7}
+OBS verify.before {"verified": true, "review_current": true, "review_exported_by": "5.8.0"}
+OBS open.resume {"handoff": "PE-1584", "behind": 0}
+OBS handoff-repeated {"status": "pass", "entities": [], "population": 19}
+OBS feedback-unanswered.before []
+OBS fb028.read_back {"lifecycle_status": "Confirmed", "kind": "doc-error", "resolved_in": null, "upstream_ref": null}
+OBS fb028.moves {"moves": [["Reported", true, null], ["Resolved", true, null]], "transitions_journalled": 2, "row_now": ["Resolved", "5.8.1", "tamheed plans 170-174"], "feedback-unanswered_names": [], "handoff-current_counts": ["PE-1585", "PE-1586"]}
+OBS export.after_moves {"numstat": ["44", "41"], "patch_bytes": 43330, "longest_added_line": 2511, "csv_changed": [" 2 files changed, 3 insertions(+), 1 deletion(-)"], "review_current": true, "exported_by": "5.8.1"}
+OBS emit.first_plain {"written": [".mcp.json", "C:\\Users\\ahammo\\AppData\\Local\\Temp\\claude\\C--Users-ahammo-Repos-tamheed\\61baf644-ae93-462d-9b9b-937175ee44fc\\scratchpad\\acmp-replay9\\tamheed-package\\CLAUDE.md"], "unchanged": ["CLAUDE.md"], "files_changed_in_the_copy": [" M tamheed-package/CLAUDE.md", "?? .mcp.json"]}
+OBS lock_gone true
+OBS hook.compact {"exit": 0, "lines": 24, "chars": 2474, "trace_opens": "version=5.8.1 source=compact", "trace_tail_is_session": true}
+OBS wire {"entity_query": 387, "progress_update": 333, "audit_record": 325}
+DONE

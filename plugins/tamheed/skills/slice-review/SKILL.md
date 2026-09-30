@@ -53,7 +53,13 @@ Review the just-completed slice of the `<package>` Tamheed package:
    (change scope), or a `WVR-` waiver naming the rule + entity — operator-approved
    only, reported as "waived", and the right ask for one stubborn item.
    `"force": true` overrides the whole transition and exists only on the operator's
-   explicit words.
+   explicit words. A slice closes on at least one bound work item: with no `WBS-` row
+   in the slice, `wbs-done` reads indeterminate and the slice is not ready — a
+   recorded omission of the wbs family does not stand in for one at slice or phase
+   scope (the scoped rules measure rows, plans 049 and 077; lab measurement
+   2026-09-30). The honest route is a work-item row for the work that was verified,
+   bound to its commit, on the operator's word — never a row that exists only to
+   turn the rule green.
 8. `gate_run()` — G-PROGRESS must hold (every AC has a verdict once auditing
    started). `export_html()` to refresh the committed review, report the verdict,
    and STOP at the phase gate for operator approval before the next slice (phase

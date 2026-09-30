@@ -20,7 +20,9 @@ Close phase `<PH-x>` of the `<package>` Tamheed package:
 1. `package_open("<package>")` if not already open.
 2. `readiness_check("phase", "<PH-x>")` — resolve every blocking failure: ACs of the
    phase's slices not latest-Met, slices/work items still open (Review counts as
-   open — done-claimed is not verified), open critical/high defects (medium/low only
+   open — done-claimed is not verified; a phase with no `WBS-` row at all reads
+   `wbs-done` indeterminate, and a recorded omission of the family does not stand in
+   for a row at this scope — `tamheed:slice-review`), open critical/high defects (medium/low only
    surface as the defects-minor advisory; never downgrade severity to pass). Each
    resolution is recorded (verdicts with evidence, statuses via full-row upserts,
    deferrals/scope via `DW-`/`SC-` rows, a named-rule exception via a `WVR-`

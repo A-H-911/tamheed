@@ -10,7 +10,7 @@ All notable changes to Tamheed are documented here. The format is based on
 
 ## [Unreleased]
 
-## [5.8.1] - 2026-10-01
+## [5.8.1] - 2026-09-30
 
 **PATCH — the FB-028 cycle and the real-agent lab run (plans 170–174).** The field ran 5.8.0
 and every engine class held; one class read false, and it was the 5.8.0 correction itself.
@@ -31,7 +31,15 @@ No engine change; no migration; `schema_version` stays 7.
 - **`orient-resume` step 1** says that the descriptions and schemas a session lists were
   fetched when its client process started, that `server_info` names the server that
   answers, and that after an update only a client process started after it lists the new
-  text — said to the operator, never read as the server.
+  text — said to the operator, never read as the server. **Step 1 also says (ruling R64, the
+  lab runs)** that a new client process is not a compaction: `claude --resume`, a `-p --resume`
+  turn or a new terminal restarts the server, the package is closed, a lock left on disk names
+  a process that is gone, and a session that ends with `package_close` leaves nothing to unlock.
+- **`slice-review` step 7 and `phase-close` step 2 (ruling R63, the lab runs):** a slice closes
+  on at least one bound work item; with no `WBS-` row `wbs-done` reads indeterminate, and a
+  recorded omission of the wbs family does not stand in for a row at slice or phase scope (the
+  scoped rules measure rows — plans 049 and 077, the doctrine kept). The honest route is a
+  work-item row for the verified work, bound to its commit, on the operator's word.
 - **The lab, driven by a real agent (plan 172, rulings R60/R61):** the scenario's items 1–9
   run end to end by Opus 5.5, headless (Claude Code 2.1.286, `--plugin-dir` on the working
   tree, `--permission-mode dontAsk` with an allow list), a fresh run from the seed and four

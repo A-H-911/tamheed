@@ -14,6 +14,11 @@ record; §4 quotes them. **Cost:** A1 $2.03, A2 $12.44 (twelve processes), B1 $0
 B3 $1.06, B4 $1.69, the probe $1.61 (four sessions; probes 2–4 are one) — $20.40 in all, inside the approved 20 + 15 + 4×8 plus the
 probe.
 
+**What the runs exercised, exactly:** the bundle at `7acf957` — its `server/` and `db/` are byte-identical
+to the released 5.8.1 (`git diff 7acf957 v5.8.1 -- plugins/tamheed/server plugins/tamheed/db` empty);
+the three skill sentences of rulings R63/R64 (`orient-resume` step 1, `slice-review` step 7,
+`phase-close` step 2) were written after the runs, on what the runs found, and no agent has met them.
+
 **The result in one line:** every mechanism the scenario's items 1–9 name fired under a real
 agent through the plugin's own path — the skills loaded by slash command, the tools through the
 MCP server, the writes under `dontAsk` — and the 38 predicates of `labrun_check.py` all pass
