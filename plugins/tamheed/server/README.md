@@ -1,6 +1,8 @@
 # Tamheed MCP server
 
-Documents the tool surface as of **tamheed v5.8.1**.
+Documents the tool surface as of **tamheed v5.8.1**. The bilingual user guide
+(<https://github.com/A-H-911/tamheed/blob/main/index.html>) renders the same surface with every
+parameter, read from this server at build time.
 
 The **only write path** into a Tamheed package (ADR-0001). Agents interact with a package
 exclusively through these MCP tools: every write passes schema validation (FKs, CHECKs,

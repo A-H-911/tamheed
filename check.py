@@ -42,6 +42,7 @@ SUITES = [
     "tests/test_eval_runner.py",
     "tests/test_scratch_diff.py",
     "tests/test_check_lints.py",
+    "tests/test_user_guide.py",
 ]
 
 V4_DEMO_DATA = REPO / "generated-samples" / "support-triage-agent-v2" / "data"
@@ -175,13 +176,15 @@ def gate_lint() -> None:
     # 8) README freshness (plan 030, maintainer contract): the documentation READMEs
     #    are updated with EVERY release — each must carry the current version string,
     #    so a release that skips one fails the gate (the version-sync-lint precedent).
-    for rel in ("README.md", "plugins/tamheed/server/README.md",
+    surfaces = ("README.md", "plugins/tamheed/server/README.md",
                 "plugins/tamheed/prompts/README.md", "plugins/tamheed/skills/tamheed/SKILL.md",
-                "plugins/tamheed/references/artifact-catalog.md"):
+                "plugins/tamheed/references/artifact-catalog.md",
+                "index.html")  # the generated user guide: rebuild with docs/guide/build.py
+    for rel in surfaces:
         if plugin_ver not in (REPO / rel).read_text(encoding="utf-8"):
             fail(f"{rel} does not mention the current version {plugin_ver} — the"
                  " READMEs are updated with every release (plan 030)")
-    print(f"lint: all 5 version-stamped surfaces carry v{plugin_ver}")
+    print(f"lint: all {len(surfaces)} version-stamped surfaces carry v{plugin_ver}")
 
     # 9) the teaching surface (plan 032): prompts/templates may only teach vocabulary
     #    the engine has, and the stock history must be CURRENT — a release that

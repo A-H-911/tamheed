@@ -18,3 +18,6 @@ tests/_vp_probe.py
 # Generated packages produced by running Keystone (keep examples/ and generated-samples/ which are curated)
 /packages/
 *.local.json
+
+# Browser-tool scratch (screenshots, snapshots) written during the user-guide visual pass
+.playwright-mcp/

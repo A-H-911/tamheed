@@ -2,7 +2,8 @@
 
 Tamheed ships as a self-contained bundle at [`../plugins/tamheed/`](../plugins/tamheed). Everything the
 skill reads or invokes at runtime lives inside that one directory, so it installs and runs as a single intact
-unit. Pick the path that matches your tool.
+unit. Pick the path that matches your tool. The bilingual user guide ([`../index.html`](../index.html),
+English and Arabic) covers installation, every workflow, every skill and the whole engine in one page.
 
 > Arriving from **Keystone** (the frozen v1 predecessor)? Existing v1 packages keep working with the
 > [old repository](https://github.com/A-H-911/keystone); when you're ready, follow the migration runbook:

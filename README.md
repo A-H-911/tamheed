@@ -10,6 +10,8 @@
 
 <p align="center"><strong>Turn a project description into a validated, traceable, execution-ready planning &amp; handoff package for Claude Code to implement.</strong></p>
 
+<p align="center"><a href="index.html"><strong>User guide</strong> (English &middot; العربية)</a> — every workflow, skill, family, column, tool, gate and readiness rule, generated from the engine.</p>
+
 <p align="center">
   <em>Claude Code plugin + MCP-backed agent skill &middot; v5.8.1</em> &middot;
   <a href="#license">MIT</a> &middot;
