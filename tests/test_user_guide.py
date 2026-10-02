@@ -114,6 +114,9 @@ class UserGuideTest(unittest.TestCase):
         self.assertNotIn("\r", self.html)
         self.assertEqual(self.html.count('<svg class="dia" lang="en"'), self.html.count('<svg class="dia" lang="ar"'))
         self.assertNotIn("[[", self.html, "unresolved content placeholder")
+        # the language toggle must never be hidden by the per-language visibility rule
+        for btn in re.findall(r"<button[^>]*data-lang-btn[^>]*>", self.html):
+            self.assertNotIn(" lang=", btn, btn)
         src = (GUIDE / "extract.py").read_text(encoding="utf-8") + (GUIDE / "render.py").read_text(encoding="utf-8")
         for m in re.finditer(r"\.(glob|iterdir|listdir)\(", src):
             line = src[src.rfind("\n", 0, m.start()) + 1: m.start()]
