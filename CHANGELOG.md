@@ -10,6 +10,12 @@ All notable changes to Tamheed are documented here. The format is based on
 
 ## [Unreleased]
 
+### Changed
+- `plugins/tamheed/server/README.md` links the generated bilingual user guide (`index.html`), and
+  `skills/generate-report/SKILL.md` names all eleven sections of `review.html` (it listed five).
+- `check.py` lint 8 counts `index.html` among the version-stamped surfaces (six); a release rebuilds
+  the guide with `python docs/guide/build.py`.
+
 ## [5.8.1] - 2026-09-30
 
 **PATCH — the FB-028 cycle and the real-agent lab run (plans 170–174).** The field ran 5.8.0

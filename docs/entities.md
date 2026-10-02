@@ -1212,7 +1212,7 @@ and never recorded as `SKL-` rows: they are tamheed's teaching surface (lint 12 
 well-formed, stack-neutral and free of field identifiers). A `SKL-` row is the PROJECT's own
 distillation, written into `.claude/skills/` on the operator's word and owned by them; the two
 never collide (plugin skills are namespaced). A project skill whose content the plugin later
-ships is retired by its operator: the row goes `Obsolete` with `custom_attributes.upstreamed_to`
+ships is retired by its operator: the row goes `Obsolete` with `upstreamed_to`
 naming the plugin skill (`superseded_by` is a foreign key to `skills(id)` and cannot point upstream).
 
 **Related mechanics.** `lessons.promoted_to` FK (the `DEC-`→`ADR-` promotion idiom);
@@ -1284,7 +1284,7 @@ registry: type_id, label, `id_prefix` UNIQUE, `generation_class` CHECK: Always/
 Conditional/Derived/On-request/Continuous — the machine mirror G-SET enforces, seeded from
 `BASELINE_ENTITY_TYPES` at `package_create`); and **`omissions`** (entity_type PK + NOT
 NULL non-empty `reason` — how an Always family is legally absent). **`trace_edges`**
-(from_id, to_id, relation — CHECK over the 14 relation kinds, composite PK, both ends FK
+(from_id, to_id, relation — CHECK over the 16 relation kinds, composite PK, both ends FK
 into `entity_index`) is the write-only relation surface — and the one place a caller can
 remove a row: `retire: true` on a trace-edge item deletes exactly that triple (the relation
 rule is not consulted; the server journals a `correction` row naming it in the same

@@ -46,7 +46,7 @@ violations, and bad JSON fail loud — nothing is silently repaired.
 One loader/writer per package, guarded by a lockfile:
 
 - `data/.lock` is created with `O_CREAT | O_EXCL` on open-for-write; it contains a JSON
-  object `{pid, host, taken_at}` for diagnostics (legacy bare-integer locks are tolerated
+  object `{pid, host, taken_at, started, identity, pidns}` for diagnostics (legacy bare-integer locks are tolerated
   when read).
 - If `data/.lock` already exists, opening the store **fails loud** (`StoreLockedError`) — no
   waiting, no stealing. A crashed writer's stale lock is removed by the operator, deliberately

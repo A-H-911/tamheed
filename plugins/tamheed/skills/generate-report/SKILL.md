@@ -19,11 +19,14 @@ Generate the review surface for the `<package>` Tamheed package:
 1. `package_open("<package>")`, then `export_html()` — it writes
    `<package>/review.html` (self-contained, zero-JS; commit it — its diffs are
    row-scoped and meaningful).
-2. Open it and use the sticky nav: `#overview` (gate chips + package identity —
-   values marked "(v1-manifest-derived)" came from the old v1 manifest, not v2
-   activity), `#registers` (families over 50 rows are folded — click the summary
-   to expand), `#traceability` (the requirement×coverage matrix; the raw edge
-   dump is folded below it), `#execution` (AC × latest verdict + progress log),
+2. Open it and use the sticky nav — the page has eleven sections: `#overview` (gate
+   chips + package identity — values marked "(v1-manifest-derived)" came from the old
+   v1 manifest, not v2 activity), `#resume` (where the last session stopped: the latest
+   handoff entry and what followed it), `#flow` (requirement → decision → work → test),
+   `#graph` (the relations graph), `#traceability` (the requirement×coverage matrix; the
+   raw edge dump is folded below it), `#execution` (AC × latest verdict + progress log),
+   `#readiness` (the rules, their status, the waivers applied), `#lessons`, `#feedback`,
+   `#registers` (families over 50 rows are folded — click the summary to expand), and
    `#gaps` (adoption gaps + screening notes).
 3. Read the freshness line: "no v2 activity recorded yet" means nothing has been
    recorded since migration/creation — if work has happened, the operator runs `/tamheed:progress-sync`

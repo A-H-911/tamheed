@@ -284,7 +284,7 @@ user-level) the executing harness auto-loads, with an `SKL-` metadata row record
 
 **Your package carries its own prompt library — and prompts are plain `.md` files, never database
 rows** (v3). `<package>/prompts/` is the single prompt surface, seeded at creation and refreshed by
-migration/adoption/handoff: **17 stock files (16 scenario prompts + the operator README)**
+migration/adoption/handoff: **one stock file (the operator README; since v5.0.0 the sixteen scenarios are the plugin's `/tamheed:<name>` skills, not files)**
 covering both operator styles —
 orientation (`orient-resume`, `package-onboarding`), execution (`slice-kickoff`, `progress-sync`,
 `defect-triage`, `drift-register`), close-outs (`slice-review`, `phase-close`,
@@ -427,7 +427,7 @@ tamheed/
 │   ├── references/                   # per-stage / per-concern depth (incl. artifact-catalog.md)
 │   ├── templates/                    # surviving narrative section templates
 │   ├── scripts/                      # scratch_diff.py (package diff utility)
-│   ├── skills/                       # the plugin's skills: 7 discipline + 16 operator-invoked scenarios (v5)
+│   ├── skills/                       # the plugin's skills: the front door + 8 discipline + 16 operator-invoked scenarios (v5)
 │   ├── prompts/                      # the operator guide (emitted into <package>/prompts/) + the stock history
 │   ├── db/                           # relational store: schema.sql, migrations/ (append-only), store.py, CANONICAL.md
 │   ├── server/                       # the Tamheed MCP server (the only write path into a package)
@@ -436,7 +436,7 @@ tamheed/
 ├── evals/                            # behavioral eval spec + deterministic eval runner
 ├── generated-samples/                # the demonstration package (migrated in place through v2→v3→v4)
 ├── lab/                              # the permanent execution lab (brief + seed package + scenario)
-├── tests/                            # the nine test suites
+├── tests/                            # the eleven test suites
 ├── check.py                          # THE one deterministic gate — CI job 1 runs exactly this
 ├── .github/workflows/                # CI (check.py + server smoke) + scheduled eval-spec lint
 └── SECURITY.md                       # trust model, untrusted-content posture, reporting
@@ -445,7 +445,7 @@ tamheed/
 ## Verifying a local checkout
 
 ```bash
-python check.py        # everything CI runs: 8 suites + the lint battery, canonical form, eval fixtures
+python check.py        # everything CI runs: 11 suites + the lint battery, canonical form, eval fixtures
 ```
 
 ## Contributing

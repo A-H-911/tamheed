@@ -378,7 +378,7 @@ is readable but packages cannot be created — see the capability tiers above.
 ## Verifying a local checkout
 
 ```bash
-# everything CI runs — the 8 suites, the lint battery, canonical form, eval fixtures
+# everything CI runs — the 11 suites, the lint battery, canonical form, eval fixtures
 python check.py
 
 # the MCP server's tool surface (uv fetches the SDK via PEP 723; no install step)
