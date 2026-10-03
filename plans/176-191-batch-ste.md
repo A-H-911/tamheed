@@ -73,7 +73,8 @@ lessons unless the operator opts in per row; ledger-first plan files.
 - **177 — the converted-prompt hints name live skills.** `3e10ba1`. Three hints in the `/tamheed:<name>` form, one sentence each.
 - **178 — `handoff.md` no longer claims the template twin.** `70e63d9`. The plan-132 test reads the reference too.
 - **179 — the vocabulary.** `74a6725`. The census (`evidence/scripts-ste/vocab_census.md`, 16 groups, name positions), four rulings R30–R33, `references/vocabulary.md` with 26 actions, 22 terms and 5 names. Frozen.
-- **180 — the linter module.** (this commit) `server/ste_lint.py` (port of upstream `ste-lint.py`, MIT notice, `THIRD-PARTY-NOTICES.md`), 21 tests in the twelfth suite, the four count surfaces, the guide id.
+- **180 — the linter module.** `b0733b4`. `server/ste_lint.py` (port of upstream `ste-lint.py`, MIT notice, `THIRD-PARTY-NOTICES.md`), 21 tests in the twelfth suite, the four count surfaces, the guide id.
+- **181 — lint 14.** (this commit) The roster (`_STE_SURFACES`, `_STE_PENDING`, the exempt set, `_ste_scope` by rglob), the block in the numbered-comment shape, six lint tests, `lint.14` in the guide, fourteen lints on the page.
 
 ## 4. Errors owned
 

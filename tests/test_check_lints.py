@@ -39,8 +39,70 @@ class CheckLintsTest(unittest.TestCase):
     def test_lints_pass_on_the_repo_copy(self):
         code, out = self._lint()
         self.assertIsNone(code, out)
-        self.assertGreaterEqual(out.count("lint:"), 12)
+        self.assertGreaterEqual(out.count("lint:"), 13)
         self.assertIn("binding vocabulary", out)                  # lint 13 ran
+        self.assertIn("plain English", out)                       # lint 14 ran
+
+    # ---- lint 14, plain English (plan 181): the roster is red at the first hard finding
+    _ROSTERED = "plugins/tamheed/references/vocabulary.md"
+
+    def _append_rostered(self, text: str):
+        p = self.copy / self._ROSTERED
+        p.write_text(p.read_text(encoding="utf-8") + text, encoding="utf-8")
+
+    def test_semicolon_in_a_rostered_surface_is_caught(self):
+        self._append_rostered("\nA sentence; with a semicolon.\n")
+        try:
+            code, out = self._lint()
+            self.assertEqual(code, 1); self.assertIn("plain English", out)
+            self.assertIn("semicolon", out); self.assertIn(self._ROSTERED, out)
+        finally:
+            self._restore(self._ROSTERED)
+
+    def test_wrapped_long_sentence_is_caught(self):
+        words = " ".join(f"word{i}" for i in range(30))
+        wrapped = "\n" + words[:70] + "\n" + words[70:140] + "\n" + words[140:] + ".\n"
+        self._append_rostered(wrapped)
+        try:
+            code, out = self._lint()
+            self.assertEqual(code, 1); self.assertIn("long-sentence", out)
+        finally:
+            self._restore(self._ROSTERED)
+
+    def test_hedges_terms_and_code_spans_pass(self):
+        self._append_rostered("\nVerify before you claim. The lesson is operator-confirmed."
+                              " The write may have failed. The flag `--a; --b` is one token.\n")
+        try:
+            code, out = self._lint()
+            self.assertIsNone(code, out)
+        finally:
+            self._restore(self._ROSTERED)
+
+    def test_allow_marker_without_a_reason_is_caught(self):
+        self._append_rostered("\n<!-- ste:allow semicolon -->\nQuoted; as the standard wrote it.\n")
+        try:
+            code, out = self._lint()
+            self.assertEqual(code, 1); self.assertIn("allow-without-reason", out)
+        finally:
+            self._restore(self._ROSTERED)
+
+    def test_allow_marker_with_a_reason_passes_and_is_counted(self):
+        self._append_rostered("\n<!-- ste:allow semicolon: the standard's own sentence, quoted -->\n"
+                              "Quoted; as the standard wrote it.\n")
+        try:
+            code, out = self._lint()
+            self.assertIsNone(code, out); self.assertIn("allow markers=1", out)
+        finally:
+            self._restore(self._ROSTERED)
+
+    def test_prose_file_in_neither_roster_nor_pending_is_caught(self):
+        probe = self.copy / "plugins" / "tamheed" / "probe-neither.md"  # the bundle root: no roster or pending glob covers it
+        probe.write_text("A clean sentence.\n", encoding="utf-8")
+        try:
+            code, out = self._lint()
+            self.assertEqual(code, 1); self.assertIn("probe-neither.md", out)
+        finally:
+            probe.unlink()
 
     def test_version_mismatch_is_caught(self):
         rel = "plugins/tamheed/.claude-plugin/plugin.json"

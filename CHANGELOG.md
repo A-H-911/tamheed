@@ -16,6 +16,9 @@ All notable changes to Tamheed are documented here. The format is based on
   paragraph join, the frontmatter and Python-literal extractors, the vocabulary tables of
   `references/vocabulary.md`, the Arabic rules and the allow marker. Suite `tests/test_ste_lint.py`,
   the twelfth (plan 180).
+- `check.py` lint 14, plain English: every rostered prose surface passes the structural rules at
+  baseline 0, the roster grows one rewrite wave at a time, and a prose file that is neither rostered,
+  pending nor exempt fails the gate (plan 181).
 - `plugins/tamheed/references/vocabulary.md`: one verb per action, one meaning per term, the names
   that contain a rejected word (plan 179, rulings R30-R33).
 

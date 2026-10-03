@@ -22,11 +22,13 @@ SUITES here, nowhere else.
 """
 from __future__ import annotations
 
+import fnmatch
 import json
 import re
 import subprocess
 import sys
 import tempfile
+from collections import Counter
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parent
@@ -45,6 +47,52 @@ SUITES = [
     "tests/test_user_guide.py",
     "tests/test_ste_lint.py",
 ]
+
+# Lint 14 (plan 181, R26): the plain-English roster. A rostered file has zero hard findings at
+# every commit. (glob, mode, lang, rules skipped for that file). The rewrite waves (plans
+# 184-188) move their globs from _STE_PENDING to here; the last wave leaves _STE_PENDING empty.
+_STE_SURFACES = (
+    ("plugins/tamheed/references/vocabulary.md", "strict", "en", ("vocabulary",)),
+)
+_STE_PENDING = (
+    # wave 1 (plan 184): the engine's runtime strings; docs/guide/content.py waits for wave 4b (188)
+    "plugins/tamheed/server/*.py", "plugins/tamheed/db/*.py", "plugins/tamheed/scripts/*.py",
+    "check.py", "evals/*.py", "docs/guide/*.py",
+    # wave 2 (plan 185)
+    "plugins/tamheed/skills/*/SKILL.md",
+    # wave 3 (plan 186)
+    "plugins/tamheed/references/*.md", "plugins/tamheed/templates/*.md",
+    "plugins/tamheed/prompts/README.md", "plugins/tamheed/server/README.md",
+    "plugins/tamheed/db/CANONICAL.md", "plugins/tamheed/assets/README.md",
+    # wave 4a (plan 187)
+    "README.md", "SECURITY.md", "CLAUDE.md", "CONTRIBUTING.md", "docs/*.md",
+    "lab/README.md", "evals/README.md",
+)
+# Never linted: the linter's own messages name rejected words; a verbatim license; the lab's
+# deliberately flawed brief, its dated beats and its seeded code; eval fixtures; dated records;
+# the stock history (it quotes old releases); generated samples; the tests; dot-directories.
+_STE_EXEMPT_PATHS = frozenset({
+    "plugins/tamheed/server/ste_lint.py", "plugins/tamheed/THIRD-PARTY-NOTICES.md",
+    "lab/brief.md", "lab/scenario.md", "evals/evals.json", "CHANGELOG.md",
+    "plugins/tamheed/prompts/stock-history.json",
+})
+_STE_EXEMPT_PREFIXES = ("lab/seed/", "plans/", "docs/adr/", "docs/history/",
+                        "evals/sample-results/", "generated-samples/", "tests/")
+
+
+def _ste_scope(repo: Path) -> list[str]:
+    """Every prose file the plain-English lint must place: rglob, never git ls-files."""
+    out = []
+    for pattern in ("*.md", "*.py"):
+        for p in repo.rglob(pattern):
+            parts = p.relative_to(repo).parts
+            if any(part.startswith(".") or part == "__pycache__" for part in parts):
+                continue
+            rel = "/".join(parts)
+            if rel in _STE_EXEMPT_PATHS or rel.startswith(_STE_EXEMPT_PREFIXES):
+                continue
+            out.append(rel)
+    return sorted(out)
 
 V4_DEMO_DATA = REPO / "generated-samples" / "support-triage-agent-v2" / "data"
 
@@ -424,6 +472,51 @@ def gate_lint() -> None:
         fail("binding vocabulary (plan 147): the status BINDS, the note's roster is what is"
              " RENDERED - say which one a sentence means:\n  " + "\n  ".join(vocab_problems))
     print(f"lint: binding vocabulary ({len(vocab_files)} files) keeps the two words apart")
+
+    # 14) plain English (plan 181, ASD-STE100): every rostered prose surface passes the structural rules at baseline 0
+    #     - no semicolon, no sentence over 25 words, no phrasal verb, no nominalization, no
+    #     marketing adjective, no dangling conjunction, no word references/vocabulary.md rejects
+    #     (hard under strict, advisory under flavored). The roster grows one rewrite wave at a
+    #     time (R26): a prose file is rostered, pending or exempt, and a file in none of the three
+    #     fails the lint. Scope is rglob minus the exempt set, never git ls-files (the lint test
+    #     runs the gate on a copy without .git). Passive voice and compound tenses are advisory.
+    #     Hedges (may, might, could) are never flagged: confidence is content.
+    sys.path.insert(0, str(REPO / "plugins" / "tamheed" / "server"))
+    import ste_lint  # noqa: PLC0415
+    ste_vocab = ste_lint.load_vocabulary(REPO / "plugins" / "tamheed" / "references" / "vocabulary.md")
+    ste_scope = _ste_scope(REPO)
+    rostered: dict[str, tuple] = {}
+    for pattern, mode, lang, skipped in _STE_SURFACES:
+        for rel in ste_scope:
+            if fnmatch.fnmatchcase(rel, pattern):
+                rostered.setdefault(rel, (mode, lang, skipped))
+    pending = [rel for rel in ste_scope if rel not in rostered
+               and any(fnmatch.fnmatchcase(rel, g) for g in _STE_PENDING)]
+    unplaced = [rel for rel in ste_scope if rel not in rostered and rel not in pending]
+    if unplaced:
+        fail("plain English (plan 181): every prose file is rostered, pending or exempt -"
+             " these are in none of the three:\n  " + "\n  ".join(unplaced))
+    ste_problems: list[str] = []
+    ste_words = 0
+    ste_advisory: Counter = Counter()
+    ste_markers = 0
+    for rel, (mode, lang, skipped) in rostered.items():
+        findings, words = ste_lint.lint_path(REPO / rel, mode=mode, lang=lang, vocab=ste_vocab,
+                                             skip_rules=skipped)
+        ste_words += words
+        ste_markers += (REPO / rel).read_text(encoding="utf-8").count("ste:allow")
+        for f in findings:
+            if f["level"] == ste_lint.HARD:
+                ste_problems.append(f"{rel}:{f['line']} {f['rule']}: {f['message']} [{f['match']}]")
+            else:
+                ste_advisory[f["rule"]] += 1
+    if ste_problems:
+        fail("plain English (plan 181): hard findings on rostered surfaces (baseline 0):\n  "
+             + "\n  ".join(ste_problems))
+    advisory_line = " ".join(f"{k}={v}" for k, v in sorted(ste_advisory.items())) or "none"
+    print(f"lint: plain English ({len(rostered)} files, {ste_words} words) 0 hard;"
+          f" advisory {advisory_line}; allow markers={ste_markers};"
+          f" pending {len(pending)} surfaces")
 
 
 def gate_canonical() -> None:
