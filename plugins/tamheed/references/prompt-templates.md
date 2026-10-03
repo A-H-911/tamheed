@@ -1,16 +1,16 @@
 # Handoff prompt templates
 
-Operational guidance for writing the project prompt **files** (v3, plan 027: prompts are plain
-`.md` in `<package>/prompts/`, never database rows — any non-stock filename marks a project
-prompt; `handoff_emit` G-INJECT- and stale-scans every file). **Naming (plan 028): project
-prompts are purpose-named kebab-case like the stock library — `kickoff.md`,
-`phase3-resume.md`. The `prm-NNN-<kind>.md` names on converted legacy prompts are conversion
-audit identifiers, not a pattern to imitate; the tool never renames — renames are the
-operator's, git keeps history.** Blank fill-in forms live in
-`../templates/initial-prompt.template.md`, `follow-up-prompts.template.md`, and
-`review-prompts.template.md`. Write prompts for Claude Code (CLI/IDE) and reference real entity ids;
-keep the plan's technology choices vendor-neutral. Use Claude Code affordances — plan mode,
-TodoWrite, subagents, a code-review pass — where they help, named as capabilities, not hard dependencies.
+Operational guidance for writing the project prompt **files**. Since v3 (plan 027) prompts are plain
+`.md` in `<package>/prompts/`, never database rows. Any non-stock filename marks a project prompt, and
+`handoff_emit` G-INJECT- and stale-scans every file. **Naming (plan 028): project prompts are
+purpose-named kebab-case like the stock library, for example `kickoff.md`, `phase3-resume.md`. The
+`prm-NNN-<kind>.md` names on converted legacy prompts are conversion audit identifiers, not a pattern
+to imitate. The tool never renames. Renames are the operator's, and git keeps history.** Blank
+fill-in forms live in `../templates/initial-prompt.template.md`, `follow-up-prompts.template.md`,
+and `review-prompts.template.md`. Write prompts for Claude Code (CLI/IDE) and reference real entity
+ids. Keep the plan's technology choices vendor-neutral. Use Claude Code affordances (plan mode,
+TodoWrite, subagents, a code-review pass) where they help, named as capabilities, not hard
+dependencies.
 
 ## Initial prompt — shape
 
@@ -34,58 +34,58 @@ authorizes building the whole system at once.
 
 ## Follow-up prompts — shape
 
-One per phase gate. Each: resume context ("Phase <N-1> is complete and approved; its exit criteria were
-…"), the phase goal, the bounded tasks with pass/fail, the invariants still in force, and the exit gate.
-Plus situational prompts: fallback-invocation, fresh-session refresher, invariant audit, engine/dependency
-upgrade + baseline regen, bug triage, release prep, deviation ADR, status report.
+One per phase gate. Each has a resume context ("Phase <N-1> is complete and approved. Its exit criteria
+were …"), the phase goal, the bounded tasks with pass/fail, the invariants still in force, and the
+exit gate. Plus situational prompts: fallback-invocation, fresh-session refresher, invariant audit,
+engine/dependency upgrade + baseline regen, bug triage, release prep, deviation ADR, status report.
 
 ## Review prompts — shape
 
-Prompts that make Claude Code (or a human) check work against the plan — a code-review pass (e.g.
-`/code-review`) where available: invariant audit ("verify the
-implementation honors `INV-001..INV-00n`; report violations with file:line"), readiness recheck ("re-run
-the quality gates against the current repo"), and PR review against acceptance criteria.
+Prompts that make Claude Code (or a human) check work against the plan, with a code-review pass (for
+example `/code-review`) where available. The shapes are an invariant audit ("verify the implementation
+honors `INV-001..INV-00n`, report violations with file:line"), a readiness recheck ("re-run the quality
+gates against the current repo"), and a PR review against acceptance criteria.
 
-## The scenario skills (plan 018, grown in plan 027; skills since v5, plan 116)
+## The scenario skills (plan 018, grown in plan 027, skills since v5, plan 116)
 
 Distinct from the project prompts above: seventeen operator-invoked scenario skills ship in the bundle
-(`../skills/<name>/SKILL.md`, `disable-model-invocation`; invoked as `/tamheed:<name>`, an argument
-naming another package) and are updated with the plugin — never emitted per project. Only the
+(`../skills/<name>/SKILL.md`, `disable-model-invocation`). They are invoked as `/tamheed:<name>`, with an
+argument naming another package, and are updated with the plugin, never emitted per project. Only the
 operator guide (`prompts/README.md`) is still emitted, `{package}` substituted, by `package_create`,
-`package_migrate`, `package_adopt`, and `handoff_emit`; it is the authoritative situation map. This
+`package_migrate`, `package_adopt`, and `handoff_emit`. It is the authoritative situation map. This
 file teaches AUTHORING project prompts:
 
 | Skill | Scenario |
 |---|---|
-| `orient-resume` | Re-orient after a session clear/compaction — tools + git-history cross-check against `work_bind` records (unreferenced commits classified by `git show --name-only`: package-only writes cannot cite themselves) |
+| `orient-resume` | Re-orient after a session clear/compaction: tools + git-history cross-check against `work_bind` records. Unreferenced commits are classified by `git show --name-only` (package-only writes cannot cite themselves) |
 | `package-onboarding` | A cold agent meets the package from zero: charter → invariants → roadmap → state → obligations |
 | `slice-kickoff` | Start the next open slice plan-first (STOP for approval, then AC-first execution) |
 | `progress-sync` | Record completed work: progress entries, bindings, evidenced verdicts, typed scope changes |
 | `defect-triage` | A bug surfaced: `DEF-` row BEFORE the fix, then fix/audit/bind/close the loop |
-| `drift-register` | Work happened unrecorded: classify everything into DEF-/DW-/SC-first + progress/bindings (a commit whose whole content is a package write is unbound by rule, never an orphan) |
+| `drift-register` | Work happened unrecorded: classify everything into DEF-/DW-/SC-first + progress/bindings. A commit whose whole content is a package write is unbound by rule, never an orphan |
 | `slice-review` | Slice completion: `entity_export` the ACs first (a committed slate quotes the file), audit ACs with evidence, bind commits, `readiness_check("slice")`, stop at the gate |
 | `phase-close` | Phase exit: phase-scope readiness blocking-clean, milestones, human GATE- confirmations, the guarded transition |
 | `release-close-out` | Package-scope readiness blocking-clean, human gates recorded, notes, bind, export, close |
 | `replan-deferred` | Deferred-work triggers review: SC- first, activate, wire edges, STOP on new scope |
 | `skill-promote` | Operator-run promotion interview: cluster Approved lessons → name/trigger/edge-cases/level → operator approves content → write the `SKILL.md` → `SKL-` row + `Promoted` flips (`operator_confirm`) |
-| `register-liveness` | Readiness advisories piling up — the amber-list sweep, run on a cadence (incl. `amends` merges, Merged-last, and the note-budget promotion candidates) |
-| `integrity-check` | Read-only audit: `package_verify` (the canonical round-trip, foreign files, digest), gates, counts, trace spot-checks, narrated + ungraded verdicts by id, rulings buried in closed rows, staleness (an export to a path outside the repository) + source-touching commits with no binding — reads through the tool (`after_id`/`ids`/`search`), never the files |
+| `register-liveness` | Readiness advisories piling up: the amber-list sweep, run on a cadence (incl. `amends` merges, Merged-last, and the note-budget promotion candidates) |
+| `integrity-check` | Read-only audit: `package_verify` (the canonical round-trip, foreign files, digest), gates, counts, trace spot-checks, narrated + ungraded verdicts by id, rulings buried in closed rows. Also staleness (an export to a path outside the repository) + source-touching commits with no binding. It reads through the tool (`after_id`/`ids`/`search`), never the files |
 | `generate-report` | Export + how to read `review.html` (nav, folded tables, freshness) |
 | `loop-iteration` | Fully-auto: ONE unattended pass ending in the machine-parseable `ITERATION:` block |
-| `loop-guard` | Fully-auto: the stop conditions — scope decisions and forced transitions always need a human |
-| `ste-rewrite` | Rewrite the record's prose into plain English, batch by batch (STOP per batch; immutable rows superseded; v5.9) |
+| `loop-guard` | Fully-auto: the stop conditions. Scope decisions and forced transitions always need a human |
+| `ste-rewrite` | Rewrite the record's prose into plain English, batch by batch (STOP per batch, immutable rows superseded, v5.9) |
 
 They are trusted bundle content with no package-derived text, linted by check.py (lint 12:
 well-formed, stack-neutral, no field identifiers, no `{package}` placeholder). The guide follows the
 managed-emission sync model in `handoff.md`: re-emit refreshes, hand edits are detected and
-refused, nothing is silently clobbered; a retired 4.x scenario file left in `<package>/prompts/` is
-named by `handoff_emit` and deleted by `refresh_stock=true` only when byte-equal to a shipped
-release. Project prompt files are operator-owned — never managed-refreshed, only screened.
+refused, nothing is silently clobbered. A retired 4.x scenario file left in `<package>/prompts/` is
+named by `handoff_emit` and removed by `refresh_stock=true` only when byte-equal to a shipped
+release. Project prompt files are operator-owned: never managed-refreshed, only screened.
 
 ## Wiring rules
 
-- Replace every placeholder; a shipped prompt with an unfilled `<…>` is a G-HANDOFF failure.
-- Reference entities by id (`FR-012`, `SL-003`) — the package is the source of truth; any
+- Replace every placeholder. A shipped prompt with an unfilled `<…>` is a G-HANDOFF failure.
+- Reference entities by id (`FR-012`, `SL-003`). The package is the source of truth, and any
   file path a prompt names must exist (the stale scan flags dead relative links).
-- List invariant IDs explicitly; don't paraphrase them loosely.
-- State the stop/approval gate in every step that produces meaningful change.
+- List invariant IDs explicitly. Do not paraphrase them loosely.
+- State the stop/approval gate in every step that makes a meaningful change.

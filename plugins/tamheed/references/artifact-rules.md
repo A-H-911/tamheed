@@ -1,25 +1,25 @@
 # Artifact-selection rules
 
 Populate artifact families by **need, not ceremony** (safeguard 11). Each family has a generation
-class; the project profile (Stage 2) and the answered questions decide which optional ones apply. The
+class. The project profile (Stage 2) and the answered questions decide which optional ones apply. The
 machine mirror of these classes is **`BASELINE_ENTITY_TYPES`**, seeded into each package's
-`entity_types` registry at `package_create` — gate G-SET enforces from the registry, and `check.py`
-lints registry ↔ catalog sync. The catalog with per-artifact history is `artifact-catalog.md`; the
+`entity_types` registry at `package_create`. Gate G-SET enforces from the registry, and `check.py`
+lints registry ↔ catalog sync. The catalog with per-artifact history is `artifact-catalog.md`. The
 set itself was decided at the plan-006 deliverables review.
 
 ## Generation classes
 
-- **Always** — every package gets rows (or a recorded `omission` with a reason — G-SET enforces).
-- **Conditional** — populated when a trigger holds (profile, size, risk, regulatory, etc.).
-- **On-request** — only when the user asks.
-- **Continuous** — created early, appended every cycle (Stage 21).
-- **Derived** — views over other entities; never authored, never stored (they are queries).
+- **Always**: every package has rows (or a recorded `omission` with a reason, which G-SET enforces).
+- **Conditional**: populated when a trigger holds (profile, size, risk, regulatory, and so on).
+- **On-request**: only when the user asks.
+- **Continuous**: created early, appended every cycle (Stage 21).
+- **Derived**: views over other entities. Never authored, never stored (they are queries).
 
 ## Always (v2 set, per the approved deliverables review)
 
 Charter + executive summary (narrative documents), requirements (FR/NFR), constraint register,
 assumption register, open-question register, open-decision register, risk register, phased roadmap
-(`phases`), acceptance criteria. Two Always deliverables are not entity families: the initial handoff
+(`phases`), acceptance criteria. Two Always deliverables are not entity families. The initial handoff
 prompt is a **file** in `<package>/prompts/`, and the package README is a narrative-document row.
 Derived-by-construction: traceability, readiness, status, backlog views.
 
@@ -40,35 +40,36 @@ Derived-by-construction: traceability, readiness, status, backlog views.
 | Consciously postponed work exists | deferred-work rows (severity, activation trigger, invariant-at-stake) |
 
 Dropped in v2 (decided 2026-07-17): the standalone stakeholder document (the `stakeholders` **table**
-is first-class), the milestones file (`milestones` rows live under phases), the execution backlog
-(a view over `wbs_items`), DoR/DoD/checkpoints as documents (merged into `execution_gates` rows), and
-the separate handoff manifest (absorbed into the package manifest data).
+is first-class), and the milestones file (`milestones` rows live under phases). Also the execution
+backlog (a view over `wbs_items`) and DoR/DoD/checkpoints as documents (merged into `execution_gates`
+rows). And the separate handoff manifest (absorbed into the package manifest data).
 
 ## Continuous
 
 Audit verdicts, progress entries, and scope changes accrue during Stage 21 by their own rules.
-**Lessons** (`LL-`) join them: create one whenever execution teaches something durable (kind
-`improve` or `sustain`) — born Proposed; operator confirmation gates binding: only an Approved
-lesson binds, and the executor's always-loaded note renders a roster of them (every pinned row
+**Lessons** (`LL-`) join them. Create one whenever execution teaches something durable (kind
+`improve` or `sustain`), born Proposed. Operator confirmation gates binding: only an Approved
+lesson binds. The executor's always-loaded note renders a roster of them (every pinned row
 and the 10 highest-numbered unpinned ones). **Open the statement with the rule.** The note
 prints the statement flattened to one line, whole at 180 characters or fewer and cut to its
-first 177 above that; nothing else of the row is printed, so a statement that opens with its
-story renders the story. Edit it while it is Proposed: an approved lesson is immutable.
+first 177 above that. Nothing else of the row is printed, so a statement that opens with its
+story renders the story. Edit it while it is Proposed. An approved lesson is immutable.
 
 ## On-request
 
 Deep stakeholder analysis, cost/budget models, deployment/data-flow diagrams beyond MVP,
 code-of-conduct, governance charter beyond the baseline, marketing/positioning material.
-**Skills** (`SKL-`) are On-request in the strictest sense: created only by the operator's
-promotion interview (the `skill-promote` prompt) distilling Approved lessons — never by a loop
+**Skills** (`SKL-`) are On-request in the strictest sense. They are created only by the operator's
+promotion interview (the `skill-promote` prompt) distilling Approved lessons, never by a loop
 or on the agent's initiative.
 
 ## Right-sizing (field evidence, 2026-07-17)
 
-Bias register size by what execution actually references: **fewer, sharper FR/AC rows** (field data
-showed near-zero commit references to FR/AC in three real deployments) and **rich DEC/OQ/ADR rows**
-(load-bearing everywhere); WBS depth per profile (heavily used in one deployment, unused in another).
-`last_referenced` (stamped by `work_bind`) tells you afterwards which registers earned their keep.
+Bias register size by what execution actually references. That means **fewer, sharper FR/AC rows**
+(field data showed near-zero commit references to FR/AC in three real deployments) and **rich
+DEC/OQ/ADR rows** (load-bearing everywhere). WBS depth goes per profile (heavily used in one
+deployment, unused in another). `last_referenced` (stamped by `work_bind`) tells you afterwards
+which registers earned their keep.
 
 ## Selection algorithm
 
@@ -84,4 +85,4 @@ showed near-zero commit references to FR/AC in three real deployments) and **ric
 - If a family would only restate another, **link** (trace edge) instead of duplicating.
 - If a narrative section has no project-specific content, omit it rather than emit a placeholder.
 - Prefer one well-populated register over several thin ones.
-- A diagram must add understanding a paragraph cannot; otherwise skip it.
+- A diagram must add understanding a paragraph cannot. Otherwise skip it.

@@ -16,29 +16,29 @@ owner: <name-or-role>
 
 Verify the current implementation honors the invariants `INV-001..INV-00n` listed in
 `entity_query("invariant")`. For each: state whether it holds, and for any
-violation give `file:line` and a proposed minimal fix. Do not make functional changes during the audit —
-produce a report only.
+violation give `file:line` and a proposed minimal fix. Do not make functional changes during the audit.
+Write a report only.
 
 ## Readiness re-check
 
 Re-run the quality gates against the current repository (the DoR/DoD gates:
-`entity_query("execution-gate")`). Run `gate_run()` — the full mechanical set (`G-IDS`,
-`G-DEC-STATUS`, `G-REQ-SRC`, `G-TRACE`, `G-SET`, `G-PROGRESS`, `G-COMPLETE`, `G-REL`) — plus
-`readiness_check`; report each gate as pass/fail with offending IDs, then give an overall
-**go / no-go**. Never report "ready" while a Critical gate fails.
+`entity_query("execution-gate")`). Run `gate_run()`, the full mechanical set, plus
+`readiness_check`. The set is `G-IDS`, `G-DEC-STATUS`, `G-REQ-SRC`, `G-TRACE`, `G-SET`,
+`G-PROGRESS`, `G-COMPLETE`, `G-REL`. Report each gate as pass/fail with offending IDs, then give an
+overall **go / no-go**. Never report "ready" while a Critical gate fails.
 
 ## PR review against acceptance criteria
 
 Review the changes in <PR / branch> against the acceptance criteria in
-`entity_query("acceptance-criterion")` — running a code review (e.g. `/code-review`)
-where available is a good way to do this. For each `AC-` the PR claims to satisfy:
-confirm it is met — record via `audit_record` with the full evidence chain (evidence,
-`verified_by`, `verification_method`, `against_commit`) — or record **Not-met honestly,
-never softened** (a Not-met that blocks is resolved, waived by the OPERATOR's `WVR-`, or
-carried loudly — not narrated away). Also check:
+`entity_query("acceptance-criterion")`. Running a code review (for example `/code-review`)
+where available is a good way to do this. For each `AC-` the PR claims to satisfy, confirm it
+is met. Record it via `audit_record` with the full evidence chain (evidence,
+`verified_by`, `verification_method`, `against_commit`). Or record **Not-met honestly,
+never softened**. A Not-met that blocks is resolved, waived by the OPERATOR's `WVR-`, or
+carried loudly, never narrated away. Also check:
 - Invariants (`INV-`) not regressed.
 - NFR thresholds (`NFR-`) it touches still met.
-- No scope beyond the current phase (`PH-`); deviations captured as ADRs.
+- No scope beyond the current phase (`PH-`). Deviations are captured as ADRs.
 - Traceability links updated.
 
 Output: a pass/fail per `AC-`, a list of issues, and an approve / request-changes recommendation.

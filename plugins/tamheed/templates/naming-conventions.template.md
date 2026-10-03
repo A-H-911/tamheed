@@ -54,17 +54,17 @@ owner: <name-or-role>
 | Skill | `SKL-NNN` | SKL-001 |
 | Feedback (upstream feedback / local tool) | `FB-NNN` | FB-001 |
 
-`DEC` vs `ADR`: use `DEC-` for ANY decision; **promote** to `ADR-NNNN` when the one-way-door
-test says so (hard to reverse, broad blast radius), and record the promotion
+`DEC` vs `ADR`: use `DEC-` for ANY decision. **Promote** to `ADR-NNNN` when the one-way-door
+test says so (hard to reverse, broad blast radius). Record the promotion
 (`decisions.promoted_to = ADR-0003`).
 
 ## Files and store conventions
 
-- The canonical `data/*.jsonl` files are **tool-owned** — written only through the MCP tools; you
+- The canonical `data/*.jsonl` files are **tool-owned**, written only through the MCP tools. You
   never name or hand-edit them.
 - Prompts are kebab-case `.md` files in `<package>/prompts/`, purpose-named (`kickoff.md`,
   `phase3-resume.md`).
-- ADRs are entity rows (`ADR-NNNN` ids), not per-ADR files; the ADR template shapes the row's prose.
+- ADRs are entity rows (`ADR-NNNN` ids), not per-ADR files. The ADR template shapes the row's prose.
 - References between artifacts are entity IDs, not file paths.
 
 ## Project-specific additions

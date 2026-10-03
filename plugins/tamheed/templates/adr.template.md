@@ -25,7 +25,7 @@ superseded_by: <ADR-NNNN or none>
 <!-- One of the standard lifecycle values (the store CHECK): Draft | Proposed | Approved | Rejected |
      Deferred | Implemented | Superseded | Obsolete. Mirror the front-matter.
      If superseded, link the successor: "Superseded by ADR-000x". -->
-<status> — <date and one-line note; e.g. "Promoted from DEC-007">
+<status>: <date and a one-line note, for example "Promoted from DEC-007">
 
 ## Context
 
@@ -50,7 +50,7 @@ We will <decision>.
 - <cost, limitation, or new obligation>
 
 ### Follow-ups
-- <e.g. introduces RISK-00x; requires TEST-00x; creates DEP-00x>
+- <for example: introduces RISK-00x, requires TEST-00x, creates DEP-00x>
 
 ## Confirmation
 
@@ -58,7 +58,7 @@ We will <decision>.
      function, a review checklist item, a test, a gate. Stored in the adrs.confirmation
      column; part of the frozen content once approved. An ADR whose confirmation is
      never exercised is drift waiting to be found. -->
-- <e.g. TEST-00x asserts the boundary; review checklist item; G-REL edge rule>
+- <for example: TEST-00x asserts the boundary, a review checklist item, the G-REL edge rule>
 
 ## Alternatives considered (and why rejected)
 

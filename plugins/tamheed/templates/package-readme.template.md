@@ -15,10 +15,10 @@ owner: <name-or-role>
 
 ## What this is
 
-The execution-ready planning and handoff package for **<project-name>**, produced by
-Tamheed: requirements, constraints, invariants, assumptions, open questions, decisions
-and ADRs, risks, a phased roadmap with slices, acceptance criteria, and full typed
-traceability — every entity a row, every write through the Tamheed MCP tools.
+The execution-ready planning and handoff package for **<project-name>**, written by Tamheed. It holds
+requirements, constraints, invariants, assumptions, open questions, decisions and ADRs, risks, a
+phased roadmap with slices, acceptance criteria, and full typed traceability. Every entity is a row,
+and every write goes through the Tamheed MCP tools.
 
 ## Status snapshot
 
@@ -30,28 +30,28 @@ traceability — every entity a row, every write through the Tamheed MCP tools.
 
 ## How to read this package
 
-1. **The human surface**: open `review.html` (regenerate with `export_html` — verdict
-   and identity first, then the traceability flow, the registers, execution progress).
-2. **The data**: `data/*.jsonl` — one file per entity family, canonical and
-   diff-friendly; commit it with your code. Never hand-edit while a session is open.
+1. **The human surface**: open `review.html` (regenerate with `export_html`). The verdict
+   and identity come first, then the traceability flow, the registers, execution progress.
+2. **The data**: `data/*.jsonl`, one file per entity family, canonical and
+   diff-friendly. Commit it with your code. Never hand-edit while a session is open.
 3. **The queries**: `entity_query("requirement", status="Approved")`,
    `entity_query("invariant")`, `trace_query("<id>")`, `gate_run()`,
-   `readiness_check(scope)` — the store is the record; prose copies drift.
+   `readiness_check(scope)`. The store is the record, and prose copies drift.
 
 ## How an execution agent consumes this
 
 Start from the prompts folder: **`prompts/README.md`** is the operator guide (which
 `/tamheed:<name>` skill for which situation, semi-auto vs fully-auto, the single-writer lock).
-The project-authored kickoff prompt lives beside it; the scenarios are the plugin's skills. The target
-repo's `CLAUDE.md` carries the recording-obligations table (emitted by `handoff_emit`)
-— the package is the record; unrecorded work is drift.
+The project-authored kickoff prompt lives beside it, and the scenarios are the plugin's skills. The
+target repo's `CLAUDE.md` carries the recording-obligations table (emitted by `handoff_emit`).
+The package is the record, and unrecorded work is drift.
 
 ## Conventions
 
-- Identifiers, statuses, and cross-references: this package follows Tamheed
-  governance (see the generated `governance`/`naming` documents if present, else the
-  identifier prefixes are self-describing: `FR-`, `AC-`, `SL-`, `DEC-`, `ADR-`, …).
-- Approved ADRs and acceptance criteria are immutable — superseded, never edited.
+- Identifiers, statuses, and cross-references: this package follows Tamheed governance. See the
+  generated `governance`/`naming` documents if present. Else the identifier prefixes are
+  self-describing: `FR-`, `AC-`, `SL-`, `DEC-`, `ADR-`, and the rest.
+- Approved ADRs and acceptance criteria are immutable: superseded, never edited.
 - One session at a time: `data/.lock` is the single-writer guard.
 
 ## Package metadata

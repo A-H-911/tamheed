@@ -2,10 +2,10 @@
 
 ## Accept
 
-- **Long-form prose** — a pasted brief, doc, or transcript. Most common.
-- **Structured input** — a structured brief file (YAML/JSON). The store's DDL (`../db/schema.sql`) is
+- **Long-form prose**: a pasted brief, doc, or transcript. Most common.
+- **Structured input**: a structured brief file (YAML/JSON). The store's DDL (`../db/schema.sql`) is
   the single source of data shape.
-- **Mixed / partial** — some fields plus prose. Treat the structured fields as authoritative and mine prose
+- **Mixed / partial**: some fields plus prose. Treat the structured fields as authoritative and mine prose
   for the rest.
 
 Tamheed **must support incomplete input** and normalize progressively: capture what exists, mark gaps as
@@ -25,24 +25,24 @@ lets G-REQ-SRC pass and lets a reviewer audit "why is this here?". Never drop pr
 3. **Extract verbatim**, then restate crisply in a `normalized` field while keeping the original.
 4. **Split** compound statements into atomic items.
 5. **Assign IDs** per `governance.md`.
-6. **De-duplicate**; merge with a recorded `merged_from`.
-7. **Separate requirement from preference** ("must/shall" vs "prefer/ideally/nice-to-have"); set priority.
+6. **De-duplicate**. Merge with a recorded `merged_from`.
+7. **Separate requirement from preference** ("must/shall" vs "prefer/ideally/nice-to-have"). Set priority.
 8. **Detect premature solutions** (a named technology in a requirement) and lift them into candidate
    decisions, leaving the underlying need as the requirement.
-9. **Record gaps** as `OQ-`; **record inferences** as `ASM-` with `risk_if_wrong` — never as requirements.
+9. **Record gaps** as `OQ-`. **Record inferences** as `ASM-` with `risk_if_wrong`, never as requirements.
 
 ## Intake field checklist
 
-What to extract when the input carries it: business objectives, problem statement, functional & non-functional requirements,
-technical/organizational/regulatory constraints, existing systems/environments, preferred & prohibited
-technologies, known risks, known decisions, unknowns/ambiguities, expected deliverables, target users,
-stakeholders, available infrastructure, execution-agent constraints, repository constraints, and
-time/budget/resource constraints. Absent fields are normal — list them as `OQ-` if they matter for the
-profile, otherwise leave unset.
+What to extract when the input carries it: business objectives, problem statement, functional and
+non-functional requirements, technical/organizational/regulatory constraints, existing
+systems/environments. Also preferred and prohibited technologies, known risks, known decisions,
+unknowns/ambiguities, expected deliverables, target users, stakeholders. Also available infrastructure,
+execution-agent constraints, repository constraints, and time/budget/resource constraints. Absent fields
+are normal. List them as `OQ-` if they matter for the profile, otherwise leave unset.
 
 ## Output of intake
 
 The package store populated with: the brief archived verbatim as a provenance-labeled narrative
-document, the profile on the `packages` row, requirement/constraint rows (Draft, with
+document, and the profile on the `packages` row. Also requirement/constraint rows (Draft, with
 `source_kind`/`source_span`), and seeded `open-question`/`assumption` rows. This is the substrate
-every later stage reads and updates (all via the MCP tools — see `state.md`).
+every later stage reads and updates (all via the MCP tools, see `state.md`).

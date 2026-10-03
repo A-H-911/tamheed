@@ -41,6 +41,10 @@ All notable changes to Tamheed are documented here. The format is based on
   every quoted trigger phrase and every pinned phrase word for word, the "Use before ..." conditions
   as sentences, the vocabulary's verbs throughout. The names table of `vocabulary.md` gained the
   verdict values `Validated` and `Invalidated` (plan 185).
+- The references, templates, the stock prompts README, the server README, CANONICAL and the assets
+  README are plain English (wave 3 of 4): 1,010 hard findings to 0, every pinned phrase word for word.
+  `workflow.md` labels each stage's check `Check:` (the label was a rejected verb). The stock README
+  body under `stock-history.json`'s `5.9.0` key follows (plan 186).
 - `plugins/tamheed/references/vocabulary.md`: one verb per action, one meaning per term, the names
   that contain a rejected word (plan 179, rulings R30-R33).
 

@@ -63,6 +63,9 @@ perfect 88 (advisory). Python runtime literals: `tamheed_server.py` 104 semicolo
 | R34 | A names-table row for an engine value name (`Validated`, `Invalidated`) does not re-open the vocabulary freeze; each addition is listed in the beat's ledger (wave 2 review, plan 185). |
 | R35 | A frontmatter condition split into sentences with its words and their order kept, joiners added, keeps R11; waves 3-4 do not re-litigate the split (wave 2 review, plan 185). |
 | R36 | On an unquoted condition word, R8 (the vocabulary) wins over R11: "produce a charter" is "write a charter". Only QUOTED trigger phrases are verbatim (wave 2 review, plan 185). |
+| R37 | The vocabulary applies to the spec's own field labels: workflow.md's `Validate:` is `Check:` in all 22 stages and the legend; `docs/workflow.md:161` follows in plan 187 (wave 3 review, plan 186). |
+| R38 | A stale count or name met while rewriting the sentence it sits in is corrected in the wave and disclosed in the ledger, not split into a `fix:` beat (wave 3 review, plan 186). |
+| R39 | The templates' HTML guidance comments stay as they are, permanently: the extractor drops them by design, they never reach an agent's context, and a filled template removes them (wave 3 review, plan 186). |
 
 Approved with the plan (2026-10-03): the wave protocol (stage, advisor read, operator review, one
 commit after the ruling, fix-ups disclosed); beat 33 runs the rewrite skill on a scratch copy and
@@ -82,11 +85,13 @@ lessons unless the operator opts in per row; ledger-first plan files.
 - **183 — the two skills.** `a537a1e`. `plain-english` (discipline) and `ste-rewrite` (scenario), the note's skills line, the stock README under `5.9.0`, every count surface (1 / 17 / 9, 27 skills), two tests.
 - **184 — wave 1.** `883412b`. 207 hard findings to 0 across 16 rostered files: the 19 tool descriptions, every refusal, every readiness note, every warning, the note as v6 (the hook reads v5 and v6), lint 9 blacklists `tamheed:note v5`; 16 pins re-aimed; the linter learned to read a multi-line literal as Markdown.
 - **185 — wave 2.** (the commit this record lands in) 818 hard findings to 0 across the 27 skills, the glob rostered (43 files, 0 hard, pending 50), every quoted trigger identical, 22 of 23 pins word for word (the 23rd an absence assertion on the fixture), the word-multiset check of every description (`desc_words.py`) showing joiners only plus `produce` → `write`, two names-table rows (R34), one allow marker inside the lint-13 probe test, rulings R34–R36.
+- **186 — wave 3.** (the commit this record lands in) 1,010 hard findings to 0 across 37 files (references, templates, the stock README strict; the server README, CANONICAL, the assets README flavored), six globs rostered (79 files, 0 hard, pending 14), 41 pins word for word, the stock body under `stock-history.json`'s `5.9.0` key, `Validate:` → `Check:` in workflow.md, four count/name corrections (seventeen scenarios, eleven sections, nine discipline skills, the v6 marker).
 
 ## 4. Errors owned
 
 - **184.** Bash heredocs unescaped backslashes twice (a test insert, a lint regex); every script since is written to a file first. The tool-owned test failure was a pin (capitalisation), not instability, proved by two identical emits.
 - **185.** A code span broken across a line in loop-iteration (the token invariant caught it). "stored as" dropped from the front door's first sentence and an example list rewritten as a definition in operator-interview (the description multiset check caught both before the review). A `sed` edit of a regex dropped a backslash (the third shell mangling of the batch). Plan 182 had appended register-liveness item 22 after the closing step; renumbered here. The lint-13 probe's deliberate semicolon failed lint 14 on the first gate run after the roster move; fixed in the test with an allow marker, not in either lint.
+- **186.** Three code spans and two pinned phrases broken across lines by my wrapping (the token invariant and the pin tool caught every one; a contract test failed once on a pin). One "must" weakened to a plain statement in handoff.md (the modal counter caught it; restored). Rule from here: a code span or a pinned phrase never straddles a line break.
 
 ## 5. Not built, by ruling or on purpose
 

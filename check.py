@@ -65,14 +65,18 @@ _STE_SURFACES = (
     ("docs/guide/diagrams.py", "strict", "en", ()),
     # wave 2 (plan 185): the 27 skills
     ("plugins/tamheed/skills/*/SKILL.md", "strict", "en", ()),
+    # wave 3 (plan 186): references, templates, the stock README (agent-facing, strict);
+    # the server README, CANONICAL and the assets README (human-facing, flavored)
+    ("plugins/tamheed/references/*.md", "strict", "en", ()),
+    ("plugins/tamheed/templates/*.md", "strict", "en", ()),
+    ("plugins/tamheed/prompts/README.md", "strict", "en", ()),
+    ("plugins/tamheed/server/README.md", "flavored", "en", ()),
+    ("plugins/tamheed/db/CANONICAL.md", "flavored", "en", ()),
+    ("plugins/tamheed/assets/README.md", "flavored", "en", ()),
 )
 _STE_PENDING = (
     # wave 4b (plan 188): the guide's prose, read by import
     "docs/guide/content.py",
-    # wave 3 (plan 186)
-    "plugins/tamheed/references/*.md", "plugins/tamheed/templates/*.md",
-    "plugins/tamheed/prompts/README.md", "plugins/tamheed/server/README.md",
-    "plugins/tamheed/db/CANONICAL.md", "plugins/tamheed/assets/README.md",
     # wave 4a (plan 187)
     "README.md", "SECURITY.md", "CLAUDE.md", "CONTRIBUTING.md", "docs/*.md",
     "lab/README.md", "evals/README.md",

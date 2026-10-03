@@ -36,7 +36,7 @@ Choose <what> to satisfy `FR-/NFR-/CON-`. Feeds `DEC-00x` / `ADR-000x`.
 | <maturity / support> | 0.20 | <risk reduction> |
 | <constraint compliance> | 0.20 | <ties to CON-> |
 | <effort / complexity> | 0.15 | <delivery impact> |
-| <extensibility / lock-in> | 0.15 | <neutrality; safeguard against coupling> |
+| <extensibility / lock-in> | 0.15 | <neutrality, safeguard against coupling> |
 
 ## Comparison matrix
 

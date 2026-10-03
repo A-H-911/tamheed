@@ -1,7 +1,7 @@
 # Traceability
 
 The traceability matrix is what lets an implementing agent navigate from any need to its evidence and back.
-It is **derived by construction** — views over typed `trace_edges` rows, never hand-maintained — so it
+It is **derived by construction**, views over typed `trace_edges` rows, never hand-maintained, so it
 cannot drift from the entities it links.
 
 ## The chain
@@ -15,9 +15,9 @@ Requirement (FR-/NFR-)
    → Risk (RISK-)                  what could go wrong
 ```
 
-Not every requirement touches every column, but the gate (`G-TRACE`) requires: every MVP `FR-/NFR-` links
-to ≥1 decision, ≥1 work item, and ≥1 test; every requirement asserting user-visible behavior links to ≥1
-acceptance criterion.
+Not every requirement touches every column, but the gate (`G-TRACE`) requires two things. Every MVP
+`FR-/NFR-` links to ≥1 decision, ≥1 work item, and ≥1 test. Every requirement asserting user-visible
+behavior links to ≥1 acceptance criterion.
 
 ## Representation
 
@@ -27,27 +27,28 @@ current.
 
 ## Recording & checking
 
-1. Edges are recorded **live, as typed `trace_edges` rows, at decision time** — `derives_from`,
-   `implements`, `tests`, `verifies`, `mitigates`, `discharges`, `learned_from` (a lesson → the
-   defect / decision / risk / slice / wbs-item / progress-entry that taught it), plus the
-   scope-delta kinds (`scope_adds`/`scope_modifies`/`scope_removes` — plan rows only) and
-   `amends` (a scope change → the `DEC-`/`ADR-` ruling it carves an exception out of or
-   re-scopes; v4.5) and `carries` (a wbs-item → the activated `DW-` row it carries; v5 —
-   the edge `deferred-work-carried` reads); `relates_to` is the documented untyped escape hatch. There is no after-the-fact "collect the links" pass.
-   Edges are keyed `(from_id, to_id, relation)`: writing a new relation between a pair never
-   replaces an old one — a wrong edge is RETIRED (`retire: true` on the trace-edge item; the
-   triple is deleted, the relation rule is not consulted, and the server journals it as a
-   `correction` row in the same transaction — v4.6, findings_23 §1) and the corrected edge is
-   written in the same batch. Retire a wrong edge only, never to make a gate pass. Promotion links are
+1. Edges are recorded **live, as typed `trace_edges` rows, at decision time**. The relations are
+   `derives_from`, `implements`, `tests`, `verifies`, `mitigates`, `discharges`, and `learned_from`.
+   A `learned_from` edge links a lesson → the defect / decision / risk / slice / wbs-item /
+   progress-entry that taught it. Add the scope-delta kinds (`scope_adds`/`scope_modifies`/
+   `scope_removes`, plan rows only). `amends` links a scope change → the `DEC-`/`ADR-` ruling it
+   carves an exception out of or re-scopes (v4.5). `carries` links a wbs-item → the activated `DW-`
+   row it carries (v5). It is the edge `deferred-work-carried` reads. `relates_to` is the documented
+   untyped escape hatch. There is no after-the-fact "collect the links" pass.
+   Edges are keyed `(from_id, to_id, relation)`. Writing a new relation between a pair never
+   replaces an old one. A wrong edge is RETIRED (`retire: true` on the trace-edge item) and the
+   corrected edge is written in the same batch. On a retire the triple is removed and the relation
+   rule is not consulted. The server journals it as a `correction` row in the same transaction
+   (v4.6, findings_23 §1). Retire a wrong edge only, never to make a gate pass. Promotion links are
    **columns**, not edges: `lessons.promoted_to` → the `SKL-` skill it was distilled into, the same
    idiom as `decisions.promoted_to` → the ADR.
-2. `G-TRACE` fails on any MVP requirement with a gap in a required column — fix by adding the missing
-   decision/slice/test edge or by explicitly de-scoping the requirement (recorded).
-3. On updates (Stage 21), the views stay current by construction; a superseded item's links move to its
+2. `G-TRACE` fails on any MVP requirement with a gap in a required column. Fix by adding the missing
+   decision/slice/test edge, or by explicitly de-scoping the requirement (recorded).
+3. On updates (Stage 21), the views stay current by construction. A superseded item's links move to its
    successor through the supersession flow.
 
 ## Bidirectional
 
-The matrix reads forward (need → evidence) and backward (a test/risk → the needs it serves). Backward links
-catch orphans: a work item or test that traces to no requirement is either gold-plating or a missing
-requirement — investigate, don't ignore.
+The matrix reads in both directions: from a need to its evidence, and back from a test/risk to the
+needs it serves. Backward links catch orphans: a work item or test that traces to no requirement is
+either gold-plating or a missing requirement. Investigate, do not ignore.

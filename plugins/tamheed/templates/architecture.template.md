@@ -44,8 +44,8 @@ owner: <name-or-role>
 
 | Contract | Between | Shape (inputs → outputs) | Guarantees / invariants |
 |---|---|---|---|
-| <contract-1> | <A → B> | <input> → <output> | <e.g. deterministic; honors INV-001> |
-| <contract-2> | <boundary> | <request> → <response> | <validation; versioning policy> |
+| <contract-1> | <A → B> | <input> → <output> | <for example deterministic, honors INV-001> |
+| <contract-2> | <boundary> | <request> → <response> | <validation, versioning policy> |
 
 ## Data / control flow
 
@@ -64,7 +64,7 @@ owner: <name-or-role>
 <!-- Where each is handled in the architecture. -->
 - Error handling / failure modes: <approach>
 - Observability: <logging/metrics/tracing approach>
-- Security: <where enforced; links NFR-/CON->
+- Security: <where enforced, links NFR-/CON->
 - Extensibility: <how new <component types> are added — e.g. via a registry, honoring INV-002>
 
 ## Open architectural questions

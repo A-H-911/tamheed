@@ -1,6 +1,6 @@
 # Generated package structure (v4)
 
-The layout Tamheed produces **for a target project** (distinct from the Tamheed repo itself). A
+The layout Tamheed writes **for a target project** (distinct from the Tamheed repo itself). A
 package is a data directory plus the prompts folder plus emitted review surfaces — not a tree of
 Markdown registers.
 
@@ -60,6 +60,6 @@ reading raw JSONL.
 ## Minimal vs maximal
 
 A tiny project may populate only: the package row, requirements, decisions, open questions,
-assumptions, risks, one phase + one slice, acceptance criteria, a charter narrative, and the initial
-prompt — with `omission` rows for the rest of the Always set. The selection rules decide
-(`artifact-rules.md`); never emit empty ceremonial rows.
+assumptions, risks, one phase + one slice. Add acceptance criteria, a charter narrative, and the
+initial prompt, with `omission` rows for the rest of the Always set. The selection rules decide
+(`artifact-rules.md`). Never emit empty ceremonial rows.

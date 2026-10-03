@@ -24,23 +24,23 @@ owner: <name-or-role>
 ## Project state
 
 - **What this is:** <one line>.
-- **The contract:** the Tamheed package `<package-name>` — charter and registers via
-  `entity_query`, the human surface at `<package-name>/review.html`. Decisions in approved
-  `DEC-`/`ADR-` rows are FINAL; do not re-litigate settled decisions.
-- **Where you are now:** the `resume` block `package_open` / `server_info` return (the latest
-  `handoff` journal entry with its corrections — the plugin's SessionStart hook prints it), then
-  `gate_run()` + `readiness_check(scope)` + the newest journal entries the block names
-  (`last_entries`; a read cut by `limit` returns the OLDEST rows) — never a stale copy
-  in this file. A status sentence written here ("phase N complete", "N criteria Met") goes stale
-  on the next write and then reads as current; `handoff_emit` reports such sentences and id-dense
-  paragraphs in this file (`restated_content`) so they can be replaced by the query.
+- **The contract:** the Tamheed package `<package-name>`. The charter and registers come through
+  `entity_query`, and the human surface is `<package-name>/review.html`. Decisions in approved
+  `DEC-`/`ADR-` rows are FINAL. Do not re-litigate settled decisions.
+- **Where you are now:** the `resume` block `package_open` / `server_info` return. It holds the
+  latest `handoff` journal entry with its corrections, and the plugin's SessionStart hook prints it.
+  Then `gate_run()` + `readiness_check(scope)` + the newest journal entries the block names
+  (`last_entries`). A read cut by `limit` returns the OLDEST rows. Never a stale copy in this
+  file. A status sentence written here ("phase N complete", "N criteria Met") goes stale on the
+  next write and then reads as current. `handoff_emit` reports such sentences and id-dense
+  paragraphs in this file (`restated_content`) so the query can replace them.
 
 ## Invariants — never violate (a violation requires a new ADR)
 
 - `INV-001` — <one-line invariant>.
 - `INV-002` — <one-line invariant>.
 - Full list + rationale: `entity_query("invariant")` or `review.html#registers`.
-- **Rule:** breaking an invariant is not a silent option — upsert a new `adr` row (status
+- **Rule:** breaking an invariant is not a silent option. Upsert a new `adr` row (status
   Proposed) and STOP for approval.
 
 ## Hard constraints (refuse work that crosses these)
@@ -56,34 +56,35 @@ owner: <name-or-role>
      CLAUDE.md) and rebuilds on every emit; a second copy here drifted, and a copy of register
      content is exactly the shape `handoff_emit`'s restated-content scan reports. -->
 
-The obligations table — what to record before moving on (defects, deferred work, scope changes,
-open questions, lessons, feedback, work-done entries, `Review` claims, verdicts, bindings,
-readiness before any done-claim) — is the tool-owned tamheed note in `<package-name>/CLAUDE.md`,
-which this file's `CLAUDE.md` imports; it is never copied here. If you cannot record (lock held,
-package missing), STOP and tell the operator — do not proceed unrecorded.
+The obligations table says what to record before moving on. That is defects, deferred work, scope
+changes, open questions, lessons and feedback. It is also work-done entries, `Review` claims,
+verdicts, bindings, and readiness before any done-claim. The table is the
+tool-owned tamheed note in `<package-name>/CLAUDE.md`, which this file's `CLAUDE.md` imports. It
+is never copied here. If you cannot record (lock held, package missing), STOP and tell the operator.
+Do not proceed unrecorded.
 
 Before a compaction, at session end or on a handover, write a `handoff` journal entry LAST
-(`tamheed:session-handoff`: resume point, in-flight ids, what awaits the operator, verified facts
-with the query that measured each, what not to carry); the `handoff-current` advisory names a
-missing or stale one, and the next session reads it first.
+(`tamheed:session-handoff`). It holds the resume point, the in-flight ids and what awaits the
+operator. It holds the verified facts with the query that measured each, and what not to carry. The
+`handoff-current` advisory names a missing or stale one, and the next session reads it first.
 
 ## Operating conventions
 
 - Work **acceptance-criteria-first**: pick an `AC-`, write the failing test, implement,
   `audit_record` with evidence, repeat.
-- No phase starts with red CI; keep changes small and reviewable.
+- No phase starts with red CI. Keep changes small and reviewable.
 - **The HOW of every package write, read and git crossing is the tamheed plugin's
-  `tamheed:package-writes` skill** (v5): commit the package `data/` before branch operations
+  `tamheed:package-writes` skill** (v5). Commit the package `data/` before branch operations,
   and run `git status --porcelain -uall` immediately before any branch operation (recording
-  FLUSHES `data/*.jsonl` after the commit it records); read registers through the tools,
-  never the files (`entity_query` pages, `entity_export` for a committed script,
-  `package_verify()` for the canonical proof); a status flip on a long row names its
+  FLUSHES `data/*.jsonl` after the commit it records). Read registers through the tools,
+  never the files: `entity_query` pages, `entity_export` for a committed script,
+  `package_verify()` for the canonical proof. A status flip on a long row names its
   untouched columns (`expect_unchanged`) or uses `substitute`. `tamheed:reading-the-record`
-  before citing a row; `tamheed:operator-interview` at every STOP.
+  before citing a row, `tamheed:operator-interview` at every STOP.
 
 ## Kickoff
 
-Start from the kickoff prompt in `<package-name>/prompts/` (project-authored); the
-recurring situations are the plugin's slash skills — `/tamheed:package-onboarding` for an
-agent that has never seen the package, then `/tamheed:orient-resume`, `/tamheed:slice-kickoff`,
-`/tamheed:progress-sync`, … (`<package-name>/prompts/README.md` maps every situation).
+Start from the kickoff prompt in `<package-name>/prompts/` (project-authored). The recurring
+situations are the plugin's slash skills. `/tamheed:package-onboarding` is for an agent that has
+never seen the package. Then `/tamheed:orient-resume`, `/tamheed:slice-kickoff`,
+`/tamheed:progress-sync`, and the rest. `<package-name>/prompts/README.md` maps every situation.

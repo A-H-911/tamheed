@@ -1,21 +1,21 @@
 # Tamheed section templates (v4)
 
 Blank, fillable forms for the **narrative documents** of a v4 package. Since v2 (ADR-0001) the
-register families — requirements, decisions, risks, phases, acceptance criteria, and the rest —
-are **relational entities** written through the MCP server (`entity_upsert`); their shape lives
+register families are **relational entities** written through the MCP server (`entity_upsert`).
+That is requirements, decisions, risks, phases, acceptance criteria, and the rest. Their shape lives
 in the `entity_types` registry + `../db/schema.sql`, not in a template. What remains here are
 the **section templates** for `narrative_documents` prose and the handoff prompts.
 
 Each template keeps YAML front-matter (`status`, `version`, `updated`, `owner`), section
-headings, `<placeholder>` markers, and `<!-- guidance -->` comments. Fill from package state,
-remove the guidance comments; blank forms only — filled content lives in the package (as
+headings, `<placeholder>` markers, and `<!-- guidance -->` comments. Fill from package state and
+remove the guidance comments. Blank forms only: filled content lives in the package (as
 `document_sections` rows and emitted handoff files).
 
 **Conventions:** identifiers, statuses, versioning, cross-references: `../references/governance.md`.
 
 ## Index (survivors of the plan-006 deliverables review — v1→v2 history)
 
-| Template | Produces | Class |
+| Template | Yields | Class |
 |---|---|---|
 | `project-charter.template.md` | Charter sections (problem, goals/non-goals, scope, KPIs, stakeholders) | Always |
 | `executive-summary.template.md` | One-page summary + recommendation | Always |
@@ -35,11 +35,11 @@ remove the guidance comments; blank forms only — filled content lives in the p
 ## Historical: where the v1 templates went (v2 era, plan 009 dispositions)
 
 - **Retired to entity types** (shape now = `entity_types` registry + DDL): the register
-  templates — requirements (FR/NFR), constraint/invariant/assumption/dependency/open-question/
-  open-decision registers, risk register, hypothesis/experiment/POC plans, roadmap,
+  templates. That is requirements (FR/NFR), the constraint/invariant/assumption/dependency/open-question/
+  open-decision registers, the risk register, and the hypothesis/experiment/POC plans. Also roadmap,
   work-breakdown, test strategy, acceptance criteria/audit, progress log, deferred-work
   register, package manifest.
 - **Dropped with their artifacts** (plan-006 review): milestones file, DoR/DoD (→ execution
   gates), stakeholder register, R&D backlog (→ research plan), handoff manifest (→ package
-  manifest), traceability matrix + status report + execution-readiness report (derived views,
+  manifest). Also the traceability matrix + status report + execution-readiness report (derived views,
   rendered not templated).

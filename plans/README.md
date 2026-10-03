@@ -198,7 +198,7 @@ Status values: PLANNED / IN PROGRESS / DONE.
 | 183 | [Skills `plain-english` and `ste-rewrite`; every count surface](183-skills-plain-english-ste-rewrite.md) -- the discipline and the operator-run rewrite ceremony, the note's skills line, the stock README under 5.9.0, 1 / 17 / 9 | 182 | DONE -- 2026-10-03, `a537a1e` |
 | 184 | [Wave 1: tool descriptions, server messages, note v6, the hook](184-wave-1-engine-strings.md) -- 207 hard findings to 0 on 16 rostered files, the note as v6 with the hook reading both, 16 pins re-aimed | 183 | DONE -- 2026-10-03 (the commit this row lands in, after the operator's review) |
 | 185 | [Wave 2: the 27 skills](185-wave-2-skills.md) -- 818 hard findings to 0 on 27 skills, the glob rostered, triggers and 22 pins kept, two names-table rows, one allow marker in a lint-13 probe | 184 | DONE -- 2026-10-03 (the commit this row lands in, after the operator's review) |
-| 186 | Wave 3: references, templates, stock README, server README, CANONICAL | 185 | PLANNED |
+| 186 | [Wave 3: references, templates, stock README, server README, CANONICAL](186-wave-3-references-templates.md) -- 1,010 hard findings to 0 on 37 files, six globs rostered, 41 pins kept, the stock body under its 5.9.0 key, `Validate:` → `Check:` in workflow.md | 185 | DONE -- 2026-10-03 (the commit this row lands in, after the operator's review) |
 | 187 | Wave 4a: human docs, root files, the lab and evals READMEs | 186 | PLANNED |
 | 188 | Wave 4b: the guide EN and AR, the "Writing discipline" section; pending empty | 187 | PLANNED |
 | 189 | Stamp 5.9.0, evals re-aimed, lab beat 33 | 188 | PLANNED |

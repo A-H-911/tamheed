@@ -1,67 +1,72 @@
 # Extension points
 
-Tamheed is designed to grow as new projects reveal new reusable patterns — **without editing core
-logic**. Everything below is additive: register an entry, drop in a migration; don't fork the
+Tamheed is designed to grow as new projects reveal new reusable patterns, **without editing core
+logic**. Everything below is additive: register an entry, drop in a migration. Do not fork the
 workflow. The biggest case (a whole new artifact family) starts a **new migration-chain entry** on
-the v4 baseline — `../db/migrations/002_lessons.sql` (the lessons family, plan 035) is the LIVE
-worked example of exactly this chain: table + trigger pair + immutability trigger + a relation-CHECK
-extension, registered end to end; `../db/migrations/003_skills.sql` (the skill family + the lesson
-`Promoted` state, plan 036) continues the same chain, and `../db/migrations/004_amends_verify.sql`
-(plan 039) is the worked example of the two SMALLER extensions — a new trace relation (`amends`)
-and a new journal event kind (`integrity-verified`), each a CHECK recreation on an empty-at-connect
-table, `../db/migrations/006_carries.sql` (plan 113, v5) repeats the relation case alone
-(`carries`, read by one advisory), and `../db/migrations/007_handoff.sql` (plan 121, v5.1) is the
-worked example of a CALLER-written event kind (`handoff`, returned by the `resume` block) beside the
-smallest extension of all — one nullable column (`skills.upstreamed_to`, `ALTER TABLE … ADD COLUMN`;
-every existing package's file for that table rewrites once, because every column serialises); `../db/migrations/005_feedback.sql` (the feedback family, plan 087) is the newest
-whole-family add and the shortest worked example: one table with its index triggers, a
-`ENTITY_TABLES` + `BASELINE_ENTITY_TYPES` row (`Continuous`, so no existing package fails G-SET),
-an `_PROSE_ID_EXEMPT_TABLES` decision, the catalog and governance rows, the naming template's
-identifier row, a lifecycle row and diagram in `docs/entities.md`, the guards in `entity_upsert`,
-and no new tool — a field package opens as is and gains the registry row by `package_migrate`'s
-registry-sync. `glossary_terms` (itself a baseline table since v4) remains the
-worked example of the SHAPE: the table + trigger pair + the two registry entries — the contributor
-walkthrough in the repo's contributing guide retraces it step by step.
+the v4 baseline. The chain has a LIVE worked example for every size of extension:
+
+- `../db/migrations/002_lessons.sql` (the lessons family, plan 035): table + trigger pair +
+  immutability trigger + a relation-CHECK extension, registered end to end.
+- `../db/migrations/003_skills.sql` (the skill family + the lesson `Promoted` state, plan 036)
+  continues the same chain.
+- `../db/migrations/004_amends_verify.sql` (plan 039) is the worked example of the two SMALLER
+  extensions. They are a new trace relation (`amends`) and a new journal event kind
+  (`integrity-verified`). Each is a CHECK recreation on an empty-at-connect table.
+- `../db/migrations/006_carries.sql` (plan 113, v5) repeats the relation case alone (`carries`, read
+  by one advisory).
+- `../db/migrations/007_handoff.sql` (plan 121, v5.1) is the worked example of a CALLER-written event
+  kind (`handoff`, returned by the `resume` block). Beside it sits the smallest extension of all, one
+  nullable column (`skills.upstreamed_to`, `ALTER TABLE … ADD COLUMN`). Every existing package's
+  file for that table rewrites once, because every column serialises.
+- `../db/migrations/005_feedback.sql` (the feedback family, plan 087) is the newest whole-family add
+  and the shortest worked example. It is one table with its index triggers, and a `ENTITY_TABLES` +
+  `BASELINE_ENTITY_TYPES` row (`Continuous`, so no existing package fails G-SET). It takes an
+  `_PROSE_ID_EXEMPT_TABLES` decision. Add the catalog and governance rows, the naming template's
+  identifier row, a lifecycle row and diagram in `docs/entities.md`, and the guards in
+  `entity_upsert`. No new tool. A field package opens as is and gains the registry row by
+  `package_migrate`'s registry-sync.
+- `glossary_terms` (itself a baseline table since v4) remains the worked example of the SHAPE: the
+  table + trigger pair + the two registry entries. The contributor walkthrough in the repo's
+  contributing guide retraces it step by step.
 
 ## How migrations reach the runtime
 
-`schema.sql` is the **frozen, byte-identical twin** of `db/migrations/001_init.sql` — `check.py`
+`schema.sql` is the **frozen, byte-identical twin** of `db/migrations/001_init.sql`, and `check.py`
 enforces the identity. All later DDL is an **append-only** migration (`migrations/NNN_*.sql`,
 NNN ≥ 002), applied by the store's connection factory in lexical order on every load. Never edit
-`001_init.sql`, `schema.sql`, or any shipped migration — mirroring the supersede-don't-edit
+`001_init.sql`, `schema.sql`, or any shipped migration. This mirrors the supersede-don't-edit
 governance rule.
 
 ## What you can extend
 
 | Extension | How | Where |
 |---|---|---|
-| New artifact family (entity type) | An append-only DDL migration (the table — TEXT PK in the governed ID scheme, `custom_attributes` + `last_referenced` columns — plus the `entity_index` trigger pair) **and the two in-code registry entries**: `ENTITY_TABLES` (tool routing) + `BASELINE_ENTITY_TYPES` (the registry row seeded at `package_create`: type id, label, ID prefix, generation class). The viewer renders the new family automatically (its Registers section iterates `ENTITY_TABLES`); `check.py`'s lint gate fails until registry ↔ table map ↔ DDL agree. Add a catalog row + a selection trigger for the prose surfaces. | `../db/migrations/NNN_*.sql`, `../server/tamheed_server.py`, `artifact-catalog.md`, `artifact-rules.md` |
-| New attribute on an existing family | Prefer `custom_attributes` (JSON) for experiments; promote to a real column via a migration once proven. | `../db/migrations/` |
-| New section template | Add a `.template.md`; reference it from the catalog. | `../templates/` |
-| New scenario skill (operator-invoked ceremony) | Since v5 the scenarios are plugin skills: add `../skills/<name>/SKILL.md` with `disable-model-invocation: true` and `argument-hint: "[package]"` beside the existing seventeen; the body reads the package from the note or `$ARGUMENTS` (no `{package}` placeholder); teach it in `prompt-templates.md` and the emitted guide (`../prompts/README.md`, whose body then needs its `stock-history.json` key at the release). Lint 12 checks the frontmatter, the 500-line cap, stack-neutrality and the menu contract (v5.1: exactly one of `disable-model-invocation: true` / `user-invocable: false` per skill). | `../skills/`, `../prompts/README.md` |
-| New discipline skill (model-invoked) | Add `../skills/<name>/SKILL.md` with `user-invocable: false` (out of the `/` menu, description in context); name it in the note paragraph (`tamheed_server.py`) and in the guide — in a crowded host the description may reach the model name-only, so a tool RESULT that names the skill is the cue (plan 120's `skill` hint). | `../skills/`, `../server/tamheed_server.py` |
-| New hook | `../hooks/hooks.json` (the plugin's hook config, merged with the manifest's `hooks` field): a `SessionStart` hook prints plain text into the model's context; keep it guarded, lockless, screened and capped like `../server/resume_hook.py`, and never let it fail the session (one line, exit 0). Document the posture in the repo's SECURITY.md. | `../hooks/`, `../server/` |
+| New artifact family (entity type) | An append-only DDL migration **and the two in-code registry entries**. The migration adds the table (TEXT PK in the governed ID scheme, `custom_attributes` + `last_referenced` columns) plus the `entity_index` trigger pair. The entries are `ENTITY_TABLES` (tool routing) + `BASELINE_ENTITY_TYPES` (the registry row seeded at `package_create`: type id, label, ID prefix, generation class). The viewer renders the new family automatically (its Registers section iterates `ENTITY_TABLES`). `check.py`'s lint gate fails until registry ↔ table map ↔ DDL agree. Add a catalog row + a selection trigger for the prose surfaces. | `../db/migrations/NNN_*.sql`, `../server/tamheed_server.py`, `artifact-catalog.md`, `artifact-rules.md` |
+| New attribute on an existing family | Prefer `custom_attributes` (JSON) for experiments. Promote to a real column via a migration once proven. | `../db/migrations/` |
+| New section template | Add a `.template.md`. Reference it from the catalog. | `../templates/` |
+| New scenario skill (operator-invoked ceremony) | Since v5 the scenarios are plugin skills. Add `../skills/<name>/SKILL.md` with `disable-model-invocation: true` and `argument-hint: "[package]"` beside the existing seventeen. The body reads the package from the note or `$ARGUMENTS` (no `{package}` placeholder). Teach it in `prompt-templates.md` and the emitted guide (`../prompts/README.md`, whose body then needs its `stock-history.json` key at the release). Lint 12 checks the frontmatter, the 500-line cap, stack-neutrality and the menu contract (v5.1: exactly one of `disable-model-invocation: true` / `user-invocable: false` per skill). | `../skills/`, `../prompts/README.md` |
+| New discipline skill (model-invoked) | Add `../skills/<name>/SKILL.md` with `user-invocable: false` (out of the `/` menu, description in context). Name it in the note paragraph (`tamheed_server.py`) and in the guide. In a crowded host the description may reach the model name-only. So a tool RESULT that names the skill is the cue (plan 120's `skill` hint). | `../skills/`, `../server/tamheed_server.py` |
+| New hook | `../hooks/hooks.json` (the plugin's hook config, merged with the manifest's `hooks` field). A `SessionStart` hook prints plain text into the model's context. Keep it guarded, lockless, screened and capped like `../server/resume_hook.py`, and never let it fail the session (one line, exit 0). Document the posture in the repo's SECURITY.md. | `../hooks/`, `../server/` |
 | New quality gate | Coverage tier: a SQL view (via a migration) + a `gate_run` row. Content tier: a scan/judgment rule. Referential tier: a constraint in a migration. | `../db/migrations/`, `quality-gates.md`, `../server/tamheed_server.py` |
 | New project-type profile | Add a profile that biases selection + research depth (the `packages.profile` CHECK gains the value via a migration). | `artifact-rules.md`, `research-depth.md`, `../db/migrations/` |
 | New diagram kind | Extend the `diagrams.kind` CHECK via a migration + a generation note. | `../db/migrations/`, `generated-structure.md` |
-| New trace relation | Extend the `trace_edges.relation` CHECK via a migration (recreate the table — it is empty at connect time) AND add the endpoint rule to `RELATION_RULES` (the write-time + G-REL enforcement); teach it in `governance.md`/`traceability.md` and the governance template (lint 11 needle). `004_amends_verify.sql` + `amends` is the worked example. | `../db/migrations/`, `../server/tamheed_server.py` |
-| New journal event kind | Extend the `progress_entries.event_type` CHECK via a migration and add the name to `PE_EVENT_TYPES` (the teaching-lint roster, DDL-tied by test); a kind the SERVER witnesses joins `_SERVER_ONLY_EVENTS` so callers cannot narrate it. `integrity-verified` (004) is the server-witnessed worked example; `handoff` (007, v5.1) the caller-written one — note the teaching lint checks only HYPHENATED `event_type` tokens, so a one-word kind is guarded by the DDL write-through test alone. | `../db/migrations/`, `../server/tamheed_server.py` |
+| New trace relation | Extend the `trace_edges.relation` CHECK via a migration (recreate the table, because it is empty at connect time). Then add the endpoint rule to `RELATION_RULES` (the write-time + G-REL enforcement). Teach it in `governance.md`/`traceability.md` and the governance template (lint 11 needle). `004_amends_verify.sql` + `amends` is the worked example. | `../db/migrations/`, `../server/tamheed_server.py` |
+| New journal event kind | Extend the `progress_entries.event_type` CHECK via a migration and add the name to `PE_EVENT_TYPES` (the teaching-lint roster, DDL-tied by test). A kind the SERVER witnesses joins `_SERVER_ONLY_EVENTS` so callers cannot narrate it. `integrity-verified` (004) is the server-witnessed worked example, and `handoff` (007, v5.1) the caller-written one. The teaching lint checks only HYPHENATED `event_type` tokens, so a one-word kind is guarded by the DDL write-through test alone. | `../db/migrations/`, `../server/tamheed_server.py` |
 | New entry point | Build a thin wrapper that normalizes input and routes output to THIS skill. | a CLI / API / UI wrapper (in Claude Code the skill itself is the entry point) |
 
-New identifier prefixes live **on the registry row** (`id_prefix`) and in the new table's CHECK —
-there is no separate central pattern list. Registering a family means all three together: the DDL
-migration, `ENTITY_TABLES`, and `BASELINE_ENTITY_TYPES`; `check.py`'s sync lints catch a partial add.
+New identifier prefixes live **on the registry row** (`id_prefix`) and in the new table's CHECK.
+There is no separate central pattern list. Registering a family means all three together: the DDL
+migration, `ENTITY_TABLES`, and `BASELINE_ENTITY_TYPES`. `check.py`'s sync lints catch a partial add.
 
 **Existing packages and new families.** A package's own `entity_types` registry is seeded when the
-package is created (or migrated), so a package that predates an extension does not know the new
-family: writing a row of the new type into it fails loud on the registry FK. That is intentional
-fail-closed behavior — teaching an old package a new family is a deliberate operator action, never a
+package is created (or migrated). So a package that predates an extension does not know the new
+family. Writing a row of the new type into it fails loud on the registry FK. That is intentional
+fail-closed behavior. Teaching an old package a new family is a deliberate operator action, never a
 silent side effect of upgrading Tamheed. The action is `package_migrate`'s staged **registry-sync**
-mode: on a v4 store missing baseline entity types, the preview reports `mode: "registry-sync"` +
-`entity_types_added` (+ `columns_added` naming any files that will re-serialize because their
-tables gained columns since the store was last written), and confirm appends the registry rows —
-a pure registry append, no backup taken; an
-up-to-date v4 store still refuses.
+mode. On a v4 store missing baseline entity types, the preview reports `mode: "registry-sync"` +
+`entity_types_added` (+ `columns_added`). `columns_added` names any files that will re-serialize
+because their tables gained columns since the store was last written. Confirm appends the registry
+rows, a pure registry append with no backup taken. An up-to-date v4 store still refuses.
 
 ## Entry-point contract
 
@@ -69,12 +74,12 @@ Any new entry point (another slash command, a CLI, an API endpoint, a UI) MUST:
 
 1. Accept user input + optional parameters and normalize them to the skill's contract (a mode +
    profile + package dir).
-2. Invoke this skill — never re-implement intake, clarification, artifact selection, generation,
+2. Invoke this skill. Never re-implement intake, clarification, artifact selection, generation,
    gates, or handoff.
 3. Route or link the skill's output back to the user.
 4. Contain no methodology and no business logic. (Mirrors safeguard 12 / G-CMD-THIN.)
 
-The **MCP server is not an entry point** under this contract — it is the mechanical half of the
+The **MCP server is not an entry point** under this contract. It is the mechanical half of the
 capability itself (ADR-0001's doctrinal note): the only write path into a package, the successor of
 the v1 validator. The thin-wrapper rule governs things that *invoke* the methodology, not the store
 that enforces it. The server's tool surface is itself a public contract: additive = MINOR,
@@ -82,11 +87,11 @@ breaking = MAJOR + migration note.
 
 ## Compatibility
 
-Mirrors `governance.md` versioning: **MINOR = additive** (new artifacts/fields, no break) — a new
+Mirrors `governance.md` versioning. **MINOR = additive** (new artifacts/fields, no break): a new
 entity type, template, gate, profile, diagram kind, or entry point. **MAJOR = breaking change to
-schemas, identifiers, or the handoff contract; ship a migration note** — changing an existing
+schemas, identifiers, or the handoff contract, with a migration note.** That is changing an existing
 table's columns or constraints, the identifier scheme, or the MCP tool surface. Keep older packages
-loadable: a package authored under a prior MINOR version of the same MAJOR must load into a newer
-schema (missing new columns default NULL; a missing `.jsonl` file is an empty table; never repurpose
-a column). Across a MAJOR the doctrine is explicit migration: `package_open` refuses an older store;
-`package_migrate` converts it.
+loadable. A package authored under a prior MINOR version of the same MAJOR must load into a newer
+schema. Missing new columns default NULL, a missing `.jsonl` file is an empty table, and a column is
+never repurposed. Across a MAJOR the doctrine is explicit migration: `package_open` refuses an older
+store, and `package_migrate` converts it.
