@@ -29,19 +29,24 @@ class Text:
 
 
 def md(s: str) -> str:
-    """The tiny markup subset content.py may use: `code`, **bold**, [text](#anchor), id tokens."""
-    out, i = [], 0
-    for m in re.finditer(r"`([^`]+)`", s):
-        out.append(_inline(s[i:m.start()]))
-        out.append(f"<code>{esc(m.group(1))}</code>")
-        i = m.end()
-    out.append(_inline(s[i:]))
-    return "".join(out)
+    """The tiny markup subset content.py may use: `code`, **bold**, *italic*, [text](#anchor),
+    id tokens. Code spans are lifted out first so their contents are never marked up, then
+    bold and italic run over the prose (bold may wrap a code span), then the spans return."""
+    spans: list[str] = []
+
+    def lift(m):
+        spans.append(f"<code>{esc(m.group(1))}</code>")
+        return f"\x00{len(spans) - 1}\x00"
+
+    s = re.sub(r"`([^`]+)`", lift, s)
+    s = _inline(s)
+    return re.sub(r"\x00(\d+)\x00", lambda m: spans[int(m.group(1))], s)
 
 
 def _inline(s: str) -> str:
     s = esc(s)
-    s = re.sub(r"\*\*([^*]+)\*\*", r"<strong>\1</strong>", s)
+    s = re.sub(r"\*\*(.+?)\*\*", r"<strong>\1</strong>", s)
+    s = re.sub(r"(?<![\w*])\*([^*\n]+?)\*(?![\w*])", r"<em>\1</em>", s)
     s = re.sub(r"\[([^\]]+)\]\((#[\w.-]+)\)", r'<a href="\2">\1</a>', s)
     s = _ID_TOKEN.sub(r'<bdi class="id">\1</bdi>', s)
     return s
@@ -389,18 +394,21 @@ def _col_rows(r: R, t: dict) -> list[list[str]]:
     for c in t["columns"]:
         flags = []
         if c["pk"]:
-            flags.append(r.badge("PK", "pk"))
+            flags.append(r.badge("PK", "pk"))     # a key the caller mints: neither optional nor a NOT NULL badge
         if c["server"]:
             flags.append(r.badge("server", "srv"))
         elif c["required"]:
             flags.append(r.badge("required", "req"))
-        else:
+        elif not c["pk"]:
             flags.append(r.badge("optional", "opt"))
         facts = []
         if c["fk"]:
             facts.append(f'→ <code>{esc(c["fk"][0])}.{esc(c["fk"][1])}</code>')
         if c["check_in"]:
-            facts.append(" ".join(f'<span class="status-pill">{esc(v)}</span>' for v in c["check_in"]))
+            pills = " ".join(f'<span class="status-pill">{esc(v)}</span>' for v in c["check_in"])
+            if c.get("check_glob"):
+                pills += " " + " ".join(f'{r.UI("or")} <span class="status-pill">{esc(g)}</span>' for g in c["check_glob"])
+            facts.append(pills)
         if c["nonempty"]:
             facts.append(r.badge("non-empty", "req"))
         if c["default"] is not None:
@@ -526,7 +534,7 @@ def _statuses(r: R) -> None:
     body += r.figure("d6", "dia.status.caption")
     body += r.H(3, "section.statuses.standard") + r.P("lifecycle.STD8")
     rows = [[f'<span class="status-pill">{esc(s)}</span>', r.T(f"status.{s}")] for s in lc["STD9"]["values"]]
-    body += r.table([r.UI("col.status"), r.UI("col.meaning")], rows, "compact")
+    body += r.table([r.UI("col.status"), r.UI("col.meaning_only")], rows, "compact")
     body += (f'<p>{r.UI("std8.on")} {", ".join(f"<code>{esc(x)}</code>" for x in lc["STD8"]["tables"])}.</p>'
              f'<p>{r.T("lifecycle.STD9")} {", ".join(f"<code>{esc(x)}</code>" for x in lc["STD9"]["tables"])}.</p>')
     body += r.H(3, "section.statuses.domain") + r.P("section.statuses.domain.1")
@@ -537,7 +545,7 @@ def _statuses(r: R) -> None:
     body += r.H(3, "section.statuses.axes") + r.PS("section.statuses.axes", 2)
     vs = f["verdicts"]
     rows = [[f'<span class="status-pill">{esc(v)}</span>', r.T(f"verdict.{v}")] for v in vs["audit_verdicts"]]
-    body += r.H(4, "section.statuses.verdicts") + r.table([r.UI("col.verdict"), r.UI("col.meaning")], rows, "compact")
+    body += r.H(4, "section.statuses.verdicts") + r.table([r.UI("col.verdict"), r.UI("col.meaning_only")], rows, "compact")
     r.section("statuses", body)
 
 
@@ -552,14 +560,14 @@ def _tools(r: R) -> None:
                 req = r.badge("required", "req") if p["required"] else f'{r.UI("default")} <code>{esc(p["default"])}</code>'
                 rows.append([r.code(p["name"]), f'<span class="mono muted">{esc(p["annotation"])}</span>', req,
                              r.T(f"param.{t['name']}.{p['name']}")])
-            params = r.table([r.UI("col.param"), r.UI("col.type"), r.UI("col.required"), r.UI("col.meaning")], rows, "compact") if rows else f'<p class="muted">{r.UI("noparams")}</p>'
+            params = r.table([r.UI("col.param"), r.UI("col.type"), r.UI("col.required"), r.UI("col.meaning_only")], rows, "compact") if rows else f'<p class="muted">{r.UI("noparams")}</p>'
             body += (f'<div class="card" id="tool-{t["name"]}"><h4><code>{esc(t["name"])}</code></h4>'
                      f'<p class="muted" lang="en" dir="ltr">“{esc(t["desc"])}”</p>'
                      f'<p class="muted" lang="ar"><span dir="ltr" style="unicode-bidi:isolate">“{esc(t["desc"])}”</span></p>'
                      f'{r.P("tool." + t["name"])}{params}</div>')
     body += r.H(3, "section.tools.upsert") + r.PS("section.tools.upsert", 2)
     rows = [[r.code(k), r.T(f"meta.{k}")] for k in f["header"]["meta_keys"]]
-    body += r.table([r.UI("col.key"), r.UI("col.meaning")], rows, "compact")
+    body += r.table([r.UI("col.key"), r.UI("col.meaning_only")], rows, "compact")
     body += r.H(3, "section.tools.header") + r.P("section.tools.header.1")
     body += (f'<p>{r.UI("header.writable")} {", ".join(f"<code>{esc(x)}</code>" for x in f["header"]["writable"])}. '
              f'{r.UI("header.frozen")} {", ".join(f"<code>{esc(x)}</code>" for x in f["header"]["frozen"])}.</p>')
@@ -593,7 +601,7 @@ def _readiness(r: R) -> None:
         body += r.table([r.UI("col.rule"), r.UI("col.severity"), r.UI("col.what")], rows, "compact")
     body += r.H(3, "section.readiness.statuses") + r.P("section.readiness.statuses.1")
     rows = [[f'<span class="status-pill">{esc(s)}</span>', r.T(f"rstatus.{s}")] for s in f["verdicts"]["readiness_statuses"]]
-    body += r.table([r.UI("col.status"), r.UI("col.meaning")], rows, "compact")
+    body += r.table([r.UI("col.status"), r.UI("col.meaning_only")], rows, "compact")
     body += r.pre("ready = not indeterminate and not any(rule.severity == 'blocking' and rule.status == 'fail')", copy=False)
     body += r.H(3, "section.readiness.waivers") + r.PS("section.readiness.waivers", 2)
     body += r.H(3, "section.readiness.human") + r.PS("section.readiness.human", 2)

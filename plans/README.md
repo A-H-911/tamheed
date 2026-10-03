@@ -176,6 +176,12 @@ devil's-advocate review; execution order is the row order below). Status values:
 | 089 | [Lab beat 18](089-lab-beat-18-findings-27.md) | 085-088 + full test (15/15 vs 0/15 on `v4.10.0`; 9 suites; selftest) | DONE `762b98b` — 9 new assertions, each failing on the pre-beat fixture; D-1 registry-sync unscripted, F-3 fixed |
 | 090 | [Release v4.11.0](090-release-v4110.md) — plan-058 recipe + the fixture follows the stamp | 089 | DONE — 2026-09-22, tag `v4.11.0` (SHA in the tag) |
 
+### The user guide, review round 1 -- plan 175 (2026-10-02; pair review, maintainer + reviewer)
+
+| # | Plan | Depends on | Status |
+|---|---|---|---|
+| 175 | [The user guide, review round 1](175-guide-review-round-1.md) -- the rendered `index.html` walked section by section in interview style; every accuracy concern settled against the engine, every visualization defect named by geometry; ledger first, one fix batch at the end | the guide commits c3874e4 / 0b13ba7 / e818d5a | DONE -- 2026-10-03, one commit (the one that carries this row): 22 rounds walked, 60-odd ledger rows, the diagram engine gained a geometry lint, the guide and the bundle's self-description carry both halves |
+
 ### Field cycle FB-026 / FB-027 -- plans 165-169 -> v5.8.0 (2026-09-30; maintainer-executed)
 
 Master record: [165-169-batch-fb026-fb027.md](165-169-batch-fb026-fb027.md) (the approved plan, revision

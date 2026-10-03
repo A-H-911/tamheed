@@ -34,6 +34,8 @@ def build() -> tuple[str, list[str]]:
     """Returns (html, required content ids). Deterministic: no clock, no unsorted enumeration."""
     f = extract.facts()
     html = render.render_page(f, content.TEXT, CSS, JS)
+    geometry = diagram_problems(f)
+    assert not geometry, "diagram geometry: " + "; ".join(geometry[:12])
     required = list(render.USED_IDS)
     derived = extract.derived_ids(f)
     missing_render = [d for d in derived if d.startswith(MUST_RENDER) and d not in required]
@@ -45,6 +47,17 @@ def build() -> tuple[str, list[str]]:
         en = content.TEXT.get(cid, {}).get("en")
         assert en in (None, s["title"]), f"{cid}: content says {en!r}, workflow.md says {s['title']!r}"
     return html, required
+
+
+def diagram_problems(f: dict) -> list[str]:
+    """Every diagram, both copies, through diagrams.lint (the operator's drawing bar)."""
+    out: list[str] = []
+    for did in sorted(diagrams.MODELS):
+        model = diagrams.MODELS[did](f)
+        for lg in ("en", "ar"):
+            resolve = lambda cid, lg=lg: content.TEXT.get(cid, {}).get(lg) or cid
+            out += [f"{lg}: {p}" for p in diagrams.lint(model, rtl=(lg == "ar"), resolve=resolve)]
+    return out
 
 
 def missing(required: list[str]) -> list[tuple[str, str]]:

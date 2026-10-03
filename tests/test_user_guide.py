@@ -88,6 +88,33 @@ class UserGuideTest(unittest.TestCase):
         self.assertEqual(len(f["skills"]), 25)
         self.assertEqual(len(f["stages"]["stages"]), 22)
         self.assertEqual(f["stages"]["human"], [7, 8, 14, 18, 22])
+        # plan 175: a multi-line table CHECK is carried whole; an `OR col GLOB` tail is a value form
+        req = next(t for t in f["schema"]["tables"] if t["table"] == "requirements")
+        self.assertTrue(any("NFR-" in c for c in req["table_checks"]), req["table_checks"])
+        pkg = next(t for t in f["schema"]["tables"] if t["table"] == "packages")
+        mode = next(c for c in pkg["columns"] if c["name"] == "mode")
+        self.assertEqual(mode["check_glob"], ["stage:*"])
+
+    def test_diagrams_draw_cleanly(self):
+        """Plan 175 (operator ruling): every edge meets its box on the border, crosses no box and
+        no other edge, and no label lies on a line or a box — on both language copies."""
+        import build
+        self.assertEqual(build.diagram_problems(self.facts), [])
+        # the relation matrix covers every typed relation and nothing the engine lacks
+        import diagrams
+        cells = diagrams.relation_matrix(self.facts)
+        shown = {rel for rels in cells.values() for rel in rels}
+        self.assertEqual(shown, set(srv.RELATION_RULES))
+
+    def test_markup_renders(self):
+        """Plan 175: the markdown subset renders bold (also around a code span) and italics."""
+        import render
+        self.assertEqual(render.md("**`force: true`** carries"), "<strong><code>force: true</code></strong> carries")
+        self.assertEqual(render.md("counted *narrated* by `gate_run`"), "counted <em>narrated</em> by <code>gate_run</code>")
+        self.assertEqual(render.md("`data/*.jsonl` and `csv/*.csv`"), "<code>data/*.jsonl</code> and <code>csv/*.csv</code>")
+        body = self.html.split("<main>", 1)[1]
+        self.assertNotRegex(body, r"\*\*", "literal ** reached the page")
+        self.assertNotRegex(re.sub(r"<code>.*?</code>", "", body), r"(?<![\w*])\*[a-z][a-z -]*\*(?![\w*])", "literal *italic* reached the page")
 
     def test_tokens_resolve(self):
         gates = set(self.facts["gates"]["mechanical"]) | set(self.facts["gates"]["judgment"]) | set(self.facts["gates"]["warn"])
@@ -117,6 +144,8 @@ class UserGuideTest(unittest.TestCase):
         # the language toggle must never be hidden by the per-language visibility rule
         for btn in re.findall(r"<button[^>]*data-lang-btn[^>]*>", self.html):
             self.assertNotIn(" lang=", btn, btn)
+        # a primary key is caller-minted: it never wears the `optional` badge (plan 175, L34)
+        self.assertNotRegex(self.html, r'badge pk">PK</span>\s*<span class="badge opt"')
         src = (GUIDE / "extract.py").read_text(encoding="utf-8") + (GUIDE / "render.py").read_text(encoding="utf-8")
         for m in re.finditer(r"\.(glob|iterdir|listdir)\(", src):
             line = src[src.rfind("\n", 0, m.start()) + 1: m.start()]

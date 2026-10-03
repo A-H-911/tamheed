@@ -15,6 +15,10 @@ All notable changes to Tamheed are documented here. The format is based on
   `skills/generate-report/SKILL.md` names all eleven sections of `review.html` (it listed five).
 - `check.py` lint 8 counts `index.html` among the version-stamped surfaces (six); a release rebuilds
   the guide with `python docs/guide/build.py`.
+- The front-door skill's description and the README tagline name both halves of the capability:
+  the planning package before the build, and the record it keeps while execution runs
+  (plan 175, the user-guide review). `docs/assets/tamheed-overview.png` is redrawn from the
+  guide's overview diagram to match.
 
 ## [5.8.1] - 2026-09-30
 

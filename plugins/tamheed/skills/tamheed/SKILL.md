@@ -5,7 +5,9 @@ description: >-
   handoff package for Claude Code to implement — requirements, constraints, invariants, assumptions,
   open decisions, risks, architecture + ADRs, technology comparisons, R&D/experiment plans, a phased
   roadmap with slices, acceptance criteria, full traceability, and handoff prompts — stored as a
-  relational package (SQLite runtime, canonical JSONL) written only through the Tamheed MCP tools. Use
+  relational package (SQLite runtime, canonical JSONL) written only through the Tamheed MCP tools —
+  then keep that package the record while execution runs: progress, verdicts, bindings, defects, scope
+  changes, lessons and readiness through the same tools. Use
   whenever the user wants to plan, scope, spec, or "inception" a project; run an R&D, architecture, or
   design mission; produce a charter or execution plan; de-risk a build before coding; update a package
   as execution progresses; or prepare kickoff prompts for Claude Code. Trigger on "plan this project",

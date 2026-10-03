@@ -8,7 +8,7 @@
 
 <h1 align="center">Tamheed</h1>
 
-<p align="center"><strong>Turn a project description into a validated, traceable, execution-ready planning &amp; handoff package for Claude Code to implement.</strong></p>
+<p align="center"><strong>Turn a project description into a validated, traceable, execution-ready planning &amp; handoff package for Claude Code to implement, and keep it the record of the build while execution runs.</strong></p>
 
 <p align="center"><a href="index.html"><strong>User guide</strong> (English &middot; العربية)</a> — every workflow, skill, family, column, tool, gate and readiness rule, generated from the engine.</p>
 

@@ -69,11 +69,26 @@ def _check_sets(sql: str) -> dict[str, list[str]]:
 
 
 def _table_checks(sql: str) -> list[str]:
-    """Table-level CHECK clauses (lines that start with CHECK), whitespace-collapsed."""
+    """Table-level CHECK clauses (lines that start with CHECK), whitespace-collapsed. The
+    clause is read to its balanced closing parenthesis, so a CHECK that spans lines (the
+    requirements kind/prefix pairing) is carried whole."""
     found = []
-    for m in re.finditer(r"^\s*CHECK\s*\((.*?)\)\s*,?\s*$", sql, re.M | re.S):
-        found.append(re.sub(r"\s+", " ", m.group(1)).strip())
+    for m in re.finditer(r"^\s*CHECK\s*\(", sql, re.M):
+        depth, i = 1, m.end()
+        while i < len(sql) and depth:
+            depth += {"(": 1, ")": -1}.get(sql[i], 0)
+            i += 1
+        found.append(re.sub(r"\s+", " ", sql[m.end():i - 1]).strip())
     return found
+
+
+def _check_globs(sql: str) -> dict[str, list[str]]:
+    """Column CHECKs of the form `col IN (...) OR col GLOB 'x'`: the GLOB alternatives a value
+    may take besides the listed ones (packages.mode admits `stage:*`)."""
+    out: dict[str, list[str]] = {}
+    for col, body in re.findall(r"CHECK\s*\(\s*(\w+)\s+IN\s*\([^)]*\)((?:\s+OR\s+\w+\s+GLOB\s+'[^']*')+)", sql, re.S):
+        out[col] = re.findall(r"GLOB\s+'([^']*)'", body)
+    return out
 
 
 def schema() -> dict:
@@ -91,6 +106,7 @@ def schema() -> dict:
         sql = _strip_sql_comments(conn.execute(
             "SELECT sql FROM sqlite_master WHERE type='table' AND name=?", (tbl,)).fetchone()[0])
         sets = _check_sets(sql)
+        globs_by_col = _check_globs(sql)
         nonempty = set(re.findall(r"CHECK\s*\(\s*(\w+)\s*<>\s*''\s*\)", sql))
         globs = re.findall(r"id\s+GLOB\s+'([^']+)'", sql)
         fks = sorted(conn.execute(f"PRAGMA foreign_key_list({tbl})").fetchall(),
@@ -108,7 +124,7 @@ def schema() -> dict:
                 "name": name, "type": ctype, "notnull": bool(notnull), "default": dflt,
                 "pk": bool(pk), "required": bool(notnull) and dflt is None and not pk and not server,
                 "fk": fk_by_col.get(name), "check_in": sets.get(name), "nonempty": name in nonempty,
-                "server": server, "block": block,
+                "check_glob": globs_by_col.get(name), "server": server, "block": block,
             })
         if kind == "family":
             hue += 1
