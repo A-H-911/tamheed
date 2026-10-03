@@ -63,12 +63,12 @@ _STE_SURFACES = (
     ("docs/guide/extract.py", "strict", "en", ()),
     ("docs/guide/render.py", "strict", "en", ()),
     ("docs/guide/diagrams.py", "strict", "en", ()),
+    # wave 2 (plan 185): the 27 skills
+    ("plugins/tamheed/skills/*/SKILL.md", "strict", "en", ()),
 )
 _STE_PENDING = (
     # wave 4b (plan 188): the guide's prose, read by import
     "docs/guide/content.py",
-    # wave 2 (plan 185)
-    "plugins/tamheed/skills/*/SKILL.md",
     # wave 3 (plan 186)
     "plugins/tamheed/references/*.md", "plugins/tamheed/templates/*.md",
     "plugins/tamheed/prompts/README.md", "plugins/tamheed/server/README.md",

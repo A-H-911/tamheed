@@ -37,6 +37,10 @@ All notable changes to Tamheed are documented here. The format is based on
   project is `X`", and the SessionStart hook reads that sentence and the v5 one until a client
   re-emits. Any `handoff_emit` rebuilds the note, and `refresh_stock=true` also refreshes the stock
   README (plan 184).
+- The 27 skills are plain English (wave 2 of 4): 818 hard findings to 0 under the strict rules,
+  every quoted trigger phrase and every pinned phrase word for word, the "Use before ..." conditions
+  as sentences, the vocabulary's verbs throughout. The names table of `vocabulary.md` gained the
+  verdict values `Validated` and `Invalidated` (plan 185).
 - `plugins/tamheed/references/vocabulary.md`: one verb per action, one meaning per term, the names
   that contain a rejected word (plan 179, rulings R30-R33).
 

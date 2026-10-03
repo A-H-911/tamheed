@@ -70,6 +70,8 @@ A rejected word stays legal inside a code span and inside a name listed in the t
 | name | where it is a name |
 |---|---|
 | Quality validation | the title of stage 19 in `workflow.md` and the guide |
+| Validated | a verdict value of experiments, hypotheses and POCs (with Invalidated, Inconclusive, Pending) |
+| Invalidated | a verdict value of experiments, hypotheses and POCs |
 | validated, traceable, execution-ready | the product line in the README and the plugin manifest |
 | scope_modifies | a relation name |
 | fast-forward | the git term |

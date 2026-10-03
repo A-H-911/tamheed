@@ -2,19 +2,19 @@
 name: session-handoff
 description: >-
   Use BEFORE a context compaction, at the end of a session, and when handing the package to another
-  agent or session: write the `handoff` journal entry that says where this session stopped — the
-  resume point, the in-flight ids, what awaits the operator, the verified facts with the query that
-  measured each, and what NOT to carry. Also whenever the resume block or the `handoff-current`
-  advisory says the latest handoff is behind the journal.
+  agent or session. Write the `handoff` journal entry that says where this session stopped. The
+  entry holds the resume point, the in-flight ids, and what awaits the operator. It holds the
+  verified facts with the query that measured each, and what NOT to carry. Also use whenever the
+  resume block or the `handoff-current` advisory says the latest handoff is behind the journal.
 ---
 
 # Session handoff
 
-**The package is the state; the handoff is the one journal entry that says where a session stopped
-in it. A resuming agent reads it first — through the `resume` block of `package_open` /
+**The package is the state. The handoff is the one journal entry that says where a session stopped
+in it. A resuming agent reads it first. It reads it through the `resume` block of `package_open` /
 `server_info`, and from the plugin's SessionStart hook after a clear or a compaction.**
 
-What a compaction summary loses first is exactly what the next turn needs: which row was mid-write,
+What a compaction summary loses first is exactly what the next turn needs. Which row was mid-write,
 which question is still open, which figure was measured and which was assumed. A `handoff` entry
 (`progress_update`, `event_type: "handoff"`) keeps that in the record, typed, where the
 `handoff-current` advisory can see when it falls behind.
@@ -24,95 +24,96 @@ which question is still open, which figure was measured and which was assumed. A
 ## When
 
 - **Before a compaction** you can see coming (a long session, a large tool result ahead). The
-  SessionStart hook re-injects the latest handoff after `/compact`; it cannot re-inject what was
+  SessionStart hook re-injects the latest handoff after `/compact`. It cannot re-inject what was
   never written.
 - **At the end of a session**, after the last write of the close-out.
 - **On a handover** to another agent, model or operator session.
-- **When the resume block reports `handoff_behind > 0`** or `handoff-current` fails — the record
+- **When the resume block reports `handoff_behind > 0`** or `handoff-current` fails. The record
   moved past the last handoff.
 
-## The shape — five short sections, ids not rows
+## The shape: five short sections, ids not rows
 
-Write ONE entry, under 25 lines and 4,000 characters — the SessionStart hook prints exactly that
-much of it, and the `resume` block carries the same; past either cap the next session sees a
-truncation marker and has to query for the rest — in this order:
+Write ONE entry, under 25 lines and 4,000 characters. The SessionStart hook prints exactly that
+much of it, and the `resume` block carries the same. Past either cap the next session sees a
+truncation marker and has to query for the rest. Write the sections in this order:
 
 1. **Resume at.** The next action, concretely: the slice or work item, the step of the ceremony, the
    exact tool call if one is half-done. One or two lines.
-2. **In flight.** The ids touched this session whose state is not yet settled — rows in `Review`,
-   an open scope change, a verdict recorded but not bound, a branch not yet merged. Ids only; the
+2. **In flight.** The ids touched this session whose state is not yet settled. That is rows in
+   `Review`, an open scope change, a verdict recorded but not bound, a branch not yet merged. Ids
+   only. The
    rows are the record.
 3. **Awaiting the operator.** Every question put and not yet answered, verbatim with its options
-   (`tamheed:operator-interview`): the next session must re-put it, not reconstruct it. State
+   (`tamheed:operator-interview`). The next session must re-put it, not reconstruct it. State
    explicitly which rulings were GIVEN this session, by decision id, so nobody re-asks them.
 4. **Verified facts.** Each fact with the query or command that measured it (`gate_run` verdict,
    the `readiness_check` blocking list, `git status --porcelain -uall` empty, a CI run id). A fact
-   without its instrument is a memory of a fact — leave it out or mark it unverified.
+   without its instrument is a memory of a fact. Leave it out or mark it unverified.
 5. **Do not carry.** What is history and must not be re-done: closed rows, questions already ruled,
    the branch already merged. A handoff that dispatches someone to redo finished work is worse than
    no handoff.
 
 ## The rules
 
-- **Write it LAST.** After the session's final package write and `gate_run` — never
+- **Write it LAST.** After the session's final package write and `gate_run`, never
   from a snapshot taken earlier in the session. A handoff written before the last verdict landed
-  went to the remote claiming criteria still open that were already Met, and sent the next session
-  to close them again. The review page is exported AFTER it, not before: the handoff is itself a
+  went to the remote claiming criteria still open that were already Met. It sent the next session
+  to close them again. The review page is exported AFTER it, not before. The handoff is itself a
   write.
 - **Quote live numbers from a query made after the last write**, never from memory of earlier in
   the session (`tamheed:measurement-evidence`).
 - **The handoff says what is true when it is written.** Its own commit, the bind and the export
-  come AFTER it, so it names them as following and never as done — no sha of a commit not yet
+  come AFTER it, so it names them as following and never as done. No sha of a commit not yet
   made, no "pushed", no "the page is current". The next session reads the commit from git and
   the page from `package_verify`. *Field evidence:* a draft said the branch was pushed through
-  commits that did not exist yet, and called one step done and remaining in the same sentence.
+  commits that did not exist yet. It called one step done and remaining in the same sentence.
 - **A line carried from the previous handoff is re-measured, or it says what it rests on.**
-  Copying an awaiting item forward claims that it still stands. Re-read it at its source — a
-  row through the tools, a thing outside the store (a change request, a pipeline run, a
-  meeting) where it lives — and against the rulings given since it was written: an answer
-  often lands in a decision row, not on the item. A line you cannot re-measure this session
+  Copying an awaiting item onward claims that it still stands. Re-read it at its source. The
+  source is a row through the tools, or a thing outside the store (a change request, a pipeline
+  run, a meeting) where it lives. Read it against the rulings given since it was written, because an
+  answer often lands in a decision row, not on the item. A line you cannot re-measure this session
   carries `carried, not re-measured` with its source and the date it was last measured
-  (`… - carried, not re-measured; rests on the decision row, last read <date>`), so the next
+  (`… - carried, not re-measured; rests on the decision row, last read <date>`). So the next
   session knows which lines nobody checked and where to look. **The mark lasts one
-  handoff.** A line that arrives already marked is re-measured before it is written again,
-  or it leaves the handoff for the row it rests on (an open question with an owner and a
-  date, which the liveness rules watch). `readiness_check`'s `handoff-repeated` advisory
+  handoff.** A line that arrives already marked is re-measured before it is written again.
+  Or it leaves the handoff for the row it rests on, an open question with an owner and a
+  date, which the liveness rules watch. `readiness_check`'s `handoff-repeated` advisory
   names, by line number, the lines of the latest handoff that stood word for word through
-  three handoffs; do not reword a line to clear it — re-measure it and write what you read.
-  *Field evidence:* two handoffs in a row named a change request that had been closed and
-  replaced by another before the first of them was written; a marked line re-put an
-  operator interview through eight handoffs after the operator had answered it, and another
-  tracked a ruling that could never be executed — reading the code was the re-measurement,
+  three handoffs. Do not reword a line to clear it. Re-measure it and write what you read.
+  *Field evidence:* two handoffs in a row named a change request. It had been closed and
+  replaced by another before the first of them was written. A marked line re-put an
+  operator interview through eight handoffs after the operator had answered it. Another
+  tracked a ruling that could never be executed. Reading the code was the re-measurement,
   and no handoff made it.
-- **Ids, never pasted rows.** The rows are live; a copy rots. Name them and say what to read.
+- **Ids, never pasted rows.** The rows are live. A copy rots. Name them and say what to read.
 - **A stale handoff is corrected, never edited.** The journal is append-only: `progress_update`
-  with `event_type: "correction"` and `corrects: "<the handoff's PE-id>"`; the resume block returns
+  with `event_type: "correction"` and `corrects: "<the handoff's PE-id>"`. The resume block returns
   the handoff WITH its correction chain, so the correction is read beside the sentence it retracts.
-  When a whole new handoff replaces an old one, the newer entry is simply the latest — no marker on
-  the old one is needed; its id no longer comes back.
+  When a whole new handoff replaces an old one, the newer entry is simply the latest. No marker on
+  the old one is needed. Its id no longer comes back.
 - **Nothing instruction-shaped.** The entry is printed into the next session's context by the hook
-  and screened by the injection gate; an entry the screen withholds reaches nobody. Write state, not
+  and screened by the injection gate. An entry the screen withholds reaches nobody. Write state, not
   commands to a reader.
 - **Status moves first, the handoff, then the commit, then the bind, then the export.** A feedback
-  row's or a skill row's status move is journalled by the engine as a `transition` and counts
-  against `handoff-current` exactly like your own work-done entries — write those BEFORE the
+  row's or a skill row's status move is journalled by the engine as a `transition`. It counts
+  against `handoff-current` exactly like your own work-done entries, so write those BEFORE the
   handoff. After it: commit the package `data/` with the rest of the close-out
-  (`tamheed:package-writes`; an uncommitted handoff is destroyed by the next `git checkout`), then
-  `work_bind` that commit — a bind is journalled as a `note`, so the handoff stays current and the
-  commit stays bound. A field close-out that skipped the bind left its own handoff commit
-  unrecorded. Then `export_html`, and commit the bind with the page: the handoff and the bind are
+  (`tamheed:package-writes`). An uncommitted handoff is destroyed by the next `git checkout`.
+  Then `work_bind` that commit. A bind is journalled as a `note`, so the handoff stays current and
+  the commit stays bound. A field close-out that skipped the bind left its own handoff commit
+  unrecorded. Then `export_html`, and commit the bind with the page. The handoff and the bind are
   both writes, and the page a project commits must carry them (`package_verify` reads
   `review_current: true` before that commit).
 
 ## What this skill does NOT cover
 
-- **Re-orienting when you arrive** — `/tamheed:orient-resume` (which reads the latest handoff first).
-- **What else to record before you stop** — the obligations table in this project's `CLAUDE.md`
+- **Re-orienting when you arrive**: `/tamheed:orient-resume` (which reads the latest handoff first).
+- **What else to record before you stop**: the obligations table in this project's `CLAUDE.md`
   note (work-done entries, verdicts, bindings).
-- **The closing ceremonies** — `/tamheed:progress-sync`, `/tamheed:slice-review`,
+- **The closing ceremonies**: `/tamheed:progress-sync`, `/tamheed:slice-review`,
   `/tamheed:release-close-out`.
 
 ---
 
 *Adapted from a prior project's operator-confirmed lessons (2026). The instances are illustrative,
-anonymised and stack-neutral; this file is the procedure.*
+anonymised and stack-neutral. This file is the procedure.*

@@ -199,8 +199,13 @@ class CheckLintsTest(unittest.TestCase):
                 code, out = self._lint()
                 self.assertEqual(code, 1, blurred)
                 self.assertIn("binding vocabulary", out)
+            # The probe keeps its semicolon on purpose (the lint-13 window must stop at
+            # one), and the skill is a rostered plain-English surface (lint 14), so the
+            # probe carries the allow marker a real author would.
             p.write_text(
-                original + "\nA lesson does not bind until the operator approves it.\n"
+                original + "\n<!-- ste:allow semicolon: lint-13 probe, the window must not"
+                " cross a semicolon -->\n"
+                "A lesson does not bind until the operator approves it.\n"
                 "A Proposed lesson binds nothing and may be rejected freely.\n"
                 "A lesson does not bind until the operator approves it; the note renders it at"
                 " the next emit.\n"

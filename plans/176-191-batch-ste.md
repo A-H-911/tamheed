@@ -60,6 +60,9 @@ perfect 88 (advisory). Python runtime literals: `tamheed_server.py` 104 semicolo
 | R31 | retire = rows, remove = files, markers and lines; `delete` and `erase` rejected (plan 179). |
 | R32 | Rejected: repair (fix / correct), get and fetch (read), produce (emit / generate / write), decline (refuse / reject) (plan 179). |
 | R33 | display, journal, log and reference stay as noun terms, never rejected; verb uses are rewritten by hand (plan 179). |
+| R34 | A names-table row for an engine value name (`Validated`, `Invalidated`) does not re-open the vocabulary freeze; each addition is listed in the beat's ledger (wave 2 review, plan 185). |
+| R35 | A frontmatter condition split into sentences with its words and their order kept, joiners added, keeps R11; waves 3-4 do not re-litigate the split (wave 2 review, plan 185). |
+| R36 | On an unquoted condition word, R8 (the vocabulary) wins over R11: "produce a charter" is "write a charter". Only QUOTED trigger phrases are verbatim (wave 2 review, plan 185). |
 
 Approved with the plan (2026-10-03): the wave protocol (stage, advisor read, operator review, one
 commit after the ruling, fix-ups disclosed); beat 33 runs the rewrite skill on a scratch copy and
@@ -77,11 +80,13 @@ lessons unless the operator opts in per row; ledger-first plan files.
 - **181 — lint 14.** `dd1cc85`. The roster (`_STE_SURFACES`, `_STE_PENDING`, the exempt set, `_ste_scope` by rglob), the block in the numbered-comment shape, six lint tests, `lint.14` in the guide, fourteen lints on the page.
 - **182 — the readiness rule.** `8ec513b`. `prose-plain-english`, advisory, thirtieth package rule: register statement columns, the project's prompt files, the latest handoff, `GT-` terms as names, counts per rule, the skill cue in the note; `register-liveness` item 22; the guide's `rule.*` id.
 - **183 — the two skills.** `a537a1e`. `plain-english` (discipline) and `ste-rewrite` (scenario), the note's skills line, the stock README under `5.9.0`, every count surface (1 / 17 / 9, 27 skills), two tests.
-- **184 — wave 1.** (staged for the operator's review) 207 hard findings to 0 across 16 rostered files: the 19 tool descriptions, every refusal, every readiness note, every warning, the note as v6 (the hook reads v5 and v6), lint 9 blacklists `tamheed:note v5`; 16 pins re-aimed; the linter learned to read a multi-line literal as Markdown.
+- **184 — wave 1.** `883412b`. 207 hard findings to 0 across 16 rostered files: the 19 tool descriptions, every refusal, every readiness note, every warning, the note as v6 (the hook reads v5 and v6), lint 9 blacklists `tamheed:note v5`; 16 pins re-aimed; the linter learned to read a multi-line literal as Markdown.
+- **185 — wave 2.** (the commit this record lands in) 818 hard findings to 0 across the 27 skills, the glob rostered (43 files, 0 hard, pending 50), every quoted trigger identical, 22 of 23 pins word for word (the 23rd an absence assertion on the fixture), the word-multiset check of every description (`desc_words.py`) showing joiners only plus `produce` → `write`, two names-table rows (R34), one allow marker inside the lint-13 probe test, rulings R34–R36.
 
 ## 4. Errors owned
 
-(none yet)
+- **184.** Bash heredocs unescaped backslashes twice (a test insert, a lint regex); every script since is written to a file first. The tool-owned test failure was a pin (capitalisation), not instability, proved by two identical emits.
+- **185.** A code span broken across a line in loop-iteration (the token invariant caught it). "stored as" dropped from the front door's first sentence and an example list rewritten as a definition in operator-interview (the description multiset check caught both before the review). A `sed` edit of a regex dropped a backslash (the third shell mangling of the batch). Plan 182 had appended register-liveness item 22 after the closing step; renumbered here. The lint-13 probe's deliberate semicolon failed lint 14 on the first gate run after the roster move; fixed in the test with an allow marker, not in either lint.
 
 ## 5. Not built, by ruling or on purpose
 
