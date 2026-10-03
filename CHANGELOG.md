@@ -14,6 +14,9 @@ All notable changes to Tamheed are documented here. The format is based on
 - `handoff_emit`'s registered description names what the tool writes (the CLAUDE.md note, the
   stock prompts README, `.mcp.json` for a standalone install). It said "Emit handoff prompts", a
   write the tool stopped making in v3 (plan 176).
+- The converted-prompt hints (`handoff_emit` on a v2-converted prompt file) name the live slash
+  skills in the `/tamheed:<name>` form. They named `package-onboarding.md` and `slice-kickoff.md`,
+  files the library stopped shipping in 5.0.0 (plan 177).
 - `plugins/tamheed/server/README.md` links the generated bilingual user guide (`index.html`), and
   `skills/generate-report/SKILL.md` names all eleven sections of `review.html` (it listed five).
 - `check.py` lint 8 counts `index.html` among the version-stamped surfaces (six); a release rebuilds

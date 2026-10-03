@@ -3302,6 +3302,22 @@ class V4EngineTest(unittest.TestCase):
         self.assertIn("`.mcp.json` for a standalone install", desc)
         self.assertIn("Injection-screened", desc)
 
+    def test_converted_hints_name_live_skills(self):
+        """Plan 177 (the STE census, R19b): the converted-prompt hints repeat on every emit
+        until the operator curates the file. They named `package-onboarding.md` and
+        `slice-kickoff.md`, files the library stopped shipping in 5.0.0. Every hint names
+        at least one shipped slash skill in the `/tamheed:<name>` form and no `.md` file."""
+        skills_dir = REPO_ROOT / "plugins" / "tamheed" / "skills"
+        for kind, hint in srv._CONVERTED_HINTS.items():
+            self.assertNotRegex(hint, r"[a-z-]+\.md", kind)
+            names = re.findall(r"/tamheed:([a-z-]+)", hint)
+            self.assertTrue(names, f"{kind}: no /tamheed:<name> in {hint!r}")
+            for name in names:
+                self.assertTrue((skills_dir / name / "SKILL.md").is_file(), f"{kind}: {name}")
+            self.assertNotIn(";", hint, kind)
+        self.assertNotIn(";", srv._CONVERTED_CURATE)
+        self.assertIn("/tamheed:", srv._converted_hint("initial"))
+
     def test_audit_evidence_names_narrated_ids(self):
         """findings_22 §3 named the ids; findings_23 §2 (plan 040) fixed the
         POPULATION: each ACTIVE AC's LATEST verdict (the acs-met population), split

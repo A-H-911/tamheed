@@ -3706,21 +3706,22 @@ def _restated_content_report(target: Path, extra: tuple = ()) -> list[dict]:
 _CONVERTED_RE = re.compile(
     r"^<!-- converted from data/prompts\.jsonl (PRM-\S+) \(kind: ([a-z-]+)")
 _CONVERTED_HINTS = {
-    "initial": "generic half now covered by package-onboarding.md/slice-kickoff.md; "
-               "keep only project-specific content (and check any restated state for "
-               "staleness)",
-    "follow-up": "generic half now covered by orient-resume/replan-deferred/"
-                 "slice-review; keep project-specific cautions",
-    "review": "generic half now covered by integrity-check/slice-review; keep "
-              "project-specific checklists",
+    "initial": "The generic half is now covered by `/tamheed:package-onboarding` and "
+               "`/tamheed:slice-kickoff`. Keep only the project-specific content, and check "
+               "any restated state for staleness",
+    "follow-up": "The generic half is now covered by `/tamheed:orient-resume`, "
+                 "`/tamheed:replan-deferred` and `/tamheed:slice-review`. Keep the "
+                 "project-specific cautions",
+    "review": "The generic half is now covered by `/tamheed:integrity-check` and "
+              "`/tamheed:slice-review`. Keep the project-specific checklists",
 }
 _CONVERTED_CURATE = ("curate = extract the project-specific half into a purpose-named "
                      "prompt (or keep as-is) and remove this header line once "
-                     "reviewed — this hint clears itself")
+                     "reviewed. This hint clears itself")
 
 
 def _converted_hint(kind: str) -> str:
-    return (f"{_CONVERTED_HINTS.get(kind, 'review against the stock library')}; "
+    return (f"{_CONVERTED_HINTS.get(kind, 'review against the stock library')}. "
             f"{_CONVERTED_CURATE}")
 
 
