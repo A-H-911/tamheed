@@ -62,6 +62,42 @@ class McpContractTest(unittest.TestCase):
             srv.package_close()
         self._tmp.cleanup()
 
+    # ------------------------------------------------- plan 182 (plain English)
+
+    def test_prose_plain_english_is_advisory_and_counts(self):
+        """Plan 182 (R13): the record's own prose under the structural plain-English rules.
+        Advisory: `ready` never moves. Population is texts scanned; zero texts reads
+        indeterminate. A `GT-` term is the project's word and never a finding."""
+        srv.package_create("plain", "Plain", "rnd")
+        report = srv.readiness_check("package")
+        rule = next(r for r in report["rules"] if r["rule"] == "prose-plain-english")
+        self.assertEqual(rule["severity"], "advisory")
+        self.assertEqual(rule["status"], "indeterminate")
+        self.assertEqual(rule["population"]["rows"], 0)
+        self.assertIn("tamheed:plain-english", rule["note"])
+        self.assertIn("/tamheed:ste-rewrite", rule["note"])
+        ready_before = report["ready"]
+        row = {"type": "requirement", "kind": "functional", "title": "t", "mvp": 0,
+               "lifecycle_status": "Draft", "source_kind": "brief", "source_span": "x"}
+        up = srv.entity_upsert([dict(row, id="FR-001", statement="The job runs; it waits."),
+                                dict(row, id="FR-002", statement="Validate the input.")])
+        self.assertTrue(up["ok"], up)
+        report = srv.readiness_check("package")
+        rule = next(r for r in report["rules"] if r["rule"] == "prose-plain-english")
+        self.assertEqual(rule["status"], "fail")
+        self.assertIn("FR-001.statement: semicolon x1", rule["entities"])
+        self.assertIn("FR-002.statement: vocabulary x1", rule["entities"])
+        self.assertEqual(rule["counts"], {"semicolon": 1, "vocabulary": 1})
+        self.assertEqual(rule["population"]["rows"], 2)
+        self.assertEqual(report["ready"], ready_before)
+        gt = srv.entity_upsert([{"type": "glossary-term", "id": "GT-001", "term": "validate",
+                                 "definition": "this project's word for its input check"}])
+        self.assertTrue(gt["ok"], gt)
+        rule = next(r for r in srv.readiness_check("package")["rules"]
+                    if r["rule"] == "prose-plain-english")
+        self.assertEqual(rule["entities"], ["FR-001.statement: semicolon x1"])
+        self.assertEqual(rule["counts"], {"semicolon": 1})
+
     # ------------------------------------------------- plan 017 phase 1 (C11/C14)
 
     def test_gate_trace_vacuous_pass_warns(self):
@@ -5081,7 +5117,8 @@ class V4EngineTest(unittest.TestCase):
                           "lessons-superseded-binding", "waivers-open-ended",
                           "prompt-ids-resolve", "feedback-unanswered",   # plans 093 (missed), 100
                           "handoff-current", "lessons-stranded",         # plan 122 (v5.1)
-                          "handoff-repeated"):                           # plan 165 (v5.8)
+                          "handoff-repeated",                            # plan 165 (v5.8)
+                          "prose-plain-english"):                        # plan 182 (v5.9)
             self.assertIn(rule_name, text, rule_name)
         self.assertIn("STOP for operator approval", text)
         self.assertIn("you NEVER author a `WVR-` row", text)

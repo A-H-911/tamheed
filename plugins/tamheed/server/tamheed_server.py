@@ -32,6 +32,7 @@ _SERVER_DIR = Path(__file__).resolve().parent
 sys.path.insert(0, str(_SERVER_DIR.parent / "db"))
 
 import store  # plugins/tamheed/db/store.py  # noqa: E402
+import ste_lint  # plugins/tamheed/server/ste_lint.py (plan 182)  # noqa: E402
 
 # Inlined from the retired v1 validator (D-017-4 parity kept): blank out fenced +
 # inline code so TODO/{{...}} inside examples is never flagged as an unfinished marker.
@@ -463,6 +464,102 @@ def _scan_prose_ids(conn) -> dict[str, list[str]]:
     return {k: sorted(v) for k, v in found.items()}
 
 
+def _stock_bodies(name: str) -> set[str]:
+    """Every stock body the bundle ever shipped, `{package}` filled in: a file equal to one
+    is the maintainer's prose, never the project's (plans 093, 182)."""
+    stock: set[str] = set()
+    for bodies in _load_stock_history().values():
+        for body in bodies.values():
+            stock.add(body.replace("{package}", name))
+    for src in _PROMPTS_DIR.glob("*.md"):
+        stock.add(src.read_text(encoding="utf-8").replace("{package}", name))
+    return stock
+
+
+# ---- plan 182 (R13): the record's own prose under the structural plain-English rules
+_PLAIN_PROSE_COLUMNS = {
+    "requirements": ("statement", "rationale"),
+    "constraints": ("statement",),
+    "invariants": ("statement",),
+    "assumptions": ("statement",),
+    "dependencies": ("statement",),
+    "open_questions": ("question", "resolution"),
+    "decisions": ("decision", "rationale"),
+    "adrs": ("context", "decision", "consequences", "confirmation"),
+    "acceptance_criteria": ("statement",),
+    "lessons": ("statement",),
+}
+_PLAIN_VOCAB_PATH = _SERVER_DIR.parent / "references" / "vocabulary.md"
+_PLAIN_VOCAB_CACHE: dict = {}
+
+
+def _plain_vocabulary(conn) -> dict:
+    """The bundle vocabulary (cached by the file's mtime) plus the package's own `GT-` terms
+    as names: a word a project defined is the project's word, never a finding."""
+    mtime = _PLAIN_VOCAB_PATH.stat().st_mtime_ns
+    if _PLAIN_VOCAB_CACHE.get("mtime") != mtime:
+        _PLAIN_VOCAB_CACHE.update(mtime=mtime, vocab=ste_lint.load_vocabulary(_PLAIN_VOCAB_PATH))
+    base = _PLAIN_VOCAB_CACHE["vocab"]
+    names = dict(base["names"])
+    for (term,) in conn.execute("SELECT term FROM glossary_terms"):
+        if term:
+            for form in (term, term.capitalize(), term.lower()):
+                names.setdefault(form, "a glossary-term row of this package")
+    return dict(base, names=names)
+
+
+def _scan_prose_plain(conn, pkg_dir: Path, name: str) -> dict:
+    """Lint the record's prose: the statement columns of the registers (Superseded and
+    Obsolete rows skipped), the latest handoff entry, and the project's own prompt files
+    (a stock body is skipped, as `_scan_prompt_ids` does). Strict mode, English. Returns
+    the labelled texts with hard findings, the counts per rule and the texts scanned."""
+    vocab = _plain_vocabulary(conn)
+    entities: list[str] = []
+    counts: dict[str, int] = {}
+    texts = 0
+
+    def take(label: str, text: str) -> None:
+        nonlocal texts
+        texts += 1
+        hard = ste_lint.hard(ste_lint.lint_text(text, mode="strict", vocab=vocab, filename=label))
+        if not hard:
+            return
+        per: dict[str, int] = {}
+        for f in hard:
+            per[f["rule"]] = per.get(f["rule"], 0) + 1
+            counts[f["rule"]] = counts.get(f["rule"], 0) + 1
+        entities.append(label + ": " + ", ".join(f"{r} x{n}" for r, n in sorted(per.items())))
+
+    for table, cols in _PLAIN_PROSE_COLUMNS.items():
+        info = list(conn.execute(f"PRAGMA table_info({table})"))
+        names = {r[1] for r in info}
+        present = [c for c in cols if c in names]
+        if "id" not in names or not present:
+            continue
+        where = (" WHERE lifecycle_status NOT IN ('Superseded','Obsolete')"
+                 if "lifecycle_status" in names else "")
+        for row in conn.execute(f"SELECT id, {', '.join(present)} FROM {table}{where}"):
+            for col, value in zip(present, row[1:]):
+                if value and str(value).strip():
+                    take(f"{row[0]}.{col}", str(value))
+    ho = conn.execute("SELECT id, entry FROM progress_entries WHERE event_type = 'handoff'"
+                      f" ORDER BY {_PE_NUM} DESC LIMIT 1").fetchone()
+    if ho and ho[1]:
+        take(f"{ho[0]}.entry", str(ho[1]))
+    stock = _stock_bodies(name)
+    prompts_dir = pkg_dir / "prompts"
+    for path in sorted(prompts_dir.glob("*.md")) if prompts_dir.is_dir() else []:
+        text = path.read_text(encoding="utf-8")
+        if text in stock:
+            continue
+        texts += 1
+        for f in ste_lint.hard(ste_lint.lint_text(text, mode="strict", vocab=vocab,
+                                                  filename=f"prompts/{path.name}")):
+            counts[f["rule"]] = counts.get(f["rule"], 0) + 1
+            entities.append(f"prompts/{path.name}:{f['line']}: {f['rule']}")
+    return {"entities": sorted(entities), "counts": dict(sorted(counts.items())), "texts": texts}
+
+
 def _id_universe(conn):
     """The id pattern, every id the index holds, and each family's minimum numeric
     width (plan 076: `SEC-8` against `SEC-001` is not well-formed)."""
@@ -502,12 +599,7 @@ def _scan_prompt_ids(conn, pkg_dir: Path, name: str) -> dict:
     ANY stock body (current or an older release's, `{package}` substituted) is the
     maintainer's prose, not the project's citations, and is skipped; customised and
     project-authored files are scanned line by line."""
-    stock: set[str] = set()
-    for bodies in _load_stock_history().values():
-        for body in bodies.values():
-            stock.add(body.replace("{package}", name))
-    for src in _PROMPTS_DIR.glob("*.md"):
-        stock.add(src.read_text(encoding="utf-8").replace("{package}", name))
+    stock = _stock_bodies(name)
     pattern, known, min_width = _id_universe(conn)
     found: dict[str, set] = {"dangling": set(), "in_code_spans": set(),
                              "not_well_formed": set()}
@@ -2871,6 +2963,30 @@ def _readiness_report(conn, scope: str, scope_id: str | None) -> dict:
             rules[-1]["discriminating"] = False
             rules[-1]["note"] += (" — no project prompt file to scan (every file in prompts/"
                                   " is a stock body): this rule measured nothing")
+        # Plan 182 (the plain-English batch, R13): the record's own prose under the
+        # structural ASD-STE100 rules. Advisory: a semicolon never blocks a release.
+        # Population is texts scanned (register statement columns, the project's prompt
+        # files, the latest handoff), set by hand; zero texts reads indeterminate.
+        plain = _scan_prose_plain(conn, PACKAGE_ROOT / _CURRENT_NAME, _CURRENT_NAME)
+        plain_cut = (f" — showing {_PROSE_ID_CAP} of {len(plain['entities'])}"
+                     if len(plain["entities"]) > _PROSE_ID_CAP else "")
+        rule("prose-plain-english", "advisory", plain["entities"][:_PROSE_ID_CAP],
+             "texts of the record that break the structural plain-English rules (ASD-STE100:"
+             " no semicolon, no sentence over 25 words, no phrasal verb, no nominalization,"
+             " no marketing adjective, no word that `references/vocabulary.md` rejects). The"
+             " texts are the statement columns of the registers, the project's own prompt"
+             " files and the latest handoff, each named with its hard findings per rule. A"
+             " `GT-` term of this package is never a finding, and a hedge (may, might, could)"
+             " is never flagged. Write new text with `tamheed:plain-english`. The operator"
+             " runs `/tamheed:ste-rewrite` to rewrite the existing text, row by row, with a"
+             " STOP per batch" + plain_cut)
+        rules[-1]["counts"] = plain["counts"]
+        rules[-1]["population"] = {"table": "register text + prompts/*.md + the latest handoff",
+                                   "rows": plain["texts"], "scoped": False, "unit": "texts"}
+        if plain["texts"] == 0:
+            rules[-1]["status"] = "indeterminate"
+            rules[-1]["discriminating"] = False
+            rules[-1]["note"] += " — no text to scan yet: this rule measured nothing"
         rule("lessons-confirmed", "advisory",
              ids("SELECT id FROM lessons WHERE lifecycle_status = 'Proposed'"),
              "lessons recorded by the executing agent awaiting the operator's"

@@ -247,7 +247,7 @@ def readiness_rules() -> dict:
         out[scope].append({"rule": m.group(1), "severity": m.group(2),
                            "conditional": indent > base_indent[scope]})
     counts = {s: len(v) for s, v in out.items()}
-    assert counts == {"package": 29, "phase": 5, "slice": 5}, counts
+    assert counts == {"package": 30, "phase": 5, "slice": 5}, counts
     return out
 
 

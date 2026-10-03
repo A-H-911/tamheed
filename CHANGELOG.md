@@ -19,6 +19,10 @@ All notable changes to Tamheed are documented here. The format is based on
 - `check.py` lint 14, plain English: every rostered prose surface passes the structural rules at
   baseline 0, the roster grows one rewrite wave at a time, and a prose file that is neither rostered,
   pending nor exempt fails the gate (plan 181).
+- `readiness_check` advisory rule `prose-plain-english`: the register statements, the project's
+  prompt files and the latest handoff under the structural plain-English rules, each named with
+  its hard findings per rule; a `GT-` term of the package is never a finding; `ready` never moves
+  (plan 182).
 - `plugins/tamheed/references/vocabulary.md`: one verb per action, one meaning per term, the names
   that contain a rejected word (plan 179, rulings R30-R33).
 

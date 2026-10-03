@@ -193,8 +193,8 @@ Status values: PLANNED / IN PROGRESS / DONE.
 | 178 | [`references/handoff.md` no longer claims the template twin](178-handoff-reference-template-twin.md) -- the reference contradicted the plan-132 test for seven releases | 176 | DONE -- 2026-10-03, `70e63d9` |
 | 179 | [The vocabulary](179-vocabulary.md) -- a census of 16 synonym groups with name positions, one interview round (R30-R33), `references/vocabulary.md` frozen | 178 | DONE -- 2026-10-03, `74a6725` |
 | 180 | [`server/ste_lint.py`, its suite, the third-party notice](180-ste-lint-module.md) -- the upstream linter ported with the paragraph join, the `ast` extractor, the vocabulary tables, Arabic and the allow marker; 21 tests, the twelfth suite | 179 | DONE -- 2026-10-03, `b0733b4` |
-| 181 | [Lint 14, plain English, with a roster that grows per wave](181-lint-14-plain-english.md) -- one file rostered, 90 pending, a prose file in neither fails; six lint tests | 180 | DONE -- 2026-10-03 (the commit this row lands in) |
-| 182 | Readiness rule `prose-plain-english` (advisory) | 180 | PLANNED |
+| 181 | [Lint 14, plain English, with a roster that grows per wave](181-lint-14-plain-english.md) -- one file rostered, 90 pending, a prose file in neither fails; six lint tests | 180 | DONE -- 2026-10-03, `dd1cc85` |
+| 182 | [Readiness rule `prose-plain-english` (advisory)](182-readiness-prose-plain-english.md) -- register statements, prompt files and the latest handoff linted, `GT-` terms never a finding, counts per rule, the skill cue | 180 | DONE -- 2026-10-03 (the commit this row lands in) |
 | 183 | Skills `plain-english` and `ste-rewrite`; every count surface | 182 | PLANNED |
 | 184 | Wave 1: tool descriptions, server messages, note v6, the hook | 183 | PLANNED |
 | 185 | Wave 2: the 27 skills | 184 | PLANNED |

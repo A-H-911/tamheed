@@ -183,3 +183,11 @@ is the only wrong answer.
     "actor": "agent:<session>"}])`, then `readiness_check("package")` again and report
     the advisory delta plus everything now awaiting operator words (promotions,
     waivers, plan approvals, activations).
+22. **Prose that an agent can misread** (`prose-plain-english`, v5.9): the register
+    statements, the project's own prompt files and the latest handoff that break the
+    structural plain-English rules (no semicolon, no sentence over 25 words, no phrasal
+    verb, no nominalization, no marketing adjective, no word `references/vocabulary.md`
+    rejects), each named with its hard findings per rule. A `GT-` term of the package is
+    never a finding. Write new text with `tamheed:plain-english`. Do not rewrite the
+    existing rows on your own: the operator runs `/tamheed:ste-rewrite`, which proposes a
+    batch, STOPs, and supersedes an immutable row instead of editing it.
