@@ -82,6 +82,8 @@ with a STOP per batch, and nothing runs without that word.
   found all three gaps in lab beat 33 and stopped on the first (plan 189).
 - `evals/pkg_check.py ste-clean <package>`: every Tamheed-owned prompt file under `<package>/prompts/`
   passes the strict plain-English rules; the eval spec asserts it on the lab fixture (plan 189).
+- The guide's release recipe gains a ninth step: roster the new field brief's path in lint 14. The
+  brief is plain English, and the gate reads it (plan 190).
 - `handoff_emit`'s registered description names what the tool writes (the CLAUDE.md note, the
   stock prompts README, `.mcp.json` for a standalone install). It said "Emit handoff prompts", a
   write the tool stopped making in v3 (plan 176).

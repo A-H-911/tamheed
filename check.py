@@ -83,6 +83,8 @@ _STE_SURFACES = (
     ("evals/README.md", "flavored", "en", ()),
     # wave 4b (plan 188): the guide's prose, read by import (every entry, EN and AR), flavored
     ("docs/guide/content.py", "flavored", "en+ar", ()),
+    # the current field brief (plan 190): by explicit path, under the exempt plans/ prefix
+    ("plans/briefs/acmp-5.9.0.md", "strict", "en", ()),
 )
 _STE_PENDING: tuple[str, ...] = ()  # every wave has landed (R26: the last wave leaves it empty)
 # Never linted: the linter's own messages name rejected words; a verbatim license; the lab's
@@ -128,6 +130,10 @@ def _ste_scope(repo: Path) -> list[str]:
             if rel in _STE_EXEMPT_PATHS or rel.startswith(_STE_EXEMPT_PREFIXES):
                 continue
             out.append(rel)
+    # a surface rostered by its exact path is in scope even under an exempt prefix (the brief)
+    for pattern, *_ in _STE_SURFACES:
+        if (repo / pattern).is_file() and pattern not in out:
+            out.append(pattern)
     return sorted(out)
 
 V4_DEMO_DATA = REPO / "generated-samples" / "support-triage-agent-v2" / "data"

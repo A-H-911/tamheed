@@ -732,7 +732,7 @@ def _maintainer(r: R) -> None:
     body += r.H(3, "section.maintainer.evals") + r.PS("section.maintainer.evals", 2)
     body += r.H(3, "section.maintainer.lab") + r.PS("section.maintainer.lab", 2)
     body += r.H(3, "section.maintainer.release") + r.P("section.maintainer.release.1")
-    body += "<ol>" + "".join(f'<li>{r.T(f"section.maintainer.release.s{k}")}</li>' for k in range(1, 9)) + "</ol>"
+    body += "<ol>" + "".join(f'<li>{r.T(f"section.maintainer.release.s{k}")}</li>' for k in range(1, 10)) + "</ol>"
     body += r.H(3, "section.maintainer.guide") + r.PS("section.maintainer.guide", 3)
     body += r.pre("python docs/guide/build.py            # rebuild index.html\npython docs/guide/build.py --missing  # ids still lacking EN or AR prose\npython tests/test_user_guide.py       # byte-twin + coverage + runtime witness")
     r.section("maintainer", body)

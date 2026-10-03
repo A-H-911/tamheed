@@ -141,6 +141,20 @@ class CheckLintsTest(unittest.TestCase):
         finally:
             self._restore(self._GUIDE)
 
+    # ---- plan 190: the current field brief is rostered by its path; older briefs are not scanned
+    _BRIEF = "plans/briefs/acmp-5.9.0.md"
+
+    def test_current_brief_is_in_the_roster(self):
+        self.assertIn(self._BRIEF, check._ste_scope(REPO_ROOT))
+        self.assertNotIn("plans/briefs/acmp-5.8.1.md", check._ste_scope(REPO_ROOT))
+        p = self.copy / self._BRIEF
+        p.write_text(p.read_text(encoding="utf-8") + "\nA sentence; with a semicolon.\n", encoding="utf-8")
+        try:
+            code, out = self._lint()
+            self.assertEqual(code, 1); self.assertIn(self._BRIEF, out); self.assertIn("semicolon", out)
+        finally:
+            self._restore(self._BRIEF)
+
     def test_prose_file_in_neither_roster_nor_pending_is_caught(self):
         probe = self.copy / "plugins" / "tamheed" / "probe-neither.md"  # the bundle root: no roster or pending glob covers it
         probe.write_text("A clean sentence.\n", encoding="utf-8")

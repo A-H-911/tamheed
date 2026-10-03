@@ -1,0 +1,17 @@
+OBS field.head {"head": "8b7d8bd1", "uncommitted_in_the_field_tree": [".vscode/settings.json", "tamheed-package/data/defects.jsonl", "tamheed-package/data/deferred_work.jsonl", "tamheed-package/data/progress_entries.jsonl", ".analyze.ps1"]}
+OBS server_info {"version": "5.9.0", "migrations_head": "007_handoff.sql", "schema_version": 7}
+OBS verify.before {"verified": true, "review_current": true, "review_exported_by": "5.8.1", "dirty": []}
+OBS open.resume {"handoff": "PE-1610", "behind": 0}
+OBS readiness {"ready": false, "advisories": 24, "blocking_failing": ["acs-met"]}
+OBS prose-plain-english {"status": "fail", "counts": {"long-sentence": 3602, "marketing-adjective": 1, "semicolon": 2342, "vocabulary": 631}, "texts": 1290, "entities": 50, "by_family": {"AC": 50}, "prompt_files_named": 0, "note_ends_with_skill": "text, row by row, with a STOP per batch — showing 50 of 1146"}
+OBS ste-clean.before {"exit": 1, "first_line": "stock files linted: README.md. Project files skipped: prm-next.md, project-deferred-work-cautions.md, project-design-review.md, project-invariant-audit.md", "hard": 73}
+OBS emit.refresh_stock {"refreshed": ["prompts/README.md"], "retired": [], "customised": null, "written": [".mcp.json", "C:\\Users\\ahammo\\AppData\\Local\\Temp\\claude\\C--Users-ahammo-Repos-tamheed\\af3e8894-45e7-4d32-b33f-85a935fb3999\\scratchpad\\acmp10\\acmp-replay10\\tamheed-package\\CLAUDE.md"], "files_changed_in_the_copy": [" M tamheed-package/CLAUDE.md", " M tamheed-package/prompts/README.md", "?? .mcp.json", "?? tamheed-package/data/.lock"], "guide_title_has_release": true, "guide_names_nine": true}
+OBS note {"marker_before": "tamheed:note v5", "marker_after": "tamheed:note v6", "first_sentence_after": "The Tamheed package for this project is `tamheed-package` (u", "names_plain_english": true, "lines_before_after": [41, 41], "numstat": ["14", "14"]}
+OBS ste-clean.after {"exit": 0, "first_line": "stock files linted: README.md. Project files skipped: prm-next.md, project-deferred-work-cautions.md, project-design-review.md, project-invariant-audit.md", "hard": 0}
+OBS export {"numstat": ["5", "4"], "patch_bytes": 10929, "longest_added_line": 2512, "csv_changed": "none", "review_current": true, "exported_by": "5.9.0"}
+OBS prose-plain-english.after_emit {"counts": {"long-sentence": 3602, "marketing-adjective": 1, "semicolon": 2342, "vocabulary": 631}, "texts": 1290}
+OBS lock_gone true
+OBS hook.v6_note {"exit": 0, "lines": 21, "chars": 2212, "trace_opens": "version=5.9.0 source=compact"}
+OBS hook.v5_note_untouched {"exit": 0, "lines": 20, "chars": 2056, "trace_opens": "version=5.9.0 source=startup", "note_marker": "tamheed:note v5"}
+OBS wire {"entity_query": 387, "progress_update": 333, "audit_record": 325, "handoff_emit": 155}
+DONE
