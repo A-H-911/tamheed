@@ -73,13 +73,18 @@ _STE_SURFACES = (
     ("plugins/tamheed/server/README.md", "flavored", "en", ()),
     ("plugins/tamheed/db/CANONICAL.md", "flavored", "en", ()),
     ("plugins/tamheed/assets/README.md", "flavored", "en", ()),
+    # wave 4a (plan 187): the human docs, the root files, the lab and evals READMEs (flavored)
+    ("README.md", "flavored", "en", ()),
+    ("SECURITY.md", "flavored", "en", ()),
+    ("CLAUDE.md", "flavored", "en", ()),
+    ("CONTRIBUTING.md", "flavored", "en", ()),
+    ("docs/*.md", "flavored", "en", ()),
+    ("lab/README.md", "flavored", "en", ()),
+    ("evals/README.md", "flavored", "en", ()),
 )
 _STE_PENDING = (
     # wave 4b (plan 188): the guide's prose, read by import
     "docs/guide/content.py",
-    # wave 4a (plan 187)
-    "README.md", "SECURITY.md", "CLAUDE.md", "CONTRIBUTING.md", "docs/*.md",
-    "lab/README.md", "evals/README.md",
 )
 # Never linted: the linter's own messages name rejected words; a verbatim license; the lab's
 # deliberately flawed brief, its dated beats and its seeded code; eval fixtures; dated records;

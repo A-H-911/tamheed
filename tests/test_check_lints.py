@@ -1,5 +1,5 @@
 """check.py's own lints under test (plan 056): the release gate is verified, not trusted."""
-import io, json, shutil, sys, tempfile, unittest, contextlib
+import io, json, re, shutil, sys, tempfile, unittest, contextlib
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -87,11 +87,16 @@ class CheckLintsTest(unittest.TestCase):
             self._restore(self._ROSTERED)
 
     def test_allow_marker_with_a_reason_passes_and_is_counted(self):
+        def markers(text: str) -> int:
+            m = re.search(r"allow markers=(\d+)", text)
+            self.assertIsNotNone(m, text)
+            return int(m.group(1))
+        _, before = self._lint()  # the tree carries its own markers (README's link bar, CLAUDE.md's id list)
         self._append_rostered("\n<!-- ste:allow semicolon: the standard's own sentence, quoted -->\n"
                               "Quoted; as the standard wrote it.\n")
         try:
             code, out = self._lint()
-            self.assertIsNone(code, out); self.assertIn("allow markers=1", out)
+            self.assertIsNone(code, out); self.assertEqual(markers(out), markers(before) + 1, out)
         finally:
             self._restore(self._ROSTERED)
 

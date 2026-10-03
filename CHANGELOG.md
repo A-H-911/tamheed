@@ -45,6 +45,11 @@ All notable changes to Tamheed are documented here. The format is based on
   README are plain English (wave 3 of 4): 1,010 hard findings to 0, every pinned phrase word for word.
   `workflow.md` labels each stage's check `Check:` (the label was a rejected verb). The stock README
   body under `stock-history.json`'s `5.9.0` key follows (plan 186).
+- The human docs are plain English (wave 4a of 4): `README.md`, `SECURITY.md`, `CLAUDE.md`,
+  `CONTRIBUTING.md`, `docs/*.md`, `lab/README.md` and `evals/README.md` under the flavored rules,
+  1,262 hard findings to 0, every pinned phrase word for word. The plugin and marketplace
+  descriptions name both halves of the capability: the planning package, then the record of the
+  build while execution runs (plan 187).
 - `plugins/tamheed/references/vocabulary.md`: one verb per action, one meaning per term, the names
   that contain a rejected word (plan 179, rulings R30-R33).
 

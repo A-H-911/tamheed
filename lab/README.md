@@ -1,18 +1,18 @@
 # The Tamheed lab — a permanent, deliberately imperfect test project
 
 This directory is a **controlled mock project** (plan 031): a tiny CLI task tracker whose
-brief and seed code are deliberately flawed so that **every v4 mechanism has a reason to
+brief and seed code are deliberately flawed. So **every v4 mechanism has a reason to
 fire** during a full Understand → Explore → Plan → execute run. It exists so releases can
-be exercised against a model-in-the-loop, full-lifecycle scenario — not only unit suites.
+be exercised against a model-in-the-loop, full-lifecycle scenario, not only unit suites.
 
 ## What is seeded, and which mechanism it forces
 
 | Seeded flaw | Where | The mechanism it forces |
 |---|---|---|
-| An ambiguous requirement ("recurring tasks… somehow") | `brief.md` | `OQ-` row + `[NEEDS-CLARIFICATION: OQ-NNN]` marker (G-COMPLETE-validated) |
+| An ambiguous requirement ("recurring tasks… somehow") | `brief.md` | `OQ-` row + `[NEEDS-CLARIFICATION: OQ-NNN]` marker (G-COMPLETE-checked) |
 | A storage-engine fork the brief leaves open | `brief.md` | `DEC-` → one-way-door test → `ADR-` promotion (+ the `decisions-look-architectural` nag if skipped) |
-| An off-by-one bug in `overdue()` | `seed/tracker.py` | `DEF-` row (honest severity) BEFORE the fix; evidence-chained `audit_record` |
-| A time-dependent flaky test | `seed/test_tracker.py` | a defect is a defect (the Google flaky-test doctrine) — severity judgment + quarantine-or-fix |
+| An off-by-one bug in `overdue()` | `seed/tracker.py` | `DEF-` row (honest severity) BEFORE the fix. Evidence-chained `audit_record` |
+| A time-dependent flaky test | `seed/test_tracker.py` | a defect is a defect (the Google flaky-test doctrine). Severity judgment + quarantine-or-fix |
 | A mid-execution scope surprise (the "export" ask in the brief's postscript) | `brief.md` | `SC-` Proposed + `scope_modifies` edges → operator approval → apply → Merged |
 | A cosmetic leftover (typo in the help text) | `seed/tracker.py` | low-severity defect: `defects-minor` advisory + an operator-approved `WVR-` waiver |
 | A slice the operator closes early | scenario step 8 | the readiness refusal, then the operator-words `force` → typed `forced-override` audit |
@@ -20,78 +20,81 @@ be exercised against a model-in-the-loop, full-lifecycle scenario — not only u
 ## How a release exercises the lab
 
 The scripted scenario is `scenario.md`. The resulting package lives at
-`evals/sample-results/lab-tracker/package` and is **eval-tier**: model-in-the-loop output
-cannot be byte-deterministic, so it is validated by `gate_run` + `readiness_check` (the
+`evals/sample-results/lab-tracker/package` and is **eval-tier**. Model-in-the-loop output
+cannot be byte-deterministic, so it is checked by `gate_run` + `readiness_check` (the
 eval runner's checks), never byte-compared like the goldens. Later releases add
-**continuation beats** (10: lessons, 11: promotion, 12: paging + `amends` + `package_verify`
-+ the server-only refusal, 13: the edge retire + the three-bucket audit split, 14: the
-`entity_export` read for committed scripts + the paste guard, 15: the advisor-audit
-mechanisms — stale-tree rollback, born-Implemented refusal + force, scoped indeterminate,
-whole-rule waiver, omission revision, CSV defusing, the note's skill screen; 16: the
-findings_25 mechanisms — the dead holder's lock observed and unlocked, the live holder's
-refused, the legible reads (`server_info(detail)`, `omitted_columns`/`matched`, rule
-`population`), the phantom id caught by `prose-ids-resolve`, the partial export and its
-digest, the retired CSV removed, the stock prompts refreshed; 17: the findings_26
-mechanisms — the lost paragraph reported as a length drop, the half-finished supersession
-that keeps binding, the two refused unattended retirements and the engine's own retirement
-on the operator's word, the backticked phantom reported inert, the open-ended blanket
-waiver named, the empty family that measured nothing until its omission was recorded, the
-review page that says whether it is current, the completed hand-merge that stops lagging;
-18: the findings_27 mechanisms — the registry synced for a new family, the missing function
-recorded as feedback instead of scripted, confirmed and exported and reported on the operator's
-word, the refused unattended confirmation and the refused rewrite under the operator's own name,
-the local tool that exists only on that word, the by-hand lesson retirement the engine journals
-and the forged engine row refused on both caller paths, the formula's variable names that trip
-no list; 19: the findings_28 mechanisms — the phantom id in the project's own kickoff prompt
-reported amber and made inert by backticks, the token census that counts every occurrence, the
-go/no-go verdict that lands only on the operator's word — a string never attests — and the
-engine's own witness of it, the one-token substitute that touches nothing else and the glued,
-immutable and mixed substitutes refused, the review page's Readiness and Feedback sections;
-20: the findings_29 mechanisms — the reported request closed by the partial-row disposition
-recipe and journaled as bookkeeping that claims no word, the readiness advisory and the handoff
-warning that fall silent with it, the MVP definition written and read back beside every other
-header column, the current verdict re-sent unattended and refused by the presence check, the
-prefix repair that lands once and is refused on the re-run, the partial row whose omitted
-column is preserved and the sent drifted one refused; 21: the findings_30 mechanisms — the
-empty slice that reads not ready and names the two rules that could not discriminate, made
-ready by one bound work item and one criterion with a Met verdict, the recorded omission read
-back as a deliberate zero, the pointer warning that says whether it rebuilt or wrote nothing,
-the empty unanswered fold that says it is empty, and the `expect_unchanged` that names a
-column the item does not carry refused as asserting nothing; 22: the v5.0.0 mechanisms — the
-sixteen retired stock prompts named as leftovers, kept on a plain emit and deleted on
-`refresh_stock`, the guide that maps situations to skills, the byte-stable v5 note whose flush
-sentence names the mechanism, the `carries` edge typed in one direction and the advisory that
-watches the carrier close, the note-budget arithmetic quoted, and the recorded omission read as a
-deliberate zero by both deferred-work rules; 23: the v5.1.0 mechanisms — the resume block with no
-handoff and eleven uncovered work entries, the `handoff` entry written mid-beat then overtaken and
-corrected then written LAST, `handoff-current` following each move, the tool results naming the
-skill, the guide refreshed to eight discipline skills with the note's marker unchanged, and — on a
-scratch copy only — the stranded lesson passing once `upstreamed_to` is set, the oversized prompt,
-the false `stock-merged` marker, the two detectors, and the hook after a compaction)
-run as incremental real-agent sessions against the recorded package — the fixture is regenerated
-by continuation, not from scratch.
+**continuation beats**, run as incremental real-agent sessions against the recorded package.
+The fixture is regenerated by continuation, not from scratch. The beats so far:
+
+- 10: lessons. 11: promotion. 12: paging + `amends` + `package_verify` + the server-only refusal.
+  13: the edge retire + the three-bucket audit split. 14: the `entity_export` read for committed
+  scripts + the paste guard.
+- 15: the advisor-audit mechanisms. Stale-tree rollback, born-Implemented refusal + force, scoped
+  indeterminate, whole-rule waiver, omission revision, CSV defusing, the note's skill screen.
+- 16: the findings_25 mechanisms. The dead holder's lock observed and unlocked, and the live
+  holder's refused. The legible reads (`server_info(detail)`, `omitted_columns`/`matched`, rule
+  `population`). The phantom id caught by `prose-ids-resolve`, the partial export and its digest,
+  the retired CSV removed, the stock prompts refreshed.
+- 17: the findings_26 mechanisms. The lost paragraph reported as a length drop, and the half-finished
+  supersession that keeps binding. The two refused unattended retirements and the engine's own
+  retirement on the operator's word. The backticked phantom reported inert, the open-ended blanket
+  waiver named, the empty family that measured nothing until its omission was recorded. The review
+  page that says whether it is current, the completed hand-merge that stops lagging.
+- 18: the findings_27 mechanisms. The registry synced for a new family. The missing function
+  recorded as feedback instead of scripted, confirmed and exported and reported on the operator's
+  word. The refused unattended confirmation and the refused rewrite under the operator's own name.
+  The local tool that exists only on that word. The by-hand lesson retirement the engine journals
+  and the forged engine row refused on both caller paths. The formula's variable names that trip
+  no list.
+- 19: the findings_28 mechanisms. The phantom id in the project's own kickoff prompt reported amber
+  and made inert by backticks. The token census that counts every occurrence. The go/no-go verdict
+  that lands only on the operator's word (a string never attests) and the engine's own witness of
+  it. The one-token substitute that touches nothing else and the glued, immutable and mixed
+  substitutes refused. The review page's Readiness and Feedback sections.
+- 20: the findings_29 mechanisms. The reported request closed by the partial-row disposition recipe
+  and journaled as bookkeeping that claims no word. The readiness advisory and the handoff warning
+  that fall silent with it. The MVP definition written and read back beside every other header
+  column. The current verdict re-sent unattended and refused by the presence check. The prefix fix
+  that lands once and is refused on the re-run. The partial row whose omitted column is preserved
+  and the sent drifted one refused.
+- 21: the findings_30 mechanisms. The empty slice that reads not ready and names the two rules that
+  could not discriminate. It is made ready by one bound work item and one criterion with a Met verdict.
+  The recorded omission read back as a deliberate zero. The pointer warning that says whether it
+  rebuilt or wrote nothing. The empty unanswered fold that says it is empty. The `expect_unchanged`
+  that names a column the item does not carry, refused as asserting nothing.
+- 22: the v5.0.0 mechanisms. The sixteen retired stock prompts named as leftovers, kept on a plain
+  emit and removed on `refresh_stock`. The guide that maps situations to skills. The byte-stable v5
+  note whose flush sentence names the mechanism. The `carries` edge typed in one direction and the
+  advisory that watches the carrier close. The note-budget arithmetic quoted, and the recorded
+  omission read as a deliberate zero by both deferred-work rules.
+- 23: the v5.1.0 mechanisms. The resume block with no handoff and eleven uncovered work entries.
+  The `handoff` entry written mid-beat then overtaken and corrected then written LAST, with
+  `handoff-current` following each move. The tool results naming the skill. The guide refreshed to
+  eight discipline skills with the note's marker unchanged. And, on a scratch copy only, the
+  stranded lesson passing once `upstreamed_to` is set. Also the oversized prompt, the false
+  `stock-merged` marker, the two detectors, and the hook after a compaction.
 
 ## The honesty limit (read this before citing the lab as proof)
 
 The lab proves that every v4 mechanism **fires** under a real agent. It cannot prove
-**autonomous drift discharge** — a delegated agent defers to its parent. The older clause here
-("headless permission modes block the MCP tool path", the findings_15/16 instrument lesson of
-2026-08) was **re-measured on 2026-09-30 (Claude Code 2.1.286) and no longer holds**: a headless
+**autonomous drift discharge**, because a delegated agent defers to its parent. The older clause here
+("headless permission modes block the MCP tool path") was the findings_15/16 instrument lesson of
+2026-08. It was **re-measured on 2026-09-30 (Claude Code 2.1.286) and no longer holds**. A headless
 `claude -p` under `--permission-mode dontAsk` with `--allowedTools "mcp__plugin_tamheed_tamheed__*"`
-ran every write through the plugin's MCP server with no prompt, and a slash command given as the
-whole prompt loaded an operator-only skill. What a headless run still cannot do: it is a new client
-process per turn, so a `--resume` restarts the server and the package must be reopened (a session
-that ends without `package_close` leaves a lock naming a dead process); a slash command inside a
-longer prompt is not expanded; and the operator's words are scripted, so an interview point the
-script did not foresee is answered by a resume from a words file, never by a person in the loop.
-The full measurement: `plans/evidence/lab-acceptance-report-2026-09-30.md` (plan 172: a fresh run
-from the seed, items 1–9, driven by Opus 5.5 through the working-tree bundle; and four sessions on
-a copy of the fixture). The only valid instrument for autonomous drift discharge remains an
+ran every write through the plugin's MCP server with no prompt. A slash command given as the whole
+prompt loaded an operator-only skill. What a headless run still cannot do. It is a new client
+process per turn, so a `--resume` restarts the server and the package must be reopened. A session
+that ends without `package_close` leaves a lock naming a dead process. A slash command inside a
+longer prompt is not expanded. And the operator's words are scripted. An interview point the script
+did not foresee is answered by a resume from a words file, never by a person in the loop.
+The full measurement is `plans/evidence/lab-acceptance-report-2026-09-30.md` (plan 172). It covers a
+fresh run from the seed, items 1–9, driven by Opus 5.5 through the working-tree bundle. It covers four
+sessions on a copy of the fixture. The only valid instrument for autonomous drift discharge remains an
 interactive fresh session driven by a human operator on a real repo.
 
-A second, smaller limit: `handoff_emit` writes machine-specific absolute paths (the
-resolved server script and package root in `.mcp.json` for standalone installs, the
-package root in the `CLAUDE.md` note) — by design, so the executor host can find the
-server. An emitted target is therefore never committed as a fixture: beats emit to a
+A second, smaller limit: `handoff_emit` writes machine-specific absolute paths. They are the
+resolved server script and package root in `.mcp.json` for standalone installs, and the
+package root in the `CLAUDE.md` note. That is by design, so the executor host can find the
+server. An emitted target is therefore never committed as a fixture. Beats emit to a
 scratch target and **quote the note verbatim in their evidence report** (beats 14 and 15
-did), which is the durable record of what was emitted.
+did). That quote is the durable record of what was emitted.

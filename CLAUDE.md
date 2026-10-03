@@ -4,13 +4,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this repository is
 
-Tamheed is **not an application** — it is a reusable, vendor/stack-neutral agent **skill**, packaged
-as a **Claude Code plugin**, that turns a project description into an execution-ready planning &
+Tamheed is **not an application**. It is a reusable, vendor/stack-neutral agent **skill**, packaged
+as a **Claude Code plugin**. It turns a project description into an execution-ready planning &
 handoff package for *another* agent to implement. The "product" is a methodology spec plus a small
 stdlib-only relational package store and MCP server. There is no build step.
 
 This repo is the home of the *capability*, not of any project Tamheed plans. Generated output only
-ever lives under `generated-samples/` and `evals/sample-results/` (curated) — never elsewhere.
+ever lives under `generated-samples/` and `evals/sample-results/` (curated), never elsewhere.
 
 ## Layout (v4)
 
@@ -43,7 +43,7 @@ tamheed 3.2.1 first, then v3→v4 (`docs/migrate-from-keystone.md`).
 
 ## Commands
 
-Python 3.10+ (ASM-D — the MCP SDK's floor and the CI matrix floor); stdlib only.
+Python 3.10+ (ASM-D, the MCP SDK's floor and the CI matrix floor), stdlib only.
 
 ```bash
 # THE gate — suites + lints + canonical round-trip + evals (CI runs exactly this)
@@ -62,15 +62,15 @@ uv run plugins/tamheed/server/tamheed_server.py --selftest
 ```
 
 > Windows note: `tamheed_server.py` reconfigures stdout/stderr to UTF-8 at startup, so its output
-> doesn't raise `UnicodeEncodeError` on legacy code pages such as cp1252.
+> does not raise `UnicodeEncodeError` on legacy code pages such as cp1252.
 
 ## Architecture — the governing principle
 
-> **The skill owns the capability; every entry point is a thin wrapper.**
+> **The skill owns the capability. Every entry point is a thin wrapper.**
 
-All methodology — the 22 stages, artifact selection, quality gates, readiness, handoff — lives in
-`plugins/tamheed/skills/tamheed/SKILL.md` + its `references/`. External entry points only normalize input, invoke
-the skill, and route output. In Claude Code the skill *is* the entry point.
+All methodology (the 22 stages, artifact selection, quality gates, readiness, handoff) lives in
+`plugins/tamheed/skills/tamheed/SKILL.md` + its `references/`. External entry points only normalize
+input, invoke the skill, and route output. In Claude Code the skill *is* the entry point.
 
 The 22 stages: **Understand** (1–8 intake→scope) → **Explore** (9–15 research→decisions→risk) →
 **Plan & hand off** (16–22 execution plan→artifacts→storage→validation→handoff). Authoritative
@@ -79,61 +79,62 @@ per-stage spec: `plugins/tamheed/references/workflow.md`.
 ## Invariants that must stay true
 
 - **Self-contained bundle (mechanically required).** Claude Code copies only the plugin directory on
-  install, so everything the skill reads/invokes at runtime must live inside `plugins/tamheed/`
-  with **zero** outward (`../..`, repo-root) references. `docs/` may link into the bundle; the
+  install. So everything the skill reads/invokes at runtime must live inside `plugins/tamheed/`
+  with **zero** outward (`../..`, repo-root) references. `docs/` may link into the bundle. The
   bundle never links out.
-- **Single source of truth** = the bundle: the DDL (`db/schema.sql`) is the single source of data
-  shape; the artifact catalog is `references/artifact-catalog.md`; the registry
-  (`BASELINE_ENTITY_TYPES`) is the machine mirror of the Always class — `check.py` lints the
+- **Single source of truth** = the bundle. The DDL (`db/schema.sql`) is the single source of data
+  shape, and the artifact catalog is `references/artifact-catalog.md`. The registry
+  (`BASELINE_ENTITY_TYPES`) is the machine mirror of the Always class. `check.py` lints the
   registry ↔ catalog ↔ table-map ↔ DDL sync and the `schema.sql` == `migrations/001_init.sql`
   byte-twin.
+<!-- ste:allow long-sentence: the identifier scheme is a list of 36 names -->
 - **Identifier scheme** (`plugins/tamheed/references/governance.md`): `FR-`/`NFR-`, `CON-`, `INV-`,
   `ASM-`, `DEP-`, `OQ-`, `DEC-`, `ADR-`, `RISK-`, `HYP-`, `EXP-`, `POC-`, `TEST-`, `KPI-`, `STK-`,
   `PH-`, `MS-`, `SL-`, `WBS-`, `AC-`, `AV-`, `PE-`, `DEF-`, `DW-`, `GATE-`, `EP-`, `CONV-`, `SC-`,
   `WVR-`, `DOC-`/`SEC-`, `DIA-`, `GT-`, `LL-`, `SKL-`, `FB-`. Statuses: `Draft → Proposed → Approved / Rejected /
-  Superseded / Deferred → Implemented` (+ `Review` = done-claimed, wbs/slices only; `Obsolete`).
-  A *proposed* decision is never rendered as *approved*; `Review` never counts as done.
+  Superseded / Deferred → Implemented` (+ `Review` = done-claimed, wbs/slices only, and `Obsolete`).
+  A *proposed* decision is never rendered as *approved*. `Review` never counts as done.
 - **A new entity family** = DDL table + `ENTITY_TABLES` + `BASELINE_ENTITY_TYPES` + catalog row +
   governance row (the check.py sync lints catch a partial add).
-- **Immutable-after-approval** artifacts (ADRs incl. `confirmation`, approved acceptance criteria)
-  are *superseded*, never edited — trigger-enforced.
+- **Immutable-after-approval** artifacts (ADRs including `confirmation`, approved acceptance criteria)
+  are *superseded*, never edited. Trigger-enforced.
 - **The user guide is generated.** `index.html` is a byte-twin of `docs/guide/build.py`'s output
-  (`tests/test_user_guide.py`); structure comes from the engine, prose from `docs/guide/content.py`.
+  (`tests/test_user_guide.py`). Structure comes from the engine, prose from `docs/guide/content.py`.
   An engine change (a column, a tool parameter, a rule) needs EN + AR prose before `check.py`
-  passes; `index.html` is also a lint-8 version surface, so a release rebuilds it.
-- **Byte-canonical JSONL** (`db/CANONICAL.md`): an idle open→close produces zero git diff; goldens
+  passes. `index.html` is also a lint-8 version surface, so a release rebuilds it.
+- **Byte-canonical JSONL** (`db/CANONICAL.md`): an idle open→close yields zero git diff. Goldens
   are regenerated by scripts, never hand-edited.
-- **Migration is explicit.** `package_open` refuses pre-v4 stores; `package_migrate` is staged
-  (preview → operator backs up → confirm; old files kept in `data-v3-backup/`).
-- **Extend additively** via `plugins/tamheed/references/extension.md`. Additive = MINOR; changing
+- **Migration is explicit.** `package_open` refuses pre-v4 stores. `package_migrate` is staged
+  (preview → operator backs up → confirm, old files kept in `data-v3-backup/`).
+- **Extend additively** via `plugins/tamheed/references/extension.md`. Additive = MINOR. Changing
   the store shape, the identifier scheme, or the handoff contract = MAJOR + explicit migration.
 
-Note: paths inside `*.template.md` describe the **generated** package structure — intentional
+Note: paths inside `*.template.md` describe the **generated** package structure. They are intentional
 output content, not stale references to this repo's layout.
 
 ## The quality gates (gate_run, all mechanical)
 
 `gate_run` on an open package (all blocking except where noted):
 
-- **G-IDS** — foreign_key_check + entity_index⇄tables consistency, verified at gate time.
-- **G-DEC-STATUS** — decision statuses in the allowed set (also CHECK-enforced at write).
-- **G-REQ-SRC** — every requirement has non-empty provenance (whitespace-only caught).
-- **G-COMPLETE** — no unfinished markers; `[NEEDS-CLARIFICATION: OQ-NNN]` legal only while the
+- **G-IDS**: foreign_key_check + entity_index⇄tables consistency, verified at gate time.
+- **G-DEC-STATUS**: decision statuses in the allowed set (also CHECK-enforced at write).
+- **G-REQ-SRC**: every requirement has non-empty provenance (whitespace-only caught).
+- **G-COMPLETE**: no unfinished markers. `[NEEDS-CLARIFICATION: OQ-NNN]` is legal only while the
   cited OQ is live.
-- **G-TRACE** — every MVP requirement links to ≥1 decision, ≥1 work item, ≥1 test (vacuous-pass
+- **G-TRACE**: every MVP requirement links to ≥1 decision, ≥1 work item, ≥1 test (vacuous-pass
   warning at zero MVP rows).
-- **G-SET** — every Always family present or omission-recorded (vacuous-pass warning for
+- **G-SET**: every Always family present or omission-recorded (vacuous-pass warning for
   G-PROGRESS at zero verdicts).
-- **G-PROGRESS** — active ACs all carry verdicts once auditing has begun.
-- **G-REL** — stored trace edges satisfy the endpoint-type rules (v4: blocking; migrate cleans at
+- **G-PROGRESS**: active ACs all carry verdicts once auditing has begun.
+- **G-REL**: stored trace edges satisfy the endpoint-type rules (v4: blocking. Migrate cleans at
   conversion, adopt reports, writes reject).
 
-Above the gates sits `readiness_check(scope)` — the semantic layer: blocking rules (pre-approval
+Above the gates sits `readiness_check(scope)`, the semantic layer. It has blocking rules: pre-approval
 decisions/ADRs, ACs not latest-Met, open critical/high defects, undischarged risks, open
-slices/work incl. `Review`) + advisory liveness rules + operator-approved `WVR-` waivers
-(reported `waived`, never silent) + `human_required` execution gates. The phase/slice →
-`Implemented` transition is guarded by the same blocking rules; `force` is operator-words-only
+slices/work including `Review`. It adds advisory liveness rules, operator-approved `WVR-` waivers
+(reported `waived`, never silent), and `human_required` execution gates. The phase/slice →
+`Implemented` transition is guarded by the same blocking rules. `force` is operator-words-only
 and self-audited.
 
-When changing the engine, run `python check.py` — suites, lints, the canonical round-trip, and
+When changing the engine, run `python check.py`. Suites, lints, the canonical round-trip, and
 the eval fixtures are the merge bar.
