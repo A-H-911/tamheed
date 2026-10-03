@@ -189,8 +189,8 @@ Status values: PLANNED / IN PROGRESS / DONE.
 | # | Plan | Depends on | Status |
 |---|---|---|---|
 | 176 | [`handoff_emit` says what it writes](176-handoff-emit-description.md) -- the registered description named prompts the tool stopped writing in v3; README rows for plans 170-174 | -- | DONE -- 2026-10-03, `d7ca9f8` |
-| 177 | [`_CONVERTED_HINTS` names live skills](177-converted-hints-name-live-skills.md) -- the hints named two files retired in 5.0.0; they name `/tamheed:<name>` skills, one sentence each | 176 | DONE -- 2026-10-03 (the commit this row lands in) |
-| 178 | `references/handoff.md` no longer claims the template twin | 176 | PLANNED |
+| 177 | [`_CONVERTED_HINTS` names live skills](177-converted-hints-name-live-skills.md) -- the hints named two files retired in 5.0.0; they name `/tamheed:<name>` skills, one sentence each | 176 | DONE -- 2026-10-03, `3e10ba1` |
+| 178 | [`references/handoff.md` no longer claims the template twin](178-handoff-reference-template-twin.md) -- the reference contradicted the plan-132 test for seven releases | 176 | DONE -- 2026-10-03 (the commit this row lands in) |
 | 179 | The vocabulary: census, draft, one interview round, freeze | 178 | PLANNED |
 | 180 | `server/ste_lint.py`, its suite, the third-party notice | 179 | PLANNED |
 | 181 | Lint 14 wired with a roster of one file; the guide learns a fourteenth lint | 180 | PLANNED |

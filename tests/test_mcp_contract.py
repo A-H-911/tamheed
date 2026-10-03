@@ -1038,6 +1038,13 @@ class McpContractTest(unittest.TestCase):
             self.assertNotIn(f"| {cell} |", tpl, f"obligation row copied into the template: {cell}")
         self.assertIn("tool-owned tamheed note in `<package-name>/CLAUDE.md`", tpl)
         self.assertIn("write a `handoff` journal entry LAST", tpl)
+        # Plan 178 (the STE census, R19c): the reference the planner reads at stage 20 said
+        # the table "lives verbatim in the agent-control template" for seven releases after
+        # plan 132 ended that twin. The reference says what the template does.
+        ref = (REPO_ROOT / "plugins" / "tamheed" / "references" /
+               "handoff.md").read_text(encoding="utf-8")
+        self.assertNotIn("lives verbatim in the agent-control template", ref)
+        self.assertIn("carries no obligation row", ref)
 
     def test_note_teaches_paging_verify_amends_and_the_flush_rule(self):
         """Plan 039: the note carries LL-061's refinement of C31 (recording FLUSHES

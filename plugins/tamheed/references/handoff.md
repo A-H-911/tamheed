@@ -29,7 +29,8 @@ and `handoff_emit(target_dir)` wires the target project to the package (it copie
   row first; out-of-scope discovery → `DW-` row with a trigger; deviation → `SC-` row FIRST
   (`amends` for a ruling; Merged set LAST after the targets are applied and re-read);
   progress/audit/bind per unit; `readiness_check(scope)` before declaring a slice/phase/release
-  done. The same table lives verbatim in the agent-control template. The note's C31 paragraph
+  done. The agent-control template points at the note and carries no obligation row (plan 132).
+  The note's C31 paragraph
   also carries the flush rule (v4.5, mechanism corrected in v5): every store write (`entity_upsert`,
   `progress_update`, `audit_record`, `work_bind`, `package_verify(record=true)`, `package_close`)
   flushes `data/*.jsonl`, and `export_html` / `handoff_emit` write other package files — `work_bind`
