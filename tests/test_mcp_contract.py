@@ -1082,6 +1082,39 @@ class McpContractTest(unittest.TestCase):
         self.assertNotIn("lives verbatim in the agent-control template", ref)
         self.assertIn("carries no obligation row", ref)
 
+    def test_note_names_every_discipline_skill(self):
+        """Plan 183: the note's skills line names every model-invoked discipline skill the
+        bundle ships (`user-invocable: false`), so a crowded host that drops the descriptions
+        still has the names in the always-loaded note."""
+        self._emit_ready()
+        with tempfile.TemporaryDirectory() as target:
+            srv.handoff_emit(target)
+            note = (Path(target) / "CLAUDE.md").read_text(encoding="utf-8")
+        skills_dir = REPO_ROOT / "plugins" / "tamheed" / "skills"
+        disciplines = sorted(p.parent.name for p in skills_dir.glob("*/SKILL.md")
+                             if "user-invocable: false" in p.read_text(encoding="utf-8"))
+        self.assertIn("plain-english", disciplines)
+        for name in disciplines:
+            self.assertIn(f"`tamheed:{name}`", note, name)
+
+    def test_ste_rewrite_skill_teaches_the_stop_and_supersession(self):
+        """Plan 183 (R4): the rewrite ceremony is operator-invoked, STOPs per batch, writes
+        Draft and Proposed rows with expect_unchanged, supersedes immutable rows, never
+        touches a stock body, skips readiness-affecting rows by default, and reads the
+        `Kept as-is:` lines to the operator."""
+        text = (REPO_ROOT / "plugins" / "tamheed" / "skills" / "ste-rewrite" /
+                "SKILL.md").read_text(encoding="utf-8")
+        self.assertIn("disable-model-invocation: true", text)
+        for needle in ("STOP for operator approval", "expect_unchanged", "supersed",
+                       "never a stock body", "Kept as-is:", "skipped by default",
+                       "prose-plain-english", "tamheed:plain-english", "`WVR-`"):
+            self.assertIn(needle, text, needle)
+        plain = (REPO_ROOT / "plugins" / "tamheed" / "skills" / "plain-english" /
+                 "SKILL.md").read_text(encoding="utf-8")
+        self.assertIn("user-invocable: false", plain)
+        for needle in ("Kept as-is:", "vocabulary.md", "/tamheed:ste-rewrite", "Rule 8.1"):
+            self.assertIn(needle, plain, needle)
+
     def test_note_teaches_paging_verify_amends_and_the_flush_rule(self):
         """Plan 039: the note carries LL-061's refinement of C31 (recording FLUSHES
         after the commit it records — the porcelain check, never a memory) and the

@@ -226,7 +226,7 @@ recording-obligations table** — defect found → `DEF-` row *before* the fix; 
 note names (`tamheed:package-writes` before any write, `tamheed:reading-the-record` before citing a
 row, `tamheed:operator-interview` at every STOP (since v5.4 every option set it puts to the
 operator carries one recommendation, marked as the agent's), and since v5.1 `tamheed:session-handoff` before a
-compaction — eight discipline skills, out of the `/` menu, named by the tool results as well as the
+compaction — nine discipline skills, out of the `/` menu, named by the tool results as well as the
 note; the scenarios are the operator-invoked `/tamheed:<name>` slash skills) and the note carries no
 cheat-sheet. The plugin's SessionStart hook prints the package's resume block — the latest handoff —
 into every new session, clear and compaction. The one stock file in
@@ -284,7 +284,7 @@ user-level) the executing harness auto-loads, with an `SKL-` metadata row record
 
 **Your package carries its own prompt library — and prompts are plain `.md` files, never database
 rows** (v3). `<package>/prompts/` is the single prompt surface, seeded at creation and refreshed by
-migration/adoption/handoff: **one stock file (the operator README; since v5.0.0 the sixteen scenarios are the plugin's `/tamheed:<name>` skills, not files)**
+migration/adoption/handoff: **one stock file (the operator README; since v5.0.0 the seventeen scenarios are the plugin's `/tamheed:<name>` skills, not files)**
 covering both operator styles —
 orientation (`orient-resume`, `package-onboarding`), execution (`slice-kickoff`, `progress-sync`,
 `defect-triage`, `drift-register`), close-outs (`slice-review`, `phase-close`,
@@ -427,7 +427,7 @@ tamheed/
 │   ├── references/                   # per-stage / per-concern depth (incl. artifact-catalog.md)
 │   ├── templates/                    # surviving narrative section templates
 │   ├── scripts/                      # scratch_diff.py (package diff utility)
-│   ├── skills/                       # the plugin's skills: the front door + 8 discipline + 16 operator-invoked scenarios (v5)
+│   ├── skills/                       # the plugin's skills: the front door + 9 discipline + 17 operator-invoked scenarios (v5)
 │   ├── prompts/                      # the operator guide (emitted into <package>/prompts/) + the stock history
 │   ├── db/                           # relational store: schema.sql, migrations/ (append-only), store.py, CANONICAL.md
 │   ├── server/                       # the Tamheed MCP server (the only write path into a package)

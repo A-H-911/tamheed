@@ -48,7 +48,7 @@ the quality gates against the current repo"), and PR review against acceptance c
 
 ## The scenario skills (plan 018, grown in plan 027; skills since v5, plan 116)
 
-Distinct from the project prompts above: sixteen operator-invoked scenario skills ship in the bundle
+Distinct from the project prompts above: seventeen operator-invoked scenario skills ship in the bundle
 (`../skills/<name>/SKILL.md`, `disable-model-invocation`; invoked as `/tamheed:<name>`, an argument
 naming another package) and are updated with the plugin — never emitted per project. Only the
 operator guide (`prompts/README.md`) is still emitted, `{package}` substituted, by `package_create`,
@@ -73,6 +73,7 @@ file teaches AUTHORING project prompts:
 | `generate-report` | Export + how to read `review.html` (nav, folded tables, freshness) |
 | `loop-iteration` | Fully-auto: ONE unattended pass ending in the machine-parseable `ITERATION:` block |
 | `loop-guard` | Fully-auto: the stop conditions — scope decisions and forced transitions always need a human |
+| `ste-rewrite` | Rewrite the record's prose into plain English, batch by batch (STOP per batch; immutable rows superseded; v5.9) |
 
 They are trusted bundle content with no package-derived text, linted by check.py (lint 12:
 well-formed, stack-neutral, no field identifiers, no `{package}` placeholder). The guide follows the

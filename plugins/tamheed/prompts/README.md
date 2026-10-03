@@ -47,15 +47,17 @@ as a project prompt under a new name (the stock name is retired), or delete it y
 | Refresh + read the human report | `/tamheed:generate-report` |
 | Unattended execution — the repeated prompt | `/tamheed:loop-iteration` |
 | Unattended execution — the brake (read FIRST) | `/tamheed:loop-guard` |
+| The record's prose breaks the plain-English rules (`prose-plain-english` names the texts) | `/tamheed:ste-rewrite` |
 | Something project-specific | any other `.md` here — project prompts are operator-authored, purpose-named; read the folder |
 
 Every scenario skill is **operator-invoked** (`disable-model-invocation`): the agent never
 starts a ceremony on its own, exactly as it never pasted one. Each works in the package this
 project's `CLAUDE.md` note names; an argument names another (`/tamheed:slice-kickoff other`).
-Beside them, eight **discipline skills** are model-invoked (out of the `/` menu since v5.1)
+Beside them, nine **discipline skills** are model-invoked (out of the `/` menu since v5.1)
 in every session where the plugin is enabled: `tamheed:package-writes` (every write, read and
 git crossing), `tamheed:reading-the-record` (before citing a row), `tamheed:written-claims`
-(before prose that states a mechanism or a count), `tamheed:operator-interview` (at every STOP),
+(before prose that states a mechanism or a count), `tamheed:plain-english` (before any English a
+reader cannot question, v5.9), `tamheed:operator-interview` (at every STOP),
 `tamheed:test-evidence` / `tamheed:measurement-evidence` / `tamheed:ci-evidence` (what a
 verdict's evidence must survive), and `tamheed:session-handoff` (write the handoff LAST before a
 compaction, at session end or on a handover — it also answers to `/tamheed:session-handoff`).

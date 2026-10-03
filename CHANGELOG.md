@@ -23,6 +23,13 @@ All notable changes to Tamheed are documented here. The format is based on
   prompt files and the latest handoff under the structural plain-English rules, each named with
   its hard findings per rule; a `GT-` term of the package is never a finding; `ready` never moves
   (plan 182).
+- Two skills: `tamheed:plain-english` (discipline, model-invoked: the structural plain-English rules,
+  the two modes, the `Kept as-is:` protocol) and `/tamheed:ste-rewrite [package]` (scenario,
+  operator-invoked: the readiness rule names the texts, batches of ten, a STOP per batch, Draft and
+  Proposed rows rewritten in place with `expect_unchanged`, immutable rows superseded, an Approved
+  AC with a Met verdict and an Approved lesson skipped unless the operator opts in). The note names
+  the new discipline; the stock README maps the new situation. 1 front, 17 scenario, 9 discipline
+  (plan 183).
 - `plugins/tamheed/references/vocabulary.md`: one verb per action, one meaning per term, the names
   that contain a rejected word (plan 179, rulings R30-R33).
 

@@ -317,7 +317,7 @@ def skills() -> list[dict]:
                     "arg_hint": fm.get("argument-hint", ""),
                     "lines": len(p.read_text(encoding="utf-8").splitlines())})
     counts = {g: sum(1 for s in out if s['group'] == g) for g in ("front", "scenario", "discipline")}
-    assert counts == {"front": 1, "scenario": 16, "discipline": 8}, counts
+    assert counts == {"front": 1, "scenario": 17, "discipline": 9}, counts
     return out
 
 

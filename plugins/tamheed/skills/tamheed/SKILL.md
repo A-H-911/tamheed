@@ -294,7 +294,7 @@ Read the reference file when you reach the matching part of the work; do not loa
 | `references/safeguards.md` | The anti-patterns to actively prevent |
 | `references/handoff.md` | Assembling the execution-agent handoff |
 | `references/adopt.md` | Brownfield onboarding (`adopt` mode) |
-| `references/prompt-templates.md` | Writing project prompt files + the sixteen scenario skills |
+| `references/prompt-templates.md` | Writing project prompt files + the seventeen scenario skills |
 | `references/generated-structure.md` | The layout of a generated package |
 | `references/state.md` | State, resumption, and update cycles |
 | `references/extension.md` | Adding capabilities without touching core logic |

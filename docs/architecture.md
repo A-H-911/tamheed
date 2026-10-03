@@ -186,7 +186,7 @@ tamheed/
 └── plugins/tamheed/                       # THE PLUGIN — the self-contained skill bundle
     ├── .claude-plugin/plugin.json
     ├── .mcp.json                           # auto-starts the server when the plugin is enabled
-    ├── skills/                             # v5: tamheed/SKILL.md (the front door, owns the capability) + 7 discipline + 16 scenario skills
+    ├── skills/                             # v5: tamheed/SKILL.md (the front door, owns the capability) + 9 discipline + 17 scenario skills
     ├── references/                         # on-demand depth + artifact-catalog.md
     ├── templates/                          # surviving narrative section templates
     ├── scripts/                            # scratch_diff.py (package diff utility)
@@ -205,8 +205,8 @@ always-loaded note stays small because everything that is HOW rather than WHAT m
 flowchart LR
     EMIT[handoff_emit] -->|rebuilds every emit| NOTE["CLAUDE.md note - tamheed:note v5<br/>AMBIENT: package pointer, the obligations table, Approved lessons, the skills line"]
     EMIT -->|refreshes the guide, retires stale leftovers| GUIDE["package/prompts/<br/>README.md (the one stock file) + project-authored prompts"]
-    UPD[claude plugin update] -->|ships| DISC["8 discipline skills (v5.1)<br/>MODEL-INVOKED, out of the / menu: package-writes, reading-the-record, operator-interview, written-claims, test-evidence, measurement-evidence, ci-evidence, session-handoff (both routes)"]
-    UPD -->|ships| SCEN["16 scenario skills<br/>OPERATOR-INVOKED /tamheed:name - description out of context"]
+    UPD[claude plugin update] -->|ships| DISC["9 discipline skills (v5.1, plain-english v5.9)<br/>MODEL-INVOKED, out of the / menu: package-writes, reading-the-record, operator-interview, written-claims, plain-english, test-evidence, measurement-evidence, ci-evidence, session-handoff (both routes)"]
+    UPD -->|ships| SCEN["17 scenario skills<br/>OPERATOR-INVOKED /tamheed:name - description out of context"]
     UPD -->|ships| HOOK["hooks/hooks.json (v5.1)<br/>SessionStart: resume_hook.py prints the resume block - plain text, screened, capped"]
     PROMO["/tamheed:skill-promote"] -->|writes on the operator's word| PROJ[".claude/skills/name<br/>PROJECT: promoted lessons, operator-owned, SKL- rows"]
     NOTE -.->|names| DISC

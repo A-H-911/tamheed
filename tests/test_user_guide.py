@@ -85,7 +85,7 @@ class UserGuideTest(unittest.TestCase):
         self.assertEqual(len(f["events"]["all"]), 12)
         self.assertEqual(len(f["tools"]), 19)
         self.assertEqual({s["group"] for s in f["skills"]}, {"front", "scenario", "discipline"})
-        self.assertEqual(len(f["skills"]), 25)
+        self.assertEqual(len(f["skills"]), 27)
         self.assertEqual(len(f["stages"]["stages"]), 22)
         self.assertEqual(f["stages"]["human"], [7, 8, 14, 18, 22])
         # plan 175: a multi-line table CHECK is carried whole; an `OR col GLOB` tail is a value form

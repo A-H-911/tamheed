@@ -22,7 +22,7 @@ Markdown registers.
 ├── prompts/                       # v3 (plan 027): the project's prompts, plain .md — read the folder, pick
 │   ├── <kickoff>.md               # project-authored (Stage 20; any non-stock filename)
 │   └── README.md                  # the operator guide ({package} substituted), seeded at create — v5: the ONE
-│                                  #   stock file; the 16 scenarios are the plugin's /tamheed:<name> skills
+│                                  #   stock file; the 17 scenarios are the plugin's /tamheed:<name> skills
 ├── review.html (+ csv/)           # the human review surface, exported on demand
 ├── exports/                       # v4.7: entity_export files — a read tool's whole result, digest-
 │   └── <name>.json                #   stamped, deterministic; the sanctioned read for committed scripts

@@ -75,7 +75,8 @@ lessons unless the operator opts in per row; ledger-first plan files.
 - **179 — the vocabulary.** `74a6725`. The census (`evidence/scripts-ste/vocab_census.md`, 16 groups, name positions), four rulings R30–R33, `references/vocabulary.md` with 26 actions, 22 terms and 5 names. Frozen.
 - **180 — the linter module.** `b0733b4`. `server/ste_lint.py` (port of upstream `ste-lint.py`, MIT notice, `THIRD-PARTY-NOTICES.md`), 21 tests in the twelfth suite, the four count surfaces, the guide id.
 - **181 — lint 14.** `dd1cc85`. The roster (`_STE_SURFACES`, `_STE_PENDING`, the exempt set, `_ste_scope` by rglob), the block in the numbered-comment shape, six lint tests, `lint.14` in the guide, fourteen lints on the page.
-- **182 — the readiness rule.** (this commit) `prose-plain-english`, advisory, thirtieth package rule: register statement columns, the project's prompt files, the latest handoff, `GT-` terms as names, counts per rule, the skill cue in the note; `register-liveness` item 22; the guide's `rule.*` id.
+- **182 — the readiness rule.** `8ec513b`. `prose-plain-english`, advisory, thirtieth package rule: register statement columns, the project's prompt files, the latest handoff, `GT-` terms as names, counts per rule, the skill cue in the note; `register-liveness` item 22; the guide's `rule.*` id.
+- **183 — the two skills.** (this commit) `plain-english` (discipline) and `ste-rewrite` (scenario), the note's skills line, the stock README under `5.9.0`, every count surface (1 / 17 / 9, 27 skills), two tests.
 
 ## 4. Errors owned
 
