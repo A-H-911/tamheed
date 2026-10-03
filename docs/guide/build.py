@@ -27,7 +27,7 @@ JS = (HERE / "guide.js").read_text(encoding="utf-8")
 # Derived-id prefixes the page must render for every member (a family the renderer silently
 # dropped would otherwise pass the coverage test).
 MUST_RENDER = ("type.", "table.", "tool.", "param.", "gate.", "rule.", "rel.", "skill.", "stage.",
-               "mode.", "profile.", "lint.", "suite.", "event.", "trigger.", "view.", "review.")
+               "mode.", "profile.", "lint.", "suite.", "event.", "trigger.", "view.", "review.", "vocab.")
 
 
 def build() -> tuple[str, list[str]]:
@@ -46,6 +46,9 @@ def build() -> tuple[str, list[str]]:
             required.append(cid)
         en = content.TEXT.get(cid, {}).get("en")
         assert en in (None, s["title"]), f"{cid}: content says {en!r}, workflow.md says {s['title']!r}"
+    for cid, file_text in extract.vocabulary_cells(f["vocabulary"]):  # plan 188: the EN cell IS the file's
+        en = content.TEXT.get(cid, {}).get("en")
+        assert en in (None, file_text), f"{cid}: content says {en!r}, vocabulary.md says {file_text!r}"
     return html, required
 
 

@@ -144,6 +144,7 @@ def render_page(f: dict, text_table: dict, css: str, js: str) -> str:
     _skills(r)
     _session(r)
     _practices(r)
+    _writing(r)
     _faq(r)
     _maintainer(r)
     _glossary(r)
@@ -208,7 +209,8 @@ SECTIONS = [
     ("workflows", "use"), ("package", "data"), ("families", "data"), ("relations", "data"),
     ("statuses", "data"), ("tools", "engine"), ("gates", "engine"), ("readiness", "engine"),
     ("transitions", "engine"), ("skills", "agents"), ("session", "agents"), ("practices", "agents"),
-    ("faq", "agents"), ("maintainer", "appendix"), ("glossary", "appendix"), ("about", "appendix"),
+    ("writing", "agents"), ("faq", "agents"), ("maintainer", "appendix"), ("glossary", "appendix"),
+    ("about", "appendix"),
 ]
 
 
@@ -683,6 +685,23 @@ def _practices(r: R) -> None:
     body = r.P("section.practices.1")
     body += "<ol>" + "".join(f'<li>{r.T(f"practice.{k}")}</li>' for k in PRACTICES) + "</ol>"
     r.section("practices", body)
+
+
+def _writing(r: R) -> None:
+    """Plan 188 (R22): the writing discipline, with the vocabulary tables rendered FROM
+    references/vocabulary.md (extract.vocabulary); build.py asserts the EN cells equal the file."""
+    v = r.f["vocabulary"]
+    body = r.PS("section.writing", 3)
+    body += r.H(3, "section.writing.actions")
+    rows = [[r.T(f"vocab.action.{a['slug']}"), r.code(a["verb"]), md(a["rejected"])] for a in v["actions"]]
+    body += r.table([r.UI("col.action"), r.UI("col.verb"), r.UI("col.rejected")], rows, "compact")
+    body += r.H(3, "section.writing.terms")
+    rows = [[r.code(t["term"]), r.T(f"vocab.term.{t['slug']}"), r.T(f"vocab.never.{t['slug']}")] for t in v["terms"]]
+    body += r.table([r.UI("col.term"), r.UI("col.means"), r.UI("col.nevermeans")], rows, "compact")
+    body += r.H(3, "section.writing.names") + r.P("section.writing.names.1")
+    rows = [[r.code(n["name"]), r.T(f"vocab.name.{n['slug']}")] for n in v["names"]]
+    body += r.table([r.UI("col.name"), r.UI("col.where")], rows, "compact")
+    r.section("writing", body)
 
 
 FAQ = ["locked", "stale", "pre-v4", "uv", "silent-hook", "old-descriptions", "indeterminate", "not-null",

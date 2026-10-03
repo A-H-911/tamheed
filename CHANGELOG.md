@@ -50,6 +50,11 @@ All notable changes to Tamheed are documented here. The format is based on
   1,262 hard findings to 0, every pinned phrase word for word. The plugin and marketplace
   descriptions name both halves of the capability: the planning package, then the record of the
   build while execution runs (plan 187).
+- The guide's prose is plain English (wave 4b of 4), in both languages: 1,495 hard findings to 0
+  over 1,284 entries of `docs/guide/content.py`, the Arabic under the semicolon and length rules.
+  Lint 14 reads that file by import, entry by entry, and `_STE_PENDING` is empty: every prose file
+  in the repository is rostered. A new guide section, Writing discipline, renders the three tables
+  of `references/vocabulary.md` from the file itself, with an Arabic twin for every cell (plan 188).
 - `plugins/tamheed/references/vocabulary.md`: one verb per action, one meaning per term, the names
   that contain a rejected word (plan 179, rulings R30-R33).
 

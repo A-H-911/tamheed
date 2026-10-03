@@ -81,11 +81,10 @@ _STE_SURFACES = (
     ("docs/*.md", "flavored", "en", ()),
     ("lab/README.md", "flavored", "en", ()),
     ("evals/README.md", "flavored", "en", ()),
+    # wave 4b (plan 188): the guide's prose, read by import (every entry, EN and AR), flavored
+    ("docs/guide/content.py", "flavored", "en+ar", ()),
 )
-_STE_PENDING = (
-    # wave 4b (plan 188): the guide's prose, read by import
-    "docs/guide/content.py",
-)
+_STE_PENDING: tuple[str, ...] = ()  # every wave has landed (R26: the last wave leaves it empty)
 # Never linted: the linter's own messages name rejected words; a verbatim license; the lab's
 # deliberately flawed brief, its dated beats and its seeded code; eval fixtures; dated records;
 # the stock history (it quotes old releases); generated samples; the tests; dot-directories.
@@ -96,6 +95,25 @@ _STE_EXEMPT_PATHS = frozenset({
 })
 _STE_EXEMPT_PREFIXES = ("lab/seed/", "plans/", "docs/adr/", "docs/history/",
                         "evals/sample-results/", "generated-samples/", "tests/")
+
+
+def _ste_lint_guide_prose(path: Path, mode: str, vocab, ste_lint) -> tuple[list[dict], int]:
+    """docs/guide/content.py holds the guide's prose as TEXT[id][lang]. Each entry is Markdown
+    prose, linted under its own language (AR: the semicolon and length rules), and a finding is
+    labelled `content.py:<id>.<lang>`. Imported from the copy under test, never the live tree."""
+    import importlib.util  # noqa: PLC0415
+    spec = importlib.util.spec_from_file_location("tamheed_guide_content", path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    findings: list[dict] = []
+    words = 0
+    for cid, entry in module.TEXT.items():
+        for lang in ("en", "ar"):
+            label = f"docs/guide/{path.name}:{cid}.{lang}"
+            blocks = ste_lint.extract_markdown_prose(entry.get(lang) or "", filename=label)
+            words += ste_lint.word_count(blocks)
+            findings += ste_lint.lint_blocks(blocks, mode=mode, lang=lang, vocab=vocab, filename=label)
+    return findings, words
 
 
 def _ste_scope(repo: Path) -> list[str]:
@@ -520,13 +538,17 @@ def gate_lint() -> None:
     ste_advisory: Counter = Counter()
     ste_markers = 0
     for rel, (mode, lang, skipped) in rostered.items():
-        findings, words = ste_lint.lint_path(REPO / rel, mode=mode, lang=lang, vocab=ste_vocab,
-                                             skip_rules=skipped)
+        if rel == "docs/guide/content.py":  # prose by import: every entry, EN and AR (plan 188)
+            findings, words = _ste_lint_guide_prose(REPO / rel, mode, ste_vocab, ste_lint)
+        else:
+            findings, words = ste_lint.lint_path(REPO / rel, mode=mode, lang=lang, vocab=ste_vocab,
+                                                 skip_rules=skipped)
         ste_words += words
         ste_markers += len(re.findall(r"(?:<!--|#)\s*ste:allow\b", (REPO / rel).read_text(encoding="utf-8")))
         for f in findings:
             if f["level"] == ste_lint.HARD:
-                ste_problems.append(f"{rel}:{f['line']} {f['rule']}: {f['message']} [{f['match']}]")
+                where = f["file"] if rel == "docs/guide/content.py" else f"{rel}:{f['line']}"
+                ste_problems.append(f"{where} {f['rule']}: {f['message']} [{f['match']}]")
             else:
                 ste_advisory[f["rule"]] += 1
     if ste_problems:

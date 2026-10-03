@@ -100,6 +100,47 @@ class CheckLintsTest(unittest.TestCase):
         finally:
             self._restore(self._ROSTERED)
 
+    # ---- plan 188: the last wave landed; the guide's prose is linted by import, both languages
+    def test_ste_pending_is_empty(self):
+        self.assertEqual(check._STE_PENDING, ())
+
+    def test_ste_roster_covers_the_scope(self):
+        import fnmatch
+        scope = check._ste_scope(REPO_ROOT)
+        rostered = [rel for rel in scope if any(fnmatch.fnmatchcase(rel, g) for g, *_ in check._STE_SURFACES)]
+        self.assertEqual(sorted(rostered), scope)
+        self.assertIn("docs/guide/content.py", scope)
+
+    _GUIDE = "docs/guide/content.py"
+
+    def test_arabic_semicolon_in_the_guide_prose_is_caught_by_id(self):
+        p = self.copy / self._GUIDE
+        src = p.read_text(encoding="utf-8")
+        needle = '"ui.toc.contents": {"en": "Contents", "ar": "المحتويات"},'
+        self.assertIn(needle, src)
+        p.write_text(src.replace(needle, '"ui.toc.contents": {"en": "Contents", "ar": "المحتويات؛ الفهرس"},'),
+                     encoding="utf-8")
+        try:
+            code, out = self._lint()
+            self.assertEqual(code, 1); self.assertIn("content.py:ui.toc.contents.ar", out)
+            self.assertIn("semicolon", out)
+        finally:
+            self._restore(self._GUIDE)
+
+    def test_long_english_sentence_in_the_guide_prose_is_caught_by_id(self):
+        p = self.copy / self._GUIDE
+        src = p.read_text(encoding="utf-8")
+        needle = '"ui.toc.contents": {"en": "Contents", "ar": "المحتويات"},'
+        long = " ".join(["word"] * 26) + "."
+        p.write_text(src.replace(needle, f'"ui.toc.contents": {{"en": "{long}", "ar": "المحتويات"}},'),
+                     encoding="utf-8")
+        try:
+            code, out = self._lint()
+            self.assertEqual(code, 1); self.assertIn("content.py:ui.toc.contents.en", out)
+            self.assertIn("long-sentence", out)
+        finally:
+            self._restore(self._GUIDE)
+
     def test_prose_file_in_neither_roster_nor_pending_is_caught(self):
         probe = self.copy / "plugins" / "tamheed" / "probe-neither.md"  # the bundle root: no roster or pending glob covers it
         probe.write_text("A clean sentence.\n", encoding="utf-8")

@@ -95,6 +95,24 @@ class UserGuideTest(unittest.TestCase):
         mode = next(c for c in pkg["columns"] if c["name"] == "mode")
         self.assertEqual(mode["check_glob"], ["stage:*"])
 
+    def test_vocabulary_table_comes_from_the_file(self):
+        """Plan 188 (R22): the Writing discipline section renders references/vocabulary.md's
+        three tables, every English cell the file's own text, every row with an Arabic twin."""
+        v = self.facts["vocabulary"]
+        self.assertEqual(len(v["actions"]), 25)
+        self.assertEqual(len(v["terms"]), 22)
+        self.assertEqual(len(v["names"]), 7)
+        section = self.html[self.html.index('<section class="sec" id="writing">'):]
+        section = section[:section.index("</section>")]
+        for cid, en in extract.vocabulary_cells(v):
+            self.assertIn(cid, self.required, cid)
+            self.assertEqual(content.TEXT[cid]["en"], en, cid)
+            self.assertIn(render.md(en), section, cid)
+            self.assertTrue(content.TEXT[cid]["ar"].strip(), cid)
+        for a in v["actions"]:
+            self.assertIn(f"<code>{a['verb']}</code>", section, a["verb"])
+        self.assertIn("<code>check</code>", section)
+
     def test_diagrams_draw_cleanly(self):
         """Plan 175 (operator ruling): every edge meets its box on the border, crosses no box and
         no other edge, and no label lies on a line or a box — on both language copies."""

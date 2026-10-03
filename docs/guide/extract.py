@@ -356,6 +356,36 @@ def review_sections() -> list[tuple[str, str]]:
     return [(sid, title) for sid, title, _fn in export_html.SECTIONS]
 
 
+def _slug(s: str) -> str:
+    return re.sub(r"[^a-z0-9]+", "-", s.strip("`").lower()).strip("-")
+
+
+def vocabulary() -> dict:
+    """The three tables of references/vocabulary.md, through the linter's own parser (plan 188).
+    load_vocabulary runs first: a missing header raises, so the page never renders an empty table."""
+    import ste_lint  # noqa: E402
+    path = BUNDLE / "references" / "vocabulary.md"
+    ste_lint.load_vocabulary(path)
+    tables = {tuple(h.lower() for h in head): rows for head, rows in ste_lint._tables(path.read_text(encoding="utf-8"))}
+    actions = tables[("action", "approved verb", "rejected synonyms")]
+    terms = tables[("term", "one meaning", "never means")]
+    names = tables[("name", "where it is a name")]
+    return {
+        "actions": [{"slug": _slug(a), "action": a, "verb": v.strip("`"), "rejected": rej} for a, v, rej in actions],
+        "terms": [{"slug": _slug(t), "term": t.strip("`"), "meaning": m, "never": n} for t, m, n in terms],
+        "names": [{"slug": _slug(n), "name": n.strip("`"), "where": w} for n, w in names],
+    }
+
+
+def vocabulary_cells(v: dict) -> list[tuple[str, str]]:
+    """(content id, the file's English cell) for every vocabulary id the page renders."""
+    out = [(f"vocab.action.{a['slug']}", a["action"]) for a in v["actions"]]
+    for t in v["terms"]:
+        out += [(f"vocab.term.{t['slug']}", t["meaning"]), (f"vocab.never.{t['slug']}", t["never"])]
+    out += [(f"vocab.name.{n['slug']}", n["where"]) for n in v["names"]]
+    return out
+
+
 # ------------------------------------------------------------------------------ facts
 
 def facts() -> dict:
@@ -366,7 +396,7 @@ def facts() -> dict:
         "gates": gates(), "rules": readiness_rules(), "events": events(),
         "verdicts": verdict_sets(sch), "stages": stages(), "skills": skills(),
         "modes": modes(sch), "hook": hook(), "mcp": mcp(), "maintainer": maintainer(),
-        "review_sections": review_sections(),
+        "review_sections": review_sections(), "vocabulary": vocabulary(),
     }
 
 
@@ -437,6 +467,7 @@ def derived_ids(f: dict) -> list[str]:
         ids.append(f"checkgate.{g}")
     for sid, _ in f["review_sections"]:
         ids.append(f"review.{sid}")
+    ids += [cid for cid, _ in vocabulary_cells(f["vocabulary"])]
     # de-duplicate, keep order
     out, seen2 = [], set()
     for i in ids:

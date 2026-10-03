@@ -200,7 +200,7 @@ Status values: PLANNED / IN PROGRESS / DONE.
 | 185 | [Wave 2: the 27 skills](185-wave-2-skills.md) -- 818 hard findings to 0 on 27 skills, the glob rostered, triggers and 22 pins kept, two names-table rows, one allow marker in a lint-13 probe | 184 | DONE -- 2026-10-03 (the commit this row lands in, after the operator's review) |
 | 186 | [Wave 3: references, templates, stock README, server README, CANONICAL](186-wave-3-references-templates.md) -- 1,010 hard findings to 0 on 37 files, six globs rostered, 41 pins kept, the stock body under its 5.9.0 key, `Validate:` → `Check:` in workflow.md | 185 | DONE -- 2026-10-03 (the commit this row lands in, after the operator's review) |
 | 187 | [Wave 4a: human docs, root files, the lab and evals READMEs](187-wave-4a-human-docs.md) -- 1,262 hard findings to 0 on 13 files (flavored), seven globs rostered, 21 pins kept, both manifest descriptions name both halves, six stale counts corrected under R38 | 186 | DONE -- 2026-10-03 (the commit this row lands in, after the operator's review) |
-| 188 | Wave 4b: the guide EN and AR, the "Writing discipline" section; pending empty | 187 | PLANNED |
+| 188 | [Wave 4b: the guide EN and AR, the Writing discipline section](188-wave-4b-guide.md) -- 1,495 hard findings to 0 over 1,284 bilingual entries, `content.py` rostered by import, pending empty, the vocabulary tables rendered from the file with Arabic twins (92 new ids), 14 pins kept | 187 | DONE -- 2026-10-04 (the commit this row lands in, after the operator's review) |
 | 189 | Stamp 5.9.0, evals re-aimed, lab beat 33 | 188 | PLANNED |
 | 190 | The ACMP brief 5.9.0 | 189 | PLANNED |
 | 191 | Release: batch record, push, tag | 190 | PLANNED |
