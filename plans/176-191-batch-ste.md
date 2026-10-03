@@ -56,6 +56,10 @@ perfect 88 (advisory). Python runtime literals: `tamheed_server.py` 104 semicolo
 | R27 | `lab/README.md` and `evals/README.md` in scope; `lab/brief.md`, `lab/scenario.md`, `evals/evals.json` exempt. |
 | R28 | Runtime string literals only; docstrings and comments exempt. |
 | R29 | Allow marker with a mandatory reason; a marker without one is a hard finding; the count is printed. |
+| R30 | check = a gate ran, verify = a verdict on evidence, confirm = the operator's word; `validate` rejected in prose, kept in the stage-19 title and the product line as names (plan 179). |
+| R31 | retire = rows, remove = files, markers and lines; `delete` and `erase` rejected (plan 179). |
+| R32 | Rejected: repair (fix / correct), get and fetch (read), produce (emit / generate / write), decline (refuse / reject) (plan 179). |
+| R33 | display, journal, log and reference stay as noun terms, never rejected; verb uses are rewritten by hand (plan 179). |
 
 Approved with the plan (2026-10-03): the wave protocol (stage, advisor read, operator review, one
 commit after the ruling, fix-ups disclosed); beat 33 runs the rewrite skill on a scratch copy and
@@ -65,7 +69,10 @@ lessons unless the operator opts in per row; ledger-first plan files.
 
 ## 3. What shipped, per plan
 
-- **176 — `handoff_emit` says what it writes.** (this commit)
+- **176 — `handoff_emit` says what it writes.** `d7ca9f8`. The description names the note, the stock README and `.mcp.json` for a standalone install. README rows for 170–174.
+- **177 — the converted-prompt hints name live skills.** `3e10ba1`. Three hints in the `/tamheed:<name>` form, one sentence each.
+- **178 — `handoff.md` no longer claims the template twin.** `70e63d9`. The plan-132 test reads the reference too.
+- **179 — the vocabulary.** (this commit) The census (`evidence/scripts-ste/vocab_census.md`, 16 groups, name positions), four rulings R30–R33, `references/vocabulary.md` with 26 actions, 22 terms and 5 names. Frozen.
 
 ## 4. Errors owned
 
