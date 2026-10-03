@@ -203,7 +203,7 @@ always-loaded note stays small because everything that is HOW rather than WHAT m
 
 ```mermaid
 flowchart LR
-    EMIT[handoff_emit] -->|rebuilds every emit| NOTE["CLAUDE.md note - tamheed:note v5<br/>AMBIENT: package pointer, the obligations table, Approved lessons, the skills line"]
+    EMIT[handoff_emit] -->|rebuilds every emit| NOTE["CLAUDE.md note - tamheed:note v6<br/>AMBIENT: package pointer, the obligations table, Approved lessons, the skills line"]
     EMIT -->|refreshes the guide, retires stale leftovers| GUIDE["package/prompts/<br/>README.md (the one stock file) + project-authored prompts"]
     UPD[claude plugin update] -->|ships| DISC["9 discipline skills (v5.1, plain-english v5.9)<br/>MODEL-INVOKED, out of the / menu: package-writes, reading-the-record, operator-interview, written-claims, plain-english, test-evidence, measurement-evidence, ci-evidence, session-handoff (both routes)"]
     UPD -->|ships| SCEN["17 scenario skills<br/>OPERATOR-INVOKED /tamheed:name - description out of context"]

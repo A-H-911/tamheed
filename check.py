@@ -53,11 +53,20 @@ SUITES = [
 # 184-188) move their globs from _STE_PENDING to here; the last wave leaves _STE_PENDING empty.
 _STE_SURFACES = (
     ("plugins/tamheed/references/vocabulary.md", "strict", "en", ("vocabulary",)),
+    # wave 1 (plan 184): the engine's runtime strings
+    ("plugins/tamheed/server/*.py", "strict", "en", ()),
+    ("plugins/tamheed/db/*.py", "strict", "en", ()),
+    ("plugins/tamheed/scripts/*.py", "strict", "en", ()),
+    ("check.py", "strict", "en", ()),
+    ("evals/*.py", "strict", "en", ()),
+    ("docs/guide/build.py", "strict", "en", ()),
+    ("docs/guide/extract.py", "strict", "en", ()),
+    ("docs/guide/render.py", "strict", "en", ()),
+    ("docs/guide/diagrams.py", "strict", "en", ()),
 )
 _STE_PENDING = (
-    # wave 1 (plan 184): the engine's runtime strings; docs/guide/content.py waits for wave 4b (188)
-    "plugins/tamheed/server/*.py", "plugins/tamheed/db/*.py", "plugins/tamheed/scripts/*.py",
-    "check.py", "evals/*.py", "docs/guide/*.py",
+    # wave 4b (plan 188): the guide's prose, read by import
+    "docs/guide/content.py",
     # wave 2 (plan 185)
     "plugins/tamheed/skills/*/SKILL.md",
     # wave 3 (plan 186)
@@ -156,7 +165,7 @@ def gate_lint() -> None:
     if (db_dir / "schema.sql").read_bytes() != (db_dir / "migrations" / "001_init.sql").read_bytes():
         fail("schema.sql is no longer byte-identical to migrations/001_init.sql — "
              "new DDL goes in an append-only migrations/NNN >= 002, never in either twin")
-    print(f"lint: v2 registry ({len(registry)} types) <-> table map <-> DDL in sync;"
+    print(f"lint: v2 registry ({len(registry)} types) <-> table map <-> DDL in sync,"
           " schema.sql == 001_init.sql")
 
     # 3) Always-class sync (plan 031, replacing the retired v1 mirror lint): every
@@ -207,8 +216,8 @@ def gate_lint() -> None:
         .read_text(encoding="utf-8").splitlines()[:15])
     if not re.search(r'dependencies = \["mcp>=[0-9.]+,<2"\]', server_head):
         fail("PEP 723 mcp pin missing or widened in tamheed_server.py — this build"
-             " requires mcp<2 (C33); port serve() to mcp.server.mcpserver before"
-             " touching the bound")
+             " requires mcp<2 (C33). Port serve() to mcp.server.mcpserver before"
+             " you touch the bound")
     print("lint: PEP 723 mcp pin bounded (<2)")
 
     # 7) migrations are announced (plan 027): every shipped schema migration must be
@@ -244,9 +253,9 @@ def gate_lint() -> None:
                   if p.read_text(encoding="utf-8")
                   not in history.get(p.name, {}).values()]
     if stale_hist:
-        fail(f"stock-history.json is missing the CURRENT body of: {stale_hist} — "
-             "append each changed stock prompt's body under the release version"
-             " (plan 032: the history is what makes divergence classifiable)")
+        fail(f"stock-history.json is missing the CURRENT body of: {stale_hist}."
+             " Append each changed stock prompt's body under the release version"
+             " (plan 032: the history makes divergence classifiable)")
     print(f"lint: stock history current ({len(history)} files,"
           f" {sum(len(v) for v in history.values())} bodies)")
 
@@ -290,7 +299,8 @@ def gate_lint() -> None:
                  ('"status":', "all"), ("PRM-", "prompts+templates"),
                  ("PASS/FAIL", "prompts"),
                  ("tamheed:note v3", "all"),  # marker bumped to v4 (plan 035)
-                 ("tamheed:note v4", "all")]  # and to v5 (plan 116)
+                 ("tamheed:note v4", "all"),  # and to v5 (plan 116)
+                 ("tamheed:note v5", "all")]  # and to v6 (plan 184)
     _hist = re.compile(r"retired|deleted|renamed|blacklist|historical", re.I)
     problems = []
     for rel, text in teaching.items():
@@ -504,7 +514,7 @@ def gate_lint() -> None:
         findings, words = ste_lint.lint_path(REPO / rel, mode=mode, lang=lang, vocab=ste_vocab,
                                              skip_rules=skipped)
         ste_words += words
-        ste_markers += (REPO / rel).read_text(encoding="utf-8").count("ste:allow")
+        ste_markers += len(re.findall(r"(?:<!--|#)\s*ste:allow\b", (REPO / rel).read_text(encoding="utf-8")))
         for f in findings:
             if f["level"] == ste_lint.HARD:
                 ste_problems.append(f"{rel}:{f['line']} {f['rule']}: {f['message']} [{f['match']}]")
@@ -514,8 +524,8 @@ def gate_lint() -> None:
         fail("plain English (plan 181): hard findings on rostered surfaces (baseline 0):\n  "
              + "\n  ".join(ste_problems))
     advisory_line = " ".join(f"{k}={v}" for k, v in sorted(ste_advisory.items())) or "none"
-    print(f"lint: plain English ({len(rostered)} files, {ste_words} words) 0 hard;"
-          f" advisory {advisory_line}; allow markers={ste_markers};"
+    print(f"lint: plain English ({len(rostered)} files, {ste_words} words) 0 hard,"
+          f" advisory {advisory_line}, allow markers={ste_markers},"
           f" pending {len(pending)} surfaces")
 
 

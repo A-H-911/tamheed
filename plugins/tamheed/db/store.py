@@ -217,9 +217,9 @@ def observe_lock(lock_path: Path, probe=process_start_time,
     late = started > taken + _START_TOLERANCE_S
     return {**out, "outcome": "reused" if late else "alive",
             "evidence": (f"pid {pid} started AFTER the lock was taken - a process cannot"
-                         " write a file before it exists (ordering; the lock recorded no"
+                         " write a file before it exists (ordering: the lock recorded no"
                          " start time)" if late else
-                         f"pid {pid} is running and predates the lock (ordering only;"
+                         f"pid {pid} is running and predates the lock (ordering only:"
                          " the lock recorded no start time)")}
 
 
@@ -351,7 +351,7 @@ def load(data_dir: str | os.PathLike) -> sqlite3.Connection:
     if violations:
         table, rowid, parent, _ = violations[0]
         raise sqlite3.IntegrityError(
-            f"foreign key violation loading {table!r} (row {rowid} -> {parent!r});"
+            f"foreign key violation loading {table!r} (row {rowid} -> {parent!r}),"
             f" {len(violations)} violation(s) total"
         )
     return conn

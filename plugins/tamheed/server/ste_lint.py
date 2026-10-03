@@ -356,7 +356,7 @@ def _code_shaped(text: str) -> bool:
         return True
     if _REGEX_META.search(text) or _SQL_START.match(text) or _MARKUP.search(text):
         return True
-    tokens = text.split()
+    tokens = [t for t in text.split() if any(ch.isalnum() for ch in t)]  # `|` is layout
     lettered = sum(1 for t in tokens if _LETTERS3.search(t))
     return lettered * 2 < len(tokens)
 
@@ -401,6 +401,13 @@ def extract_python_literals(source: str, *, filename: str = "<source>") -> list[
                     allow.add(rule)
                 else:
                     bad.append(node.lineno - 1)
+        if "\n" in text.strip():
+            # A multi-line literal is Markdown (the operating note, a stale-warning block):
+            # its headings, table rows and paragraphs are read as such, each at the
+            # literal's line, so a table row is never one long sentence.
+            for sub in extract_markdown_prose(text, filename=filename):
+                blocks.append(_block(node.lineno, sub["kind"], sub["text"], allow, bad))
+            continue
         blocks.append(_block(node.lineno, "literal", _inline(text), allow, bad))
     return blocks
 

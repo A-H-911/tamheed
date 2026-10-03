@@ -76,7 +76,8 @@ lessons unless the operator opts in per row; ledger-first plan files.
 - **180 — the linter module.** `b0733b4`. `server/ste_lint.py` (port of upstream `ste-lint.py`, MIT notice, `THIRD-PARTY-NOTICES.md`), 21 tests in the twelfth suite, the four count surfaces, the guide id.
 - **181 — lint 14.** `dd1cc85`. The roster (`_STE_SURFACES`, `_STE_PENDING`, the exempt set, `_ste_scope` by rglob), the block in the numbered-comment shape, six lint tests, `lint.14` in the guide, fourteen lints on the page.
 - **182 — the readiness rule.** `8ec513b`. `prose-plain-english`, advisory, thirtieth package rule: register statement columns, the project's prompt files, the latest handoff, `GT-` terms as names, counts per rule, the skill cue in the note; `register-liveness` item 22; the guide's `rule.*` id.
-- **183 — the two skills.** (this commit) `plain-english` (discipline) and `ste-rewrite` (scenario), the note's skills line, the stock README under `5.9.0`, every count surface (1 / 17 / 9, 27 skills), two tests.
+- **183 — the two skills.** `a537a1e`. `plain-english` (discipline) and `ste-rewrite` (scenario), the note's skills line, the stock README under `5.9.0`, every count surface (1 / 17 / 9, 27 skills), two tests.
+- **184 — wave 1.** (staged for the operator's review) 207 hard findings to 0 across 16 rostered files: the 19 tool descriptions, every refusal, every readiness note, every warning, the note as v6 (the hook reads v5 and v6), lint 9 blacklists `tamheed:note v5`; 16 pins re-aimed; the linter learned to read a multi-line literal as Markdown.
 
 ## 4. Errors owned
 

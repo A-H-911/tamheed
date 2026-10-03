@@ -195,8 +195,8 @@ Status values: PLANNED / IN PROGRESS / DONE.
 | 180 | [`server/ste_lint.py`, its suite, the third-party notice](180-ste-lint-module.md) -- the upstream linter ported with the paragraph join, the `ast` extractor, the vocabulary tables, Arabic and the allow marker; 21 tests, the twelfth suite | 179 | DONE -- 2026-10-03, `b0733b4` |
 | 181 | [Lint 14, plain English, with a roster that grows per wave](181-lint-14-plain-english.md) -- one file rostered, 90 pending, a prose file in neither fails; six lint tests | 180 | DONE -- 2026-10-03, `dd1cc85` |
 | 182 | [Readiness rule `prose-plain-english` (advisory)](182-readiness-prose-plain-english.md) -- register statements, prompt files and the latest handoff linted, `GT-` terms never a finding, counts per rule, the skill cue | 180 | DONE -- 2026-10-03, `8ec513b` |
-| 183 | [Skills `plain-english` and `ste-rewrite`; every count surface](183-skills-plain-english-ste-rewrite.md) -- the discipline and the operator-run rewrite ceremony, the note's skills line, the stock README under 5.9.0, 1 / 17 / 9 | 182 | DONE -- 2026-10-03 (the commit this row lands in) |
-| 184 | Wave 1: tool descriptions, server messages, note v6, the hook | 183 | PLANNED |
+| 183 | [Skills `plain-english` and `ste-rewrite`; every count surface](183-skills-plain-english-ste-rewrite.md) -- the discipline and the operator-run rewrite ceremony, the note's skills line, the stock README under 5.9.0, 1 / 17 / 9 | 182 | DONE -- 2026-10-03, `a537a1e` |
+| 184 | [Wave 1: tool descriptions, server messages, note v6, the hook](184-wave-1-engine-strings.md) -- 207 hard findings to 0 on 16 rostered files, the note as v6 with the hook reading both, 16 pins re-aimed | 183 | DONE -- 2026-10-03 (the commit this row lands in, after the operator's review) |
 | 185 | Wave 2: the 27 skills | 184 | PLANNED |
 | 186 | Wave 3: references, templates, stock README, server README, CANONICAL | 185 | PLANNED |
 | 187 | Wave 4a: human docs, root files, the lab and evals READMEs | 186 | PLANNED |

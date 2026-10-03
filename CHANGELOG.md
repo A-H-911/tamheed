@@ -30,6 +30,13 @@ All notable changes to Tamheed are documented here. The format is based on
   AC with a Met verdict and an Approved lesson skipped unless the operator opts in). The note names
   the new discipline; the stock README maps the new situation. 1 front, 17 scenario, 9 discipline
   (plan 183).
+- The engine's English is plain English (wave 1 of 4): the 19 tool descriptions, every refusal,
+  every readiness note and every `handoff_emit` warning read as short active sentences with no
+  semicolon and the vocabulary's verbs (`remove` for a file, `retire` for a row, `read` for a query).
+  The CLAUDE.md note is `tamheed:note v6`: its first sentence reads "The Tamheed package for this
+  project is `X`", and the SessionStart hook reads that sentence and the v5 one until a client
+  re-emits. Any `handoff_emit` rebuilds the note, and `refresh_stock=true` also refreshes the stock
+  README (plan 184).
 - `plugins/tamheed/references/vocabulary.md`: one verb per action, one meaning per term, the names
   that contain a rejected word (plan 179, rulings R30-R33).
 

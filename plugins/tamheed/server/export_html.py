@@ -101,8 +101,8 @@ def _freshness(conn: sqlite3.Connection) -> str:
         # Field-evidence C18: right after migration the only date around is the package
         # record's own (often the v1 manifest's) — calling it "activity" reads as
         # staleness. Say what it actually is.
-        return (f"iteration {iteration} · package record dated {created or 'unknown'}; "
-                "no v2 activity recorded yet")
+        return (f"iteration {iteration} · package record dated {created or 'unknown'}. "
+                "There is no v2 activity recorded yet")
     return f"iteration {iteration} · latest recorded activity: {latest}"
 
 
@@ -322,10 +322,10 @@ def _graph(conn, gates, ready, readiness=None):
     if connected:
         svg = _graph_agg(connected, edges) if len(connected) > _G_AGG_LIMIT \
             else _graph_full(connected, edges)
-        hint = ("Hover a family for its size; click to jump to its register."
+        hint = ("Hover a family for its size. Click to jump to its register."
                 if len(connected) > _G_AGG_LIMIT else
-                "Hover a node for its id (radius = edge count); click to jump to its "
-                "register row. Arrowheads show direction; pick a relation to isolate "
+                "Hover a node for its id (radius = edge count). Click to jump to its "
+                "register row. Arrowheads show direction. Pick a relation to isolate "
                 "it.")
         # CSS-only zoom (C26): radio inputs + sibling selectors — zero JS. The inputs
         # must be direct siblings of .graphwrap for `:checked ~ .graphwrap` to apply.
@@ -585,7 +585,7 @@ def _feedback(conn, gates, ready, readiness=None):
          "lifecycle_status = 'Proposed'", "feedback-queue"),
         ("Confirmed, not yet reported upstream (entity_export(\"feedback\") into the findings)",
          "lifecycle_status = 'Confirmed' AND kind <> 'local-tool'", "feedback-confirmed"),
-        ("Registered local tools (on the operator's word; writes nothing tool-owned)",
+        ("Registered local tools (on the operator's word, writes nothing tool-owned)",
          "kind = 'local-tool'", "feedback-tools"),
         # plan 100 (the field's FB-014): an unanswered report is not closed - the heading
         # said "kept as evidence" over rows that were still live requests. The predicate is

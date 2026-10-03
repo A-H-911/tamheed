@@ -377,7 +377,7 @@ def _package(r: R) -> None:
         "└── data-v3-backup/    # only after a v3 -> v4 package_migrate\n"
         "<target project>/\n"
         "├── .mcp.json          # executor-side server config (handoff_emit)\n"
-        "└── CLAUDE.md          # the tool-owned note span <!-- tamheed:note v5 --> ... <!-- /tamheed:note -->",
+        "└── CLAUDE.md          # the tool-owned note span <!-- tamheed:note v6 --> ... <!-- /tamheed:note -->",
         copy=False)
     body += r.H(3, "section.package.canonical") + r.PS("section.package.canonical", 2)
     body += "<ul>" + "".join(f"<li>{r.T(f'section.package.rule.{k}')}</li>" for k in range(1, 8)) + "</ul>"

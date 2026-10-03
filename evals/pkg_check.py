@@ -246,7 +246,7 @@ def main(argv: list[str] | None = None) -> int:
         p.set_defaults(fn=lambda a, _p=present: _grep_tree(a, _p))
 
     p = sub.add_parser("verify", help="the package passes its canonical round-trip"
-                                      " (package_verify; read-only)")
+                                      " (package_verify, read-only)")
     p.add_argument("package")
     p.set_defaults(fn=cmd_verify)
 

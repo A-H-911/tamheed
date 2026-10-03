@@ -19,9 +19,13 @@ import resume_hook as hook  # noqa: E402
 import tamheed_server as srv  # noqa: E402
 
 DEMO_DATA = REPO_ROOT / "generated-samples" / "support-triage-agent-v2" / "data"
-NOTE = ("\n## Tamheed progress tracking\n<!-- tamheed:note v5 -->\n\n"
-        "This project executes Tamheed package `{name}` (under `{root}`).\n"
+NOTE = ("\n## Tamheed progress tracking\n<!-- tamheed:note v6 -->\n\n"
+        "The Tamheed package for this project is `{name}` (under `{root}`).\n"
         "<!-- /tamheed:note -->\n")
+# Plan 184: a client that has not re-emitted since 5.8.x still carries the v5 sentence.
+NOTE_V5 = ("\n## Tamheed progress tracking\n<!-- tamheed:note v5 -->\n\n"
+           "This project executes Tamheed package `{name}` (under `{root}`).\n"
+           "<!-- /tamheed:note -->\n")
 
 
 def run_hook(project: Path, source: str = "", stdin_text: str | None = None,
@@ -64,9 +68,9 @@ class ResumeHookTest(unittest.TestCase):
             srv.package_close()
         self._tmp.cleanup()
 
-    def _package(self, name: str = "pkg", pointer: bool = True) -> None:
+    def _package(self, name: str = "pkg", pointer: bool = True, template: str = NOTE) -> None:
         shutil.copytree(DEMO_DATA, self.project / name / "data")
-        note = NOTE.format(name=name, root=self.project)
+        note = template.format(name=name, root=self.project)
         if pointer:   # the note behind ONE level of `@` import (the field's layout)
             (self.project / "CLAUDE.md").write_text(f"# Project\n\n@{name}/CLAUDE.md\n",
                                                     encoding="utf-8")
@@ -96,6 +100,15 @@ class ResumeHookTest(unittest.TestCase):
         self.assertIn("Skill: tamheed:package-writes", out)
         self.assertNotIn("compacted", out)
         self.assertLessEqual(len(lines), hook.MAX_LINES)
+
+    def test_a_v5_note_still_resumes(self):
+        """Plan 184 (R9): the note's first sentence was reworded for v6. A client that has
+        not re-emitted keeps the v5 sentence, and the hook reads both until it does."""
+        self._package(template=NOTE_V5)
+        out, code = run_hook(self.project, source="startup")
+        self.assertEqual(code, 0)
+        self.assertTrue(out.splitlines()[0].startswith("tamheed resume — package `pkg`"), out)
+        self.assertIn("No handoff recorded", out)
 
     def test_note_inline_and_missing_data_dir(self):
         self._package(pointer=False)

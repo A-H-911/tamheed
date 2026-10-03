@@ -87,11 +87,11 @@ def main(argv: list[str]) -> int:
             by_prefix[cid.split(".")[0]] = by_prefix.get(cid.split(".")[0], 0) + 1
         for cid, lg in miss:
             print(f"{cid}\t{lg}")
-        print(f"-- {len(miss)} missing strings over {len({c for c, _ in miss})} ids; by prefix: {by_prefix}")
+        print(f"-- {len(miss)} missing strings over {len({c for c, _ in miss})} ids, by prefix: {by_prefix}")
         orph = orphans(required)
         if orph:
             print(f"-- {len(orph)} orphan content ids: {orph[:20]}")
-        print(f"-- required ids: {len(required)}; content ids: {len(content.TEXT)}")
+        print(f"-- required ids: {len(required)}, content ids: {len(content.TEXT)}")
         return 1 if miss or orph else 0
     data = html.encode("utf-8")
     if "--check" in argv:

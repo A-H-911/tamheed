@@ -239,7 +239,7 @@ def fidelity(plan: Plan, pkg_dir: Path) -> dict:
                                  "field_mapping": field_mapping},
             "execution_state_note": (
                 f"{open_wbs} work item(s) land open in v_backlog — imported packages "
-                "carry no execution state; sync verdicts/progress via update mode"
+                "carry no execution state. Sync verdicts/progress via update mode"
                 if open_wbs else None),
             "unmapped": plan.unmapped}
 
@@ -247,5 +247,5 @@ def fidelity(plan: Plan, pkg_dir: Path) -> dict:
 _CUTOVER_NEXT = (
     "cutover (C15): open the package and run handoff_emit(<repo>) — it writes the "
     "executor .mcp.json and the CLAUDE.md tracking note. Then update stale v1 pointers "
-    "in the repo's AGENTS.md/CLAUDE.md and freeze the v1 source tree; until then two "
+    "in the repo's AGENTS.md/CLAUDE.md and freeze the v1 source tree. Until then two "
     "sources of truth coexist.")

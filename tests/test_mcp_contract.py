@@ -929,7 +929,7 @@ class McpContractTest(unittest.TestCase):
         # states what was verified and what was not — never only the weaker net
         self.assertTrue(prev["report"]["relocate"][0]["action"].startswith(
             "remove (copied to data-v3-backup/, a directory operators commonly"
-            " gitignore; if data/ is git-tracked"))
+            " gitignore). If data/ is git-tracked"))
         self.assertIn("git log -- data/old.jsonl.converted",
                       prev["report"]["relocate"][0]["action"])
         self.assertTrue(stale.exists())                      # preview writes nothing
@@ -1158,7 +1158,7 @@ class McpContractTest(unittest.TestCase):
             self.assertEqual(root_md.read_text(encoding="utf-8"), pointer)
             pkg_md = srv.PACKAGE_ROOT / "demo" / "CLAUDE.md"
             self.assertTrue(pkg_md.exists())
-            self.assertIn("<!-- tamheed:note v5 -->",
+            self.assertIn("<!-- tamheed:note v6 -->",
                           pkg_md.read_text(encoding="utf-8"))
             w = next(w for w in out["warnings"] if "imports the package note" in w)
             self.assertIn(str(pkg_md.resolve()), w)
@@ -1170,7 +1170,7 @@ class McpContractTest(unittest.TestCase):
             self.assertIn("was rebuilt there", w)
             again = srv.handoff_emit(target)
             w2 = next(w for w in again["warnings"] if "imports the package note" in w)
-            self.assertIn("is current there; nothing written", w2)
+            self.assertIn("is current there. Nothing written", w2)
             self.assertNotIn("updated", w2)
             self.assertEqual(again["written"], [])
             # a TRUE v1 note (heading, no markers, no import) still warns —
@@ -1460,20 +1460,20 @@ class McpContractTest(unittest.TestCase):
             self.assertEqual(root.read_bytes(), pointer.encode("utf-8"))     # root untouched
             self.assertIn("<!-- tamheed:stale-warning -->", pkg_md.read_text(encoding="utf-8"))
             w = next(w for w in out["warnings"] if "imports the package note" in w)
-            self.assertIn("is current there; the stale-warning block was added there", w)
-            self.assertIn("the root file was left untouched", w)
+            self.assertIn("is current there. The stale-warning block was added there", w)
+            self.assertIn("The root file was left untouched", w)
             stale_pkg = pkg_md.read_bytes()
             again = srv.handoff_emit(target)                                  # stable
             self.assertEqual(again["written"], [])
             self.assertEqual(pkg_md.read_bytes(), stale_pkg)
             w2 = next(w for w in again["warnings"] if "imports the package note" in w)
-            self.assertIn("is current there; nothing written", w2)
+            self.assertIn("is current there. Nothing written", w2)
             skill.write_text("# Writing rows\n\nUse the tools.\n", encoding="utf-8")
             out = srv.handoff_emit(target)
             self.assertEqual(out["stale_references"], [])
             self.assertEqual(pkg_md.read_bytes(), clean_pkg)                  # bytes restored
             w3 = next(w for w in out["warnings"] if "imports the package note" in w)
-            self.assertIn("the stale-warning block was removed there", w3)
+            self.assertIn("The stale-warning block was removed there", w3)
             # a 5.1-era block left in the ROOT is stripped once, and the warning says so
             root.write_text(pointer + "\n<!-- tamheed:stale-warning -->\n> old\n"
                             "<!-- /tamheed:stale-warning -->\n", encoding="utf-8", newline="\n")
@@ -1481,7 +1481,7 @@ class McpContractTest(unittest.TestCase):
             self.assertEqual(root.read_bytes(), pointer.encode("utf-8"))
             self.assertIn("CLAUDE.md", out["written"])
             w4 = next(w for w in out["warnings"] if "imports the package note" in w)
-            self.assertIn("a 5.1-era stale-warning block was removed from the root file", w4)
+            self.assertIn("A 5.1-era stale-warning block was removed from the root file", w4)
             self.assertEqual(srv.handoff_emit(target)["written"], [])
 
     def test_restated_register_tripwire_kinds(self):
@@ -1537,7 +1537,7 @@ class McpContractTest(unittest.TestCase):
             for _ in range(2):
                 out = srv.handoff_emit(target)
             self.assertTrue(out["ok"], out)
-            self.assertIn("<!-- tamheed:note v5 -->",
+            self.assertIn("<!-- tamheed:note v6 -->",
                           (Path(target) / "CLAUDE.md").read_text(encoding="utf-8"))
             self.assertEqual([f for f in out["restated_content"] if f["file"] == "CLAUDE.md"], [])
             self.assertEqual([f for f in out["stale_references"] if f["file"] == "CLAUDE.md"], [])
@@ -1807,7 +1807,7 @@ class McpContractTest(unittest.TestCase):
             self.assertEqual(lib["retired"], ["prompts/slice-kickoff.md"])
             self.assertEqual(lib["leftover_stale_stock"], [])
             self.assertEqual(lib["leftover_customized"], ["prompts/orient-resume.md"])
-            self.assertTrue(any("deleted (refresh_stock)" in w and "slice-kickoff.md" in w
+            self.assertTrue(any("removed (refresh_stock)" in w and "slice-kickoff.md" in w
                                 for w in out["warnings"]), out["warnings"])
         self.assertFalse((prompts / "slice-kickoff.md").exists())
         self.assertTrue((prompts / "orient-resume.md").read_text(encoding="utf-8").endswith("mine\n"))
@@ -1869,7 +1869,7 @@ class McpContractTest(unittest.TestCase):
             out = srv.handoff_emit(target)
             verdicts = {w.split(":")[0]: w for w in out["warnings"]
                         if w.startswith("handoff/")}
-            self.assertIn("safe to delete", verdicts["handoff/prm-001-initial.md"])
+            self.assertIn("safe to remove", verdicts["handoff/prm-001-initial.md"])
             self.assertIn("MOVE", verdicts["handoff/prm-002-live.md"])
             self.assertIn("destroy live content",
                           verdicts["handoff/prm-002-live.md"])
@@ -1924,7 +1924,7 @@ class McpContractTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as target:
             srv.handoff_emit(target)
             note = (Path(target) / "CLAUDE.md").read_text(encoding="utf-8")
-        for needle in ("<!-- tamheed:note v5 -->", "<!-- /tamheed:note -->",
+        for needle in ("<!-- tamheed:note v6 -->", "<!-- /tamheed:note -->",
                        "Recording obligations", "`scope-change` row (`SC-`) FIRST",
                        "activation trigger", "readiness_check(scope)",
                        "STOP and tell the operator",
@@ -1934,9 +1934,9 @@ class McpContractTest(unittest.TestCase):
                        "demo/prompts/README.md",             # the operator guide
                        "tamheed:package-writes", "tamheed:reading-the-record",
                        "tamheed:operator-interview", "/tamheed:slice-kickoff",
-                       "this table stays here because it is mandatory"):
+                       "This table stays here because it is mandatory"):
             self.assertIn(needle, note, needle)
-        for gone in ("Tool cheat-sheet", "tamheed:note v4", "audit_record(verdicts=",
+        for gone in ("Tool cheat-sheet", "tamheed:note v4", "tamheed:note v5", "audit_record(verdicts=",
                      "ready-made task prompts"):
             self.assertNotIn(gone, note, gone)
     def test_claude_md_v1_note_warned_never_touched(self):
@@ -1973,7 +1973,7 @@ class McpContractTest(unittest.TestCase):
             self.assertFalse(any("tamheed:note span" in w
                                  for w in second["warnings"]))
             hacked = claude.read_text(encoding="utf-8").replace(
-                "never Met without proof", "verdicts are optional")
+                "Never Met without proof", "verdicts are optional")
             claude.write_text(hacked + "\n## Operator notes\n\nkeep me\n",
                               encoding="utf-8")
             third = srv.handoff_emit(target)                   # NO force
@@ -1982,7 +1982,7 @@ class McpContractTest(unittest.TestCase):
             self.assertTrue(any("tool-owned" in w and "OUTSIDE" in w
                                 for w in third["warnings"]))
             after = claude.read_text(encoding="utf-8")
-            self.assertIn("never Met without proof", after)    # span rebuilt
+            self.assertIn("Never Met without proof", after)    # span rebuilt
             self.assertNotIn("verdicts are optional", after)
             self.assertIn("keep me", after)                    # outside markers: kept
 
@@ -2010,10 +2010,10 @@ class McpContractTest(unittest.TestCase):
             self.assertEqual(lib["diverged_stale_stock"], [])
             self.assertEqual(lib["refreshed"], [])
             w = next(w for w in out["warnings"] if "CUSTOMISED" in w)
-            self.assertIn("delete it and re-emit", w)
+            self.assertIn("remove it and re-emit", w)
             self.assertIn("force=True overwrites ALL", w)
-            self.assertIn("stock last changed: README.md", w)
-            self.assertIn("if a customization predates", w)
+            self.assertIn("Stock last changed: README.md", w)
+            self.assertIn("A customization that predates", w)
         self.assertEqual(stock.read_text(encoding="utf-8"), edited)  # never touched
     def test_stale_stock_classified_and_safely_refreshed(self):
         """Plan 032: a package file byte-equal to an OLDER release's stock (with the
@@ -3804,7 +3804,7 @@ class V4EngineTest(unittest.TestCase):
         case), refused when the two differ."""
         srv.package_close()
         pkg = srv.PACKAGE_ROOT / "demo"
-        self.assertIn("nothing to migrate", srv.package_migrate("demo")["error"])
+        self.assertIn("Nothing to migrate", srv.package_migrate("demo")["error"])
         conv = pkg / "data" / "prompts.jsonl.converted"
         conv.write_text('{"id":"PRM-001"}\n', encoding="utf-8")
         prev = srv.package_migrate("demo")
@@ -4101,7 +4101,7 @@ class V4EngineTest(unittest.TestCase):
         self.assertNotIn("BINDS only once", out["items"][0]["next"])
         # Plan 136 (v5.3, findings_34 E2): binding is not rendering. A pinned row always
         # renders; an unpinned one only while among the 10 newest — the hint says which.
-        self.assertIn("pinned rows always render", out["items"][0]["next"])
+        self.assertIn("Pinned rows always render", out["items"][0]["next"])
         unpinned = srv.entity_upsert([dict(lesson, id="LL-002", lifecycle_status="Approved",
                                            pinned=0, operator_confirm=True,
                                            confirmed_by="anas")])
@@ -4116,7 +4116,7 @@ class V4EngineTest(unittest.TestCase):
                                       "operator_confirm": True, "confirmed_by": "anas"}])
         self.assertTrue(partial["ok"], partial)
         self.assertNotIn("pinned", partial["items"][0].get("changed_columns", []))
-        self.assertIn("pinned rows always render", partial["items"][0]["next"])
+        self.assertIn("Pinned rows always render", partial["items"][0]["next"])
         third = dict(lesson, id="LL-003", lifecycle_status="Approved", pinned=0,
                      operator_confirm=True, confirmed_by="anas")
         self.assertTrue(srv.entity_upsert([third])["ok"])      # promotion needs prior approval
@@ -4972,7 +4972,7 @@ class V4EngineTest(unittest.TestCase):
                         encoding="utf-8")
         try:
             preview = srv.package_migrate("demo")
-            self.assertIn("nothing to migrate", preview.get("error", ""), preview)
+            self.assertIn("Nothing to migrate", preview.get("error", ""), preview)
             self.assertIn("locked", preview.get("error", ""))          # says what it saw
             self.assertTrue(lock.exists())                             # untouched
             confirmed = srv.package_migrate("demo", confirm=True)

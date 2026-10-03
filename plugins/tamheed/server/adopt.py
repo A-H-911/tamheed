@@ -223,12 +223,12 @@ def extract(source: Path, inventory: dict) -> tuple[record.Plan, list, list]:
     if not inventory["readmes"]:
         gap("No README found — stated intent is unrecoverable from prose.")
     gap("Ownership and phasing are not recoverable from code — who owns this, and what "
-        "is the forward roadmap?")
+        "is the roadmap ahead?")
     for finding in injections:
         plan.add("open_questions", {
             "id": nid("OQ"),
             "title": f"Injection-shaped text found at {finding['span']} (captured as data)",
-            "question": "Untrusted repository content matched the injection screen; review "
+            "question": "Untrusted repository content matched the injection screen. Review "
                         "the fenced span in custom_attributes.",
             "lifecycle_status": "Proposed", "source_kind": "code",
             "source_span": finding["span"],

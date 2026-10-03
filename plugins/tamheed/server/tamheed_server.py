@@ -220,7 +220,7 @@ def _relation_rule_error(conn, cols: dict) -> str | None:
     relation = cols["relation"]
     if rule == "SAME_TYPE":
         if types["from_id"] != types["to_id"]:
-            return (f"relation {relation!r} requires matching endpoint types; got "
+            return (f"relation {relation!r} requires matching endpoint types, got "
                     f"{types['from_id']} ({cols['from_id']}) -> "
                     f"{types['to_id']} ({cols['to_id']})")
         return None
@@ -229,9 +229,9 @@ def _relation_rule_error(conn, cols: dict) -> str | None:
             and (to_ok is None or types["to_id"] in to_ok)):
         return None
     return (f"relation {relation!r} does not allow {types['from_id']} -> "
-            f"{types['to_id']} ({cols['from_id']} -> {cols['to_id']}); allowed from: "
-            f"{', '.join(sorted(from_ok)) if from_ok else 'any'}; allowed to: "
-            f"{', '.join(sorted(to_ok)) if to_ok else 'any'} — use 'relates_to' for "
+            f"{types['to_id']} ({cols['from_id']} -> {cols['to_id']}). Allowed from: "
+            f"{', '.join(sorted(from_ok)) if from_ok else 'any'}. Allowed to: "
+            f"{', '.join(sorted(to_ok)) if to_ok else 'any'}. Use 'relates_to' for "
             "an untyped association")
 
 # (type_id, label, id_prefix, generation_class) — seeded into entity_types at create.
@@ -322,7 +322,7 @@ def _item_error(item, takes: tuple, required: tuple) -> str | None:
         return (f"an item is an object with the keys {', '.join(takes)} — this one is"
                 f" {type(item).__name__}, not an object")
     if unknown := sorted(str(k) for k in set(item) - set(takes)):
-        return (f"unknown key(s) {unknown} — an item takes {', '.join(takes)}; a key"
+        return (f"unknown key(s) {unknown} — an item takes {', '.join(takes)}. A key"
                 " outside that list is refused, never dropped")
     for key in required:
         if item.get(key) is None:
@@ -345,7 +345,7 @@ def _caller_journal_error(row: dict) -> str | None:
     et = row.get("event_type", "note")
     if et in _SERVER_ONLY_EVENTS:
         return (f"event_type {et!r} is appended by the server only — via"
-                f" {_SERVER_ONLY_EVENTS[et]}; a caller-written one would be a narrated"
+                f" {_SERVER_ONLY_EVENTS[et]}. A caller-written one would be a narrated"
                 " record of a mechanical fact")
     actor = row.get("actor")
     if isinstance(actor, str) and actor.startswith("system:"):
@@ -698,7 +698,7 @@ def _commit() -> dict | None:
         _CURRENT.commit()
     except store.StoreStaleError as exc:
         _CURRENT.conn.rollback()
-        return _err(f"{exc} — the batch was NOT applied; close the package, reconcile "
+        return _err(f"{exc} — the batch was NOT applied. Close the package, reconcile "
                     "data/ via git, then reopen and retry")
     return None
 
@@ -759,8 +759,8 @@ def _write_package_header(conn, i: int, item: dict) -> dict:
     verdict_moves = ("go_no_go" in cols and not _same_value(cols["go_no_go"], before["go_no_go"]))
     if err is None and "go_no_go" in cols and not _operator_word(item):
         err = ("go_no_go is the package's governance verdict and changes only on the"
-               " OPERATOR's word — re-run this item with \"operator_confirm\": true after"
-               " their explicit confirmation; never in unattended mode")
+               " OPERATOR's word. Re-run this item with \"operator_confirm\": true after"
+               " their explicit confirmation, never in unattended mode")
     if err:
         return {"index": i, "ok": False, "id": stored_name, "error": err}
     res = {"index": i, "ok": True, "id": stored_name,
@@ -827,8 +827,8 @@ def _materialize_substitute(conn, etype: str, table: str, item: dict,
     extra = sorted(set(item) - _SUBSTITUTE_KEYS)
     if extra:
         return cols, (f"a substitute item carries only type, id, substitute, operator_confirm"
-                      f" and expect_unchanged — not {extra}: half a row plus a substitute is"
-                      " ambiguous; send a full row, or a substitute alone"), None
+                      f" and expect_unchanged, not {extra}. Half a row plus a substitute is"
+                      " ambiguous. Send a full row, or a substitute alone"), None
     if etype in ("progress-entry", "audit-verdict"):
         return cols, ("journal rows are corrected by compensating rows, never substituted"
                       " (append-only)"), None
@@ -852,7 +852,7 @@ def _materialize_substitute(conn, etype: str, table: str, item: dict,
         if col not in names:
             return cols, f"substitute names an unknown column for {etype}: {col!r}", None
         if col not in text_cols:
-            return cols, f"substitute works on TEXT columns only; {col!r} is not one", None
+            return cols, f"substitute works on TEXT columns only. {col!r} is not one", None
         if old == "":
             return cols, f"substitute: `old` for {col!r} is empty — nothing to find", None
         if old == new:
@@ -873,7 +873,7 @@ def _materialize_substitute(conn, etype: str, table: str, item: dict,
         glued = _glued_match(text, old)
         if glued:
             return cols, (f"{rid}: {old!r} in {col!r} also matches inside a longer token"
-                          f" ({glued!r}) — a substitute never rewrites part of an id; send"
+                          f" ({glued!r}). A substitute never rewrites part of an id. Send"
                           " the whole token, or a full row"), None
         # Plan 102 (findings_29 §3): a replacement that CONTAINS the needle re-matches its
         # own output - `scripts/X` -> `src/web/scripts/X` run twice doubles the prefix. The
@@ -882,9 +882,9 @@ def _materialize_substitute(conn, etype: str, table: str, item: dict,
         # refusal: a needle matching more than the caller meant.
         if old in new and (present := text.count(new)):
             return cols, (f"{rid}: {new!r} already occurs {present} time(s) in {col!r} and"
-                          f" contains {old!r} — a re-run would compound it; send old and new"
+                          f" contains {old!r}. A re-run would compound it. Send old and new"
                           " with the characters that bound them (the backticks, the"
-                          " delimiter) so the result cannot re-match, or a full row"), None
+                          " delimiter) so the result cannot re-match, or send a full row"), None
         replaced = text.replace(old, new)
         if col == "custom_attributes":
             try:
@@ -892,7 +892,7 @@ def _materialize_substitute(conn, etype: str, table: str, item: dict,
                     raise ValueError("not an object or array")
             except ValueError:
                 return cols, (f"{rid}: the substitution leaves {col!r} as invalid JSON —"
-                              " refused; substitute inside a value, never across the"
+                              " refused. Substitute inside a value, never across the"
                               " structure"), None
         full[col] = replaced
         counts[col] = n
@@ -1050,7 +1050,7 @@ def _convert_legacy_prompts(pkg_dir: Path) -> dict | None:
         except ValueError:
             raise ValueError(
                 f"data/prompts.jsonl:{lineno} unparseable — conversion aborted, "
-                "package NOT opened; fix the line or move the file aside") from None
+                "package NOT opened. Fix the line or move the file aside") from None
     out_dir = pkg_dir / "prompts"
     planned: list[tuple[Path, str, str, str]] = []
     collisions: list[str] = []
@@ -1118,7 +1118,7 @@ def _stored_package_version(pkg_dir: Path) -> str | None:
                 return str(json.loads(line).get("package_version"))
             except ValueError:
                 raise ValueError(f"data/packages.jsonl:{lineno} is not valid JSON — the"
-                                 " package row is unreadable; repair it (git) before"
+                                 " package row is unreadable. Correct it (git) before"
                                  " opening or migrating") from None
     return None
 
@@ -1267,9 +1267,9 @@ def _resume_block(conn, name: str, data_dir: Path | None = None) -> dict:
             except Exception as exc:  # noqa: BLE001 — a read of state, never a failure
                 lock["observed"], lock["evidence"] = "unobservable", exc.__class__.__name__
     if handoff and behind:
-        nxt = (f"Read handoff {handoff['id']} and its corrections, then note that"
-               f" {len(behind)} work-done/transition entries followed it — orient from the"
-               " journal for those, invoke tamheed:package-writes before your first write,"
+        nxt = (f"Read handoff {handoff['id']} and its corrections. Then note that"
+               f" {len(behind)} work-done/transition entries followed it: orient from the"
+               " journal for those. Invoke tamheed:package-writes before your first write,"
                " and write a fresh handoff (tamheed:session-handoff) before the next compaction")
     elif handoff:
         nxt = (f"Read handoff {handoff['id']} and its corrections first, then invoke"
@@ -1376,7 +1376,7 @@ def package_verify(name: str | None = None, record: bool = False,
         name = _CURRENT_NAME
     elif name is None:
         return _err("no package open — pass name=… to verify a closed package"
-                    " (read-only; record=true needs the package open)")
+                    " (read-only, record=true needs the package open)")
     elif record:
         return _err("record=true needs the package OPEN (the journal row is a package"
                     " write) — package_open it first, or verify read-only")
@@ -1438,14 +1438,14 @@ def package_verify(name: str | None = None, record: bool = False,
                    "memory_matches_disk": memory_matches_disk})
     if record:
         if not verified:
-            report["note"] = ("NOT recorded — verification failed; integrity-verified"
+            report["note"] = ("NOT recorded — verification failed, so integrity-verified"
                               " is appended only for a passing round-trip")
             return report
         pe_id = _next_id("PE-", "progress_entries")
         entry = (f"INTEGRITY-VERIFIED: canonical round-trip byte-identical over"
-                 f" {len(on_disk)} file(s); digest sha256:{digest} — of the store"
+                 f" {len(on_disk)} file(s), digest sha256:{digest}. The digest is of the store"
                  " state BEFORE this row (recording rewrites progress_entries.jsonl,"
-                 " so the next verify's digest differs by construction); foreign"
+                 " so the next verify's digest differs by construction). Foreign"
                  f" files in data/: {', '.join(foreign) if foreign else 'none'}")
         _CURRENT.conn.execute(
             "INSERT INTO progress_entries (id, event_type, entry, actor, occurred_at)"
@@ -1522,7 +1522,7 @@ def entity_export(path: str, tool: str = "entity_query", args: dict | None = Non
     args = dict(args or {})
     if tool == "package_verify" and args.get("record"):
         return _err("an export never writes into the package — package_verify's"
-                    " record=true is refused here; verify and record in-session")
+                    " record=true is refused here. Verify and record in-session")
     pkg_dir = (PACKAGE_ROOT / _CURRENT_NAME).resolve()
     target = Path(path)
     if not target.is_absolute():
@@ -1531,7 +1531,7 @@ def entity_export(path: str, tool: str = "entity_query", args: dict | None = Non
     data_dir = (pkg_dir / "data").resolve()
     if target == data_dir or data_dir in target.parents:
         return _err(f"refusing to write inside the canonical data/ directory ({target})"
-                    " — an export is a derived file; data/ holds only the store")
+                    " — an export is a derived file. data/ holds only the store")
     if target.is_dir():
         return _err(f"{target} is a directory — name the file to write")
     if target.exists():
@@ -1571,8 +1571,8 @@ def entity_export(path: str, tool: str = "entity_query", args: dict | None = Non
         out.update({"count": result["count"], "total": result["total"],
                     "partial": result["count"] < result["total"]})
         if out["partial"]:
-            out["note"] = (f"PARTIAL: {result['count']} of {result['total']} rows —"
-                           " the file has no payload cap; pass a limit above total"
+            out["note"] = (f"PARTIAL: {result['count']} of {result['total']} rows."
+                           " The file has no payload cap. Pass a limit above total"
                            " (or page with after_id) to export the whole family")
     return out
 
@@ -1732,9 +1732,9 @@ def entity_upsert(entities: list[dict]) -> dict:
                 if not force:
                     results.append({
                         "index": i, "ok": False, "id": cols["id"],
-                        "error": f"readiness: {cols['id']} cannot be created as Implemented"
-                                 " — create it (Proposed/Approved), bind its work, then"
-                                 " transition; or re-run this item with \"force\": true"
+                        "error": f"readiness: {cols['id']} cannot be created as Implemented."
+                                 " Create it (Proposed/Approved), bind its work, then"
+                                 " transition. Or re-run this item with \"force\": true"
                                  " after EXPLICIT operator confirmation"})
                     failed = True
                     continue
@@ -1809,9 +1809,9 @@ def entity_upsert(entities: list[dict]) -> dict:
                     results.append({
                         "index": i, "ok": False, "id": cols["id"],
                         "error": (f"{cols['id']}: {what} is the OPERATOR's word, like"
-                                  " approving it — re-run this item with"
+                                  " approving it. Re-run this item with"
                                   " \"operator_confirm\": true after their explicit"
-                                  " confirmation; never in unattended mode")})
+                                  " confirmation, never in unattended mode")})
                     failed = True
                     continue
             if incoming in ("Approved", "Promoted") and stored_status != incoming:
@@ -1821,9 +1821,9 @@ def entity_upsert(entities: list[dict]) -> dict:
                            " approve on the operator's words first, then promote")
                 elif not operator_confirm:
                     err = (f"{cols['id']}: a lesson binds future sessions only on"
-                           " the OPERATOR's words — re-run this item with"
+                           " the OPERATOR's words. Re-run this item with"
                            " \"operator_confirm\": true after their explicit"
-                           " confirmation; never in unattended mode")
+                           " confirmation, never in unattended mode")
                 elif stored is not None:
                     drift = [c for j, c in enumerate(_LESSON_CONTENT_COLS, 1)
                              if cols.get(c) != stored[j]]
@@ -1834,12 +1834,12 @@ def entity_upsert(entities: list[dict]) -> dict:
                                   if cols.get(c) != stored[j]]
                     if drift:
                         err = (f"{cols['id']}: approval/promotion is not an edit —"
-                               f" content drifted on {sorted(drift)}; send the"
+                               f" content drifted on {sorted(drift)}. Send the"
                                " stored content byte-identical, or supersede first")
                 if err is None and incoming == "Approved" \
                         and not str(cols.get("confirmed_by") or "").strip():
                     err = (f"{cols['id']}: attribution lands WITH approval —"
-                           " confirmed_by can never be added later; set it on"
+                           " confirmed_by can never be added later. Set it on"
                            " this write")
                 if err is None and incoming == "Promoted":
                     skl = cols.get("promoted_to")
@@ -1879,9 +1879,9 @@ def entity_upsert(entities: list[dict]) -> dict:
             if tool_arrives:
                 if not operator_confirm:
                     err = (f"{cols['id']}: a local tool over the package exists only on"
-                           " the OPERATOR's word — interview them with what it reads"
-                           " (exports/ only) and writes (nowhere tool-owned), then re-run"
-                           " this item with \"operator_confirm\": true; never in"
+                           " the OPERATOR's word. Interview them with what it reads"
+                           " (exports/ only) and writes (nowhere tool-owned). Then re-run"
+                           " this item with \"operator_confirm\": true, never in"
                            " unattended mode")
                 elif fb_now not in _FEEDBACK_BOUND:
                     fb_now = cols["lifecycle_status"] = "Confirmed"
@@ -1892,8 +1892,8 @@ def entity_upsert(entities: list[dict]) -> dict:
                            " on the OPERATOR's word — confirm it first")
                 elif not operator_confirm:
                     err = (f"{cols['id']}: feedback leaves the package only on the"
-                           " OPERATOR's word — re-run this item with"
-                           " \"operator_confirm\": true after their explicit confirmation;"
+                           " OPERATOR's word. Re-run this item with"
+                           " \"operator_confirm\": true after their explicit confirmation,"
                            " never in unattended mode")
                 elif not str(cols.get("confirmed_by") or "").strip():
                     err = (f"{cols['id']}: attribution lands WITH confirmation —"
@@ -1920,8 +1920,8 @@ def entity_upsert(entities: list[dict]) -> dict:
                 drift = [c for j, c in enumerate(_FEEDBACK_CONTENT_COLS, 1)
                          if c in cols and cols.get(c) != fb_stored[j]]
                 if drift:
-                    err = (f"{cols['id']}: the operator confirmed this row as it stood —"
-                           f" content drifted on {sorted(drift)}; re-confirm the change with"
+                    err = (f"{cols['id']}: the operator confirmed this row as it stood,"
+                           f" and content drifted on {sorted(drift)}. Re-confirm the change with"
                            " \"operator_confirm\": true, or record a new FB- row")
             if err:
                 results.append({"index": i, "ok": False, "id": cols["id"], "error": err})
@@ -1986,15 +1986,15 @@ def entity_upsert(entities: list[dict]) -> dict:
                                if c in cols and not _same_value(cols[c], was)]
                     if unsent:
                         err = (f"{cols['id']}: expect_unchanged names column(s) this item"
-                               f" does not carry ({', '.join(unsent)}) — an omitted column"
-                               " is preserved by the UPDATE, so naming it asserts nothing:"
-                               " drop it from expect_unchanged, or send it")
+                               f" does not carry ({', '.join(unsent)}). An omitted column"
+                               " is preserved by the UPDATE, so naming it asserts nothing."
+                               " Drop it from expect_unchanged, or send it")
                     elif drifted:
                         err = (f"{cols['id']}: expect_unchanged — {', '.join(drifted)}"
-                               " differ(s) from the stored row (a sent column must"
-                               " match; an omitted column is preserved by the UPDATE"
-                               " and never counts as drift): the transport altered the"
-                               " value; re-fetch the row through entity_query and"
+                               " differ(s) from the stored row. A sent column must"
+                               " match. An omitted column is preserved by the UPDATE"
+                               " and never counts as drift. The transport changed the"
+                               " value. Re-read the row through entity_query and"
                                " paste that")
             if err:
                 results.append({"index": i, "ok": False, "id": cols.get("id"),
@@ -2076,7 +2076,7 @@ def entity_upsert(entities: list[dict]) -> dict:
                         ("this lesson binds from this write and is RENDERED only once the"
                          " always-loaded note is rebuilt"
                          if cols.get("lifecycle_status") == "Approved" else
-                         "this lesson binds from this write; the always-loaded note names"
+                         "this lesson binds from this write. The always-loaded note names"
                          " its skill only once it is rebuilt")
                         + " - run handoff_emit in this same batch"
                           " (the note is rebuilt by nothing else)")
@@ -2093,8 +2093,8 @@ def entity_upsert(entities: list[dict]) -> dict:
                             got = conn.execute("SELECT pinned FROM lessons WHERE id = ?",
                                                (cols.get("id"),)).fetchone()
                             pinned = got[0] if got else None
-                        res["next"] += ("; pinned rows always render" if pinned else
-                                        "; it renders in the note only if pinned or among"
+                        res["next"] += (". Pinned rows always render" if pinned else
+                                        ". It renders in the note only if pinned or among"
                                         " the 10 newest unpinned Approved rows - pin it to"
                                         " keep it visible")
                     if cols.get("superseded_by"):       # Approved AND Promoted both bind
@@ -2103,7 +2103,7 @@ def entity_upsert(entities: list[dict]) -> dict:
                             f"{cols['id']} is still Approved, so it KEEPS BINDING:"
                             " `superseded_by` is only a pointer. It is retired when its"
                             f" successor {cols['superseded_by']} is approved (the engine"
-                            " then sets it Superseded), or by setting lifecycle_status"
+                            " then sets it Superseded). Or set lifecycle_status"
                             " to Superseded on the operator's word (operator_confirm)")
                 if lesson_pe:
                     # Plan 075: STATUS is the single truth for what binds (the note and
@@ -2233,7 +2233,7 @@ def entity_upsert(entities: list[dict]) -> dict:
                 exists = conn.execute(f"SELECT 1 FROM {table} WHERE id = ?",
                                       (cols["id"],)).fetchone()
                 if exists:  # field-evidence C11 (D2): name the actual cause
-                    msg += (" — the row exists; entity_upsert requires FULL rows even for"
+                    msg += (" — the row exists. entity_upsert requires FULL rows even for"
                             " updates (INSERT evaluates NOT NULL before conflict resolution)")
             elif "FOREIGN KEY constraint failed" in msg:
                 # findings_19 §3 (plan 036): SQLite's FK error names nothing —
@@ -2254,12 +2254,12 @@ def entity_upsert(entities: list[dict]) -> dict:
                 if culprits:
                     msg += (" — " + "; ".join(culprits) + " is a foreign key —"
                             " the referenced row must exist (create it first,"
-                            " or use the correct existing id; free text is"
+                            " or use the correct existing id. Free text is"
                             " never legal here)")
             if (etype in ("progress-entry", "audit-verdict")
                     and "UNIQUE constraint failed" in msg):
                 msg += (" — append-only journal: append a new entry via progress_update /"
-                        " audit_record instead of editing history; corrections are"
+                        " audit_record instead of editing history. Corrections are"
                         " recorded as new entries")
             results.append({"index": i, "ok": False, "id": cols.get("id"), "error": msg})
             failed = True
@@ -2311,7 +2311,7 @@ def entity_query(type: str, id: str | None = None, status: str | None = None,
         # Plan 094: the header is not a family - read it through server_info().package;
         # entity_upsert(type="package") writes it
         return _err("'package' is the header row, not a family — read it with"
-                    " server_info().package; entity_upsert(type=\"package\") writes it")
+                    " server_info().package. entity_upsert(type=\"package\") writes it")
     if table is None:
         return _err(f"unknown entity type {type!r} — one of: "
                 f"{', '.join(sorted(ENTITY_TABLES))}")
@@ -2319,7 +2319,7 @@ def entity_query(type: str, id: str | None = None, status: str | None = None,
         # C31 (A2): write-only is not nonexistent — the old "unknown entity type"
         # message here sent a false statement into a package's permanent record.
         return _err(f"entity type {type!r} is write-only (composite key, no id column)"
-                    " — writable via entity_upsert; query edges via trace_query")
+                    " — writable via entity_upsert. Query edges via trace_query")
     all_cols = _columns(table)
     cols = columns or all_cols
     if bad := set(cols) - set(all_cols):
@@ -2513,7 +2513,7 @@ def gate_run() -> dict:
     mvp_rows = conn.execute("SELECT COUNT(*) FROM requirements WHERE mvp = 1").fetchone()[0]
     if mvp_rows == 0:
         report["G-TRACE"]["warning"] = (
-            "0 MVP requirements — G-TRACE passed vacuously; set mvp=1 on the MVP set "
+            "0 MVP requirements — G-TRACE passed vacuously. Set mvp=1 on the MVP set "
             "(expected only for adopt-mode or pre-scoping packages)")
     # v4 (plan 031): the SAME tripwire for G-PROGRESS — with zero verdicts anywhere the
     # view is globally gated off and passes over ACs nobody ever audited.
@@ -2523,7 +2523,7 @@ def gate_run() -> dict:
     if verdict_rows == 0 and active_acs:
         report["G-PROGRESS"]["warning"] = (
             f"0 audit verdicts — G-PROGRESS passed vacuously over {active_acs} active"
-            " AC(s); every one of them is unverified (expected only pre-execution)")
+            " AC(s). Every one of them is unverified (expected only pre-execution)")
     findings = []
     # Column exemptions: custom_attributes everywhere (C14: provenance preserved
     # verbatim, not authored content — grading it fails the package for being
@@ -2591,8 +2591,8 @@ def gate_run() -> dict:
         "ungraded": len(ungraded_ids), "narrated_ids": narrated_ids,
         "ungraded_ids": ungraded_ids,
         "note": "over each active AC's LATEST verdict (superseded verdicts are"
-                " history, as acs-met reads them): narrated = a graded verdict with"
-                " no evidence — the graded party grading itself (C7); ungraded = a"
+                " history, as acs-met reads them). Narrated = a graded verdict with"
+                " no evidence, the graded party grading itself (C7). Ungraded = a"
                 " Pending placeholder nobody has graded"}
     # v4 (plan 031): the stored-edge sweep is a BLOCKING gate. Safe because every v4
     # package starts rule-clean — the migrate tool retypes violating edges to
@@ -2601,10 +2601,10 @@ def gate_run() -> dict:
     mistyped = _edge_rule_violations(conn)
     report["G-REL"] = {
         "status": "pass" if not mistyped else "fail", "mistyped": mistyped,
-        "note": "stored edges must satisfy RELATION_RULES; retype a wrong edge in ONE"
+        "note": "stored edges must satisfy RELATION_RULES. Retype a wrong edge in ONE"
                 " entity_upsert batch: {retire: true} on the old triple + the correct"
-                " relation (relates_to only when no typed relation fits and the link"
-                " itself is real)"}
+                " relation. Use relates_to only when no typed relation fits and the link"
+                " itself is real"}
     # Plan 028 (C34 §7, the FR-156..159 class): requirements created during execution
     # never get wired — work_bind stamps commits, it does not create trace edges, and
     # G-TRACE only sees mvp=1 matrix rows. Advisory on the habitual every-session
@@ -2616,7 +2616,7 @@ def gate_run() -> dict:
     report["requirements_unwired"] = {
         "status": "advisory", "requirements": unwired,
         "note": "non-retired requirements with ZERO trace edges — wire derives_from/"
-                "implements/tests in the session that creates them; never fails the"
+                "implements/tests in the session that creates them. This rule never fails the"
                 " gate"}
     ready = all(v.get("status") == "pass" for k, v in report.items() if k.startswith("G-"))
     return {"ok": True, "ready": ready, "gates": report}
@@ -2689,7 +2689,7 @@ def _readiness_report(conn, scope: str, scope_id: str | None) -> dict:
                         " (a package with nothing to report and one that recorded nothing"
                         " look the same here). Record the rows, or record the family's"
                         " omission if it is deliberately empty. (scoped: false - the whole"
-                        " table is empty; a scoped zero reads indeterminate by plan 049"
+                        " table is empty. A scoped zero reads indeterminate by plan 049"
                         " and carries scoped: true)")
         measured.update({"list": None, "table": None, "rows": None})
         if entities and name in waivers:
@@ -2736,7 +2736,7 @@ def _readiness_report(conn, scope: str, scope_id: str | None) -> dict:
         total, populated = conn.execute(
             f"SELECT COUNT(*), COUNT({column}) FROM {table}").fetchone()
         if total and not populated:
-            return (f" — 0 of {total} {table} rows have {column} set; this rule "
+            return (f" — 0 of {total} {table} rows have {column} set. This rule "
                     f"cannot discriminate (populate {column} to make it meaningful)")
         return None
 
@@ -2746,7 +2746,7 @@ def _readiness_report(conn, scope: str, scope_id: str | None) -> dict:
         (n,) = conn.execute(sql, params).fetchone()
         measured["rows"] = n      # plan 069: the scoped denominator for this rule
         if n == 0:
-            return f" — no {what} in this scope; this rule cannot discriminate ({how})"
+            return f" — no {what} in this scope. This rule cannot discriminate ({how})"
         return None
 
     def unlocated_defects_note(scope_name: str) -> str | None:
@@ -2795,10 +2795,10 @@ def _readiness_report(conn, scope: str, scope_id: str | None) -> dict:
         rule("deferred-work-reviewed", "advisory",
              ids("SELECT id FROM deferred_work"
                  " WHERE lifecycle_status IN ('Open','Scheduled')"),
-             "activation triggers are prose — a human judges whether each fired: Open (has"
-             " the trigger fired?) and Scheduled (has the date come?) rows are listed; an"
-             " Activated row is work now (a wbs-item `carries` it — deferred-work-carried"
-             " lists the ones no open item carries) and Done / Won't-do are closed — a"
+             "activation triggers are prose, so a human judges whether each fired. Open rows (has"
+             " the trigger fired?) and Scheduled rows (has the date come?) are listed. An"
+             " Activated row is work now (a wbs-item `carries` it, and deferred-work-carried"
+             " lists the ones no open item carries). Done / Won't-do are closed. A"
              " judged row leaves this list by moving to one of those states")
         # Plan 113 (findings_31's FB-018): "carries" is an edge since v5, so a finished
         # activation is visible - an Activated row whose every carrier is closed, or that
@@ -2809,10 +2809,10 @@ def _readiness_report(conn, scope: str, scope_id: str | None) -> dict:
                  " ON w.id = e.from_id WHERE e.to_id = d.id AND e.relation = 'carries'"
                  " AND w.lifecycle_status NOT IN"
                  " ('Implemented','Superseded','Obsolete','Rejected'))"),
-             "an Activated row is work only while an OPEN wbs-item `carries` it (the edge is"
-             " written with the WBS rows in the activating batch; Review counts as open):"
-             " listed rows have no open carrier — every carrier Implemented means the row"
-             " is Done (close it); no carrier at all means bind one or judge the row")
+             "an Activated row is work only while an OPEN wbs-item `carries` it. The edge is"
+             " written with the WBS rows in the activating batch, and Review counts as open."
+             " Listed rows have no open carrier. Every carrier Implemented means the row"
+             " is Done (close it). No carrier at all means bind one or judge the row")
         # findings_17 B1 (plan 033): the old resolved_by-only predicate measured
         # BOOKKEEPING — 70 of ACMP's 76 OQs carried evidenced resolutions yet read
         # amber. A non-empty resolution OR a resolver resolves; Deferred IS the
@@ -2822,8 +2822,8 @@ def _readiness_report(conn, scope: str, scope_id: str | None) -> dict:
             "SELECT COUNT(*), COUNT(CASE WHEN (resolution IS NOT NULL AND"
             " trim(resolution) <> '') OR resolved_by IS NOT NULL THEN 1 END)"
             " FROM open_questions").fetchone()
-        oq_na = ((" — 0 of %d open_questions rows have resolution or resolved_by set;"
-                  " this rule cannot discriminate (record resolutions to make it"
+        oq_na = ((" — 0 of %d open_questions rows have resolution or resolved_by set."
+                  " This rule cannot discriminate (record resolutions to make it"
                   " meaningful)") % oq_total) if oq_total and not oq_any else None
         rule("open-questions-resolved", "advisory",
              ids("SELECT id FROM open_questions"
@@ -2859,15 +2859,15 @@ def _readiness_report(conn, scope: str, scope_id: str | None) -> dict:
                  "              AND x.entity_type IN ('invariant','constraint')))"
                  " ORDER BY d.id"),
              "DECs that work items implement or that touch invariants/constraints,"
-             " never promoted — apply the one-way-door test (hard to reverse, broad"
+             " never promoted. Apply the one-way-door test (hard to reverse, broad"
              " blast radius => promote to an ADR)")
         rule("scope-changes-merged", "advisory",
              ids("SELECT id FROM scope_changes WHERE lifecycle_status = 'Approved'"),
-             "approved scope changes whose deltas never merged into the plan rows —"
-             " apply the scope_adds/scope_modifies/scope_removes edges' intent via"
+             "approved scope changes whose deltas never merged into the plan rows."
+             " Apply the scope_adds/scope_modifies/scope_removes edges' intent via"
              " entity_upsert (an `amends` edge merges its ruling: DEC- by full-row"
-             " upsert, ADR- by supersession), RE-READ every target row, then set the"
-             " SC- row to Merged — Merged is the LAST step")
+             " upsert, ADR- by supersession). RE-READ every target row, then set the"
+             " SC- row to Merged. Merged is the LAST step")
         rule("open-questions-overdue", "advisory",
              ids("SELECT id FROM open_questions WHERE resolved_by IS NULL"
                  " AND resolution IS NULL AND due_by IS NOT NULL AND due_by < ?",
@@ -2883,9 +2883,9 @@ def _readiness_report(conn, scope: str, scope_id: str | None) -> dict:
         pi_total, pi_any = conn.execute(
             "SELECT COUNT(*), COUNT(COALESCE(probability, impact)) FROM risks"
             " WHERE risk_state IN ('open','materialized')").fetchone()
-        pi_na = ((" — 0 of %d open/materialized risks have probability or impact set;"
-                  " the high-risk predicate cannot fire (populate the v4 scale —"
-                  " governance.md defines it — to make this rule meaningful)")
+        pi_na = ((" — 0 of %d open/materialized risks have probability or impact set."
+                  " The high-risk predicate cannot fire. Populate the v4 scale"
+                  " (governance.md defines it) to make this rule meaningful")
                  % pi_total) if pi_total and not pi_any else None
         rule("risk-liveness", "advisory",
              ids("SELECT id FROM risks WHERE risk_state IN ('open','materialized')"
@@ -2898,8 +2898,8 @@ def _readiness_report(conn, scope: str, scope_id: str | None) -> dict:
              ids("SELECT id FROM assumptions WHERE validation_date IS NOT NULL"
                  " AND validation_date < ? AND lifecycle_status NOT IN"
                  " ('Rejected','Superseded','Obsolete')", (today,)),
-             "assumptions past their validation date — re-validate, or escalate the"
-             " invalidated ones to risks (assumptions decay)",
+             "assumptions past their validation date — check each again, or escalate the"
+             " ones that no longer hold to risks (assumptions decay)",
              na=na_note("assumptions", "validation_date"))
         rule("hypotheses-measurable", "advisory",
              ids("SELECT id FROM hypotheses WHERE lifecycle_status NOT IN"
@@ -2911,12 +2911,12 @@ def _readiness_report(conn, scope: str, scope_id: str | None) -> dict:
              ids("SELECT id FROM acceptance_criteria WHERE retired_in IS NULL"
                  " AND slice_id IS NULL"),
              "active ACs bound to no slice — INVISIBLE to phase/slice exit views and"
-             " scoped readiness; bind them or accept package-scope-only verification")
+             " scoped readiness. Bind them or accept package-scope-only verification")
         markers = [f"{m['id']}.{m['column']} -> {m['oq']}"
                    for m in _scan_markers(conn) if not m["invalid"]]
         rule("clarifications-open", "advisory", markers,
              "open [NEEDS-CLARIFICATION: OQ-…] markers in prose fields — each cites a"
-             " live OQ; resolve the OQ and remove the marker")
+             " live OQ. Resolve the OQ and remove the marker")
         prose = _scan_prose_ids(conn)
         dangling = prose["dangling"]
         # Plan 085 (findings_27 s3): every cut list says so - a truncated list must
@@ -2926,16 +2926,16 @@ def _readiness_report(conn, scope: str, scope_id: str | None) -> dict:
                         if len(prose[k]) > _PROSE_ID_CAP)
         rule("prose-ids-resolve", "advisory", dangling[:_PROSE_ID_CAP],
              "identifiers written in prose that resolve to NO entity (G-IDS checks"
-             " foreign keys and the index, never a sentence): correct the id, or"
-             " record the missing row; an immutable row is repaired by supersession."
-             " THE ENTITY LIST IS A FLOOR, not a census: hits inside code spans are"
-             " listed under `in_code_spans` and tokens too narrow to be this family's"
-             " ids under `not_well_formed` - both informational, neither fails the"
-             " rule, so backticks hide nothing. The three lists are disjoint and width"
-             " is tested first, so a narrow token inside a code span appears only under"
-             " `not_well_formed`. The append-only journal and Superseded/Obsolete rows"
-             " are not scanned. A green means every id RESOLVES - not that the sentence"
-             " about it is true" + (f" — {cut}" if cut else ""))
+             " foreign keys and the index, never a sentence). Correct the id, or"
+             " record the missing row. An immutable row is corrected by supersession."
+             " THE ENTITY LIST IS A FLOOR, not a census. Hits inside code spans are"
+             " listed under `in_code_spans`. Tokens too narrow to be this family's"
+             " ids are listed under `not_well_formed`. Both lists are informational,"
+             " neither fails the rule, so backticks hide nothing. The three lists are"
+             " disjoint and width is tested first, so a narrow token inside a code"
+             " span appears only under `not_well_formed`. The append-only journal and"
+             " Superseded/Obsolete rows are not scanned. A green means every id"
+             " RESOLVES, not that the sentence about it is true" + (f" — {cut}" if cut else ""))
         rules[-1].update({k: prose[k][:_PROSE_ID_CAP]
                           for k in ("in_code_spans", "not_well_formed")})
         # Plan 093 (FB-002): the project's prompt FILES, the surface a session reads
@@ -2947,12 +2947,12 @@ def _readiness_report(conn, scope: str, scope_id: str | None) -> dict:
                          if len(pfiles[k]) > _PROSE_ID_CAP)
         rule("prompt-ids-resolve", "advisory", pfiles["dangling"][:_PROSE_ID_CAP],
              "identifiers written in the PROJECT's prompt files (`<package>/prompts/*.md`"
-             " that are not a stock body) that resolve to NO entity - the prose a session"
-             " reads before it runs any tool: correct the id, record the missing row, or"
-             " quote history in backticks (a code span is inert). THE ENTITY LIST IS A"
-             " FLOOR: `in_code_spans` and `not_well_formed` are informational, as for"
-             " rows; width is tested first. A green means every id RESOLVES - not that the"
-             " sentence about it is true" + (f" — {pcut}" if pcut else ""))
+             " that are not a stock body) that resolve to NO entity. These files are the"
+             " prose a session reads before it runs any tool. Correct the id, record the"
+             " missing row, or quote history in backticks (a code span is inert). THE"
+             " ENTITY LIST IS A FLOOR: `in_code_spans` and `not_well_formed` are"
+             " informational, as for rows, and width is tested first. A green means"
+             " every id RESOLVES, not that the sentence about it is true" + (f" — {pcut}" if pcut else ""))
         rules[-1].update({k: pfiles[k][:_PROSE_ID_CAP]
                           for k in ("in_code_spans", "not_well_formed")})
         # the uniform population shape (every consumer reads `rows`); `unit` says files
@@ -2971,12 +2971,12 @@ def _readiness_report(conn, scope: str, scope_id: str | None) -> dict:
         plain_cut = (f" — showing {_PROSE_ID_CAP} of {len(plain['entities'])}"
                      if len(plain["entities"]) > _PROSE_ID_CAP else "")
         rule("prose-plain-english", "advisory", plain["entities"][:_PROSE_ID_CAP],
-             "texts of the record that break the structural plain-English rules (ASD-STE100:"
-             " no semicolon, no sentence over 25 words, no phrasal verb, no nominalization,"
-             " no marketing adjective, no word that `references/vocabulary.md` rejects). The"
-             " texts are the statement columns of the registers, the project's own prompt"
-             " files and the latest handoff, each named with its hard findings per rule. A"
-             " `GT-` term of this package is never a finding, and a hedge (may, might, could)"
+             "texts of the record that break the structural plain-English rules of ASD-STE100."
+             " The rules: no semicolon, no sentence over 25 words, no phrasal verb, no"
+             " nominalization, no marketing adjective, no word that `references/vocabulary.md`"
+             " rejects. The texts are the statement columns of the registers, the project's own"
+             " prompt files and the latest handoff. Each is named with its hard findings per"
+             " rule. A `GT-` term of this package is never a finding, and a hedge (may, might, could)"
              " is never flagged. Write new text with `tamheed:plain-english`. The operator"
              " runs `/tamheed:ste-rewrite` to rewrite the existing text, row by row, with a"
              " STOP per batch" + plain_cut)
@@ -2990,8 +2990,8 @@ def _readiness_report(conn, scope: str, scope_id: str | None) -> dict:
         rule("lessons-confirmed", "advisory",
              ids("SELECT id FROM lessons WHERE lifecycle_status = 'Proposed'"),
              "lessons recorded by the executing agent awaiting the operator's"
-             " interview — confirm (Approve + optionally pin), reject, or refine by"
-             " supersession; ONLY Approved lessons bind future sessions")
+             " interview. Confirm (Approve + optionally pin), reject, or refine by"
+             " supersession. ONLY Approved lessons bind future sessions")
         # Plan 075 (findings_26 s3): a lesson pointing at an APPROVED successor while
         # itself still Approved is a half-finished supersession - it keeps binding,
         # beside the lesson that corrects it, and the two can render identically.
@@ -3001,8 +3001,8 @@ def _readiness_report(conn, scope: str, scope_id: str | None) -> dict:
                  " AND s.lifecycle_status IN ('Approved', 'Promoted') ORDER BY l.id"),
              "Approved lessons whose `superseded_by` names an approved successor: they"
              " STILL BIND (the pointer alone retires nothing). Retire each by setting"
-             " lifecycle_status to Superseded on the operator's word (operator_confirm);"
-             " approving a successor retires the lessons pointing at it automatically")
+             " lifecycle_status to Superseded on the operator's word (operator_confirm)."
+             " Approving a successor retires the lessons pointing at it automatically")
         # Plan 079 (lab beat 16's observation): a whole-rule waiver with no expiry keeps
         # absorbing rows written long after the operator approved it. Emitted only when
         # the package HAS waivers: a permanent amber about a family nobody uses would
@@ -3024,13 +3024,13 @@ def _readiness_report(conn, scope: str, scope_id: str | None) -> dict:
         if conn.execute("SELECT 1 FROM feedback LIMIT 1").fetchone():
             rule("feedback-unanswered", "advisory",
                  ids(f"SELECT id FROM feedback WHERE {_FEEDBACK_UNANSWERED_WHERE} ORDER BY id"),
-                 "feedback reported upstream and not yet answered. When it ships - or, for a"
-                 " question, when the maintainer answers - set lifecycle_status Resolved with"
+                 "feedback reported upstream and not yet answered. When it ships, or when the"
+                 " maintainer answers a question, set lifecycle_status Resolved. Set"
                  " `resolved_in` (the release or the response) and `upstream_ref` (the plan or"
-                 " reply), as a PARTIAL row: id, kind, title and those three (omitted columns"
-                 " are preserved; the engine journals the move). `Rejected` on the operator's"
-                 " word if upstream declined. A local-tool row is a register: it never"
-                 " resolves and is not listed here")
+                 " reply). Send a PARTIAL row: id, kind, title and those three (omitted columns"
+                 " are preserved, and the engine journals the move). Set `Rejected` on the"
+                 " operator's word if upstream rejected it. A local-tool row is a register: it"
+                 " never resolves and is not listed here")
         # Plan 039 (the ACMP register: 57 Approved lessons, 48 pinned, 0 promoted —
         # 57 lines in the always-loaded note): pinning bypasses the cap by design,
         # so the cost of a pin is made visible instead. Entities = the rows that
@@ -3042,8 +3042,8 @@ def _readiness_report(conn, scope: str, scope_id: str | None) -> dict:
              f"the always-loaded CLAUDE.md note renders {len(rendered)} lesson"
              f" line(s) against a curation ceiling of {_NOTE_LESSONS_CEILING}"
              + (" — past it (an always-loaded surface degrades as instructions"
-                " pile up): distil shared themes into a skill (/tamheed:skill-promote —"
-                " promoted lessons graduate out of the note) or unpin what no"
+                " pile up). Distil shared themes into a skill (/tamheed:skill-promote:"
+                " promoted lessons graduate out of the note). Or unpin what no"
                 # plan 146 (R34): unpinning changes what is rendered, never what binds
                 " longer needs to be rendered for every session" if over else ""))
         # Plan 122 (v5.1, findings_32 note 4): the resume state is behind the journal.
@@ -3062,11 +3062,12 @@ def _readiness_report(conn, scope: str, scope_id: str | None) -> dict:
              ("work-done/transition entries written after the latest `handoff` journal entry"
               f" ({ho[0]})" if ho else
               "work-done/transition entries journalled with NO `handoff` entry at all")
-             + " — the resume state is behind the record: before a compaction, at session"
-             " end or on a handover, write a handoff LAST (`tamheed:session-handoff`: resume"
-             " point, in-flight ids, what awaits the operator, verified facts with the"
-             " query that measured each); a stale handoff is corrected (`corrects`), never"
-             " edited. The latest one is the `resume` block of package_open/server_info")
+             + " — the resume state is behind the record. Before a compaction, at session"
+             " end or on a handover, write a handoff LAST (`tamheed:session-handoff`). It holds"
+             " the resume point, the in-flight ids, what awaits the operator, and the verified"
+             " facts with the query that measured each. A stale handoff is corrected"
+             " (`corrects`), never edited. The latest one is the `resume` block of"
+             " package_open/server_info")
         rules[-1]["population"] = {"table": "progress_entries", "rows": worked,
                                    "scoped": False, "unit": "work entries"}
         if worked == 0 and ho is None:
@@ -3096,12 +3097,12 @@ def _readiness_report(conn, scope: str, scope_id: str | None) -> dict:
                 f" since {s} ({c} handoffs)" for (s, c), ns in by_since.items())
             rule("handoff-repeated", "advisory", since,
                  f"lines of the latest handoff that stood word for word through"
-                 f" {_HANDOFF_REPEATED_AT} handoffs in a row (line numbers over the entry's"
-                 " lines, 1-based — the SessionStart hook prints the first 25, entity_query"
-                 " by id shows the rest; headings ending"
-                 f" with ':' and lines under {_HANDOFF_LINE_MIN} characters are not read)"
-                 " — a line copied forward claims it still stands: re-measure each at its"
-                 " source and against the rulings given since, then write it with what you"
+                 f" {_HANDOFF_REPEATED_AT} handoffs in a row, by line number over the entry's"
+                 " lines (1-based). The SessionStart hook prints the first 25, and entity_query"
+                 " by id shows the rest. Headings ending"
+                 f" with ':' and lines under {_HANDOFF_LINE_MIN} characters are not read."
+                 " A line copied onward claims it still stands. Re-measure each at its"
+                 " source and against the rulings given since. Then write it with what you"
                  " read and the date, or drop it to the row it rests on"
                  " (`tamheed:session-handoff`). A reworded line resets this count: the rule"
                  " reads wording, never truth",
@@ -3121,10 +3122,10 @@ def _readiness_report(conn, scope: str, scope_id: str | None) -> dict:
                      " AND s.superseded_by IS NULL AND s.upstreamed_to IS NULL"
                      " ORDER BY CAST(SUBSTR(l.id, 4) AS INTEGER)"),
                  "Promoted lessons whose skill is retired (Obsolete/Superseded) with NO"
-                 " pointer to where its content lives now: set the skill row's"
+                 " pointer to where its content lives now. Set the skill row's"
                  " `superseded_by` (a successor SKL- row) or `upstreamed_to` (the plugin"
                  " skill that absorbed it, e.g. `tamheed:package-writes`) on the operator's"
-                 " word — the lessons stay Promoted; the pointer is what makes them reachable")
+                 " word. The lessons stay Promoted. The pointer is what makes them reachable")
             # Plan 131 (v5.2, findings_33 §4): the population is the Promoted lessons — the
             # rows a retired skill can strand — not the whole lessons table the join reads.
             (promoted,) = conn.execute("SELECT COUNT(*) FROM lessons"
@@ -3461,14 +3462,14 @@ _STALE_PATTERNS = [
     (re.compile(r"docs/handoff/"),
      "prompts live in <package>/prompts/ (v3.0.0) — point there instead"),
     (re.compile(r"Keystone (?:v1|package|register|validator|tree)", re.IGNORECASE),
-     "the v1 tree is a frozen archive; the Tamheed package is the record"),
+     "the v1 tree is a frozen archive. The Tamheed package is the record"),
     (re.compile(r"progress-log\.md|acceptance-audit\.md"),
      "v1 hand-edited artifacts — record via progress_update/audit_record instead"),
     # Plan 125 (v5.1, the field's FB-021): the pre-5.0.0 note said export_html and
     # handoff_emit flush the JSONL; only store writes reach the commit. The sentence was
     # distilled into a project skill file and outlived the note that carried it.
     (re.compile(r"(?:export_html|handoff_emit)[^.\n]{0,80}\bflush", re.IGNORECASE),
-     "only store writes flush data/*.jsonl; export_html and handoff_emit write package files"
+     "only store writes flush data/*.jsonl. export_html and handoff_emit write package files"
      " beside it (v5) — this sentence names a flush that never happens"),
 ]
 
@@ -3745,7 +3746,7 @@ def _restated_findings(label: str, lines: list[str]) -> list[dict]:
                 kind = ("labeled-snapshot" if labeled(run_start, i) else "unlabeled")
                 suggestion = (
                     f'labeled snapshot of {tid} rows — verify it is still current '
-                    f'(quoted register content drifts silently); the live form is '
+                    f'(quoted register content drifts silently). The live form is '
                     f'`entity_query("{tid}")` / review.html#registers'
                     if kind == "labeled-snapshot" else
                     f'replace the restated {tid} rows with a reference: '
@@ -3784,8 +3785,8 @@ def _restated_findings(label: str, lines: list[str]) -> list[dict]:
                         "file": label, "line": para_start + 1, "family": tid,
                         "count": len(found), "kind": "id-dense",
                         "suggestion": f"a paragraph naming {len(found)} {tid} rows is a"
-                                      " hand-maintained mirror of the register — it drifts on"
-                                      f" the next write; the live form is `entity_query(\"{tid}\")`"
+                                      " hand-maintained mirror of the register. It drifts on"
+                                      f" the next write. The live form is `entity_query(\"{tid}\")`"
                                       " / review.html#registers"})
         para_start = None
     for i, line in enumerate(lines):
@@ -3799,8 +3800,8 @@ def _restated_findings(label: str, lines: list[str]) -> list[dict]:
                     "file": label, "line": i + 1, "family": tid, "count": 1,
                     "kind": "status-claim",
                     "suggestion": f"a lifecycle word beside an id ({m.group(0).strip()[:60]!r})"
-                                  " is a status copy — it goes stale on the next write and reads"
-                                  f" as current; the live form is `entity_query(\"{tid}\", id=…)`"
+                                  " is a status copy. It goes stale on the next write and reads"
+                                  f" as current. The live form is `entity_query(\"{tid}\", id=…)`"
                                   " / readiness_check(scope)"})
                 break
     return findings
@@ -3856,8 +3857,8 @@ _STALE_BLOCK_RE = re.compile(   # plan 130: CRLF-tolerant, so an editor-saved fi
 # agent-control files, prompt files and skill files — not "v1 references" and "the v1 tree".
 _STALE_BLOCK = ("\n<!-- tamheed:stale-warning -->\n"
                 "> **Stale references detected** in this project's agent-control files, prompt "
-                "files or skill files — see `stale_references` in the handoff_emit result "
-                "(file:line and the replacement). Fix them and re-run handoff_emit: this "
+                "files or skill files. See `stale_references` in the handoff_emit result "
+                "(file:line and the replacement). Fix them and re-run handoff_emit. This "
                 "warning removes itself once the scan is clean.\n"
                 "<!-- /tamheed:stale-warning -->\n")
 
@@ -3942,7 +3943,7 @@ def _note_lessons_section() -> tuple[str, list[dict]]:
                               f" [{_defuse_note_text(str(lv))}]"
                               for n, lv in skills)
                   + " — auto-loaded where present"
-                    " (project: .claude/skills/; user: ~/.claude/skills/).\n"
+                    " (project: .claude/skills/, user: ~/.claude/skills/).\n"
                   if skills else "")
     if not approved and not skills:
         return "", []
@@ -4010,8 +4011,8 @@ def handoff_emit(target_dir: str, subdir: str = "handoff", force: bool = False,
     project = [p.name for p in prompt_files if p.name not in stock]
     if not project:
         return _err("no project-authored prompts in <package>/prompts/ — write the "
-                    "kickoff prompt file(s) there first (Stage 20; adopted packages: "
-                    "author at least a kickoff prompt)")
+                    "kickoff prompt file(s) there first (Stage 20). An adopted package "
+                    "needs at least a kickoff prompt")
     # Plan 125 (v5.1, findings_32 note 4): a project prompt past the threshold carries
     # STATE — the field's kickoff prompt reached 3,600 lines / 360 KB of carried lists and
     # traps that went stale on every write. State belongs in a handoff entry and the registers.
@@ -4066,8 +4067,8 @@ def handoff_emit(target_dir: str, subdir: str = "handoff", force: bool = False,
     warnings: list[str] = []
     for o in oversized:
         warnings.append(
-            f"{o['file']} is {o['lines']} lines / {o['bytes']} bytes — a prompt this size"
-            " carries state; state belongs in a `handoff` journal entry (tamheed:session-handoff)"
+            f"{o['file']} is {o['lines']} lines / {o['bytes']} bytes. A prompt this size"
+            " carries state. State belongs in a `handoff` journal entry (tamheed:session-handoff)"
             f" and the registers (limits: {_PROMPT_MAX_LINES} lines / {_PROMPT_MAX_BYTES} bytes)")
     for chk in library.get("stock_merged", []):
         if not chk["verified"]:
@@ -4080,8 +4081,8 @@ def handoff_emit(target_dir: str, subdir: str = "handoff", force: bool = False,
     # history, so the warning names each class and its safe path.
     if stale := library["diverged_stale_stock"]:
         warnings.append(
-            f"{len(stale)} stock prompt(s) are STALE-STOCK — byte-equal to an older"
-            " release's stock, never customised: re-run with refresh_stock=true to"
+            f"{len(stale)} stock prompt(s) are STALE-STOCK: byte-equal to an older"
+            " release's stock, never customised. Re-run with refresh_stock=true to"
             " update them safely (customised files are never touched by refresh)")
     if custom := library["diverged_customized"]:
         # findings_18 §2 (plan 034): name how far the stock has moved under each
@@ -4095,12 +4096,12 @@ def handoff_emit(target_dir: str, subdir: str = "handoff", force: bool = False,
             for e in custom if e["stock_last_changed"]
             and not e.get("contains_current_stock")
             and e.get("stock_merged") != f"declared {e['stock_last_changed']}")
-        lag = (f"; stock last changed: {moved} — if a customization predates that"
-               " release it lacks the update: hand-merge (the bundled"
+        lag = (f". Stock last changed: {moved}. A customization that predates that"
+               " release lacks the update: hand-merge it (the bundled"
                " stock-history.json carries every release's body)" if moved else "")
         warnings.append(
-            f"{len(custom)} stock prompt(s) are CUSTOMISED — kept{lag}; to accept"
-            " the current template for ONE file, delete it and re-emit; force=True"
+            f"{len(custom)} stock prompt(s) are CUSTOMISED and kept{lag}. To accept"
+            " the current template for ONE file, remove it and re-emit. force=True"
             " overwrites ALL diverged stock files (customised included)")
     if library["refreshed"]:
         warnings.append(
@@ -4111,18 +4112,18 @@ def handoff_emit(target_dir: str, subdir: str = "handoff", force: bool = False,
     if left := library["leftover_stale_stock"]:
         warnings.append(
             f"{len(left)} retired stock prompt(s) remain in <package>/prompts/, byte-equal"
-            " to a shipped release (the scenarios are the plugin's /tamheed:<name> skills"
-            " since v5.0.0): re-run with refresh_stock=true to delete them safely"
+            " to a shipped release. The scenarios are the plugin's /tamheed:<name> skills"
+            " since v5.0.0. Re-run with refresh_stock=true to remove them safely"
             f" ({', '.join(e['file'].removeprefix('prompts/') for e in left)})")
     if custom_left := library["leftover_customized"]:
         warnings.append(
             f"{len(custom_left)} customised copy(ies) of retired stock prompt(s) kept"
-            f" ({', '.join(n.removeprefix('prompts/') for n in custom_left)}) — keep each"
+            f" ({', '.join(n.removeprefix('prompts/') for n in custom_left)}). Keep each"
             " as a project prompt under a NEW name (the stock name is retired and its skill"
-            " is /tamheed:<name>), or delete it yourself; refresh never touches it")
+            " is /tamheed:<name>), or remove it yourself. Refresh never touches it")
     if retired := library["retired"]:
         warnings.append(
-            f"{len(retired)} retired stock prompt(s) deleted (refresh_stock) — the scenarios"
+            f"{len(retired)} retired stock prompt(s) removed (refresh_stock) — the scenarios"
             f" are the plugin's /tamheed:<name> skills ({', '.join(n.removeprefix('prompts/') for n in retired)})")
     # Plan 087: feedback is named every emission until it has left the package - ids
     # only, never row text. INVARIANT this relies on (security review): `warnings` is
@@ -4141,9 +4142,9 @@ def handoff_emit(target_dir: str, subdir: str = "handoff", force: bool = False,
     if unexported:
         warnings.append(
             f"{len(unexported)} confirmed feedback row(s) not yet reported upstream"
-            f" ({', '.join(unexported)}) — entity_export(\"feedback.json\","
+            f" ({', '.join(unexported)}). Run entity_export(\"feedback.json\","
             " args={\"type\": \"feedback\"}) and QUOTE its envelope and rows in your"
-            " findings (exports are point-in-time and may be untracked in your git); set"
+            " findings (exports are point-in-time and may be untracked in your git). Set"
             " each row Reported once it has left")
     # Plan 100 (the field's FB-014): "left the package" is not "was answered" - a Reported
     # row stayed invisible for a day at ACMP. Named until resolved_in is set; ids only.
@@ -4152,9 +4153,9 @@ def handoff_emit(target_dir: str, subdir: str = "handoff", force: bool = False,
     if unanswered:
         warnings.append(
             f"{len(unanswered)} feedback row(s) reported upstream and not yet answered"
-            f" ({', '.join(unanswered)}) — when the maintainer ships or answers it, set the row"
+            f" ({', '.join(unanswered)}). When the maintainer ships or answers it, set the row"
             " Resolved with resolved_in and upstream_ref (a partial row: id, kind, title and"
-            " those three); the feedback-unanswered readiness rule lists the same rows")
+            " those three). The feedback-unanswered readiness rule lists the same rows")
     # v3.0.0: nothing is emitted into handoff/ anymore — leftover v2 copies actively
     # mislead. Plan 028 (C34 §2): the verdict is PER FILE, by content compare — a
     # blanket "delete" would have destroyed a live project prompt that existed nowhere
@@ -4170,7 +4171,7 @@ def handoff_emit(target_dir: str, subdir: str = "handoff", force: bool = False,
             if (left_text == pkg_text
                     or _normalized_prompt(left_text) == _normalized_prompt(pkg_text)):
                 verdict = (f"handoff/{left.name}: copy of prompts/{left.name} — "
-                           "safe to delete")
+                           "safe to remove")
         if verdict is None:
             verdict = (f"handoff/{left.name}: NOT a copy of any package prompt — MOVE "
                        "it into <package>/prompts/ (deleting would destroy live "
@@ -4228,80 +4229,80 @@ def handoff_emit(target_dir: str, subdir: str = "handoff", force: bool = False,
                    "(no project-level .mcp.json entry needed)." if plugin_hosted else
                    "The `tamheed` MCP server is registered in this project's `.mcp.json`.")
     note_block = (
-        "<!-- tamheed:note v5 -->\n\n"
-        f"This project executes Tamheed package `{_CURRENT_NAME}` "
-        f"(under `{PACKAGE_ROOT.resolve()}`). **The package is the record — when code and "
-        "package disagree, fix the code or record a scope change; never let them drift.** "
-        "**Package data lives in the git working tree** (C31): uncommitted package writes "
-        "are destroyed by `git reset --hard` / `git checkout` / `git stash` exactly like "
-        "uncommitted source — commit the package `data/` before branch operations. "
+        "<!-- tamheed:note v6 -->\n\n"
+        f"The Tamheed package for this project is `{_CURRENT_NAME}` "
+        f"(under `{PACKAGE_ROOT.resolve()}`). **The package is the record. When code and "
+        "package disagree, fix the code or record a scope change. Never let them drift.** "
+        "**Package data lives in the git working tree** (C31). Uncommitted package writes "
+        "are destroyed by `git reset --hard` / `git checkout` / `git stash`, exactly like "
+        "uncommitted source. Commit the package `data/` before branch operations. "
         "Every store write (`entity_upsert`, `progress_update`, `audit_record`, `work_bind`, "
-        "`package_verify(record=true)`, `package_close`) FLUSHES `data/*.jsonl`, and "
-        "`export_html` / `handoff_emit` write package files beside it — `work_bind` records "
+        "`package_verify(record=true)`, `package_close`) FLUSHES `data/*.jsonl`. "
+        "`export_html` and `handoff_emit` write package files beside it. `work_bind` records "
         "a commit and dirties the tree AFTER it, so the tree is dirty again the moment you "
-        "finish recording: run `git status --porcelain -uall` immediately before ANY branch "
-        "operation — never a memory of having committed. "
-        f"{server_line} All package reads/writes go through the `tamheed` MCP tools — a "
+        "finish recording. Run `git status --porcelain -uall` immediately before ANY branch "
+        "operation, never from a memory of having committed. "
+        f"{server_line} All package reads and writes go through the `tamheed` MCP tools. A "
         "committed script that must QUOTE the store (a review slate, a docket) reads an "
-        "`entity_export` file the tool wrote under `exports/`, never `data/*.jsonl` and "
-        "never a pasted display. The HOW of every write, read and git crossing is the "
-        "plugin's `tamheed:package-writes` skill — `tamheed:reading-the-record` before "
-        "citing a row, `tamheed:written-claims` before prose that states a mechanism or a "
-        "count, `tamheed:plain-english` before any English a reader cannot question, "
-        "`tamheed:operator-interview` at every STOP, `tamheed:test-evidence` / "
-        "`tamheed:measurement-evidence` / `tamheed:ci-evidence` behind every verdict, and "
-        "`tamheed:session-handoff` before a compaction, at session end or on a handover: "
-        "write a `handoff` journal entry LAST — the `resume` block of `package_open` / "
-        "`server_info` returns the latest one, and `handoff-current` names a missing one "
-        "(invoke a skill by NAME when its description did not reach you; a tool result that "
-        "names one is the cue; this table stays here because it is mandatory). The scenario "
-        "ceremonies are the plugin's operator-invoked slash skills (`/tamheed:orient-resume`, "
-        "`/tamheed:slice-kickoff`, `/tamheed:progress-sync`, `/tamheed:slice-review`, "
-        "`/tamheed:register-liveness`, …): "
+        "`entity_export` file the tool wrote under `exports/`. It never reads `data/*.jsonl` "
+        "or a pasted display. The HOW of every write, read and git crossing is the "
+        "plugin's `tamheed:package-writes` skill. Invoke `tamheed:reading-the-record` before "
+        "you cite a row, and `tamheed:written-claims` before prose that states a mechanism or "
+        "a count. Invoke `tamheed:plain-english` before any English a reader cannot question. "
+        "Invoke `tamheed:operator-interview` at every STOP, and `tamheed:test-evidence`, "
+        "`tamheed:measurement-evidence` or `tamheed:ci-evidence` behind every verdict. "
+        "Invoke `tamheed:session-handoff` before a compaction, at session end or on a "
+        "handover, and write a `handoff` journal entry LAST. The `resume` block of "
+        "`package_open` and `server_info` returns the latest handoff, and `handoff-current` "
+        "names a missing one. Invoke a skill by NAME when its description did not reach you. "
+        "A tool result that names one is the cue. This table stays here because it is "
+        "mandatory. The scenario ceremonies are the plugin's operator-invoked slash skills "
+        "(`/tamheed:orient-resume`, `/tamheed:slice-kickoff`, `/tamheed:progress-sync`, "
+        "`/tamheed:slice-review`, `/tamheed:register-liveness`, …). "
         f"`{_CURRENT_NAME}/prompts/README.md`, the operator guide, maps every situation to "
-        f"its skill, and project-authored prompts live in `{_CURRENT_NAME}/prompts/`; the "
+        f"its skill. Project-authored prompts live in `{_CURRENT_NAME}/prompts/`. The "
         f"human review surface is `{_CURRENT_NAME}/review.html`.\n"
-        "\n### Recording obligations (mandatory — unrecorded work is drift)\n\n"
+        "\n### Recording obligations (mandatory: unrecorded work is drift)\n\n"
         "| During execution, when… | Record BEFORE moving on |\n"
         "|---|---|\n"
-        "| you find a defect | `entity_upsert` a `defect` row (`DEF-`, honest severity —"
-        " open critical/high BLOCK readiness) — then fix it |\n"
+        "| you find a defect | `entity_upsert` a `defect` row (`DEF-`, honest severity:"
+        " open critical/high BLOCK readiness). Then fix it |\n"
         "| you find needed work that is out of scope | `entity_upsert` a `deferred-work`"
         " row (`DW-`) with an activation trigger |\n"
         "| you deviate from the approved plan in any way | a `scope-change` row (`SC-`)"
-        " FIRST, `decision_ref` naming the deciding `DEC-`/`ADR-`, delta edges"
-        " (`scope_adds`/`scope_modifies`/`scope_removes` for plan rows; `amends` for a"
-        " ruling — DEC-: full-row upsert, ADR-: supersede) naming the affected rows —"
-        " after approval, apply the row changes, RE-READ them, and only then set the"
+        " FIRST, with `decision_ref` naming the deciding `DEC-`/`ADR-`. Delta edges name"
+        " the affected rows: `scope_adds`/`scope_modifies`/`scope_removes` for plan rows,"
+        " `amends` for a ruling (DEC- by full-row upsert, ADR- by supersede)."
+        " After approval, apply the row changes, RE-READ them, and only then set the"
         " `SC-` to Merged |\n"
         "| you hit genuine ambiguity | an `open-question` row (`OQ-`, with owner +"
-        " due_by) and `[NEEDS-CLARIFICATION: OQ-NNN]` at the exact spot — NEVER"
+        " due_by) and `[NEEDS-CLARIFICATION: OQ-NNN]` at the exact spot. NEVER"
         " assume |\n"
         "| execution teaches you something durable (a mistake's fix, a practice"
-        " worth repeating) | `entity_upsert` a `lesson` row (`LL-`, born Proposed;"
+        " worth repeating) | `entity_upsert` a `lesson` row (`LL-`, born Proposed,"
         " kind improve\\|sustain, statement + impacts) + a `learned_from` edge to"
-        " the source — the OPERATOR confirms later; only Approved lessons bind |\n"
-        "| you need a function tamheed lacks, meet a defect or a doc error in it, have a question"
-        " for its maintainer, or would build a script over the package | a `feedback` row (`FB-`;"
-        " kind missing-capability\\|defect\\|doc-error\\|question, born Proposed) FIRST — never a"
-        " side tool: a script is a `local-tool` row that CANNOT be a draft (the OPERATOR's word is"
-        " a precondition of its insert); it writes nothing tool-owned and, if it reads the STORE,"
-        " reads `exports/` only; `handoff_emit` names every row until it has left the package, and every reported row until it is answered (`feedback-unanswered`) |\n"
-        "| you finish a unit of work | `progress_update(...)` — event_type `work-done`,"
+        " the source. The OPERATOR confirms later. Only Approved lessons bind |\n"
+        "| you need a function tamheed lacks, find a defect or doc error in it, have a"
+        " maintainer question, or would script over the package | a `feedback` row (`FB-`,"
+        " kind missing-capability\\|defect\\|doc-error\\|question, born Proposed) FIRST, never a"
+        " side tool. A script is a `local-tool` row that CANNOT be a draft (the OPERATOR's word is"
+        " a precondition of its insert). It writes nothing tool-owned and, if it reads the STORE,"
+        " reads `exports/` only. `handoff_emit` names every row until it has left the package, and every reported row until it is answered (`feedback-unanswered`) |\n"
+        "| you finish a unit of work | `progress_update(...)` with event_type `work-done`,"
         " `subject_id`, your `actor` string, phase/slice ids |\n"
         "| you believe a slice/wbs-item is complete | set its `lifecycle_status` to"
-        " **Review** (done-claimed) — `Implemented` means VERIFIED and is"
+        " **Review** (done-claimed). `Implemented` means VERIFIED and is"
         " readiness-guarded |\n"
         "| you verify an acceptance criterion | `audit_record(...)` with evidence +"
-        " `verified_by` + `verification_method` + `against_commit` — never Met without"
+        " `verified_by` + `verification_method` + `against_commit`. Never Met without"
         " proof |\n"
         "| you create a commit or PR | `work_bind(ref, entity_ids=[...])` |\n"
-        "| you declare a slice/phase/release done | `readiness_check(scope)` first —"
-        " resolve every blocking failure, or ask the OPERATOR for a `WVR-` waiver"
-        " (their words; you never author your own) — `\"force\": true` only on the"
+        "| you declare a slice/phase/release done | `readiness_check(scope)` first."
+        " Resolve every blocking failure, or ask the OPERATOR for a `WVR-` waiver"
+        " (their words, you never author your own). `\"force\": true` only on the"
         " operator's explicit words |\n"
         "\nIf you cannot record (lock held, package missing), STOP and tell the"
-        " operator — do not proceed unrecorded.\n"
+        " operator. Do not proceed unrecorded.\n"
         f"{lessons_section}"
         "<!-- /tamheed:note -->\n")
     note = "\n## Tamheed progress tracking\n" + note_block
@@ -4331,8 +4332,8 @@ def handoff_emit(target_dir: str, subdir: str = "handoff", force: bool = False,
             # rebuilt on EVERY emit. A hand edit inside the markers is
             # overwritten — warned, never silent.
             warnings.append(
-                f"the tamheed:note span in {path.resolve()} was rebuilt — it is"
-                " tool-owned and always reflects the current emission; keep"
+                f"the tamheed:note span in {path.resolve()} was rebuilt, it is"
+                " tool-owned and always reflects the current emission. Keep"
                 " operator content OUTSIDE the <!-- tamheed:note --> markers")
             return text.replace(m.group(0), note_block.rstrip("\n"))
         return text
@@ -4362,8 +4363,8 @@ def handoff_emit(target_dir: str, subdir: str = "handoff", force: bool = False,
         if pkg_content != pkg_raw:
             pkg_md.write_text(pkg_content, encoding="utf-8", newline="\n")
             emitted.append(str(pkg_md.resolve()))
-        block_txt = ("; the stale-warning block was added there" if stale and not block_was
-                     else "; the stale-warning block was removed there" if block_was and not stale
+        block_txt = (". The stale-warning block was added there" if stale and not block_was
+                     else ". The stale-warning block was removed there" if block_was and not stale
                      else "")
         # Plan 107 (findings_30 Q1.4): say what happened - the old text claimed an update
         # over `written: []` on every idle re-emission
@@ -4373,15 +4374,15 @@ def handoff_emit(target_dir: str, subdir: str = "handoff", force: bool = False,
             f" {pkg_md.resolve()} and "
             + ("was rebuilt there" if rebuilt else "is current there")
             + block_txt
-            + ("" if rebuilt or block_txt else "; nothing written")
-            + ("; a 5.1-era stale-warning block was removed from the root file"
-               if content != existing else "; the root file was left untouched"))
+            + ("" if rebuilt or block_txt else ". Nothing written")
+            + (". A 5.1-era stale-warning block was removed from the root file"
+               if content != existing else ". The root file was left untouched"))
     else:
         warnings.append(
             f"{claude_md.resolve()} carries a v1-era Tamheed operating note"
-            " (the heading without the managed markers) — delete its"
-            " '## Tamheed progress tracking' section and re-run handoff_emit;"
-            " the marker-managed note self-updates thereafter")
+            " (the heading without the managed markers). Remove its"
+            " '## Tamheed progress tracking' section and re-run handoff_emit."
+            " The marker-managed note self-updates thereafter")
     if block_here:
         content += _STALE_BLOCK
     if content != existing:
@@ -4502,10 +4503,10 @@ def package_migrate(name: str, confirm: bool = False) -> dict:
             # confirm (previewed here) — never a second run to relocate it (plan 039).
             relocate = [{"file": f"data/{f.name}",
                          "action": "remove (copied to data-v3-backup/, a directory"
-                                   " operators commonly gitignore; if data/ is"
-                                   " git-tracked the file also lives in history —"
+                                   " operators commonly gitignore). If data/ is"
+                                   " git-tracked the file also lives in history:"
                                    f" check git log -- data/{f.name} before you"
-                                   " confirm)"}
+                                   " confirm"}
                         for f in sorted(data.glob("*.jsonl.converted"))]
         try:
             _read_jsonl_tables(data)   # plan 045: every input parses BEFORE any write
@@ -4514,8 +4515,8 @@ def package_migrate(name: str, confirm: bool = False) -> dict:
         if confirm and not v4_sync:
             backup = pkg_dir / "data-v3-backup"
             if backup.exists():
-                return _err("data-v3-backup/ already exists — a previous migration ran;"
-                            " remove or rename it before migrating again")
+                return _err("data-v3-backup/ already exists — a previous migration ran."
+                            " Remove or rename it before migrating again")
             backup.mkdir()
             try:
                 for f in data.iterdir():
@@ -4564,7 +4565,7 @@ def package_migrate(name: str, confirm: bool = False) -> dict:
                         added_cols[tname] = new
             finally:
                 ddl.close()
-            note = ("registry rows + the audit journal row appended; no data"
+            note = ("registry rows + the audit journal row appended. No data"
                     " transform, no backup taken")
             if added_cols:
                 note += (" — files whose tables gained columns since this store"
@@ -4590,13 +4591,13 @@ def package_migrate(name: str, confirm: bool = False) -> dict:
                     # and what was NOT (that copy's durability — the server never
                     # calls git and cannot know whether data/ is tracked).
                     action = ("remove (byte-identical copy verified in data-v3-backup/,"
-                              " a directory operators commonly gitignore; if data/ is"
-                              " git-tracked the file also lives in history — check"
-                              f" git log -- data/{f.name} before you confirm)")
+                              " a directory operators commonly gitignore). If data/ is"
+                              " git-tracked the file also lives in history: check"
+                              f" git log -- data/{f.name} before you confirm")
                 else:
                     return _err(f"data/{f.name} and data-v3-backup/{f.name} both"
                                 " exist and DIFFER — resolve by hand (keep one),"
-                                " then re-run; nothing was written")
+                                " then re-run. Nothing was written")
                 relocate.append({"file": f"data/{f.name}", "action": action})
             if relocate:
                 rep["relocate"] = relocate
@@ -4617,8 +4618,8 @@ def package_migrate(name: str, confirm: bool = False) -> dict:
         added = [tid for tid, _, _, _ in BASELINE_ENTITY_TYPES if tid not in have]
         if v4_sync and not added and not relocate:
             return _err(f"package is already v{stored}, its entity-type registry"
-                        " is current, and data/ holds no foreign audit-trail file"
-                        " — nothing to migrate (the expected answer on a current"
+                        " is current, and data/ holds no foreign audit-trail file."
+                        " Nothing to migrate (the expected answer on a current"
                         " store)" + held)
         for tid, label, prefix, gclass in BASELINE_ENTITY_TYPES:
             if tid in added:
@@ -4667,7 +4668,7 @@ def package_migrate(name: str, confirm: bool = False) -> dict:
             except Exception as exc:
                 if v4_sync:
                     return _err(f"migration validation failed — package UNCHANGED"
-                                f" (nothing written; registry-sync takes no backup):"
+                                f" (nothing written, registry-sync takes no backup):"
                                 f" {exc}")
                 _restore_from_backup(data, backup, conversion)
                 return _err(f"migration validation failed — package UNCHANGED"
@@ -4707,8 +4708,8 @@ def package_migrate(name: str, confirm: bool = False) -> dict:
                         dst.unlink(missing_ok=True)
                     if v4_sync:
                         return _err(f"registry sync failed — package UNCHANGED"
-                                    f" (nothing was deleted; staged .tmp files"
-                                    f" removed): {exc}")
+                                    f" (no package file was removed, the staged .tmp files"
+                                    f" are gone): {exc}")
                     _restore_from_backup(data, backup, conversion)
                     return _err(f"migration failed — package UNCHANGED (restored"
                                 f" from data-v3-backup/, now removed): {exc}")
@@ -4780,7 +4781,7 @@ def package_unlock(name: str, confirm: bool = False) -> dict:
     removed unjournaled and the result says so."""
     if _CURRENT is not None:
         return _err(f"package '{_CURRENT_NAME}' is open in THIS session -"
-                    " package_close releases its lock; package_unlock is for a lock"
+                    " package_close releases its lock. package_unlock is for a lock"
                     " whose holder is gone")
     if err := _bad_name(name):
         return err
@@ -4796,7 +4797,7 @@ def package_unlock(name: str, confirm: bool = False) -> dict:
         snapshot = lock.read_bytes()      # the EXACT lock this verdict is about
     except OSError as exc:
         return _err(f"package '{name}': the lock could not be read ({exc}) - its"
-                    " holder may have it open; nothing was removed")
+                    " holder may have it open. Nothing was removed")
     seen = _observe_lock(lock)
     report = {"ok": True, "stage": "report", "package": name, "locked": True,
               "lock": {k: seen.get(k) for k in ("pid", "host", "taken_at")},
@@ -4813,8 +4814,8 @@ def package_unlock(name: str, confirm: bool = False) -> dict:
     if not report["would_unlock"]:
         return _err(f"package '{name}': the lock's holder was observed"
                     f" `{seen['outcome']}` ({seen['evidence']}) - not removed. Only a"
-                    " holder observed not-running or reused is unlocked by this tool;"
-                    " a manual removal of data/.lock stays the deliberate path when YOU"
+                    " holder observed not-running or reused is unlocked by this tool."
+                    " A manual removal of data/.lock stays the deliberate path when YOU"
                     " know what this host cannot see")
     try:
         stored = _stored_package_version(pkg_dir)
@@ -4833,7 +4834,7 @@ def package_unlock(name: str, confirm: bool = False) -> dict:
     try:
         if lock.read_bytes() != snapshot:
             return _err(f"package '{name}': the lock changed while it was being"
-                        " examined - another writer took it; nothing was removed")
+                        " examined - another writer took it. Nothing was removed")
         lock.unlink()
     except OSError as exc:
         return _err(f"package '{name}': the lock could not be removed ({exc}) -"
@@ -4857,10 +4858,10 @@ def package_unlock(name: str, confirm: bool = False) -> dict:
             (pe_id, f"FORCED lock removal: data/.lock held by pid"
                     f" {str(seen.get('pid'))[:40]} on {str(seen.get('host'))[:80]}"
                     f" since {str(seen.get('taken_at'))[:40]} was observed"
-                    f" `{seen['outcome']}` - {str(seen['evidence'])[:300]} - and removed on the"
+                    f" `{seen['outcome']}` ({str(seen['evidence'])[:300]}). Removed on the"
                     " operator's word (package_unlock confirm=true)", _now()))
         if (err := _commit()) is not None:
-            out["note"] = f"lock removed; the journal row was NOT written: {err['error']}"
+            out["note"] = f"lock removed. The journal row was NOT written: {err['error']}"
         else:
             out.update({"journaled": True, "journal_id": pe_id})
     finally:
@@ -4871,9 +4872,9 @@ def package_unlock(name: str, confirm: bool = False) -> dict:
         except Exception as exc:  # noqa: BLE001
             out["close_error"] = str(exc)
         if out.get("close_error"):
-            out["note"] = ("the lock was removed and journaled, but closing FAILED - this"
-                           " session may still hold the package open (and a fresh lock):"
-                           " run package_close() before anything else")
+            out["note"] = ("the lock was removed and journaled, but closing FAILED. This"
+                           " session may still hold the package open (and a fresh lock)."
+                           " Run package_close() before anything else")
     return out
 
 
@@ -4896,10 +4897,10 @@ def package_adopt(source_dir: str, name: str | None = None, confirm: bool = Fals
             if viol:
                 out["relation_rule_violations"] = {
                     "mistyped": viol,
-                    "note": "these edges will FAIL the blocking G-REL gate — retype"
-                            " before handoff in one entity_upsert batch ({retire:"
+                    "note": "these edges will FAIL the blocking G-REL gate. Retype them"
+                            " before handoff in one entity_upsert batch: {retire:"
                             " true} on the old triple + the correct relation, or"
-                            " relates_to when nothing typed fits)"}
+                            " relates_to when nothing typed fits"}
         except store.StoreLockedError:
             pass  # the adoption report stands; the sweep re-runs at first gate_run
     return out
@@ -4972,7 +4973,7 @@ def export_html(output: str | None = None) -> dict:
             if not (existing.startswith(_HTML_PROLOGUE)
                     and "tamheed" in existing[:300].lower()):
                 return _err(f"{output} exists and is not a Tamheed review surface —"
-                            " refusing to overwrite; choose another path or delete it"
+                            " refusing to overwrite. Choose another path or remove it"
                             " first")
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(text, encoding="utf-8", newline="\n")
@@ -5129,18 +5130,18 @@ _ENTITY_QUERY_DESC = (
     "Query one entity family with targeted columns. Rows come in id order: by prefix,"
     " then by the id's first number, then by id. `limit` cuts from the lowest, so a"
     " limited read never returns the newest rows. `after_id` returns the rows after"
-    " that id in the same order: pass the result's `next_after`, or an id you type (it"
+    " that id in the same order. Pass the result's `next_after`, or an id you type (it"
     " need not name a row). `total` is the size of the filtered set, uncut.")
 # Plan 167 (v5.8): the argument is named — one field call sent `items` for `verdicts`
 # under the 5.7.0 text, which spoke of "each item" and named no argument.
 _PROGRESS_UPDATE_DESC = (
     "Append progress entries (execution tracking), one transaction. `entries` is a"
-    f" list; each entry is an object with these keys: {_keys_told(_PROGRESS_KEYS, _PROGRESS_REQUIRED)}."
+    f" list. Each entry is an object with these keys: {_keys_told(_PROGRESS_KEYS, _PROGRESS_REQUIRED)}."
     " A key outside this list is refused and nothing is written. `event_type` defaults"
-    " to note; the server assigns the id and the time.")
+    " to note. The server assigns the id and the time.")
 _AUDIT_RECORD_DESC = (
     "Record AC verdicts, optionally evidence-bound, one transaction. `verdicts` is a"
-    f" list; each verdict is an object with these keys: {_keys_told(_VERDICT_KEYS, _VERDICT_REQUIRED)}."
+    f" list. Each verdict is an object with these keys: {_keys_told(_VERDICT_KEYS, _VERDICT_REQUIRED)}."
     " A key outside this list is refused and nothing is written. The server assigns"
     " the id and the time.")
 
@@ -5149,13 +5150,13 @@ TOOLS = {
     "package_create": (package_create, "Create a package under the package root (takes the lock)"),
     "package_open": (package_open, "Open an existing package (takes the single-writer lock)"),
     "package_unlock": (package_unlock,
-                       "Report a lock's holder; confirm=true (operator words only) removes"
+                       "Report a lock's holder. confirm=true (operator words only) removes"
                        " a lock whose holder was observed dead, and journals it"),
     "package_close": (package_close, "Write back canonical text and release the lock"),
-    "entity_upsert": (entity_upsert, "Batch upsert entities in one transaction; per-item verdicts"),
+    "entity_upsert": (entity_upsert, "Batch upsert entities in one transaction, with per-item verdicts"),
     "entity_query": (entity_query, _ENTITY_QUERY_DESC),
     "trace_query": (trace_query, "Traverse typed trace edges from/to an entity"),
-    "gate_run": (gate_run, "Run the mechanical quality gates; returns the gate report"),
+    "gate_run": (gate_run, "Run the mechanical quality gates and return the gate report"),
     "readiness_check": (readiness_check,
                         "Lifecycle readiness at a close boundary (package/phase/slice)"),
     "progress_update": (progress_update, _PROGRESS_UPDATE_DESC),
@@ -5167,14 +5168,14 @@ TOOLS = {
     "export_html": (export_html, "Export the HTML review surface to <package>/review.html"),
     "package_verify": (package_verify,
                        "Canonical round-trip of the on-disk store (byte-equality, foreign"
-                       " files, digest); record=true journals the verified digest"),
+                       " files, digest). record=true journals the verified digest"),
     "entity_export": (entity_export,
                       "Write a read-only tool's whole result to a digest-stamped JSON"
                       " file under <package>/exports/ for committed scripts to quote"),
 }
 
-_SDK_ERROR = ("tamheed MCP server requires the 'mcp' SDK (Python >=3.10): launch with"
-              " 'uv run tamheed_server.py' (PEP 723 fetches it) or pip install 'mcp<2'.")
+_SDK_ERROR = ("tamheed MCP server requires the 'mcp' SDK (Python >=3.10): start it with"
+              " 'uv run tamheed_server.py' (uv installs the pinned SDK) or pip install 'mcp<2'.")
 
 
 def _mcp_version() -> str:
@@ -5253,9 +5254,9 @@ def serve() -> int:
         try:
             import mcp  # noqa: F401
             print(f"tamheed MCP server: mcp {_mcp_version()}"
-                  f" is installed but does not provide mcp.server.fastmcp ({exc}) —"
-                  " this build requires mcp<2; relaunch with a bounded resolve"
-                  " (uv run reads the PEP 723 pin; or pip install 'mcp<2').",
+                  f" is installed but does not provide mcp.server.fastmcp ({exc})."
+                  " This build requires mcp<2. Restart with a bounded resolve"
+                  " (uv run reads the PEP 723 pin, or pip install 'mcp<2').",
                   file=sys.stderr)
         except ImportError:
             print(f"{_SDK_ERROR} (import failed: {exc})", file=sys.stderr)

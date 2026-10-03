@@ -44,7 +44,7 @@ TITLE_CHARS = 60
 MANIFEST = HERE.parent / ".claude-plugin" / "plugin.json"   # the version's single source
 
 _NOTE_RE = re.compile(r"<!--\s*tamheed:note v(\d+)\s*-->(.*?)<!--\s*/tamheed:note\s*-->", re.S)
-_PKG_RE = re.compile(r"executes Tamheed package `([^`\n]+)`")
+_PKG_RE = re.compile(r"(?:executes Tamheed package|Tamheed package for this project is) `([^`\n]+)`")
 _IMPORT_RE = re.compile(r"^@(\S+)", re.M)
 _TOKEN_RE = re.compile(r"[A-Za-z0-9._-]{1,64}")   # what an event field may put in the trace
 
@@ -126,16 +126,16 @@ def build_lines(project: Path, source: str = "") -> list[str]:
               }.get(str(lock.get("observed")) if lock else "",
                     "package_unlock reports the evidence")
     lock_s = (f"lock file present (pid {lock.get('pid')} on {lock.get('host')} since"
-              f" {lock.get('taken_at')}; holder observed {lock.get('observed')} — {remedy})"
+              f" {lock.get('taken_at')}, holder observed {lock.get('observed')} — {remedy})"
               if lock else "unlocked")
     lines.append(f"tamheed resume — package `{name}` (schema {schema}) — {lock_s}")
     if source == "compact":
         lines.append("Context was compacted mid-session: this is state re-injection, not a"
-                     " session start — resume from the handoff below; do not re-summarise it"
+                     " session start — resume from the handoff below. Do not re-summarise it"
                      " to the operator.")
     ho, behind = block.get("handoff"), block.get("handoff_behind", 0)
     if not ho:
-        lines.append(f"No handoff recorded; work-done/transition entries uncovered: {behind}.")
+        lines.append(f"No handoff recorded. Work-done/transition entries uncovered: {behind}.")
     else:
         lines.append(f"Handoff {ho['id']} ({ho.get('occurred_at')}, {ho.get('actor')});"
                      f" {behind} work-done/transition entries since"

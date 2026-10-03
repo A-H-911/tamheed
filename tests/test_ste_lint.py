@@ -199,6 +199,16 @@ class PythonLiteralsTest(unittest.TestCase):
         self.assertEqual([f["line"] for f in semis], [6, 10])
         self.assertEqual([f["rule"] for f in found if f["rule"] == "long-sentence"], [])
 
+    def test_a_multiline_literal_is_read_as_markdown(self):
+        """The operating note is Markdown inside one Python literal. Its table rows are
+        cells, not one long sentence, and a semicolon inside a cell is still a finding."""
+        words = " ".join(["record"] * 14)
+        src = ('NOTE = (\n    "## Heading\\n\\n"\n    "| when | record |\\n"\n    "|---|---|\\n"\n'
+               f'    "| {words} | {words} |\\n"\n    "| a; b | short |\\n")\n')
+        found = sl.lint_source(src, mode="strict", filename="n.py")
+        self.assertEqual(rules(found), ["semicolon"])
+        self.assertEqual(found[0]["line"], 2)  # the literal starts on line 2, after "NOTE = ("
+
     def test_an_allow_marker_without_a_reason_is_a_finding(self):
         src = 'x = 1\n# ste:allow semicolon\ny = "the panel; removed from the aircraft"\n'
         found = sl.lint_source(src, mode="strict", filename="x.py")
