@@ -1,8 +1,8 @@
 # Tamheed behavioral evals
 
-`tests/` proves the **mechanical surfaces** are correct (the eleven suites: store, schema
+`tests/` proves the **mechanical surfaces** are correct (the twelve suites: store, schema
 migrations, server contract, v3→v4 migration, adopt, viewer, the resume hook, the eval runner, the
-scratch-diff tool, check.py's own lints, and the generated user guide). These evals exercise the **skill** — does Tamheed
+scratch-diff tool, check.py's own lints, the generated user guide, and the plain-English linter). These evals exercise the **skill** — does Tamheed
 actually extract requirements faithfully, surface assumptions instead of inventing
 requirements, keep proposals as proposals, resist prompt injection (in briefs *and* in
 adopted repositories), and produce a package whose gates pass? That behavior is what

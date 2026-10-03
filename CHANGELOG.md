@@ -10,6 +10,15 @@ All notable changes to Tamheed are documented here. The format is based on
 
 ## [Unreleased]
 
+### Added
+- `plugins/tamheed/server/ste_lint.py`, the plain-English (ASD-STE100) structural linter, ported from
+  danyuchn/asd-ste100-skill (MIT, notice in `plugins/tamheed/THIRD-PARTY-NOTICES.md`) with the
+  paragraph join, the frontmatter and Python-literal extractors, the vocabulary tables of
+  `references/vocabulary.md`, the Arabic rules and the allow marker. Suite `tests/test_ste_lint.py`,
+  the twelfth (plan 180).
+- `plugins/tamheed/references/vocabulary.md`: one verb per action, one meaning per term, the names
+  that contain a rejected word (plan 179, rulings R30-R33).
+
 ### Changed
 - `handoff_emit`'s registered description names what the tool writes (the CLAUDE.md note, the
   stock prompts README, `.mcp.json` for a standalone install). It said "Emit handoff prompts", a
