@@ -11,6 +11,9 @@ All notable changes to Tamheed are documented here. The format is based on
 ## [Unreleased]
 
 ### Changed
+- `handoff_emit`'s registered description names what the tool writes (the CLAUDE.md note, the
+  stock prompts README, `.mcp.json` for a standalone install). It said "Emit handoff prompts", a
+  write the tool stopped making in v3 (plan 176).
 - `plugins/tamheed/server/README.md` links the generated bilingual user guide (`index.html`), and
   `skills/generate-report/SKILL.md` names all eleven sections of `review.html` (it listed five).
 - `check.py` lint 8 counts `index.html` among the version-stamped surfaces (six); a release rebuilds

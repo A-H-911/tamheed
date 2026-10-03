@@ -3290,6 +3290,18 @@ class V4EngineTest(unittest.TestCase):
         self.assertEqual(srv._PROGRESS_REQUIRED, ("entry",))
         self.assertEqual(srv._VERDICT_REQUIRED, ("ac_id", "verdict"))
 
+    def test_handoff_emit_description_names_its_writes(self):
+        """Plan 176 (the STE census, R19a): the registered description said the tool emits
+        handoff prompts. No prompt has been written into a target since v3. The description
+        names what the tool writes: the CLAUDE.md note, the stock prompts README, and
+        `.mcp.json` for a standalone install only (plugin-hosted installs skip it)."""
+        desc = srv.TOOLS["handoff_emit"][1]
+        self.assertNotIn("Emit handoff prompts", desc)
+        self.assertIn("CLAUDE.md note", desc)
+        self.assertIn("prompts README", desc)
+        self.assertIn("`.mcp.json` for a standalone install", desc)
+        self.assertIn("Injection-screened", desc)
+
     def test_audit_evidence_names_narrated_ids(self):
         """findings_22 §3 named the ids; findings_23 §2 (plan 040) fixed the
         POPULATION: each ACTIVE AC's LATEST verdict (the acs-met population), split

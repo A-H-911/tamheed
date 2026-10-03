@@ -5043,7 +5043,7 @@ TOOLS = {
     "progress_update": (progress_update, _PROGRESS_UPDATE_DESC),
     "audit_record": (audit_record, _AUDIT_RECORD_DESC),
     "work_bind": (work_bind, "Bind a commit/PR to the entities it satisfies (stamps last_referenced)"),
-    "handoff_emit": (handoff_emit, "Emit handoff prompts + executor MCP config (injection-screened)"),
+    "handoff_emit": (handoff_emit, "Wire a target project to the package: write the CLAUDE.md note and the stock prompts README, plus `.mcp.json` for a standalone install. Injection-screened."),
     "package_migrate": (package_migrate, "Migrate a v2/v3 package in place to the v4 store (staged: preview, then confirm)"),
     "package_adopt": (package_adopt, "Adopt a brownfield repo (staged: scan/preview, then confirm)"),
     "export_html": (export_html, "Export the HTML review surface to <package>/review.html"),

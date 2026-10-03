@@ -176,6 +176,48 @@ devil's-advocate review; execution order is the row order below). Status values:
 | 089 | [Lab beat 18](089-lab-beat-18-findings-27.md) | 085-088 + full test (15/15 vs 0/15 on `v4.10.0`; 9 suites; selftest) | DONE `762b98b` — 9 new assertions, each failing on the pre-beat fixture; D-1 registry-sync unscripted, F-3 fixed |
 | 090 | [Release v4.11.0](090-release-v4110.md) — plan-058 recipe + the fixture follows the stamp | 089 | DONE — 2026-09-22, tag `v4.11.0` (SHA in the tag) |
 
+### The plain-English batch (ASD-STE100) -- plans 176-191 -> v5.9.0 (2026-10-03; maintainer-executed)
+
+Master record: [176-191-batch-ste.md](176-191-batch-ste.md) (the approved plan, revision 2 after the
+maintainer's own devil's-advocate pass, the operator's strict review and three advisor calls; 32
+interview answers, rulings R1-R29 of the batch). The upstream skill
+[danyuchn/asd-ste100-skill](https://github.com/danyuchn/asd-ste100-skill) (MIT) is ported, not
+referenced: a bundle linter, a fourteenth lint with a roster that grows per wave, an advisory
+readiness rule, two skills, four rewrite waves, lab beat 33, the ACMP brief, the release.
+Status values: PLANNED / IN PROGRESS / DONE.
+
+| # | Plan | Depends on | Status |
+|---|---|---|---|
+| 176 | [`handoff_emit` says what it writes](176-handoff-emit-description.md) -- the registered description named prompts the tool stopped writing in v3; README rows for plans 170-174 | -- | DONE -- 2026-10-03 (the commit this row lands in) |
+| 177 | `_CONVERTED_HINTS` names live skills | 176 | PLANNED |
+| 178 | `references/handoff.md` no longer claims the template twin | 176 | PLANNED |
+| 179 | The vocabulary: census, draft, one interview round, freeze | 178 | PLANNED |
+| 180 | `server/ste_lint.py`, its suite, the third-party notice | 179 | PLANNED |
+| 181 | Lint 14 wired with a roster of one file; the guide learns a fourteenth lint | 180 | PLANNED |
+| 182 | Readiness rule `prose-plain-english` (advisory) | 180 | PLANNED |
+| 183 | Skills `plain-english` and `ste-rewrite`; every count surface | 182 | PLANNED |
+| 184 | Wave 1: tool descriptions, server messages, note v6, the hook | 183 | PLANNED |
+| 185 | Wave 2: the 27 skills | 184 | PLANNED |
+| 186 | Wave 3: references, templates, stock README, server README, CANONICAL | 185 | PLANNED |
+| 187 | Wave 4a: human docs, root files, the lab and evals READMEs | 186 | PLANNED |
+| 188 | Wave 4b: the guide EN and AR, the "Writing discipline" section; pending empty | 187 | PLANNED |
+| 189 | Stamp 5.9.0, evals re-aimed, lab beat 33 | 188 | PLANNED |
+| 190 | The ACMP brief 5.9.0 | 189 | PLANNED |
+| 191 | Release: batch record, push, tag | 190 | PLANNED |
+
+### Field cycle FB-028 -- plans 170-174 -> v5.8.1 (2026-09-30; maintainer-executed)
+
+Master record: [170-174-batch-fb028.md](170-174-batch-fb028.md) (rulings R59-R64; the headless lab
+harness recipe; released as a PATCH). Rows added 2026-10-03 (plan 176): the cycle shipped without them.
+
+| # | Plan | Depends on | Status |
+|---|---|---|---|
+| 170 | The correction of 5.8.0: a reload restarts the server, not what the session lists (FB-028) | -- | DONE -- 2026-09-30, `5a38184` |
+| 171 | The 5.8.1 stamp with its history key; the reload replication (R62) | 170 | DONE -- 2026-09-30, `1c1b812` + `7acf957` |
+| 172 | The lab driven by a real agent, headless, against the 5.8.1 working tree (R60/R61) | 171 | DONE -- 2026-09-30, `a24f67e` |
+| 173 | Lab beat 32 on the fixture, the evals re-aimed, three corrections to the report | 172 | DONE -- 2026-09-30, `12f7a87` |
+| 174 | Release v5.8.1, the brief `briefs/acmp-5.8.1.md`, close-out (R63, R64) | 173 | DONE -- 2026-09-30, `67889cc`, tag `v5.8.1` |
+
 ### The user guide, review round 1 -- plan 175 (2026-10-02; pair review, maintainer + reviewer)
 
 | # | Plan | Depends on | Status |
