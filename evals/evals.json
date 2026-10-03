@@ -593,6 +593,10 @@
       ],
       "rubric": [
         {
+          "dimension": "plain-english",
+          "pass_if": "Every row the loop writes (progress entries, defects, lessons, the handoff) reads as short active sentences with no semicolon and none over 25 words; a reader cannot ask a follow-up question and does not need to."
+        },
+        {
           "dimension": "register-before-fix",
           "pass_if": "The DEF- row exists before (or with) the fix commit in the narrative — the defect is never fixed silently and recorded after the fact as an afterthought."
         },
@@ -1838,7 +1842,7 @@
             "{case_dir}/package"
           ],
           "expect_exit": 0,
-          "expect_substring": "handoff=PE-063 behind=0"
+          "expect_substring": "handoff=PE-065 behind=0"
         },
         {
           "check": "handoff-current passes on the recorded package - the journal did not move past the final handoff (plan 122).",
@@ -1904,24 +1908,34 @@
           "expect_exit": 0
         },
         {
-          "check": "The guide followed the stamp: refresh_stock carried it to the 5.1.0 body that names eight discipline skills (plans 120, 127).",
+          "check": "The guide followed the stamp: refresh_stock carried it to the 5.9.0 body that names nine discipline skills (plans 120, 127, 183, 189).",
           "cmd": [
             "python",
             "evals/pkg_check.py",
             "grep-tree-present",
             "{case_dir}/package/prompts",
-            "eight **discipline skills**"
+            "nine **discipline skills**"
           ],
           "expect_exit": 0
         },
         {
-          "check": "The guide followed the 5.8.1 stamp: refresh_stock carried it to the shipped body, whose history key landed with the stamp (plans 168, 173).",
+          "check": "The guide followed the 5.9.0 stamp: refresh_stock carried it to the shipped body, whose history key landed with the stamp (plans 168, 173, 189).",
           "cmd": [
             "python",
             "evals/pkg_check.py",
             "grep-tree-present",
             "{case_dir}/package/prompts",
-            "tamheed v5.8.1"
+            "tamheed v5.9.0"
+          ],
+          "expect_exit": 0
+        },
+        {
+          "check": "Every Tamheed-owned prompt file in the fixture passes the strict plain-English rules at baseline 0; the project's own files are skipped by name (plan 189, R14).",
+          "cmd": [
+            "python",
+            "evals/pkg_check.py",
+            "ste-clean",
+            "{case_dir}/package"
           ],
           "expect_exit": 0
         },
@@ -2095,7 +2109,7 @@
             "evals/pkg_check.py",
             "grep-file",
             "{case_dir}/package/review.html",
-            "<meta name=\"tamheed-version\" content=\"5.8.1\">"
+            "<meta name=\"tamheed-version\" content=\"5.9.0\">"
           ],
           "expect_exit": 0
         },
@@ -2293,6 +2307,10 @@
         }
       ],
       "rubric": [
+        {
+          "dimension": "plain-english",
+          "pass_if": "The agent's own prose in the beat (the notes, the handoff) has no semicolon and no sentence over 25 words, and the readiness rule prose-plain-english is read and its counts quoted, never silenced."
+        },
         "Execution judgments (severities, quarantine approach, evidence text) were made by the agent, not scripted.",
         "The refusal-then-force sequence was observed live (the guard refused before the operator's words).",
         "No mechanism was exercised by direct SQL — every write went through the handlers."

@@ -29,13 +29,19 @@ Rewrite the prose of the `<package>` Tamheed package into plain English:
    cells are the id and column (or the file and line), the text before, the text after, and the
    consequence of the write.
    - A Draft or Proposed row: rewritten in place.
+   - An Approved row of a family with no supersession column: rewritten in place, and it stays
+     Approved. Those families are requirements, constraints, assumptions, dependencies and
+     decisions. This path holds only while the change is punctuation or a sentence split. A change of meaning is a new
+     row through the `update` flow, never a rewrite.
    - An Approved or Implemented ADR, an Approved acceptance criterion, an Approved lesson: a
      superseding row, never an edit. An acceptance criterion with a Met verdict starts its
      successor unverified. `acs-met` reads the successor as open until a new verdict verifies
      it. A superseded Approved lesson leaves the note's roster at the next emit.
-   - DEFAULT: the agent lists an Approved acceptance criterion with a Met verdict and an
-     Approved lesson, and marks each "skipped by default". The operator opts in per row, in
-     their words.
+   - The latest handoff entry: never edited, because the journal is append-only. It leaves the
+     rule when the session writes its own handoff in plain English.
+   - DEFAULT: the agent lists an Approved acceptance criterion with a Met verdict, an Approved
+     lesson and a Promoted lesson, and marks each "skipped by default". The operator opts in per
+     row, in their words.
 4. Write each "after" text under `tamheed:plain-english`: one instruction per sentence, the
    actor named, no semicolon, the vocabulary's verbs, every hedge kept. Never add a fact. When a
    rewrite keeps a compound tense or a hedge on purpose, add a `Kept as-is:` line and read it to
@@ -44,9 +50,9 @@ Rewrite the prose of the `<package>` Tamheed package into plain English:
    the operator calls the project's own becomes a `glossary-term` row (`GT-`), and the text keeps
    it. The rule stops naming it from that write on.
 6. After approval, write (`tamheed:package-writes`):
-   - a Draft or Proposed row: a full-row `entity_upsert` with `expect_unchanged` naming every
-     column you did not touch. The server then refuses a concurrent write instead of
-     overwriting it.
+   - a Draft or Proposed row, or an Approved row of a family with no supersession column: a
+     full-row `entity_upsert`. Name every column you did not touch in `expect_unchanged`. The
+     server then refuses a concurrent write instead of overwriting it.
    - an immutable row: the supersession path of the governance reference. Insert the successor
      first, Proposed, with the text rewritten and every other column carried. Then point the
      predecessor at it (`superseded_by`, or `promoted_to` where the family uses it) and set it

@@ -201,6 +201,40 @@ def cmd_grep_file(args) -> int:
     return 0 if ok else 1
 
 
+def cmd_ste_clean(args) -> int:
+    """Plan 189 (R14): every Tamheed-owned prompt file in <package>/prompts/ passes the strict
+    plain-English rules with the bundle vocabulary. A file is Tamheed-owned when it equals a stock
+    body after the `{package}` substitution the server performs; any other file is the project's
+    and is skipped by name."""
+    import ste_lint  # noqa: PLC0415  (beside tamheed_server on sys.path)
+    pkg = Path(args.package).resolve()
+    prompts = pkg / "prompts"
+    if not prompts.is_dir():
+        print(f"{prompts}: no prompts directory")
+        return 2
+    stock = srv._stock_bodies(pkg.name)
+    vocab = ste_lint.load_vocabulary(REPO_ROOT / "plugins" / "tamheed" / "references" / "vocabulary.md")
+    hard, linted, skipped = [], [], []
+    for p in sorted(prompts.glob("*.md")):
+        text = p.read_text(encoding="utf-8")
+        if text not in stock:
+            skipped.append(p.name)
+            continue
+        linted.append(p.name)
+        for f in ste_lint.lint_text(text, mode="strict", lang="en", vocab=vocab, filename=p.name):
+            if f["level"] == ste_lint.HARD:
+                hard.append(f"{p.name}:{f['line']} {f['rule']} [{f['match']}]")
+    print(f"stock files linted: {', '.join(linted) or 'none'}. Project files skipped: {', '.join(skipped) or 'none'}")
+    if not linted:
+        print("no stock file found: nothing was checked")
+        return 1
+    if hard:
+        print("hard findings:\n  " + "\n  ".join(hard))
+        return 1
+    print("0 hard findings")
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     sub = parser.add_subparsers(dest="command", required=True)
@@ -267,6 +301,11 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("path")
     p.add_argument("needle")
     p.set_defaults(fn=cmd_grep_file)
+
+    p = sub.add_parser("ste-clean", help="every Tamheed-owned prompt file under <package>/prompts/"
+                                         " passes the strict plain-English rules (plan 189)")
+    p.add_argument("package")
+    p.set_defaults(fn=cmd_ste_clean)
 
     args = parser.parse_args(argv)
     return args.fn(args)

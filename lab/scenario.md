@@ -945,6 +945,38 @@ must fire; the resulting package replaces `evals/sample-results/lab-tracker/pack
       green (`verified: true`, `dirty: []`, `foreign: []`, `review_current: true`,
       `review_exported_by: "5.8.1"`); `package_close`; no `data/.lock` remains.
 
+33. **The v5.9.0 continuation. Plain English: the rule that reports, the skill that rewrites on the
+    operator's word, the guide and the note that follow the stamp.** 5.9.0 changes no store shape.
+    The package opens at `schema_version` 7 with the resume block naming beat 32's final handoff.
+    The scratch phase runs FIRST, by a real agent. The fixture's note then quotes what it measured.
+    ✔ THE RULE, read before any write: `readiness_check("package")` carries `prose-plain-english` as
+      an advisory. On this record it reads `fail` with counts per rule (semicolons and long sentences
+      over the register statements, the project's prompt file and the latest handoff). `ready` does
+      not move on it.
+    ✔ THE SCRATCH PHASE (plan 189, a copy of this package outside the repository, the headless
+      harness of `plans/evidence/scripts-fb028/`): the operator types `/tamheed:ste-rewrite package`.
+      The skill reads the rule, proposes batch 1 as a before-and-after table with a consequence
+      column, and STOPS. This record holds no Draft or Proposed row the rule names. The agent stops
+      first on the path for an Approved row of a family with no supersession column, and the
+      operator rules: in place, still Approved, while the change is only punctuation or a split.
+      On the operator's words it applies ONE such in-place rewrite (a full-row `entity_upsert`
+      with `expect_unchanged`) and ONE supersession of an immutable row the rule named, and the
+      operator approves the successor. It skips Approved acceptance criteria with a Met verdict,
+      Approved lessons and Promoted lessons, as its default says. The counts after are smaller than
+      the counts before. No row of this package is written in that phase.
+    ✔ THE EMISSION (the stamp): `handoff_emit(<target>, refresh_stock=true)` reports
+      `refreshed: ["prompts/README.md"]`. The guide reads `tamheed v5.9.0` and names nine discipline
+      skills. The note is `<!-- tamheed:note v6 -->`, its first sentence names the package, and it
+      names `tamheed:plain-english`.
+    ✔ Close the beat with ONE `progress_update` note (actor `agent:lab-beat-33`, `event_type:
+      "note"`) that quotes the rule's counts, the scratch session's id and the evidence path. THEN
+      the final handoff (`event_type: "handoff"`, written LAST, sharing no line with the two before
+      it). Then `export_html`, `gate_run` ready, `package_verify()` green (`verified: true`,
+      `dirty: []`, `foreign: []`, `review_current: true`, `review_exported_by: "5.9.0"`),
+      `package_close`. No `data/.lock` remains.
+    ✔ THE EVAL (R14): `python evals/pkg_check.py ste-clean <package>` reads 0 hard findings over the
+      Tamheed-owned prompt file (the refreshed guide) and skips the project's own file by name.
+
 **Pass bar:** every ✔ observed; `gate_run` ready (or failing ONLY on deliberately-open
 items the scenario names); the eval runner's lab checks green. `readiness_check` is
 expectedly NOT ready on the scenario's deliberately-open items (AC-003 and, since beat

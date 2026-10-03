@@ -21,7 +21,7 @@ description: >-
 
 # Tamheed
 
-This skill documents tamheed **v5.8.1** (the version travels with the bundle, and check.py lint 8
+This skill documents tamheed **v5.9.0** (the version travels with the bundle, and check.py lint 8
 keeps this line current).
 
 Tamheed turns a project description into an **execution-ready handoff package**. The package holds

@@ -14,7 +14,7 @@
 
 <!-- ste:allow long-sentence: a link bar, not a sentence -->
 <p align="center">
-  <em>Claude Code plugin + MCP-backed agent skill · v5.8.1</em> ·
+  <em>Claude Code plugin + MCP-backed agent skill · v5.9.0</em> ·
   <a href="#license">MIT</a> ·
   <a href="docs/install.md">Install</a> ·
   <a href="docs/migrate-from-keystone.md">Migrate from Keystone</a> ·
@@ -462,7 +462,7 @@ See [`CONTRIBUTING.md`](CONTRIBUTING.md) and
 
 ## Maturity
 
-**v5.x** (currently v5.8.1). The methodology (22 stages), the re-baselined relational store, the MCP tool
+**v5.x** (currently v5.9.0). The methodology (22 stages), the re-baselined relational store, the MCP tool
 surface, the canonical serialization, and the in-place migration path are defined, tested, and stable. The
 store (plan 031) has claimed-vs-verified `Review`, evidence-chained verdicts, `WVR-` waivers,
 severity-thresholded blocking, typed progress events, drift-delta scope changes, blocking G-REL, and

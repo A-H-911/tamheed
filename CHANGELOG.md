@@ -10,6 +10,22 @@ All notable changes to Tamheed are documented here. The format is based on
 
 ## [Unreleased]
 
+## [5.9.0] - 2026-10-03
+
+**MINOR — plain English (plans 176–191).** Every authored English surface of the plugin and the
+repository follows the structural rules of ASD-STE100 Simplified Technical English: no semicolon,
+no sentence over 25 words, the vocabulary of `references/vocabulary.md`, hedges kept. The engine
+gained one readiness rule, two skills, one lint and one linter module. No schema migration:
+`schema_version` stays 7, and the store's bytes do not move.
+
+**For a live package (the migration note).** `handoff_emit(..., refresh_stock=true)` rebuilds the
+CLAUDE.md note as `tamheed:note v6` (its first sentence reads "The Tamheed package for this project
+is `X`") and refreshes the stock prompts README to the 5.9.0 body. The SessionStart hook reads the
+v5 and the v6 sentence, so a note not yet re-emitted still resumes. `readiness_check` reports the
+new advisory `prose-plain-english` with its counts, and `ready` does not move on it. Rewriting a
+package's own prose is the operator's choice: `/tamheed:ste-rewrite` proposes it batch by batch
+with a STOP per batch, and nothing runs without that word.
+
 ### Added
 - `plugins/tamheed/server/ste_lint.py`, the plain-English (ASD-STE100) structural linter, ported from
   danyuchn/asd-ste100-skill (MIT, notice in `plugins/tamheed/THIRD-PARTY-NOTICES.md`) with the
@@ -59,6 +75,13 @@ All notable changes to Tamheed are documented here. The format is based on
   that contain a rejected word (plan 179, rulings R30-R33).
 
 ### Changed
+- `/tamheed:ste-rewrite` names the path for an Approved row of a family with no supersession column
+  (a requirement, a constraint, an assumption, a dependency, a decision): rewritten in place, still
+  Approved, only while the change is punctuation or a sentence split. Its default-skip list names a
+  Promoted lesson beside an Approved one, and the latest handoff entry is never edited. A real agent
+  found all three gaps in lab beat 33 and stopped on the first (plan 189).
+- `evals/pkg_check.py ste-clean <package>`: every Tamheed-owned prompt file under `<package>/prompts/`
+  passes the strict plain-English rules; the eval spec asserts it on the lab fixture (plan 189).
 - `handoff_emit`'s registered description names what the tool writes (the CLAUDE.md note, the
   stock prompts README, `.mcp.json` for a standalone install). It said "Emit handoff prompts", a
   write the tool stopped making in v3 (plan 176).
