@@ -1,6 +1,6 @@
 # Plan 175 — the user guide, review round 1 (pair review, interview style)
 
-Status: DONE (opened 2026-10-02, batch landed 2026-10-03 in the commit that carries this file). The ledger of the operator's and the reviewer's pair review of
+Status: DONE (opened 2026-10-02; batch landed 2026-10-03 as `f59a72c`, with one follow-up commit for the D5 chip interaction, the bucket legend, the README alt text and this ledger's corrections). The ledger of the operator's and the reviewer's pair review of
 `index.html` (the generated bilingual guide, commits c3874e4 / 0b13ba7 / e818d5a). Rulings: page order,
 reviewer's findings first then the operator's; **ledger during the walk, one fix batch at the end**;
 every English fix mirrored into Arabic, no separate Arabic read. The approved plan (revised after a
@@ -187,8 +187,8 @@ is never demanded, so "required" means *the caller must supply it*, which is wha
 - **Bundle/docs**: SKILL.md description and README tagline carry both halves (CHANGELOG `[Unreleased]`);
   `docs/assets/tamheed-overview.png` re-exported from the new D1.
 - **Verification**: `python docs/guide/build.py` clean (geometry lint green on 16 SVGs); `python check.py`
-  ALL CHECKS PASSED; Python 3.10 compile of the generator; captures of all 8 diagrams EN + AR, light + dark;
-  390 px: no horizontal page scroll.
+  ALL CHECKS PASSED; Python 3.10 compile of the generator; captures of all 8 diagrams EN + AR in light and EN in dark (geometry is theme-independent; the dark
+  pass checked colour only); 390 px: no horizontal page scroll; Lighthouse re-run on the rebuilt page in the follow-up.
 
 ## The batch (as planned before round 22)
 

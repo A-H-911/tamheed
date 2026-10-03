@@ -1492,4 +1492,6 @@ TEXT: dict[str, dict[str, str]] = {
     "section.about.3": {"en": "Tamheed is MIT-licensed; its repository, issues and releases are at the link above.", "ar": "تمهيد مرخَّص بـ MIT؛ ومستودعه ومسائله وإصداراته في الرابط أعلاه."},
     "col.packages.custom_attributes": {"en": "Frozen on the header row: `entity_upsert(type=\"package\")` refuses it along with the identity columns; carried for the schema's uniformity.",
                                        "ar": "مجمَّد على صف الترويسة: يرفضه `entity_upsert(type=\"package\")` مع أعمدة الهوية؛ ويُحمل لتوحيد المخطط."},
+    "section.relations.buckets.1": {"en": "The buckets above group the entity types as the matrix uses them. Stakeholders, verdicts, journal entries, waivers, execution gates (as a source), documents, sections, diagrams and glossary terms take only `relates_to`, so they appear in no cell; waivers and gates point at rows through their own `applies_to` column instead.",
+                                    "ar": "تجمّع الفئات أعلاه أنواع الكيانات كما تستعملها المصفوفة. أصحاب المصلحة والأحكام ومدخلات اليومية والإعفاءات وبوابات التنفيذ (كمصدر) والوثائق والأقسام والمخططات ومصطلحات المسرد لا تأخذ إلا `relates_to`، فلا تظهر في أي خلية؛ وتشير الإعفاءات والبوابات إلى الصفوف عبر عمودها `applies_to` بدلًا من ذلك."},
 }  # END TEXT

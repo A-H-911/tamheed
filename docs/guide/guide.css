@@ -220,6 +220,10 @@ html.js svg.dia .step:not([data-on]) { opacity: .18; }
 .stage-detail { min-height: 3.2rem; margin-top: .6rem; padding: .6rem .9rem; border-radius: var(--radius); background: var(--panel-2); max-width: var(--measure); }
 .stage-detail:empty { display: none; }
 
+ul.buckets { columns: 2; max-width: 52rem; font-size: .92em; }
+ul.buckets li { break-inside: avoid; }
+@media (max-width: 640px) { ul.buckets { columns: 1; } }
+
 /* recipes */
 .recipe { border: 1px solid var(--line); border-radius: var(--radius); background: var(--panel); padding: .9rem 1.1rem; margin-block: .8rem; }
 .recipe h3 { margin-top: 0; font-size: 1.1rem; }

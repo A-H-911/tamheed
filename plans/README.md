@@ -180,7 +180,7 @@ devil's-advocate review; execution order is the row order below). Status values:
 
 | # | Plan | Depends on | Status |
 |---|---|---|---|
-| 175 | [The user guide, review round 1](175-guide-review-round-1.md) -- the rendered `index.html` walked section by section in interview style; every accuracy concern settled against the engine, every visualization defect named by geometry; ledger first, one fix batch at the end | the guide commits c3874e4 / 0b13ba7 / e818d5a | DONE -- 2026-10-03, one commit (the one that carries this row): 22 rounds walked, 60-odd ledger rows, the diagram engine gained a geometry lint, the guide and the bundle's self-description carry both halves |
+| 175 | [The user guide, review round 1](175-guide-review-round-1.md) -- the rendered `index.html` walked section by section in interview style; every accuracy concern settled against the engine, every visualization defect named by geometry; ledger first, one fix batch at the end | the guide commits c3874e4 / 0b13ba7 / e818d5a | DONE -- 2026-10-03, `f59a72c` (+ one follow-up): 22 rounds walked, 60-odd ledger rows, the diagram engine gained a geometry lint, the guide and the bundle's self-description carry both halves |
 
 ### Field cycle FB-026 / FB-027 -- plans 165-169 -> v5.8.0 (2026-09-30; maintainer-executed)
 

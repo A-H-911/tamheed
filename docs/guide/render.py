@@ -511,7 +511,10 @@ def _relations(r: R) -> None:
     body = r.PS("section.relations", 3)
     chips = "".join(f'<button type="button" class="chip" data-key="{esc(x["relation"])}">{esc(x["relation"])}</button>'
                     for x in f["relations"] if not x.get("fallback") and not x["same_type"])
+    legend = "".join(f'<li><b>{r.T(f"dia.relations.h.{b}")}</b>: ' + ", ".join(f"<code>{esc(t)}</code>" for t in types) + "</li>"
+                     for b, types in diagrams.BUCKETS)
     body += r.figure("d5", "dia.relations.caption", isolate=True, extra_html=f'<div class="chips">{chips}</div>')
+    body += f'<ul class="buckets">{legend}</ul>' + r.P("section.relations.buckets.1")
     rows = []
     for x in f["relations"]:
         if x.get("fallback"):

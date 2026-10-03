@@ -28,11 +28,11 @@ def _L(key: str) -> str:
 
 
 def node(key, x, y, w, h, label, cls="", mono=False, step=None, group="", links="", detail=None,
-         line_keys=None, small=False):
+         line_keys=None, small=False, keyed=True):
     """A box (w,h > 0), a text-only label (cls contains 'bare') or a junction point (w = h = 0)."""
     return {"key": key, "x": x, "y": y, "w": w, "h": h, "label": label, "cls": cls, "mono": mono,
             "step": step, "group": group, "links": links, "detail": detail,
-            "line_keys": line_keys, "small": small}
+            "line_keys": line_keys, "small": small, "keyed": keyed}
 
 
 def edge(frm, to, label=None, cls="", key="", step=None, draw=True, side=None, bend=0, via=None,
@@ -208,7 +208,7 @@ def svg(model, rtl: bool, lang: str, resolve, title: str) -> str:
         if w == 0 and h == 0:
             continue                                   # a junction point
         attrs = []
-        if n["key"]:
+        if n["key"] and n["keyed"]:          # a matrix cell is keyed by its text lines, not its box
             attrs.append(f'data-key="{esc(n["key"])}"')
         if n["group"]:
             attrs.append(f'data-group="{esc(n["group"])}"')
@@ -517,19 +517,19 @@ def relations_map(f) -> dict:
     for a in names:
         lines = max([len(cells.get((a, b), [])) for b in names] + [1])
         rows_h.append(max(26, lines * lh + 10))
-    ns = [node("corner", 10, 10, hx - 4, hy - 4, _L("relations.corner"), "bare", small=True)]
+    ns = [node("corner", 10, 10, hx - 4, hy - 4, _L("relations.corner"), "bare", small=True, keyed=False)]
     x0, y0 = 10 + hx, 10 + hy
     for j, b in enumerate(names):
-        ns.append(node(f"col-{b}", x0 + j * cw, 10, cw - 4, hy - 4, _L(f"relations.h.{b}"), "acc pill"))
+        ns.append(node(f"col-{b}", x0 + j * cw, 10, cw - 4, hy - 4, _L(f"relations.h.{b}"), "acc pill", keyed=False))
     y = y0
     for i, a in enumerate(names):
         h = rows_h[i]
-        ns.append(node(f"row-{a}", 10, y, hx - 4, h - 4, _L(f"relations.h.{a}"), "acc pill"))
+        ns.append(node(f"row-{a}", 10, y, hx - 4, h - 4, _L(f"relations.h.{a}"), "acc pill", keyed=False))
         for j, b in enumerate(names):
             rels = cells.get((a, b), [])
             cls = "cell" if rels else "cell empty"
             ns.append(node(f"c-{a}-{b}", x0 + j * cw, y, cw - 4, h - 4, rels or [""], cls, mono=True,
-                            small=True, line_keys=rels or None))
+                            small=True, line_keys=rels or None, keyed=False))
         y += h
     return {"id": "d5", "w": x0 + len(names) * cw + 6, "h": y + 6, "nodes": ns, "edges": []}
 
