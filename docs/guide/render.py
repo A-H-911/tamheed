@@ -622,6 +622,7 @@ def _statuses(r: R) -> None:
 
 def _tools(r: R) -> None:
     f = r.f
+    file_models = diagrams.file_models(f)
     body = r.PS("section.tools", 3)
     for g in ("read", "mutate", "staged", "export"):
         body += r.H(3, f"toolgroup.{g}", f"tools-{g}")
@@ -635,7 +636,11 @@ def _tools(r: R) -> None:
             body += (f'<div class="card" id="tool-{t["name"]}"><h4><code>{esc(t["name"])}</code></h4>'
                      f'<p class="muted" lang="en" dir="ltr">“{esc(t["desc"])}”</p>'
                      f'<p class="muted" lang="ar"><span dir="ltr" style="unicode-bidi:isolate">“{esc(t["desc"])}”</span></p>'
-                     f'{r.P("tool." + t["name"])}{params}</div>')
+                     f'{r.P("tool." + t["name"])}{params}'
+                     f'{r.figure_file("fx-" + t["name"], "dia.fx.caption", alt_prefix=t["name"])}'
+                     + (r.figure_file("seq-" + t["name"], "dia.seq.caption", alt_prefix=t["name"])
+                        if "seq-" + t["name"] in file_models else r.P("ui.seq.none", "muted"))
+                     + '</div>')
     body += r.H(3, "section.tools.upsert") + r.PS("section.tools.upsert", 2)
     rows = [[r.code(k), r.T(f"meta.{k}")] for k in f["header"]["meta_keys"]]
     body += r.table([r.UI("col.key"), r.UI("col.meaning_only")], rows, "compact")

@@ -241,12 +241,14 @@ def svg(model, rtl: bool, lang: str, resolve, title: str) -> str:
         if n["step"]:
             attrs.append(f'class="step" data-step="{n["step"]}"')
         parts.append(f'<g {" ".join(attrs)}>')
-        if "bare" not in n["cls"]:
-            rx = h / 2 if "pill" in n["cls"] else 6
-            parts.append(f'<rect class="box {n["cls"]}" x="{x:.1f}" y="{y}" width="{w}" height="{h}" rx="{rx}"/>')
         label = n["label"]
         lines = label if isinstance(label, list) else resolve(label).split("\n")
         lines = lines + list(n.get("label_tail") or [])
+        # plan 206: a node may be accented when its resolved text names a token (the strip's step)
+        box_cls = n["cls"] + (" acc" if n.get("accent_if") and n["accent_if"] in " ".join(lines) else "")
+        if "bare" not in n["cls"]:
+            rx = h / 2 if "pill" in n["cls"] else 6
+            parts.append(f'<rect class="box {box_cls}" x="{x:.1f}" y="{y}" width="{w}" height="{h}" rx="{rx}"/>')
         cls = "num" if n["mono"] else ("strong" if "strong" in n["cls"] else "")
         if n["small"]:
             cls = (cls + " small").strip()
@@ -944,11 +946,166 @@ def trace_path(f, ftype: str) -> dict:
     return {"id": f"trace-{ftype}", "w": 620, "h": int(H), "nodes": [hub] + ns, "edges": es, "frames": frs}
 
 
+# Plan 206 (G7): what each tool needs, reads and writes, hand-authored, every claim with the line of
+# plugins/tamheed/server/tamheed_server.py that makes it true (the number after the item): the line
+# in the tool or in the helper it calls; the def line only for a parameter of the signature or for
+# "nothing". An item
+# starting with "@" is a content id under dia.fx.*, resolved per language; any other item is an
+# identifier drawn as written (a table, a file, a journal event type).
+TOOL_EFFECTS = {
+    "server_info": {
+        "needs": [("@need.none", 5431)],
+        "reads": [("plugin.json", 5405), ("packages", 5433), ("@resume", 5449)],
+        "writes": [("@nothing", 5412)]},
+    "package_create": {
+        "needs": [("@need.closed", 954), ("@need.lockfree", 963)],
+        "reads": [("@nothing", 951)],
+        "writes": [("entity_types", 967), ("packages", 972), ("README.md", 984), ("@lock_taken", 962)]},
+    "package_open": {
+        "needs": [("@need.closed", 1287), ("@need.v4", 1294), ("@need.lockfree", 1306)],
+        "reads": [("@canonical", 1305), ("@resume", 1311)],
+        "writes": [("@lock_taken", 1305)]},
+    "package_close": {
+        "needs": [("@need.open", 1317)],
+        "reads": [("@nothing", 1314)],
+        "writes": [("@canonical", 1322), ("@lock_released", 1323)]},
+    "package_unlock": {
+        "needs": [("@need.name", 5101), ("@need.word", 5142)],
+        "reads": [("@lock_file", 5138)],
+        "writes": [("@lock_removed", 5175), ("progress_entries", 5192), ("forced-override", 5195)]},
+    "entity_upsert": {
+        "needs": [("@need.open", 1623)],
+        "reads": [("@readiness", 1738), ("@skill_names", 1858)],
+        "writes": [("@any_table", 2032), ("trace_edges", 1684), ("progress_entries", 1693), ("lessons", 2127),
+                   ("@canonical", 2278)]},
+    "entity_query": {
+        "needs": [("@need.open", 2319)],
+        "reads": [("@any_table", 2384)],
+        "writes": [("@nothing", 2287)]},
+    "trace_query": {
+        "needs": [("@need.open", 2456)],
+        "reads": [("trace_edges", 2465)],
+        "writes": [("@nothing", 2454)]},
+    "gate_run": {
+        "needs": [("@need.open", 2480)],
+        "reads": [("@all_tables", 2499)],
+        "writes": [("@nothing", 2475)]},
+    "readiness_check": {
+        "needs": [("@need.open", 3269)],
+        "reads": [("@all_tables", 3284)],
+        "writes": [("@nothing", 3263)]},
+    "progress_update": {
+        "needs": [("@need.open", 3317)],
+        "reads": [("@nothing", 3295)],
+        "writes": [("progress_entries", 3334), ("@canonical", 3347)]},
+    "audit_record": {
+        "needs": [("@need.open", 3388)],
+        "reads": [("@nothing", 3374)],
+        "writes": [("audit_verdicts", 3402), ("@canonical", 3414)]},
+    "work_bind": {
+        "needs": [("@need.open", 3426)],
+        "reads": [("entity_index", 3436)],
+        "writes": [("@bound_rows", 3446), ("progress_entries", 3453), ("@canonical", 3461)]},
+    "handoff_emit": {
+        "needs": [("@need.open", 4081), ("@need.kickoff", 4098)],
+        "reads": [("prompts", 4098), ("lessons", 3983), ("skills", 3989), ("feedback", 4237)],
+        "writes": [("README.md", 4090), ("<target>/CLAUDE.md", 4497), ("<target>/.mcp.json", 4166),
+                   ("<package>/CLAUDE.md", 4456)]},
+    "package_migrate": {
+        "needs": [("@need.name", 4730), ("@need.lockfree", 4770), ("@need.word", 4730)],
+        "reads": [("@canonical", 4810)],
+        "writes": [("data-v3-backup/", 4806), ("data/*.jsonl", 5025), ("progress_entries", 4954),
+                   ("README.md", 5088)]},
+    "package_adopt": {
+        "needs": [("@need.source", 5218), ("@need.word", 5223)],
+        "reads": [("@source_repo", 5223)],
+        "writes": [("@new_package", 5232), ("README.md", 5227)]},
+    "export_html": {
+        "needs": [("@need.open", 5276)],
+        "reads": [("@all_tables", 5279), ("@readiness", 5282)],
+        "writes": [("review.html", 5319), ("csv/*.csv", 5348)]},
+    "package_verify": {
+        "needs": [("@need.name", 1331)],
+        "reads": [("data/*.jsonl", 1384), ("review.html", 1395)],
+        "writes": [("progress_entries", 1446), ("integrity-verified", 1446)]},
+    "entity_export": {
+        "needs": [("@need.open", 1510), ("@need.path", 1481)],
+        "reads": [("@tool_result", 1539)],
+        "writes": [("@export_file", 1561)]},
+}
+
+
+def _fx_pill(key, item, x, y, w):
+    if item.startswith("@"):
+        return node(key, x, y, w, 28, _L("fx." + item[1:]), "pill", small=True)
+    return node(key, x, y, w, 28, [item], "pill", mono=True, small=True)
+
+
+def effects_figure(f, tool: str) -> dict:
+    """Plan 206 (G7): the tool in the centre, what it reads on the left (arrows in), what it writes
+    on the right (arrows out), what it needs beneath it."""
+    fx = TOOL_EFFECTS[tool]
+    reads = [(x, i) for i, (x, _ln) in enumerate(fx["reads"])]
+    writes = [(x, i) for i, (x, _ln) in enumerate(fx["writes"])]
+    needs = [x for x, _ln in fx["needs"]]
+    col_h = lambda items: 30 + 36 * len(items) + 6
+    H = max(col_h(reads), col_h(writes), 82 + col_h(needs), 120) + 20   # 82 = the needs frame's top
+    ns, frs = [], []
+    for k, (x, i) in enumerate(reads):
+        ns.append(_fx_pill(f"r{i}", x, 20, 40 + 36 * k, 220))
+    rk = [n["key"] for n in ns]
+    frs.append(frame("reads", 10, 10, 240, col_h(reads), _L("fx.reads"), rk))
+    wn = []
+    for k, (x, i) in enumerate(writes):
+        wn.append(_fx_pill(f"w{i}", x, 610, 40 + 36 * k, 220))
+    frs.append(frame("writes", 600, 10, 240, col_h(writes), _L("fx.writes"), [n["key"] for n in wn]))
+    ty = 24
+    hub = node("tool", 320, ty, 210, 44, [tool], "acc strong", mono=True)
+    ny = ty + 44 + 14
+    nn = [_fx_pill(f"n{i}", x, 320, ny + 30 + 36 * i, 210) for i, x in enumerate(needs)]
+    frs.append(frame("needs", 310, ny, 230, col_h(needs), _L("fx.needs"), [n["key"] for n in nn]))
+    es = []
+    live_r = [n for n in ns if n["key"] != "nothing" and not (len(reads) == 1 and reads[0][0] == "@nothing")]
+    live_w = [n for n in wn if not (len(writes) == 1 and writes[0][0] == "@nothing")]
+    hub_cy = ty + 22
+    if live_r:
+        es += _hub("tool", live_r, 320, hub_cy, 44, False, gap=70)
+    if live_w:
+        es += _hub("tool", live_w, 530, hub_cy, 44, True, gap=70)
+    return {"id": f"fx-{tool}", "w": 860, "h": int(H), "nodes": ns + wn + [hub] + nn, "edges": es, "frames": frs}
+
+
+def sequence_strip(f, tool: str) -> dict:
+    """Plan 206 (G7): every recipe that names the tool, one row each, its steps as the swimlane's
+    pills with the tool's step accented. Derived from RECIPES."""
+    rows = [(slug, names, steps) for slug, names, steps in RECIPES if tool in names]
+    ns, es, frs = [], [], []
+    y = 10
+    for slug, names, steps in rows:
+        col = 860 // steps
+        w = min(col - 8, 200)
+        keys = []
+        for k in range(1, steps + 1):
+            ns.append(node(f"{slug}-s{k}", 30 + (k - 1) * col, y + 26, w, 40, _L(f"wf.{slug}.s{k}"), "pill", small=True))
+            ns[-1]["accent_if"] = tool       # the step whose label names the tool is drawn accented
+            keys.append(f"{slug}-s{k}")
+            if k > 1:
+                es.append(edge(f"{slug}-s{k - 1}", f"{slug}-s{k}", side=("r", "l")))
+        frs.append(frame(f"row-{slug}", 10, y, 880, 76, f"workflow.{slug}.title", keys))
+        y += 86
+    return {"id": f"seq-{tool}", "w": 900, "h": y + 4, "nodes": ns, "edges": es, "frames": frs}
+
+
 def file_models(f) -> dict:
     """Every file figure the page may embed: the swimlanes; per family a relations figure (when a
-    typed relation names it), a data path, a trace path (when a gate or rule reads it); STD8."""
+    typed relation names it), a data path, a trace path (when a gate or rule reads it); STD8; per
+    tool an effects canvas and, when a recipe names it, a call-sequence strip."""
     out = dict(FILE_MODELS)
     out["life-STD8"] = life_std8
+    for t in f["tools"]:
+        out[f"fx-{t['name']}"] = (lambda ff, n=t["name"]: effects_figure(ff, n))
+        if any(t["name"] in names for _slug, names, _steps in RECIPES):
+            out[f"seq-{t['name']}"] = (lambda ff, n=t["name"]: sequence_strip(ff, n))
     for x in f["families"]:
         incoming, outgoing, same = relation_partners(f, x["type"])
         if incoming or outgoing or same:

@@ -82,6 +82,44 @@ class UserGuideTest(unittest.TestCase):
         for g, tabs in diagrams.GATE_TABLES.items():
             self.assertTrue(set(tabs) <= tables, g)
 
+    def test_tool_effects_cover_every_tool_and_cite_server_lines(self):
+        """Plan 206 (G7): every registered tool has an effects set; every cited line is a line of
+        the server; every identifier item that names a table is a store table."""
+        import diagrams
+        names = {t["name"] for t in self.facts["tools"]}
+        self.assertEqual(set(diagrams.TOOL_EFFECTS), names)
+        import re as _re
+        src = extract.SERVER_SRC.split("\n")
+        defs = {m.group(1): i for i, ln in enumerate(src) if (m := _re.match(r"^def (\w+)", ln))}
+        tables = {t["table"] for t in self.facts["schema"]["tables"]}
+        events = set(self.facts["events"]["all"])
+
+        def names(line: int, token: str) -> bool:
+            """The cited line or the six lines around it name the token, or a helper called on the
+            line does within 80 lines (the statement that names a file often sits a line or two
+            from the write)."""
+            text = src[line - 1]
+            if token in "\n".join(src[max(0, line - 7):line + 6]):
+                return True
+            for h in _re.findall(r"\b(_\w+)\(", text):
+                if h in defs and token in "\n".join(src[defs[h]:defs[h] + 80]):
+                    return True
+            return False
+
+        for tool, fx in diagrams.TOOL_EFFECTS.items():
+            for side in ("needs", "reads", "writes"):
+                self.assertTrue(fx[side], (tool, side))
+                for item, line in fx[side]:
+                    self.assertTrue(1 <= line <= len(src), (tool, item, line))
+                    if item.startswith("@"):
+                        continue
+                    if item.isidentifier():
+                        self.assertIn(item, tables, (tool, item))
+                    elif "-" in item and "/" not in item and "." not in item:
+                        self.assertIn(item, events, (tool, item))
+                    token = item.split("/")[-1].replace("*", "")      # data/*.jsonl -> .jsonl, csv/*.csv -> .csv
+                    self.assertTrue(names(line, token), (tool, item, line, src[line - 1].strip()))
+
     def test_every_rendered_id_has_en_and_ar(self):
         missing = build.missing(self.required)
         self.assertEqual(missing, [], f"{len(missing)} strings missing, e.g. {missing[:5]}")

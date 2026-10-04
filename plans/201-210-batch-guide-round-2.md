@@ -37,6 +37,8 @@ the engine as it is after 6.0.0.
 | G19 | (plan 204 review) A family's relations figure has one node per relation kind listing the partner prefixes, never one node per partner family; the centre grows per arrival. A family no typed relation names gets one sentence, not an empty figure. |
 | G20 | (plan 205 review) A family fold: columns, the relations figure or its sentence, Data path and Trace path sub-headings (figure or sentence), one lifecycle line; the standard lifecycle figures live once in the statuses section and are linked. |
 | G21 | (plan 205 review) A domain lifecycle set shows its values as pills in CHECK order, no arrow: the engine states no transition table. |
+| G22 | (plan 206 review) The effects canvas: reads in from the left, writes out to the right, needs beneath; the store's work as a phrase pinned to the calling line, never a file name no server line names; every claim a server line the test holds. |
+| G23 | (plan 206 review) The call-sequence strip marks a step only where its label names the tool; the caption claims only that; no hand map of step indexes. |
 
 ## 2. The beat map
 
@@ -47,7 +49,7 @@ the engine as it is after 6.0.0.
 | 203 | The figures folder proven on the twelve workflow swimlanes (`<picture>`, the swap, the LF rule, the folder byte-twin) | DONE 2026-10-04 |
 | 204 | Family relations figures | DONE 2026-10-04 |
 | 205 | Family flow figures | DONE 2026-10-04 |
-| 206 | Tool figures | planned |
+| 206 | Tool figures | DONE 2026-10-04 |
 | 207 | Gate figures | planned |
 | 208 | Skill figures | planned |
 | 209 | Logo, icon, tagline | planned |
@@ -83,6 +85,10 @@ the engine as it is after 6.0.0.
   family (stages, writer, canonical file, review section) and a trace path for the 20 families a
   gate or rule reads (the rules' tables from a readiness run, the gates from a five-entry map with
   source lines); STD8 drawn once, linked from the folds; 392 files in the folder.
+- **206 — the tool figures.** (the commit this record lands in) An effects canvas per tool (needs,
+  reads, writes; hand-authored, every claim with its server line, the census as the cross-check) and
+  a call-sequence strip per tool a recipe names (derived from RECIPES, the tool's step accented at
+  render time from the label's own text); 528 files in the folder.
 
 ## 4. Errors owned
 
@@ -101,6 +107,8 @@ the engine as it is after 6.0.0.
 - **205.** The sentence-end regex missed stage 3 (no clause: now `None`); the elbows entered the stage
   column (a 40 px gap); seven arrivals on a 30 px node; a stale patch script ran because its rewrite
   could not overwrite an unread file (three files restored from HEAD, nothing else in them).
+- **206.** The strip read `RECIPES` as one tool per step and indexed past the list; a heredoc patch
+  mangled a backslash again (the fourth time) and matched nothing, so the script went through a file.
 
 ## 5. Not built, by ruling or on purpose
 
