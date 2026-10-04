@@ -195,7 +195,7 @@ PROGRESS / DONE.
 | 207 | [The gate figures](207-gate-figures.md) -- the pipeline in the server's order, one figure per gate from the gate map, the Check clauses parsed and the definitions table read, one canvas helper | 206 | DONE -- 2026-10-05 (`3fc2798`) |
 | 208 | [The skill figures](208-skill-figures.md) -- the skills' text read once, the citation matrix, the lifecycle map with only the stated moves, a strip per skill in a fold | 207 | DONE -- 2026-10-05 (`19dfdcc`) |
 | 209 | [The logo, the icon and the tagline](209-logo-icon-tagline.md) -- the two-half paving mark with a return arc on the icon, the lockups and the favicon; the tagline reconsidered on every surface | 208 | DONE -- 2026-10-05 (`ee39799`) |
-| 210 | [Release 6.1.0](210-release-6.1.0.md) -- the stamp on every surface, the stock guide's history key, the lab fixture refreshed through the engine, Lighthouse 100/100/100, push and tag on the operator's word | 209 | DONE -- 2026-10-05 (the commit this row lands in, after the operator's review) |
+| 210 | [Release 6.1.0](210-release-6.1.0.md) -- the stamp on every surface, the stock guide's history key, the lab fixture refreshed through the engine, Lighthouse 100/100/100, push and tag on the operator's word | 209 | DONE -- 2026-10-04 UTC (`a48bd35`, tag `v6.1.0`, CI run 37243052723 green) |
 
 ### Prompts return to the store -- plans 192-200 -> v6.0.0 (released 2026-10-04; maintainer-executed)
 

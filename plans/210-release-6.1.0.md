@@ -6,7 +6,7 @@
 
 ## Status
 - **Priority**: P1 - **Effort**: S - **Risk**: LOW-MEDIUM (a MINOR; the bundle changed in one beat, the
-  assets; the figures folder's LF attribute meets the Windows CI jobs for the first time) - **IN PROGRESS**
+  assets; the figures folder's LF attribute meets the Windows CI jobs for the first time) - **DONE 2026-10-04 UTC**
 
 ## Steps, in the recipe's order
 
@@ -32,7 +32,16 @@
 
 ## The release, as it landed
 
-(filled after the push and the tag)
+- The release commit: `a48bd35`. `python check.py` ALL CHECKS PASSED on it; the selftest 19/19.
+- The push, on the operator's single word (R23): `git push origin main`, `b94c9ac..a48bd35`, ten
+  commits (plan 200's ledger follow-up and 201-210), at 23:14 UTC on 2026-10-04.
+- CI on `a48bd35`: run 37243052723, every job green (the server smoke job and the eight `check` jobs,
+  ubuntu + windows x Python 3.10-3.13). The Windows jobs read the 724 figure files through the LF
+  attribute at their first contact; no fix-up commit was needed.
+- The tag: `v6.1.0` on `a48bd35`, pushed (`refs/tags/v6.1.0` on origin). `git diff v6.1.0 HEAD --
+  plugins/tamheed` is empty. `git diff v6.0.0 v6.1.0 --stat -- plugins/tamheed`: 11 files, the five
+  assets and the six the stamp touches, as the CHANGELOG says.
+- This ledger's own lines above landed in a follow-up commit after the tag; the bundle did not move.
 
 ## Pin ledger
 

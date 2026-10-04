@@ -107,7 +107,7 @@ the engine as it is after 6.0.0.
 - **209 — the logo, the icon and the tagline.** (`ee39799`) The two-half paving
   mark with a return arc, drawn once and emitted as the icon (a Keystone arch until now), the three
   lockups and the guide's favicon; the tagline "Plan the ground, keep the record" on every surface.
-- **210 — release 6.1.0.** (the commit this record lands in) The stamp on plugin.json, the CHANGELOG,
+- **210 — release 6.1.0.** (`a48bd35`, tag `v6.1.0`, CI run 37243052723 green) The stamp on plugin.json, the CHANGELOG,
   the six lint-8 surfaces and the stock guide's title line with its history key; the lab-tracker
   fixture refreshed through the engine (`refresh_lab_610.py`: `handoff_emit` refresh_stock,
   `export_html`, `package_verify` clean, the untracked package note removed); the two planning-only
