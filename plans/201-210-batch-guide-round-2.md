@@ -34,6 +34,7 @@ the engine as it is after 6.0.0.
 | G16 | The word is "half": the planning half, the execution half; lanes labelled "Planning" and "Execution". |
 | G17 | (plan 201 review) A **frame** is a region, not an object: a dashed box drawn behind the edges with a short top-left title, never a click target. The geometry lint checks it stays on the canvas and that every member it names lies inside it, and skips it for crossings, borders and label touches. The fallback declined: two adjacent lane boxes with no frame. |
 | G18 | (plan 203 review) The lane rule of a swimlane: a step sits in the lane of the party that acts. An operator's command or word is the operator's; a tool the agent calls, or a skill it runs, is the agent's; the engine's own behaviour is the engine's. Three postures of G13 accepted: the explicit-dark flash on file figures (210 decides a fix), the system serif in file figures, the Latin-run isolate in every Arabic SVG text. |
+| G19 | (plan 204 review) A family's relations figure has one node per relation kind listing the partner prefixes, never one node per partner family; the centre grows per arrival. A family no typed relation names gets one sentence, not an empty figure. |
 
 ## 2. The beat map
 
@@ -42,7 +43,7 @@ the engine as it is after 6.0.0.
 | 201 | D1 and D2 as one agent with two halves; the README overview image | DONE 2026-10-04 |
 | 202 | The chrome: the two-level nav, D3's returns, D5's header pills, the pager in rem | DONE 2026-10-04 |
 | 203 | The figures folder proven on the twelve workflow swimlanes (`<picture>`, the swap, the LF rule, the folder byte-twin) | DONE 2026-10-04 |
-| 204 | Family relations figures | planned |
+| 204 | Family relations figures | DONE 2026-10-04 |
 | 205 | Family flow figures with the Writes parser | planned |
 | 206 | Tool figures | planned |
 | 207 | Gate figures | planned |
@@ -70,6 +71,11 @@ the engine as it is after 6.0.0.
   tokens and its language's direction; the twelve recipes as three-lane swimlanes (the frame
   primitive, one node per step in the acting party's lane, 61 short labels EN + AR); the
   label-width rule for file figures; Latin runs isolated in RTL text.
+- **204 — a relations figure per family.** (the commit this record lands in) Derived from
+  `RELATION_RULES`: the family in the centre, one node per incoming kind on the left and per
+  outgoing kind on the right with the partner prefixes, a same-family node below where the table can
+  be superseded; 28 families drawn, 9 say they have no typed relation; file models computed from
+  the facts; elbows ranked so no two edges overlap; 160 files in the folder.
 
 ## 4. Errors owned
 
@@ -83,6 +89,8 @@ the engine as it is after 6.0.0.
 - **203.** The file figures' labels were orphans at first; the Arabic files reordered Latin tokens
   until the isolate; 26 label lines failed the width rule across four builds; the embedded style
   string tripped lint 14, then one label's semicolon; one import was missing on the first build.
+- **204.** The first routing put every elbow at one mid-x (overlapping verticals), the second marched
+  them into the column's own box with eight kinds; the Arabic caption named the English sides.
 
 ## 5. Not built, by ruling or on purpose
 

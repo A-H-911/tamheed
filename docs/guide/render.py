@@ -135,10 +135,10 @@ class R:
         return (f'<figure{iso}><div class="dia-wrap">{"".join(parts)}</div>{step_bar}{extra_html}'
                 f'<figcaption>{self.T(caption_cid)}</figcaption></figure>')
 
-    def figure_file(self, fid: str, caption_cid: str, title_cid: str) -> str:
+    def figure_file(self, fid: str, caption_cid: str, title_cid: str = "", alt_prefix: str = "") -> str:
         """Plan 203 (G13): a per-item figure as sibling files, one per language and theme, embedded
         through <picture> (the dark source by media query; the script swaps on the explicit toggle)."""
-        model = diagrams.FILE_MODELS[fid](self.f)
+        model = diagrams.file_models(self.f)[fid](self.f)
         W, H = model["w"], model["h"]
         self.figures.append((fid, model, caption_cid))
         pics = []
@@ -146,7 +146,8 @@ class R:
             # the labels are rendered into the files by build.py; resolve them here once so the
             # ids count as used (the missing-strings and orphan checks)
             diagrams.svg(model, rtl=(lg == "ar"), lang=lg, resolve=lambda cid, lg=lg: self.t.get(cid, lg), title="")
-            alt = f"{self.t.get(title_cid, lg)} — {self.t.get(caption_cid, lg)}"
+            head = self.t.get(title_cid, lg) if title_cid else alt_prefix
+            alt = f"{head} — {self.t.get(caption_cid, lg)}"
             light, dark = f"docs/guide/figures/{fid}-{lg}.svg", f"docs/guide/figures/{fid}-{lg}-dark.svg"
             pics.append(f'<picture lang="{lg}" data-fig=""><source media="(prefers-color-scheme: dark)" srcset="{dark}">'
                         f'<img class="fig" src="{light}" data-light="{light}" data-dark="{dark}" alt="{esc(alt)}"'
@@ -512,6 +513,7 @@ def _families(r: R) -> None:
     body += (f'<div class="fam-tools"><div class="chips" id="fam-filter">{chips}</div>'
              f'<input id="fam-search" type="search" placeholder="FR-, requirements, waiver…" aria-label="Search families"></div>')
     by_table = {x['table']: x for x in f['families']}
+    file_models = diagrams.file_models(f)
     for t in f["schema"]["tables"]:
         fam = by_table.get(t["table"])
         cls = fam["cls"] if fam else "Store"
@@ -538,6 +540,11 @@ def _families(r: R) -> None:
         inner += '<p class="muted">' + " · ".join(meta) + "</p>"
         inner += r.table([r.UI("col.column"), r.UI("col.type"), r.UI("col.constraints"), r.UI("col.meaning")],
                          _col_rows(r, t), "compact")
+        if fam:   # plan 204 (G4): the family's typed relations, or the sentence that there are none
+            if f"rel-{fam['type']}" in file_models:
+                inner += r.figure_file(f"rel-{fam['type']}", "dia.rel.caption", alt_prefix=fam["label"])
+            else:
+                inner += r.P("ui.rel.none", "muted")
         body += (f'<details class="fam" id="fam-{t["table"]}" data-class="{esc(cls)}" data-search="{esc(search)}" '
                  f'style="--hue:{hue}"><summary>{head}</summary><div class="body">{inner}</div></details>')
     # triggers and views

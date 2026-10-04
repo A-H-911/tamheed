@@ -246,6 +246,7 @@ def svg(model, rtl: bool, lang: str, resolve, title: str) -> str:
             parts.append(f'<rect class="box {n["cls"]}" x="{x:.1f}" y="{y}" width="{w}" height="{h}" rx="{rx}"/>')
         label = n["label"]
         lines = label if isinstance(label, list) else resolve(label).split("\n")
+        lines = lines + list(n.get("label_tail") or [])
         cls = "num" if n["mono"] else ("strong" if "strong" in n["cls"] else "")
         if n["small"]:
             cls = (cls + " small").strip()
@@ -710,6 +711,121 @@ def swimlane(f, slug) -> dict:
 FILE_MODELS = {f"wf-{slug}": (lambda f, s=slug: swimlane(f, s)) for slug in SWIMLANES}
 
 
+def _wrap(items: list[str], width: float, px: float = 12) -> list[str]:
+    """Greedy lines of space-joined items that fit `width` by the width estimate."""
+    lines, cur = [], ""
+    for it in items:
+        cand = f"{cur} {it}".strip()
+        if cur and _text_width(cand, px) > width:
+            lines.append(cur)
+            cur = it
+        else:
+            cur = cand
+    if cur:
+        lines.append(cur)
+    return lines
+
+
+def relation_partners(f, ftype: str) -> tuple[dict, dict, list[str]]:
+    """(incoming kind -> source prefixes, outgoing kind -> target prefixes, same-family kinds) for
+    one family, from RELATION_RULES. relates_to (the fallback) is never drawn."""
+    fams = {x["type"]: x for x in f["families"]}
+    prefix = lambda t: fams[t]["prefix"].rstrip("-") if t in fams else t
+    incoming: dict[str, list[str]] = {}
+    outgoing: dict[str, list[str]] = {}
+    same: list[str] = []
+    table = fams[ftype]["table"] if ftype in fams else None
+    cols = {c["name"] for t in f["schema"]["tables"] if t["table"] == table for c in t["columns"]}
+    for rel in f["relations"]:
+        if rel.get("fallback"):
+            continue
+        if rel["same_type"]:
+            if "superseded_by" in cols:
+                same.append(rel["relation"])
+            continue
+        if ftype in rel["to"]:
+            incoming[rel["relation"]] = [prefix(t) for t in rel["from"]]
+        if ftype in rel["from"]:
+            outgoing[rel["relation"]] = [prefix(t) for t in rel["to"]]
+    return incoming, outgoing, same
+
+
+def relations_figure(f, ftype: str) -> dict:
+    """Plan 204 (G4): the family in the centre, one node per incoming relation kind on the left
+    (the source families' prefixes), one per outgoing kind on the right (the targets'), the
+    same-family kinds below. Arrivals spread along the centre's sides, so no two edges share an
+    anchor."""
+    fams = {x["type"]: x for x in f["families"]}
+    incoming, outgoing, same = relation_partners(f, ftype)
+    LW, CW, GAP = 270, 200, 12
+    lx, cx, rx = 20, 350, 610
+
+    def column(kinds: dict, x: float, key: str) -> list[dict]:
+        out, y = [], 40
+        for kind, prefixes in kinds.items():
+            lines = [kind] + _wrap(prefixes, LW - 14)
+            h = 16 + 14 * len(lines)
+            out.append(node(f"{key}-{kind}", x, y, LW, h, lines, ""))
+            y += h + GAP
+        return out
+
+    left = column(incoming, lx, "in")
+    right = column(outgoing, rx, "out")
+    col_h = lambda ns: (ns[-1]["y"] + ns[-1]["h"] + 20) if ns else 0
+    ch = max(44, 12 + 10 * max(len(left), len(right)))   # 10 px per arrival, so the arrowheads spread
+    same_h = (16 + 14 * len(same)) if same else 0
+    H = max(col_h(left), col_h(right), 40 + ch + (GAP + same_h if same else 0) + 20, 120)
+    cy = max(40, (H - ch - (GAP + same_h if same else 0)) / 2)
+    ns = left + right + [node("fam", cx, cy, CW, ch, [ftype, fams[ftype]["prefix"]], "acc strong")]
+    es = []
+
+    def spread(k: int, i: int) -> float:
+        step = min(14, (ch - 12) / (k - 1)) if k > 1 else 0
+        return (i - (k - 1) / 2) * step
+
+    def elbows(column: list[dict], arrivals: list[float], near_x: float, sign: int) -> list[float]:
+        """One elbow x per edge: the edge farthest from its arrival hugs the centre, the nearest
+        elbows first, so verticals never overlap and no horizontal meets another vertical."""
+        dist = [abs((n["y"] + n["h"] / 2) - a) for n, a in zip(column, arrivals)]
+        order = sorted(range(len(column)), key=lambda i: -dist[i])
+        step = min(8.0, 48 / max(1, len(column)))   # every elbow stays inside the 60 px gap
+        xs = [0.0] * len(column)
+        for rank, i in enumerate(order):
+            xs[i] = near_x + sign * step * rank
+        return xs
+
+    cy_mid = cy + ch / 2
+    arr_l = [cy_mid + spread(len(left), i) for i in range(len(left))]
+    for n, a, mx in zip(left, arr_l, elbows(left, arr_l, cx - 6, -1)):
+        ys = n["y"] + n["h"] / 2
+        es.append(edge(n["key"], "fam", side=("r", "l"), offset=(0, a - cy_mid), via=[(mx, ys), (mx, a)]))
+    arr_r = [cy_mid + spread(len(right), j) for j in range(len(right))]
+    for n, a, mx in zip(right, arr_r, elbows(right, arr_r, cx + CW + 6, 1)):
+        ys = n["y"] + n["h"] / 2
+        es.append(edge("fam", n["key"], side=("r", "l"), offset=(a - cy_mid, 0), via=[(mx, a), (mx, ys)]))
+    if same:
+        ns.append(node("same", cx, cy + ch + GAP, CW, same_h, _L("rel.same"), "pill", line_keys=None))
+        ns[-1]["label_tail"] = same   # the kinds, appended by the renderer after the resolved first line
+        es.append(edge("fam", "same", side=("b", "t")))
+    frs = []
+    if left:
+        frs.append(frame("sources", lx - 10, 10, LW + 20, col_h(left) - 10, _L("rel.sources"), [n["key"] for n in left]))
+    if right:
+        frs.append(frame("targets", rx - 10, 10, LW + 20, col_h(right) - 10, _L("rel.targets"), [n["key"] for n in right]))
+    return {"id": f"rel-{ftype}", "w": 900, "h": int(H), "nodes": ns, "edges": es, "frames": frs}
+
+
+def file_models(f) -> dict:
+    """Every file figure the page may embed: the swimlanes, and a relations figure for every
+    family that a typed relation names."""
+    out = dict(FILE_MODELS)
+    for x in f["families"]:
+        incoming, outgoing, same = relation_partners(f, x["type"])
+        if incoming or outgoing or same:
+            out[f"rel-{x['type']}"] = (lambda ff, t=x["type"]: relations_figure(ff, t))
+    return out
+
+
 def label_problems(model, resolve) -> list[str]:
     """A file figure renders in fallback fonts with no inline twin to compare against, so every
     node label line must fit its box by the width estimate (plan 203)."""
@@ -718,6 +834,7 @@ def label_problems(model, resolve) -> list[str]:
         if not (n["w"] and n["h"]):
             continue
         lines = n["label"] if isinstance(n["label"], list) else resolve(n["label"]).split("\n")
+        lines = list(lines) + list(n.get("label_tail") or [])
         px = 13 if "strong" in n["cls"] else (10.5 if n["small"] else 12)
         for line in lines:
             if _text_width(line, px) > n["w"] - 10:

@@ -84,8 +84,9 @@ def diagram_problems(f: dict) -> list[str]:
         for lg in ("en", "ar"):
             resolve = lambda cid, lg=lg: content.TEXT.get(cid, {}).get(lg) or cid
             out += [f"{lg}: {p}" for p in diagrams.lint(model, rtl=(lg == "ar"), resolve=resolve)]
-    for fid in sorted(diagrams.FILE_MODELS):
-        model = diagrams.FILE_MODELS[fid](f)
+    models = diagrams.file_models(f)
+    for fid in sorted(models):
+        model = models[fid](f)
         for lg in ("en", "ar"):
             resolve = lambda cid, lg=lg: content.TEXT.get(cid, {}).get(lg) or cid
             out += [f"{lg}: {p}" for p in diagrams.lint(model, rtl=(lg == "ar"), resolve=resolve)]
