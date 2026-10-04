@@ -208,14 +208,20 @@ def cmd_ste_clean(args) -> int:
     and is skipped by name."""
     import ste_lint  # noqa: PLC0415  (beside tamheed_server on sys.path)
     pkg = Path(args.package).resolve()
+    # v6 (plan 194): the stock operator guide lives at the package root; a package that has
+    # not migrated yet still carries it (and 4.x leftovers) under prompts/, so both are read.
+    candidates = [pkg / "README.md"]
     prompts = pkg / "prompts"
-    if not prompts.is_dir():
-        print(f"{prompts}: no prompts directory")
+    if prompts.is_dir():
+        candidates.extend(sorted(prompts.glob("*.md")))
+    candidates = [c for c in candidates if c.is_file()]
+    if not candidates:
+        print(f"{pkg}: no README.md at the root and no prompts directory")
         return 2
     stock = srv._stock_bodies(pkg.name)
     vocab = ste_lint.load_vocabulary(REPO_ROOT / "plugins" / "tamheed" / "references" / "vocabulary.md")
     hard, linted, skipped = [], [], []
-    for p in sorted(prompts.glob("*.md")):
+    for p in candidates:
         text = p.read_text(encoding="utf-8")
         if text not in stock:
             skipped.append(p.name)

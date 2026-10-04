@@ -68,13 +68,23 @@ fails with a foreign-key load error, raised from `package_open` as an uncaught `
 |---|---|---|
 | 192 | The family: migration 008, registry, catalog, governance, guide ids, tests | DONE 2026-10-04 |
 | 193 | The engine paths: screen, scans, the emit precondition, `plugin_skill=` on `entity_query`, note v7 | DONE 2026-10-04 |
-| 194 | The stock operator guide at `<package>/README.md` | planned |
-| 195 | `package_migrate` converts files to rows; the sample and the fixture migrated by the tool | planned |
+| 194 | The stock operator guide at `<package>/README.md` | DONE 2026-10-04 |
+| 195 | `package_migrate` converts files to rows, proven on temporary packages and the ACMP replay copy | planned |
 | 196 | The bundle's teaching surface and the halves wording | planned |
 | 197 | The docs, the README and the guide's prose | planned |
-| 198 | Stamp 6.0.0, the evals, lab beat 34 | planned |
+| 198 | Stamp 6.0.0; the fixture and the sample migrated by the tool (after the stamp, never to an unreleased body); the family becomes Always; the evals re-aimed; lab beat 34 | planned |
 | 199 | The ACMP brief 6.0.0 | planned |
 | 200 | Release 6.0.0 | planned |
+
+## 2b. A sequencing change (plan 194 review)
+
+The plan had plan 195 migrate the lab fixture and the generated sample. Two things break there:
+the fixture's `prompts/README.md` moves to the root while four `evals.json` lines pin it under
+`prompts/` until plan 198, and the root guide the emit writes carries a body no release has
+shipped (the v5.0.0 lesson: never refresh a fixture to an unreleased stock body; the STE
+precedent is plan 189, stamp first). So plan 195 proves the converter on temporary packages and
+on the ACMP replay copy, and plan 198 (the stamp) migrates the fixture and the sample by the tool,
+flips the family to Always, and re-aims the evals in the same commit.
 
 ## 3. What shipped, per plan
 
@@ -94,6 +104,13 @@ fails with a foreign-key load error, raised from `package_open` as an uncaught `
   `prose-plain-english` read `prompts.title` / `prompts.body` and the generic prose-id scan leaves
   the family to its own rule; `entity_query(plugin_skill=)`; the hook's v7 fixture and the
   v6-still-resumes case; lint 9 blacklists v6; `handoff.md` and the guide name v7.
+- **194 — the operator guide at the package root.** (the commit this record lands in)
+  `_emit_prompt_library` emits the stock guide at `<package>/README.md` for all four callers; a
+  pre-v6 copy at `prompts/README.md` is a leftover (stale -> retired on refresh, customised -> kept
+  and named); the stock-merged check labels by location; the stock body speaks of the package root
+  and the prompt rows and lands under `6.0.0` in the history; the note names the root; a stale
+  pattern names old `prompts/` paths in the field's files; `ste-clean` reads the root with a
+  fallback; the guide's path mentions follow (D4's node, the tree, eleven ids EN + AR).
 
 ## 4. Errors owned
 
@@ -104,6 +121,8 @@ fails with a foreign-key load error, raised from `package_open` as an uncaught `
   prose-id scan already covered the new table (a double report); the advisor caught it. The first
   pass of the emit left the v2 leftover compare reading the prompts folder (`NameError`); the suite
   caught it. Five new server strings and one guide sentence failed lint 14 before the gate.
+- **194.** The stock-merged check carried a hard-wired `prompts/` label the plan did not foresee
+  (one test caught it). One recipe sentence of mine failed lint 14.
 
 ## 5. Not built, by ruling or on purpose
 

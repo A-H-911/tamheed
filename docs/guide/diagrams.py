@@ -457,7 +457,7 @@ def package_tree(f) -> dict:
         node("tools", 240, 6, 190, 34, _L("package.tools"), "pill"),
         node("root", 10, 76, 150, 36, _L("package.root"), "acc strong"),
         node("data", 240, 70, 190, 48, _L("package.data"), "", links="write"),
-        node("prompts", 240, 132, 190, 48, _L("package.prompts"), ""),
+        node("readme", 240, 132, 190, 48, _L("package.readme"), ""),
         node("review", 240, 194, 190, 48, _L("package.review"), ""),
         node("exports", 240, 256, 190, 48, _L("package.exports"), ""),
         node("csv", 240, 318, 190, 36, _L("package.csv"), ""),
@@ -466,7 +466,7 @@ def package_tree(f) -> dict:
         node("claude", 480, 134, 270, 48, _L("package.claude"), ""),
     ]
     es = [
-        edge("root", "data", side=("r", "l"), bus="tree"), edge("root", "prompts", side=("r", "l"), bus="tree"),
+        edge("root", "data", side=("r", "l"), bus="tree"), edge("root", "readme", side=("r", "l"), bus="tree"),
         edge("root", "review", side=("r", "l"), bus="tree"), edge("root", "exports", side=("r", "l"), bus="tree"),
         edge("root", "csv", side=("r", "l"), bus="tree"),
         edge("tools", "data", _L("package.flush"), "acc", side=("b", "t"), label_at=(327, 55, "end")),

@@ -3488,6 +3488,9 @@ def _plugin_skill_names() -> list[str]:
 # v1-flow patterns for the cutover stale-reference scan (C19). Precision matters: the bare
 # word "Keystone" is NEVER matched alone — real projects use it as a product/domain term
 # (ACMP's "Keystone optional" feature, ADR-0007 lesson).
+_OLD_PROMPTS_PATH_HINT = ("the operator guide is <package>/README.md and project prompts are"
+                          " rows of the package since v6 (entity_query(\"prompt\")) — point"
+                          " there instead")
 _STALE_PATTERNS = [
     (re.compile(r"validate_package\.py"),
      "run gate_run via the tamheed MCP tools instead of the v1 validator"),
@@ -3495,6 +3498,10 @@ _STALE_PATTERNS = [
      "the package IS the state — query it with entity_query/trace_query"),
     (re.compile(r"docs/handoff/"),
      "project prompts are rows of the package since v6 (entity_query(\"prompt\")) — point there instead"),
+    # v6 (plan 194): the operator guide moved to <package>/README.md and the project's
+    # prompts became rows. Only the PLACEHOLDER form is static; the package-scoped form is
+    # built per emit in _stale_patterns() (a bare `prompts/` path is a project's own business).
+    (re.compile(r"<package>/prompts/"), _OLD_PROMPTS_PATH_HINT),
     (re.compile(r"Keystone (?:v1|package|register|validator|tree)", re.IGNORECASE),
      "the v1 tree is a frozen archive. The Tamheed package is the record"),
     (re.compile(r"progress-log\.md|acceptance-audit\.md"),
@@ -3516,10 +3523,22 @@ def _strip_tool_spans(text: str) -> str:
     return _STALE_BLOCK_RE.sub("", _NOTE_BLOCK_RE.sub("", text))
 
 
+def _stale_patterns() -> list:
+    """The static patterns plus, while a package is open, the one scoped to ITS directory
+    name (plan 194): `<name>/prompts/<file>.md` names nothing live since v6. A bare
+    `prompts/<file>.md` is never matched - a project keeps Markdown prompts of its own
+    under that name, and the precision doctrine above holds (a hit writes the stale-warning
+    block into the field's CLAUDE.md)."""
+    if not _CURRENT_NAME:
+        return list(_STALE_PATTERNS)
+    scoped = re.compile(rf"\b{re.escape(_CURRENT_NAME)}/prompts/[A-Za-z0-9][A-Za-z0-9_.-]*\.md\b")
+    return [*_STALE_PATTERNS, (scoped, _OLD_PROMPTS_PATH_HINT)]
+
+
 def _scan_stale_lines(label: str, text: str) -> list[dict]:
     findings = []
     for lineno, line in enumerate(text.splitlines(), 1):
-        for pattern, suggestion in _STALE_PATTERNS:
+        for pattern, suggestion in _stale_patterns():
             if pattern.search(line):
                 findings.append({"file": label, "line": lineno,
                                  "text": line.strip()[:160], "suggestion": suggestion})
@@ -3543,14 +3562,6 @@ def _managed_emit(path: Path, content: str, force: bool = False) -> str:
     return "emitted"
 
 
-def _stock_names() -> set[str]:
-    """Plan 116 (v5): every file name tamheed ever shipped into <package>/prompts/ - the
-    current bundle's files (README.md alone since 5.0.0) plus every stock-history key. A
-    retired stock file left on disk is never a PROJECT prompt: it neither satisfies the
-    "no project prompts" refusal nor joins the project set the scans run over."""
-    return {p.name for p in _PROMPTS_DIR.glob("*.md")} | set(_load_stock_history())
-
-
 def _load_stock_history() -> dict:
     """The bundled roster of every stock body ever shipped ({package} intact) —
     plan 032: the history that makes stock divergence classifiable. Missing file =
@@ -3567,7 +3578,8 @@ def _load_stock_history() -> dict:
 _STOCK_MERGED_RE = re.compile(r"<!--\s*tamheed:stock-merged\s+(\d+\.\d+\.\d+)\s*-->")
 
 
-def _stock_merged_check(fname: str, on_disk: str, name: str, history: dict) -> dict | None:
+def _stock_merged_check(fname: str, on_disk: str, name: str, history: dict,
+                        rel: str | None = None) -> dict | None:
     """Plan 125 (v5.1, the field's FB-019) verified a declared `stock-merged X.Y.Z` marker
     against the lines X.Y.Z ADDED over the previous release. The field's FB-023 (v5.2, plan
     129) showed what that misses: a marker over a much older body passes as soon as the newest
@@ -3584,7 +3596,7 @@ def _stock_merged_check(fname: str, on_disk: str, name: str, history: dict) -> d
         return None
     ver = declared.group(1)
     releases = sorted(history.get(fname, {}), key=_vkey)
-    entry: dict = {"file": f"prompts/{fname}", "declared": ver}
+    entry: dict = {"file": rel or f"prompts/{fname}", "declared": ver}   # v6: the guide at the root
     if ver not in releases:
         entry.update({"verified": False, "delta_missing": None, "missing_by_release": None,
                       "reason": f"{ver} is not a release of this file's stock history"})
@@ -3618,16 +3630,20 @@ def _stock_merged_check(fname: str, on_disk: str, name: str, history: dict) -> d
 
 def _emit_prompt_library(pkg_dir: Path, name: str, force: bool = False,
                          refresh_stock: bool = False) -> dict:
-    """Copy the bundled stock files into <package>/prompts/ (C19; the library lives with
-    the package) - since v5.0.0 (plan 116) that is README.md alone: the sixteen scenarios
-    are the plugin's slash skills (`/tamheed:<name>`), updated with the plugin. Deterministic:
+    """Copy the bundled stock files into the package (C19; the library lives with the
+    package) - since v5.0.0 (plan 116) that is README.md alone: the sixteen scenarios are
+    the plugin's slash skills (`/tamheed:<name>`), updated with the plugin. Since v6
+    (plan 194) the guide lives at the PACKAGE ROOT, `<package>/README.md`: the project's
+    prompts are rows, so no folder of prompts remains for it to introduce. Deterministic:
     static content, {package} substitution only.
 
-    v5 leftover pass: a retired stock file still on disk (a package created under 4.x) is
+    v5 leftover pass: a retired stock file still on disk under `prompts/` (a package
+    created under 4.x), or the guide's own pre-v6 copy at `prompts/README.md`, is
     classified against the history exactly like a diverged file - byte-equal to any shipped
     release's body after substitution = `leftover_stale_stock`, deleted ONLY with
     refresh_stock=True (reported `retired`: the operator never customised it - the same
     proof the overwrite relies on); anything else = `leftover_customized`, never touched.
+    The folder itself is never removed here (package_migrate owns that, plan 195).
 
     v4.1 (plan 032): every `diverged` stock file is subclassified against the bundled
     stock history — `stale-stock` (byte-equals a HISTORICAL release's stock after the
@@ -3637,7 +3653,7 @@ def _emit_prompt_library(pkg_dir: Path, name: str, force: bool = False,
     refresh_stock=True overwrites ONLY stale-stock files with current
     stock (safe by construction — reported as `refreshed`, not diverged); customized
     files are never touched by refresh; `force` still overwrites ALL diverged."""
-    out_dir = pkg_dir / "prompts"
+    out_dir = pkg_dir / "prompts"          # the RETIRED location: 4.x leftovers, the pre-v6 guide
     result: dict[str, list] = {"emitted": [], "unchanged": [], "diverged": [],
                                "diverged_stale_stock": [], "diverged_customized": [],
                                "refreshed": [], "leftover_stale_stock": [],
@@ -3648,9 +3664,9 @@ def _emit_prompt_library(pkg_dir: Path, name: str, force: bool = False,
     # never a lexical compare (lexical would rank 4.10.0 below 4.9.0).
     for src in sorted(_PROMPTS_DIR.glob("*.md")):
         text = src.read_text(encoding="utf-8").replace("{package}", name)
-        path = out_dir / src.name
+        path = pkg_dir / src.name           # v6: the stock guide at the package root
         status = _managed_emit(path, text, force=force)
-        rel = f"prompts/{src.name}"
+        rel = src.name
         if status == "diverged":
             on_disk = path.read_text(encoding="utf-8")
             matches = next(
@@ -3678,7 +3694,7 @@ def _emit_prompt_library(pkg_dir: Path, name: str, force: bool = False,
                 # containment test alone fails on a customisation that REWRITES stock
                 # lines, which is what the marker is for.
                 declared = _STOCK_MERGED_RE.search(on_disk)
-                if chk := _stock_merged_check(src.name, on_disk, name, history):
+                if chk := _stock_merged_check(src.name, on_disk, name, history, rel=rel):
                     result["stock_merged"].append(chk)
                 rest = iter(on_disk.splitlines())
                 result["diverged_customized"].append(
@@ -3690,7 +3706,9 @@ def _emit_prompt_library(pkg_dir: Path, name: str, force: bool = False,
                          for line in text.splitlines())})
         result[status].append(rel)
     current = {p.name for p in _PROMPTS_DIR.glob("*.md")}
-    for fname in sorted(set(history) - current):
+    # the retired names (4.x scenarios) AND the current names at the retired location (the
+    # pre-v6 guide at prompts/README.md): both are leftovers under prompts/
+    for fname in sorted((set(history) - current) | current):
         path = out_dir / fname
         if not path.exists():
             continue
@@ -4342,7 +4360,7 @@ def handoff_emit(target_dir: str, subdir: str = "handoff", force: bool = False,
         "mandatory. The scenario ceremonies are the plugin's operator-invoked slash skills "
         "(`/tamheed:orient-resume`, `/tamheed:slice-kickoff`, `/tamheed:progress-sync`, "
         "`/tamheed:slice-review`, `/tamheed:register-liveness`, …). "
-        f"`{_CURRENT_NAME}/prompts/README.md`, the operator guide, maps every situation to "
+        f"`{_CURRENT_NAME}/README.md`, the operator guide, maps every situation to "
         "its skill. The project's prompts are rows of the package. The kickoff is the row "
         "`entry_point` names. A row bound to a skill by `plugin_skill` is listed under "
         "Prompts below. Read one whole with `entity_query(\"prompt\", id=...)`. The "
@@ -5253,7 +5271,7 @@ TOOLS = {
     "progress_update": (progress_update, _PROGRESS_UPDATE_DESC),
     "audit_record": (audit_record, _AUDIT_RECORD_DESC),
     "work_bind": (work_bind, "Bind a commit/PR to the entities it satisfies (stamps last_referenced)"),
-    "handoff_emit": (handoff_emit, "Wire a target project to the package: write the CLAUDE.md note and the stock prompts README, plus `.mcp.json` for a standalone install. Injection-screened."),
+    "handoff_emit": (handoff_emit, "Wire a target project to the package: write the CLAUDE.md note and the stock README at the package root, plus `.mcp.json` for a standalone install. Injection-screened."),
     "package_migrate": (package_migrate, "Migrate a v2/v3 package in place to the v4 store (staged: preview, then confirm)"),
     "package_adopt": (package_adopt, "Adopt a brownfield repo (staged: scan/preview, then confirm)"),
     "export_html": (export_html, "Export the HTML review surface to <package>/review.html"),

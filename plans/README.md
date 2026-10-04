@@ -190,11 +190,11 @@ the tag. Status values: PLANNED / IN PROGRESS / DONE.
 |---|---|---|---|
 | 192 | [The `prompts` family](192-prompts-family.md) -- migration 008, the registry row, the `plugin_skill` write guard, the catalog and governance rows, the guide ids | 191 | DONE -- 2026-10-04 (the commit this row lands in, after the operator's review) |
 | 193 | [The engine paths over prompt rows](193-engine-paths.md) -- the emit demands an Approved kickoff row named by `entry_point`, G-INJECT and the scans over the rows, the Prompts roster in the note (marker v7), `prompt-ids-resolve` and `prose-plain-english` over `prompts.title` / `body`, `entity_query(plugin_skill=)` | 192 | DONE -- 2026-10-04 (the commit this row lands in, after the operator's review) |
-| 194 | The stock operator guide at `<package>/README.md` | 193 | PLANNED |
-| 195 | `package_migrate` converts prompt files to rows; the sample and the fixture migrated by the tool; the family becomes Always | 194 | PLANNED |
+| 194 | [The stock operator guide at `<package>/README.md`](194-operator-guide-root.md) -- the managed emission targets the package root, a pre-v6 copy under `prompts/` is a leftover, the stock body speaks of rows, the note and the guide name the root, a stale pattern names the old paths | 193 | DONE -- 2026-10-04 (the commit this row lands in, after the operator's review) |
+| 195 | `package_migrate` converts prompt files to rows, proven on temporary packages and the ACMP replay copy | 194 | PLANNED |
 | 196 | The bundle's teaching surface and the halves wording | 195 | PLANNED |
 | 197 | The docs, the README and the guide's prose | 196 | PLANNED |
-| 198 | Stamp 6.0.0, the evals re-aimed, lab beat 34 | 197 | PLANNED |
+| 198 | Stamp 6.0.0; the fixture and the sample migrated by the tool; the family becomes Always; the evals re-aimed; lab beat 34 | 197 | PLANNED |
 | 199 | The ACMP brief 6.0.0 | 198 | PLANNED |
 | 200 | Release 6.0.0: the batch record, push, tag | 199 | PLANNED |
 

@@ -372,7 +372,7 @@ def _package(r: R) -> None:
     body += r.pre(
         "<package>/\n"
         "├── data/              # the package: one <table>.jsonl per non-empty table; .lock while open\n"
-        "├── prompts/           # README.md (stock operator guide) + the project's own prompt files\n"
+        "├── README.md          # the stock operator guide (project prompts are rows: data/prompts.jsonl)\n"
         "├── review.html        # the human review page, exported by export_html\n"
         "├── csv/               # one CSV per table, written beside review.html\n"
         "├── exports/           # entity_export files: whole tool results, digest-stamped\n"

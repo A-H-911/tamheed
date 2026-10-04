@@ -453,22 +453,22 @@ class McpContractTest(unittest.TestCase):
         self._emit_ready()
         with tempfile.TemporaryDirectory() as target:
             first = srv.handoff_emit(target)                # library seeded at create
-            self.assertIn("prompts/README.md",
+            self.assertIn("README.md",
                           first["prompt_library"]["unchanged"])
             second = srv.handoff_emit(target)               # nothing changed anywhere
             self.assertEqual(second["written"], [])
-            self.assertIn("prompts/README.md",
+            self.assertIn("README.md",
                           second["prompt_library"]["unchanged"])
             self.assertIn("CLAUDE.md", second["unchanged"])
-            stock = srv.PACKAGE_ROOT / "demo" / "prompts" / "README.md"
+            stock = srv.PACKAGE_ROOT / "demo" / "README.md"
             stock.write_text(stock.read_text(encoding="utf-8") + "\nOPERATOR NOTE\n",
                              encoding="utf-8")
             third = srv.handoff_emit(target)                # hand edit: refused, reported
-            self.assertIn("prompts/README.md",
+            self.assertIn("README.md",
                           third["prompt_library"]["diverged"])
             self.assertIn("OPERATOR NOTE", stock.read_text(encoding="utf-8"))
             forced = srv.handoff_emit(target, force=True)   # explicit force overwrites
-            self.assertIn("prompts/README.md",
+            self.assertIn("README.md",
                           forced["prompt_library"]["emitted"])
             self.assertNotIn("OPERATOR NOTE", stock.read_text(encoding="utf-8"))
     def test_upsert_accepts_dict_custom_attributes(self):
@@ -1660,9 +1660,10 @@ class McpContractTest(unittest.TestCase):
         history = json.loads((REPO_ROOT / "plugins" / "tamheed" / "prompts" /
                               "stock-history.json").read_text(encoding="utf-8"))
         prompts = srv.PACKAGE_ROOT / "demo" / "prompts"
+        prompts.mkdir(exist_ok=True)
         with tempfile.TemporaryDirectory() as target:
             srv.handoff_emit(target)                         # emits the current README
-            readme = prompts / "README.md"
+            readme = srv.PACKAGE_ROOT / "demo" / "README.md"
             releases = sorted(history["README.md"], key=srv._vkey)
             # The newest release that ADDED two lines or more: a partial merge needs a line to
             # leave out. A release whose only change to the guide is its title (5.4.0, plan
@@ -1683,7 +1684,7 @@ class McpContractTest(unittest.TestCase):
             out = srv.handoff_emit(target)
             (chk,) = out["stock_merged"]
             self.assertEqual((chk["file"], chk["declared"], chk["verified"]),
-                             ("prompts/README.md", latest, False))
+                             ("README.md", latest, False))
             self.assertEqual(chk["delta_missing"], f"{len(added) - 1}/{len(added)}")
             self.assertTrue(any("stock-merged" in w and "claim" in w for w in out["warnings"]))
             # the complete merge verifies
@@ -1717,6 +1718,7 @@ class McpContractTest(unittest.TestCase):
         history = json.loads((REPO_ROOT / "plugins" / "tamheed" / "prompts" /
                               "stock-history.json").read_text(encoding="utf-8"))
         prompts = srv.PACKAGE_ROOT / "demo" / "prompts"
+        prompts.mkdir(exist_ok=True)
         rel = sorted(history["orient-resume.md"], key=srv._vkey)      # five releases
         self.assertGreaterEqual(len(rel), 4)
         first, prev, latest = rel[0], rel[-2], rel[-1]
@@ -1857,6 +1859,7 @@ class McpContractTest(unittest.TestCase):
         it never joins `project_prompts`."""
         make_complete_package("demo")
         prompts = srv.PACKAGE_ROOT / "demo" / "prompts"
+        prompts.mkdir(exist_ok=True)                 # v6: the folder exists only on a 4.x/5.x package
         hist = json.loads((srv._PROMPTS_DIR / "stock-history.json").read_text(encoding="utf-8"))
         newest = lambda n: hist[n][sorted(hist[n], key=srv._vkey)[-1]].replace("{package}", "demo")
         (prompts / "slice-kickoff.md").write_text(newest("slice-kickoff.md"),
@@ -1899,37 +1902,82 @@ class McpContractTest(unittest.TestCase):
         rule = {r["rule"]: r for r in srv.readiness_check("package")["rules"]}["prompt-ids-resolve"]
         self.assertEqual(rule["population"]["rows"], 1)
 
+    def test_pre_v6_guide_under_prompts_is_a_leftover(self):
+        """Plan 194 (v6, P5): the guide moved to <package>/README.md. A copy still at
+        prompts/README.md is classified like a retired 4.x file: byte-equal to a shipped body
+        is `leftover_stale_stock`, removed only on refresh (reported `retired`); a customised
+        copy is `leftover_customized`, named and never touched. The folder itself stays (the
+        migration removes it)."""
+        self._emit_ready()
+        history = json.loads((srv._PROMPTS_DIR / "stock-history.json").read_text(encoding="utf-8"))
+        old_release, old_body = sorted(history["README.md"].items(), key=lambda kv: srv._vkey(kv[0]))[0]
+        prompts = srv.PACKAGE_ROOT / "demo" / "prompts"
+        prompts.mkdir()
+        old_copy = prompts / "README.md"
+        old_copy.write_text(old_body.replace("{package}", "demo"), encoding="utf-8", newline="\n")
+        with tempfile.TemporaryDirectory() as target:
+            lib = srv.handoff_emit(target)["prompt_library"]
+            self.assertEqual(lib["unchanged"], ["README.md"])                       # the root copy
+            self.assertEqual(lib["leftover_stale_stock"],
+                             [{"file": "prompts/README.md", "matches": old_release}])
+            self.assertTrue(old_copy.exists())                                      # a plain emit deletes nothing
+            lib = srv.handoff_emit(target, refresh_stock=True)["prompt_library"]
+            self.assertEqual(lib["retired"], ["prompts/README.md"])
+            self.assertFalse(old_copy.exists())
+            self.assertTrue(prompts.is_dir())                                       # the folder is the migration's
+            old_copy.write_text("# my own guide\n", encoding="utf-8")
+            lib = srv.handoff_emit(target, refresh_stock=True)["prompt_library"]
+            self.assertEqual(lib["leftover_customized"], ["prompts/README.md"])
+            self.assertEqual(old_copy.read_text(encoding="utf-8"), "# my own guide\n")
+
+    def test_stale_scan_names_the_old_prompt_paths(self):
+        """Plan 194: a target file that still points at THIS package's prompts/ folder, or at
+        the `<package>/prompts/` placeholder, is named by the stale scan with the v6
+        destination. A project's own `prompts/` folder is never matched (precision: a hit
+        writes the stale-warning block into the field's CLAUDE.md)."""
+        self._emit_ready()
+        with tempfile.TemporaryDirectory() as target:
+            (Path(target) / "AGENTS.md").write_text(
+                "Read demo/prompts/README.md first.\n"
+                "Then the kickoff at <package>/prompts/kickoff.md.\n"
+                "Our own prompts/system.md and docs/prompts/review.md are unrelated.\n",
+                encoding="utf-8")
+            out = srv.handoff_emit(target)
+            hits = [f for f in out["stale_references"] if f["file"] == "AGENTS.md"]
+            self.assertEqual([f["line"] for f in hits], [1, 2])
+            for f in hits:
+                self.assertIn("<package>/README.md", f["suggestion"])
+                self.assertIn("rows of the package", f["suggestion"])
+
     def test_package_create_seeds_library(self):
         """Plan 027: <package>/prompts/ is the Stage-20 authoring surface — it exists
         from birth with the stock library; v5 (plan 116): the operator guide alone —
         no scenario file is ever seeded again (they are the plugin's skills)."""
         out = srv.package_create("demo", "Demo", "rnd")
         self.assertTrue(out["ok"], out)
-        self.assertEqual(out["prompt_library"]["emitted"], ["prompts/README.md"])
-        lib = srv.PACKAGE_ROOT / "demo" / "prompts"
-        self.assertTrue((lib / "README.md").exists())
-        self.assertFalse((lib / "orient-resume.md").exists())
-        self.assertEqual(sorted(p.name for p in lib.glob("*.md")), ["README.md"])
+        self.assertEqual(out["prompt_library"]["emitted"], ["README.md"])
+        pkg = srv.PACKAGE_ROOT / "demo"
+        self.assertTrue((pkg / "README.md").exists())              # v6: at the package root
+        self.assertFalse((pkg / "prompts").exists())               # no folder of prompts at all
     def test_prompt_library_emitted_with_package_name(self):
         self._emit_ready()
         with tempfile.TemporaryDirectory() as target:
             out = srv.handoff_emit(target)
-            self.assertEqual(out["prompt_library"]["unchanged"], ["prompts/README.md"])
+            self.assertEqual(out["prompt_library"]["unchanged"], ["README.md"])
             self.assertEqual(out["project_prompts"], ["PRT-001"])     # rows, not files
-        lib = srv.PACKAGE_ROOT / "demo" / "prompts"
-        stock = sorted(p.name for p in lib.glob("*.md") if p.name != "kickoff.md")
-        self.assertEqual(stock, ["README.md"])   # plan 116: the guide is the whole stock
-        guide = (lib / "README.md").read_text(encoding="utf-8")
+        pkg = srv.PACKAGE_ROOT / "demo"
+        self.assertEqual(sorted(p.name for p in pkg.glob("*.md")), ["README.md"])   # the guide is the whole stock
+        guide = (pkg / "README.md").read_text(encoding="utf-8")
         self.assertIn('package_unlock("demo")', guide)      # {package} substituted
         self.assertNotIn("{package}", guide)
         self.assertIn("Which skill, when", guide)           # plan 116: the operator guide
-        self.assertIn("`demo` prompt guide", guide)
+        self.assertIn("`demo` operator guide", guide)        # v6: the guide at the package root
         for name in ("orient-resume", "slice-kickoff", "loop-iteration", "loop-guard",
                      "skill-promote", "register-liveness"):
             self.assertIn(f"/tamheed:{name}", guide, name)  # every scenario, by its skill
         # plan 030 (C36): the table indexes the FOLDER, not just the library, and the
         # guide teaches the single-writer lock + the stale-lock discipline
-        self.assertIn("project prompts are operator-authored", guide)
+        self.assertIn("Project prompts are operator-authored", guide)
         self.assertIn("single-writer lock", guide)
         self.assertIn("Never auto-clear", guide)
         self.assertIn("leftover_customized", guide)          # the v4 -> v5 leftover story
@@ -2009,7 +2057,7 @@ class McpContractTest(unittest.TestCase):
                        "NEEDS-CLARIFICATION", "**Review** (done-claimed)",
                        "`WVR-` waiver", "verified_by", "against_commit",
                        "event_type `work-done`",
-                       "demo/prompts/README.md",             # the operator guide
+                       "demo/README.md",                     # the operator guide, at the root (v6)
                        "tamheed:package-writes", "tamheed:reading-the-record",
                        "tamheed:operator-interview", "/tamheed:slice-kickoff",
                        "This table stays here because it is mandatory"):
@@ -2071,7 +2119,7 @@ class McpContractTest(unittest.TestCase):
         names the per-file acceptance path + force; refresh never touches it.
         v5: the one stock file is the operator guide."""
         self._emit_ready()
-        stock = srv.PACKAGE_ROOT / "demo" / "prompts" / "README.md"
+        stock = srv.PACKAGE_ROOT / "demo" / "README.md"
         # plan 078: the customisation REWRITES a stock line - a file that merely appends
         # to the current stock contains it whole and is, correctly, no longer "lagging"
         lines = stock.read_text(encoding="utf-8").splitlines(keepends=True)
@@ -2080,12 +2128,12 @@ class McpContractTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as target:
             out = srv.handoff_emit(target, refresh_stock=True)
             lib = out["prompt_library"]
-            self.assertIn("prompts/README.md", lib["diverged"])
+            self.assertIn("README.md", lib["diverged"])
             # plan 034 (findings_18 §2): customized entries carry the lag field
             custom = {e["file"]: e["stock_last_changed"]
                       for e in lib["diverged_customized"]}
-            self.assertIn("prompts/README.md", custom)
-            self.assertRegex(custom["prompts/README.md"], r"^\d+\.\d+\.\d+$")
+            self.assertIn("README.md", custom)
+            self.assertRegex(custom["README.md"], r"^\d+\.\d+\.\d+$")
             self.assertEqual(lib["diverged_stale_stock"], [])
             self.assertEqual(lib["refreshed"], [])
             w = next(w for w in out["warnings"] if "CUSTOMISED" in w)
@@ -2105,23 +2153,23 @@ class McpContractTest(unittest.TestCase):
             .read_text(encoding="utf-8"))
         old_release, old_body = sorted(history["README.md"].items(),
                                        key=lambda kv: srv._vkey(kv[0]))[0]
-        stock = srv.PACKAGE_ROOT / "demo" / "prompts" / "README.md"
+        stock = srv.PACKAGE_ROOT / "demo" / "README.md"
         stock.write_text(old_body.replace("{package}", "demo"),
                          encoding="utf-8", newline="\n")
         with tempfile.TemporaryDirectory() as target:
             out = srv.handoff_emit(target)                     # no refresh: report only
             lib = out["prompt_library"]
             self.assertEqual(lib["diverged_stale_stock"],
-                             [{"file": "prompts/README.md",
+                             [{"file": "README.md",
                                "matches": old_release}])
-            self.assertIn("prompts/README.md", lib["diverged"])
+            self.assertIn("README.md", lib["diverged"])
             self.assertTrue(any("STALE-STOCK" in w and "refresh_stock=true" in w
                                 for w in out["warnings"]))
         with tempfile.TemporaryDirectory() as target:
             out = srv.handoff_emit(target, refresh_stock=True)
             lib = out["prompt_library"]
-            self.assertEqual(lib["refreshed"], ["prompts/README.md"])
-            self.assertNotIn("prompts/README.md", lib["diverged"])
+            self.assertEqual(lib["refreshed"], ["README.md"])
+            self.assertNotIn("README.md", lib["diverged"])
         current = (REPO_ROOT / "plugins" / "tamheed" / "prompts" /
                    "README.md").read_text(encoding="utf-8")
         self.assertEqual(stock.read_text(encoding="utf-8"),
@@ -2134,7 +2182,7 @@ class McpContractTest(unittest.TestCase):
         lexical `reverse=True` sort would report the older '4.9.0' first."""
         self._emit_ready()
         fname = "README.md"
-        stock = srv.PACKAGE_ROOT / "demo" / "prompts" / fname
+        stock = srv.PACKAGE_ROOT / "demo" / fname
         old_body = stock.read_text(encoding="utf-8") + "\n<!-- old -->\n"
         stock.write_text(old_body, encoding="utf-8", newline="\n")
         from unittest import mock
@@ -2156,15 +2204,16 @@ class McpContractTest(unittest.TestCase):
             .read_text(encoding="utf-8"))
         _, old_body = sorted(history["defect-triage.md"].items())[0]
         stale = srv.PACKAGE_ROOT / "demo" / "prompts" / "defect-triage.md"
+        stale.parent.mkdir(exist_ok=True)
         stale.write_text(old_body.replace("{package}", "demo"),
                          encoding="utf-8", newline="\n")
-        custom = srv.PACKAGE_ROOT / "demo" / "prompts" / "README.md"
+        custom = srv.PACKAGE_ROOT / "demo" / "README.md"
         custom.write_text(custom.read_text(encoding="utf-8") + "\nmine\n",
                           encoding="utf-8")
         with tempfile.TemporaryDirectory() as target:
             lib = srv.handoff_emit(target, refresh_stock=True,
                                    force=True)["prompt_library"]
-        self.assertIn("prompts/README.md", lib["emitted"])          # force took it
+        self.assertIn("README.md", lib["emitted"])          # force took it
         self.assertEqual(lib["retired"], ["prompts/defect-triage.md"])  # refresh retired it
         self.assertFalse(stale.exists())
         self.assertNotIn("mine", custom.read_text(encoding="utf-8"))
@@ -2172,7 +2221,7 @@ class McpContractTest(unittest.TestCase):
         """No history file = every divergence reads customized — never a false
         stale-stock, so refresh can never clobber (nor delete a leftover)."""
         self._emit_ready()
-        stock = srv.PACKAGE_ROOT / "demo" / "prompts" / "README.md"
+        stock = srv.PACKAGE_ROOT / "demo" / "README.md"
         stock.write_text("anything\n", encoding="utf-8")
         real = srv._PROMPTS_DIR
         with tempfile.TemporaryDirectory() as empty, \
@@ -2187,9 +2236,9 @@ class McpContractTest(unittest.TestCase):
                 srv._PROMPTS_DIR = real
         custom = {e["file"]: e["stock_last_changed"]
                   for e in lib["diverged_customized"]}
-        self.assertIn("prompts/README.md", custom)
+        self.assertIn("README.md", custom)
         # no history -> no lag claim (degrades honest, plan 034)
-        self.assertIsNone(custom["prompts/README.md"])
+        self.assertIsNone(custom["README.md"])
         self.assertEqual(lib["refreshed"], [])
         self.assertEqual(lib["retired"], [])
         self.assertEqual(stock.read_text(encoding="utf-8"), "anything\n")
@@ -2202,7 +2251,7 @@ class McpContractTest(unittest.TestCase):
         customisation rewrote stock lines; the marker covers exactly that case.
         v5 (plan 116): measured on the operator guide, the one stock file - one shape per emit."""
         self._emit_ready()
-        guide = srv.PACKAGE_ROOT / "demo" / "prompts" / "README.md"
+        guide = srv.PACKAGE_ROOT / "demo" / "README.md"
         current = guide.read_text(encoding="utf-8")
         newest = sorted(json.loads((srv._PROMPTS_DIR / "stock-history.json")
                                    .read_text(encoding="utf-8"))["README.md"], key=srv._vkey)[-1]
@@ -2212,7 +2261,7 @@ class McpContractTest(unittest.TestCase):
                 out = srv.handoff_emit(target)
             self.assertTrue(out["ok"], out)                 # the marker trips no screen
             entry = {e["file"]: e for e in out["prompt_library"]["diverged_customized"]}
-            return entry["prompts/README.md"], next(w for w in out["warnings"] if "CUSTOMISED" in w)
+            return entry["README.md"], next(w for w in out["warnings"] if "CUSTOMISED" in w)
 
         # stock lines REWRITTEN + a marker naming the current release: declared, not lagging
         guide.write_text(f"# our own guide\n\n<!-- tamheed:stock-merged {newest} -->"
@@ -3452,12 +3501,13 @@ class V4EngineTest(unittest.TestCase):
     def test_handoff_emit_description_names_its_writes(self):
         """Plan 176 (the STE census, R19a): the registered description said the tool emits
         handoff prompts. No prompt has been written into a target since v3. The description
-        names what the tool writes: the CLAUDE.md note, the stock prompts README, and
-        `.mcp.json` for a standalone install only (plugin-hosted installs skip it)."""
+        names what the tool writes: the CLAUDE.md note, the stock README (at the package root
+        since v6, plan 194), and `.mcp.json` for a standalone install only (plugin-hosted
+        installs skip it)."""
         desc = srv.TOOLS["handoff_emit"][1]
         self.assertNotIn("Emit handoff prompts", desc)
         self.assertIn("CLAUDE.md note", desc)
-        self.assertIn("prompts README", desc)
+        self.assertIn("stock README at the package root", desc)
         self.assertIn("`.mcp.json` for a standalone install", desc)
         self.assertIn("Injection-screened", desc)
 
