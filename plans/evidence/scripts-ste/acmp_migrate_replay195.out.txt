@@ -1,0 +1,22 @@
+prompt files before: ['README.md', 'prm-next.md', 'project-deferred-work-cautions.md', 'project-design-review.md', 'project-invariant-audit.md']
+preview ok: True | 
+   prompts/README.md -> remove (byte-equal to shipped stock)
+   prompts/prm-next.md -> convert to PRT-001 (kickoff), then move to prompts-v5-backup/
+   prompts/project-deferred-work-cautions.md -> convert to PRT-002 (situational), then move to prompts-v5-backup/
+   prompts/project-design-review.md -> convert to PRT-003 (situational), then move to prompts-v5-backup/
+   prompts/project-invariant-audit.md -> convert to PRT-004 (situational), then move to prompts-v5-backup/
+entry_point: {'from': 'prompts/prm-next.md', 'to': 'PRT-001'} | folder: remove
+entity types added: ['prompt']
+confirm ok: True | 
+applied: {'moved_to_backup': ['prompts/prm-next.md', 'prompts/project-deferred-work-cautions.md', 'prompts/project-design-review.md', 'prompts/project-invariant-audit.md'], 'removed_stock': ['prompts/README.md'], 'folder': 'removed'}
+prompts/ exists after: False
+backup: ['prm-next.md', 'project-deferred-work-cautions.md', 'project-design-review.md', 'project-invariant-audit.md']
+open ok: True
+entry_point now: PRT-001
+  PRT-001 kickoff     Proposed  'Kickoff prompt — the durable one'  <- prompts/prm-next.md  body=3651B
+  PRT-002 situational Proposed  'Picking up deferred work — ACMP cautions'  <- prompts/project-deferred-work-cautions.md  body=1466B
+  PRT-003 situational Proposed  'Design review — ACMP `.dc.html` process'  <- prompts/project-design-review.md  body=1807B
+  PRT-004 situational Proposed  'Invariant audit — ACMP load-bearing subset'  <- prompts/project-invariant-audit.md  body=3975B
+G-SET: pass []
+G-IDS: pass
+emit before approval ok: False | the kickoff prompt PRT-001 is Proposed, not Approved — the handoff carries only what the operator approved. Approve the row in their words (

@@ -4549,6 +4549,176 @@ def _restore_from_backup(data: Path, backup: Path, conversion: dict | None) -> N
     shutil.rmtree(backup)
 
 
+_PROMPT_BACKUP_DIR = "prompts-v5-backup"
+_PROMPT_KINDS = ("kickoff", "phase", "situational")
+_FRONT_MATTER_KIND_RE = re.compile(r"^kind:\s*([a-z-]+)\s*$", re.M)
+_PROMPT_COLUMNS = ("id", "kind", "title", "body", "phase_id", "plugin_skill", "lifecycle_status",
+                   "disposition", "disposition_reason_ref", "source_kind", "source_span",
+                   "custom_attributes", "last_referenced")
+
+
+def _prompt_row_from_file(fname: str, text: str, is_entry: bool) -> tuple[str, str, str, dict]:
+    """(kind, title, body, provenance) for one project prompt file (plan 195, P4). Kind: the
+    file `entry_point` names is the kickoff; then a filename that says kickoff; then a
+    front-matter `kind:` in the vocabulary; else situational. The title is the first H1, else
+    the file's stem. The body loses the front-matter block, the v3 provenance header and the
+    title line; each is kept in the provenance so nothing the file carried is lost."""
+    prov: dict = {}
+    lines = text.splitlines()
+    if lines and _CONVERTED_RE.match(lines[0]):
+        m = _CONVERTED_RE.match(lines[0])
+        prov["v2_id"], prov["v2_kind"] = m.group(1), m.group(2)
+        lines = lines[1:]
+    fm_kind = None
+    if lines and lines[0].strip() == "---":
+        try:
+            end = lines.index("---", 1)
+        except ValueError:
+            end = -1
+        if end > 0:
+            block = "\n".join(lines[1:end])
+            prov["front_matter"] = block
+            if m := _FRONT_MATTER_KIND_RE.search(block):
+                fm_kind = m.group(1)
+            lines = lines[end + 1:]
+    title = None
+    for i, line in enumerate(lines):
+        if line.startswith("# "):
+            title = line[2:].strip()
+            del lines[i]
+            if i < len(lines) and not lines[i].strip():
+                del lines[i]
+            break
+        if line.strip():
+            break
+    stem = fname[:-3] if fname.endswith(".md") else fname
+    if is_entry or "kickoff" in stem.lower():
+        kind = "kickoff"
+    elif fm_kind in _PROMPT_KINDS:
+        kind = fm_kind
+    else:
+        kind = "situational"
+    body = "\n".join(lines).strip("\n") + "\n"
+    return kind, title or stem, body, prov
+
+
+def _plan_prompt_files(pkg_dir: Path, name: str, tables: dict) -> dict | None:
+    """Plan 195 (v6, P4): what `package_migrate` does with `<package>/prompts/`. Every `.md`
+    that is not a stock body becomes a Proposed `prompt` row with `converted_from` in its
+    custom_attributes; a stock body (the pre-v6 guide, a 4.x scenario) is removed; a
+    customised README is moved and named; the files leave for `prompts-v5-backup/`; the
+    header's `entry_point` follows the kickoff; the folder goes when it is empty. Idempotent:
+    a file already converted (a row names it in `converted_from`) is only moved. Raises
+    ValueError on an anomaly; returns None when there is nothing to do."""
+    folder = pkg_dir / "prompts"
+    if not folder.is_dir():
+        return None
+    entries = sorted(folder.iterdir(), key=lambda q: q.name)
+    files = [q for q in entries if q.is_file() and q.suffix == ".md"]
+    if not files and entries:
+        return None                                   # other things live there: not ours
+    backup = pkg_dir / _PROMPT_BACKUP_DIR
+    stock = _stock_bodies(name)
+    header = (tables.get("packages") or [{}])[0]
+    entry_point = str(header.get("entry_point") or "")
+    rows_now = tables.get("prompts", [])
+    already: dict[str, str] = {}
+    for r in rows_now:
+        try:
+            attrs = json.loads(r.get("custom_attributes") or "{}")
+        except (TypeError, ValueError):
+            attrs = {}
+        if isinstance(attrs, dict) and attrs.get("converted_from"):
+            already[str(attrs["converted_from"])] = str(r.get("id"))
+    nxt = max((int(str(r.get("id"))[4:]) for r in rows_now
+               if re.fullmatch(r"PRT-\d+", str(r.get("id", "")))), default=0) + 1
+    plan: dict = {"files": [], "rows": [], "backup": _PROMPT_BACKUP_DIR,
+                  "entry_point": {"from": entry_point or None, "to": None}}
+    entry_file = entry_point.removeprefix("prompts/") if entry_point.startswith("prompts/") else ""
+    kickoffs: list[tuple[bool, str]] = []
+    for q in files:
+        rel = f"prompts/{q.name}"
+        try:
+            text = q.read_text(encoding="utf-8")
+        except UnicodeDecodeError as exc:
+            raise ValueError(f"{rel} is not UTF-8 ({exc}) — fix or move the file, then re-run."
+                             " Nothing was written") from None
+        if text in stock:
+            plan["files"].append({"file": rel, "action": "remove (byte-equal to shipped stock)"})
+            continue
+        if q.name == "README.md":
+            plan["files"].append({"file": rel, "action": f"move to {_PROMPT_BACKUP_DIR}/ (a"
+                                  " customised operator guide. The stock guide is now"
+                                  " <package>/README.md)"})
+            continue
+        if rel in already:
+            plan["files"].append({"file": rel, "action": f"move to {_PROMPT_BACKUP_DIR}/"
+                                  f" (already converted: {already[rel]})"})
+            continue
+        is_entry = q.name == entry_file
+        kind, title, body, prov = _prompt_row_from_file(q.name, text, is_entry)
+        pid = f"PRT-{nxt:03d}"
+        nxt += 1
+        attrs = {"converted_from": rel, "kind": kind, **prov}
+        row = {c: None for c in _PROMPT_COLUMNS}
+        row.update({"id": pid, "kind": kind, "title": title, "body": body,
+                    "lifecycle_status": "Proposed",
+                    "custom_attributes": json.dumps(attrs, ensure_ascii=False)})
+        plan["rows"].append(row)
+        plan["files"].append({"file": rel, "action": f"convert to {pid} ({kind}), then move to"
+                              f" {_PROMPT_BACKUP_DIR}/", "id": pid, "kind": kind, "title": title})
+        if kind == "kickoff":
+            kickoffs.append((is_entry, pid))
+    if plan["rows"] and backup.exists():
+        # a real second conversion is refused; a recovery run (every remaining file is
+        # already converted, stock, or the customised guide) merges into the folder
+        raise ValueError(f"{_PROMPT_BACKUP_DIR}/ already exists — a previous conversion ran."
+                         " Remove or rename it before migrating again")
+    if kickoffs:
+        kickoffs.sort(key=lambda k: (not k[0], k[1]))
+        plan["entry_point"]["to"] = kickoffs[0][1]
+    elif entry_point.startswith("prompts/"):
+        # P4: the header named a prompt FILE and no kickoff converted (the file was stock,
+        # already converted, or absent): a dead path is cleared and said, never kept
+        plan["entry_point"]["to"] = None
+        plan["entry_point"]["note"] = (f"{entry_point!r} converted as nothing, so the header's"
+                                       " entry_point is cleared. Write the kickoff as a"
+                                       " `prompt` row and name it")
+        plan["entry_point"]["clear"] = True
+    plan["moves"] = any(not f["action"].startswith("remove") for f in plan["files"])
+    handled = {pkg_dir / f["file"] for f in plan["files"]}
+    plan["folder"] = ("remove" if all(q in handled for q in entries)
+                      else "keep (files that are not prompts remain)")
+    always = any(tid == "prompt" and g == "Always" for tid, _, _, g in BASELINE_ENTITY_TYPES)
+    if always and not rows_now and not plan["rows"]:
+        plan["gset"] = ("no prompt row exists and none converts: G-SET names `prompt` until the"
+                        " kickoff row is written (Stage 20) or an omission records the choice")
+    return plan
+
+
+def _apply_prompt_file_plan(pkg_dir: Path, plan: dict) -> dict:
+    """The file moves of a confirmed plan, after the store swap succeeded: nothing here can
+    lose content (a remove is a shipped stock body; a move is a rename into the backup)."""
+    import shutil
+    backup = pkg_dir / plan["backup"]
+    moved, removed = [], []
+    for item in plan["files"]:
+        src = pkg_dir / item["file"]
+        if item["action"].startswith("remove"):
+            src.unlink()
+            removed.append(item["file"])
+        else:
+            backup.mkdir(exist_ok=True)
+            shutil.move(str(src), str(backup / src.name))
+            moved.append(item["file"])
+    folder = pkg_dir / "prompts"
+    folder_state = "kept"
+    if plan.get("folder") == "remove" and folder.is_dir() and not any(folder.iterdir()):
+        folder.rmdir()
+        folder_state = "removed"
+    return {"moved_to_backup": moved, "removed_stock": removed, "folder": folder_state}
+
+
 def package_migrate(name: str, confirm: bool = False) -> dict:
     """Migrate a v2/v3 package IN PLACE to the v4 store shape (staged, operator-gated).
 
@@ -4558,7 +4728,11 @@ def package_migrate(name: str, confirm: bool = False) -> dict:
     prompts/*.md (the v3 converter, abort-on-anomaly), rows are transformed
     (migrate_v3to4.transform_tables), and the result is validated + canonicalized
     through a full store round-trip BEFORE it replaces the live files — a package
-    that fails v4 integrity is left untouched. Migration is operator-initiated,
+    that fails v4 integrity is left untouched. Since v6 (plan 195) the package's
+    prompt FILES then become `prompt` rows (Proposed, provenance in custom_attributes),
+    the files move to prompts-v5-backup/, the pre-v6 guide and 4.x stock leftovers are
+    removed, the header's entry_point follows the kickoff, and the folder goes; a v4
+    store with prompt files takes that step alone. Migration is operator-initiated,
     always; package_open refuses pre-v4 stores and names this tool.
     v1 Keystone markdown packages are no longer ingested here — migrate them under
     tamheed 3.2.1 first (docs/migrate-from-keystone.md), then re-run this."""
@@ -4639,6 +4813,14 @@ def package_migrate(name: str, confirm: bool = False) -> dict:
                 return _err(f"migration failed — package UNCHANGED (restored from"
                             f" data-v3-backup/, now removed): {exc}")
             return _err(str(exc))
+        try:
+            pplan = _plan_prompt_files(pkg_dir, name, tables)
+        except ValueError as exc:
+            if confirm and not v4_sync:
+                _restore_from_backup(data, backup, conversion)
+                return _err(f"migration failed — package UNCHANGED (restored from"
+                            f" data-v3-backup/, now removed): {exc}")
+            return _err(str(exc))
         legacy_note = None
         if not confirm and not v4_sync and "prompts" in tables:
             # Preview parity with the confirm path's converter: PRM- rows/edges leave.
@@ -4647,8 +4829,10 @@ def package_migrate(name: str, confirm: bool = False) -> dict:
                 e for e in tables.get("trace_edges", [])
                 if not (str(e.get("from_id", "")).startswith("PRM-")
                         or str(e.get("to_id", "")).startswith("PRM-"))]
-            legacy_note = ("data/prompts.jsonl will be converted to prompts/*.md on"
-                           " confirm (the v3 prompt converter, abort-on-anomaly)")
+            legacy_note = ("data/prompts.jsonl is converted on confirm in two steps. The v3"
+                           " prompt converter writes files (abort-on-anomaly). Then the files"
+                           " become `prompt` rows (v6) and leave for"
+                           f" {_PROMPT_BACKUP_DIR}/")
         if v4_sync:
             # findings_20 (plan 037): the note is computed per-run, never asserted
             # per-mode — a later release's migration may add columns to populated
@@ -4720,11 +4904,38 @@ def package_migrate(name: str, confirm: bool = False) -> dict:
                 rep["relocate"] = relocate
         have = {r.get("type_id") for r in tables.get("entity_types", [])}
         added = [tid for tid, _, _, _ in BASELINE_ENTITY_TYPES if tid not in have]
-        if v4_sync and not added and not relocate:
+        if v4_sync and not added and not relocate and not pplan:
             return _err(f"package is already v{stored}, its entity-type registry"
-                        " is current, and data/ holds no foreign audit-trail file."
-                        " Nothing to migrate (the expected answer on a current"
-                        " store)" + held)
+                        " is current, data/ holds no foreign audit-trail file, and"
+                        " prompts/ holds no prompt file. Nothing to migrate (the expected"
+                        " answer on a current store)" + held)
+        if pplan:
+            # v6 (plan 195): the rows join the tables BEFORE the scratch validation, so a
+            # row the store would refuse aborts the whole migration with nothing written
+            if pplan["rows"]:
+                tables.setdefault("prompts", []).extend(pplan["rows"])
+            if (pplan["entry_point"]["to"] or pplan["entry_point"].get("clear")) and tables.get("packages"):
+                tables["packages"][0]["entry_point"] = pplan["entry_point"]["to"]
+            rep["prompt_files"] = pplan["files"]
+            rep["prompt_rows"] = [r["id"] for r in pplan["rows"]]
+            rep["entry_point"] = pplan["entry_point"]
+            rep["prompts_folder"] = pplan["folder"]
+            if pplan["moves"]:
+                rep["prompts_backup"] = f"{_PROMPT_BACKUP_DIR}/"
+            if pplan.get("gset"):
+                rep["g_set"] = pplan["gset"]
+            if v4_sync:
+                if pplan["rows"]:
+                    what = (f"{len(pplan['rows'])} prompt file(s) convert to `prompt` rows (a data"
+                            f" transform: data/prompts.jsonl is written) and every prompt file"
+                            f" leaves for {_PROMPT_BACKUP_DIR}/ (the only backup taken)")
+                elif pplan["moves"]:
+                    what = (f"no prompt file converts. The remaining file(s) leave for"
+                            f" {_PROMPT_BACKUP_DIR}/. No data transform")
+                else:
+                    what = ("stock leftover(s) under prompts/ are removed. No data transform,"
+                            " no backup taken")
+                rep["note"] = rep["note"].replace("No data transform, no backup taken", what)
         for tid, label, prefix, gclass in BASELINE_ENTITY_TYPES:
             if tid in added:
                 tables.setdefault("entity_types", []).append(
@@ -4742,6 +4953,9 @@ def package_migrate(name: str, confirm: bool = False) -> dict:
             if relocate:
                 parts.append("relocated to data-v3-backup/: " + ", ".join(
                     f"{r['file']} [{r['action'].split(' ')[0]}]" for r in relocate))
+            if pplan:
+                parts.append(f"prompt files converted to rows ({len(pplan['rows'])}),"
+                             f" moved to {_PROMPT_BACKUP_DIR}/ ({len(pplan['files'])} file(s))")
             entry = "REGISTRY-SYNC: " + "; ".join(parts)
         else:
             rewrites = sorted(k for k in rep
@@ -4845,9 +5059,20 @@ def package_migrate(name: str, confirm: bool = False) -> dict:
                 src.rename(pkg_dir / "data-v3-backup" / src.name)
             else:
                 src.unlink()
+        if pplan:
+            try:
+                rep["prompt_files_applied"] = _apply_prompt_file_plan(pkg_dir, pplan)
+            except OSError as exc:
+                return _err(f"the store is migrated (the prompt rows are written) but moving"
+                            f" the prompt files failed: {exc}. Move the files listed in"
+                            f" report.prompt_files to {_PROMPT_BACKUP_DIR}/ by hand. A re-run"
+                            " converts nothing twice (a converted file is only moved)",
+                            report=rep)
+        moved = bool(pplan and pplan["moves"])
         out = {"ok": True, "stage": "migrated", "package": name, "report": rep,
-               "backup": "none (registry-sync is a pure append)" if v4_sync
-                         else "data-v3-backup/",
+               "backup": ((f"{_PROMPT_BACKUP_DIR}/ (the prompt files)" if moved
+                           else "none (registry-sync is a pure append)") if v4_sync
+                          else "data-v3-backup/" + (f" + {_PROMPT_BACKUP_DIR}/" if moved else "")),
                "package_root": str(Path(PACKAGE_ROOT).resolve()),
                "note": "review the report, commit the diff, then package_open"}
         if conversion:

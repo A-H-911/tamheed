@@ -54,6 +54,7 @@ The reverse move is MAJOR, as plan 027's was: the handoff contract changes.
 | P13 | review.html gains a Prompts section (kind, plugin skill, status, title, the body in a fold). |
 | P14 | `plugin_skill` admits the 17 bundled scenario skills only (`disable-model-invocation: true` in the frontmatter), never the front door or a discipline skill (plan 192 review). |
 | P15 | G-INJECT at emit time screens Approved prompt rows only, as it screens lessons; a Proposed row blocks nothing because the executing agent reads Approved rows (plan 193 review). |
+| P16 | `package_migrate` removes a shipped stock body found under `prompts/` on confirm, never moves it (the history reproduces it; the confirm is the operator's word); `prompts-v5-backup/` holds the project's own files only (plan 195 review). |
 
 Measured 2026-10-04 with the live 5.9.0 server on scratch packages (the CHANGELOG states it):
 `entity_index` is never serialised, so a 5.9 server opens a 6.0-migrated package, leaves
@@ -69,10 +70,10 @@ fails with a foreign-key load error, raised from `package_open` as an uncaught `
 | 192 | The family: migration 008, registry, catalog, governance, guide ids, tests | DONE 2026-10-04 |
 | 193 | The engine paths: screen, scans, the emit precondition, `plugin_skill=` on `entity_query`, note v7 | DONE 2026-10-04 |
 | 194 | The stock operator guide at `<package>/README.md` | DONE 2026-10-04 |
-| 195 | `package_migrate` converts files to rows, proven on temporary packages and the ACMP replay copy | planned |
+| 195 | `package_migrate` converts files to rows, proven on temporary packages and the ACMP replay copy | DONE 2026-10-04 |
 | 196 | The bundle's teaching surface and the halves wording | planned |
 | 197 | The docs, the README and the guide's prose | planned |
-| 198 | Stamp 6.0.0; the fixture and the sample migrated by the tool (after the stamp, never to an unreleased body); the family becomes Always; the evals re-aimed; lab beat 34 | planned |
+| 198 | Stamp 6.0.0; the fixture and the sample migrated by the tool (after the stamp, never to an unreleased body); the family becomes Always (owed: the test for zero rows + Always, the one case that writes the migrate report's G-SET line); the evals re-aimed; lab beat 34 | planned |
 | 199 | The ACMP brief 6.0.0 | planned |
 | 200 | Release 6.0.0 | planned |
 
@@ -111,6 +112,15 @@ flips the family to Always, and re-aims the evals in the same commit.
   and the prompt rows and lands under `6.0.0` in the history; the note names the root; a stale
   pattern names old `prompts/` paths in the field's files; `ste-clean` reads the root with a
   fallback; the guide's path mentions follow (D4's node, the tree, eleven ids EN + AR).
+- **195 — the migration of prompt files to rows.** (the commit this record lands in)
+  `package_migrate` plans every `.md` under `prompts/` before writing: a non-stock file becomes a
+  Proposed `prompt` row (kind by `entry_point`, filename, front matter, else situational; the
+  body stripped of front matter, v3 header and title, all kept in `custom_attributes`), a stock
+  body is removed, a customised README is moved and named, the files leave for
+  `prompts-v5-backup/`, `entry_point` follows the kickoff, the folder goes; a v4 store with
+  prompt files proceeds on that reason alone; the v2 chain runs files-then-rows in one confirm;
+  idempotent by `converted_from`. Replayed on ACMP's package copy: four rows, the emit refusing
+  until the kickoff is approved.
 
 ## 4. Errors owned
 
@@ -123,6 +133,7 @@ flips the family to Always, and re-aims the evals in the same commit.
   caught it. Five new server strings and one guide sentence failed lint 14 before the gate.
 - **194.** The stock-merged check carried a hard-wired `prompts/` label the plan did not foresee
   (one test caught it). One recipe sentence of mine failed lint 14.
+- **195.** Three new server strings failed lint 14 (two semicolons, one long sentence).
 
 ## 5. Not built, by ruling or on purpose
 

@@ -1349,19 +1349,153 @@ class McpContractTest(unittest.TestCase):
         self.assertEqual(kinds, {"prompts/prm-001-initial.md": "initial",
                                  "prompts/prm-002-review.md": "review"})
         self.assertIn("package-onboarding", conv["curation"][0]["hint"])
-        self.assertFalse((pkg / "data" / "prompts.jsonl").exists())
         self.assertFalse((pkg / "data" / "prompts.jsonl.converted").exists())
-        self.assertTrue((pkg / "data-v3-backup" / "prompts.jsonl").exists())
-        one = (pkg / "prompts" / "prm-001-initial.md").read_text(encoding="utf-8")
+        self.assertTrue((pkg / "data-v3-backup" / "prompts.jsonl").exists())   # the v2 table
+        # v6 (plan 195): the files the v3 step wrote became rows in the SAME confirm, and
+        # left for the backup folder; data/prompts.jsonl is now the v6 table
+        self.assertEqual(out["report"]["prompt_rows"], ["PRT-001", "PRT-002"])
+        self.assertFalse((pkg / "prompts").exists())
+        one = (pkg / "prompts-v5-backup" / "prm-001-initial.md").read_text(encoding="utf-8")
         self.assertIn("converted from data/prompts.jsonl PRM-001", one)
         self.assertEqual(one.count("# Kickoff"), 1)          # stripped, not doubled
-        two = (pkg / "prompts" / "prm-002-review.md").read_text(encoding="utf-8")
+        two = (pkg / "prompts-v5-backup" / "prm-002-review.md").read_text(encoding="utf-8")
         self.assertIn("# Resume", two)
         self.assertIn("# Orientation", two)                  # different H1 preserved
-        # the migrated package opens plainly: no conversion, no legacy report
         again = srv.package_open("demo")
         self.assertTrue(again["ok"])
         self.assertNotIn("legacy_prompts", again)
+        rows = {r["id"]: r for r in srv.entity_query("prompt", limit=10)["rows"]}
+        self.assertEqual(rows["PRT-001"]["title"], "Kickoff")
+        self.assertEqual(rows["PRT-001"]["lifecycle_status"], "Proposed")
+        attrs = json.loads(rows["PRT-001"]["custom_attributes"])
+        self.assertEqual((attrs["converted_from"], attrs["v2_id"], attrs["v2_kind"]),
+                         ("prompts/prm-001-initial.md", "PRM-001", "initial"))
+        self.assertNotIn("converted from data/prompts.jsonl", rows["PRT-001"]["body"])
+        self.assertIn("# Orientation", rows["PRT-002"]["body"])   # the second H1 stays in the body
+
+    def _v4_with_prompt_files(self, name="demo", files=None, entry_point=None):
+        """A v4 package whose prompts/ folder holds project prompt files (the pre-v6 layout:
+        the stock guide beside them)."""
+        make_complete_package(name)
+        if entry_point:
+            srv.entity_upsert([{"type": "package", "entry_point": entry_point}])
+        srv.package_close()
+        pkg = srv.PACKAGE_ROOT / name
+        prompts = pkg / "prompts"
+        prompts.mkdir(exist_ok=True)
+        current = (srv._PROMPTS_DIR / "README.md").read_text(encoding="utf-8").replace("{package}", name)
+        (prompts / "README.md").write_text(current, encoding="utf-8", newline="\n")
+        for fname, text in (files or {}).items():
+            (prompts / fname).write_text(text, encoding="utf-8", newline="\n")
+        return pkg
+
+    def test_migrate_converts_prompt_files_to_rows(self):
+        """Plan 195 (v6, P4): a v4 package's prompt files become Proposed `prompt` rows on
+        the operator's word. The file `entry_point` names is the kickoff (ACMP's is
+        `prm-next.md`, no 'kickoff' in its name); a front-matter kind is honoured; the rest
+        are situational; the stock guide under prompts/ is removed; the files leave for
+        prompts-v5-backup/; the folder goes; entry_point follows the kickoff; the preview
+        writes nothing."""
+        pkg = self._v4_with_prompt_files(files={
+            "prm-next.md": "# Kickoff — the durable one\n\nRead `AGENTS.md` first.\n",
+            "phase2-resume.md": "---\nstatus: Draft\nkind: phase\n---\n# Phase 2 resume\n\nPhase 1 is approved.\n",
+            "project-invariant-audit.md": "# Invariant audit\n\nReview INV- rows.\n",
+        }, entry_point="prompts/prm-next.md")
+        before = {q.name: q.read_bytes() for q in (pkg / "data").glob("*.jsonl")}
+        preview = srv.package_migrate("demo")
+        self.assertTrue(preview["ok"], preview)
+        self.assertEqual(preview["stage"], "preview")
+        rep = preview["report"]
+        self.assertEqual(rep["prompt_rows"], ["PRT-001", "PRT-002", "PRT-003"])
+        by_file = {f["file"]: f for f in rep["prompt_files"]}
+        self.assertEqual(by_file["prompts/prm-next.md"]["kind"], "kickoff")       # entry_point wins
+        self.assertEqual(by_file["prompts/phase2-resume.md"]["kind"], "phase")    # front matter
+        self.assertEqual(by_file["prompts/project-invariant-audit.md"]["kind"], "situational")
+        self.assertTrue(by_file["prompts/README.md"]["action"].startswith("remove"))
+        self.assertEqual(rep["entry_point"], {"from": "prompts/prm-next.md", "to": "PRT-002"})
+        self.assertEqual(rep["prompts_folder"], "remove")
+        self.assertNotIn("g_set", rep)                  # rows convert, so G-SET has nothing to say
+        self.assertEqual({q.name: q.read_bytes() for q in (pkg / "data").glob("*.jsonl")}, before)
+        self.assertTrue((pkg / "prompts" / "prm-next.md").exists())              # nothing moved
+        out = srv.package_migrate("demo", confirm=True)
+        self.assertTrue(out["ok"], out)
+        self.assertEqual(out["report"]["prompt_files_applied"]["folder"], "removed")
+        self.assertFalse((pkg / "prompts").exists())
+        self.assertEqual(sorted(q.name for q in (pkg / "prompts-v5-backup").iterdir()),
+                         ["phase2-resume.md", "prm-next.md", "project-invariant-audit.md"])
+        self.assertTrue(srv.package_open("demo")["ok"])
+        self.assertEqual(srv.server_info()["package"]["entry_point"], "PRT-002")
+        rows = {r["id"]: r for r in srv.entity_query("prompt", limit=10)["rows"]}
+        self.assertEqual({k: (v["kind"], v["title"], v["lifecycle_status"]) for k, v in rows.items()},
+                         {"PRT-001": ("phase", "Phase 2 resume", "Proposed"),
+                          "PRT-002": ("kickoff", "Kickoff — the durable one", "Proposed"),
+                          "PRT-003": ("situational", "Invariant audit", "Proposed")})
+        self.assertEqual(rows["PRT-001"]["body"], "Phase 1 is approved.\n")        # front matter and H1 out
+        self.assertIn("status: Draft", json.loads(rows["PRT-001"]["custom_attributes"])["front_matter"])
+        self.assertEqual(json.loads(rows["PRT-003"]["custom_attributes"])["converted_from"],
+                         "prompts/project-invariant-audit.md")
+        # the emit is refused until the operator approves the kickoff: the STOP by design
+        with tempfile.TemporaryDirectory() as target:
+            refused = srv.handoff_emit(target)
+            self.assertFalse(refused["ok"])
+            self.assertIn("PRT-002 is Proposed, not Approved", refused["error"])
+        srv.package_close()
+        again = srv.package_migrate("demo")                 # idempotent: nothing left to do
+        self.assertFalse(again["ok"])
+        self.assertIn("Nothing to migrate", again["error"])
+
+    def test_migrate_prompt_files_customised_guide_and_backup_refusal(self):
+        """Plan 195: a customised prompts/README.md is moved and named, never converted; a
+        backup folder from a previous run refuses the whole migration; a package without a
+        prompts folder migrates nothing on this account."""
+        pkg = self._v4_with_prompt_files(files={"kickoff.md": "# K\n\nbody\n"})
+        guide = pkg / "prompts" / "README.md"
+        guide.write_text(guide.read_text(encoding="utf-8") + "\nours\n", encoding="utf-8")
+        (pkg / "prompts-v5-backup").mkdir()
+        out = srv.package_migrate("demo")
+        self.assertFalse(out["ok"])
+        self.assertIn("prompts-v5-backup/ already exists", out["error"])
+        (pkg / "prompts-v5-backup").rmdir()
+        out = srv.package_migrate("demo", confirm=True)
+        self.assertTrue(out["ok"], out)
+        by_file = {f["file"]: f["action"] for f in out["report"]["prompt_files"]}
+        self.assertIn("customised operator guide", by_file["prompts/README.md"])
+        self.assertTrue((pkg / "prompts-v5-backup" / "README.md").read_text(encoding="utf-8").endswith("ours\n"))
+        self.assertEqual(out["report"]["prompt_rows"], ["PRT-001"])
+        self.assertEqual(out["report"]["entry_point"], {"from": None, "to": "PRT-001"})  # named kickoff
+        self.assertFalse((pkg / "prompts").exists())
+        make_complete_package("plain")
+        srv.package_close()
+        plain = srv.package_migrate("plain")
+        self.assertFalse(plain["ok"])
+        self.assertIn("prompts/ holds no prompt file", plain["error"])
+
+    def test_migrate_recovers_a_half_moved_conversion_and_clears_a_dead_entry_point(self):
+        """Plan 195: a re-run after the rows were written but a file move failed (the backup
+        folder exists, the file is still on disk, a row names it) moves the file and writes no
+        second row. The header's entry_point naming a file that converted as nothing (here:
+        the already-converted one) is cleared and said (P4)."""
+        pkg = self._v4_with_prompt_files(files={"notes.md": "# Notes\n\nbody\n"},
+                                         entry_point="prompts/notes.md")
+        srv.package_open("demo")
+        self.assertTrue(srv.entity_upsert([
+            {"type": "prompt", "id": "PRT-001", "kind": "situational", "title": "Notes",
+             "body": "body\n", "custom_attributes": {"converted_from": "prompts/notes.md"}}])["ok"])
+        srv.package_close()
+        (pkg / "prompts-v5-backup").mkdir()                   # the first run got this far
+        out = srv.package_migrate("demo", confirm=True)
+        self.assertTrue(out["ok"], out)
+        rep = out["report"]
+        self.assertEqual(rep["prompt_rows"], [])              # no second row
+        by_file = {f["file"]: f["action"] for f in rep["prompt_files"]}
+        self.assertIn("already converted: PRT-001", by_file["prompts/notes.md"])
+        self.assertEqual(rep["entry_point"]["to"], None)
+        self.assertIn("converted as nothing", rep["entry_point"]["note"])
+        self.assertTrue((pkg / "prompts-v5-backup" / "notes.md").exists())
+        self.assertFalse((pkg / "prompts").exists())
+        srv.package_open("demo")
+        self.assertIsNone(srv.server_info()["package"]["entry_point"])
+        self.assertEqual(srv.entity_query("prompt", limit=5)["total"], 1)
 
     def test_convert_unparseable_line_blocks_migrate(self):
         """ANY anomaly aborts the migration with the package untouched — never a

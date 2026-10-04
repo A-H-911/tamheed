@@ -201,9 +201,14 @@ class MigrateV3ToV4Test(unittest.TestCase):
         self.assertEqual(self.migrated["stage"], "migrated")
         self.assertTrue((self.pkg / "data-v3-backup" / "prompts.jsonl").exists(),
                         "backup must hold the ORIGINAL files")
-        self.assertFalse((self.pkg / "data" / "prompts.jsonl").exists())
+        # v6 (plan 195): data/prompts.jsonl is the NEW table (PRT- rows), never the v2 one
+        v6_rows = rows(self.pkg, "prompts.jsonl")
+        self.assertEqual([r["id"] for r in v6_rows], ["PRT-001"])
+        self.assertEqual(v6_rows[0]["lifecycle_status"], "Proposed")
         self.assertEqual(self.migrated["legacy_prompts"]["prompts_converted"],
                          ["prompts/prm-001-initial.md"])
+        self.assertFalse((self.pkg / "prompts").exists())            # the files left for the backup
+        self.assertTrue((self.pkg / "prompts-v5-backup" / "prm-001-initial.md").exists())
         pkg_row = rows(self.pkg, "packages.jsonl")[0]
         self.assertEqual(pkg_row["package_version"], "4.0.0")
         self.assertEqual(pkg_row["mode"], "full")
