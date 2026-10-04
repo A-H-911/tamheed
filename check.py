@@ -84,7 +84,7 @@ _STE_SURFACES = (
     # wave 4b (plan 188): the guide's prose, read by import (every entry, EN and AR), flavored
     ("docs/guide/content.py", "flavored", "en+ar", ()),
     # the current field brief (plan 190): by explicit path, under the exempt plans/ prefix
-    ("plans/briefs/acmp-5.9.0.md", "strict", "en", ()),
+    ("plans/briefs/acmp-6.0.0.md", "strict", "en", ()),
 )
 _STE_PENDING: tuple[str, ...] = ()  # every wave has landed (R26: the last wave leaves it empty)
 # Never linted: the linter's own messages name rejected words; a verbatim license; the lab's

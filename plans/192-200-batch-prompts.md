@@ -59,6 +59,7 @@ The reverse move is MAJOR, as plan 027's was: the handoff contract changes.
 | P18 | The G2 sweep's tail (nine bundle and CHANGELOG lines the repo-wide census found after 196) lands in 197 with the docs, not in 198; P12's split holds for the rest (plan 197 review). |
 | P19 | P4's rule 1 widened: the kickoff is the file `entry_point` names, matched by file name on any path prefix (the sample's v2 `handoff/initial-prompt.md`); a dead `.md` entry point that names no converted file is cleared and said (plan 198 review). |
 | P20 | The recorded planning-only fixtures (`minimal-brief`, `execution-loop`) take the registry sync and one omission row for `prompt` through the server, with a reason true of each, disclosed in the ledger and the lab report; never re-recorded for this (plan 198 review). |
+| P21 | The 5.9.0 brief is superseded by the 6.0.0 brief and not executed; the 6.0.0 brief carries its one STOP as a pointer to `acmp-5.9.0.md` §3; a brief's every "changed" claim names its comparison base, the field's measured client (plan 199 review). |
 
 Measured 2026-10-04 with the live 5.9.0 server on scratch packages (the CHANGELOG states it):
 `entity_index` is never serialised, so a 5.9 server opens a 6.0-migrated package, leaves
@@ -78,7 +79,7 @@ fails with a foreign-key load error, raised from `package_open` as an uncaught `
 | 196 | The bundle's teaching surface and the halves wording | DONE 2026-10-04 |
 | 197 | The docs, the README and the guide's prose | DONE 2026-10-04 |
 | 198 | Stamp 6.0.0; the fixtures and the sample migrated by the engine; the family becomes Always; the evals re-aimed; the Prompts section; lab beat 34 | DONE 2026-10-04 |
-| 199 | The ACMP brief 6.0.0 | planned |
+| 199 | The ACMP brief 6.0.0, every class replayed on a copy | DONE 2026-10-04 |
 | 200 | Release 6.0.0 | planned |
 
 ## 2b. A sequencing change (plan 194 review)
@@ -151,6 +152,12 @@ flips the family to Always, and re-aims the evals in the same commit.
   generated sample's three files became rows (`initial-prompt` the kickoff); 11 eval checks re-aimed and 3
   added (counted from the staged diff); lab beat 34 by a real agent on a scratch copy, then the fixture
   (`lab-continuation-report-198-2026-10-04.md`).
+- **199 — the ACMP brief 6.0.0.** (the commit this record lands in) `plans/briefs/acmp-6.0.0.md`,
+  strict, rostered: O24 and O25 owned, the upgrade in eleven points, eleven classes measured on a
+  `git archive` copy at `8b7d8bd1` by `acmp_replay11.py` (the preview and the confirm, the STOP, the
+  approval, the two bindings and the guard, the emit with the v7 roster and the stale pointers, the
+  export, the rules over rows, the hook over the v5 and the v7 note, the wire), the STOP with the
+  maintainer's recommendation marked (R47), not built, if a class fails.
 
 ## 4. Errors owned
 
@@ -174,6 +181,8 @@ flips the family to Always, and re-aims the evals in the same commit.
 - **198.** T1's words to the lab agent ordered `package_open` before `package_migrate`, which runs on
   a closed package; the agent stopped and the words were corrected in T1b. A ledger line claimed the
   pin re-check before it was run (then run: clean).
+- **199.** Nine of my sentences failed strict mode in the brief (five semicolons in a table, three long
+  sentences, `delete` twice).
 
 ## 5. Not built, by ruling or on purpose
 

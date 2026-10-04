@@ -142,11 +142,11 @@ class CheckLintsTest(unittest.TestCase):
             self._restore(self._GUIDE)
 
     # ---- plan 190: the current field brief is rostered by its path; older briefs are not scanned
-    _BRIEF = "plans/briefs/acmp-5.9.0.md"
+    _BRIEF = "plans/briefs/acmp-6.0.0.md"
 
     def test_current_brief_is_in_the_roster(self):
         self.assertIn(self._BRIEF, check._ste_scope(REPO_ROOT))
-        self.assertNotIn("plans/briefs/acmp-5.8.1.md", check._ste_scope(REPO_ROOT))
+        self.assertNotIn("plans/briefs/acmp-5.9.0.md", check._ste_scope(REPO_ROOT))
         p = self.copy / self._BRIEF
         p.write_text(p.read_text(encoding="utf-8") + "\nA sentence; with a semicolon.\n", encoding="utf-8")
         try:
