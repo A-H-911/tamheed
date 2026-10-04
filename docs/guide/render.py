@@ -730,6 +730,14 @@ def _skills(r: R) -> None:
                          f'<span class="muted" lang="ar"><span dir="ltr" style="unicode-bidi:isolate;display:inline-block;text-align:left">{esc(s["description"])}</span></span>',
                          " ".join(how), r.T(f"skill.{s['name']}")])
         body += r.table([r.UI("col.skill"), r.UI("col.invoke"), r.UI("col.when")], rows, "compact")
+        for s in [x for x in f["skills"] if x["group"] == g]:   # plan 208: one fold per skill holding its strip
+            body += (f'<details class="fold" id="skillfig-{esc(s["name"])}"><summary><span class="prefix">{esc(s["name"])}</span>'
+                     f'<span class="lbl">{r.UI("skill.fold")}</span></summary><div class="body">'
+                     f'{r.figure_file("skill-" + s["name"], "dia.skills.strip.caption", alt_prefix=s["name"])}</div></details>')
+    body += r.H(3, "section.skills.matrix") + r.P("section.skills.matrix.1")
+    body += r.figure_file("skills-matrix", "dia.skills.matrix.caption")
+    body += r.H(3, "section.skills.lifecycle") + r.P("section.skills.lifecycle.1")
+    body += r.figure_file("skills-lifecycle", "dia.skills.life.caption")
     body += r.H(3, "section.skills.styles") + r.PS("section.skills.styles", 2)
     body += r.pre("ITERATION: wbs=<id> slice=<id> acs_moved=<n> gate=<pass|fail> ready=<true|false> stop=<reason|none> lessons_pending=<n>", copy=False)
     body += r.P("section.skills.styles.3")

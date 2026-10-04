@@ -151,6 +151,26 @@ class UserGuideTest(unittest.TestCase):
         for g, items in diagrams.GATE_READS.items():
             self.assertTrue({i for i in items if not i.startswith("@")} <= tables, g)
 
+    def test_skill_figures_derive_from_the_skills_text(self):
+        """Plan 208 (G9): every skill has its text read; citations name skills, tokens name tools or
+        STOP; the matrix columns are the discipline group; the lifecycle pills are the CHECK sets;
+        the two event lines and the lesson rules exist."""
+        st = self.facts["skill_text"]
+        names = {s["name"] for s in self.facts["skills"]}
+        self.assertEqual(set(st), names)
+        tools = set(extract.srv.TOOLS)
+        for n, t in st.items():
+            self.assertTrue(set(t["cites"]) <= names - {n}, n)
+            self.assertTrue(set(t["tokens"]) <= tools | {"STOP"}, n)
+        self.assertTrue(any(t["tokens"] for t in st.values()))
+        src = extract.SERVER_SRC.split("\n")
+        self.assertIn("lesson-confirmed", src[1851])
+        self.assertIn("lesson-promoted", src[1852])
+        self.assertIn("'Superseded'", src[2126] + src[2127])      # the successor retires the old lessons
+        rules = {r["rule"] for sc in self.facts["rules"].values() for r in sc}
+        self.assertTrue({"lessons-confirmed", "lessons-stranded", "lessons-superseded-binding"} <= rules)
+        self.assertEqual(self.facts["lifecycles"]["domain"]["skills"], ["Approved", "Superseded", "Obsolete"])
+
     def test_every_rendered_id_has_en_and_ar(self):
         missing = build.missing(self.required)
         self.assertEqual(missing, [], f"{len(missing)} strings missing, e.g. {missing[:5]}")

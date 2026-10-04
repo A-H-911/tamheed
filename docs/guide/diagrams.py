@@ -1178,6 +1178,108 @@ def sequence_strip(f, tool: str) -> dict:
     return {"id": f"seq-{tool}", "w": 900, "h": y + 4, "nodes": ns, "edges": es, "frames": frs}
 
 
+def skills_matrix(f) -> dict:
+    """Plan 208 (G9): rows the skills by group, columns the discipline skills, a mark where the
+    row's SKILL.md cites the column. Derived from skill_text; nothing authored."""
+    groups = [("front", "skillgroup.front"), ("scenario", "skillgroup.scenario"), ("discipline", "skillgroup.discipline")]
+    cols = [s["name"] for s in f["skills"] if s["group"] == "discipline"]
+    hx, hy, cw, rh = 150, 44, 90, 22      # 'measurement-' is 73 px at the small size; the rule wants w - 10
+    x0, y0 = 10 + hx, 10 + hy
+    ns = [node("corner", 10, 10, hx - 4, hy - 4, _L("skills.corner"), "bare", small=True, keyed=False)]
+    for j, c in enumerate(cols):
+        head, _, tail = c.partition("-")
+        ns.append(node(f"col-{c}", x0 + j * cw, 10, cw - 4, hy - 4, [head + "-", tail] if tail else [c], "acc", small=True, keyed=False))   # a box: a pill's round ends eat its width
+    frs, y = [], y0
+    for g, label in groups:
+        members = []
+        gy = y
+        y += 22                      # the frame's title band: the first row must not sit under the title
+        for s in [x for x in f["skills"] if x["group"] == g]:
+            rk = f"row-{s['name']}"
+            ns.append(node(rk, 14, y, hx - 12, rh - 2, [s["name"]], "bare", mono=True, small=True, keyed=False))
+            members.append(rk)
+            for j, c in enumerate(cols):
+                if c in f["skill_text"][s["name"]]["cites"]:
+                    mk = f"m-{s['name']}-{c}"
+                    ns.append(node(mk, x0 + j * cw + cw / 2 - 8, y + rh / 2 - 6, 12, 12, [], "acc pill", keyed=False))
+                    members.append(mk)
+            y += rh
+        frs.append(frame(f"grp-{g}", 10, gy - 4, hx + len(cols) * cw, y - gy + 4, label, members))
+        y += 14
+    return {"id": "skills-matrix", "w": x0 + len(cols) * cw + 6, "h": y, "nodes": ns, "edges": [], "frames": frs}
+
+
+def skills_lifecycle(f) -> dict:
+    """Plan 208 (G9): the lesson and skill statuses as pills in CHECK order (G21: no arrow the
+    engine does not state); between them the moves a line states: the two journal events the
+    server writes on a lesson's status change (L1852-1853), skill-promote's interview that sets the
+    lessons Promoted and writes the SKL- row on the operator's word (its steps 3 and 5), the two
+    retirement columns, and the readiness rules that watch lessons."""
+    lessons = f["lifecycles"]["domain"]["lessons"]
+    skills = f["lifecycles"]["domain"]["skills"]
+    ns, es, frs = [], [], []
+    ly = {}
+    for i, v in enumerate(lessons):
+        ly[v] = 50 + 36 * i
+        ns.append(node(f"l-{v}", 40, ly[v], 240, 28, [v], "acc pill" if v in ("Approved", "Promoted") else "pill", mono=True, small=True))
+    # the retirement note sits under the pills; the retirement edges run in the frame's left channel
+    ns.append(node("sup-note", 40, 50 + 36 * len(lessons), 240, 20, _L("skills.supersede"), "bare", small=True))
+    frs.append(frame("lessons", 10, 10, 290, 36 * len(lessons) + 74, _L("skills.lessons"), [f"l-{v}" for v in lessons] + ["sup-note"]))
+    ns.append(node("ev-c", 330, ly["Approved"], 220, 28, ["lesson-confirmed"], "pill", mono=True, small=True))
+    ns.append(node("ev-p", 330, ly["Promoted"], 220, 28, ["lesson-promoted"], "pill", mono=True, small=True))
+    frs.append(frame("events", 320, ly["Approved"] - 30, 240, 36 * 2 + 30, _L("skills.events"), ["ev-c", "ev-p"]))
+    es.append(edge("l-Approved", "ev-c", side=("r", "l"), offset=(-5, 0)))
+    es.append(edge("l-Promoted", "ev-p", side=("r", "l"), offset=(-5, 0)))
+    # the third stated move (L2120-2135): a successor lesson approved on the operator's word retires
+    # the old Approved and Promoted lessons to Superseded and writes a `transition` journal row
+    sup = ly["Superseded"]
+    # the farther source runs the outer channel and arrives lower, so the two never cross (the 204 ranking)
+    es.append(edge("l-Approved", "l-Superseded", side=("l", "l"), offset=(0, 6), via=[(22, ly["Approved"] + 14), (22, sup + 20)]))
+    es.append(edge("l-Promoted", "l-Superseded", side=("l", "l"), offset=(0, -6), via=[(31, ly["Promoted"] + 14), (31, sup + 8)]))
+    py = ly["Promoted"] + 36 * 2 + 30
+    ns.append(node("promote", 330, py, 220, 44, _L("skills.promote"), "acc strong"))
+    es.append(edge("promote", "l-Promoted", side=("l", "r"), offset=(0, 6), via=[(305, py + 22), (305, ly["Promoted"] + 20)]))
+    sy = {}
+    for i, v in enumerate(skills):
+        sy[v] = py + 36 * i
+        ns.append(node(f"s-{v}", 610, sy[v], 260, 28, [v], "good pill" if v == "Approved" else "pill", mono=True, small=True))
+    es.append(edge("promote", "s-Approved", side=("r", "l")))
+    ry = py + 36 * len(skills) + 10
+    ns.append(node("ret-s", 610, ry, 260, 28, ["superseded_by"], "pill", mono=True, small=True))
+    ns.append(node("ret-u", 610, ry + 36, 260, 28, ["upstreamed_to"], "pill", mono=True, small=True))
+    frs.append(frame("skills", 600, py - 30, 290, ry + 72 - (py - 30) + 6, _L("skills.skills"), [f"s-{v}" for v in skills] + ["ret-s", "ret-u"]))
+    rules = sorted(r["rule"] for sc in f["rules"].values() for r in sc if r["rule"].startswith("lessons-"))
+    rules = sorted(set(rules))
+    by = max(ry + 72 + 6, 36 * len(lessons) + 84) + 20
+    col = 860 // max(1, len(rules))
+    rn = []
+    for i, r in enumerate(rules):
+        rn.append(node(f"rule-{r}", 30 + i * col, by + 30, col - 12, 28, [r], "warn pill", mono=True, small=True))
+    ns += rn
+    frs.append(frame("rules", 10, by, 880, 68, _L("skills.rules"), [n["key"] for n in rn]))
+    return {"id": "skills-lifecycle", "w": 900, "h": by + 78, "nodes": ns, "edges": es, "frames": frs}
+
+
+def skill_strip(f, name: str) -> dict:
+    """Plan 208 (G9): the tools a skill's text names in the order of first mention, STOP where the
+    text says so, chained left to right in rows of six; a skill naming no tool says so."""
+    tokens = f["skill_text"][name]["tokens"]
+    if not tokens:
+        return {"id": f"skill-{name}", "w": 900, "h": 60,
+                "nodes": [node("none", 20, 16, 860, 28, _L("skills.notool"), "bare", small=True)], "edges": [], "frames": []}
+    ns, es = [], []
+    per, col = 6, 143
+    for i, tok in enumerate(tokens):
+        r, c = divmod(i, per)
+        cls = "warn pill" if tok == "STOP" else "pill"
+        ns.append(node(f"t{i}", 30 + c * col, 12 + r * 52, col - 12, 36, [tok], cls, mono=True, small=True))
+        if i:
+            pr, pc = divmod(i - 1, per)
+            es.append(edge(f"t{i - 1}", f"t{i}", side=("r", "l") if pr == r else ("b", "t")))
+    rows = (len(tokens) + per - 1) // per
+    return {"id": f"skill-{name}", "w": 900, "h": 12 + rows * 52 + 4, "nodes": ns, "edges": es, "frames": []}
+
+
 def file_models(f) -> dict:
     """Every file figure the page may embed: the swimlanes; per family a relations figure (when a
     typed relation names it), a data path, a trace path (when a gate or rule reads it); STD8; per
@@ -1185,6 +1287,10 @@ def file_models(f) -> dict:
     out = dict(FILE_MODELS)
     out["life-STD8"] = life_std8
     out["gates-pipeline"] = pipeline_figure
+    out["skills-matrix"] = skills_matrix
+    out["skills-lifecycle"] = skills_lifecycle
+    for s in f["skills"]:
+        out[f"skill-{s['name']}"] = (lambda ff, n=s["name"]: skill_strip(ff, n))
     for tier in f["gates"].values():
         for g in tier:
             out[f"gate-{g}"] = (lambda ff, gg=g: gate_figure(ff, gg))

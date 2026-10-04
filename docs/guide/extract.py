@@ -413,6 +413,38 @@ def gate_defs() -> dict[str, dict]:
     return out
 
 
+def skill_text() -> dict[str, dict]:
+    """Plan 208 (G9): each skill's body read once: the other skills it cites as `tamheed:<name>`,
+    and the tools and ceremony STOPs its text names in order (a tool at its first mention, every
+    bold STOP). A cited name that is no skill fails the build; a named tool must be a registered
+    tool."""
+    names = sorted(p.parent.name for p in (BUNDLE / "skills").glob("*/SKILL.md"))
+    tool_names = sorted(srv.TOOLS)
+    # a STOP counts only in its bold ceremony form (**STOP ...**); a prose mention of stops does not
+    tool_re = re.compile(r"\*\*(STOP)\b|\b(" + "|".join(tool_names) + r")\b")
+    cite_re = re.compile(r"tamheed:([a-z][a-z-]+)")
+    out: dict[str, dict] = {}
+    for name in names:
+        body = (BUNDLE / "skills" / name / "SKILL.md").read_text(encoding="utf-8")
+        text = body[body.index("---\n", 4) + 4:]
+        # "tamheed:note" is the CLAUDE.md note span's marker (server L3933), not a skill
+        cites = sorted({c for c in cite_re.findall(text) if c != name and c != "note"})
+        bad = [c for c in cites if c not in names]
+        assert not bad, f"{name} cites skills that do not exist: {bad}"
+        seen: set[str] = set()
+        tokens: list[str] = []
+        for m in tool_re.finditer(text):
+            tok = m.group(1) or m.group(2)
+            if tok == "STOP":
+                if not tokens or tokens[-1] != "STOP":
+                    tokens.append("STOP")
+            elif tok not in seen:
+                seen.add(tok)
+                tokens.append(tok)
+        out[name] = {"cites": cites, "tokens": tokens}
+    return out
+
+
 def inserters() -> dict[str, list[str]]:
     """Plan 205: which server functions insert into which table, a census of the `INSERT INTO`
     statements in the server source by enclosing def. entity_upsert's generic insert is listed
@@ -534,6 +566,7 @@ def facts() -> dict:
         "version": version(), "schema": sch, "lifecycles": lifecycle_sets(sch),
         "writes": writes(sch), "rule_tables": rule_tables(), "inserters": inserters(),
         "checks": checks(), "gate_defs": gate_defs(),
+        "skill_text": skill_text(),
         "families": families(), "relations": relations(), "tools": tools(), "header": header(),
         "gates": gates(), "rules": readiness_rules(), "events": events(),
         "verdicts": verdict_sets(sch), "stages": stages(), "skills": skills(),
