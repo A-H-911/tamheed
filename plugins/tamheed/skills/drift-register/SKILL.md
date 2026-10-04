@@ -19,6 +19,7 @@ hotfix, an agent that forgot) to bring `<package>` back to truth.
 Register every piece of drift between reality and the `<package>` Tamheed package:
 
 1. `package_open("<package>")` if not already open.
+   Then read the prompt rows bound to this skill: `entity_query("prompt", status="Approved", plugin_skill="drift-register")`. Each carries what is true of this project for this ceremony.
 2. Enumerate what the package does not know: `git log --oneline -20` vs the recorded
    `work_bind` refs, each unreferenced commit classified by `git show --name-only`
    (`tamheed:package-writes` §9). A commit whose whole content is a package write is

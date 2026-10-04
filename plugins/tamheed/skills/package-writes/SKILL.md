@@ -108,7 +108,7 @@ id resolves, and the damage stays until someone reads it.
 - Treat the tail of a recording batch as a write. Every store write (`entity_upsert`,
   `progress_update`, `audit_record`, `work_bind`, `package_verify(record=true)`, `package_close`)
   flushes `data/*.jsonl`. `export_html` / `handoff_emit` write package files beside it
-  (`review.html`, `csv/`, `prompts/`, the target's `CLAUDE.md`). `work_bind` records the commit and
+  (`review.html`, `csv/`, `README.md`, the target's `CLAUDE.md`). `work_bind` records the commit and
   dirties the tree AFTER it. If anything ran since your last commit, the tree is dirty again.
 - Prefer this order: code work on the branch → land it → commit package writes on the branch the
   package is tracked on. Then bind → commit the binding.
@@ -220,7 +220,7 @@ id resolves, and the damage stays until someone reads it.
 - **A global rename skips every record that quotes the text as written.** Renaming an id, a title
   or a term with a search-and-replace over the rows you know about leaves the quotations in other
   families untouched. Think of a decision clause that cites the old title. Think of a journal entry
-  that names the old id in prose, or a prompt file that repeats it. Sweep with `search=` across every family for the
+  that names the old id in prose, or a prompt row that repeats it. Sweep with `search=` across every family for the
   OLD text after the rename, and read each hit (`tamheed:reading-the-record` step 3: two keys, not
   one). `prose-ids-resolve` and `prompt-ids-resolve` catch a dangling id, never a stale sentence.
 

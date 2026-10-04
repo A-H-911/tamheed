@@ -64,6 +64,8 @@ A rejected word stays legal inside a code span and inside a name listed in the t
 | gate | one mechanical check in `gate_run` | a readiness rule |
 | drift | work that happened without a row | a stale sentence |
 | handoff | the `handoff` journal entry a session writes last | stage 20 |
+| planning half | stages 1-20: the brief becomes the package, through the handoff | a second agent |
+| execution half | stages 21-22: the agent builds and records into the same package | a second agent |
 
 ## Names
 

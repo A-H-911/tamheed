@@ -41,6 +41,7 @@ Orient yourself on this project's Tamheed package before doing anything else:
    started after it lists the new text. A reload restarts the server, not the listing (field
    measurement, 2026-09-30). Say so to the operator rather than read the listing as the
    server.
+   Then read the prompt rows bound to this skill: `entity_query("prompt", status="Approved", plugin_skill="orient-resume")`. Each carries what is true of this project for this ceremony.
 2. `package_open("<package>")`: take the single-writer lock. If it refuses, the refusal
    says what the store observed about the holder. `package_unlock("<package>")` reports
    it. Removing a dead holder's lock (`confirm=true`) is the OPERATOR's word, never yours.

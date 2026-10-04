@@ -63,8 +63,8 @@ test says so (hard to reverse, broad blast radius). Record the promotion
 
 - The canonical `data/*.jsonl` files are **tool-owned**, written only through the MCP tools. You
   never name or hand-edit them.
-- Prompts are kebab-case `.md` files in `<package>/prompts/`, purpose-named (`kickoff.md`,
-  `phase3-resume.md`).
+- Prompts are `prompt` rows (`PRT-NNN`) with a kind: `kickoff`, `phase` or `situational`. A
+  situational row names the scenario skill that reads it in `plugin_skill`.
 - ADRs are entity rows (`ADR-NNNN` ids), not per-ADR files. The ADR template shapes the row's prose.
 - References between artifacts are entity IDs, not file paths.
 

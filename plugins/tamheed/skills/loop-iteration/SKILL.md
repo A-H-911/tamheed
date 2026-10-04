@@ -29,6 +29,7 @@ Execute ONE iteration against the `<package>` Tamheed package, no pauses:
    exported page, is one. Only a commit that touches source or tests is drift. Register
    it via the drift-register steps, `${CLAUDE_PLUGIN_ROOT}/skills/drift-register/SKILL.md`,
    before new work.
+   Then read the prompt rows bound to this skill: `entity_query("prompt", status="Approved", plugin_skill="loop-iteration")`. Each carries what is true of this project for this ceremony.
 2. Check the brakes: evaluate every loop-guard stop condition. Any of them true →
    record the reason as a final `progress_update`, `package_close()`, and emit the
    ITERATION block with `stop=<reason>`. Do nothing else.

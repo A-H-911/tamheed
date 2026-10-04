@@ -1,28 +1,31 @@
 # Execution-agent handoff
 
 The handoff lets **Claude Code** start implementing with no missing context and no access to this
-planning conversation. Treat it as the contract between planner and executor. In v3 the prompts are
-**`.md` files in `<package>/prompts/`**, and the operator reads the folder and picks.
-`handoff_emit(target_dir)` wires the target project to the package (it copies nothing).
+planning conversation. Treat it as the contract between the planning half and the execution half.
+Since v6 the prompts are **`prompt` rows of the package** (`PRT-`), approved by the operator and
+read through the tools. `handoff_emit(target_dir)` wires the target project to the package (it
+copies nothing).
 
 ## Contents
 
-- **Prompt files** (authored in Stage 20, plain `.md` in `<package>/prompts/`):
+- **Prompt rows** (authored in Stage 20, `prompt` rows with a kind, read with `entity_query`):
   - the *kickoff* prompt: self-contained orientation + first bounded task (one slice) + an explicit
     stop/await-approval gate.
   - *follow-up* prompt(s): one per phase gate (`PH-`), each resuming from the prior phase's exit
     criteria, plus situational prompts as needed (see `prompt-templates.md`).
-  - the **operator guide** (`prompts/README.md`, plugin-versioned, seeded at `package_create`,
-    since v5 the one stock file). And the **scenario skills** the plugin ships (`/tamheed:<name>`,
-    operator-invoked, updated with the plugin). The skills cover orientation (orient-resume,
-    package-onboarding) and execution (slice-kickoff, progress-sync, defect-triage, drift-register).
-    They cover close-outs (slice-review, phase-close, release-close-out), replanning
-    (replan-deferred), and the promotion interview (skill-promote). They cover audit/report
-    (integrity-check, register-liveness, generate-report), and the fully-auto pair (loop-iteration +
-    loop-guard, with a machine-parseable `ITERATION:` contract).
+  - a *situational* row names the scenario skill that reads it (`plugin_skill`). The kickoff is the
+    row the header's `entry_point` names, and `handoff_emit` demands it Approved.
+- **The operator guide** (`<package>/README.md`, plugin-versioned, seeded at `package_create`,
+  since v5 the one stock file, at the package root since v6). And the **scenario skills** the
+  plugin ships (`/tamheed:<name>`, operator-invoked, updated with the plugin). The skills cover orientation (orient-resume,
+  package-onboarding) and execution (slice-kickoff, progress-sync, defect-triage, drift-register).
+  They cover close-outs (slice-review, phase-close, release-close-out), replanning
+  (replan-deferred), and the promotion interview (skill-promote). They cover audit/report
+  (integrity-check, register-liveness, generate-report), and the fully-auto pair (loop-iteration +
+  loop-guard, with a machine-parseable `ITERATION:` contract).
 - **Executor-side wiring** (`W-V2-7`): `handoff_emit` writes `.mcp.json` into the target project
   (starting the tamheed server against the package, omitted on plugin-hosted installs). It manages
-  the `CLAUDE.md` operating note too. So the executing agent records progress through
+  the `CLAUDE.md` operating note too. So the agent of the execution half records progress through
   `progress_update` / `audit_record` / `work_bind`. The execution-tracking loop is wired at
   handoff, not hoped for.
 - **The recording obligations** (plan 027): the note carries a mandatory table. Defect → `DEF-`
@@ -65,7 +68,7 @@ planning conversation. Treat it as the contract between planner and executor. In
 
 ## Principles
 
-- **Claude-Code-targeted.** Write for Claude Code as the executor (CLI/IDE primary). Lean on its
+- **Claude-Code-targeted.** Write for Claude Code, the agent of the execution half (CLI/IDE primary). Lean on its
   native affordances where they help. That is plan mode for orientation, TodoWrite for the live
   task list, subagents for parallel work, a code-review pass at gates. Name each as a capability, never
   hard-depending on a specific command existing. The *plan's* technology choices stay
@@ -83,7 +86,7 @@ planning conversation. Treat it as the contract between planner and executor. In
   never a silent workaround.
 - **Prerequisites explicit.** Runtimes, accounts, pinned versions, environment notes are listed so the
   executor can set up deterministically.
-- **Record as you go, enforced, not hoped for.** The obligations table binds the executor from the
+- **Record as you go, enforced, not hoped for.** The obligations table binds the agent from the
   first minute. `readiness_check` + the guarded `Implemented` transition make "declared done while not
   done" a refused write, not a discovered surprise. Cascades (requirement auto-advance, view
   freshness) are automatic.
@@ -94,18 +97,19 @@ planning conversation. Treat it as the contract between planner and executor. In
 ## Assembly steps
 
 1. Confirm Stage 19 gates are green (`gate_run`, especially G-TRACE, G-COMPLETE).
-2. Author the prompt **files** in `<package>/prompts/` from the templates
-   (`prompt-templates.md`). Wire in real entity IDs, the invariants, and the first slice with
-   its pass/fail task checklist. Non-stock filenames mark them as project prompts. `handoff_emit`
-   refuses to wire a target while none exist.
+2. Author the prompt **rows** from the templates (`prompt-templates.md`): a `kickoff`, a `phase`
+   row per gate, `situational` rows bound by `plugin_skill`. Wire in real entity IDs, the
+   invariants, and the first slice with its pass/fail task checklist. The operator approves each
+   row. Set the header's `entry_point` to the kickoff's id. `handoff_emit` refuses to wire a target
+   until the kickoff it names is Approved.
 3. `handoff_emit(target_dir)`:
-   - **Injection screen (G-INJECT):** every package prompt file (project AND stock) is scanned for
+   - **Injection screen (G-INJECT):** every Approved prompt row (title and body) is scanned for
      instruction-shaped text. A finding **blocks emission**, and nothing is written. Fence and
      provenance-label the span (so it reads as data), then re-emit. Do not silently remove content.
-   - **Stale scan (C24/D-8):** v1-protocol instructions and dead relative links inside the prompt
+   - **Stale scan (C24/D-8):** v1-protocol instructions inside the prompt
      files surface as `stale_references`, reported, never rewritten.
    - On a clean screen: `.mcp.json` + the `CLAUDE.md` note are written/updated in the target.
-     Both carry **machine-specific absolute paths** by design, because the executor host must
+     Both carry **machine-specific absolute paths** by design, because the target host must
      find the server without guessing. `.mcp.json` (standalone installs only) names the resolved
      server script and package root, and the note names the package root. An emitted target is
      therefore a *workspace*, not a committable fixture. Re-emit on another machine rather
@@ -113,19 +117,20 @@ planning conversation. Treat it as the contract between planner and executor. In
 4. Emit the readiness verdict. If any critical gate fails, mark **not ready** and list the gaps instead
    of shipping prompts that assume readiness.
 
-## Prompt surfaces & the sync model (plan 027 — v3)
+## Prompt surfaces & the sync model (plan 196 — v6)
 
-Two prompt surfaces, one folder:
+Two prompt surfaces, one package:
 
 | Surface | Source of truth | Lifecycle |
 |---|---|---|
-| `<package>/prompts/` project files | Authored at Stage 20 (any non-stock filename) | Plain files, operator-owned. G-INJECT + stale-scanned + restated-state-scanned at every `handoff_emit`. Legacy `PRM-` rows are converted here by `package_migrate` (v4: `package_open` refuses pre-v4 stores). Converted files (provenance header) carry a standing per-kind curation hint until the operator reviews them (remove the header = reviewed). The folder's `README.md` is the operator guide |
-| `<package>/prompts/` stock library | The plugin bundle | Seeded at `package_create` and refreshed by migrate/adopt/handoff via managed emission (`emitted`/`unchanged`/`diverged`, force to overwrite a hand edit) |
+| `prompt` rows (`PRT-`) | Authored at Stage 20, approved by the operator | Rows of the store, edited in place while Approved. G-INJECT + stale-scanned + restated-state-scanned at every `handoff_emit` (Approved rows). `prompt-ids-resolve` and `prose-plain-english` read them. A row `package_migrate` converted from a file carries `converted_from` in its `custom_attributes` and a standing per-kind curation hint until the operator removes it (reviewed) |
+| `<package>/README.md`, the stock operator guide | The plugin bundle | Seeded at `package_create` and refreshed by migrate/adopt/handoff via managed emission (`emitted`/`unchanged`/`diverged`, force to overwrite a hand edit). A pre-v6 copy at `prompts/README.md` is a leftover: removed by the migration or by `refresh_stock` when byte-equal to shipped stock |
 
-The v2 `prompts` table and the `<target>/handoff/*.md` copies have been GONE since v3 (the v4
-baseline never had them). `package_migrate` converts a v2 store's `data/prompts.jsonl` once. The
-source survives only as the `data-v3-backup/` copy, because v4.5 stopped leaving a
-`prompts.jsonl.converted` in the canonical `data/`, and `package_migrate` relocates an old one.
+The v2 `prompts` table (`PRM-`) and the `<target>/handoff/*.md` copies have been GONE since v3. The
+v3 prompt FILES under `<package>/prompts/` are gone since v6. `package_migrate` converts them to
+`prompt` rows on the operator's word and moves the files to `prompts-v5-backup/`. A v2 store
+passes through files, then rows, in one confirm. The v2 source survives only as the
+`data-v3-backup/` copy, and `package_migrate` relocates an old `prompts.jsonl.converted`.
 `handoff_emit` warns about leftover `handoff/prm-*.md` copies. Remove them, because the package
 folder is the single source.
 
@@ -166,8 +171,8 @@ the same check. A project prompt over 300 lines or 24,576 bytes is named as carr
 claim. The restated-content scan gained two detectors. `status-claim` is a lifecycle word beside
 an id or an id range. `id-dense` is a paragraph naming six or more ids of one family, reported
 at the paragraph's first line. That scan runs over the target's `CLAUDE.md` / `AGENTS.md` and
-over EVERY `prompts/*.md` in the package. Since 5.0 all of them are project-owned or leftovers,
-plus the stock guide. The tool-owned spans are stripped before every scan, and in the
+over EVERY Approved `prompt` row of the package (`PRT-NNN.body`). The tool-owned spans are
+stripped before every scan, and in the
 pointer-import case the package's own `CLAUDE.md` is scanned too. Since v5.2 (plan 130, the
 field's FB-024) the self-retracting stale-warning block lives beside the note. It lives in the
 package's `CLAUDE.md` when the root imports it, never in a file the tool does not own. Its text names

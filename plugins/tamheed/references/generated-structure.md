@@ -19,10 +19,10 @@ Markdown registers.
 │   ├── …
 │   └── .lock                      # single-writer lock (transient; never committed)
 ├── data-v3-backup/                # only after a v3→v4 package_migrate: the pre-migration data/ files
-├── prompts/                       # v3 (plan 027): the project's prompts, plain .md — read the folder, pick
-│   ├── <kickoff>.md               # project-authored (Stage 20; any non-stock filename)
-│   └── README.md                  # the operator guide ({package} substituted), seeded at create — v5: the ONE
-│                                  #   stock file; the 17 scenarios are the plugin's /tamheed:<name> skills
+├── README.md                      # v6 (plan 194): the operator guide ({package} substituted), seeded at create,
+│                                  #   the ONE stock file; the 17 scenarios are the plugin's /tamheed:<name> skills.
+│                                  #   The project's prompts are `prompt` rows in data/prompts.jsonl (v6, plan 192)
+├── prompts-v5-backup/             # only after a v6 package_migrate: the pre-v6 prompt files it converted
 ├── review.html (+ csv/)           # the human review surface, exported on demand
 ├── exports/                       # v4.7: entity_export files — a read tool's whole result, digest-
 │   └── <name>.json                #   stamped, deterministic; the sanctioned read for committed scripts

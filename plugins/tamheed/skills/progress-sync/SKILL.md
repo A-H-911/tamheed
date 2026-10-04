@@ -19,6 +19,7 @@ up to date.
 Sync the `<package>` Tamheed package with the work just completed:
 
 1. `package_open("<package>")` if not already open.
+   Then read the prompt rows bound to this skill: `entity_query("prompt", status="Approved", plugin_skill="progress-sync")`. Each carries what is true of this project for this ceremony.
 2. For each meaningful unit of work: `progress_update([{"entry": "<what happened>",
    "phase_id": "<PH-x>", "slice_id": "<SL-x>", "event_type": "work-done",
    "subject_id": "<WBS-x/AC-x>", "actor": "agent:<session>"}])`. Write concrete entries,

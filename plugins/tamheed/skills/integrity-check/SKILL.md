@@ -29,6 +29,7 @@ Run a read-only integrity check on the `<package>` Tamheed package:
    `relates_to` only when nothing typed fits. Recommend it, do not apply it here.
    Treat a G-TRACE "passed vacuously" warning as a finding, not a pass. Report any
    pair carrying BOTH a typed relation and `relates_to` as residue to retire.
+   Then read the prompt rows bound to this skill: `entity_query("prompt", status="Approved", plugin_skill="integrity-check")`. Each carries what is true of this project for this ceremony.
 2. Spot-check counts: `entity_query("requirement", limit=1)` and read `total`.
    Compare `total` per family against expectations from the roadmap/charter. Read
    registers THROUGH the tool: page with `after_id` (the result's `next_after`),

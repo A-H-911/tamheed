@@ -21,6 +21,7 @@ end.
 Close phase `<PH-x>` of the `<package>` Tamheed package:
 
 1. `package_open("<package>")` if not already open.
+   Then read the prompt rows bound to this skill: `entity_query("prompt", status="Approved", plugin_skill="phase-close")`. Each carries what is true of this project for this ceremony.
 2. `readiness_check("phase", "<PH-x>")`. Resolve every blocking failure. The failures
    are ACs of the phase's slices not latest-Met, slices/work items still open, and open
    critical/high defects. Review counts as open, because done-claimed is not verified. A

@@ -40,9 +40,9 @@ and every write goes through the Tamheed MCP tools.
 
 ## How an execution agent consumes this
 
-Start from the prompts folder: **`prompts/README.md`** is the operator guide (which
-`/tamheed:<name>` skill for which situation, semi-auto vs fully-auto, the single-writer lock).
-The project-authored kickoff prompt lives beside it, and the scenarios are the plugin's skills. The
+Start from the package root: **`README.md`** is the operator guide (which `/tamheed:<name>`
+skill for which situation, semi-auto vs fully-auto, the single-writer lock). The project's
+kickoff is a `prompt` row the header's `entry_point` names, and the scenarios are the plugin's skills. The
 target repo's `CLAUDE.md` carries the recording-obligations table (emitted by `handoff_emit`).
 The package is the record, and unrecorded work is drift.
 

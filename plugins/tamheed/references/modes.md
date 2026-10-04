@@ -11,7 +11,7 @@ before doing heavy work**. Modes change where the workflow starts/stops, not the
 | `resume` | Continue an interrupted package | last incomplete stage | as configured |
 | `stage:<id>` | Run/re-run one stage | that stage | that stage |
 | `update` | Apply new decisions/progress/scope (D-UPDATE) | Stage 21 | Stage 22 |
-| `migrate` | Convert a v2/v3 store to v4 IN PLACE | `package_migrate(name)`, staged. The preview is a full rewrite report with nothing written. The operator backs up, then `confirm=true`. Old files are kept in `data-v3-backup/`. A v4 store missing newer baseline entity types takes the staged **registry-sync** path instead. Its preview reports `mode: "registry-sync"` + `entity_types_added` + `columns_added` (files that re-serialize because their tables gained columns). Confirm appends the registry rows (a pure registry append, no backup taken). An up-to-date v4 store still refuses. v1 Keystone trees are no longer ingested. The two-step escape route is documented in the repo's docs | migration report + refreshed `<package>/prompts/` library |
+| `migrate` | Convert a v2/v3 store to v4 IN PLACE | `package_migrate(name)`, staged. The preview is a full rewrite report with nothing written. The operator backs up, then `confirm=true`. Old files are kept in `data-v3-backup/`. A v4 store missing newer baseline entity types takes the staged **registry-sync** path instead. Its preview reports `mode: "registry-sync"` + `entity_types_added` + `columns_added` (files that re-serialize because their tables gained columns). Confirm appends the registry rows (a pure registry append, no backup taken). An up-to-date v4 store still refuses. v1 Keystone trees are no longer ingested. The two-step escape route is documented in the repo's docs | migration report + refreshed `<package>/README.md` guide + the prompt files converted to rows |
 | `adopt` | Onboard a brownfield repository | `package_adopt` (staged: scan/preview → confirm, see `adopt.md`) | gap report + gates |
 
 Parameters: `--profile enterprise|rnd|legacy|ai-agentic|unknown` (registry-backed, with community
@@ -54,7 +54,7 @@ A change to an entity regenerates its dependents, and only its dependents.
 
 ### 2. Execution-progress sync
 
-Ingest the executing agent's tracking output into the package.
+Ingest the execution half's tracking output into the package.
 
 1. `progress_update([...])`: journal entries (phase/slice-tagged).
 2. `audit_record([{ac_id, verdict, evidence}])`: evidence refs (test path, CI run id) make verdicts

@@ -20,6 +20,7 @@ Invoke this (`/tamheed:package-onboarding`) for an agent (or teammate's session)
 Onboard yourself onto the `<package>` Tamheed package from zero:
 
 1. `server_info`: server version, package root. Then `package_open("<package>")`.
+   Then read the prompt rows bound to this skill: `entity_query("prompt", status="Approved", plugin_skill="package-onboarding")`. Each carries what is true of this project for this ceremony.
 2. The why: read the charter and executive summary
    (`entity_query("narrative-document")` → `entity_query("document-section",
    columns=["id", "document_id", "heading", "body"])` for the charter's sections).
@@ -44,8 +45,10 @@ Onboard yourself onto the `<package>` Tamheed package from zero:
    `progress-entry` / `audit-verdict` rows, and open `defect`/`deferred-work` rows.
 6. The surfaces: `export_html()` and skim `review.html` (overview chips, the
    traceability flow, phase readiness). The situation playbook is the plugin's `/tamheed:`
-   scenario skills. `<package>/prompts/README.md` maps situations to them, and
-   project-authored prompts live in that folder. Know what is in it.
+   scenario skills. `<package>/README.md` maps situations to them. The project's prompts
+   are `prompt` rows. Read the Approved kickoff the header's `entry_point` names:
+   `entity_query("prompt", id=<entry_point>)`. Then read the Approved rows bound to a
+   skill: `entity_query("prompt", status="Approved")`. Know what is in them.
 7. The obligations: read the "Recording obligations" table in this project's CLAUDE.md
    note. Every one of them binds you from the first minute. On genuine ambiguity,
    never assume: create an `OQ-` row (owner + due_by) and put

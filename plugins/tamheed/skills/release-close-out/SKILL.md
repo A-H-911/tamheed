@@ -20,6 +20,7 @@ transitions and human gates need your explicit words).
 Close out the release against the `<package>` Tamheed package:
 
 1. `package_open("<package>")` if not already open.
+   Then read the prompt rows bound to this skill: `entity_query("prompt", status="Approved", plugin_skill="release-close-out")`. Each carries what is true of this project for this ceremony.
 2. `readiness_check("package")`. Resolve EVERY blocking failure before anything else:
    - decisions/ADRs still Proposed/Draft → approve, reject, or supersede them (the
      close cannot rest on proposed decisions).

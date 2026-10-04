@@ -9,7 +9,7 @@ owner: <name-or-role>
 
 # AGENTS.md — standing operating context for <project-name>
 
-<!-- The AMBIENT control surface for Claude Code (the executor). Claude Code auto-loads CLAUDE.md at the repo
+<!-- The AMBIENT control surface for Claude Code, the agent of the execution half. Claude Code auto-loads CLAUDE.md at the repo
      root every session; CLAUDE.md imports this AGENTS.md (Anthropic's documented idiom — "Claude Code reads
      CLAUDE.md, not AGENTS.md; create a CLAUDE.md that imports it"), so this file is where the plan's
      non-negotiables KEEP governing the work after the one-time kickoff prompt. The content lives here in
@@ -84,7 +84,8 @@ operator. It holds the verified facts with the query that measured each, and wha
 
 ## Kickoff
 
-Start from the kickoff prompt in `<package-name>/prompts/` (project-authored). The recurring
+Start from the kickoff prompt row the package header's `entry_point` names
+(`entity_query("prompt", id=...)`, operator-approved). The recurring
 situations are the plugin's slash skills. `/tamheed:package-onboarding` is for an agent that has
 never seen the package. Then `/tamheed:orient-resume`, `/tamheed:slice-kickoff`,
-`/tamheed:progress-sync`, and the rest. `<package-name>/prompts/README.md` maps every situation.
+`/tamheed:progress-sync`, and the rest. `<package-name>/README.md` maps every situation.

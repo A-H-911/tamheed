@@ -3005,7 +3005,7 @@ def _readiness_report(conn, scope: str, scope_id: str | None) -> dict:
             rules[-1]["note"] += " — no text to scan yet: this rule measured nothing"
         rule("lessons-confirmed", "advisory",
              ids("SELECT id FROM lessons WHERE lifecycle_status = 'Proposed'"),
-             "lessons recorded by the executing agent awaiting the operator's"
+             "lessons the agent recorded during execution, awaiting the operator's"
              " interview. Confirm (Approve + optionally pin), reject, or refine by"
              " supersession. ONLY Approved lessons bind future sessions")
         # Plan 075 (findings_26 s3): a lesson pointing at an APPROVED successor while
@@ -3480,8 +3480,12 @@ def _plugin_skill_names() -> list[str]:
         skill_md = p / "SKILL.md"
         if not skill_md.is_file():
             continue
-        head = skill_md.read_text(encoding="utf-8").split("\n---", 2)[0]
-        if "disable-model-invocation: true" in head:
+        text = skill_md.read_text(encoding="utf-8")
+        head = text.split("\n---", 2)[0]
+        # P17 (plan 196 review): a row binds only to a scenario skill that READS its bound
+        # rows (the step that queries `plugin_skill=`); the brake `loop-guard` reads no
+        # package and takes no row. Self-describing: a skill that gains the step becomes legal.
+        if "disable-model-invocation: true" in head and 'plugin_skill="' in text:
             names.append(p.name)
     return names
 

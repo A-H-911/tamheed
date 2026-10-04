@@ -9,8 +9,8 @@ owner: <name-or-role>
 
 <!-- Prompts that make Claude Code (or a human) CHECK work against the approved plan; reference
      entities by real ids; replace every <placeholder> (G-HANDOFF). Generation class: Conditional (handoff
-     to Claude Code). PROJECT prompt files in `<package>/prompts/` (purpose-named).
-     Shape: references/prompt-templates.md. -->
+     to Claude Code). The BODIES of `situational` prompt rows (`PRT-`), each bound by plugin_skill
+     to the scenario skill that reads it. Shape: references/prompt-templates.md. -->
 
 ## Invariant audit
 

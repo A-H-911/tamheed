@@ -21,10 +21,11 @@ Rewrite the prose of the `<package>` Tamheed package into plain English:
 
 1. `package_open("<package>")` if not already open, then `readiness_check("package")`. Read the
    `prose-plain-english` rule: its `entities` are the scope and its `counts` are the baseline.
-   A text the rule does not name is never touched. A stock body in `prompts/` and the journal's
+   A text the rule does not name is never touched. The stock guide and the journal's
    history are outside the scope by construction.
+   Then read the prompt rows bound to this skill: `entity_query("prompt", status="Approved", plugin_skill="ste-rewrite")`. Each carries what is true of this project for this ceremony.
 2. Read every named row whole: `entity_query("<type>", ids=[...])` with the full columns, never
-   a display (`tamheed:reading-the-record`). Read a named prompt file from disk.
+   a display (`tamheed:reading-the-record`). A prompt row is read the same way, whole.
 3. Form a batch of at most ten texts. For each text, write a table row with four cells. The
    cells are the id and column (or the file and line), the text before, the text after, and the
    consequence of the write.
@@ -57,7 +58,9 @@ Rewrite the prose of the `<package>` Tamheed package into plain English:
      first, Proposed, with the text rewritten and every other column carried. Then point the
      predecessor at it (`superseded_by`, or `promoted_to` where the family uses it) and set it
      Superseded. The operator approves the successor on their own word.
-   - a prompt file: rewrite it in place, never a stock body, never a file the rule did not name.
+   - a prompt row: a full-row upsert in place, Approved or not (the kickoff included), with
+     `expect_unchanged` on the columns you do not touch. Never a row the rule did not name,
+     and never a stock body (the operator guide is the plugin's file).
 7. One `progress_update` per batch (event_type `note`, actor `agent:<session>`). It names the
    rows written, the rows superseded, the files rewritten and the rows skipped by default.
 8. `readiness_check("package")` again. Show the operator the rule's `counts` before and after.

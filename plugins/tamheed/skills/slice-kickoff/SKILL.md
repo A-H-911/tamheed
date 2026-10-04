@@ -20,6 +20,7 @@ Start the next slice of the `<package>` Tamheed package:
 
 1. `package_open("<package>")` if not already open, then `gate_run()`. A failing gate
    is fixed or explained before new work starts.
+   Then read the prompt rows bound to this skill: `entity_query("prompt", status="Approved", plugin_skill="slice-kickoff")`. Each carries what is true of this project for this ceremony.
 2. Find the next open slice: `entity_query("slice")` + `entity_query("phase")` in
    roadmap order. It is the first slice not in a terminal status whose phase is active.
 3. Read its contract: `entity_query("execution-plan")` for the slice's `EP-` row, then the

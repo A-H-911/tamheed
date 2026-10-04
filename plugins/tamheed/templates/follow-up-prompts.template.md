@@ -11,7 +11,7 @@ owner: <name-or-role>
      prior phase's exit criteria, states the phase goal, gives bounded tasks with pass/fail, restates the
      invariants still in force, and ends at the exit gate. Replace every <placeholder> (G-HANDOFF).
      Reference entities by real ids. Generation class: Conditional (handoff to Claude Code).
-     PROJECT prompt files in `<package>/prompts/` (purpose-named). Shape: references/prompt-templates.md. -->
+     The BODIES of the project's `phase` and `situational` prompt rows (`PRT-`). Shape: references/prompt-templates.md. -->
 
 ## Phase-gate prompts
 
@@ -91,8 +91,8 @@ Run `readiness_check("package")`. Resolve every blocking failure (pre-approval
 decisions/ADRs, ACs not latest-Met, open defects, undischarged risks). Confirm the
 `human_required` gates with the operator, recording each confirmation via
 `progress_update`. Then `gate_run()`, `export_html()`, and release notes from
-`entity_query("progress-entry")`. (The emitted `<package>/prompts/release-close-out.md`
-is the full version of this.)
+`entity_query("progress-entry")`. (The plugin's `/tamheed:release-close-out` skill is the
+full version of this.)
 
 ### Deviation ADR
 A change departs from the approved plan. Upsert the `adr` row (status Proposed) capturing
@@ -126,7 +126,7 @@ For a reported bug: reproduce it as a minimal failing test. **`entity_upsert` th
 row (`DEF-`, lifecycle_status Open, honest severity, `found_in` the phase/slice) BEFORE
 fixing.** Fix to green.
 `work_bind` the fix commit to the `DEF-` and affected `AC-`, and flip the DEF- status.
-(The emitted `<package>/prompts/defect-triage.md` is the full version of this.)
+(The plugin's `/tamheed:defect-triage` skill is the full version of this.)
 
 ### Phase 1 — baseline (seed ADRs from the architecture)
 Start Phase 1: seed the `adr` rows from the architecture decisions (status Proposed). Propose the

@@ -10,7 +10,7 @@ argument-hint: "[package]"
 # Promote lessons into a reusable skill
 
 Invoke this (`/tamheed:skill-promote`) when the operator asks to distill confirmed lessons into a
-skill: a `SKILL.md` the executing agent loads natively, forever. This is an INTERACTIVE ceremony. The
+skill. A skill is a `SKILL.md` the agent loads natively in every later session. This is an INTERACTIVE ceremony. The
 operator decides at every step. You never promote on your own.
 
 ---
@@ -24,6 +24,7 @@ Work through this with the operator, in the `<package>` package:
    the clusters ("these three boundary-semantics lessons could become one skill").
    A single strong lesson is a legal cluster of one. **STOP: the operator picks
    the cluster (or rejects them all).**
+   Then read the prompt rows bound to this skill: `entity_query("prompt", status="Approved", plugin_skill="skill-promote")`. Each carries what is true of this project for this ceremony.
 2. The interview (the skill-creator pattern, where their words shape everything):
    - the skill **name** (kebab-case, because it becomes the folder name).
    - **when it should trigger**. This becomes the frontmatter `description`,

@@ -20,6 +20,7 @@ Review the just-completed slice of the `<package>` Tamheed package:
 
 1. `package_open("<package>")`. Identify the slice: `entity_query("slice")` and its
    bound ACs (`trace_query("<SL-x>", direction="in")`).
+   Then read the prompt rows bound to this skill: `entity_query("prompt", status="Approved", plugin_skill="slice-review")`. Each carries what is true of this project for this ceremony.
 2. The per-item verdict is taken against the criterion's OWN text, quoted from the
    store, never paraphrased, never re-typed. Run `entity_export("<slice>-review.json",
    args={"type": "acceptance-criterion", "ids": [...]})` IMMEDIATELY before the

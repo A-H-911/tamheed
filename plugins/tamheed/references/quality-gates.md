@@ -29,7 +29,7 @@ three tiers (engine / judgment / warn) synced against this file in both directio
 | G-REL | Critical | Every stored trace edge satisfies the typed endpoint rules (RELATION_RULES). Blocking since v4.0.0, which is safe because the migrate tool retypes violating edges to `relates_to` at conversion. Adopt reports them at adoption, and `entity_upsert` rejects them at write time. |
 | G-CONFLICT | Critical | No unresolved hard contradiction past scope lock. (Judgment + open-question audit.) |
 | G-EXEC | Critical | Each phase has slices + exit criteria. Leaf WBS items are actionable + testable. (Judgment over the planning rows.) |
-| G-HANDOFF | Critical | Prompt FILES in `<package>/prompts/` reference only existing entities. They are Claude-Code-appropriate, with no dangling instructions (the stale scan flags dead relative links). (Judgment + `handoff_emit` checks.) |
+| G-HANDOFF | Critical | Prompt ROWS reference only existing entities (`prompt-ids-resolve`). They are Claude-Code-appropriate, with no dangling instructions (the stale scan flags v1-protocol lines). (Judgment + `handoff_emit` checks.) |
 | G-OQ | Critical | No blocking open question silently unanswered. Open ones are listed accepted-open. |
 | G-ASM-VISIBLE | Warn | Assumptions consumed by stages carry `risk_if_wrong`. |
 | G-CLAIM | Warn | Capability claims in Approved artifacts cited or tagged `unverified`. |
@@ -37,7 +37,7 @@ three tiers (engine / judgment / warn) synced against this file in both directio
 | G-COUPLING | Warn | The *plan* couples to no vendor/stack needlessly. Executor coupling to Claude Code is intentional. |
 | G-BLOAT | Warn | No family merely restates another. No empty ceremonial rows. |
 | G-CMD-THIN | Warn | Entry points carry no methodology. (The MCP server is not an entry point. It is the capability's mechanical half.) |
-| G-INJECT | Critical at emission | Brief-derived text never becomes an imperative. `handoff_emit` scans every `<package>/prompts/*.md` (project prompts, the guide, any leftover) and refuses emission on instruction-shaped text. |
+| G-INJECT | Critical at emission | Brief-derived text never becomes an imperative. `handoff_emit` scans every Approved `prompt` row, lesson and skill row and refuses emission on instruction-shaped text. |
 
 ## Running gates
 
@@ -94,8 +94,8 @@ three tiers (engine / judgment / warn) synced against this file in both directio
   character, so a token touching an underscore is part of a longer identifier and is not scanned
   (v4.11). The whole-table `indeterminate` note names `scoped: false`. A scoped zero (plan 049)
   carries `scoped: true`, and that field tells the two ambers apart. `prompt-ids-resolve` (v4.12)
-  applies the same rule to the PROJECT's prompt files, the prose a session reads before any tool,
-  never to a stock body. Its `population` counts files (`unit: files`). Both id rules check that an
+  applies the same rule to the PROJECT's prompt rows, the prose a session reads before any tool,
+  as their own rule. Its `population` counts rows (`unit: rows`). Both id rules check that an
   id RESOLVES, never that the sentence about it is true. The field found seven true-looking
   sentences about a row that now exists. `feedback-unanswered` (v4.13) names every reported
   feedback row until `resolved_in` is set. Like `waivers-open-ended` it exists only when the package

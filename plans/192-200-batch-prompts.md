@@ -55,6 +55,7 @@ The reverse move is MAJOR, as plan 027's was: the handoff contract changes.
 | P14 | `plugin_skill` admits the 17 bundled scenario skills only (`disable-model-invocation: true` in the frontmatter), never the front door or a discipline skill (plan 192 review). |
 | P15 | G-INJECT at emit time screens Approved prompt rows only, as it screens lessons; a Proposed row blocks nothing because the executing agent reads Approved rows (plan 193 review). |
 | P16 | `package_migrate` removes a shipped stock body found under `prompts/` on confirm, never moves it (the history reproduces it; the confirm is the operator's word); `prompts-v5-backup/` holds the project's own files only (plan 195 review). |
+| P17 | P14 amended: `plugin_skill` admits only the scenario skills that read their bound rows (the sixteen with the step), never the brake `loop-guard`; the guard reads the skills' own text, so a skill that gains the step becomes legal (plan 196 review). |
 
 Measured 2026-10-04 with the live 5.9.0 server on scratch packages (the CHANGELOG states it):
 `entity_index` is never serialised, so a 5.9 server opens a 6.0-migrated package, leaves
@@ -71,7 +72,7 @@ fails with a foreign-key load error, raised from `package_open` as an uncaught `
 | 193 | The engine paths: screen, scans, the emit precondition, `plugin_skill=` on `entity_query`, note v7 | DONE 2026-10-04 |
 | 194 | The stock operator guide at `<package>/README.md` | DONE 2026-10-04 |
 | 195 | `package_migrate` converts files to rows, proven on temporary packages and the ACMP replay copy | DONE 2026-10-04 |
-| 196 | The bundle's teaching surface and the halves wording | planned |
+| 196 | The bundle's teaching surface and the halves wording | DONE 2026-10-04 |
 | 197 | The docs, the README and the guide's prose | planned |
 | 198 | Stamp 6.0.0; the fixture and the sample migrated by the tool (after the stamp, never to an unreleased body); the family becomes Always (owed: the test for zero rows + Always, the one case that writes the migrate report's G-SET line); the evals re-aimed; lab beat 34 | planned |
 | 199 | The ACMP brief 6.0.0 | planned |
@@ -121,6 +122,14 @@ flips the family to Always, and re-aims the evals in the same commit.
   prompt files proceeds on that reason alone; the v2 chain runs files-then-rows in one confirm;
   idempotent by `converted_from`. Replayed on ACMP's package copy: four rows, the emit refusing
   until the kickoff is approved.
+- **196 — the bundle's teaching surface.** (the commit this record lands in) The front door,
+  `workflow.md` stage 20 and 21, `handoff.md` (the two-surface table is rows + the root guide),
+  `prompt-templates.md` and the three templates (bodies of prompt rows), `artifact-catalog.md`,
+  `artifact-rules.md`, `quality-gates.md`, `modes.md`, `safeguards.md`, the other templates, the
+  discipline skills that named prompt files, `package-onboarding` reading the kickoff row, sixteen
+  scenario skills reading their bound rows, the server's lessons note, and "planning agent /
+  executing agent" -> the halves wording throughout the bundle; `vocabulary.md` gains the two terms
+  and the guide renders them. Pins 0 missing; invariants reviewed; lint 14 at 0.
 
 ## 4. Errors owned
 
@@ -134,6 +143,10 @@ flips the family to Always, and re-aims the evals in the same commit.
 - **194.** The stock-merged check carried a hard-wired `prompts/` label the plan did not foresee
   (one test caught it). One recipe sentence of mine failed lint 14.
 - **195.** Three new server strings failed lint 14 (two semicolons, one long sentence).
+- **196.** Sixteen of my new sentences failed lint 14 across three passes; the first pin ledger was
+  written in cp1252 by a shell redirect and had to be re-encoded; a census hit (`server/README.md`,
+  two rows) was skipped without a note and caught by the advisor; the sentence inserted into sixteen
+  skills used the word `half` in a third sense on the day the vocabulary froze it.
 
 ## 5. Not built, by ruling or on purpose
 

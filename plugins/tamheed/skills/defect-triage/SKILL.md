@@ -20,6 +20,7 @@ Triage a defect against the `<package>` Tamheed package. The registration comes
 BEFORE the fix, so the record survives even if the session dies mid-fix:
 
 1. `package_open("<package>")` if not already open.
+   Then read the prompt rows bound to this skill: `entity_query("prompt", status="Approved", plugin_skill="defect-triage")`. Each carries what is true of this project for this ceremony.
 2. Reproduce the symptom as a minimal failing test. No fix yet.
 3. Register it: `entity_upsert([{"type": "defect", "id": "DEF-<next>", "title":
    "<symptom>", "severity": "critical|high|medium|low", "lifecycle_status": "Open",

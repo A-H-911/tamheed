@@ -1,13 +1,13 @@
 # Handoff prompt templates
 
-Operational guidance for writing the project prompt **files**. Since v3 (plan 027) prompts are plain
-`.md` in `<package>/prompts/`, never database rows. Any non-stock filename marks a project prompt, and
-`handoff_emit` G-INJECT- and stale-scans every file. **Naming (plan 028): project prompts are
-purpose-named kebab-case like the stock library, for example `kickoff.md`, `phase3-resume.md`. The
-`prm-NNN-<kind>.md` names on converted legacy prompts are conversion audit identifiers, not a pattern
-to imitate. The tool never renames. Renames are the operator's, and git keeps history.** Blank
-fill-in forms live in `../templates/initial-prompt.template.md`, `follow-up-prompts.template.md`,
-and `review-prompts.template.md`. Write prompts for Claude Code (CLI/IDE) and reference real entity
+Operational guidance for writing the project's prompt **rows**. Since v6 (plan 196) a prompt is a
+`prompt` row of the package (`PRT-`) with a `kind`. A `kickoff` is the one row the header's
+`entry_point` names. A `phase` row is one per phase gate, with `phase_id` set. A `situational`
+row is bound by `plugin_skill` to the bundled scenario skill that reads it. The operator approves a row before an
+agent reads it, and Approved rows are edited in place. `handoff_emit` G-INJECT- and stale-scans
+every Approved row. The three shapes below are the **bodies** of those rows. Blank fill-in forms
+live in `../templates/initial-prompt.template.md`, `follow-up-prompts.template.md` and
+`review-prompts.template.md`. Write prompts for Claude Code (CLI/IDE) and reference real entity
 ids. Keep the plan's technology choices vendor-neutral. Use Claude Code affordances (plan mode,
 TodoWrite, subagents, a code-review pass) where they help, named as capabilities, not hard
 dependencies.
@@ -51,7 +51,7 @@ gates against the current repo"), and a PR review against acceptance criteria.
 Distinct from the project prompts above: seventeen operator-invoked scenario skills ship in the bundle
 (`../skills/<name>/SKILL.md`, `disable-model-invocation`). They are invoked as `/tamheed:<name>`, with an
 argument naming another package, and are updated with the plugin, never emitted per project. Only the
-operator guide (`prompts/README.md`) is still emitted, `{package}` substituted, by `package_create`,
+operator guide (`<package>/README.md`) is still emitted, `{package}` substituted, by `package_create`,
 `package_migrate`, `package_adopt`, and `handoff_emit`. It is the authoritative situation map. This
 file teaches AUTHORING project prompts:
 
@@ -80,12 +80,12 @@ well-formed, stack-neutral, no field identifiers, no `{package}` placeholder). T
 managed-emission sync model in `handoff.md`: re-emit refreshes, hand edits are detected and
 refused, nothing is silently clobbered. A retired 4.x scenario file left in `<package>/prompts/` is
 named by `handoff_emit` and removed by `refresh_stock=true` only when byte-equal to a shipped
-release. Project prompt files are operator-owned: never managed-refreshed, only screened.
+release. Project prompt rows are operator-approved: never managed-refreshed, only screened.
 
 ## Wiring rules
 
 - Replace every placeholder. A shipped prompt with an unfilled `<…>` is a G-HANDOFF failure.
-- Reference entities by id (`FR-012`, `SL-003`). The package is the source of truth, and any
-  file path a prompt names must exist (the stale scan flags dead relative links).
+- Reference entities by id (`FR-012`, `SL-003`). The package is the source of truth, and
+  `prompt-ids-resolve` names every id in a prompt row that resolves to no entity.
 - List invariant IDs explicitly. Do not paraphrase them loosely.
 - State the stop/approval gate in every step that makes a meaningful change.

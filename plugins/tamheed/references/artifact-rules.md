@@ -20,7 +20,7 @@ set itself was decided at the plan-006 deliverables review.
 Charter + executive summary (narrative documents), requirements (FR/NFR), constraint register,
 assumption register, open-question register, open-decision register, risk register, phased roadmap
 (`phases`), acceptance criteria. Two Always deliverables are not entity families. The initial handoff
-prompt is a **file** in `<package>/prompts/`, and the package README is a narrative-document row.
+prompt is a `prompt` **row** (`PRT-`), and the package README is a narrative-document row.
 Derived-by-construction: traceability, readiness, status, backlog views.
 
 ## Conditional (trigger → families)
@@ -49,7 +49,7 @@ rows). And the separate handoff manifest (absorbed into the package manifest dat
 Audit verdicts, progress entries, and scope changes accrue during Stage 21 by their own rules.
 **Lessons** (`LL-`) join them. Create one whenever execution teaches something durable (kind
 `improve` or `sustain`), born Proposed. Operator confirmation gates binding: only an Approved
-lesson binds. The executor's always-loaded note renders a roster of them (every pinned row
+lesson binds. The target repository's always-loaded note renders a roster of them (every pinned row
 and the 10 highest-numbered unpinned ones). **Open the statement with the rule.** The note
 prints the statement flattened to one line, whole at 180 characters or fewer and cut to its
 first 177 above that. Nothing else of the row is printed, so a statement that opens with its

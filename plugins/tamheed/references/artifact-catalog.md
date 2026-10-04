@@ -2,9 +2,8 @@
 
 The authoritative, human-facing list of every artifact a Tamheed package carries. Since v2
 the package **is a relational store** (`data/*.jsonl`, one file per entity family, see
-`../db/CANONICAL.md`). Since v3 the handoff prompts are **files** under `<package>/prompts/`
-(since v5 the project's own, because the stock scenarios are the plugin's `/tamheed:<name>`
-skills). v4 (plan 031) re-baselined the schema, added waivers, typed the progress journal, and
+`../db/CANONICAL.md`). Since v6 the handoff prompts are **rows** again (`prompt`, `PRT-`), approved
+by the operator. The stock scenarios are the plugin's `/tamheed:<name>` skills since v5. v4 (plan 031) re-baselined the schema, added waivers, typed the progress journal, and
 made this catalog the teaching mirror of the live registry. The machine mirror of the generation
 classes is `BASELINE_ENTITY_TYPES` (`../server/tamheed_server.py`), seeded into the
 `entity_types` table at `package_create`. **G-SET enforces the Always class from the
@@ -154,7 +153,7 @@ One `data/<table>.jsonl` file per non-empty family. Class = the registry's gener
 | wbs-item | `WBS-` | Conditional | Work breakdown (self-parenting hierarchy). The lifecycle includes Review |
 | execution-plan | `EP-` | Conditional | Per-slice how-to, package-resident |
 | execution-gate | `GATE-` | Conditional | DoR/DoD/checkpoint/approval definitions (prose a HUMAN evaluates, surfaced as human_required). `outcome` records the latest Go/Hold/Redirect/Kill decision |
-| convention | `CONV-` | Conditional | Durable conventions the executor must honor |
+| convention | `CONV-` | Conditional | Durable conventions the agent must honor during execution |
 | defect | `DEF-` | Conditional | Found bugs. Severity critical/high/medium/low. **Open critical/high block readiness, medium/low advise.** `found_in` locates it |
 | deferred-work | `DW-` | Conditional | Postponed work with severity + activation trigger + invariant at stake. Once Activated, the wbs-item that carries it says so with a `carries` edge (v5). `deferred-work-carried` lists Activated rows no open item carries |
 | scope-change | `SC-` | Continuous | Drift record: Proposed → Approved → **Merged**. Merged means the deltas are applied to plan rows via scope_adds/scope_modifies/scope_removes edges. A RULING it touches takes an `amends` edge (a `DEC-` merges by full-row upsert, an `ADR-` by supersession). Merged is set LAST, after every target is applied and re-read. The scope-changes-merged advisory flags Approved-never-Merged |
@@ -168,13 +167,13 @@ One `data/<table>.jsonl` file per non-empty family. Class = the registry's gener
 | narrative-document | `DOC-` | Always | Charter-class prose (charter, executive summary, architecture, research plan, …) |
 | document-section | `SEC-` | Always | The sections of narrative documents (heading/body/order) |
 | diagram | `DIA-` | Conditional | Diagram source (mermaid) by kind: context/component/integration/deployment/data-flow |
-| prompt | `PRT-` | Conditional | The prompts an executing agent starts from, as rows since v6 (plan 192). `kickoff` is the row `packages.entry_point` names, and `handoff_emit` demands it Approved. `phase` is one per phase gate, with `phase_id` set. `situational` accompanies one scenario skill. `plugin_skill` binds a row to the bundled scenario skill that reads it, and the server refuses a name that is not a bundled skill. Approved rows are edited in place. The project's own package README is not a prompt: that is a `narrative-document` of kind `readme`. The stock operator guide is a file (below) |
+| prompt | `PRT-` | Conditional | The prompts an executing agent starts from, as rows since v6 (plan 192). `kickoff` is the row `packages.entry_point` names, and `handoff_emit` demands it Approved. `phase` is one per phase gate, with `phase_id` set. `situational` accompanies one scenario skill. `plugin_skill` binds a row to the bundled scenario skill that reads its rows, and the server refuses any other name (the brake `loop-guard` reads none). Approved rows are edited in place. The project's own package README is not a prompt: that is a `narrative-document` of kind `readme`. The stock operator guide is a file (below) |
 
 ## File artifacts (outside the store)
 
 | Artifact | Location | Class | Notes |
 |---|---|---|---|
-| Prompt library | `<package>/prompts/*.md` | Always | The operator guide (`README.md`, the one stock file since v5). Managed emission: emitted/unchanged/diverged, with diverged classified stale-stock vs customized against the bundled stock history. refresh_stock safely updates stale-stock and removes retired 4.x scenario leftovers byte-equal to shipped stock. Plus the project's own prompts. The seventeen scenarios are the plugin's `/tamheed:<name>` skills, beside operator-authored project prompts |
+| Operator guide | `<package>/README.md` | Always | The one stock file since v5, at the package root since v6. Managed emission: emitted/unchanged/diverged, with diverged classified stale-stock vs customized against the bundled stock history. refresh_stock safely updates stale-stock and removes retired 4.x scenario leftovers byte-equal to shipped stock. The project's own prompts are `prompt` rows (above). The seventeen scenarios are the plugin's `/tamheed:<name>` skills |
 | Review surface | `<package>/review.html` (+ `csv/`) | Derived | `export_html`: deterministic, zero-JS, committed |
 | Agent-control note | executor repo `CLAUDE.md` (tool-owned marker span) | Derived | `handoff_emit`: carries the recording-obligations table |
 | Executor MCP config | executor repo `.mcp.json` | Derived | `handoff_emit` |

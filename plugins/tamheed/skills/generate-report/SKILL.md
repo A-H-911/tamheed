@@ -20,6 +20,7 @@ Generate the review surface for the `<package>` Tamheed package:
 1. `package_open("<package>")`, then `export_html()`. It writes
    `<package>/review.html` (self-contained, zero-JS). Commit it: its diffs are
    row-scoped and meaningful.
+   Then read the prompt rows bound to this skill: `entity_query("prompt", status="Approved", plugin_skill="generate-report")`. Each carries what is true of this project for this ceremony.
 2. Open it and use the sticky nav. The page has eleven sections. `#overview` holds the gate
    chips and the package identity (values marked "(v1-manifest-derived)" came from the old
    v1 manifest, not v2 activity). `#resume` is where the last session stopped: the latest

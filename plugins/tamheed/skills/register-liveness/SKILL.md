@@ -25,6 +25,7 @@ is the only wrong answer.
    Work every advisory rule whose status is `fail`. An `indeterminate` rule means the
    keyed column is empty everywhere, and populating it IS the fix. Do not touch blocking
    failures here. They belong to the close-out prompts.
+   Then read the prompt rows bound to this skill: `entity_query("prompt", status="Approved", plugin_skill="register-liveness")`. Each carries what is true of this project for this ceremony.
 2. **Ambiguity markers** (`clarifications-open`): each entry names a field carrying
    `[NEEDS-CLARIFICATION: OQ-NNN]`. Resolve the OQ if you now can, then remove the
    marker from the field (full-row upsert). If it is still genuinely open, leave both.
@@ -144,8 +145,8 @@ is the only wrong answer.
     row if the reference is real. An immutable row (approved AC, ADR, lesson) is
     corrected by supersession, never by an edit. Code spans, the append-only journal and
     Superseded/Obsolete rows are not scanned. History may name what was refused.
-17. **Dangling references in prompt files** (`prompt-ids-resolve`): the same rule over
-    the PROJECT's own `prompts/*.md` (never a stock body). These files are the prose a
+17. **Dangling references in prompt rows** (`prompt-ids-resolve`): the same rule over
+    the PROJECT's own `prompt` rows (title and body, never a stock body). These rows are the prose a
     session reads before any tool. Fix the id or record the row. Quote history in backticks (a code
     span is inert and lands in `in_code_spans`). A green here means every id RESOLVES,
     not that the sentence about it is true.
@@ -181,7 +182,7 @@ is the only wrong answer.
     `promoted_to` is immutable, and the pointer is what makes them reachable again.
 22. **Prose that an agent can misread** (`prose-plain-english`, v5.9): the texts that break
     the structural plain-English rules. The texts are the register statements, the project's
-    own prompt files and the latest handoff. Each is named with its hard findings per rule. The rules:
+    own prompt rows and the latest handoff. Each is named with its hard findings per rule. The rules:
     no semicolon, no sentence over 25 words, no phrasal verb, no nominalization, no
     marketing adjective, no word `references/vocabulary.md` rejects. A `GT-` term of the
     package is never a finding. Write new text with `tamheed:plain-english`. Do not rewrite

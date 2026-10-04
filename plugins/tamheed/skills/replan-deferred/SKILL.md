@@ -19,6 +19,7 @@ Invoke this (`/tamheed:replan-deferred`) when deferred-work triggers may have fi
 Review and activate deferred work in the `<package>` Tamheed package:
 
 1. `package_open("<package>")` if not already open.
+   Then read the prompt rows bound to this skill: `entity_query("prompt", status="Approved", plugin_skill="replan-deferred")`. Each carries what is true of this project for this ceremony.
 2. `entity_query("deferred-work")`. For each Open/Scheduled row, judge its
    `activation_trigger` against current state. The triggers are prose, and that judgment
    is the point of this prompt. Report: fired / not fired / unclear, with reasons.

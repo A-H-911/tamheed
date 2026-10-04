@@ -37,8 +37,8 @@ owner: <name-or-role>
 
 ## Reviews
 
-- Use the review prompts in `<package>/prompts/` for invariant audits, readiness re-checks, and PR
-  reviews against acceptance criteria.
+- Use the review prompts (the package's `situational` prompt rows) for invariant audits, readiness
+  re-checks, and PR reviews against acceptance criteria.
 - A change is mergeable only when the Definition of Done is met and criticals are green.
 
 ## What NOT to do

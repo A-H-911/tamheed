@@ -4,7 +4,7 @@ user-invocable: false
 description: >-
   Use before writing English a reader cannot question. That is a tool description, a skill step, a
   row's statement, a requirement or an acceptance criterion. It is also a lesson, a handoff, a
-  prompt file or a README. Use it before rewriting any of them, and when the readiness rule
+  prompt row or a README. Use it before rewriting any of them, and when the readiness rule
   `prose-plain-english` names a text you own.
 ---
 
@@ -13,7 +13,7 @@ description: >-
 **A reader who cannot ask a question must parse every sentence one way. Write for that reader.**
 
 Tamheed text is read by agents with no back-channel: a tool description, a refusal, a readiness
-note, a handoff, a kickoff prompt. An executing agent reads the rows of the record the same way,
+note, a handoff, a kickoff prompt. In the execution half the agent reads the rows of the record the same way,
 before it acts. ASD-STE100, the controlled English of aircraft maintenance manuals, exists for that
 reader. This skill applies its structural rules to everything you write into a package or about
 one. `tamheed:written-claims` keeps a sentence TRUE. This skill keeps it readable one way.
@@ -23,7 +23,7 @@ one. `tamheed:written-claims` keeps a sentence TRUE. This skill keeps it readabl
 ## Two modes
 
 **Strict** is for text an agent acts on. That is a tool description, a skill step, a row's
-statement, a prompt file, a handoff, the operating note or an acceptance criterion. Every rule
+statement, a prompt row, a handoff, the operating note or an acceptance criterion. Every rule
 below applies, and the vocabulary binds.
 
 **Flavored** is for text a human reads: a README, an architecture document, a charter, a changelog

@@ -11,8 +11,8 @@ owner: <name-or-role>
      (1) ORIENT, (2) give ONE bounded task, (3) STOP at an approval gate. It NEVER authorizes building
      the whole system at once. Replace EVERY <placeholder> — a shipped prompt with an unfilled <…> is a
      G-HANDOFF failure. Reference entities by real ids. List INV- up front.
-     Generation class: Always. A PROJECT prompt file in `<package>/prompts/` (purpose-named).
-     Shape: references/prompt-templates.md. -->
+     Generation class: Always. The BODY of the project's `kickoff` prompt row (`PRT-`), the row the
+     header's entry_point names. Shape: references/prompt-templates.md. -->
 
 ---
 

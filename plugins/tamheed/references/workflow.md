@@ -180,20 +180,25 @@ human-intervention point.
   critical failure → loop to the owning stage. **Human:** review warnings. **Writes:** none (read-only).
 
 ### 20. Execution-agent handoff
-- **In:** the package past Stage 19. **Do (v3, plan 027):** author prompt **files** (kickoff / follow-up
-  per phase gate / situational) in `<package>/prompts/` per `prompt-templates.md`. Then
-  `handoff_emit(target_dir)`. It screens every package prompt file (G-INJECT + the stale scan), then
-  wires the target. The wiring is `.mcp.json` + the marker-managed `CLAUDE.md` note (with the
-  recording-obligations table), so the executing agent records progress through the tools. Nothing is
-  copied into the target. The package folder is the single prompt source. **Out:** wired target.
-  **Enter:** Stage 19 green. **Exit:** Claude Code could start from the kickoff prompt with no missing
-  context. **Check:** G-HANDOFF, emission not blocked by G-INJECT. **Fail:** prompt references a
-  missing entity → fix. No project-authored prompt file → write one. **Human:** approve handoff.
-- **Writes:** `<package>/prompts/*.md`, then handoff_emit (target wiring only).
+- **In:** the package past Stage 19. **Do (v6, plan 196):** author the prompts as `prompt` rows
+  (`PRT-`). One is the `kickoff`. One `phase` row per phase gate. A `situational` row is bound by
+  `plugin_skill` to the scenario skill that reads it. The body shapes are `prompt-templates.md`. The operator
+  approves the rows. Set the header's `entry_point` to the kickoff's id. Then `handoff_emit(target_dir)`.
+  It refuses without an Approved kickoff, screens every Approved row (G-INJECT + the stale scan),
+  then wires the target. The wiring is `.mcp.json` + the marker-managed `CLAUDE.md` note. The note
+  carries the recording-obligations table and the roster of Approved prompt rows, so the agent of
+  the execution half records progress through the tools. Nothing is copied into the target. The
+  package is the single prompt source. **Out:** wired target. **Enter:** Stage 19 green.
+  **Exit:** Claude Code could start from the kickoff row with no missing context. **Check:**
+  G-HANDOFF, emission not blocked by G-INJECT. **Fail:** a prompt references a missing entity →
+  fix. No Approved kickoff row → write one and have it approved. **Human:** approve the rows and
+  the handoff.
+- **Writes:** prompts (`PRT-` rows), packages.entry_point, then handoff_emit (target wiring only).
 
 ### 21. Progress & decision update cycles
-- **In:** execution feedback. **Do:** the executing agent (or operator) calls `progress_update` (journal)
-  and `audit_record` (AC verdicts **with evidence refs**, a test file, a CI run id). It calls `work_bind`
+- **In:** execution feedback. **Do:** in the execution half the agent (or the operator) calls
+  `progress_update` (journal). It calls `audit_record` (AC verdicts **with evidence refs**, a test
+  file, a CI run id). It calls `work_bind`
   ("commit X satisfies FR-x/AC-y/SL-z", which stamps `last_referenced`). Cascades are automatic. All ACs
   of a requirement `Met` → the requirement auto-advances to Implemented. Views stay current by
   construction. Decision flips, supersessions, and typed scope changes follow `modes.md`: the
