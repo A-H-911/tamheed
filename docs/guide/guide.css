@@ -201,6 +201,8 @@ svg.dia .edge.hue { stroke: var(--hue); }
 svg.dia .lbl { font-size: 12px; }
 svg.dia .lbl.small { font-size: 10.5px; fill: var(--ink-2); paint-order: stroke fill; stroke: var(--panel); stroke-width: 4px; stroke-linejoin: round; }
 svg.dia .box.cell { fill: var(--panel); stroke: var(--line); }
+svg.dia .box.frame { fill: none; stroke: var(--line); stroke-dasharray: 5 4; }
+svg.dia .frame .lbl { fill: var(--ink-2); }
 svg.dia .box.cell.empty { fill: none; stroke: var(--line); stroke-dasharray: 2 3; }
 svg.dia .lbl.num.small { font-size: 9.5px; fill: var(--ink); stroke: none; }
 svg.dia .lbl.strong { font-weight: 600; font-size: 13px; }

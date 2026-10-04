@@ -176,6 +176,27 @@ devil's-advocate review; execution order is the row order below). Status values:
 | 089 | [Lab beat 18](089-lab-beat-18-findings-27.md) | 085-088 + full test (15/15 vs 0/15 on `v4.10.0`; 9 suites; selftest) | DONE `762b98b` — 9 new assertions, each failing on the pre-beat fixture; D-1 registry-sync unscripted, F-3 fixed |
 | 090 | [Release v4.11.0](090-release-v4110.md) — plan-058 recipe + the fixture follows the stamp | 089 | DONE — 2026-09-22, tag `v4.11.0` (SHA in the tag) |
 
+### The user guide round 2 -- plans 201-210 -> v6.1.0 (opened 2026-10-04; maintainer-executed)
+
+Master record: [201-210-batch-guide-round-2.md](201-210-batch-guide-round-2.md) (the operator's
+rulings G1-G13 and G16 of 2026-10-04, G17 from the plan 201 review). The generated user guide draws
+the engine as it is after 6.0.0: one agent with two halves on D1 and D2, the chrome, the figures
+folder, per-family, per-tool, per-gate and per-skill figures, the logo. Status values: PLANNED / IN
+PROGRESS / DONE.
+
+| # | Plan | Depends on | Status |
+|---|---|---|---|
+| 201 | [D1 and D2 as one agent with two halves](201-d1-d2-two-halves.md) -- the frame primitive (G17) with its lint rule; the operator on top, the two lanes, the handoff, the server and the package; the README overview image re-exported | 200 | DONE -- 2026-10-04 (the commit this row lands in, after the operator's review) |
+| 202 | The chrome: the two-level nav, D3's returns, D5's header pills, the pager in rem | 201 | PLANNED |
+| 203 | The figures folder proven on the twelve workflow swimlanes | 202 | PLANNED |
+| 204 | Family relations figures | 203 | PLANNED |
+| 205 | Family flow figures with the Writes parser | 204 | PLANNED |
+| 206 | Tool figures | 205 | PLANNED |
+| 207 | Gate figures | 206 | PLANNED |
+| 208 | Skill figures | 207 | PLANNED |
+| 209 | Logo, icon, tagline | 208 | PLANNED |
+| 210 | Release 6.1.0 | 209 | PLANNED |
+
 ### Prompts return to the store -- plans 192-200 -> v6.0.0 (released 2026-10-04; maintainer-executed)
 
 Master record: [192-200-batch-prompts.md](192-200-batch-prompts.md) (the operator's rulings G1-G16 and

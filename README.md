@@ -31,7 +31,7 @@
 ## What Tamheed is
 
 <p align="center">
-  <img src="docs/assets/tamheed-overview.png" alt="Tamheed at a glance: a project brief flows through Understand, Explore, and Plan & hand off. Every row reaches the package through the MCP server. The package hands off to Claude Code, which records progress, verdicts and commits back through the same server. Readiness is checked at every close until the go/no-go. The review page is exported from the package" width="900">
+  <img src="docs/assets/tamheed-overview.png" alt="Tamheed at a glance. The operator briefs and approves. One agent, Claude Code, works in two halves: the planning half (stages 1 to 20) hands off to the execution half (stages 21 to 22). Every row reaches the package through the MCP server, the one write path. The review page is exported from it." width="900">
 </p>
 
 Tamheed is a reusable agent **skill** that transforms a long-form project description into a complete,

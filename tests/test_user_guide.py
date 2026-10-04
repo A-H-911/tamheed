@@ -118,6 +118,16 @@ class UserGuideTest(unittest.TestCase):
         no other edge, and no label lies on a line or a box — on both language copies."""
         import build
         self.assertEqual(build.diagram_problems(self.facts), [])
+        # plan 201 (G17): a frame is a region. It must stay on the canvas and hold every member;
+        # a member outside it is a lint finding, and the frame is no obstacle to an edge.
+        import content
+        import diagrams
+        model = diagrams.overview(self.facts)
+        model["frames"][0]["members"].append("server")          # the server sits below the frame
+        resolve = lambda cid: content.TEXT.get(cid, {}).get("en") or cid
+        problems = diagrams.lint(model, rtl=False, resolve=resolve)
+        self.assertTrue(any("server lies outside its frame agent" in p for p in problems), problems)
+        self.assertFalse(any("crosses box agent" in p for p in problems), problems)
         # the relation matrix covers every typed relation and nothing the engine lacks
         import diagrams
         cells = diagrams.relation_matrix(self.facts)

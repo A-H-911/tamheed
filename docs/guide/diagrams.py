@@ -35,6 +35,13 @@ def node(key, x, y, w, h, label, cls="", mono=False, step=None, group="", links=
             "line_keys": line_keys, "small": small, "keyed": keyed}
 
 
+def frame(key, x, y, w, h, label, members):
+    """A region (plan 201, G17): a dashed box drawn behind the edges with a short title at its
+    top-left. Never a click target. The lint checks it stays on the canvas and that every member
+    node lies inside it; it is not an object edges must avoid."""
+    return {"key": key, "x": x, "y": y, "w": w, "h": h, "label": label, "members": list(members)}
+
+
 def edge(frm, to, label=None, cls="", key="", step=None, draw=True, side=None, bend=0, via=None,
          offset=(0, 0), arrow=True, label_at=None, bus=""):
     """`side` = (source side, target side) in l/r/t/b; `offset` shifts each anchor along its side;
@@ -179,6 +186,11 @@ def svg(model, rtl: bool, lang: str, resolve, title: str) -> str:
     parts = [f'<svg class="dia" lang="{lang}" viewBox="0 0 {W} {H}" role="img" aria-label="{esc(title)}" xmlns="http://www.w3.org/2000/svg">',
              f'<defs><marker id="ar-{sfx}" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" class="arrow"/></marker>'
              f'<marker id="ara-{sfx}" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" class="arrow acc"/></marker></defs>']
+    for fr in model.get("frames", []):
+        x, y, w, h = _rect(fr, rtl, W)
+        tx = _mx(fr["x"] + 10, rtl, W)
+        parts.append(f'<g class="frame"><rect class="box frame" x="{x:.1f}" y="{y}" width="{w}" height="{h}" rx="8"/>'
+                     + _text([resolve(fr["label"])], tx, y + 13, rtl, "small", _flip("start", rtl)) + "</g>")
     for e in model.get("edges", []):
         p1, p2, sa, sb, pts, curve = _edge_geometry(model, e, rtl)
         marker = "ara" if "acc" in e["cls"] else "ar"
@@ -299,6 +311,17 @@ def lint(model, rtl: bool, resolve) -> list[str]:
         x, y, w, h = _rect(n, rtl, W)
         if x < -0.1 or y < -0.1 or x + w > W + 0.1 or y + h > H + 0.1:
             problems.append(f"{model['id']}: node {n['key']} leaves the canvas")
+    for fr in model.get("frames", []):
+        fx, fy, fw, fh = _rect(fr, rtl, W)
+        if fx < -0.1 or fy < -0.1 or fx + fw > W + 0.1 or fy + fh > H + 0.1:
+            problems.append(f"{model['id']}: frame {fr['key']} leaves the canvas")
+        for m in fr["members"]:
+            if m not in rects:
+                problems.append(f"{model['id']}: frame {fr['key']} names no node {m}")
+                continue
+            mx, my, mw, mh = rects[m]
+            if mx < fx or my < fy or mx + mw > fx + fw or my + mh > fy + fh:
+                problems.append(f"{model['id']}: node {m} lies outside its frame {fr['key']}")
     segs: list[tuple[str, tuple, tuple, str]] = []
     for e in model.get("edges", []):
         p1, p2, sa, sb, pts, curve = _edge_geometry(model, e, rtl)
@@ -373,54 +396,51 @@ def _box_hits_seg(box, a, b):
 # ----------------------------------------------------------------------------- models
 
 def overview(f) -> dict:
-    """D1 — both halves: a brief becomes a package through the server; execution records back
-    through the same server and ends at readiness and the go/no-go."""
+    """D1 — one agent, two halves (G1): the operator on top; one frame, Claude Code + Tamheed,
+    with the planning lane (stages 1-20) and the execution lane (stages 21-22) and the handoff
+    between them; the MCP server and the package below, the one write path; the review page."""
     ns = [
-        node("brief", 10, 92, 90, 44, _L("overview.brief"), "pill"),
-        node("A", 150, 42, 120, 44, _L("overview.understand"), "acc"),
-        node("B", 150, 92, 120, 44, _L("overview.explore"), "acc"),
-        node("C", 150, 142, 120, 44, _L("overview.plan"), "acc"),
-        node("j1", 124, 114, 0, 0, [""]), node("j2", 300, 114, 0, 0, [""]),
-        node("server", 330, 92, 120, 44, _L("overview.server"), "strong"),
-        node("pkg", 520, 70, 120, 88, _L("overview.package"), ""),
-        node("exec", 740, 92, 130, 44, _L("overview.executor"), "pill"),
-        node("review", 520, 230, 120, 36, _L("overview.review"), ""),
-        node("ready", 730, 222, 150, 44, _L("overview.readiness"), "good"),
+        node("op", 270, 10, 360, 40, _L("overview.operator"), "acc strong pill"),
+        node("plan", 40, 112, 360, 96, _L("overview.planning"), "strong"),
+        node("exec", 500, 112, 360, 96, _L("overview.execution"), "strong"),
+        node("server", 330, 272, 240, 44, _L("overview.server"), "acc"),
+        node("pkg", 640, 268, 150, 52, _L("overview.package"), ""),
+        node("review", 800, 272, 90, 44, _L("overview.review"), ""),
     ]
+    frs = [frame("agent", 20, 78, 860, 150, _L("frame.agent"), ["plan", "exec"])]
     es = [
-        edge("brief", "j1", side=("r", "l"), arrow=False, bus="in"),
-        edge("j1", "A", side=("t", "l")), edge("j1", "B", side=("r", "l")), edge("j1", "C", side=("b", "l")),
-        edge("A", "j2", side=("r", "t"), arrow=False, bus="out"), edge("B", "j2", side=("r", "l"), arrow=False, bus="out"),
-        edge("C", "j2", side=("r", "b"), arrow=False, bus="out"),
-        edge("j2", "server", side=("r", "l")),
-        edge("server", "pkg", _L("overview.writes"), "acc", side=("r", "l"), label_at=(485, 80, "middle")),
-        edge("pkg", "exec", _L("overview.handoff"), "", side=("r", "l"), label_at=(690, 102, "middle")),
-        edge("exec", "server", _L("overview.records"), "acc", bend=-62, side=("t", "t")),
-        edge("pkg", "review", _L("overview.export"), side=("b", "t")),
-        edge("exec", "ready", _L("overview.close"), "", side=("b", "t"), label_at=(797, 190, "end")),
+        edge("op", "plan", _L("overview.brief"), "", side=("b", "t"), offset=(-110, 0), label_at=(300, 70, "end")),
+        edge("op", "exec", _L("overview.approvals"), "", side=("b", "t"), offset=(110, 0), label_at=(600, 70, "start")),
+        edge("plan", "exec", _L("overview.handoff"), "acc", side=("r", "l"), label_at=(450, 150, "middle")),
+        edge("plan", "server", _L("overview.writes"), "", side=("b", "t"), offset=(0, -70), label_at=(210, 232, "end")),
+        edge("exec", "server", _L("overview.records"), "", side=("b", "t"), offset=(0, 70), label_at=(690, 232, "start")),
+        edge("server", "pkg", _L("overview.path"), "acc", side=("r", "l"), label_at=(605, 334, "middle")),
+        edge("pkg", "review", _L("overview.export"), "", side=("r", "l"), label_at=(845, 334, "middle")),
     ]
-    return {"id": "d1", "w": 890, "h": 280, "nodes": ns, "edges": es}
+    return {"id": "d1", "w": 900, "h": 352, "nodes": ns, "edges": es, "frames": frs}
 
 
 def actors(f) -> dict:
-    """D2 — the operator, the planning half, the execution half and what each may do."""
+    """D2 — the operator and the agent's two halves (G1, G16), what each may do; click a party to
+    isolate its part. The frame holds both lanes and their tool pills."""
     ns = [
-        node("op", 290, 10, 180, 46, _L("actors.operator"), "acc strong", group="op"),
-        node("plan", 60, 150, 200, 46, _L("actors.planner"), "strong", group="plan"),
-        node("exec", 500, 150, 200, 46, _L("actors.executor"), "strong", group="exec"),
-        node("op-does", 490, 13, 260, 40, _L("actors.operator.does"), "pill", group="op", links="op"),
-        node("plan-does", 20, 204, 280, 56, _L("actors.planner.does"), "pill", group="plan", links="plan"),
-        node("exec-does", 460, 204, 280, 56, _L("actors.executor.does"), "pill", group="exec", links="exec"),
-        node("store", 290, 290, 180, 40, _L("actors.store"), "", group="store"),
+        node("op", 270, 10, 220, 44, _L("actors.operator"), "acc strong", group="op"),
+        node("op-does", 510, 12, 300, 40, _L("actors.operator.does"), "pill", group="op", links="op"),
+        node("plan", 40, 118, 360, 46, _L("actors.planner"), "strong", group="plan"),
+        node("exec", 500, 118, 360, 46, _L("actors.executor"), "strong", group="exec"),
+        node("plan-does", 40, 190, 360, 70, _L("actors.planner.does"), "pill", group="plan", links="plan"),
+        node("exec-does", 500, 190, 360, 70, _L("actors.executor.does"), "pill", group="exec", links="exec"),
+        node("store", 330, 320, 240, 44, _L("actors.store"), "", group="store"),
     ]
+    frs = [frame("agent", 20, 84, 860, 196, _L("frame.agent"), ["plan", "exec", "plan-does", "exec-does"])]
     es = [
-        edge("op", "plan", _L("actors.brief"), side=("b", "t"), offset=(-50, 0)),
-        edge("op", "exec", _L("actors.approves"), side=("b", "t"), offset=(50, 0)),
-        edge("plan", "exec", _L("actors.handoff"), "acc", side=("r", "l")),
+        edge("op", "plan", _L("actors.brief"), side=("b", "t"), offset=(-60, 0), label_at=(300, 70, "end")),
+        edge("op", "exec", _L("actors.approves"), side=("b", "t"), offset=(60, 0), label_at=(460, 70, "start")),
+        edge("plan", "exec", _L("actors.handoff"), "acc", side=("r", "l"), label_at=(450, 131, "middle")),
         edge("plan-does", "store", None, "", side=("b", "l")),
         edge("exec-does", "store", None, "", side=("b", "r")),
     ]
-    return {"id": "d2", "w": 760, "h": 340, "nodes": ns, "edges": es}
+    return {"id": "d2", "w": 900, "h": 390, "nodes": ns, "edges": es, "frames": frs}
 
 
 def stage_track(f) -> dict:
