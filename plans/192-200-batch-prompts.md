@@ -53,6 +53,7 @@ The reverse move is MAJOR, as plan 027's was: the handoff contract changes.
 | P12 | Beat 196 split: the bundle (196), the docs + README + guide prose (197). |
 | P13 | review.html gains a Prompts section (kind, plugin skill, status, title, the body in a fold). |
 | P14 | `plugin_skill` admits the 17 bundled scenario skills only (`disable-model-invocation: true` in the frontmatter), never the front door or a discipline skill (plan 192 review). |
+| P15 | G-INJECT at emit time screens Approved prompt rows only, as it screens lessons; a Proposed row blocks nothing because the executing agent reads Approved rows (plan 193 review). |
 
 Measured 2026-10-04 with the live 5.9.0 server on scratch packages (the CHANGELOG states it):
 `entity_index` is never serialised, so a 5.9 server opens a 6.0-migrated package, leaves
@@ -66,7 +67,7 @@ fails with a foreign-key load error, raised from `package_open` as an uncaught `
 | Plan | Beat | Status |
 |---|---|---|
 | 192 | The family: migration 008, registry, catalog, governance, guide ids, tests | DONE 2026-10-04 |
-| 193 | The engine paths: screen, scans, the emit precondition, `plugin_skill=` on `entity_query`, note v7 | planned |
+| 193 | The engine paths: screen, scans, the emit precondition, `plugin_skill=` on `entity_query`, note v7 | DONE 2026-10-04 |
 | 194 | The stock operator guide at `<package>/README.md` | planned |
 | 195 | `package_migrate` converts files to rows; the sample and the fixture migrated by the tool | planned |
 | 196 | The bundle's teaching surface and the halves wording | planned |
@@ -84,12 +85,25 @@ fails with a foreign-key load error, raised from `package_open` as an uncaught `
   distinction), the governance and naming-template rows, `PRT` in the guide's id-token regex, the
   guide ids `type.prompt` / `table.prompts` / `col.prompts.*` EN + AR, `index.html` rebuilt; the
   exporter recognises a v2 `prompts.csv` leftover beside the live header; six tests re-aimed, two new.
+- **193 — the engine paths.** (the commit this record lands in) `handoff_emit` refuses unless the
+  header's `entry_point` names an Approved kickoff row (four refusals, each naming its leg and the
+  way out); G-INJECT, the oversize check, the stale-line scan and the restated-content detectors run
+  over the Approved prompt rows; the converted hint reads `custom_attributes.converted_from` on every
+  live row; the v2 `handoff/` leftover compare runs against rows; the note carries a Prompts roster
+  (every Approved row with the skill that reads it) under marker `v7`; `prompt-ids-resolve` and
+  `prose-plain-english` read `prompts.title` / `prompts.body` and the generic prose-id scan leaves
+  the family to its own rule; `entity_query(plugin_skill=)`; the hook's v7 fixture and the
+  v6-still-resumes case; lint 9 blacklists v6; `handoff.md` and the guide name v7.
 
 ## 4. Errors owned
 
 - **192.** The plan put the new DDL in `schema.sql` as well as the migration; lint 2 forbids it (the
   001 byte-twin). The plan said Always from this beat; the fixture's `G-SET=pass` eval made that
   plan 195's step. The first catalog row broke lint 14 (semicolons, length) and was rewritten.
+- **193.** The plan said `prompt-ids-resolve` over `prompts.body` without noticing the generic
+  prose-id scan already covered the new table (a double report); the advisor caught it. The first
+  pass of the emit left the v2 leftover compare reading the prompts folder (`NameError`); the suite
+  caught it. Five new server strings and one guide sentence failed lint 14 before the gate.
 
 ## 5. Not built, by ruling or on purpose
 

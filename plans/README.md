@@ -189,7 +189,7 @@ the tag. Status values: PLANNED / IN PROGRESS / DONE.
 | # | Plan | Depends on | Status |
 |---|---|---|---|
 | 192 | [The `prompts` family](192-prompts-family.md) -- migration 008, the registry row, the `plugin_skill` write guard, the catalog and governance rows, the guide ids | 191 | DONE -- 2026-10-04 (the commit this row lands in, after the operator's review) |
-| 193 | The engine paths: G-INJECT over rows, the scans over `prompts.body`, the emit precondition, `plugin_skill=` on `entity_query`, note v7 | 192 | PLANNED |
+| 193 | [The engine paths over prompt rows](193-engine-paths.md) -- the emit demands an Approved kickoff row named by `entry_point`, G-INJECT and the scans over the rows, the Prompts roster in the note (marker v7), `prompt-ids-resolve` and `prose-plain-english` over `prompts.title` / `body`, `entity_query(plugin_skill=)` | 192 | DONE -- 2026-10-04 (the commit this row lands in, after the operator's review) |
 | 194 | The stock operator guide at `<package>/README.md` | 193 | PLANNED |
 | 195 | `package_migrate` converts prompt files to rows; the sample and the fixture migrated by the tool; the family becomes Always | 194 | PLANNED |
 | 196 | The bundle's teaching surface and the halves wording | 195 | PLANNED |

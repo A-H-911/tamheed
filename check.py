@@ -333,7 +333,8 @@ def gate_lint() -> None:
                  ("PASS/FAIL", "prompts"),
                  ("tamheed:note v3", "all"),  # marker bumped to v4 (plan 035)
                  ("tamheed:note v4", "all"),  # and to v5 (plan 116)
-                 ("tamheed:note v5", "all")]  # and to v6 (plan 184)
+                 ("tamheed:note v5", "all"),  # and to v6 (plan 184)
+                 ("tamheed:note v6", "all")]  # and to v7 (plan 193)
     _hist = re.compile(r"retired|deleted|renamed|blacklist|historical", re.I)
     problems = []
     for rel, text in teaching.items():

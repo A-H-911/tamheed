@@ -392,7 +392,8 @@ _MARKER_RE = re.compile(r"\[NEEDS-CLARIFICATION(?::\s*([A-Za-z]+-\d+))?[^\]]*\]"
 # nobody can repair must never hold a rule amber forever (the findings_21 trap).
 # Plan 087: feedback rows QUOTE broken ids by nature (`SEC-8`, `DEC-208`) - exempt like the
 # journal, though for a different reason: not append-only, but a register of what is broken.
-_PROSE_ID_EXEMPT_TABLES = frozenset({"progress_entries", "audit_verdicts", "feedback"})
+_PROSE_ID_EXEMPT_TABLES = frozenset({"progress_entries", "audit_verdicts", "feedback",
+                                     "prompts"})  # plan 193: prompt-ids-resolve owns the prompt rows
 _PROSE_ID_CAP = 50
 # Plan 057: version strings compare numerically — "4.10.0" is newer than "4.9.0".
 _vkey = lambda v: tuple(int(p) for p in v.split("."))  # noqa: E731
@@ -491,6 +492,7 @@ _PLAIN_PROSE_COLUMNS = {
     "adrs": ("context", "decision", "consequences", "confirmation"),
     "acceptance_criteria": ("statement",),
     "lessons": ("statement",),
+    "prompts": ("title", "body"),   # plan 193 (v6): the prose a session reads first
 }
 _PLAIN_VOCAB_PATH = _SERVER_DIR.parent / "references" / "vocabulary.md"
 _PLAIN_VOCAB_CACHE: dict = {}
@@ -511,11 +513,11 @@ def _plain_vocabulary(conn) -> dict:
     return dict(base, names=names)
 
 
-def _scan_prose_plain(conn, pkg_dir: Path, name: str) -> dict:
+def _scan_prose_plain(conn) -> dict:
     """Lint the record's prose: the statement columns of the registers (Superseded and
-    Obsolete rows skipped), the latest handoff entry, and the project's own prompt files
-    (a stock body is skipped, as `_scan_prompt_ids` does). Strict mode, English. Returns
-    the labelled texts with hard findings, the counts per rule and the texts scanned."""
+    Obsolete rows skipped), the project's prompt rows (title and body, v6) and the latest
+    handoff entry. Strict mode, English. Returns the labelled texts with hard findings,
+    the counts per rule and the texts scanned."""
     vocab = _plain_vocabulary(conn)
     entities: list[str] = []
     counts: dict[str, int] = {}
@@ -549,17 +551,6 @@ def _scan_prose_plain(conn, pkg_dir: Path, name: str) -> dict:
                       f" ORDER BY {_PE_NUM} DESC LIMIT 1").fetchone()
     if ho and ho[1]:
         take(f"{ho[0]}.entry", str(ho[1]))
-    stock = _stock_bodies(name)
-    prompts_dir = pkg_dir / "prompts"
-    for path in sorted(prompts_dir.glob("*.md")) if prompts_dir.is_dir() else []:
-        text = path.read_text(encoding="utf-8")
-        if text in stock:
-            continue
-        texts += 1
-        for f in ste_lint.hard(ste_lint.lint_text(text, mode="strict", vocab=vocab,
-                                                  filename=f"prompts/{path.name}")):
-            counts[f["rule"]] = counts.get(f["rule"], 0) + 1
-            entities.append(f"prompts/{path.name}:{f['line']}: {f['rule']}")
     return {"entities": sorted(entities), "counts": dict(sorted(counts.items())), "texts": texts}
 
 
@@ -596,34 +587,35 @@ def _classify_id_hits(pattern, known, min_width, text: str, label: str, found: d
             found["in_code_spans"].add(hit)
 
 
-def _scan_prompt_ids(conn, pkg_dir: Path, name: str) -> dict:
-    """Plan 093 (the field's FB-002, ranked first): the PROJECT's prompt files - the
-    surface a session reads before any tool - scanned like rows. A file byte-equal to
-    ANY stock body (current or an older release's, `{package}` substituted) is the
-    maintainer's prose, not the project's citations, and is skipped; customised and
-    project-authored files are scanned line by line."""
-    stock = _stock_bodies(name)
+def _scan_prompt_ids(conn) -> dict:
+    """Plan 093 (the field's FB-002, ranked first), rows since v6 (plan 193): the
+    PROJECT's prompt rows - the prose a session reads before any tool - scanned like
+    the registers, as their own rule with their own population, so the zero case says
+    "no prompt row" and never hides inside `prose-ids-resolve`. Same three lists, same
+    doctrine: a code span is inert and visible, the list is a floor. A body wraps code
+    spans across lines, so the strip runs over the whole text and each hit is labelled
+    by its line (`PRT-001.body:3`). Superseded/Obsolete rows are history."""
     pattern, known, min_width = _id_universe(conn)
     found: dict[str, set] = {"dangling": set(), "in_code_spans": set(),
                              "not_well_formed": set()}
-    files = 0
-    prompts_dir = pkg_dir / "prompts"
-    for path in sorted(prompts_dir.glob("*.md")) if prompts_dir.is_dir() else []:
-        text = path.read_text(encoding="utf-8")
-        if text in stock:
-            continue
-        files += 1
-        # code spans wrap across lines in prose files: strip over the WHOLE file with the
-        # wrapping span rule, then label each hit by its line
+    rows = 0
+    for pid, title, body in conn.execute(
+            "SELECT id, title, body FROM prompts"
+            " WHERE lifecycle_status NOT IN ('Superseded','Obsolete')"
+            " ORDER BY CAST(SUBSTR(id, 5) AS INTEGER)"):
+        rows += 1
+        _classify_id_hits(pattern, known, min_width, str(title or ""),
+                          f"{pid}.title", found, own_id=pid)
+        text = str(body or "")
         stripped = _INLINE_CODE_WRAPPING_RE.sub(" ", _CODE_FENCE_RE.sub(
             lambda m: "\n" * m.group(0).count("\n"), text))
         bare = {m.group(0) for m in pattern.finditer(stripped)}
         for lineno, line in enumerate(text.splitlines(), 1):
             _classify_id_hits(pattern, known, min_width, line,
-                              f"prompts/{path.name}:{lineno}", found, bare=bare)
+                              f"{pid}.body:{lineno}", found, bare=bare)
     found["in_code_spans"] -= found["dangling"]
     out = {k: sorted(v) for k, v in found.items()}
-    out["files"] = files
+    out["rows"] = rows
     return out
 
 
@@ -2295,8 +2287,14 @@ def entity_upsert(entities: list[dict]) -> dict:
 def entity_query(type: str, id: str | None = None, status: str | None = None,
                  columns: list[str] | None = None, limit: int = 100,
                  after_id: str | None = None, ids: list[str] | None = None,
-                 search: str | None = None, context: int | None = None) -> dict:
+                 search: str | None = None, context: int | None = None,
+                 plugin_skill: str | None = None) -> dict:
     """Query one entity family with targeted columns — rows, not documents.
+
+    `plugin_skill` (v6, plan 193) filters `prompt` rows to the ones bound to that bundled
+    scenario skill, exact match on the column — the query a scenario skill runs to read
+    its project half, and the one the note's prompt roster is built from. Refused for
+    any other family.
 
     `limit` truncates ROWS (never fields — there is NO field truncation anywhere in
     the query path; a payload cap is the CLIENT's, and a family of long-text rows
@@ -2354,6 +2352,11 @@ def entity_query(type: str, id: str | None = None, status: str | None = None,
         if status_col is None:
             return _err(f"{type} has no status column")
         where.append(f"{status_col} = ?"); params.append(status)
+    if plugin_skill is not None:
+        if type != "prompt":
+            return _err("plugin_skill filters prompt rows only — it binds a prompt to the"
+                        " bundled scenario skill that reads it")
+        where.append("plugin_skill = ?"); params.append(str(plugin_skill))
     if search is not None:
         text_cols = [r[1] for r in _CURRENT.conn.execute(f"PRAGMA table_info({table})")
                      if str(r[2]).upper() == "TEXT"]
@@ -2955,33 +2958,32 @@ def _readiness_report(conn, scope: str, scope_id: str | None) -> dict:
         # Plan 093 (FB-002): the project's prompt FILES, the surface a session reads
         # before any tool. Population is files scanned, not a table - set by hand, so
         # the zero case is stated here and never routed through the omission lookup.
-        pfiles = _scan_prompt_ids(conn, PACKAGE_ROOT / _CURRENT_NAME, _CURRENT_NAME)
+        pfiles = _scan_prompt_ids(conn)
         pcut = "; ".join(f"{k}: showing {_PROSE_ID_CAP} of {len(pfiles[k])}"
                          for k in ("dangling", "in_code_spans", "not_well_formed")
                          if len(pfiles[k]) > _PROSE_ID_CAP)
         rule("prompt-ids-resolve", "advisory", pfiles["dangling"][:_PROSE_ID_CAP],
-             "identifiers written in the PROJECT's prompt files (`<package>/prompts/*.md`"
-             " that are not a stock body) that resolve to NO entity. These files are the"
-             " prose a session reads before it runs any tool. Correct the id, record the"
-             " missing row, or quote history in backticks (a code span is inert). THE"
-             " ENTITY LIST IS A FLOOR: `in_code_spans` and `not_well_formed` are"
-             " informational, as for rows, and width is tested first. A green means"
-             " every id RESOLVES, not that the sentence about it is true" + (f" — {pcut}" if pcut else ""))
+             "identifiers written in the PROJECT's prompt rows (`prompts.title` and"
+             " `prompts.body`, v6) that resolve to NO entity. These rows are the prose a"
+             " session reads before it runs any tool. Correct the id, record the missing"
+             " row, or quote history in backticks (a code span is inert). THE ENTITY LIST"
+             " IS A FLOOR: `in_code_spans` and `not_well_formed` are informational, as for"
+             " every register, and width is tested first. A green means every id RESOLVES,"
+             " not that the sentence about it is true" + (f" — {pcut}" if pcut else ""))
         rules[-1].update({k: pfiles[k][:_PROSE_ID_CAP]
                           for k in ("in_code_spans", "not_well_formed")})
-        # the uniform population shape (every consumer reads `rows`); `unit` says files
-        rules[-1]["population"] = {"table": "prompts/*.md", "rows": pfiles["files"],
-                                   "scoped": False, "unit": "files"}
-        if pfiles["files"] == 0:
+        rules[-1]["population"] = {"table": "prompts", "rows": pfiles["rows"],
+                                   "scoped": False, "unit": "rows"}
+        if pfiles["rows"] == 0:
             rules[-1]["status"] = "indeterminate"
             rules[-1]["discriminating"] = False
-            rules[-1]["note"] += (" — no project prompt file to scan (every file in prompts/"
-                                  " is a stock body): this rule measured nothing")
+            rules[-1]["note"] += (" — no prompt row to scan: this rule measured nothing."
+                                  " Stage 20 writes the kickoff as a `prompt` row")
         # Plan 182 (the plain-English batch, R13): the record's own prose under the
         # structural ASD-STE100 rules. Advisory: a semicolon never blocks a release.
         # Population is texts scanned (register statement columns, the project's prompt
         # files, the latest handoff), set by hand; zero texts reads indeterminate.
-        plain = _scan_prose_plain(conn, PACKAGE_ROOT / _CURRENT_NAME, _CURRENT_NAME)
+        plain = _scan_prose_plain(conn)
         plain_cut = (f" — showing {_PROSE_ID_CAP} of {len(plain['entities'])}"
                      if len(plain["entities"]) > _PROSE_ID_CAP else "")
         rule("prose-plain-english", "advisory", plain["entities"][:_PROSE_ID_CAP],
@@ -2989,13 +2991,13 @@ def _readiness_report(conn, scope: str, scope_id: str | None) -> dict:
              " The rules: no semicolon, no sentence over 25 words, no phrasal verb, no"
              " nominalization, no marketing adjective, no word that `references/vocabulary.md`"
              " rejects. The texts are the statement columns of the registers, the project's own"
-             " prompt files and the latest handoff. Each is named with its hard findings per"
+             " prompt rows and the latest handoff. Each is named with its hard findings per"
              " rule. A `GT-` term of this package is never a finding, and a hedge (may, might, could)"
              " is never flagged. Write new text with `tamheed:plain-english`. The operator"
              " runs `/tamheed:ste-rewrite` to rewrite the existing text, row by row, with a"
              " STOP per batch" + plain_cut)
         rules[-1]["counts"] = plain["counts"]
-        rules[-1]["population"] = {"table": "register text + prompts/*.md + the latest handoff",
+        rules[-1]["population"] = {"table": "register text + prompts + the latest handoff",
                                    "rows": plain["texts"], "scoped": False, "unit": "texts"}
         if plain["texts"] == 0:
             rules[-1]["status"] = "indeterminate"
@@ -3492,7 +3494,7 @@ _STALE_PATTERNS = [
     (re.compile(r"keystone-state\.json"),
      "the package IS the state — query it with entity_query/trace_query"),
     (re.compile(r"docs/handoff/"),
-     "prompts live in <package>/prompts/ (v3.0.0) — point there instead"),
+     "project prompts are rows of the package since v6 (entity_query(\"prompt\")) — point there instead"),
     (re.compile(r"Keystone (?:v1|package|register|validator|tree)", re.IGNORECASE),
      "the v1 tree is a frozen archive. The Tamheed package is the record"),
     (re.compile(r"progress-log\.md|acceptance-audit\.md"),
@@ -3864,9 +3866,9 @@ _CONVERTED_HINTS = {
     "review": "The generic half is now covered by `/tamheed:integrity-check` and "
               "`/tamheed:slice-review`. Keep the project-specific checklists",
 }
-_CONVERTED_CURATE = ("curate = extract the project-specific half into a purpose-named "
-                     "prompt (or keep as-is) and remove this header line once "
-                     "reviewed. This hint clears itself")
+_CONVERTED_CURATE = ("curate = keep the project-specific half in the row (or keep it as-is),"
+                     " then remove `converted_from` from the row's custom_attributes once"
+                     " reviewed. This hint clears itself")
 
 
 def _converted_hint(kind: str) -> str:
@@ -3886,10 +3888,10 @@ def _normalized_prompt(text: str) -> str:
 _STALE_BLOCK_RE = re.compile(   # plan 130: CRLF-tolerant, so an editor-saved file strips clean
     r"\r?\n?<!-- tamheed:stale-warning -->.*?<!-- /tamheed:stale-warning -->\r?\n?", re.S)
 # Plan 130 (v5.2, the field's FB-024): the block names what the scan covers since v5.1 —
-# agent-control files, prompt files and skill files — not "v1 references" and "the v1 tree".
+# agent-control files, prompt rows (v6) and skill files — not "v1 references" and "the v1 tree".
 _STALE_BLOCK = ("\n<!-- tamheed:stale-warning -->\n"
                 "> **Stale references detected** in this project's agent-control files, prompt "
-                "files or skill files. See `stale_references` in the handoff_emit result "
+                "rows or skill files. See `stale_references` in the handoff_emit result "
                 "(file:line and the replacement). Fix them and re-run handoff_emit. This "
                 "warning removes itself once the scan is clean.\n"
                 "<!-- /tamheed:stale-warning -->\n")
@@ -4008,17 +4010,45 @@ def _note_lessons_section() -> tuple[str, list[dict]]:
             + "".join(lines) + more + skill_line), findings
 
 
+def _note_prompts_section(approved_prompts: list, entry_point) -> str:
+    """The Prompts block of the note span (plan 193, v6): one line per Approved prompt
+    row - the kickoff the header names, the rows bound to a scenario skill, the phase
+    prompts - titles defused and capped like the lessons, no timestamps, so the note
+    stays byte-stable across emits for unchanged data. The agent reads a row whole
+    through `entity_query`; the note never carries a body."""
+    if not approved_prompts:
+        return ""
+    lines = []
+    for pid, kind, title, _body, skill, phase_id, _ca in approved_prompts:
+        if pid == entry_point:
+            tag = "kickoff, the entry point"
+        elif skill:
+            tag = f"{kind}, before `/tamheed:{_defuse_note_text(str(skill))}`"
+        elif kind == "phase" and phase_id:
+            tag = f"phase {_defuse_note_text(str(phase_id))}"
+        else:
+            tag = str(kind)
+        flat = _defuse_note_text(" ".join(str(title or "").split()))
+        if len(flat) > _NOTE_LINE_MAX:
+            flat = flat[:_NOTE_LINE_CUT] + "..."
+        lines.append(f"- **{pid}** [{tag}] {flat}\n")
+    return ("\n### Prompts (operator-approved rows. A skill reads the row bound to it)\n\n"
+            + "".join(lines)
+            + "\nRead a row whole with `entity_query(\"prompt\", id=\"PRT-NNN\")`. Read a"
+            " skill's rows with `entity_query(\"prompt\", plugin_skill=\"<name>\")`.\n")
+
+
 def handoff_emit(target_dir: str, subdir: str = "handoff", force: bool = False,
                  refresh_stock: bool = False) -> dict:
     """Wire the target project to the package: .mcp.json (standalone installs) + the
-    CLAUDE.md operating note. v3.0.0 (plan 027): prompts are NOT copied into the
-    target — <package>/prompts/ is the single source of PROJECT prompts (plus the
-    operator guide); since v5.0.0 (plan 116) the stock scenarios are the plugin's slash
-    skills, and the note (v5) points at the plugin's discipline skills instead of
-    carrying a tool cheat-sheet.
-    Emission is blocked if the injection screen finds instruction-shaped text in any
-    package prompt file. Reports stale v1 references AND restated register content
-    found in the target's CLAUDE.md/AGENTS.md.
+    CLAUDE.md operating note. Nothing is copied into the target. Since v6 (plan 193)
+    the project's prompts are ROWS of the package: the emit needs the kickoff the
+    header's `entry_point` names, Approved; the note lists every Approved prompt row
+    and the skill that reads it (marker v7). Since v5.0.0 (plan 116) the stock scenarios
+    are the plugin's slash skills, and the note points at the plugin's discipline skills.
+    Emission is blocked if the injection screen finds instruction-shaped text in an
+    Approved prompt row, lesson or skill. Reports stale v1 references AND restated
+    register content found in the target's CLAUDE.md/AGENTS.md and in the prompt rows.
 
     v4.1 (plan 032): diverged stock prompts are classified against the bundled stock
     history (`stale-stock` — byte-equal to an older release's stock, never customised
@@ -4032,37 +4062,54 @@ def handoff_emit(target_dir: str, subdir: str = "handoff", force: bool = False,
     if not target.is_dir():
         return _err(f"target_dir {target_dir!r} is not an existing directory")
     if subdir != "handoff":  # kept in the signature for MCP-schema stability only
-        return _err("subdir removed in v3.0.0 — prompts live in <package>/prompts/ "
-                    "and are no longer copied into the target")
+        return _err("subdir removed in v3.0.0 — project prompts are rows of the package"
+                    " (v6) and are never copied into the target")
     pkg_dir = PACKAGE_ROOT / _CURRENT_NAME
     library = _emit_prompt_library(pkg_dir, _CURRENT_NAME, force=force,
                                    refresh_stock=refresh_stock)
-    stock = _stock_names()
-    prompts_dir = pkg_dir / "prompts"
-    prompt_files = sorted(prompts_dir.glob("*.md")) if prompts_dir.exists() else []
-    project = [p.name for p in prompt_files if p.name not in stock]
-    if not project:
-        return _err("no project-authored prompts in <package>/prompts/ — write the "
-                    "kickoff prompt file(s) there first (Stage 20). An adopted package "
-                    "needs at least a kickoff prompt")
-    # Plan 125 (v5.1, findings_32 note 4): a project prompt past the threshold carries
-    # STATE — the field's kickoff prompt reached 3,600 lines / 360 KB of carried lists and
-    # traps that went stale on every write. State belongs in a handoff entry and the registers.
+    # Plan 193 (v6): project prompts are ROWS. The handoff needs the kickoff the header
+    # names, Approved on the operator's word - the contract the file era stated as
+    # "at least one project-authored prompt file" (plan 027), now checkable row by row.
+    conn = _CURRENT.conn
+    header = conn.execute("SELECT entry_point FROM packages LIMIT 1").fetchone()
+    entry_point = header[0] if header else None
+    kickoff = (conn.execute("SELECT id, kind, lifecycle_status FROM prompts WHERE id = ?",
+                            (entry_point,)).fetchone() if entry_point else None)
+    how = ("Write the kickoff as a `prompt` row of kind `kickoff` (Stage 20). The operator"
+           " approves it. Then set the package header's `entry_point` to its id with"
+           " `entity_upsert` (type `package`)")
+    if not entry_point:
+        return _err(f"no kickoff prompt: the package header's `entry_point` is empty. {how}")
+    if kickoff is None:
+        return _err(f"no kickoff prompt: `entry_point` is {entry_point!r}, which names no"
+                    f" prompt row. {how}")
+    if kickoff[1] != "kickoff":
+        return _err(f"no kickoff prompt: `entry_point` names {kickoff[0]}, a {kickoff[1]!r}"
+                    f" prompt, not a kickoff. {how}")
+    if kickoff[2] != "Approved":
+        return _err(f"the kickoff prompt {kickoff[0]} is {kickoff[2]}, not Approved — the"
+                    " handoff carries only what the operator approved. Approve the row in"
+                    " their words (lifecycle_status Approved), then re-run")
+    approved_prompts = conn.execute(
+        "SELECT id, kind, title, body, plugin_skill, phase_id, custom_attributes FROM prompts"
+        " WHERE lifecycle_status = 'Approved' ORDER BY CAST(SUBSTR(id, 5) AS INTEGER)").fetchall()
+    project = [r[0] for r in approved_prompts]
+    # Plan 125 (v5.1, findings_32 note 4): a prompt past the threshold carries STATE — the
+    # field's kickoff reached 3,600 lines / 360 KB of carried lists and traps that went
+    # stale on every write. State belongs in a handoff entry and the registers.
     oversized = []
-    for p in prompt_files:
-        if p.name in stock:
-            continue
-        raw = p.read_bytes()
-        lines = raw.count(b"\n") + (1 if raw and not raw.endswith(b"\n") else 0)
-        if lines > _PROMPT_MAX_LINES or len(raw) > _PROMPT_MAX_BYTES:
-            oversized.append({"file": f"prompts/{p.name}", "lines": lines, "bytes": len(raw)})
-    # G-INJECT, relocated to the file substrate (v3.0.0): scan EVERY package prompt —
-    # project-authored AND stock (stock scanning is free and catches tampering).
+    for pid, _kind, title, body, _sk, _ph, _ca in approved_prompts:
+        text = str(body or "")
+        lines = text.count("\n") + (1 if text and not text.endswith("\n") else 0)
+        size = len(text.encode("utf-8"))
+        if lines > _PROMPT_MAX_LINES or size > _PROMPT_MAX_BYTES:
+            oversized.append({"prompt": pid, "title": title, "lines": lines, "bytes": size})
+    # G-INJECT over the rows the executing agent will read (v6): the same screen the
+    # files had, the same blocking posture; the finding names the row.
     findings = []
-    for path in prompt_files:
-        if m := _INJECT_RE.search(path.read_text(encoding="utf-8")):
-            findings.append({"file": f"prompts/{path.name}",
-                             "pattern": m.group(0)[:60]})
+    for pid, _kind, title, body, _sk, _ph, _ca in approved_prompts:
+        if m := _INJECT_RE.search(f"{title}\n{body}"):
+            findings.append({"prompt": pid, "pattern": m.group(0)[:60]})
     # Plan 035: the note's Lessons section is agent-authored prose entering an
     # always-loaded surface — same screen, same blocking posture; the finding
     # names the LL- row so the operator can supersede its wording.
@@ -4099,9 +4146,10 @@ def handoff_emit(target_dir: str, subdir: str = "handoff", force: bool = False,
     warnings: list[str] = []
     for o in oversized:
         warnings.append(
-            f"{o['file']} is {o['lines']} lines / {o['bytes']} bytes. A prompt this size"
-            " carries state. State belongs in a `handoff` journal entry (tamheed:session-handoff)"
-            f" and the registers (limits: {_PROMPT_MAX_LINES} lines / {_PROMPT_MAX_BYTES} bytes)")
+            f"{o['prompt']} ({o['title']}) is {o['lines']} lines / {o['bytes']} bytes. A prompt"
+            " this size carries state. State belongs in a `handoff` journal entry"
+            " (tamheed:session-handoff) and the registers (limits:"
+            f" {_PROMPT_MAX_LINES} lines / {_PROMPT_MAX_BYTES} bytes)")
     for chk in library.get("stock_merged", []):
         if not chk["verified"]:
             warnings.append(
@@ -4194,29 +4242,42 @@ def handoff_emit(target_dir: str, subdir: str = "handoff", force: bool = False,
     # else (the operator had to do this compare by hand; now the tool does).
     leftover_dir = target / "handoff"
     leftovers = sorted(leftover_dir.glob("prm-*.md")) if leftover_dir.exists() else []
+    # v6 (plan 193): the live prompts are rows, so the compare is against every live
+    # row's text (the v3 converter composed a file as "# title / body"; a converted row
+    # holds the same words split in two columns).
+    live_rows = conn.execute(
+        "SELECT id, title, body FROM prompts"
+        " WHERE lifecycle_status NOT IN ('Superseded','Obsolete')").fetchall() if leftovers else []
     for left in leftovers:
-        pkg_copy = prompts_dir / left.name
         verdict = None
-        if pkg_copy.exists():
-            left_text = left.read_text(encoding="utf-8")
-            pkg_text = pkg_copy.read_text(encoding="utf-8")
-            if (left_text == pkg_text
-                    or _normalized_prompt(left_text) == _normalized_prompt(pkg_text)):
-                verdict = (f"handoff/{left.name}: copy of prompts/{left.name} — "
-                           "safe to remove")
+        left_norm = _normalized_prompt(left.read_text(encoding="utf-8"))
+        for pid, title, body in live_rows:
+            if left_norm in (_normalized_prompt(f"# {title}\n\n{body}"),
+                             _normalized_prompt(str(body or ""))):
+                verdict = f"handoff/{left.name}: copy of prompt row {pid} — safe to remove"
+                break
         if verdict is None:
-            verdict = (f"handoff/{left.name}: NOT a copy of any package prompt — MOVE "
-                       "it into <package>/prompts/ (deleting would destroy live "
-                       "content)")
+            verdict = (f"handoff/{left.name}: NOT a copy of any prompt row. If its content"
+                       " is live, convert it into a `prompt` row first. Deleting would destroy"
+                       " live content")
         warnings.append(verdict)
-    # Plan 028: converted legacy prompts get a standing, self-clearing per-kind hint —
-    # the conversion report was a one-shot moment already gone for converted packages.
+    # Plan 028: converted prompts get a standing, self-clearing per-kind hint — the
+    # conversion report was a one-shot moment already gone for converted packages. Since
+    # v6 (plan 193) the provenance is `converted_from` in the row's custom_attributes,
+    # written by package_migrate; the operator removes it once the row is reviewed.
     converted = []
-    for path in prompt_files:
-        first = path.read_text(encoding="utf-8").split("\n", 1)[0]
-        if m := _CONVERTED_RE.match(first):
-            converted.append({"file": f"prompts/{path.name}", "id": m.group(1),
-                              "kind": m.group(2), "hint": _converted_hint(m.group(2))})
+    for pid, _kind, ca in conn.execute(
+            "SELECT id, kind, custom_attributes FROM prompts"
+            " WHERE lifecycle_status NOT IN ('Superseded','Obsolete')"
+            " ORDER BY CAST(SUBSTR(id, 5) AS INTEGER)"):
+        try:
+            attrs = json.loads(ca) if ca else {}
+        except (TypeError, ValueError):
+            attrs = {}
+        if isinstance(attrs, dict) and attrs.get("converted_from"):
+            ckind = str(attrs.get("kind") or _kind)
+            converted.append({"prompt": pid, "file": str(attrs["converted_from"]),
+                              "kind": ckind, "hint": _converted_hint(ckind)})
     # Plan 125: in the pointer-import case the note lives in the package's own CLAUDE.md;
     # scan it like the target's files (the previous emit's span is stripped either way).
     pkg_claude = pkg_dir / "CLAUDE.md"
@@ -4233,35 +4294,25 @@ def handoff_emit(target_dir: str, subdir: str = "handoff", force: bool = False,
         if sp.is_file():
             stale += _scan_stale_lines(f"skill:{sname} ({spath})",
                                        sp.read_text(encoding="utf-8", errors="replace"))
-    # C24/D-8, carried into v3: v1-protocol instructions and dead relative links inside
-    # package prompt files (migrated v1 prompts land there) misdirect the kickoff —
-    # scan them like the target's agent-control files; never rewrite.
-    for path in prompt_files:
-        rel = f"prompts/{path.name}"
-        for lineno, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
-            hit = next(((p, s) for p, s in _STALE_PATTERNS if p.search(line)), None)
-            if hit:
-                stale.append({"file": rel, "line": lineno,
-                              "text": line.strip()[:160], "suggestion": hit[1]})
-                continue
-            for m in re.finditer(r"\]\(((?:\.\.?/)[^)#\s]+)\)", line):
-                if not (path.parent / m.group(1)).resolve().exists():
-                    stale.append({"file": rel, "line": lineno, "text": m.group(1),
-                                  "suggestion": "dead relative link from "
-                                                "<package>/prompts/ — fix the path"})
+    # C24/D-8, carried into v3 and v6: v1-protocol instructions inside the prompt rows
+    # (converted v1 prompts land there) misdirect the kickoff — scan them like the
+    # target's agent-control files; never rewrite. A row has no file base, so relative
+    # links are not checked (they were a file-era hazard).
+    for pid, _kind, _title, body, _sk, _ph, _ca in approved_prompts:
+        stale += _scan_stale_lines(f"{pid}.body", str(body or ""))
     restated = _restated_content_report(target, extra)
-    # Plan 028 (C34): the C22 detectors run over package prompt files too — a converted
+    # Plan 028 (C34): the C22 detectors run over the prompt rows too — a converted
     # prompt's hard-coded audit tally had drifted factually wrong with no signal.
     # Advisory only; never blocks emission (that strength stays G-INJECT's alone).
-    for path in prompt_files:
-        restated += _restated_findings(
-            f"prompts/{path.name}", path.read_text(encoding="utf-8").splitlines())
+    for pid, _kind, _title, body, _sk, _ph, _ca in approved_prompts:
+        restated += _restated_findings(f"{pid}.body", str(body or "").splitlines())
+    prompts_section = _note_prompts_section(approved_prompts, entry_point)
 
     server_line = ("The `tamheed` MCP server is provided by the installed tamheed plugin "
                    "(no project-level .mcp.json entry needed)." if plugin_hosted else
                    "The `tamheed` MCP server is registered in this project's `.mcp.json`.")
     note_block = (
-        "<!-- tamheed:note v6 -->\n\n"
+        "<!-- tamheed:note v7 -->\n\n"
         f"The Tamheed package for this project is `{_CURRENT_NAME}` "
         f"(under `{PACKAGE_ROOT.resolve()}`). **The package is the record. When code and "
         "package disagree, fix the code or record a scope change. Never let them drift.** "
@@ -4292,7 +4343,9 @@ def handoff_emit(target_dir: str, subdir: str = "handoff", force: bool = False,
         "(`/tamheed:orient-resume`, `/tamheed:slice-kickoff`, `/tamheed:progress-sync`, "
         "`/tamheed:slice-review`, `/tamheed:register-liveness`, …). "
         f"`{_CURRENT_NAME}/prompts/README.md`, the operator guide, maps every situation to "
-        f"its skill. Project-authored prompts live in `{_CURRENT_NAME}/prompts/`. The "
+        "its skill. The project's prompts are rows of the package. The kickoff is the row "
+        "`entry_point` names. A row bound to a skill by `plugin_skill` is listed under "
+        "Prompts below. Read one whole with `entity_query(\"prompt\", id=...)`. The "
         f"human review surface is `{_CURRENT_NAME}/review.html`.\n"
         "\n### Recording obligations (mandatory: unrecorded work is drift)\n\n"
         "| During execution, when… | Record BEFORE moving on |\n"
@@ -4336,6 +4389,7 @@ def handoff_emit(target_dir: str, subdir: str = "handoff", force: bool = False,
         "\nIf you cannot record (lock held, package missing), STOP and tell the"
         " operator. Do not proceed unrecorded.\n"
         f"{lessons_section}"
+        f"{prompts_section}"
         "<!-- /tamheed:note -->\n")
     note = "\n## Tamheed progress tracking\n" + note_block
     claude_md = target / "CLAUDE.md"

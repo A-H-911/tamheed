@@ -19,9 +19,11 @@ import resume_hook as hook  # noqa: E402
 import tamheed_server as srv  # noqa: E402
 
 DEMO_DATA = REPO_ROOT / "generated-samples" / "support-triage-agent-v2" / "data"
-NOTE = ("\n## Tamheed progress tracking\n<!-- tamheed:note v6 -->\n\n"
+NOTE = ("\n## Tamheed progress tracking\n<!-- tamheed:note v7 -->\n\n"
         "The Tamheed package for this project is `{name}` (under `{root}`).\n"
         "<!-- /tamheed:note -->\n")
+# Plan 193: a client that has not re-emitted since 5.9.x carries the v6 marker, same sentence.
+NOTE_V6 = NOTE.replace("tamheed:note v7", "tamheed:note v6")
 # Plan 184: a client that has not re-emitted since 5.8.x still carries the v5 sentence.
 NOTE_V5 = ("\n## Tamheed progress tracking\n<!-- tamheed:note v5 -->\n\n"
            "This project executes Tamheed package `{name}` (under `{root}`).\n"
@@ -100,6 +102,14 @@ class ResumeHookTest(unittest.TestCase):
         self.assertIn("Skill: tamheed:package-writes", out)
         self.assertNotIn("compacted", out)
         self.assertLessEqual(len(lines), hook.MAX_LINES)
+
+    def test_a_v6_note_still_resumes(self):
+        """Plan 193 (P8): the marker moved to v7 with the prompt roster; the sentence the
+        hook parses is unchanged, so a v6 note resumes until the client re-emits."""
+        self._package(template=NOTE_V6)
+        out, code = run_hook(self.project, source="startup")
+        self.assertEqual(code, 0)
+        self.assertTrue(out.splitlines()[0].startswith("tamheed resume — package `pkg`"), out)
 
     def test_a_v5_note_still_resumes(self):
         """Plan 184 (R9): the note's first sentence was reworded for v6. A client that has
