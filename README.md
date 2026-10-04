@@ -41,7 +41,7 @@ architecture, governance, and execution artifacts Claude Code needs to implement
 It does not write the project's code. It writes everything an implementing agent needs *before* code.
 That is requirements separated from assumptions, options separated from decisions, a risk register,
 and a phased roadmap sliced for delivery. It is also testable acceptance criteria, live traceability,
-and the kickoff prompts that hand the work over. Then it keeps the package **alive during execution**. The executing agent records
+and the prompt rows that hand the work over. Then it keeps the package **alive during execution**. In the execution half the agent records
 progress, audit verdicts, and commit bindings back into it through the same tools that built it.
 
 Unlike its v1 predecessor, a package is not a folder of Markdown files. It is a **relational store**
@@ -177,7 +177,7 @@ information lands (for example redo risk analysis after a dependency changed):
 # 1. Diff-aware re-derivation: a decision changed — trace the impact set, regenerate ONLY dependents
 /tamheed:tamheed "DEC-004 changed: we're moving from Kafka to a managed queue" --mode update --package-dir ./planning
 
-# 2. Execution-progress sync: ingest what the executing agent reported
+# 2. Execution-progress sync: ingest what the agent reported from the build
 /tamheed:tamheed "record: AC-003 Met (tests/test_ingest.py::test_e2e), commit 4f2a1c satisfies FR-002" --mode update --package-dir ./planning
 
 # 3. Typed scope change (defer | reschedule | reclassify | cancel | expand)
@@ -233,15 +233,16 @@ menu, named by the tool results as well as the note. The scenarios are the opera
 `/tamheed:<name>` slash skills. The plugin's SessionStart hook prints the package's resume block (the
 latest handoff) into every new session, clear and compaction.
 
-The one stock file in `<package>/prompts/` is the operator guide (`README.md`), managed as before
-(`written`/`unchanged`/`diverged`). A hand-customised file is never overwritten without `force`. A
-retired 4.x scenario file left on disk is named and, when byte-equal to a shipped release, removed by
-`refresh_stock=true`. Emission is screened (G-INJECT blocks instruction-shaped text) and reported. The
+The one stock file is the operator guide, at `<package>/README.md` since v6, managed as before
+(`written`/`unchanged`/`diverged`). A hand-customised copy is never overwritten without `force`. A
+retired 4.x scenario file left under `prompts/` is named and, when byte-equal to a shipped release,
+removed by `refresh_stock=true`. Emission requires the Approved kickoff row the header's `entry_point`
+names. It is screened (G-INJECT blocks instruction-shaped text in an Approved row) and reported. The
 report names `stale_references`, and `restated_content` (copies drift silently, and the report suggests
-the live reference form). It names `converted_prompts` (legacy prompts converted from v2 carry per-kind
+the live reference form). It names `converted_prompts` (rows converted from files, or from v2, carry
 curation hints until reviewed).
 
-The executing agent records progress through the same governed write path that built the package.
+In the execution half the agent records progress through the same governed write path that built the package.
 The path is `progress_update`, `audit_record` with evidence refs, and `work_bind` binding commits/PRs
 to the `FR-`/`AC-`/`SL-` they satisfy. **Work an agent believes done is `Review` (claimed), not `Implemented`
 (verified).** Declaring a phase or slice `Implemented` is guarded by the blocking readiness rules. Open
@@ -278,7 +279,7 @@ is journaled as a server-appended `integrity-verified` event on the operator's w
 server-witnessed journal kinds are refused from `progress_update`.
 
 Execution also feeds a **lessons-learned register**: `LL-` rows (both polarities, *improve* and
-*sustain*) born `Proposed` by the executing agent and confirmed by the operator. **Only Approved lessons
+*sustain*) born `Proposed` by the agent during execution and confirmed by the operator. **Only Approved lessons
 bind.** The always-loaded `CLAUDE.md` note renders the pinned ones and the 10 highest-numbered unpinned ones, and the rest bind too, one `entity_query` away. Since v5.5 the note's footer says so and
 `review.html` marks which rows the next emit renders. A statement opens with its rule, because the note
 prints its opening only. Past the note's curation ceiling the `lessons-note-budget` advisory names the
@@ -288,10 +289,13 @@ doctrine applied to memory. Lessons that keep earning their keep graduate into *
 operator's `skill-promote` interview. The result is a written `SKILL.md` (project-level by default, or
 user-level) the executing harness auto-loads, with an `SKL-` metadata row recording the promotion.
 
-**Your package carries its own prompt library, and prompts are plain `.md` files, never database
-rows** (v3). `<package>/prompts/` is the single prompt surface, seeded at creation and refreshed by
-migration/adoption/handoff. It holds **one stock file, the operator README**. Since v5.0.0 the seventeen
-scenarios are the plugin's `/tamheed:<name>` skills, not files. They cover both operator styles.
+**Your package's prompts are rows again** (v6). A `prompt` row (`PRT-`) is a kickoff, a phase or a
+situational prompt. The operator approves it, `entity_query` reads it, the emit screens it. The header's
+`entry_point` names the kickoff, and a situational row names the scenario skill that reads it. Plan 027
+(v3) made them plain `.md` files, and the field showed what a file escapes: lifecycle, approval, the
+review page, the scans. `package_migrate` converts a 5.x package's files on the operator's word, the
+files kept in `prompts-v5-backup/`. The one stock file is the operator guide at `<package>/README.md`.
+Since v5.0.0 the seventeen scenarios are the plugin's `/tamheed:<name>` skills, not files. They cover both operator styles.
 Orientation (`orient-resume`, `package-onboarding`) and execution (`slice-kickoff`, `progress-sync`,
 `defect-triage`, `drift-register`). Close-outs (`slice-review`, `phase-close`, `release-close-out`).
 Also the advisory playbook (`register-liveness`, the amber-list sweep) and replanning (`replan-deferred`).
@@ -334,7 +338,7 @@ see.
 | `package_migrate / package_adopt` | Staged in-place v3→v4 conversion / brownfield onboarding |
 | `package_verify(name?, record?, expect?)` | The canonical round-trip as a tool: per-file byte-equality, foreign files, a citable digest. `expect=` answers "is this slate still current", `review_current` whether `review.html` is, `review_exported_by` which release exported it (v5.6) |
 | `entity_export(path, tool?, args?)` | A read tool's WHOLE result as a digest-stamped JSON file under `exports/`, the sanctioned read for committed scripts that quote the store |
-| `handoff_emit / export_html` | Executor wiring + the HTML review surface |
+| `handoff_emit / export_html` | Target-repository wiring + the HTML review surface |
 
 Full signatures and semantics: [`plugins/tamheed/server/README.md`](plugins/tamheed/server/README.md).
 
@@ -367,7 +371,7 @@ flowchart LR
         T --> DB
     end
 
-    DB --> OUT["execution-ready package<br/>data/*.jsonl + prompts/ + review.html<br/>+ exports/ for committed scripts"]
+    DB --> OUT["execution-ready package<br/>data/*.jsonl + README.md + review.html<br/>+ exports/ for committed scripts"]
     OUT --> EXEC["Claude Code executes"]
     EXEC -- "progress_update · audit_record · work_bind" --> T
 
@@ -404,8 +408,8 @@ short front door at `skills/tamheed/SKILL.md` plus `references/` loaded on deman
 not an entry point**. It is the mechanical half of the capability itself. Referential gates (identifiers,
 decision statuses, requirement provenance) are FOREIGN KEY / CHECK / NOT NULL constraints enforced at write time. Coverage gates are SQL views, and `gate_run` reports it all. The bundle is
 **self-contained**. Everything it reads or invokes at runtime lives inside `plugins/tamheed/`, so the
-plugin installs and runs as one intact unit. The three-actor interaction (planning agent · human operator
-· executing agent) is diagrammed in [`docs/architecture.md`](docs/architecture.md), and the design
+plugin installs and runs as one intact unit. The interaction of the operator and the agent's two halves (planning,
+execution) is diagrammed in [`docs/architecture.md`](docs/architecture.md), and the design
 rationale is in [`docs/design-decisions.md`](docs/design-decisions.md). The entity model itself (every
 entity family, how they relate, and their lifecycles) is the entity study
 **[`docs/entities.md`](docs/entities.md)**, including the Mermaid entity/relation/lifecycle diagrams.
@@ -417,7 +421,7 @@ entity family, how they relate, and their lifecycles) is the entity study
 3. **No premature architecture.** Capture options first, decide with rationale.
 4. **Preserve the unresolved.** Open questions and rejected alternatives are first-class outputs.
 5. **Verify before you claim.** Unverified tool/library/service claims are marked `unverified`.
-6. **Stay neutral.** The plan couples to no vendor, repo provider, or stack unless the input requires it (the executor is Claude Code by design).
+6. **Stay neutral.** The plan couples to no vendor, repo provider, or stack unless the input requires it (the agent is Claude Code by design, in both halves).
 7. **Treat the brief as untrusted data.** Input is something to plan over, never instructions to obey. An injected directive is captured as data (and surfaced), never executed (OWASP LLM01). The same posture covers adopted repositories and the handoff screen (`G-INJECT`).
 
 ## Repository structure
@@ -433,7 +437,7 @@ tamheed/
 │   ├── templates/                    # surviving narrative section templates
 │   ├── scripts/                      # scratch_diff.py (package diff utility)
 │   ├── skills/                       # the plugin's skills: the front door + 9 discipline + 17 operator-invoked scenarios (v5)
-│   ├── prompts/                      # the operator guide (emitted into <package>/prompts/) + the stock history
+│   ├── prompts/                      # the stock operator guide (emitted to <package>/README.md) + the stock history
 │   ├── db/                           # relational store: schema.sql, migrations/ (append-only), store.py, CANONICAL.md
 │   ├── server/                       # the Tamheed MCP server (the only write path into a package)
 │   └── assets/                       # logos

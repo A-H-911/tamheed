@@ -131,7 +131,7 @@ failure conditions, human-intervention points, and the entities it writes. The s
 - **Explore**: 9 research planning · 10 architecture exploration · 11 option comparison · 12
   hypotheses. Then 13 POC/experiment planning · 14 decision capture · 15 risk analysis.
 - **Plan & hand off**: 16 execution planning · 17 artifact generation · 18 package storage
-  initialization · 19 quality validation. Then 20 execution-agent handoff · 21 progress & decision
+  initialization · 19 quality validation. Then 20 handoff to the execution half · 21 progress & decision
   update cycles · 22 final readiness assessment.
 
 Do not skip a gate to look finished. If an exit criterion fails, stay in the stage or open a clarification.
@@ -305,7 +305,7 @@ Read the reference file when you reach the matching part of the work. Do not loa
 | `references/quality-gates.md` | The three-tier gate model. Running `gate_run` |
 | `references/safeguards.md` | The anti-patterns to actively prevent |
 | `references/vocabulary.md` | One verb per action, one meaning per term, the names that contain a rejected word |
-| `references/handoff.md` | Assembling the execution-agent handoff |
+| `references/handoff.md` | Assembling the handoff to the execution half |
 | `references/adopt.md` | Brownfield onboarding (`adopt` mode) |
 | `references/prompt-templates.md` | Writing the project's prompt rows + the seventeen scenario skills |
 | `references/generated-structure.md` | The layout of a generated package |

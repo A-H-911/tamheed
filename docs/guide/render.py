@@ -378,7 +378,7 @@ def _package(r: R) -> None:
         "├── exports/           # entity_export files: whole tool results, digest-stamped\n"
         "└── data-v3-backup/    # only after a v3 -> v4 package_migrate\n"
         "<target project>/\n"
-        "├── .mcp.json          # executor-side server config (handoff_emit)\n"
+        "├── .mcp.json          # target-side server config (handoff_emit)\n"
         "└── CLAUDE.md          # the tool-owned note span <!-- tamheed:note v7 --> ... <!-- /tamheed:note -->",
         copy=False)
     body += r.H(3, "section.package.canonical") + r.PS("section.package.canonical", 2)

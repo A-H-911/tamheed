@@ -179,7 +179,7 @@ human-intervention point.
 - **Out:** the gate report. **Enter:** Stage 17. **Exit:** all **critical** gates pass. **Fail:**
   critical failure → loop to the owning stage. **Human:** review warnings. **Writes:** none (read-only).
 
-### 20. Execution-agent handoff
+### 20. Handoff to the execution half
 - **In:** the package past Stage 19. **Do (v6, plan 196):** author the prompts as `prompt` rows
   (`PRT-`). One is the `kickoff`. One `phase` row per phase gate. A `situational` row is bound by
   `plugin_skill` to the scenario skill that reads it. The body shapes are `prompt-templates.md`. The operator

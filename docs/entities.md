@@ -34,7 +34,7 @@ bands, then hand off to execution. Each band gives birth to a different set of f
 flowchart LR
     U["Understand<br/>stages 1-8<br/>―――<br/>packages row, brief (DOC-)<br/>FR-/NFR-, CON-, ASM-, DEP-<br/>OQ-, charter + KPI- + STK-"]
     E["Explore<br/>stages 9-15<br/>―――<br/>research + architecture DOC-, DIA-<br/>HYP-, EXP-/POC-<br/>DEC-, ADR-, RISK-"]
-    P["Plan and hand off<br/>stages 16-22<br/>―――<br/>PH-, SL-, WBS-, MS-<br/>AC-, GATE-, EP-, CONV-, DW-<br/>TEST-, trace edges, prompts"]
+    P["Plan and hand off<br/>stages 16-22<br/>―――<br/>PH-, SL-, WBS-, MS-<br/>AC-, GATE-, EP-, CONV-, DW-<br/>TEST-, PRT-, trace edges"]
     X["Execution<br/>stage 21 loop<br/>―――<br/>PE-, AV-, DEF-<br/>SC-, WVR-, LL-, work_bind<br/>SKL- via the promotion interview"]
     U --> E --> P --> X
     X -. "scope changes loop back<br/>into the plan rows" .-> P
@@ -479,7 +479,7 @@ codebase actually complies? That is what makes an ADR checkable rather than
 aspirational (the MADR 4.x confirmation field).
 
 **What you lose without it.** Irreversible choices are indistinguishable from reversible
-ones. The executor re-litigates load-bearing structure mid-build, or quietly walks through
+ones. The agent re-litigates load-bearing structure mid-build, or quietly walks through
 a one-way door in the other direction.
 
 **Design decisions behind it.** Decisions 4 (two tiers) and 6 (`confirmation` is the one
@@ -800,7 +800,7 @@ check, and G-TRACE's "every MVP requirement reaches ≥1 work item" leg fails.
 | `lifecycle_status` | Standard set | Approval-bearing |
 
 **Purpose.** The per-slice how-to, resident in the package (field-evidence C8), so the
-executor's plan survives the session that wrote it.
+agent's plan survives the session that wrote it.
 
 **Related mechanics.** `execution-plans-approved` / `execution-plan-approved` advisories
 (a slice built from an unapproved plan is a quiet authority leak).
@@ -830,10 +830,10 @@ shows only mechanical rules, and "we agreed a human signs off before X" evaporat
 
 | Column | Constraint | Meaning |
 |---|---|---|
-| `statement` | NOT NULL | The rule the executor must honor |
+| `statement` | NOT NULL | The rule the agent must honor during execution |
 | `rationale` | TEXT | Why |
 
-**Purpose.** Durable conventions (naming, layout, process) the executing agent must honor
+**Purpose.** Durable conventions (naming, layout, process) the agent must honor during execution
 across sessions (field-evidence C8). No lifecycle: a convention is either stated or
 retired by deletion-with-supersession in prose.
 
@@ -864,7 +864,7 @@ lands here. A flaky test is a defect: give it a DEF- row, don't shrug.
 
 ```mermaid
 sequenceDiagram
-    participant Agent as Executing agent
+    participant Agent as Claude Code (execution half)
     participant Store as Tamheed store
     participant Ready as readiness_check
     Agent->>Store: entity_upsert defect DEF-004 (severity high, found_in SL-002)
@@ -931,7 +931,7 @@ register's `LL-042`).
 
 ```mermaid
 sequenceDiagram
-    participant Agent as Executing agent
+    participant Agent as Claude Code (execution half)
     participant Store as Tamheed store
     participant Op as Operator
     Agent->>Store: reality diverges — entity_upsert scope-change SC-003 (Proposed, decision_ref DEC-021)
@@ -1089,7 +1089,7 @@ stateDiagram-v2
 | `promoted_to` | FK → `skills(id)` | The promotion link (the `decisions.promoted_to` idiom). Frozen once Promoted |
 | `superseded_by` | FK → `lessons(id)` | Supersession within the family |
 
-**Purpose.** What execution taught, kept durable. An executing agent that debugs the same
+**Purpose.** What execution taught, kept durable. An agent that debugs the same
 class of mistake twice has a memory problem, not a skill problem. The lessons register is
 the package's institutional memory (PMI lessons register: continuous capture, not an
 end-of-project ceremony). The CLAUDE.md note is how that memory reaches every future
@@ -1099,7 +1099,7 @@ session without being asked for.
 something durable. A `learned_from` edge names the source (defect, decision, risk, slice,
 wbs-item, or progress-entry, exactly those six targets, and `relates_to` covers everything
 else). The operator's confirmation interview moves each row to Approved or Rejected. Only
-**operator-Approved** lessons bind, and the executing agent's always-loaded note renders a roster
+**operator-Approved** lessons bind, and the execution half's always-loaded note renders a roster
 of them. A statement opens with its rule: the note prints its opening only (whole at 180
 characters or fewer, cut to its first 177 above that).
 
@@ -1297,7 +1297,7 @@ How claimed-vs-verified, readiness, and waivers compose at a close boundary:
 
 ```mermaid
 sequenceDiagram
-    participant Agent as Executing agent
+    participant Agent as Claude Code (execution half)
     participant Store as Tamheed store
     participant Ready as readiness_check
     participant Op as Operator

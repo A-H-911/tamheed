@@ -1,4 +1,4 @@
-# Execution-agent handoff
+# Handoff to the execution half
 
 The handoff lets **Claude Code** start implementing with no missing context and no access to this
 planning conversation. Treat it as the contract between the planning half and the execution half.

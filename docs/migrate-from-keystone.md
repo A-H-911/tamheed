@@ -78,7 +78,9 @@ removed in v4).
 4. **Populate.** `package_migrate(source_dir, confirm=true, status_map={...})`, one
    transaction. A failure leaves no partial package. On success the package directory gains
    `prompts/` (the 3.2.1 stock library, fifteen scenario files + the operator README) alongside
-   `data/`.
+   `data/`. Under tamheed 6.0 the v3→v4 `package_migrate` that follows converts the project's prompt
+   files to `prompt` rows. The files stay in `prompts-v5-backup/`, and the operator guide is seeded at
+   `<package>/README.md`.
 5. **Post-flight.** The call returns the fidelity report: identifier gaps (must be empty),
    count deltas, and `gate_run` results. Stale-manifest divergences are *reported*, for example a
    manifest declaring fewer ADRs than disk holds. Disk wins.
@@ -106,8 +108,8 @@ the v1 validator, silently undoing the migration.
 
 1. Open the migrated package and run `handoff_emit(<repo>)`. It appends the "Tamheed progress
    tracking" operating note to the repo's `CLAUDE.md`. That is the obligations table, which since v5
-   points at the plugin's skills instead of carrying a cheat-sheet. It emits the `<package>/prompts/`
-   operator guide (the scenarios are `/tamheed:<name>` skills since v5). It returns
+   points at the plugin's skills instead of carrying a cheat-sheet. It emits the operator guide at
+   `<package>/README.md` (the scenarios are `/tamheed:<name>` skills since v5). It returns
    `stale_references`: every v1-flow pointer found in `CLAUDE.md`/`AGENTS.md` as `file:line` + a
    suggested replacement. Apply those replacements. Product-domain uses of the word "Keystone" are
    never flagged. On plugin-hosted servers no project `.mcp.json` entry is written (the installed
@@ -116,7 +118,7 @@ the v1 validator, silently undoing the migration.
    (`validation/traceability-matrix.md`, `keystone-state.json`, register files) become references to
    the Tamheed package. Those are the MCP tools (`entity_query`, `trace_query`,
    `gate_run`, `progress_update`, `audit_record`, `work_bind`) and the HTML view. The
-   executing agent records progress through the tools from now on.
+   agent, in its execution half, records progress through the tools from now on.
 3. Mark the v1 package directory as a frozen archive (a top-line note in its README is enough). Then
    no future session mistakes it for the live record.
 3b. **Reference, don't restate** (plan 019). When authoring `AGENTS.md`/`CLAUDE.md`, cite the

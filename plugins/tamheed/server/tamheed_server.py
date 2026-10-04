@@ -4126,7 +4126,7 @@ def handoff_emit(target_dir: str, subdir: str = "handoff", force: bool = False,
         size = len(text.encode("utf-8"))
         if lines > _PROMPT_MAX_LINES or size > _PROMPT_MAX_BYTES:
             oversized.append({"prompt": pid, "title": title, "lines": lines, "bytes": size})
-    # G-INJECT over the rows the executing agent will read (v6): the same screen the
+    # G-INJECT over the rows the agent reads in the execution half (v6): the same screen the
     # files had, the same blocking posture; the finding names the row.
     findings = []
     for pid, _kind, title, body, _sk, _ph, _ca in approved_prompts:

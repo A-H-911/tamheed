@@ -81,7 +81,7 @@ execute. Write a gated phased roadmap sliced for delivery and an actionable, tes
 Generate the selected entity set (trace edges written live as decisions are made). Materialize the package
 store and write back canonical JSONL for the operator to commit. Check against the quality gates
 (`gate_run`). Emit the Claude-Code-targeted handoff (`handoff_emit`, injection-screened, installing the
-executor-side MCP config). Run progress and decision update cycles through the MCP tools, and emit the
+target-side MCP config). Run progress and decision update cycles through the MCP tools, and emit the
 final readiness go/no-go from the gate report.
 
 ## Document and decision lifecycle
@@ -197,7 +197,7 @@ does not replace it. Gate IDs reference [`../plugins/tamheed/references/quality-
 | 17 | Artifact generation | Populate the selected entity families + narrative sections. Trace edges written live | The populated package store | G-COMPLETE, G-TRACE (no stubs, every MVP requirement linked) |
 | 18 | Package storage initialization | Materialize the store. Write back canonical JSONL (`package_close`) | `data/*.jsonl` for the operator to commit | Operator commits the package data ✅ (no repo scaffolding, removed in v2, ASM-B) |
 | 19 | Quality validation | `gate_run`: coverage views + content scan (referential tier already held at write time) | Gate report. `omission` rows for absent Always families | All **Critical** gates pass. Review warnings ✅ |
-| 20 | Execution-agent handoff | prompt files in `<package>/prompts/`. `handoff_emit` screens (G-INJECT), writes prompts + executor-side MCP config | `.mcp.json` + the `CLAUDE.md` note in the target project (no prompt copies, because prompts stay in `<package>/prompts/`) | G-HANDOFF + G-INJECT. Approve handoff ✅ |
+| 20 | Handoff to the execution half | `prompt` rows (`PRT-`) the operator approves, `entry_point` naming the kickoff. `handoff_emit` screens the Approved rows (G-INJECT), writes the target-side MCP config | `.mcp.json` + the `CLAUDE.md` note in the target project (no prompt copies: the prompts are rows in the store) | G-HANDOFF + G-INJECT. Approve handoff ✅ |
 | 21 | Progress & decision update cycles | `progress_update` / `audit_record` (evidence refs) / `work_bind`. Typed scope changes bump the iteration (`amends` edges for rulings, Merged set last). Registers read through `entity_query` paging, never the files | Progress entries, audit verdicts, `scope-change` rows | Cascades fire in-transaction. G-PROGRESS. Approve material changes ✅ |
 | 22 | Final readiness assessment | `gate_run` again. Summarize gates, open items, residual risk. State go/no-go | Readiness verdict (from the gate report, `go_no_go` on the package row) | No Critical gate failing. Final go/no-go ✅ |
 

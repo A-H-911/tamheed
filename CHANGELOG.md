@@ -11,8 +11,8 @@ All notable changes to Tamheed are documented here. The format is based on
 ## [Unreleased]
 
 - **Prompts return to the store** (plans 192-200, the 6.0.0 batch in progress). Migration
-  `008_prompts.sql` adds the `prompts` family (`PRT-`): the kickoff, phase and situational prompts an
-  executing agent starts from, as rows with a status, provenance and a `plugin_skill` binding to the
+  `008_prompts.sql` adds the `prompts` family (`PRT-`): the kickoff, phase and situational prompts the
+  agent starts from in the execution half, as rows with a status, provenance and a `plugin_skill` binding to the
   bundled scenario skill that reads them. The file path in `<package>/prompts/` and the stock
   operator guide's new location follow in the later beats of the batch; the full migration note lands
   with the 6.0.0 entry.

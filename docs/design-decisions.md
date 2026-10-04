@@ -70,7 +70,7 @@ installed.
 
 ## 7. The brief is untrusted data, not instructions
 
-Tamheed ingests an external project brief and emits prompts another agent will act on. That is the canonical
+Tamheed ingests an external project brief and emits prompts the agent acts on in its execution half. That is the canonical
 prompt-injection shape (OWASP LLM01, direct and second-order). So the brief and any file content are treated
 as **data to plan over, never commands**. Verbatim brief text is quoted and provenance-labeled. An injected
 directive is captured (and surfaced) rather than executed, and the assembled handoff is screened before emit
@@ -122,7 +122,7 @@ pip fallback). `entity_upsert` batches are all-or-nothing with per-item verdicts
 tool, and stored text is data, never instructions. The server is **not** an entry point under decision 1.
 It is the successor of the v1 validator, the mechanical half of the capability, inside the boundary that
 G-CMD-THIN protects. This is what moves the referential gates to write time (decision/gate mapping in
-[`architecture.md`](architecture.md) §2). It gives the executing agent a governed write path for progress,
+[`architecture.md`](architecture.md) §2). It gives the agent, in the execution half, a governed write path for progress,
 audit verdicts, and work bindings during execution.
 
 ## 12. D-V4, the v4 entity-model re-baseline (2026-08-14)
@@ -663,3 +663,37 @@ tool. It was written over a gap the field's own FB-026 row had named as unmeasur
 could not tell a listing from a server (O21). The 5.8.0 brief's "then your
 reload route", which left the route to the field (O22). Record: plan
 [`170-174-batch-fb028.md`](../plans/170-174-batch-fb028.md).
+
+## 23. Prompts return to the store (2026-10-04, v6.0)
+
+- **D-PROMPT-ROWS, prompts are `prompt` rows (`PRT-`).** Plan 027 (v3) made them
+  plain `.md` files under `<package>/prompts/`. The operator reads a folder and picks, and a file
+  needs no tool to edit. The field showed what a file escapes. It has no lifecycle, so nothing says
+  whether the operator approved it. It is outside the review page, the plain-English rule and
+  `entity_query`. A prompt written for one scenario skill had no binding to that skill. The kickoff
+  was a path in `entry_point`. The largest project's kickoff grew to 3,600 lines, because a file
+  has no ceiling the engine reads. Since v5.0.0 the seventeen stock scenarios are skills, so the
+  folder held one stock file beside a few project files. The guide's second review round asked the
+  question outright, and the operator ruled: rows.
+- **The row.** Kind `kickoff`, `phase` or `situational`, a title and a body, an optional `phase_id`.
+  An optional `plugin_skill` names the scenario skill that reads the row, and only a skill that reads
+  its rows may be named (P17). The STD8 lifecycle. The operator approves a row, and an Approved row
+  is edited in place (the R45 class, P11). A prompt is an instruction the operator owns, not a
+  decision to supersede.
+- **The emit.** `handoff_emit` refuses unless the header's `entry_point` names an Approved kickoff.
+  It screens every Approved row (G-INJECT, the stale and restated scans) and writes no prompt
+  copies. The note (`v7`) rosters the Approved rows per skill. Each of the sixteen bindable scenario
+  skills reads its bound rows at its first step (`loop-guard` takes no row, P17).
+- **The migration.** `package_migrate` converts a 5.x package's files to Proposed rows on the
+  operator's word and keeps the files in `prompts-v5-backup/`. It removes a stock body (the history
+  reproduces it, P16), seeds the guide at `<package>/README.md` and removes the folder. The emit
+  then refuses until the kickoff is approved. That STOP is the design.
+- **Measured, 2026-10-04.** A 5.9 server opens a 6.0-migrated package (`entity_index` is never
+  serialised), ignores `prompts.jsonl`, and names `prompt` in G-SET. A trace edge to a `PRT-` row
+  makes that open fail with an uncaught load error (engine candidate E3).
+- **The number.** 6.0.0 MAJOR: the store gains a table, the handoff contract changes, a package
+  migrates. `package_version` stays 4.0.0 (the plan-031 pattern).
+
+Owned by the maintainer: plan 027 argued that a file is the operator's surface. It left the operator
+with no surface at all, since nobody reads a folder the engine does not render. Record: plan
+[`192-200-batch-prompts.md`](../plans/192-200-batch-prompts.md).

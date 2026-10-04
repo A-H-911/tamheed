@@ -25,7 +25,7 @@ plugins/tamheed/                     # THE installable bundle — self-contained
 ├── templates/                        # section templates for narrative prose + prompt patterns
 ├── db/                               # the store: schema.sql (v4 DDL), migrations/, store.py, CANONICAL.md
 ├── server/                           # Tamheed MCP server + migrate_v3to4 + adopt + export_html + viewer.css
-├── prompts/                          # scenario prompt library, emitted into <package>/prompts/
+├── prompts/                          # the stock operator guide (emitted to <package>/README.md) + stock-history.json
 └── assets/                           # logos
 docs/                                 # architecture, methodology, workflow, entities (the v4 study), install
 evals/                                # behavioral eval scenarios (skill-level, model-in-the-loop)
@@ -91,7 +91,7 @@ per-stage spec: `plugins/tamheed/references/workflow.md`.
 - **Identifier scheme** (`plugins/tamheed/references/governance.md`): `FR-`/`NFR-`, `CON-`, `INV-`,
   `ASM-`, `DEP-`, `OQ-`, `DEC-`, `ADR-`, `RISK-`, `HYP-`, `EXP-`, `POC-`, `TEST-`, `KPI-`, `STK-`,
   `PH-`, `MS-`, `SL-`, `WBS-`, `AC-`, `AV-`, `PE-`, `DEF-`, `DW-`, `GATE-`, `EP-`, `CONV-`, `SC-`,
-  `WVR-`, `DOC-`/`SEC-`, `DIA-`, `GT-`, `LL-`, `SKL-`, `FB-`. Statuses: `Draft → Proposed → Approved / Rejected /
+  `WVR-`, `DOC-`/`SEC-`, `DIA-`, `GT-`, `LL-`, `SKL-`, `FB-`, `PRT-`. Statuses: `Draft → Proposed → Approved / Rejected /
   Superseded / Deferred → Implemented` (+ `Review` = done-claimed, wbs/slices only, and `Obsolete`).
   A *proposed* decision is never rendered as *approved*. `Review` never counts as done.
 - **A new entity family** = DDL table + `ENTITY_TABLES` + `BASELINE_ENTITY_TYPES` + catalog row +

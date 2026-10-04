@@ -49,7 +49,7 @@ separations matter most.
 | The actual requirements, constraints, invariants, risks of one project | The registers and identifier scheme those facts are recorded in |
 | The chosen architecture and technology decisions | The decision-capture process and ADR format |
 | The phased roadmap and work breakdown for this build | The planning technique that yields gated, testable phases |
-| The handoff prompts for this specific executor | The Claude-Code-targeted prompt templates they are written from |
+| The handoff prompt rows for this project's execution half | The Claude-Code-targeted prompt templates they are written from |
 | The package data the operator commits | The canonical-JSONL store, its schema, and the single-writer write-back mechanism |
 
 The rule of thumb: **a decision belongs in a package. The way decisions are made belongs in the
@@ -68,17 +68,17 @@ full per-artifact mapping is in [`../plugins/tamheed/references/artifact-catalog
 explicit. If an artifact would only restate another, derive or link instead. If a section has no
 project-specific content, omit it rather than emit a placeholder (safeguard 11).
 
-### 2.3 Execution-agent instructions vs skill-implementation concerns vs entry-point concerns
+### 2.3 Execution-half instructions vs skill-implementation concerns vs entry-point concerns
 
 These three audiences are routinely confused, so Tamheed keeps them in separate places:
 
 | Concern | Audience | Where it lives | Must NOT contain |
 |---|---|---|---|
-| **Execution-agent instructions** | Claude Code (the downstream executor) | the generated package's `handoff/` prompts + the artifacts they reference | Tamheed's internal process. Planner-only context |
+| **Execution-half instructions** | Claude Code (the agent in its execution half) | the package's Approved `prompt` rows + the artifacts they reference | Tamheed's internal process. Planner-only context |
 | **Skill-implementation concerns** | Tamheed itself (the methodology author/runtime) | `../plugins/tamheed/skills/tamheed/SKILL.md` + `../plugins/tamheed/references/` | a specific project's content. Entry-point parsing |
 | **Slash-command / entry-point concerns** | the wrapper that starts Tamheed (`/tamheed`, a CLI, an API, a UI) | external entry points (CLI/API/UI) | any methodology or planning logic (safeguard 12). The MCP server is not a wrapper but the capability's mechanical half |
 
-The handoff prompts are written for **Claude Code** as the executor, using its native affordances where they
+The handoff prompts are written for **Claude Code** in its execution half, using its native affordances where they
 help (safeguard 13). The *plan's* technology choices stay vendor-neutral (safeguard 15). The entry point
 only normalizes input, picks a mode, invokes the skill, and routes output. It makes no planning decisions.
 See [`../plugins/tamheed/references/handoff.md`](../plugins/tamheed/references/handoff.md) and
@@ -119,7 +119,7 @@ are independently actionable and testable. Abstract phases are decomposed, not s
 criterion. So an implementer can navigate from any need to its evidence and back. Unlinked MVP requirements
 are a gate failure, not a silent omission. See [`../plugins/tamheed/references/traceability.md`](../plugins/tamheed/references/traceability.md).
 
-**Clean handoff with bounded first step.** The executor receives a self-contained orientation, the
+**Clean handoff with bounded first step.** The agent, in the execution half, receives a self-contained orientation, the
 invariants up front, and *one* bounded first task. That task ends at an approval gate, never "build
 the whole thing". Prompts reference artifacts rather than restating them, keeping the package the single source of
 truth.
@@ -192,7 +192,7 @@ are the delivery-sized units that branches, PRs, and acceptance criteria bind to
 **milestones** (`MS-`), roadmap labels since v4 with no lifecycle of their own, because gates gate. It
 yields the execution scaffolding as data. That is **execution gates** (`GATE-`: ready/done/checkpoint/approval definitions), per-slice
 **execution plans** (`EP-`), and durable **conventions** (`CONV-`). The backlog is a *view* over work items,
-never a second list to reconcile. The MVP path is sequenced explicitly and gated, so the executor always
+never a second list to reconcile. The MVP path is sequenced explicitly and gated, so the agent always
 knows the minimal coherent deliverable and where each phase ends. Abstract phases are decomposed before the
 plan is accepted (safeguard 10 / gate G-EXEC).
 
@@ -228,26 +228,27 @@ flowchart LR
     DEC -- "one-way door" --> ADR["ADR — immutable after approval, superseded never edited"]
 ```
 
-## 10. Execution-agent handoff mechanisms
+## 10. Handoff mechanisms, to the execution half
 
-The handoff package is the contract between planner and executor. It contains an **initial prompt**
-(self-contained orientation + invariants up front + one bounded first task ending at an approval gate). It
-contains **follow-up prompts**: one per phase gate, plus situational prompts such as fresh-session
-refresher, invariant audit, and deviation-ADR. It contains **review prompts** (audit against invariants, re-run
-readiness, review a PR). It contains the package row's absorbed handoff fields (entry point, MVP definition,
-go/no-go). `handoff_emit` writes the prompt files into the target project **plus the executor-side MCP
-config** (`.mcp.json` + `CLAUDE.md` note). So the executing agent records progress through the same
-governed write path. The principles (Claude-Code-targeted, reference don't restate, bounded steps with gates,
+The handoff package is the contract between the planning half and the execution half. Since v6 its
+prompts are `prompt` rows (`PRT-`) the operator approves. The **kickoff** row is the one the header's
+`entry_point` names. It carries a self-contained orientation, the invariants up front, and one bounded
+first task ending at an approval gate. **Phase** rows follow, one per phase gate. **Situational** rows
+accompany the scenario skill that reads them (`plugin_skill`): a fresh-session refresher, an invariant
+audit. The package row carries the absorbed handoff fields (entry point, MVP definition, go/no-go).
+`handoff_emit` refuses until the kickoff is Approved, screens the Approved rows, and wires the target
+project (`.mcp.json` + the `CLAUDE.md` note). It writes no prompt copies. So the agent records progress
+through the same governed write path. The principles (Claude-Code-targeted, reference don't restate, bounded steps with gates,
 invariants and prerequisites explicit) are in
 [`../plugins/tamheed/references/handoff.md`](../plugins/tamheed/references/handoff.md), with prompt forms in
 [`../plugins/tamheed/references/prompt-templates.md`](../plugins/tamheed/references/prompt-templates.md). The handoff is what lets
 **Claude Code**, with no access to the planning conversation, start implementing with no missing context.
 
-The handoff loop also *learns*. When execution teaches something durable, the executing agent records a
+The handoff loop also *learns*. When execution teaches something durable, the agent records a
 **lesson** (`LL-`, kind *improve* or *sustain*) born *Proposed*. It is linked via `learned_from` to whatever
 taught it: a defect, decision, risk, slice, work item, or progress entry. The operator interviews the
 pending set (the `lessons-confirmed` advisory nags until every lesson is decided) and approves, rejects,
-or pins each one. **Only operator-Approved lessons bind.** The executing agent's always-loaded `CLAUDE.md`
+or pins each one. **Only operator-Approved lessons bind.** The execution half's always-loaded `CLAUDE.md`
 note renders a roster of them, every pinned one and the 10 highest-numbered unpinned ones. The rest bind
 too and are read by query (two words since v5.5: a status *binds*, the roster is what is *rendered*). The
 gate is the design. An agent persisting an unvetted, possibly wrong, lesson is the known failure
@@ -292,7 +293,7 @@ is what ships, and the left column is the recurring practice it generalizes.
 | A phased plan where each phase had to "finish" before the next | **Phased roadmap** (`PH-`) with per-phase exit criteria + gated **work breakdown** (`WBS-`) |
 | A risk list with impact, likelihood, and what we'd do about it | **Risk register** (`RISK-`) with impact·likelihood scoring, mitigations, triggers, and MVP/Full tagging |
 | A spreadsheet linking requirements to where they were satisfied and tested | **Typed trace edges** queried live (`trace_query`). The matrix is a derived view in `review.html`, never a stored snapshot |
-| A handoff folder with kickoff prompts for the implementing agent | **Handoff emission** (`handoff_emit`): initial / follow-up / review prompts, Claude-Code-targeted, injection-screened, plus the executor-side MCP config |
+| A handoff with kickoff prompts for the agent that builds | **Handoff emission** (`handoff_emit`): kickoff / phase / situational prompt rows, Claude-Code-targeted, injection-screened, plus the target-side MCP config |
 | A script that set up the repo skeleton, license, and first commit | *(removed in v2, ASM-B)* The package is data the operator commits to any repository. Storage initialization is `package_create` on the MCP server |
 | "Definition of done" agreed up front so quality wasn't argued later | **Execution gates** (`GATE-` rows: ready / done / checkpoint / approval), bound package-wide or per entity |
 | A final "are we actually ready to build?" review | **Readiness verdict** (stage 22): `gate_run`'s report + open items + residual risk. Never "ready" with a Critical gate failing |

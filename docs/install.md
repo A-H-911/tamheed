@@ -43,7 +43,7 @@ There are nine discipline skills, model-invoked and named by the note and the to
 `tamheed:written-claims`, `tamheed:plain-english`, `tamheed:test-evidence`, `tamheed:measurement-evidence`,
 `tamheed:ci-evidence`, `tamheed:session-handoff`. There are seventeen operator-invoked scenario skills
 (`/tamheed:orient-resume`, `/tamheed:slice-kickoff`, `/tamheed:progress-sync`, and the rest), and the
-emitted `<package>/prompts/README.md` maps every situation. Since v5.1 eight of the nine are hidden
+emitted `<package>/README.md` maps every situation. Since v5.1 eight of the nine are hidden
 from the `/` menu (`user-invocable: false`) and the ninth, `/tamheed:session-handoff`, takes both routes.
 
 **Project-only enablement (the field's FB-022, measured).** `enabledPlugins` merges **key by key across

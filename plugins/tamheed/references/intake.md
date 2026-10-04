@@ -37,7 +37,7 @@ What to extract when the input carries it: business objectives, problem statemen
 non-functional requirements, technical/organizational/regulatory constraints, existing
 systems/environments. Also preferred and prohibited technologies, known risks, known decisions,
 unknowns/ambiguities, expected deliverables, target users, stakeholders. Also available infrastructure,
-execution-agent constraints, repository constraints, and time/budget/resource constraints. Absent fields
+execution-half constraints, repository constraints, and time/budget/resource constraints. Absent fields
 are normal. List them as `OQ-` if they matter for the profile, otherwise leave unset.
 
 ## Output of intake

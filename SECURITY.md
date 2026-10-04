@@ -2,7 +2,7 @@
 
 Tamheed is a planning/handoff **skill** (Markdown methodology + a stdlib-only relational store and
 MCP server). It has a small attack surface. But it (a) ingests an untrusted project brief and (b) emits
-prompts that another agent will act on, so prompt injection is its primary risk. This document states
+prompts that the agent acts on in the execution half. So prompt injection is its primary risk. This document states
 the trust model and how to report a problem.
 
 ## Trust boundaries
@@ -11,9 +11,12 @@ the trust model and how to report a problem.
    never instructions to obey (OWASP LLM01, direct injection).
 2. **Skill → generated artifacts.** Artifacts may quote verbatim brief text. That text stays quoted and
    provenance-labeled, never rendered as a directive.
-3. **Generated handoff prompts → downstream agent.** The highest-stakes boundary (OWASP LLM01, indirect /
-   second-order injection): the next agent may execute the handoff. The handoff is screened before emit
-   (gate `G-INJECT`) and tells the downstream agent to treat the package as untrusted too.
+3. **Approved prompt rows → the execution half.** The highest-stakes boundary (OWASP LLM01, indirect /
+   second-order injection): the agent in the target repository acts on the handoff. Since v6 the
+   prompts are `prompt` rows the operator approves. `handoff_emit` refuses without an Approved kickoff
+   and screens every Approved row (gate `G-INJECT`). A row approved after the last emit is read by its
+   skill unscreened until the next emit, as a lesson is. The emitted note tells the agent to treat the
+   package as untrusted too.
 4. **Agent tool calls → MCP server → package store.** The only write path into a package: structured,
    checked arguments (no raw SQL, package names checked, single-writer lock). A constraint violation
    fails the call. (The v1 repository bootstrapper was removed in v2, ASM-B.)
@@ -121,7 +124,7 @@ the trust model and how to report a problem.
   first guard four ways before commit (a tool kind by update, born Reported, content under an old
   confirmation, an unjournaled withdrawal). All are closed (plan 087).
 - **Approved-only lessons in the note.** The emitted `CLAUDE.md` note's Lessons section renders only
-  operator-Approved `LL-` rows and is screened by the same G-INJECT patterns as emitted prompts
+  operator-Approved `LL-` rows and is screened by the same G-INJECT patterns as the Approved prompt rows
   (blocking). The store refuses to land a lesson in Approved/Promoted without the operator's explicit
   `operator_confirm` on the write.
 - **Skill files.** A promoted skill's `SKILL.md` body is operator-approved interview output, written
@@ -135,7 +138,7 @@ the trust model and how to report a problem.
   keeps them well-formed, stack-neutral and free of field identifiers. The scenarios carry
   `disable-model-invocation`: the operator invokes a ceremony, the model never starts one. The note
   `handoff_emit` writes names them by skill name only. No skill body ever enters the note, so the
-  note's screens are unchanged. Removing a retired 4.x scenario file from `<package>/prompts/` happens
+  note's screens are unchanged. Removing a retired 4.x scenario file left under `<package>/prompts/` happens
   only with `refresh_stock=true`. It happens only when the file is byte-equal to a shipped release
   (the proof the overwrite has always relied on). A customised copy is never touched.
 - **Server-witnessed journal facts cannot be narrated.** The four journal kinds the server appends

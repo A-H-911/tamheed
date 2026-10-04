@@ -403,7 +403,7 @@ def overview(f) -> dict:
 
 
 def actors(f) -> dict:
-    """D2 — operator, planning agent, executing agent and what each may do."""
+    """D2 — the operator, the planning half, the execution half and what each may do."""
     ns = [
         node("op", 290, 10, 180, 46, _L("actors.operator"), "acc strong", group="op"),
         node("plan", 60, 150, 200, 46, _L("actors.planner"), "strong", group="plan"),
@@ -452,7 +452,7 @@ def stage_track(f) -> dict:
 
 
 def package_tree(f) -> dict:
-    """D4 — a package on disk, the one path that changes data/, and the executor repo it wires."""
+    """D4 — a package on disk, the one path that changes data/, and the target repo it wires."""
     ns = [
         node("tools", 240, 6, 190, 34, _L("package.tools"), "pill"),
         node("root", 10, 76, 150, 36, _L("package.root"), "acc strong"),

@@ -67,7 +67,7 @@ defects block while medium/low advise. A stubborn failure passes only through an
 is `indeterminate`, and `indeterminate` names the rules. The tool now agrees with its own review page,
 whose per-slice panel had always called an empty slice "not ready". Alongside the blocking rules run
 twenty-five package-scope liveness advisories, from overdue open questions to `lessons-confirmed` and
-`lessons-note-budget`. `lessons-confirmed` nags while any lesson recorded by the executing agent still
+`lessons-note-budget`. `lessons-confirmed` nags while any lesson the agent recorded during execution still
 awaits the operator's confirmation interview. `lessons-note-budget` names the lessons rendering past the
 always-loaded note's curation ceiling as promotion candidates (pinning stays the operator's choice, and its
 cost stops being invisible). The same guarded-transition doctrine that reserves `force` for the operator's
@@ -131,19 +131,21 @@ contains its needle is refused when already present (a second run would compound
 treats an omitted column as what it is: preserved by the UPDATE, never drift. Since v4.14 it refuses
 a named column the item does not carry, the guard the field found could only pass. On the read side, `search` with
 `context=N` is a census, the `occurrences` key with counts and snippets per column (FB-003).
-`prompt-ids-resolve` scans the project's own prompt files for phantom ids (FB-002), never a stock body.
+`prompt-ids-resolve` scans the project's own prompt rows for phantom ids (FB-002, rows since v6), never a stock body.
 
-## 3. The three actors
+## 3. The operator and the agent's two halves
 
-Three parties touch a package across its life, all through the same MCP boundary:
+Three parties touch a package across its life, all through the same MCP boundary. The operator is
+human. The agent is Claude Code in both halves. The planning half runs the 22 stages through the
+tamheed skill. The execution half works in the target repository from the handoff.
 
 ```mermaid
 sequenceDiagram
     autonumber
     actor Operator as Human operator
-    participant Planner as Planning agent (tamheed skill)
+    participant Planner as Planning half (Claude Code + the tamheed skill)
     participant Server as Tamheed MCP server
-    participant Executor as Executing agent (Claude Code)
+    participant Executor as Execution half (Claude Code in the target repository)
 
     Operator->>Planner: project brief (untrusted data)
     Planner->>Operator: batched clarification questions
@@ -155,7 +157,7 @@ sequenceDiagram
     Planner->>Operator: readiness verdict + open items (go/no-go gate)
     Operator-->>Planner: GO
     Planner->>Server: handoff_emit(target project)
-    Server-->>Executor: executor-side .mcp.json + the CLAUDE.md note (v5: obligations + lessons, pointing at the plugin's skills) + the prompts guide
+    Server-->>Executor: the target's .mcp.json + the CLAUDE.md note (v7: obligations, Approved lessons, the roster of Approved prompt rows) + the operator guide at the package root
     Executor->>Server: progress_update · audit_record (evidence refs) · work_bind
     Note over Server: cascade-on-transition: all ACs of a requirement Met ⇒ requirement auto-advances
     Executor->>Server: entity_export(path, tool, args) — before a review slate is generated
@@ -169,7 +171,7 @@ sequenceDiagram
 The operator never proofreads JSONL. Human review happens through `review.html` (D-REVIEW: HTML is the
 only human surface, deterministic and committed alongside the data). Since v4.12 it has a Readiness
 section and a Feedback section beside the registers. Since v5.5 each Approved lesson is marked `rendered`
-or `not rendered` in the note at the next emit. The executing agent never edits package files. Progress
+or `not rendered` in the note at the next emit. In the execution half the agent never edits package files. Progress
 enters through `progress_update`/`audit_record`/`work_bind`, and status cascades (AC verdicts →
 requirement lifecycle) fire inside the same transaction.
 
@@ -190,7 +192,7 @@ tamheed/
     ├── scripts/                            # scratch_diff.py (package diff utility)
     ├── db/                                 # the store: schema.sql + migrations/ + store.py + CANONICAL.md
     ├── server/                             # Tamheed MCP server (only write path into a package)
-    ├── prompts/                            # the operator guide (emitted into <package>/prompts/) + stock-history.json
+    ├── prompts/                            # the stock operator guide (emitted to <package>/README.md) + stock-history.json
     └── assets/                             # logos
 ```
 
@@ -201,8 +203,8 @@ always-loaded note stays small because everything that is HOW rather than WHAT m
 
 ```mermaid
 flowchart LR
-    EMIT[handoff_emit] -->|rebuilds every emit| NOTE["CLAUDE.md note - tamheed:note v6<br/>AMBIENT: package pointer, the obligations table, Approved lessons, the skills line"]
-    EMIT -->|refreshes the guide, retires stale leftovers| GUIDE["package/prompts/<br/>README.md (the one stock file) + project-authored prompts"]
+    EMIT[handoff_emit] -->|rebuilds every emit| NOTE["CLAUDE.md note - tamheed:note v7<br/>AMBIENT: package pointer, the obligations table, Approved lessons, the prompt roster, the skills line"]
+    EMIT -->|refreshes the guide, retires stale leftovers| GUIDE["package/README.md<br/>the one stock file (the project's prompts are rows since v6)"]
     UPD[claude plugin update] -->|ships| DISC["9 discipline skills (v5.1, plain-english v5.9)<br/>MODEL-INVOKED, out of the / menu: package-writes, reading-the-record, operator-interview, written-claims, plain-english, test-evidence, measurement-evidence, ci-evidence, session-handoff (both routes)"]
     UPD -->|ships| SCEN["17 scenario skills<br/>OPERATOR-INVOKED /tamheed:name - description out of context"]
     UPD -->|ships| HOOK["hooks/hooks.json (v5.1)<br/>SessionStart: resume_hook.py prints the resume block - plain text, screened, capped"]
