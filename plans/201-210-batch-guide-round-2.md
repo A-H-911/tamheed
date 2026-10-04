@@ -35,6 +35,8 @@ the engine as it is after 6.0.0.
 | G17 | (plan 201 review) A **frame** is a region, not an object: a dashed box drawn behind the edges with a short top-left title, never a click target. The geometry lint checks it stays on the canvas and that every member it names lies inside it, and skips it for crossings, borders and label touches. The fallback declined: two adjacent lane boxes with no frame. |
 | G18 | (plan 203 review) The lane rule of a swimlane: a step sits in the lane of the party that acts. An operator's command or word is the operator's; a tool the agent calls, or a skill it runs, is the agent's; the engine's own behaviour is the engine's. Three postures of G13 accepted: the explicit-dark flash on file figures (210 decides a fix), the system serif in file figures, the Latin-run isolate in every Arabic SVG text. |
 | G19 | (plan 204 review) A family's relations figure has one node per relation kind listing the partner prefixes, never one node per partner family; the centre grows per arrival. A family no typed relation names gets one sentence, not an empty figure. |
+| G20 | (plan 205 review) A family fold: columns, the relations figure or its sentence, Data path and Trace path sub-headings (figure or sentence), one lifecycle line; the standard lifecycle figures live once in the statuses section and are linked. |
+| G21 | (plan 205 review) A domain lifecycle set shows its values as pills in CHECK order, no arrow: the engine states no transition table. |
 
 ## 2. The beat map
 
@@ -44,7 +46,7 @@ the engine as it is after 6.0.0.
 | 202 | The chrome: the two-level nav, D3's returns, D5's header pills, the pager in rem | DONE 2026-10-04 |
 | 203 | The figures folder proven on the twelve workflow swimlanes (`<picture>`, the swap, the LF rule, the folder byte-twin) | DONE 2026-10-04 |
 | 204 | Family relations figures | DONE 2026-10-04 |
-| 205 | Family flow figures with the Writes parser | planned |
+| 205 | Family flow figures | DONE 2026-10-04 |
 | 206 | Tool figures | planned |
 | 207 | Gate figures | planned |
 | 208 | Skill figures | planned |
@@ -76,6 +78,11 @@ the engine as it is after 6.0.0.
   outgoing kind on the right with the partner prefixes, a same-family node below where the table can
   be superseded; 28 families drawn, 9 say they have no typed relation; file models computed from
   the facts; elbows ranked so no two edges overlap; 160 files in the folder.
+- **205 — the flow figures per family.** (the commit this record lands in) The Writes parser over
+  workflow.md (sentence-bounded, aliases, a token it cannot place fails the build); a data path per
+  family (stages, writer, canonical file, review section) and a trace path for the 20 families a
+  gate or rule reads (the rules' tables from a readiness run, the gates from a five-entry map with
+  source lines); STD8 drawn once, linked from the folds; 392 files in the folder.
 
 ## 4. Errors owned
 
@@ -91,6 +98,9 @@ the engine as it is after 6.0.0.
   string tripped lint 14, then one label's semicolon; one import was missing on the first build.
 - **204.** The first routing put every elbow at one mid-x (overlapping verticals), the second marched
   them into the column's own box with eight kinds; the Arabic caption named the English sides.
+- **205.** The sentence-end regex missed stage 3 (no clause: now `None`); the elbows entered the stage
+  column (a 40 px gap); seven arrivals on a 30 px node; a stale patch script ran because its rewrite
+  could not overwrite an unread file (three files restored from HEAD, nothing else in them).
 
 ## 5. Not built, by ruling or on purpose
 

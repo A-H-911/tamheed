@@ -9,6 +9,7 @@ from __future__ import annotations
 import inspect
 import json
 import re
+import shutil
 import sys
 from pathlib import Path
 
@@ -289,6 +290,99 @@ def stages() -> dict:
             "human": [s["n"] for s in stage_rows if s["human"]]}
 
 
+_WRITES_ALIASES = {
+    "narrative-document": "narrative_documents",
+    "narrative_documents/sections": ("narrative_documents", "document_sections"),
+    "sections": "document_sections",
+}
+_WRITES_NOT_TABLES = {"none", "packages", "packages row", "canonical jsonl", "handoff_emit", "affected rows"}
+
+
+def writes(sch: dict) -> dict[int, list[str] | None]:
+    """Plan 205 (G4): the store tables each stage writes, parsed from workflow.md's `**Writes:**`
+    clauses. The clause runs to its sentence end (a period followed by whitespace or the end), with
+    wrapped lines joined; parentheticals and code spans are stripped; the tokens are split on commas,
+    `then` and `Also`. A token that is not a table, an alias or a known non-table fails the build:
+    the parser never guesses."""
+    wf = (BUNDLE / "references" / "workflow.md").read_text(encoding="utf-8")
+    tables = {t["table"] for t in sch["tables"]}
+    parts = re.split(r"^### (\d+)\. (.+)$", wf, flags=re.M)
+    out: dict[int, list[str] | None] = {}
+    for i in range(1, len(parts), 3):
+        num, block = int(parts[i]), parts[i + 2]
+        m = re.search(r"\*\*Writes:\*\*\s*(.*?)(?<!\w\.\w)(?<=\.)(?=\s|$)", block, re.S)
+        if not m:
+            assert "Writes" not in block, f"stage {num}: a Writes line the parser cannot read"
+            out[num] = None          # the stage states no Writes clause (stage 3 today): nothing is guessed
+            continue
+        clause = m.group(1)
+        rest = block[m.end():]
+        also = re.match(r"\s*(Also\b.*?)(?<!\w\.\w)(?<=\.)(?=\s|$)", rest, re.S)
+        if also:                                             # the clause's own second sentence (stage 21)
+            clause += " " + also.group(1)
+        clause = re.sub(r"\s+", " ", clause).strip()
+        clause = re.sub(r"\([^)]*\)", "", clause)          # parentheticals: qualifiers, never tables
+        clause = re.sub(r"`[^`]*`", "", clause)              # code spans: ids and tool names
+        clause = clause.rstrip(". ")
+        found: list[str] = []
+        for raw in re.split(r",|\bthen\b|\bAlso\b", clause):
+            tok = raw.strip(" .").lower()
+            if not tok:
+                continue
+            tok = re.sub(r"^(packages\.)\w+$", "packages", tok)
+            if tok in _WRITES_NOT_TABLES:
+                continue
+            tok = _WRITES_ALIASES.get(tok, tok)
+            names = tok if isinstance(tok, tuple) else (tok,)
+            for name in names:
+                assert name in tables, f"stage {num}: Writes names {name!r}, which is no store table"
+                if name not in found:
+                    found.append(name)
+        out[num] = found
+    assert sorted(out) == list(range(1, 23)), sorted(out)
+    return out
+
+
+def rule_tables() -> dict[str, str]:
+    """Plan 205: every readiness rule's population table, read from a readiness run on an empty
+    scratch package (the server names the table it measured, rows or none). A rule with no
+    population (a rule over the header or the journal's shape) is absent here."""
+    import tempfile
+    root = Path(tempfile.mkdtemp(prefix="tamheed-guide-"))
+    saved = srv.PACKAGE_ROOT
+    try:
+        srv.PACKAGE_ROOT = root
+        assert srv.package_create("witness", "Witness", "unknown")["ok"]
+        report = srv.readiness_check("package")
+        tables = {t["table"] for t in schema()["tables"]}
+        out = {}
+        for r in report["rules"]:
+            pop = r.get("population") or {}
+            if pop.get("table") in tables:                   # prose-plain-english names a scope, not a table
+                out[r["rule"]] = pop["table"]
+        srv.package_close()
+    finally:
+        srv.PACKAGE_ROOT = saved
+        shutil.rmtree(root, ignore_errors=True)
+    return dict(sorted(out.items()))
+
+
+def inserters() -> dict[str, list[str]]:
+    """Plan 205: which server functions insert into which table, a census of the `INSERT INTO`
+    statements in the server source by enclosing def. entity_upsert's generic insert is listed
+    under the key `{table}` (every entity table); the verdicts and the journal are named literally."""
+    lines = SERVER_SRC.split("\n")
+    defs = [(i, re.match(r"^def (\w+)", ln).group(1)) for i, ln in enumerate(lines) if re.match(r"^def \w+", ln)]
+    out: dict[str, set[str]] = {}
+    for i, ln in enumerate(lines):
+        m = re.search(r"INSERT (?:OR \w+ )?INTO (\S+)", ln)
+        if m:
+            fn = max((d for d in defs if d[0] <= i), key=lambda d: d[0])[1]
+            out.setdefault(m.group(1), set()).add(fn)
+    assert "{table}" in out and "progress_entries" in out, sorted(out)
+    return {t: sorted(v) for t, v in sorted(out.items())}
+
+
 def _frontmatter(text: str) -> dict:
     fm = text.split("---\n")[1]
     out: dict[str, str] = {}
@@ -392,6 +486,7 @@ def facts() -> dict:
     sch = schema()
     return {
         "version": version(), "schema": sch, "lifecycles": lifecycle_sets(sch),
+        "writes": writes(sch), "rule_tables": rule_tables(), "inserters": inserters(),
         "families": families(), "relations": relations(), "tools": tools(), "header": header(),
         "gates": gates(), "rules": readiness_rules(), "events": events(),
         "verdicts": verdict_sets(sch), "stages": stages(), "skills": skills(),

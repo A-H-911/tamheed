@@ -140,7 +140,8 @@ class R:
         through <picture> (the dark source by media query; the script swaps on the explicit toggle)."""
         model = diagrams.file_models(self.f)[fid](self.f)
         W, H = model["w"], model["h"]
-        self.figures.append((fid, model, caption_cid))
+        if all(x[0] != fid for x in self.figures):     # one file per fid, however many folds embed it
+            self.figures.append((fid, model, caption_cid))
         pics = []
         for lg in LANGS:
             # the labels are rendered into the files by build.py; resolve them here once so the
@@ -541,10 +542,25 @@ def _families(r: R) -> None:
         inner += r.table([r.UI("col.column"), r.UI("col.type"), r.UI("col.constraints"), r.UI("col.meaning")],
                          _col_rows(r, t), "compact")
         if fam:   # plan 204 (G4): the family's typed relations, or the sentence that there are none
-            if f"rel-{fam['type']}" in file_models:
-                inner += r.figure_file(f"rel-{fam['type']}", "dia.rel.caption", alt_prefix=fam["label"])
+            ftype = fam["type"]
+            if f"rel-{ftype}" in file_models:
+                inner += r.figure_file(f"rel-{ftype}", "dia.rel.caption", alt_prefix=fam["label"])
             else:
                 inner += r.P("ui.rel.none", "muted")
+            inner += r.H(4, "ui.data.heading") + r.figure_file(f"data-{ftype}", "dia.data.caption", alt_prefix=fam["label"])
+            inner += r.H(4, "ui.trace.heading")
+            if f"trace-{ftype}" in file_models:
+                inner += r.figure_file(f"trace-{ftype}", "dia.trace.caption", alt_prefix=fam["label"])
+            else:
+                inner += r.P("ui.trace.none", "muted")
+            life = diagrams.lifecycle_of(f, ftype)
+            if life in ("STD8", "STD9"):
+                inner += f'<p class="muted">{r.T("ui.life.link")}: <a href="#statuses"><code>{life}</code></a></p>'
+            elif life:
+                pills = " ".join(f'<span class="status-pill">{esc(v)}</span>' for v in f["lifecycles"]["domain"][life])
+                inner += f'<p class="muted">{r.T("ui.life.link")}: {pills}</p>'
+            else:
+                inner += r.P("ui.life.none", "muted")
         body += (f'<details class="fam" id="fam-{t["table"]}" data-class="{esc(cls)}" data-search="{esc(search)}" '
                  f'style="--hue:{hue}"><summary>{head}</summary><div class="body">{inner}</div></details>')
     # triggers and views
@@ -587,6 +603,7 @@ def _statuses(r: R) -> None:
     body = r.PS("section.statuses", 2)
     body += r.figure("d6", "dia.status.caption")
     body += r.H(3, "section.statuses.standard") + r.P("lifecycle.STD8")
+    body += r.figure_file("life-STD8", "dia.life.caption")
     rows = [[f'<span class="status-pill">{esc(s)}</span>', r.T(f"status.{s}")] for s in lc["STD9"]["values"]]
     body += r.table([r.UI("col.status"), r.UI("col.meaning_only")], rows, "compact")
     body += (f'<p>{r.UI("std8.on")} {", ".join(f"<code>{esc(x)}</code>" for x in lc["STD8"]["tables"])}.</p>'

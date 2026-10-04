@@ -815,14 +815,148 @@ def relations_figure(f, ftype: str) -> dict:
     return {"id": f"rel-{ftype}", "w": 900, "h": int(H), "nodes": ns, "edges": es, "frames": frs}
 
 
+# Plan 205 (G4): the gates that read one table. The three SQL gates from their views in schema.sql
+# (g_trace_failures reads requirements through v_req_links over trace_edges; g_progress_failures
+# reads acceptance_criteria and audit_verdicts; g_set_failures reads the registry and omissions, so
+# it names every Always family and is added per family below); the Python gates from the server
+# (G-DEC-STATUS over decisions, G-REQ-SRC over requirements, G-REL over trace_edges). G-IDS and
+# G-COMPLETE read every table, so no family's figure draws them.
+GATE_TABLES = {
+    "G-TRACE": ("requirements", "trace_edges"),
+    "G-PROGRESS": ("acceptance_criteria", "audit_verdicts"),
+    "G-REL": ("trace_edges",),
+    "G-DEC-STATUS": ("decisions",),
+    "G-REQ-SRC": ("requirements",),
+}
+# the review page section that shows a table (export_html.SECTIONS); any other table is a register fold
+REVIEW_SECTION = {"lessons": "lessons", "feedback": "feedback", "prompts": "prompts",
+                  "progress_entries": "execution", "audit_verdicts": "execution", "trace_edges": "graph"}
+
+
+def _hub(hub: str, column: list[dict], hub_x: float, hub_cy: float, hub_h: float, hub_is_source: bool, gap: float = 60):
+    """Edges between one hub node and a column of nodes (the 204 routing): the hub's ports spread
+    along its side, one elbow x per edge ranked by its distance, inside the gap next to the hub."""
+    k = len(column)
+    step = min(14.0, (hub_h - 12) / (k - 1)) if k > 1 else 0.0
+    ports = [hub_cy + (i - (k - 1) / 2) * step for i in range(k)]
+    dist = [abs(n["y"] + n["h"] / 2 - p) for n, p in zip(column, ports)]
+    order = sorted(range(k), key=lambda i: -dist[i])
+    gstep = min(8.0, (gap - 12) / max(1, k))   # every elbow stays inside the gap beside the hub
+    xs = [0.0] * k
+    for rank, i in enumerate(order):
+        xs[i] = hub_x + (6 + gstep * rank) * (1 if hub_is_source else -1)
+    out = []
+    for n, p, mx in zip(column, ports, xs):
+        ny = n["y"] + n["h"] / 2
+        if hub_is_source:
+            out.append(edge(hub, n["key"], side=("r", "l"), offset=(p - hub_cy, 0), via=[(mx, p), (mx, ny)]))
+        else:
+            out.append(edge(n["key"], hub, side=("r", "l"), offset=(0, p - hub_cy), via=[(mx, ny), (mx, p)]))
+    return out
+
+
+def data_path(f, ftype: str) -> dict:
+    """Plan 205 (G4): where a family's rows come from and go. The stages whose Writes clause names
+    its table (workflow.md, parsed; a bare label when none does), the functions that insert into
+    it (the census of the server source), data/<table>.jsonl with its CSV, then review.html and
+    the section that shows it."""
+    fam = next(x for x in f["families"] if x["type"] == ftype)
+    table = fam["table"]
+    stages = sorted(n for n, tabs in f["writes"].items() if tabs and table in tabs)
+    # the writers, from the census of the server's INSERT statements: the public functions are drawn
+    writers = f["inserters"].get(table) or f["inserters"]["{table}"]
+    tail = [w for w in writers if not w.startswith("_")]
+    section = REVIEW_SECTION.get(table, "registers")
+    ns, y = [], 40
+    for n in stages:
+        ns.append(node(f"stage-{n}", 20, y, 260, 40, f"stagetitle.{n:02d}", "acc pill", small=True))
+        ns[-1]["label_tail"] = [str(n)]
+        y += 52
+    th = max(16 + 14 * (1 + len(tail)), 12 + 10 * len(stages))   # 10 px per arrival, so the arrowheads spread
+    H = max(y + 10 if stages else 0, th + 50, 120)
+    ty = (H - th) / 2
+    ns.append(node("tool", 320, ty, 180, th, _L("data.writers"), "strong"))
+    ns[-1]["label_tail"] = tail
+    if not stages:
+        ns.append(node("nostage", 20, (H - 20) / 2, 260, 20, _L("data.nostage"), "bare"))
+    ns.append(node("data", 530, (H - 44) / 2, 230, 44, [f"data/{table}.jsonl", f"csv/{table}.csv"], "", mono=True, small=True))
+    ns.append(node("review", 790, (H - 44) / 2, 100, 44, ["review.html", f"#{section}"], "pill", mono=True, small=True))
+    es = _hub("tool", ns[:len(stages)], 320, ty + th / 2, th, False, gap=40) if stages else []
+    # ponytail: the bare label is appended after the tool node, so the stage slice above stays ns[:len(stages)]
+    es.append(edge("tool", "data", side=("r", "l")))
+    es.append(edge("data", "review", _L("data.export"), "", side=("r", "l"), label_at=(775, (H - 44) / 2 - 8, "middle")))
+    frs = [frame("stages", 10, 10, 280, y - 2, _L("data.stages"), [n["key"] for n in ns[:len(stages)]])] if stages else []
+    return {"id": f"data-{ftype}", "w": 900, "h": int(H), "nodes": ns, "edges": es, "frames": frs}
+
+
+def life_std8(f) -> dict:
+    """Plan 205 (G4): the STD8 lifecycle is D6 without the Review state (STD9's branch, slices and
+    work items): Approved moves to Implemented when verified."""
+    m = status_machine(f)
+    m["id"] = "life-STD8"
+    m["nodes"] = [n for n in m["nodes"] if n["key"] != "Review"]
+    m["edges"] = [e for e in m["edges"] if "Review" not in (e["from"], e["to"])]
+    return m
+
+
+def lifecycle_of(f, ftype: str) -> str | None:
+    """The lifecycle set a family's table belongs to (STD8, STD9 or the table's own domain set)."""
+    fam = next(x for x in f["families"] if x["type"] == ftype)
+    for name in ("STD8", "STD9"):
+        if fam["table"] in f["lifecycles"][name]["tables"]:
+            return name
+    return fam["table"] if fam["table"] in f["lifecycles"]["domain"] else None
+
+
+def trace_readers(f, ftype: str) -> tuple[list[str], list[str]]:
+    """The gates (GATE_TABLES, plus G-SET for an Always family) and the readiness rules (the
+    readiness run's population tables) that read a family's table."""
+    fam = next(x for x in f["families"] if x["type"] == ftype)
+    gates = [g for g, tabs in GATE_TABLES.items() if fam["table"] in tabs]
+    if fam["cls"] == "Always":
+        gates.append("G-SET")
+    rules = [r for r, t in f["rule_tables"].items() if t == fam["table"]]
+    return gates, rules
+
+
+def trace_path(f, ftype: str) -> dict:
+    """Plan 205 (G4): what reads a family at the gate and in readiness, as two framed columns."""
+    fam = next(x for x in f["families"] if x["type"] == ftype)
+    gates, rules = trace_readers(f, ftype)
+    severity = {r["rule"]: r["severity"] for scope in f["rules"].values() for r in scope}
+    ns, frs, y = [], [], 10
+    if gates:
+        frs.append(frame("gates", 310, y, 290, 48 * len(gates) + 22, _L("trace.gates"), [f"gate-{g}" for g in gates]))
+        for g in gates:
+            ns.append(node(f"gate-{g}", 330, y + 30, 250, 36, [g], "good pill", mono=True))
+            y += 48
+        y += 32
+    if rules:
+        frs.append(frame("rules", 310, y, 290, 48 * len(rules) + 22, _L("trace.rules"), [f"rule-{r}" for r in rules]))
+        for r in rules:
+            sev = severity.get(r, "advisory")
+            ns.append(node(f"rule-{r}", 330, y + 30, 250, 36, [r, sev], "warn pill" if sev == "blocking" else "pill", mono=True))
+            y += 48
+        y += 32
+    H = max(y, 100)
+    hub = node("fam", 20, (H - 44) / 2, 200, 44, [ftype, fam["prefix"]], "acc strong")
+    es = _hub("fam", ns, 220, H / 2, 44, True, gap=110)
+    return {"id": f"trace-{ftype}", "w": 620, "h": int(H), "nodes": [hub] + ns, "edges": es, "frames": frs}
+
+
 def file_models(f) -> dict:
-    """Every file figure the page may embed: the swimlanes, and a relations figure for every
-    family that a typed relation names."""
+    """Every file figure the page may embed: the swimlanes; per family a relations figure (when a
+    typed relation names it), a data path, a trace path (when a gate or rule reads it); STD8."""
     out = dict(FILE_MODELS)
+    out["life-STD8"] = life_std8
     for x in f["families"]:
         incoming, outgoing, same = relation_partners(f, x["type"])
         if incoming or outgoing or same:
             out[f"rel-{x['type']}"] = (lambda ff, t=x["type"]: relations_figure(ff, t))
+        out[f"data-{x['type']}"] = (lambda ff, t=x["type"]: data_path(ff, t))
+        gates, rules = trace_readers(f, x["type"])
+        if gates or rules:
+            out[f"trace-{x['type']}"] = (lambda ff, t=x["type"]: trace_path(ff, t))
     return out
 
 

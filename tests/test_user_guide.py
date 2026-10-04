@@ -54,6 +54,34 @@ class UserGuideTest(unittest.TestCase):
             if "-ar" in name:
                 self.assertIn(b"direction:rtl", blob, name)
 
+    def test_writes_parser_names_only_tables_and_every_stage(self):
+        """Plan 205 (G4): the Writes clauses of workflow.md parse to store tables for all 22 stages
+        (an absent clause is None, never a guess); the journal's writers come from the server
+        source census; every readiness rule's table is a store table; every gate table exists; the
+        gate names and the review sections the figures draw are the engine's."""
+        import diagrams
+        w = self.facts["writes"]
+        tables = {t["table"] for t in self.facts["schema"]["tables"]}
+        self.assertEqual(sorted(w), list(range(1, 23)))
+        for n, tabs in w.items():
+            if tabs is not None:
+                self.assertTrue(set(tabs) <= tables, (n, tabs))
+        self.assertIn("requirements", w[4])
+        self.assertIn("prompts", w[20])
+        self.assertIn("lessons", w[21])           # the clause's second sentence, "Also lessons"
+        self.assertNotIn("scope_changes", w[7])   # the prose after stage 7's clause is not a write
+        ins = self.facts["inserters"]
+        self.assertIn("progress_update", ins["progress_entries"])
+        self.assertIn("work_bind", ins["progress_entries"])
+        self.assertEqual(ins["audit_verdicts"], ["audit_record"])
+        self.assertIn("entity_upsert", ins["{table}"])
+        self.assertTrue(set(diagrams.GATE_TABLES) | {"G-SET"} <= set(self.facts["gates"]["mechanical"]))
+        self.assertTrue(set(diagrams.REVIEW_SECTION.values()) | {"registers"} <= {x for x, _ in self.facts["review_sections"]})
+        self.assertTrue(set(self.facts["rule_tables"].values()) <= tables)
+        self.assertGreaterEqual(len(self.facts["rule_tables"]), 20)
+        for g, tabs in diagrams.GATE_TABLES.items():
+            self.assertTrue(set(tabs) <= tables, g)
+
     def test_every_rendered_id_has_en_and_ar(self):
         missing = build.missing(self.required)
         self.assertEqual(missing, [], f"{len(missing)} strings missing, e.g. {missing[:5]}")
