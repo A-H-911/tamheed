@@ -80,7 +80,7 @@ fails with a foreign-key load error, raised from `package_open` as an uncaught `
 | 197 | The docs, the README and the guide's prose | DONE 2026-10-04 |
 | 198 | Stamp 6.0.0; the fixtures and the sample migrated by the engine; the family becomes Always; the evals re-aimed; the Prompts section; lab beat 34 | DONE 2026-10-04 |
 | 199 | The ACMP brief 6.0.0, every class replayed on a copy | DONE 2026-10-04 |
-| 200 | Release 6.0.0 | planned |
+| 200 | Release 6.0.0 | DONE 2026-10-04 (this commit; the push and the tag on the operator's word, recorded in plan 200's ledger) |
 
 ## 2b. A sequencing change (plan 194 review)
 
@@ -94,14 +94,14 @@ flips the family to Always, and re-aims the evals in the same commit.
 
 ## 3. What shipped, per plan
 
-- **192 — the family.** (the commit this record lands in) Migration `008_prompts.sql` (the table, the
+- **192 — the family.** (`6d6c883`) Migration `008_prompts.sql` (the table, the
   index triggers; `schema_version` 8), `ENTITY_TABLES["prompt"]`, the registry row (`Prompt`, `PRT-`,
   class Conditional until plan 195 seeds the fixture, then Always as P1 rules), the `plugin_skill`
   write guard reading the bundle's skills folder, the catalog row (with the `readme` document
   distinction), the governance and naming-template rows, `PRT` in the guide's id-token regex, the
   guide ids `type.prompt` / `table.prompts` / `col.prompts.*` EN + AR, `index.html` rebuilt; the
   exporter recognises a v2 `prompts.csv` leftover beside the live header; six tests re-aimed, two new.
-- **193 — the engine paths.** (the commit this record lands in) `handoff_emit` refuses unless the
+- **193 — the engine paths.** (`8c5e3c2`) `handoff_emit` refuses unless the
   header's `entry_point` names an Approved kickoff row (four refusals, each naming its leg and the
   way out); G-INJECT, the oversize check, the stale-line scan and the restated-content detectors run
   over the Approved prompt rows; the converted hint reads `custom_attributes.converted_from` on every
@@ -110,14 +110,14 @@ flips the family to Always, and re-aims the evals in the same commit.
   `prose-plain-english` read `prompts.title` / `prompts.body` and the generic prose-id scan leaves
   the family to its own rule; `entity_query(plugin_skill=)`; the hook's v7 fixture and the
   v6-still-resumes case; lint 9 blacklists v6; `handoff.md` and the guide name v7.
-- **194 — the operator guide at the package root.** (the commit this record lands in)
+- **194 — the operator guide at the package root.** (`4a19c47`)
   `_emit_prompt_library` emits the stock guide at `<package>/README.md` for all four callers; a
   pre-v6 copy at `prompts/README.md` is a leftover (stale -> retired on refresh, customised -> kept
   and named); the stock-merged check labels by location; the stock body speaks of the package root
   and the prompt rows and lands under `6.0.0` in the history; the note names the root; a stale
   pattern names old `prompts/` paths in the field's files; `ste-clean` reads the root with a
   fallback; the guide's path mentions follow (D4's node, the tree, eleven ids EN + AR).
-- **195 — the migration of prompt files to rows.** (the commit this record lands in)
+- **195 — the migration of prompt files to rows.** (`ddfa49f`)
   `package_migrate` plans every `.md` under `prompts/` before writing: a non-stock file becomes a
   Proposed `prompt` row (kind by `entry_point`, filename, front matter, else situational; the
   body stripped of front matter, v3 header and title, all kept in `custom_attributes`), a stock
@@ -126,7 +126,7 @@ flips the family to Always, and re-aims the evals in the same commit.
   prompt files proceeds on that reason alone; the v2 chain runs files-then-rows in one confirm;
   idempotent by `converted_from`. Replayed on ACMP's package copy: four rows, the emit refusing
   until the kickoff is approved.
-- **196 — the bundle's teaching surface.** (the commit this record lands in) The front door,
+- **196 — the bundle's teaching surface.** (`f5347d2`) The front door,
   `workflow.md` stage 20 and 21, `handoff.md` (the two-surface table is rows + the root guide),
   `prompt-templates.md` and the three templates (bodies of prompt rows), `artifact-catalog.md`,
   `artifact-rules.md`, `quality-gates.md`, `modes.md`, `safeguards.md`, the other templates, the
@@ -134,7 +134,7 @@ flips the family to Always, and re-aims the evals in the same commit.
   scenario skills reading their bound rows, the server's lessons note, and "planning agent /
   executing agent" -> the halves wording throughout the bundle; `vocabulary.md` gains the two terms
   and the guide renders them. Pins 0 missing; invariants reviewed; lint 14 at 0.
-- **197 — the docs, the README and the guide's prose.** (the commit this record lands in)
+- **197 — the docs, the README and the guide's prose.** (`f215fe6`)
   `methodology.md`, `README.md`, `architecture.md` (the three-actors section is now the operator and
   the agent's two halves; note v7; the root guide), `design-decisions.md` §23 D-PROMPT-ROWS,
   `migrate-from-keystone.md` (the 6.0 step on the v3->v4 chain), `SECURITY.md` (boundary 3 is
@@ -143,8 +143,7 @@ flips the family to Always, and re-aims the evals in the same commit.
   EN + AR (the actors section, the package section, the gates, the glossary; "executor repository"
   -> "target repository"; the D1/D2 label words, geometry untouched). Pins 0 missing; two modal
   drops explained; lint 14 at 0.
-- **198 — the stamp, the Always flip, the fixtures, the evals, lab beat 34.** (the commit this
-  record lands in) `plugin.json` 6.0.0 and the CHANGELOG entry (the MAJOR headline, the migration
+- **198 — the stamp, the Always flip, the fixtures, the evals, lab beat 34.** (`4f3efec`) `plugin.json` 6.0.0 and the CHANGELOG entry (the MAJOR headline, the migration
   note, the measured cross-version behaviour); the six version surfaces and the stock guide's title
   with its history key; `prompt` is Always (G-SET names it on a fresh package); the kickoff rule
   matches `entry_point` by file name on any path (P19); `review.html` gains the Prompts section
@@ -152,12 +151,16 @@ flips the family to Always, and re-aims the evals in the same commit.
   generated sample's three files became rows (`initial-prompt` the kickoff); 11 eval checks re-aimed and 3
   added (counted from the staged diff); lab beat 34 by a real agent on a scratch copy, then the fixture
   (`lab-continuation-report-198-2026-10-04.md`).
-- **199 — the ACMP brief 6.0.0.** (the commit this record lands in) `plans/briefs/acmp-6.0.0.md`,
+- **199 — the ACMP brief 6.0.0.** (`7b9a5c4`) `plans/briefs/acmp-6.0.0.md`,
   strict, rostered: O24 and O25 owned, the upgrade in eleven points, eleven classes measured on a
   `git archive` copy at `8b7d8bd1` by `acmp_replay11.py` (the preview and the confirm, the STOP, the
   approval, the two bindings and the guard, the emit with the v7 roster and the stale pointers, the
   export, the rules over rows, the hook over the v5 and the v7 note, the wire), the STOP with the
   maintainer's recommendation marked (R47), not built, if a class fails.
+- **200 — release 6.0.0.** (the commit this record lands in) The batch record closed with every
+  plan's SHA, the plans index rows and heading, the memory, `check.py` green and the selftest 19/19.
+  The push on the operator's single word, CI on every job, the tag `v6.0.0`, the bundle diff empty:
+  plan 200's ledger records them.
 
 ## 4. Errors owned
 
@@ -186,7 +189,10 @@ flips the family to Always, and re-aims the evals in the same commit.
 
 ## 5. Not built, by ruling or on purpose
 
-- A typed relation for prompts (P10). Renaming the bundle's `prompts/` folder (P10). Retiring stock
+- A typed relation for prompts (P10). Kind inference from a file name beyond the kickoff (the
+  sample's `follow-up-prompts` landed situational). A re-recording of the two planning-only fixtures
+  (P20: the omission row, disclosed). The migrate's result returning the id of the audit row it
+  appends. `kickoff-approved` as a readiness advisory. Renaming the bundle's `prompts/` folder (P10). Retiring stock
   files entirely (P5's third option, declined). A `kickoff-approved` readiness advisory (the emit's
   refusal is the signal). E3, the uncaught load error on `package_open`. Arabic review beyond
   mirroring.

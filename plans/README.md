@@ -176,10 +176,10 @@ devil's-advocate review; execution order is the row order below). Status values:
 | 089 | [Lab beat 18](089-lab-beat-18-findings-27.md) | 085-088 + full test (15/15 vs 0/15 on `v4.10.0`; 9 suites; selftest) | DONE `762b98b` — 9 new assertions, each failing on the pre-beat fixture; D-1 registry-sync unscripted, F-3 fixed |
 | 090 | [Release v4.11.0](090-release-v4110.md) — plan-058 recipe + the fixture follows the stamp | 089 | DONE — 2026-09-22, tag `v4.11.0` (SHA in the tag) |
 
-### Prompts return to the store -- plans 192-200 -> v6.0.0 (opened 2026-10-04; maintainer-executed)
+### Prompts return to the store -- plans 192-200 -> v6.0.0 (released 2026-10-04; maintainer-executed)
 
 Master record: [192-200-batch-prompts.md](192-200-batch-prompts.md) (the operator's rulings G1-G16 and
-P1-P13 of 2026-10-04, after the user-guide review's interview and a devil's-advocate round). Project
+P1-P21 of 2026-10-04, after the user-guide review's interview and a devil's-advocate round). Project
 prompts stop being files: a `prompts` family (`PRT-`) with a status, provenance and a binding to the
 scenario skill that reads it; `handoff_emit` demands an Approved kickoff row; the stock operator guide
 moves to `<package>/README.md`; `package_migrate` converts a package's prompt files on the operator's
@@ -188,15 +188,15 @@ the tag. Status values: PLANNED / IN PROGRESS / DONE.
 
 | # | Plan | Depends on | Status |
 |---|---|---|---|
-| 192 | [The `prompts` family](192-prompts-family.md) -- migration 008, the registry row, the `plugin_skill` write guard, the catalog and governance rows, the guide ids | 191 | DONE -- 2026-10-04 (the commit this row lands in, after the operator's review) |
-| 193 | [The engine paths over prompt rows](193-engine-paths.md) -- the emit demands an Approved kickoff row named by `entry_point`, G-INJECT and the scans over the rows, the Prompts roster in the note (marker v7), `prompt-ids-resolve` and `prose-plain-english` over `prompts.title` / `body`, `entity_query(plugin_skill=)` | 192 | DONE -- 2026-10-04 (the commit this row lands in, after the operator's review) |
-| 194 | [The stock operator guide at `<package>/README.md`](194-operator-guide-root.md) -- the managed emission targets the package root, a pre-v6 copy under `prompts/` is a leftover, the stock body speaks of rows, the note and the guide name the root, a stale pattern names the old paths | 193 | DONE -- 2026-10-04 (the commit this row lands in, after the operator's review) |
-| 195 | [`package_migrate` converts prompt files to rows](195-migrate-prompt-files-to-rows.md) -- the staged plan (rows, the backup folder, the stock guide removed, `entry_point` on the kickoff, the folder gone), the v2 chain files-then-rows, replayed on ACMP's package copy | 194 | DONE -- 2026-10-04 (the commit this row lands in, after the operator's review) |
-| 196 | [The bundle's teaching surface](196-bundle-teaching-surface.md) -- prompt rows in the front door, workflow stage 20, handoff, the templates and the skills; sixteen scenario skills read their bound rows; "planning agent / executing agent" -> the two halves; the vocabulary's two terms | 195 | DONE -- 2026-10-04 (the commit this row lands in, after the operator's review) |
-| 197 | [The docs, the README and the guide's prose](197-docs-readme-guide-prose.md) -- prompt rows and the two halves in methodology, README, architecture (the actors section), SECURITY boundary 3, the Keystone chain's 6.0 step, design-decisions §23 D-PROMPT-ROWS; 34 guide entries EN + AR | 196 | DONE -- 2026-10-04 (the commit this row lands in, after the operator's review) |
-| 198 | [Stamp 6.0.0, the Always flip, the fixtures, the evals, lab beat 34](198-stamp-6.0.0-always-fixtures-evals.md) -- the MAJOR entry; `prompt` Always; P19 kickoff by file name; the Prompts section; the fixtures and the sample migrated by the engine; a real agent drove the migration in the lab | 197 | DONE -- 2026-10-04 (the commit this row lands in, after the operator's review) |
-| 199 | [The ACMP brief 6.0.0](199-acmp-brief-6.0.0.md) -- every class replayed on a git-archive copy of the field package first (`acmp_replay11.py`); O24/O25 owned; the STOP (approve the kickoff, bind two rows, rewrite the file-era pointers) with the recommendation marked | 198 | DONE -- 2026-10-04 (the commit this row lands in, after the operator's review) |
-| 200 | Release 6.0.0: the batch record, push, tag | 199 | PLANNED |
+| 192 | [The `prompts` family](192-prompts-family.md) -- migration 008, the registry row, the `plugin_skill` write guard, the catalog and governance rows, the guide ids | 191 | DONE -- 2026-10-04 (`6d6c883`) |
+| 193 | [The engine paths over prompt rows](193-engine-paths.md) -- the emit demands an Approved kickoff row named by `entry_point`, G-INJECT and the scans over the rows, the Prompts roster in the note (marker v7), `prompt-ids-resolve` and `prose-plain-english` over `prompts.title` / `body`, `entity_query(plugin_skill=)` | 192 | DONE -- 2026-10-04 (`8c5e3c2`) |
+| 194 | [The stock operator guide at `<package>/README.md`](194-operator-guide-root.md) -- the managed emission targets the package root, a pre-v6 copy under `prompts/` is a leftover, the stock body speaks of rows, the note and the guide name the root, a stale pattern names the old paths | 193 | DONE -- 2026-10-04 (`4a19c47`) |
+| 195 | [`package_migrate` converts prompt files to rows](195-migrate-prompt-files-to-rows.md) -- the staged plan (rows, the backup folder, the stock guide removed, `entry_point` on the kickoff, the folder gone), the v2 chain files-then-rows, replayed on ACMP's package copy | 194 | DONE -- 2026-10-04 (`ddfa49f`) |
+| 196 | [The bundle's teaching surface](196-bundle-teaching-surface.md) -- prompt rows in the front door, workflow stage 20, handoff, the templates and the skills; sixteen scenario skills read their bound rows; "planning agent / executing agent" -> the two halves; the vocabulary's two terms | 195 | DONE -- 2026-10-04 (`f5347d2`) |
+| 197 | [The docs, the README and the guide's prose](197-docs-readme-guide-prose.md) -- prompt rows and the two halves in methodology, README, architecture (the actors section), SECURITY boundary 3, the Keystone chain's 6.0 step, design-decisions §23 D-PROMPT-ROWS; 34 guide entries EN + AR | 196 | DONE -- 2026-10-04 (`f215fe6`) |
+| 198 | [Stamp 6.0.0, the Always flip, the fixtures, the evals, lab beat 34](198-stamp-6.0.0-always-fixtures-evals.md) -- the MAJOR entry; `prompt` Always; P19 kickoff by file name; the Prompts section; the fixtures and the sample migrated by the engine; a real agent drove the migration in the lab | 197 | DONE -- 2026-10-04 (`4f3efec`) |
+| 199 | [The ACMP brief 6.0.0](199-acmp-brief-6.0.0.md) -- every class replayed on a git-archive copy of the field package first (`acmp_replay11.py`); O24/O25 owned; the STOP (approve the kickoff, bind two rows, rewrite the file-era pointers) with the recommendation marked | 198 | DONE -- 2026-10-04 (`7b9a5c4`) |
+| 200 | [Release 6.0.0](200-release-6.0.0.md) -- the batch record closed with SHAs, the index rows, the memory, check.py and the selftest green; the push on the operator's word, CI, the tag | 199 | DONE -- 2026-10-04 (the commit this row lands in; push and tag in the ledger) |
 
 ### The plain-English batch (ASD-STE100) -- plans 176-191 -> v5.9.0 (2026-10-03; maintainer-executed)
 
