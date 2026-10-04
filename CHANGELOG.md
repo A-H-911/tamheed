@@ -8,6 +8,43 @@ All notable changes to Tamheed are documented here. The format is based on
 > original repository (<https://github.com/A-H-911/keystone>). Tamheed carries Keystone's full git
 > history; the Keystone repository stays frozen at 1.0.x for existing v1 packages.
 
+## [6.1.0] - 2026-10-04
+
+**MINOR — the user guide round 2 (plans 201–210).** The generated user guide (`index.html`) gains
+its figures: twelve workflow swimlanes, a data path per family, a relations figure for every family
+a typed relation names, a trace path for every family a gate or rule reads, the standard lifecycle,
+an effects canvas per tool and a call-sequence strip per tool a recipe names, the gates pipeline and one figure per gate, the skills' citation matrix and
+lifecycle map and a strip per skill. The figures are sibling files under `docs/guide/figures/`
+(two languages, light and dark, `<picture>` with a script swap on the explicit toggle), derived from
+the engine's own facts and from the bundle's text (the `Writes` and `Check` clauses of workflow.md,
+the gate definitions table, the skills' bodies, a census of the server's `INSERT` statements); a
+figure that claims a server line carries it, and the tests read those lines. The chrome: a numbered
+two-level section list, the two-halves framing on the overview figures, the README image. No schema
+migration: `schema_version` stays 8, the store's bytes do not move. Beyond the release stamp's own
+lines (plugin.json, the stock guide's title and its history key, the catalog, the server README, the
+front door), the bundle changes in one place: the brand marks.
+
+**For a live package (the migration note).** Nothing to run. A package created under 6.0.0 keeps its
+stock guide until the next `handoff_emit(..., refresh_stock=true)`, which carries the 6.1.0 title
+line; the body is otherwise the 6.0.0 one.
+
+### Added
+- `docs/guide/figures/`: 724 SVG files for 181 figure ids, byte-twins of the generator's output,
+  LF-pinned. `build.py --check` covers the folder; stray files are removed on build.
+- The guide's readers of the bundle: `writes()` (the stages that write a table), `checks()` (the
+  gates a stage's Check clause cites), `gate_defs()` (the definitions table), `inserters()` (which
+  server function inserts into which table), `rule_tables()` (each readiness rule's population,
+  from a readiness run), `skill_text()` (citations, tools and ceremony STOPs per skill).
+- The brand mark: two halves and a return arc (three ascending paving steps, a path slab, an arc
+  back to the first step), on `assets/icon.svg` (a Keystone arch until now), the three lockups and
+  the guide's favicon; drawn once by `plans/evidence/scripts-209/make_209_assets.py`.
+
+### Changed
+- The tagline reads "Plan the ground, keep the record" on the lockups, the README, the guide's
+  hero line and footer, and the assets README.
+- The guide's overview figures show one agent with two halves; the section list is numbered with a
+  second level; the status machine is drawn once for STD8 and once (D6) for STD9.
+
 ## [6.0.0] - 2026-10-04
 
 **MAJOR — prompts return to the store (plans 192–200).** The project's prompts are `prompt` rows

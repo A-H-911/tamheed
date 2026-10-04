@@ -45,6 +45,7 @@ the engine as it is after 6.0.0.
 | G27 | (plan 208 review) The citation matrix has the nine discipline skills as columns only. |
 | G28 | (plan 209 review) The tagline is "Plan the ground, keep the record"; the Arabic is mirrored, not reviewed. |
 | G29 | (plan 209 review) The mark: three ascending steps, a path slab, a return arc; one committed generator is the source of the icon, the lockups and the favicon. |
+| G30 | (plan 210 review) A recorded fixture's stock guide moves only when a tool of its own rewrites it; the planning-only fixtures keep the 6.0.0 guide. |
 
 ## 2. The beat map
 
@@ -59,53 +60,59 @@ the engine as it is after 6.0.0.
 | 207 | Gate figures | DONE 2026-10-05 |
 | 208 | Skill figures | DONE 2026-10-05 |
 | 209 | Logo, icon, tagline | DONE 2026-10-05 |
-| 210 | Release 6.1.0 | planned |
+| 210 | Release 6.1.0 | DONE 2026-10-05 |
 
 ## 3. What shipped, per plan
 
-- **201 — D1 and D2 as one agent with two halves.** (the commit this record lands in) The frame
+- **201 — D1 and D2 as one agent with two halves.** (`ba9ac5f`) The frame
   primitive with its lint rule and test (G17); D1: the operator, the frame with the planning and
   execution lanes, the handoff, the server, the package, the review page; D2: the same shape with
   what each party may do, the isolate by party kept; the captions and labels EN + AR; six overview
   labels retired; the README alt text and image re-exported; captures EN/AR light/dark and 390 px.
-- **202 — the chrome.** (the commit this record lands in) Numbered sections with the chapter as
+- **202 — the chrome.** (`dcb7dcd`) Numbered sections with the chapter as
   the kicker; the two-level TOC (each section's H3s get ids, a closed `<details>` per section the
   script opens for the active one, the summary a floating count and chevron); the nav fits 1280 x
   900 closed (754 px); D3's three loop-backs as orthogonal dashed returns in a channel above the
   lane; D5's row headers as boxes; the pager in rem with mono digits, identical in both languages
   (945 x 32, buttons 38.4 x 32); three titles sharpened; captures.
-- **203 — the figures folder on the twelve swimlanes.** (the commit this record lands in) The
+- **203 — the figures folder on the twelve swimlanes.** (`a5aa642`) The
   per-item figures are sibling files under `docs/guide/figures/` (one per language and theme, LF,
   written exactly by the build, covered by the byte-twin and `--check`), embedded through
   `<picture>` with the script swap on the explicit toggle; a standalone file embeds the theme's
   tokens and its language's direction; the twelve recipes as three-lane swimlanes (the frame
   primitive, one node per step in the acting party's lane, 61 short labels EN + AR); the
   label-width rule for file figures; Latin runs isolated in RTL text.
-- **204 — a relations figure per family.** (the commit this record lands in) Derived from
+- **204 — a relations figure per family.** (`0fc8e07`) Derived from
   `RELATION_RULES`: the family in the centre, one node per incoming kind on the left and per
   outgoing kind on the right with the partner prefixes, a same-family node below where the table can
   be superseded; 28 families drawn, 9 say they have no typed relation; file models computed from
   the facts; elbows ranked so no two edges overlap; 160 files in the folder.
-- **205 — the flow figures per family.** (the commit this record lands in) The Writes parser over
+- **205 — the flow figures per family.** (`0f6ddbe`) The Writes parser over
   workflow.md (sentence-bounded, aliases, a token it cannot place fails the build); a data path per
   family (stages, writer, canonical file, review section) and a trace path for the 20 families a
   gate or rule reads (the rules' tables from a readiness run, the gates from a five-entry map with
   source lines); STD8 drawn once, linked from the folds; 392 files in the folder.
-- **206 — the tool figures.** (the commit this record lands in) An effects canvas per tool (needs,
+- **206 — the tool figures.** (`c01fab5`) An effects canvas per tool (needs,
   reads, writes; hand-authored, every claim with its server line, the census as the cross-check) and
   a call-sequence strip per tool a recipe names (derived from RECIPES, the tool's step accented at
   render time from the label's own text); 528 files in the folder.
-- **207 — the gate figures.** (the commit this record lands in) The pipeline in the server's order with
+- **207 — the gate figures.** (`3fc2798`) The pipeline in the server's order with
   readiness above it; one figure per gate: a mechanical gate's tables, its view or server line and the
   stages whose Check clause names it (parsed), a judgment or warn gate's stages, the mechanics its
   definition names and the journal entry it lands in; one canvas helper for 206 and 207; 608 files.
-- **208 — the skill figures.** (the commit this record lands in) The skills' text read once; the
+- **208 — the skill figures.** (`19dfdcc`) The skills' text read once; the
   citation matrix (27 rows by 9 disciplines, 54 marks); the lifecycle map (pills in CHECK order,
   arrows only for the stated moves); a strip per skill of the tools its text names in order with its
   STOPs, in a fold; 724 files.
-- **209 — the logo, the icon and the tagline.** (the commit this record lands in) The two-half paving
+- **209 — the logo, the icon and the tagline.** (`ee39799`) The two-half paving
   mark with a return arc, drawn once and emitted as the icon (a Keystone arch until now), the three
   lockups and the guide's favicon; the tagline "Plan the ground, keep the record" on every surface.
+- **210 — release 6.1.0.** (the commit this record lands in) The stamp on plugin.json, the CHANGELOG,
+  the six lint-8 surfaces and the stock guide's title line with its history key; the lab-tracker
+  fixture refreshed through the engine (`refresh_lab_610.py`: `handoff_emit` refresh_stock,
+  `export_html`, `package_verify` clean, the untracked package note removed); the two planning-only
+  fixtures keep their 6.0.0 guide; Lighthouse accessibility, best practices and SEO 100 on the
+  served page; the selftest 19/19; the batch record and the plans index closed.
 
 ## 4. Errors owned
 
@@ -135,4 +142,21 @@ the engine as it is after 6.0.0.
 
 ## 5. Not built, by ruling or on purpose
 
-(filled at the close)
+- **A figure per domain lifecycle set** (G21): the engine states no transition table, so a domain set
+  shows its values as pills in CHECK order, in the statuses table and the fold's lifecycle line.
+- **The STD8 figure embedded in every fold** (G20): drawn once in the statuses section and linked.
+- **A by-content map of stages to gates** (G24): the Check match is by gate id; G-OQ and G-CLAIM read
+  "no stage's Check names it" until workflow.md cites the ids.
+- **A 27 x 27 citation matrix** (G27): the discipline columns only; the other citations live in the
+  208 ledger's table.
+- **A hand map of recipe step indexes per tool** (G23): the strip marks a step only where its label
+  names the tool.
+- **The tool results' discipline hints as matrix rows:** the server's result hints name discipline
+  skills (`progress_update`, `audit_record`, `handoff_emit`, `entity_query`, `readiness_check`); the
+  census is in the 208 scratch, not drawn.
+- **Prose STOPs in the strips** (G26): the bold ceremony form only.
+- **A refresh of the planning-only fixtures' stock guide:** no tool of theirs rewrites it without a
+  kickoff; they keep the 6.0.0 body, as a live package would until its next emit.
+- **A Lighthouse performance pass:** the batch promised accessibility; the page's size (1.3 MB with
+  724 lazy figure files) is a 6.2 question.
+- **Figure captions reviewed as Arabic:** mirrored, not reviewed (the standing ruling).

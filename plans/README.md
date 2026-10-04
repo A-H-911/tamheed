@@ -176,7 +176,7 @@ devil's-advocate review; execution order is the row order below). Status values:
 | 089 | [Lab beat 18](089-lab-beat-18-findings-27.md) | 085-088 + full test (15/15 vs 0/15 on `v4.10.0`; 9 suites; selftest) | DONE `762b98b` — 9 new assertions, each failing on the pre-beat fixture; D-1 registry-sync unscripted, F-3 fixed |
 | 090 | [Release v4.11.0](090-release-v4110.md) — plan-058 recipe + the fixture follows the stamp | 089 | DONE — 2026-09-22, tag `v4.11.0` (SHA in the tag) |
 
-### The user guide round 2 -- plans 201-210 -> v6.1.0 (opened 2026-10-04; maintainer-executed)
+### The user guide round 2 -- plans 201-210 -> v6.1.0 (released 2026-10-04 UTC; maintainer-executed)
 
 Master record: [201-210-batch-guide-round-2.md](201-210-batch-guide-round-2.md) (the operator's
 rulings G1-G13 and G16 of 2026-10-04, G17 from the plan 201 review). The generated user guide draws
@@ -186,16 +186,16 @@ PROGRESS / DONE.
 
 | # | Plan | Depends on | Status |
 |---|---|---|---|
-| 201 | [D1 and D2 as one agent with two halves](201-d1-d2-two-halves.md) -- the frame primitive (G17) with its lint rule; the operator on top, the two lanes, the handoff, the server and the package; the README overview image re-exported | 200 | DONE -- 2026-10-04 (the commit this row lands in, after the operator's review) |
-| 202 | [The chrome](202-chrome-nav-d3-d5-pager.md) -- numbered sections with chapter kickers, the two-level TOC that fits 1280 x 900 closed, D3's loop returns in channels, D5's row headers as boxes, the pager in rem identical in both languages | 201 | DONE -- 2026-10-04 (the commit this row lands in, after the operator's review) |
-| 203 | [The figures folder on the twelve workflow swimlanes](203-figures-folder-workflow-swimlanes.md) -- sibling SVG files per language and theme, `<picture>` with the toggle swap, LF-pinned, the folder byte-twin; three-lane swimlanes on the frame primitive with the label-width rule | 202 | DONE -- 2026-10-04 (the commit this row lands in, after the operator's review) |
-| 204 | [A relations figure per family](204-family-relations-figures.md) -- derived from the relation rules, one node per kind with the partner prefixes, the same-family node, 28 figures and 9 sentences, elbows ranked | 203 | DONE -- 2026-10-04 (the commit this row lands in, after the operator's review) |
-| 205 | [The flow figures per family](205-family-flow-figures.md) -- the Writes parser over workflow.md, a data path per family, a trace path for the 20 families a gate or rule reads (rules from a readiness run), STD8 drawn once | 204 | DONE -- 2026-10-04 (the commit this row lands in, after the operator's review) |
-| 206 | [The tool figures](206-tool-figures.md) -- an effects canvas per tool with a server line per claim, a call-sequence strip per tool a recipe names, the step accented from its own label | 205 | DONE -- 2026-10-04 (the commit this row lands in, after the operator's review) |
-| 207 | [The gate figures](207-gate-figures.md) -- the pipeline in the server's order, one figure per gate from the gate map, the Check clauses parsed and the definitions table read, one canvas helper | 206 | DONE -- 2026-10-05 (the commit this row lands in, after the operator's review) |
-| 208 | [The skill figures](208-skill-figures.md) -- the skills' text read once, the citation matrix, the lifecycle map with only the stated moves, a strip per skill in a fold | 207 | DONE -- 2026-10-05 (the commit this row lands in, after the operator's review) |
-| 209 | [The logo, the icon and the tagline](209-logo-icon-tagline.md) -- the two-half paving mark with a return arc on the icon, the lockups and the favicon; the tagline reconsidered on every surface | 208 | DONE -- 2026-10-05 (the commit this row lands in, after the operator's review) |
-| 210 | Release 6.1.0 | 209 | PLANNED |
+| 201 | [D1 and D2 as one agent with two halves](201-d1-d2-two-halves.md) -- the frame primitive (G17) with its lint rule; the operator on top, the two lanes, the handoff, the server and the package; the README overview image re-exported | 200 | DONE -- 2026-10-04 (`ba9ac5f`) |
+| 202 | [The chrome](202-chrome-nav-d3-d5-pager.md) -- numbered sections with chapter kickers, the two-level TOC that fits 1280 x 900 closed, D3's loop returns in channels, D5's row headers as boxes, the pager in rem identical in both languages | 201 | DONE -- 2026-10-04 (`dcb7dcd`) |
+| 203 | [The figures folder on the twelve workflow swimlanes](203-figures-folder-workflow-swimlanes.md) -- sibling SVG files per language and theme, `<picture>` with the toggle swap, LF-pinned, the folder byte-twin; three-lane swimlanes on the frame primitive with the label-width rule | 202 | DONE -- 2026-10-04 (`a5aa642`) |
+| 204 | [A relations figure per family](204-family-relations-figures.md) -- derived from the relation rules, one node per kind with the partner prefixes, the same-family node, 28 figures and 9 sentences, elbows ranked | 203 | DONE -- 2026-10-04 (`0fc8e07`) |
+| 205 | [The flow figures per family](205-family-flow-figures.md) -- the Writes parser over workflow.md, a data path per family, a trace path for the 20 families a gate or rule reads (rules from a readiness run), STD8 drawn once | 204 | DONE -- 2026-10-04 (`0f6ddbe`) |
+| 206 | [The tool figures](206-tool-figures.md) -- an effects canvas per tool with a server line per claim, a call-sequence strip per tool a recipe names, the step accented from its own label | 205 | DONE -- 2026-10-04 (`c01fab5`) |
+| 207 | [The gate figures](207-gate-figures.md) -- the pipeline in the server's order, one figure per gate from the gate map, the Check clauses parsed and the definitions table read, one canvas helper | 206 | DONE -- 2026-10-05 (`3fc2798`) |
+| 208 | [The skill figures](208-skill-figures.md) -- the skills' text read once, the citation matrix, the lifecycle map with only the stated moves, a strip per skill in a fold | 207 | DONE -- 2026-10-05 (`19dfdcc`) |
+| 209 | [The logo, the icon and the tagline](209-logo-icon-tagline.md) -- the two-half paving mark with a return arc on the icon, the lockups and the favicon; the tagline reconsidered on every surface | 208 | DONE -- 2026-10-05 (`ee39799`) |
+| 210 | [Release 6.1.0](210-release-6.1.0.md) -- the stamp on every surface, the stock guide's history key, the lab fixture refreshed through the engine, Lighthouse 100/100/100, push and tag on the operator's word | 209 | DONE -- 2026-10-05 (the commit this row lands in, after the operator's review) |
 
 ### Prompts return to the store -- plans 192-200 -> v6.0.0 (released 2026-10-04; maintainer-executed)
 

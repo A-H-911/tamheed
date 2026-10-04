@@ -10,11 +10,11 @@
 
 <p align="center"><strong>Turn a project description into a validated, traceable, execution-ready planning and handoff package for Claude Code to implement. Then keep it the record of the build while execution runs.</strong></p>
 
-<p align="center"><a href="index.html"><strong>User guide</strong> (English · العربية)</a> — every workflow, skill, family, column, tool, gate and readiness rule, generated from the engine.</p>
+<p align="center"><a href="index.html"><strong>User guide</strong> (English · العربية)</a> — every workflow, skill, family, column, tool, gate and readiness rule, drawn and listed, generated from the engine.</p>
 
 <!-- ste:allow long-sentence: a link bar, not a sentence -->
 <p align="center">
-  <em>Claude Code plugin + MCP-backed agent skill · v6.0.0</em> ·
+  <em>Claude Code plugin + MCP-backed agent skill · v6.1.0</em> ·
   <a href="#license">MIT</a> ·
   <a href="docs/install.md">Install</a> ·
   <a href="docs/migrate-from-keystone.md">Migrate from Keystone</a> ·
@@ -466,7 +466,7 @@ See [`CONTRIBUTING.md`](CONTRIBUTING.md) and
 
 ## Maturity
 
-**v6.x** (currently v6.0.0). The methodology (22 stages), the re-baselined relational store, the MCP tool
+**v6.x** (currently v6.1.0). The methodology (22 stages), the re-baselined relational store, the MCP tool
 surface, the canonical serialization, and the in-place migration path are defined, tested, and stable. The
 store (plan 031) has claimed-vs-verified `Review`, evidence-chained verdicts, `WVR-` waivers,
 severity-thresholded blocking, typed progress events, drift-delta scope changes, blocking G-REL, and
