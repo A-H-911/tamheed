@@ -204,6 +204,34 @@ class StoreMigrationTest(unittest.TestCase):
                      " VALUES ('SKL-1', 'writing-rows', 't', 'Obsolete', 'tamheed:package-writes')")
         conn.close()
 
+    def test_migration_008_prompts_lands(self):
+        """Plan 192 (v6): head is 8; `prompts` exists with the closed kind vocabulary, the
+        standard lifecycle, a `phase_id` foreign key, no supersession column, and the
+        trigger pair that indexes a row under 'prompt'."""
+        conn = store.connect()
+        self.assertGreaterEqual(conn.execute("PRAGMA user_version").fetchone()[0], 8)
+        conn.execute("INSERT INTO entity_types (type_id, label, id_prefix, generation_class)"
+                     " VALUES ('prompt', 'Prompt (PRT-)', 'PRT-', 'Always')")
+        conn.execute("INSERT INTO prompts (id, kind, title, body, lifecycle_status)"
+                     " VALUES ('PRT-001', 'kickoff', 'Kickoff', 'Read the record first.',"
+                     " 'Approved')")
+        self.assertEqual(conn.execute(
+            "SELECT entity_type FROM entity_index WHERE id='PRT-001'").fetchone()[0],
+            "prompt")
+        with self.assertRaises(Exception):   # closed kind vocabulary
+            conn.execute("INSERT INTO prompts (id, kind, title, body)"
+                         " VALUES ('PRT-002', 'resume', 't', 'b')")
+        with self.assertRaises(Exception):   # a phase prompt names a real phase
+            conn.execute("INSERT INTO prompts (id, kind, title, body, phase_id)"
+                         " VALUES ('PRT-003', 'phase', 't', 'b', 'PH-9')")
+        cols = [r[1] for r in conn.execute("PRAGMA table_info(prompts)")]
+        self.assertNotIn("superseded_by", cols)   # edited in place (ruling P11)
+        self.assertIn("plugin_skill", cols)
+        conn.execute("DELETE FROM prompts WHERE id='PRT-001'")
+        self.assertIsNone(conn.execute(
+            "SELECT 1 FROM entity_index WHERE id='PRT-001'").fetchone())
+        conn.close()
+
     def test_load_ignores_orphan_jsonl_of_dropped_table(self):
         """A data/ dir with a JSONL for a table the schema no longer declares loads
         without error — the contract a DROP TABLE migration (003) lands on. The orphan

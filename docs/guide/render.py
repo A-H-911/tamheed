@@ -12,7 +12,7 @@ import diagrams
 
 USED_IDS: list[str] = []
 LANGS = ("en", "ar")
-_ID_TOKEN = re.compile(r"(?<![\w`/-])((?:FR|NFR|CON|INV|ASM|DEP|OQ|DEC|ADR|RISK|HYP|EXP|POC|TEST|KPI|STK|PH|MS|SL|WBS|AC|AV|PE|DEF|DW|GATE|EP|CONV|SC|WVR|DOC|SEC|DIA|GT|LL|SKL|FB|G)-[\w.]+)(?![\w`-])")
+_ID_TOKEN = re.compile(r"(?<![\w`/-])((?:FR|NFR|CON|INV|ASM|DEP|OQ|DEC|ADR|RISK|HYP|EXP|POC|TEST|KPI|STK|PH|MS|SL|WBS|AC|AV|PE|DEF|DW|GATE|EP|CONV|SC|WVR|DOC|SEC|DIA|GT|LL|SKL|FB|PRT|G)-[\w.]+)(?![\w`-])")
 
 
 class Text:

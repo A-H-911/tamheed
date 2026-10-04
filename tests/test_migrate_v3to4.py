@@ -254,7 +254,9 @@ class MigrateV3ToV4Test(unittest.TestCase):
         ets = rows(self.pkg, "entity_types.jsonl")
         ids = {r["type_id"] for r in ets}
         self.assertIn("waiver", ids)
-        self.assertNotIn("prompt", ids)
+        # the v2 `prompt` row (PRM-) is scrubbed; the v6 family (PRT-, plan 192) is registered
+        prefixes = {r["type_id"]: r["id_prefix"] for r in ets}
+        self.assertEqual(prefixes.get("prompt"), "PRT-")
         self.assertFalse(any("template_ref" in r for r in ets))
 
     def test_double_migration_refused(self):

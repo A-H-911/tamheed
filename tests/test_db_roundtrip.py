@@ -30,6 +30,7 @@ ENTITY_TYPES = [
     ("slice", "Slice", "SL-", "Always"),
     ("invariant", "Invariant", "INV-", "Conditional"),
     ("deferred-work", "Deferred work", "DW-", "Conditional"),
+    ("prompt", "Prompt", "PRT-", "Conditional"),   # plan 192 (v6): rows, not files
 ]
 
 
@@ -71,6 +72,11 @@ def seed(conn: sqlite3.Connection) -> None:
     )
     conn.execute(
         "INSERT INTO tests (id, title) VALUES ('TEST-001', 'triage e2e')"
+    )
+    conn.execute(
+        "INSERT INTO prompts (id, kind, title, body, phase_id, plugin_skill, lifecycle_status)"
+        " VALUES ('PRT-001', 'kickoff', 'Kickoff', 'Read the record first.', 'PH-1',"
+        " 'slice-kickoff', 'Approved')"
     )
     conn.executemany(
         "INSERT INTO trace_edges (from_id, to_id, relation) VALUES (?, ?, ?)",

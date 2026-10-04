@@ -228,6 +228,51 @@ class McpContractTest(unittest.TestCase):
         (prompts_dir / "kickoff.md").write_text(
             "# Kickoff\n\nStart with SL-001.\n", encoding="utf-8")
 
+    def test_prompt_rows_are_a_family_bound_to_a_bundled_skill(self):
+        """Plan 192 (v6): project prompts are rows. A kickoff, a phase prompt and a
+        situational one round-trip through entity_upsert; the kind vocabulary is closed;
+        a phase prompt names a real phase; `plugin_skill` must be a bundled skill, by
+        folder name, and the refusal names the legal set; the registry and the schema
+        head say so."""
+        srv.package_create("pr", "Prompts", "rnd")
+        self.assertEqual(srv.server_info()["schema_version"], 8)
+        self.assertIn(("prompt", "prompts"), srv.ENTITY_TABLES.items())
+        self.assertTrue(srv.entity_upsert([{"type": "phase", "id": "PH-1", "title": "P1",
+                                            "lifecycle_status": "Approved"}])["ok"])
+        rows = [
+            {"type": "prompt", "id": "PRT-001", "kind": "kickoff", "title": "Kickoff",
+             "body": "Read the record first. Then start SL-001.", "lifecycle_status": "Approved"},
+            {"type": "prompt", "id": "PRT-002", "kind": "phase", "title": "Phase 1 resume",
+             "body": "Phase 1 is approved. Resume from its exit criteria.", "phase_id": "PH-1"},
+            {"type": "prompt", "id": "PRT-003", "kind": "situational", "title": "Deferred work",
+             "body": "DW- ids map to the historic D- numbers.", "plugin_skill": "replan-deferred"},
+        ]
+        out = srv.entity_upsert(rows)
+        self.assertTrue(out["ok"], out)
+        got = srv.entity_query("prompt", limit=10)
+        self.assertEqual(got["total"], 3)
+        by_id = {r["id"]: r for r in got["rows"]}
+        self.assertEqual(by_id["PRT-003"]["plugin_skill"], "replan-deferred")
+        self.assertEqual(by_id["PRT-002"]["phase_id"], "PH-1")
+        bad_kind = srv.entity_upsert([dict(rows[0], id="PRT-004", kind="resume")])
+        self.assertFalse(bad_kind["ok"])
+        bad_phase = srv.entity_upsert([dict(rows[1], id="PRT-005", phase_id="PH-9")])
+        self.assertFalse(bad_phase["ok"])
+        typo = srv.entity_upsert([dict(rows[2], id="PRT-006", plugin_skill="replan-defered")])
+        self.assertFalse(typo["ok"], typo)
+        self.assertIn("not a bundled scenario skill", typo["items"][0]["error"])
+        self.assertIn("replan-deferred", typo["items"][0]["error"])
+        # a discipline skill or the front door takes no project half: scenario skills only
+        for not_scenario in ("package-writes", "tamheed"):
+            out = srv.entity_upsert([dict(rows[2], id="PRT-007", plugin_skill=not_scenario)])
+            self.assertFalse(out["ok"], not_scenario)
+        self.assertEqual(len(srv._plugin_skill_names()), 17)
+        # edited in place while Approved (ruling P11): no supersession column exists
+        again = srv.entity_upsert([dict(rows[0], body="Read the record first. Then start SL-002.",
+                                        expect_unchanged=["title"])])
+        self.assertTrue(again["ok"], again)
+        self.assertNotIn("superseded_by", by_id["PRT-001"])
+
     def test_feedback_and_local_tools_exist_on_the_operators_word(self):
         """Plan 087 (maintainer rulings 2026-09-22). The field built utilities around the
         package because four functions were missing and nothing told upstream. A missing
@@ -1363,7 +1408,9 @@ class McpContractTest(unittest.TestCase):
                          [["PRM-001", "FR-001", "relates_to"]])
         after = edges.read_text(encoding="utf-8")
         self.assertNotIn("PRM-001", after)
-        self.assertNotIn('"prompt"', et.read_text(encoding="utf-8"))
+        registry = et.read_text(encoding="utf-8")
+        self.assertNotIn('"PRM-"', registry)          # the v2 row is scrubbed ...
+        self.assertIn('"PRT-"', registry)             # ... and the v6 family is registered (plan 192)
         # the migrated store is healthy: gates run, no FK violations
         self.assertTrue(srv.package_open("demo")["ok"])
         self.assertTrue(srv.gate_run()["ok"])
@@ -1380,19 +1427,26 @@ class McpContractTest(unittest.TestCase):
         self.assertEqual(len(warns), 1)
         self.assertEqual(warns[0]["file"], "prompts/prm-001-initial.md")
 
-    def test_prompts_table_gone(self):
-        """Plan 027 (migration 003): the table is gone; the entity type is unknown."""
+    def test_prompts_table_is_back_as_rows_in_v6(self):
+        """Plan 027 (migration 003) dropped the v2 table; plan 192 (migration 008) brings
+        prompts back as the v6 family. The v2 shape stays refused: a `PRM-` id fails the
+        GLOB and `prompt_kind` is not a column."""
         import store
         conn = store.connect()
         tables = {n for (n,) in conn.execute(
             "SELECT name FROM sqlite_master WHERE type = 'table'")}
-        self.assertNotIn("prompts", tables)
+        self.assertIn("prompts", tables)
+        cols = [r[1] for r in conn.execute("PRAGMA table_info(prompts)")]
+        self.assertIn("plugin_skill", cols)
+        self.assertNotIn("prompt_kind", cols)
         conn.close()
         srv.package_create("demo", "Demo", "rnd")
         out = srv.entity_upsert([{"type": "prompt", "id": "PRM-001",
                                   "prompt_kind": "initial", "title": "K", "body": "b"}])
         self.assertFalse(out["ok"])
-        self.assertIn("unknown entity type", out["items"][0]["error"])
+        out = srv.entity_upsert([{"type": "prompt", "id": "PRM-001", "kind": "kickoff",
+                                  "title": "K", "body": "b"}])
+        self.assertFalse(out["ok"])                     # the retired prefix never names a row
 
     def test_stale_warning_block_retracts_when_clean(self):
         """C20/B2: the warning's lifetime is coupled to the CURRENT scan, not the first.
@@ -2920,8 +2974,8 @@ class V4EngineTest(unittest.TestCase):
         edge; the `deferred-work-carried` advisory lists Activated rows with no OPEN carrier
         (Review counts as open) - bind one, or close the row Done."""
         info = srv.server_info()                 # setUp created "demo" with PH-1 / SL-001
-        self.assertEqual(info["migrations_head"], "007_handoff.sql")
-        self.assertEqual(info["schema_version"], 7)
+        self.assertEqual(info["migrations_head"], "008_prompts.sql")   # plan 192 (v6)
+        self.assertEqual(info["schema_version"], 8)
         rules = lambda: {r["rule"]: r for r in srv.readiness_check("package")["rules"]}
         out = srv.entity_upsert([
             {"type": "deferred-work", "id": "DW-001", "title": "later", "severity": "low",
@@ -4698,7 +4752,7 @@ class V4EngineTest(unittest.TestCase):
         waiver_cols = [r[1] for r in srv._CURRENT.conn.execute("PRAGMA table_info(waivers)")]
         (csv_dir / "waivers.csv").write_text(",".join(waiver_cols) + "\nWVR-001,x\n",
                                              encoding="utf-8")     # its table is empty now
-        (csv_dir / "prompts.csv").write_text(
+        (csv_dir / "prompts.csv").write_text(   # the v2 shape; the NAME is live again since v6 (plan 192)
             "id,prompt_kind,title,body,phase_id,custom_attributes,last_referenced\nPRM-1,k\n",
             encoding="utf-8")                                       # a table that is gone
         (csv_dir / "notes.csv").write_text("my,own\n1,2\n", encoding="utf-8")
@@ -4709,7 +4763,7 @@ class V4EngineTest(unittest.TestCase):
         (csv_dir / f"{empty}.csv").write_text("my,own,columns\n1,2,3\n",
                                               encoding="utf-8")    # OUR name, THEIR file
         seen = srv.package_verify()
-        self.assertEqual(seen["foreign_csv"], ["notes.csv", "prompts.csv"])
+        self.assertEqual(seen["foreign_csv"], ["notes.csv"])   # prompts.csv names a live table since v6
         self.assertTrue(seen["verified"])                           # reported, never flips it
         out = srv.export_html()["csv"]
         self.assertEqual(out["removed"], ["csv/prompts.csv", "csv/waivers.csv"])

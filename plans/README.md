@@ -176,6 +176,28 @@ devil's-advocate review; execution order is the row order below). Status values:
 | 089 | [Lab beat 18](089-lab-beat-18-findings-27.md) | 085-088 + full test (15/15 vs 0/15 on `v4.10.0`; 9 suites; selftest) | DONE `762b98b` — 9 new assertions, each failing on the pre-beat fixture; D-1 registry-sync unscripted, F-3 fixed |
 | 090 | [Release v4.11.0](090-release-v4110.md) — plan-058 recipe + the fixture follows the stamp | 089 | DONE — 2026-09-22, tag `v4.11.0` (SHA in the tag) |
 
+### Prompts return to the store -- plans 192-200 -> v6.0.0 (opened 2026-10-04; maintainer-executed)
+
+Master record: [192-200-batch-prompts.md](192-200-batch-prompts.md) (the operator's rulings G1-G16 and
+P1-P13 of 2026-10-04, after the user-guide review's interview and a devil's-advocate round). Project
+prompts stop being files: a `prompts` family (`PRT-`) with a status, provenance and a binding to the
+scenario skill that reads it; `handoff_emit` demands an Approved kickoff row; the stock operator guide
+moves to `<package>/README.md`; `package_migrate` converts a package's prompt files on the operator's
+word; the halves wording; the ACMP brief; the release. The user guide round 2 (plans 201-210) follows
+the tag. Status values: PLANNED / IN PROGRESS / DONE.
+
+| # | Plan | Depends on | Status |
+|---|---|---|---|
+| 192 | [The `prompts` family](192-prompts-family.md) -- migration 008, the registry row, the `plugin_skill` write guard, the catalog and governance rows, the guide ids | 191 | DONE -- 2026-10-04 (the commit this row lands in, after the operator's review) |
+| 193 | The engine paths: G-INJECT over rows, the scans over `prompts.body`, the emit precondition, `plugin_skill=` on `entity_query`, note v7 | 192 | PLANNED |
+| 194 | The stock operator guide at `<package>/README.md` | 193 | PLANNED |
+| 195 | `package_migrate` converts prompt files to rows; the sample and the fixture migrated by the tool; the family becomes Always | 194 | PLANNED |
+| 196 | The bundle's teaching surface and the halves wording | 195 | PLANNED |
+| 197 | The docs, the README and the guide's prose | 196 | PLANNED |
+| 198 | Stamp 6.0.0, the evals re-aimed, lab beat 34 | 197 | PLANNED |
+| 199 | The ACMP brief 6.0.0 | 198 | PLANNED |
+| 200 | Release 6.0.0: the batch record, push, tag | 199 | PLANNED |
+
 ### The plain-English batch (ASD-STE100) -- plans 176-191 -> v5.9.0 (2026-10-03; maintainer-executed)
 
 Master record: [176-191-batch-ste.md](176-191-batch-ste.md) (the approved plan, revision 2 after the

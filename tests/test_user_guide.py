@@ -76,7 +76,7 @@ class UserGuideTest(unittest.TestCase):
 
     def test_structural_counts(self):
         f = self.facts
-        self.assertEqual(len(f["schema"]["tables"]), 41)
+        self.assertEqual(len(f["schema"]["tables"]), 42)
         self.assertEqual(len(f["families"]), len(srv.BASELINE_ENTITY_TYPES))
         self.assertEqual(sum(1 for x in f["families"] if x["cls"] == "Always"), 10)
         rel = next(t for t in f["schema"]["tables"] if t["table"] == "trace_edges")

@@ -100,9 +100,11 @@ ENTITY_TABLES = {
     "narrative-document": "narrative_documents",
     "document-section": "document_sections",
     "diagram": "diagrams",
-    # "prompt" removed in v3.0.0 (plan 027, migration 003) — prompts are .md files in
-    # <package>/prompts/, not entities; a legacy prompts.jsonl is converted by the
-    # v3→v4 migration (package_open refuses pre-v4 stores).
+    # "prompt" left in v3.0.0 (plan 027, migration 003: prompts became .md files in
+    # <package>/prompts/) and returns in v6.0.0 (plan 192, migration 008) as rows with a
+    # status, provenance and a binding to the skill that reads them. A legacy v2
+    # prompts.jsonl still passes through files first, then rows, in one package_migrate.
+    "prompt": "prompts",           # migration 008 (plan 192): kickoff, phase and situational prompts
     "glossary-term": "glossary_terms",  # community-extension worked example
     "lesson": "lessons",           # migration 002 (plan 035): execution-taught, operator-confirmed
     "skill": "skills",             # migration 003 (plan 036): procedural memory distilled from lessons
@@ -273,6 +275,7 @@ BASELINE_ENTITY_TYPES = [
     ("lesson", "Lesson learned (LL-)", "LL-", "Continuous"),
     ("skill", "Skill (SKL-, distilled from lessons)", "SKL-", "On-request"),
     ("feedback", "Upstream feedback / local tool (FB-)", "FB-", "Continuous"),
+    ("prompt", "Prompt (PRT-)", "PRT-", "Conditional"),  # migration 008 (plan 192): rows, not files; Always from plan 195, when package_migrate seeds the field
 ]
 
 # Taught-vocabulary rosters (plan 032): the single source the check.py teaching lint
@@ -1856,6 +1859,17 @@ def entity_upsert(entities: list[dict]) -> dict:
                     continue
                 lesson_pe = ("lesson-confirmed" if incoming == "Approved"
                              else "lesson-promoted")
+        # Plan 192 (v6): a prompt row binds to the scenario skill that reads it by NAME.
+        # The vocabulary is the plugin's own skills folder, so a typo never binds nothing
+        # silently (the relation-rules posture: refuse at write, name the legal set).
+        if etype == "prompt" and cols.get("plugin_skill") is not None:
+            legal = _plugin_skill_names()
+            if str(cols["plugin_skill"]) not in legal:
+                results.append({"index": i, "ok": False, "id": cols.get("id"),
+                                "error": f"plugin_skill {cols['plugin_skill']!r} is not a"
+                                         " bundled scenario skill — one of: " + ", ".join(legal)})
+                failed = True
+                continue
         # Plan 087 (maintainer rulings 2026-09-22): what the project tells upstream, and
         # what it keeps as a local tool over the package, exists on the OPERATOR's word.
         # A draft (Proposed) is the agent's and free. The BOUND states - Confirmed,
@@ -3450,6 +3464,24 @@ def work_bind(ref: str, entity_ids: list[str], note: str | None = None) -> dict:
 # --------------------------------------------------------------------------- handoff
 
 _PROMPTS_DIR = _SERVER_DIR.parent / "prompts"
+_SKILLS_DIR = _SERVER_DIR.parent / "skills"
+
+
+def _plugin_skill_names() -> list[str]:
+    """The bundled SCENARIO skills, by folder name (plan 192): the legal values of
+    `prompts.plugin_skill`. A scenario skill is the operator-invoked ceremony a prompt
+    row accompanies (`disable-model-invocation: true` in its frontmatter); the front
+    door and the discipline skills take no project half. Read from the plugin itself,
+    so the bundle stays self-contained and a skill added in a release is legal from it."""
+    names = []
+    for p in sorted(_SKILLS_DIR.iterdir()):
+        skill_md = p / "SKILL.md"
+        if not skill_md.is_file():
+            continue
+        head = skill_md.read_text(encoding="utf-8").split("\n---", 2)[0]
+        if "disable-model-invocation: true" in head:
+            names.append(p.name)
+    return names
 
 # v1-flow patterns for the cutover stale-reference scan (C19). Precision matters: the bare
 # word "Keystone" is NEVER matched alone — real projects use it as a product/domain term
@@ -4912,6 +4944,9 @@ _CSV_TRIGGERS = ("=", "+", "-", "@", "\t", "\r")
 # Plan 065: tables past migrations converted away, whose derived CSV may survive in a
 # package (the field carried csv/prompts.csv for two months after 3.0.0).
 _RETIRED_CSV_HEADERS = {
+    # The v2 prompts table's shape. The NAME is live again since v6 (plan 192, a different
+    # table), so this header is matched beside the live one: a v2 leftover is still the
+    # engine's own file, recognised by its header, and removed.
     "prompts.csv": "id,prompt_kind,title,body,phase_id,custom_attributes,last_referenced",
 }
 
@@ -5035,7 +5070,9 @@ def export_html(output: str | None = None) -> dict:
                 first = fh.readline().rstrip("\r\n")
         except (OSError, UnicodeDecodeError):
             first = None
-        if first is not None and first == headers.get(stale.name.lower()):
+        own_shapes = (headers.get(stale.name.lower()),
+                      _RETIRED_CSV_HEADERS.get(stale.name.lower()))
+        if first is not None and first in own_shapes:
             try:
                 stale.unlink()
                 csv_out["removed"].append(f"csv/{stale.name}")

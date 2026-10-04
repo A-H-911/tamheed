@@ -95,7 +95,7 @@ class ResumeHookTest(unittest.TestCase):
         out, code = run_hook(self.project, source="startup")
         self.assertEqual(code, 0)
         lines = out.splitlines()
-        self.assertTrue(lines[0].startswith("tamheed resume — package `pkg` (schema 7) — unlocked"), lines[0])
+        self.assertTrue(lines[0].startswith("tamheed resume — package `pkg` (schema 8) — unlocked"), lines[0])
         self.assertIn("No handoff recorded", out)
         self.assertIn("Skill: tamheed:package-writes", out)
         self.assertNotIn("compacted", out)

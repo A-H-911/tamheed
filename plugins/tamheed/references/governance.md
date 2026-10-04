@@ -47,9 +47,11 @@ reused (retire, do not recycle). Every entity lives in its `data/<table>.jsonl` 
 | Lesson | `LL-NNN` | lessons |
 | Skill | `SKL-NNN` | skills |
 | Feedback (upstream feedback / local tool) | `FB-NNN` | feedback |
+| Prompt (kickoff, phase, situational) | `PRT-NNN` | prompts |
 
 Retired prefixes: `PRM-` (v3, when prompts became files under `<package>/prompts/`). Ids of that
-shape in a converted package are conversion-audit provenance, not entities.
+shape in a converted package are conversion-audit provenance, not entities. Prompts returned to
+the store in v6 under the new prefix `PRT-`, so a `PRM-` id never names a live row.
 
 **`DEC` vs `ADR`: the promotion rule (v4, plan 031).** Use `DEC-` for ANY decision. Promote
 to an `ADR-NNNN` when the **one-way-door test** says yes. The test says yes when the decision is
