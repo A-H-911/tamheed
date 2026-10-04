@@ -120,6 +120,37 @@ class UserGuideTest(unittest.TestCase):
                     token = item.split("/")[-1].replace("*", "")      # data/*.jsonl -> .jsonl, csv/*.csv -> .csv
                     self.assertTrue(names(line, token), (tool, item, line, src[line - 1].strip()))
 
+    def test_gate_figures_derive_from_the_server_and_the_references(self):
+        """Plan 207 (G8): the Check clauses parse for all 22 stages and cite only tier gates; the
+        definitions table covers every tier gate; the pipeline is the mechanical tier in the
+        server's order; every view named exists; the vacuous warnings sit on the lines cited."""
+        import diagrams
+        ck = self.facts["checks"]
+        self.assertEqual(sorted(ck), list(range(1, 23)))
+        tiers = self.facts["gates"]
+        every = {g for t in tiers.values() for g in t}
+        self.assertTrue({g for gs in ck.values() if gs for g in gs} <= every)
+        self.assertEqual(set(self.facts["gate_defs"]), every)
+        self.assertEqual(sorted(diagrams.PIPELINE), tiers["mechanical"])
+        self.assertEqual(set(diagrams.GATE_HOW), set(tiers["mechanical"]))
+        src = extract.SERVER_SRC.split("\n")
+        schema = (extract.BUNDLE / "db" / "schema.sql").read_text(encoding="utf-8")
+        lines = []
+        for g in diagrams.PIPELINE:
+            kind, where = diagrams.GATE_HOW[g]
+            if kind == "view":
+                self.assertIn(f"CREATE VIEW {where}", schema, g)
+                lines.append(2523)
+            else:
+                self.assertIn(f'"{g}"', src[where - 1], (g, where))
+                lines.append(where)
+        self.assertEqual(lines, sorted(lines), "the pipeline follows the server's order")
+        for g, line in diagrams.VACUOUS.items():
+            self.assertIn("vacuously", src[line] + src[line + 1], (g, line))
+        tables = {t["table"] for t in self.facts["schema"]["tables"]} | {"entity_index", "entity_types"}
+        for g, items in diagrams.GATE_READS.items():
+            self.assertTrue({i for i in items if not i.startswith("@")} <= tables, g)
+
     def test_every_rendered_id_has_en_and_ar(self):
         missing = build.missing(self.required)
         self.assertEqual(missing, [], f"{len(missing)} strings missing, e.g. {missing[:5]}")

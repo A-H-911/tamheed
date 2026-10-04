@@ -1035,44 +1035,126 @@ TOOL_EFFECTS = {
 }
 
 
-def _fx_pill(key, item, x, y, w):
+def _pill_item(key, item, x, y, w):
+    """A canvas item: "@x" is the phrase dia.fx.x; "#cid|tail" is a content id with a plain tail
+    (a stage title with its number); anything else is an identifier drawn as written."""
     if item.startswith("@"):
         return node(key, x, y, w, 28, _L("fx." + item[1:]), "pill", small=True)
+    if item.startswith("#"):
+        cid, _, tail = item[1:].partition("|")
+        n = node(key, x, y, w, 28, cid, "pill", small=True)
+        if tail:
+            n["label"], n["label_tail"] = cid, [tail]
+            n["h"] = 40
+        return n
     return node(key, x, y, w, 28, [item], "pill", mono=True, small=True)
+
+
+def _canvas(fid: str, centre: list[str], centre_cls: str, left: list[str], right: list[str],
+            below: list[str], labels: tuple[str, str, str]) -> dict:
+    """Plan 206/207: one hub in the centre, a framed column on the left fanning in, a framed column
+    on the right fanning out, a framed column beneath with no arrows. `labels` = the three frame
+    titles (dia.* keys). A column holding only the "@nothing" phrase draws no arrow."""
+    def column(items, x, key_prefix):
+        ns, y = [], 40
+        for i, it in enumerate(items):
+            n = _pill_item(f"{key_prefix}{i}", it, x, y, 220)
+            ns.append(n)
+            y += n["h"] + 8
+        return ns, y - 2
+    ln, lh = column(left, 20, "l")
+    rn, rh = column(right, 620, "r")
+    for n in ln:
+        n["w"] = 240
+    for n in rn:
+        n["w"] = 250
+    ty = 24
+    hub = node("hub", 330, ty, 210, 44, centre, centre_cls, mono=True)
+    ny = ty + 44 + 14
+    bn, bh = column(below, 330, "b")
+    for n in bn:
+        n["x"], n["w"], n["y"] = 330, 210, n["y"] + ny
+    H = max(lh + 10, rh + 10, ny + bh + 10, 120) + 20
+    frs = [frame("left", 10, 10, 260, lh, _L(labels[0]), [n["key"] for n in ln]),
+           frame("right", 610, 10, 270, rh, _L(labels[1]), [n["key"] for n in rn]),
+           frame("below", 320, ny, 230, bh, _L(labels[2]), [n["key"] for n in bn])]
+    es = []
+    if left != ["@nothing"]:
+        es += _hub("hub", ln, 330, ty + 22, 44, False, gap=60)
+    if right != ["@nothing"]:
+        es += _hub("hub", rn, 540, ty + 22, 44, True, gap=70)
+    return {"id": fid, "w": 900, "h": int(H), "nodes": ln + rn + [hub] + bn, "edges": es, "frames": frs}
 
 
 def effects_figure(f, tool: str) -> dict:
     """Plan 206 (G7): the tool in the centre, what it reads on the left (arrows in), what it writes
     on the right (arrows out), what it needs beneath it."""
     fx = TOOL_EFFECTS[tool]
-    reads = [(x, i) for i, (x, _ln) in enumerate(fx["reads"])]
-    writes = [(x, i) for i, (x, _ln) in enumerate(fx["writes"])]
-    needs = [x for x, _ln in fx["needs"]]
-    col_h = lambda items: 30 + 36 * len(items) + 6
-    H = max(col_h(reads), col_h(writes), 82 + col_h(needs), 120) + 20   # 82 = the needs frame's top
-    ns, frs = [], []
-    for k, (x, i) in enumerate(reads):
-        ns.append(_fx_pill(f"r{i}", x, 20, 40 + 36 * k, 220))
-    rk = [n["key"] for n in ns]
-    frs.append(frame("reads", 10, 10, 240, col_h(reads), _L("fx.reads"), rk))
-    wn = []
-    for k, (x, i) in enumerate(writes):
-        wn.append(_fx_pill(f"w{i}", x, 610, 40 + 36 * k, 220))
-    frs.append(frame("writes", 600, 10, 240, col_h(writes), _L("fx.writes"), [n["key"] for n in wn]))
-    ty = 24
-    hub = node("tool", 320, ty, 210, 44, [tool], "acc strong", mono=True)
-    ny = ty + 44 + 14
-    nn = [_fx_pill(f"n{i}", x, 320, ny + 30 + 36 * i, 210) for i, x in enumerate(needs)]
-    frs.append(frame("needs", 310, ny, 230, col_h(needs), _L("fx.needs"), [n["key"] for n in nn]))
-    es = []
-    live_r = [n for n in ns if n["key"] != "nothing" and not (len(reads) == 1 and reads[0][0] == "@nothing")]
-    live_w = [n for n in wn if not (len(writes) == 1 and writes[0][0] == "@nothing")]
-    hub_cy = ty + 22
-    if live_r:
-        es += _hub("tool", live_r, 320, hub_cy, 44, False, gap=70)
-    if live_w:
-        es += _hub("tool", live_w, 530, hub_cy, 44, True, gap=70)
-    return {"id": f"fx-{tool}", "w": 860, "h": int(H), "nodes": ns + wn + [hub] + nn, "edges": es, "frames": frs}
+    return _canvas(f"fx-{tool}", [tool], "acc strong", [x for x, _ln in fx["reads"]],
+                   [x for x, _ln in fx["writes"]], [x for x, _ln in fx["needs"]],
+                   ("fx.reads", "fx.writes", "fx.needs"))
+
+
+# Plan 207 (G8): how gate_run evaluates each mechanical gate, with the server line (Python) or the
+# view in schema.sql, in the order the server builds its report (the views share one loop, L2523).
+GATE_HOW = {
+    "G-IDS": ("python", 2510), "G-DEC-STATUS": ("python", 2515), "G-REQ-SRC": ("python", 2518),
+    "G-TRACE": ("view", "g_trace_failures"), "G-SET": ("view", "g_set_failures"),
+    "G-PROGRESS": ("view", "g_progress_failures"),
+    "G-COMPLETE": ("python", 2585), "G-REL": ("python", 2619),
+}
+PIPELINE = ["G-IDS", "G-DEC-STATUS", "G-REQ-SRC", "G-TRACE", "G-SET", "G-PROGRESS", "G-COMPLETE", "G-REL"]
+# what each mechanical gate reads: the views' bodies (schema.sql L851-871) and the server's loops
+# (G-IDS L2484-2498 over every table against entity_index; G-COMPLETE L2553 over every table;
+# G-REL through _edge_rule_violations, trace_edges joined to entity_index twice)
+GATE_READS = {**GATE_TABLES, "G-SET": ("entity_types", "entity_index", "omissions"),
+              "G-REL": ("trace_edges", "entity_index"),
+              "G-IDS": ("@all_tables", "entity_index"), "G-COMPLETE": ("@all_tables",)}
+VACUOUS = {"G-TRACE": 2532, "G-PROGRESS": 2541}          # the warning the server attaches over zero rows
+_SEVERITY_KEY = {"Critical": "@gate.sev.critical", "Warn": "@gate.sev.warn", "Critical at emission": "@gate.sev.emission"}
+
+
+def _stage_items(f, gate: str) -> list[str]:
+    return [f"#stagetitle.{n:02d}|{n}" for n, gs in f["checks"].items() if gs and gate in gs]
+
+
+def gate_figure(f, gate: str) -> dict:
+    """Plan 207 (G8): a mechanical gate reads its tables and is evaluated by a view or by Python in
+    gate_run; a judgment or warn gate is the agent's judgment at the stages whose Check names it,
+    helped by the mechanics its definition names, recorded as a gate-decision journal entry."""
+    sev = _SEVERITY_KEY[f["gate_defs"][gate]["severity"]]
+    if gate in GATE_HOW:
+        kind, where = GATE_HOW[gate]
+        how = [where, "@gate.view"] if kind == "view" else ["@gate.python", f"tamheed_server.py L{where}"]
+        # a mechanical gate no Check clause names still runs at stage 19 (quality-gates.md, Running gates)
+        stages = _stage_items(f, gate) or ["@gate.stage19"]
+        below = [sev] + (["@gate.vacuous"] if gate in VACUOUS else [])
+        return _canvas(f"gate-{gate}", [gate], "good strong", list(GATE_READS[gate]), how + stages, below,
+                       ("gate.reads", "gate.how", "gate.sev"))
+    stages = _stage_items(f, gate) or ["@gate.nostage"]
+    mech = f["gate_defs"][gate]["mechanics"]
+    cls = "warn strong" if gate in f["gates"]["warn"] else "acc strong"
+    return _canvas(f"gate-{gate}", [gate], cls, stages, ["@gate.judgment"] + mech + ["@gate.recorded"], [sev],
+                   ("gate.stages", "gate.how", "gate.sev"))
+
+
+def pipeline_figure(f) -> dict:
+    """Plan 207 (G8): gate_run's gates in evaluation order, and readiness_check's four parts above
+    them as the semantic layer. No arrow joins the two: they are separate calls."""
+    ns, es, frs = [], [], []
+    parts = ["@pipe.blocking", "@pipe.waivers", "@pipe.liveness", "@pipe.human"]
+    col = 860 // len(parts)
+    for i, p in enumerate(parts):
+        ns.append(_pill_item(f"p{i}", p, 30 + i * col, 36, col - 12))
+    frs.append(frame("sem", 10, 10, 880, 66, _L("pipe.sem"), [n["key"] for n in ns]))
+    col = 860 // len(PIPELINE)
+    gn = []
+    for i, g in enumerate(PIPELINE):
+        gn.append(node(f"g{i}", 30 + i * col, 122, col - 12, 36, [g], "good pill", mono=True, small=True))
+        if i:
+            es.append(edge(f"g{i - 1}", f"g{i}", side=("r", "l")))
+    frs.append(frame("mech", 10, 96, 880, 74, _L("pipe.mech"), [n["key"] for n in gn]))
+    return {"id": "gates-pipeline", "w": 900, "h": 184, "nodes": ns + gn, "edges": es, "frames": frs}
 
 
 def sequence_strip(f, tool: str) -> dict:
@@ -1102,6 +1184,10 @@ def file_models(f) -> dict:
     tool an effects canvas and, when a recipe names it, a call-sequence strip."""
     out = dict(FILE_MODELS)
     out["life-STD8"] = life_std8
+    out["gates-pipeline"] = pipeline_figure
+    for tier in f["gates"].values():
+        for g in tier:
+            out[f"gate-{g}"] = (lambda ff, gg=g: gate_figure(ff, gg))
     for t in f["tools"]:
         out[f"fx-{t['name']}"] = (lambda ff, n=t["name"]: effects_figure(ff, n))
         if any(t["name"] in names for _slug, names, _steps in RECIPES):

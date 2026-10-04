@@ -367,6 +367,52 @@ def rule_tables() -> dict[str, str]:
     return dict(sorted(out.items()))
 
 
+def checks() -> dict[int, list[str] | None]:
+    """Plan 207 (G8): the gate names each stage's `**Check:**` clause of workflow.md cites, the
+    clause read to its sentence end as the Writes clauses are. A stage with no clause is None. A
+    cited gate that no tier lists fails the build."""
+    wf = (BUNDLE / "references" / "workflow.md").read_text(encoding="utf-8")
+    known = {g for tier in gates().values() for g in tier}
+    parts = re.split(r"^### (\d+)\. (.+)$", wf, flags=re.M)
+    out: dict[int, list[str] | None] = {}
+    for i in range(1, len(parts), 3):
+        num, block = int(parts[i]), parts[i + 2]
+        m = re.search(r"\*\*Check:\*\*\s*(.*?)(?<!\w\.\w)(?<=\.)(?=\s|$)", block, re.S)
+        if not m:
+            assert "Check:" not in block, f"stage {num}: a Check line the parser cannot read"
+            out[num] = None
+            continue
+        cited = sorted(set(re.findall(r"G-[A-Z][A-Z-]*[A-Z]", m.group(1))))
+        for g in cited:
+            assert g in known, f"stage {num}: Check cites {g}, which no tier lists"
+        out[num] = cited
+    assert sorted(out) == list(range(1, 23)), sorted(out)
+    return out
+
+
+def gate_defs() -> dict[str, dict]:
+    """Plan 207: the Gate definitions table of quality-gates.md: each gate's severity cell and the
+    backticked tokens of its Checks cell that are readiness rules, tools, views or tables (its
+    mechanics). Every tier gate has a row and every row is a tier gate."""
+    qg = (BUNDLE / "references" / "quality-gates.md").read_text(encoding="utf-8")
+    sec = qg[qg.index("## Gate definitions"):qg.index("## Running gates")]
+    rules = {m.group(1) for m in re.finditer(r'rule\(\s*"([a-z-]+)"', SERVER_SRC)}
+    tool_names = set(srv.TOOLS)
+    views = set(re.findall(r"CREATE VIEW (\w+)", (BUNDLE / "db" / "schema.sql").read_text(encoding="utf-8")))
+    tables = set(srv.ENTITY_TABLES.values()) | {"entity_index", "entity_types", "packages"}
+    out: dict[str, dict] = {}
+    for line in sec.splitlines():
+        m = re.match(r"^\| (G-[A-Z-]+) \| ([^|]+) \| (.*) \|$", line.strip())
+        if not m:
+            continue
+        toks = re.findall(r"`([^`]+)`", m.group(3))
+        out[m.group(1)] = {"severity": m.group(2).strip(),
+                           "mechanics": [t for t in toks if t in rules or t in tool_names or t in views or t in tables]}
+    known = {g for tier in gates().values() for g in tier}
+    assert set(out) == known, (sorted(set(out) ^ known))
+    return out
+
+
 def inserters() -> dict[str, list[str]]:
     """Plan 205: which server functions insert into which table, a census of the `INSERT INTO`
     statements in the server source by enclosing def. entity_upsert's generic insert is listed
@@ -487,6 +533,7 @@ def facts() -> dict:
     return {
         "version": version(), "schema": sch, "lifecycles": lifecycle_sets(sch),
         "writes": writes(sch), "rule_tables": rule_tables(), "inserters": inserters(),
+        "checks": checks(), "gate_defs": gate_defs(),
         "families": families(), "relations": relations(), "tools": tools(), "header": header(),
         "gates": gates(), "rules": readiness_rules(), "events": events(),
         "verdicts": verdict_sets(sch), "stages": stages(), "skills": skills(),

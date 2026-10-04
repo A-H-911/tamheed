@@ -39,6 +39,8 @@ the engine as it is after 6.0.0.
 | G21 | (plan 205 review) A domain lifecycle set shows its values as pills in CHECK order, no arrow: the engine states no transition table. |
 | G22 | (plan 206 review) The effects canvas: reads in from the left, writes out to the right, needs beneath; the store's work as a phrase pinned to the calling line, never a file name no server line names; every claim a server line the test holds. |
 | G23 | (plan 206 review) The call-sequence strip marks a step only where its label names the tool; the caption claims only that; no hand map of step indexes. |
+| G24 | (plan 207 review) A gate's stages are the stages whose Check clause cites its id; words without the id do not count; no by-content map. |
+| G25 | (plan 207 review) Each gate's figure sits closed in a fold under its tier's table, dressed like the family folds; the pipeline sits open above. |
 
 ## 2. The beat map
 
@@ -50,7 +52,7 @@ the engine as it is after 6.0.0.
 | 204 | Family relations figures | DONE 2026-10-04 |
 | 205 | Family flow figures | DONE 2026-10-04 |
 | 206 | Tool figures | DONE 2026-10-04 |
-| 207 | Gate figures | planned |
+| 207 | Gate figures | DONE 2026-10-05 |
 | 208 | Skill figures | planned |
 | 209 | Logo, icon, tagline | planned |
 | 210 | Release 6.1.0 | planned |
@@ -89,6 +91,10 @@ the engine as it is after 6.0.0.
   reads, writes; hand-authored, every claim with its server line, the census as the cross-check) and
   a call-sequence strip per tool a recipe names (derived from RECIPES, the tool's step accented at
   render time from the label's own text); 528 files in the folder.
+- **207 — the gate figures.** (the commit this record lands in) The pipeline in the server's order with
+  readiness above it; one figure per gate: a mechanical gate's tables, its view or server line and the
+  stages whose Check clause names it (parsed), a judgment or warn gate's stages, the mechanics its
+  definition names and the journal entry it lands in; one canvas helper for 206 and 207; 608 files.
 
 ## 4. Errors owned
 
@@ -109,6 +115,8 @@ the engine as it is after 6.0.0.
   could not overwrite an unread file (three files restored from HEAD, nothing else in them).
 - **206.** The strip read `RECIPES` as one tool per step and indexed past the list; a heredoc patch
   mangled a backslash again (the fourth time) and matched nothing, so the script went through a file.
+- **207.** A patch script's CSS regex carried a doubled backslash in a raw string and matched nothing;
+  `UI()` prefixes its namespace, so a `ui.`-prefixed id doubled; two labels overflowed their columns.
 
 ## 5. Not built, by ruling or on purpose
 

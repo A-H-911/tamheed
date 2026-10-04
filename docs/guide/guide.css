@@ -184,17 +184,18 @@ tr.sub td { color: var(--ink-2); }
 /* family cards */
 .fam-tools { display: flex; flex-wrap: wrap; gap: .6rem; align-items: center; margin-block: .8rem; }
 .fam-tools input { font: inherit; padding: .35rem .7rem; border: 1px solid var(--line); border-radius: 999px; background: var(--panel); color: var(--ink); min-width: 14rem; }
-details.fam { border: 1px solid var(--line); border-inline-start: 4px solid var(--hue); border-radius: var(--radius); background: var(--panel); margin-block: .5rem; }
-details.fam > summary { list-style: none; cursor: pointer; display: flex; flex-wrap: wrap; align-items: baseline; gap: .5rem .8rem; padding: .65rem .9rem; }
-details.fam > summary::-webkit-details-marker { display: none; }
-details.fam > summary::before { content: "▸"; color: var(--ink-2); font-size: .8em; }
-details.fam[open] > summary::before { content: "▾"; }
-details.fam > summary .prefix { font-family: var(--mono); font-weight: 600; color: var(--ink); direction: ltr; }
-details.fam > summary .prefix::before { content: ""; display: inline-block; width: .55rem; height: .55rem; border-radius: 50%; background: var(--hue); margin-inline-end: .4rem; vertical-align: middle; }
-details.fam > summary .lbl { font-weight: 600; }
-details.fam > summary .tbl-name { font-family: var(--mono); font-size: .8em; color: var(--ink-2); direction: ltr; }
-details.fam > .body { padding: 0 .9rem .9rem; border-top: 1px solid var(--line); }
-details.fam[hidden] { display: none; }
+:is(details.fam, details.fold) { border: 1px solid var(--line); border-inline-start: 4px solid var(--hue); border-radius: var(--radius); background: var(--panel); margin-block: .5rem; }
+:is(details.fam, details.fold) > summary { list-style: none; cursor: pointer; display: flex; flex-wrap: wrap; align-items: baseline; gap: .5rem .8rem; padding: .65rem .9rem; }
+:is(details.fam, details.fold) > summary::-webkit-details-marker { display: none; }
+:is(details.fam, details.fold) > summary::before { content: "▸"; color: var(--ink-2); font-size: .8em; }
+:is(details.fam, details.fold)[open] > summary::before { content: "▾"; }
+:is(details.fam, details.fold) > summary .prefix { font-family: var(--mono); font-weight: 600; color: var(--ink); direction: ltr; }
+:is(details.fam, details.fold) > summary .prefix::before { content: ""; display: inline-block; width: .55rem; height: .55rem; border-radius: 50%; background: var(--hue); margin-inline-end: .4rem; vertical-align: middle; }
+:is(details.fam, details.fold) > summary .lbl { font-weight: 600; }
+:is(details.fam, details.fold) > summary .tbl-name { font-family: var(--mono); font-size: .8em; color: var(--ink-2); direction: ltr; }
+:is(details.fam, details.fold) > .body { padding: 0 .9rem .9rem; border-top: 1px solid var(--line); }
+:is(details.fam, details.fold)[hidden] { display: none; }
+details.fold { --hue: #5b3fd6; }   /* plan 207: the family fold's accent variable, which a gate fold would otherwise lack */
 details.blk { border: 1px solid var(--line); border-radius: var(--radius); background: var(--panel); margin-block: .5rem; }
 details.blk > summary { cursor: pointer; padding: .55rem .9rem; font-weight: 600; }
 details.blk > .body { padding: 0 .9rem .9rem; }

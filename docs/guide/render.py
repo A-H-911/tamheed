@@ -654,9 +654,14 @@ def _tools(r: R) -> None:
 def _gates(r: R) -> None:
     f = r.f
     body = r.PS("section.gates", 2)
+    body += r.figure_file("gates-pipeline", "dia.pipe.caption")
     for tier in ("mechanical", "judgment", "warn"):
         rows = [[f'<b class="id">{esc(g)}</b>', r.T(f"gate.{g}")] for g in f["gates"][tier]]
         body += r.H(3, f"gatetier.{tier}") + r.table([r.UI("col.gate"), r.UI("col.what")], rows, "compact")
+        for g in f["gates"][tier]:        # plan 207: one fold per gate holding its figure
+            body += (f'<details class="fold" id="gatefig-{esc(g)}"><summary><span class="prefix">{esc(g)}</span>'
+                     f'<span class="lbl">{r.UI("gate.fold")}</span></summary><div class="body">'
+                     f'{r.figure_file("gate-" + g, "dia.gate.caption", alt_prefix=g)}</div></details>')
     body += f'<div class="callout">{r.P("section.gates.ready")}</div>'
     r.section("gates", body)
 

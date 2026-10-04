@@ -192,7 +192,7 @@ PROGRESS / DONE.
 | 204 | [A relations figure per family](204-family-relations-figures.md) -- derived from the relation rules, one node per kind with the partner prefixes, the same-family node, 28 figures and 9 sentences, elbows ranked | 203 | DONE -- 2026-10-04 (the commit this row lands in, after the operator's review) |
 | 205 | [The flow figures per family](205-family-flow-figures.md) -- the Writes parser over workflow.md, a data path per family, a trace path for the 20 families a gate or rule reads (rules from a readiness run), STD8 drawn once | 204 | DONE -- 2026-10-04 (the commit this row lands in, after the operator's review) |
 | 206 | [The tool figures](206-tool-figures.md) -- an effects canvas per tool with a server line per claim, a call-sequence strip per tool a recipe names, the step accented from its own label | 205 | DONE -- 2026-10-04 (the commit this row lands in, after the operator's review) |
-| 207 | Gate figures | 206 | PLANNED |
+| 207 | [The gate figures](207-gate-figures.md) -- the pipeline in the server's order, one figure per gate from the gate map, the Check clauses parsed and the definitions table read, one canvas helper | 206 | DONE -- 2026-10-05 (the commit this row lands in, after the operator's review) |
 | 208 | Skill figures | 207 | PLANNED |
 | 209 | Logo, icon, tagline | 208 | PLANNED |
 | 210 | Release 6.1.0 | 209 | PLANNED |
