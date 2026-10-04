@@ -977,6 +977,38 @@ must fire; the resulting package replaces `evals/sample-results/lab-tracker/pack
     ✔ THE EVAL (R14): `python evals/pkg_check.py ste-clean <package>` reads 0 hard findings over the
       Tamheed-owned prompt file (the refreshed guide) and skips the project's own file by name.
 
+34. **The v6.0.0 continuation. Prompts return to the store: the migration on the operator's
+    word, the STOP at the Proposed kickoff, the emit that reads rows, the Prompts section.**
+    6.0.0 adds the `prompts` table (migration 008). The package opens at `schema_version` 8 with
+    the resume block naming beat 33's final handoff. The scratch phase runs FIRST, by a real agent.
+    ✔ THE PREVIEW: `package_migrate("package")` with no confirm. The plan names
+      `prompts/project-kickoff.md` as the kickoff (the header's `entry_point` names it), converted
+      to `PRT-001`. It names `prompts/README.md` as a shipped stock body, removed. The folder goes.
+      The agent STOPS with nothing written.
+    ✔ THE CONFIRM, on the operator's word: the row lands Proposed with `converted_from` in its
+      attributes. The file moves to `prompts-v5-backup/`. The header's `entry_point` reads
+      `PRT-001`. G-SET passes (the family is Always, and the row exists).
+    ✔ THE STOP: `handoff_emit` refuses while `PRT-001` is Proposed, and the refusal names the row
+      and the word. On the operator's words the agent sets the row Approved in place (a full-row
+      `entity_upsert` with `expect_unchanged`).
+    ✔ THE EMISSION: the confirm seeded the guide at the package root (`README.md`, `tamheed
+      v6.0.0`), so `handoff_emit(<target>, refresh_stock=true)` reports it `unchanged`. The note
+      is `<!-- tamheed:note v7 -->`. Its prompts section names `PRT-001` as the kickoff and the
+      entry point.
+    ✔ THE RULE: `readiness_check("package")` carries `prompt-ids-resolve` over the rows. On this
+      record it reads `pass` (the kickoff's history ids are in backticks, inert).
+    ✔ THE PAGE: `export_html` renders the Prompts section with the Approved kickoff marked as the
+      entry point.
+    ✔ Close the beat with ONE `progress_update` note (actor `agent:lab-beat-34`, `event_type:
+      "note"`) that quotes the migration report, the scratch session's id and the evidence path.
+      THEN the final handoff (`event_type: "handoff"`, written LAST). Then `export_html`, `gate_run`
+      ready, `package_verify()` green (`verified: true`, `dirty: []`, `foreign: []`,
+      `review_current: true`, `review_exported_by: "6.0.0"`), `package_close`. No `data/.lock`
+      remains. `prompts-v5-backup/` is removed from the fixture (git holds the file).
+    ✔ THE EVAL: `count prompt --col kind=kickoff --col lifecycle_status=Approved --min 1`,
+      `rule prompt-ids-resolve` = pass, the review page's `section id="prompts"`, the root guide's
+      `tamheed v6.0.0`.
+
 **Pass bar:** every ✔ observed; `gate_run` ready (or failing ONLY on deliberately-open
 items the scenario names); the eval runner's lab checks green. `readiness_check` is
 expectedly NOT ready on the scenario's deliberately-open items (AC-003 and, since beat

@@ -1,6 +1,6 @@
 # Tamheed MCP server
 
-Documents the tool surface as of **tamheed v5.9.0**. The bilingual user guide
+Documents the tool surface as of **tamheed v6.0.0**. The bilingual user guide
 (<https://github.com/A-H-911/tamheed/blob/main/index.html>) renders the same surface with every
 parameter, read from this server at build time.
 
@@ -130,7 +130,7 @@ with reason).
 ## HTML review surface (plan 012)
 
 `export_html()` renders the open package's **only human review surface** (D-REVIEW: HTML,
-never derived Markdown) to `<package>/review.html`. The page has eleven sections, and the
+never derived Markdown) to `<package>/review.html`. The page has twelve sections, and the
 `generate-report` skill names them. They start with the overview with per-gate chips, the
 resume block, and the traceability flow and matrix. They continue through the registers (with
 `last_referenced` and the three-axis status columns) and execution progress (AC × audit verdicts,

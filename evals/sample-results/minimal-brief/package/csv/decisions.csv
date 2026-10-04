@@ -1,0 +1,2 @@
+id,title,decision,rationale,lifecycle_status,disposition,disposition_reason_ref,promoted_to,source_kind,source_span,custom_attributes,last_referenced
+DEC-001,Persistence format is a flat JSON file,Store bookmarks as a JSON array at ~/.mark.json.,The brief names JSON in the home directory; stdlib-only keeps the tool dependency-free.,Approved,,,,brief,brief: persistence,,

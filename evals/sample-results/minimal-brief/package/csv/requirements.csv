@@ -1,0 +1,6 @@
+id,kind,title,statement,rationale,priority,verification_method,mvp,lifecycle_status,disposition,disposition_reason_ref,source_kind,source_span,introduced_in,retired_in,custom_attributes,last_referenced
+FR-001,functional,add <url> saves a bookmark,The CLI shall save a new bookmark with the given URL via `mark add <url>`.,,,,1,Approved,,,brief,brief: commands list,1,,,
+FR-002,functional,list prints all bookmarks,The CLI shall print every stored bookmark with its id via `mark list`.,,,,1,Approved,,,brief,brief: commands list,1,,,
+FR-003,functional,open <id> launches a bookmark,The CLI shall open the bookmark with the given id in the default browser via `mark open <id>`.,,,,1,Approved,,,brief,brief: commands list,1,,,
+FR-004,functional,rm <id> deletes a bookmark,The CLI shall delete the bookmark with the given id via `mark rm <id>`.,,,,1,Approved,,,brief,brief: commands list,1,,,
+NFR-001,non-functional,Bookmarks persist across runs,Bookmarks persist to a local JSON file in the user's home directory.,,,,1,Approved,,,brief,brief: persistence,1,,,

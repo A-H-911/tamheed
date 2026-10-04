@@ -1,0 +1,2 @@
+entity_type,reason
+prompt,"this recorded planning run stopped before Stage 20, so no kickoff prompt was written (plan 198, the prompt family is Always since 6.0.0)"

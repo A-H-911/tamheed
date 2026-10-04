@@ -616,6 +616,36 @@ def _feedback(conn, gates, ready, readiness=None):
     return "".join(parts)
 
 
+def _prompts(conn, gates, ready, readiness=None):
+    """The prompts working surface (plan 198, v6, P13): the rows awaiting the operator's
+    approval first (the emit requires the Approved kickoff the header names), then the
+    Approved rows the execution half reads, then the other statuses. The body sits in its
+    cell and wraps (plan 020: wrap, never scroll). The kickoff `entry_point` names is marked."""
+    order = f"ORDER BY {_by_id()}"
+    row = conn.execute("SELECT entry_point FROM packages LIMIT 1").fetchone()
+    entry = row[0] if row else None
+    cols = "id, kind, plugin_skill, phase_id, lifecycle_status, title, body"
+    head = ["id", "kind", "plugin skill", "phase", "status", "title", "body", "entry point"]
+    folds = (
+        ("Awaiting the operator's approval (Proposed rows: the emit requires the Approved kickoff)",
+         "lifecycle_status = 'Proposed'", "prompts-queue"),
+        ("Approved (the execution half reads these, the kickoff is the row entry_point names)",
+         "lifecycle_status = 'Approved'", "prompts-approved"),
+        ("Other statuses (Draft, Rejected, Superseded, Deferred, Implemented, Obsolete)",
+         "lifecycle_status NOT IN ('Proposed', 'Approved')", "prompts-other"),
+    )
+    parts = []
+    for title, where, anchor in folds:
+        rows = conn.execute(f"SELECT {cols} FROM prompts WHERE {where} {order}").fetchall()
+        if rows:
+            marked = [tuple(r) + ("yes" if r[0] == entry else "",) for r in rows]
+            parts.append(_fold(title, len(rows), _table(head, marked, row_ids=True), anchor=anchor))
+    if not parts:
+        return ('<p class="empty">No prompt rows. The kickoff row the header\'s entry_point names'
+                ' must be Approved before handoff_emit.</p>')
+    return "".join(parts)
+
+
 def _waived_cell(waived) -> str:
     """`waived` is a list of {entity, waiver} dicts (plan 060), never strings - lab beat 19
     found the join that assumed otherwise. Rendered `DEF-003 (WVR-001)`; a bare string is
@@ -916,6 +946,7 @@ SECTIONS = [
     ("readiness", "Readiness", _readiness),
     ("lessons", "Lessons", _lessons),
     ("feedback", "Feedback", _feedback),
+    ("prompts", "Prompts", _prompts),           # plan 198 (v6, P13): the prompt rows
     ("registers", "Registers", _registers),
     ("gaps", "Gap & screening notes", _gaps),
 ]

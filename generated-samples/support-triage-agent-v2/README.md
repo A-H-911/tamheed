@@ -1,11 +1,12 @@
-# How to use this folder — the `package` prompt guide (tamheed v5.9.0)
+# How to use this package — the `support-triage-agent-v2` operator guide (tamheed v6.0.0)
 
-This folder holds the **project's own prompts** for the `package` Tamheed package, plus
-this guide. Since v5.0.0 the stock scenarios are no longer files here. They are the tamheed
-plugin's **slash skills**, `/tamheed:<name>`, updated with the plugin and never refreshed
-per project. Two kinds of thing live in this folder:
+This guide sits at the root of the `support-triage-agent-v2` Tamheed package. Since v5.0.0 the stock
+scenarios are not files. They are the tamheed plugin's **slash skills**, `/tamheed:<name>`,
+updated with the plugin and never refreshed per project. Since v6.0.0 the project's own prompts
+are not files either. They are **rows** of the package (`PRT-`), read through the tools. Two
+things tamheed owns or reads here:
 
-- **This guide** (`README.md`), shipped by tamheed and refreshed on upgrade. `handoff_emit`
+- **This guide** (`README.md` at the package root), shipped by tamheed and refreshed on upgrade. `handoff_emit`
   with `refresh_stock=true` updates it when it is byte-equal to an older release's copy. A
   hand-edited copy is `customized` and never touched by refresh. ⚠ Customising it opts it
   out of every future refresh. The emission warning names how far the stock has since
@@ -14,14 +15,18 @@ per project. Two kinds of thing live in this folder:
   `<!-- tamheed:stock-merged X.Y.Z -->`. The line is verified against the bundled history. Every
   line of release X.Y.Z must be present, and the emission names the releases whose lines are
   absent.
-- **Your project prompts**, any other filename. They are operator-owned, and tamheed never
-  touches them. Name them by purpose, kebab-case (`kickoff.md`, `phase3-resume.md`). The
-  `prompt-ids-resolve` readiness rule scans them (never a stock body): every id written in
-  them must resolve. Files named `prm-NNN-<kind>.md` with a `<!-- converted … -->` header
-  are legacy prompts converted from the old database. They are audit names, not a pattern to copy.
+- **Your project prompts**, as `prompt` rows. Project prompts are operator-authored: the operator
+  approves a row before an agent reads it. The kickoff is the row the package header's
+  `entry_point` names, and `handoff_emit` demands it Approved. A `situational` row names the
+  scenario skill that reads it in `plugin_skill`. A `phase` row names its phase gate. The
+  `prompt-ids-resolve` readiness rule scans every row: every id written in a prompt must resolve.
+  A row converted from an old prompt file carries `converted_from` in its `custom_attributes`
+  until you review it. The note in the target's `CLAUDE.md` lists the Approved rows.
 
-**Leftovers from before v5.0.0.** A package created under 4.x still holds the sixteen
-retired stock files (`slice-kickoff.md`, `progress-sync.md`, …). `handoff_emit` names each.
+**Leftovers from before v6.0.0.** A package created under 4.x may still hold the sixteen
+retired stock files under `prompts/` (`slice-kickoff.md`, `progress-sync.md`, …). A package
+migrated from 5.x may still hold this guide's old copy at `prompts/README.md`. `handoff_emit`
+names each.
 One byte-equal to a shipped release's stock is a `leftover_stale_stock`, and
 `refresh_stock=true` removes it (reported as `retired`). That is the same proof today's refresh
 relies on: you never customised it. A `leftover_customized` copy is never removed. Keep it
@@ -49,7 +54,7 @@ as a project prompt under a new name (the stock name is retired), or remove it y
 | Unattended execution — the repeated prompt | `/tamheed:loop-iteration` |
 | Unattended execution — the brake (read FIRST) | `/tamheed:loop-guard` |
 | The record's prose breaks the plain-English rules (`prose-plain-english` names the texts) | `/tamheed:ste-rewrite` |
-| Something project-specific | any other `.md` here — project prompts are operator-authored, purpose-named. Read the folder |
+| Something project-specific | the `prompt` rows bound to the skill: `entity_query("prompt", plugin_skill="<name>")`. The kickoff: `entity_query("prompt", id=<entry_point>)` |
 
 Every scenario skill is **operator-invoked** (`disable-model-invocation`). The agent never
 starts a ceremony on its own, exactly as it never pasted one. Each works in the package this
@@ -104,7 +109,7 @@ The package has a **single-writer lock** (`data/.lock`). Two sessions invoking s
 concurrently will collide. The second `package_open` refuses, naming the holder (pid,
 host, taken_at) **and what the store observed about it**. The observation is `not-running`,
 `reused` (the pid now belongs to another process), `alive`, or `unobservable`. After a crash or
-a plugin reload the holder is usually gone. `package_unlock("package")` reports the
+a plugin reload the holder is usually gone. `package_unlock("support-triage-agent-v2")` reports the
 lock and the observation. `confirm=true` removes it and journals the removal,
 **on the operator's words only**, and only for a holder observed dead. It refuses on
 `alive` and on `unobservable` (another host, a container, access denied). Removing

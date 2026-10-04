@@ -1,0 +1,2 @@
+id,title,question,owner,due_by,resolution,resolved_by,lifecycle_status,disposition,disposition_reason_ref,source_kind,source_span,custom_attributes,last_referenced
+OQ-001,Should `open` record a visited timestamp shown by `list`?,The brief does not say whether opening a bookmark should be reflected in later listings.,,,,,Draft,,,brief,brief: commands list,,

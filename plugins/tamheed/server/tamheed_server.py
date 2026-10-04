@@ -275,7 +275,7 @@ BASELINE_ENTITY_TYPES = [
     ("lesson", "Lesson learned (LL-)", "LL-", "Continuous"),
     ("skill", "Skill (SKL-, distilled from lessons)", "SKL-", "On-request"),
     ("feedback", "Upstream feedback / local tool (FB-)", "FB-", "Continuous"),
-    ("prompt", "Prompt (PRT-)", "PRT-", "Conditional"),  # migration 008 (plan 192): rows, not files; Always from plan 195, when package_migrate seeds the field
+    ("prompt", "Prompt (PRT-)", "PRT-", "Always"),  # migration 008 (plan 192): rows, not files. Always since plan 198 (6.0.0): the kickoff is Stage 20's write, or an omission records the choice
 ]
 
 # Taught-vocabulary rosters (plan 032): the single source the check.py teaching lint
@@ -4638,7 +4638,10 @@ def _plan_prompt_files(pkg_dir: Path, name: str, tables: dict) -> dict | None:
                if re.fullmatch(r"PRT-\d+", str(r.get("id", "")))), default=0) + 1
     plan: dict = {"files": [], "rows": [], "backup": _PROMPT_BACKUP_DIR,
                   "entry_point": {"from": entry_point or None, "to": None}}
-    entry_file = entry_point.removeprefix("prompts/") if entry_point.startswith("prompts/") else ""
+    # P19 (plan 198): the header names the kickoff by FILE NAME on any path prefix. The
+    # generated sample still carried the v2 path `handoff/initial-prompt.md`; a `prompts/`
+    # prefix alone would have made every file situational and kept a dead entry point.
+    entry_file = entry_point.rsplit("/", 1)[-1] if entry_point.endswith(".md") else ""
     kickoffs: list[tuple[bool, str]] = []
     for q in files:
         rel = f"prompts/{q.name}"
@@ -4681,9 +4684,10 @@ def _plan_prompt_files(pkg_dir: Path, name: str, tables: dict) -> dict | None:
     if kickoffs:
         kickoffs.sort(key=lambda k: (not k[0], k[1]))
         plan["entry_point"]["to"] = kickoffs[0][1]
-    elif entry_point.startswith("prompts/"):
-        # P4: the header named a prompt FILE and no kickoff converted (the file was stock,
-        # already converted, or absent): a dead path is cleared and said, never kept
+    elif entry_point.endswith(".md"):
+        # P4 (P19 widens it to any file path): the header named a prompt FILE and no kickoff
+        # converted (the file was stock, already converted, or absent): a dead path is
+        # cleared and said, never kept
         plan["entry_point"]["to"] = None
         plan["entry_point"]["note"] = (f"{entry_point!r} converted as nothing, so the header's"
                                        " entry_point is cleared. Write the kickoff as a"

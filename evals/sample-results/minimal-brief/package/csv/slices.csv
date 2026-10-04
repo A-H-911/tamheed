@@ -1,0 +1,2 @@
+id,title,phase_id,objective,sort_order,lifecycle_status,disposition,disposition_reason_ref,introduced_in,retired_in,custom_attributes,last_referenced
+SL-001,Command core + persistence,PH-1,,0,Draft,,,1,,,

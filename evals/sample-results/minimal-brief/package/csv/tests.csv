@@ -1,0 +1,2 @@
+id,title,kind,verdict,lifecycle_status,disposition,disposition_reason_ref,source_kind,source_span,custom_attributes,last_referenced
+TEST-001,CLI round-trip: add -> list -> open -> rm,e2e,Pending,Draft,,,,,,

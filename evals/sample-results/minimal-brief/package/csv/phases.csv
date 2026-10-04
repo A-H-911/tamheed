@@ -1,0 +1,2 @@
+id,title,objective,exit_criteria,sort_order,lifecycle_status,disposition,disposition_reason_ref,introduced_in,retired_in,source_kind,source_span,custom_attributes,last_referenced
+PH-1,MVP - the four commands,Ship add/list/open/rm with persistence and tests.,,0,Approved,,,1,,,,,

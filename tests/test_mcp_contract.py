@@ -48,6 +48,10 @@ def make_complete_package(name: str) -> None:
         {"type": "trace-edge", "from_id": "SL-001", "to_id": "FR-001",
          "relation": "implements"},
         {"type": "trace-edge", "from_id": "TEST-001", "to_id": "FR-001", "relation": "tests"},
+        # plan 198 (v6): the prompt family is Always. This fixture stops before Stage 20,
+        # so the omission records the choice and leaves PRT- ids free for the tests.
+        {"type": "omission", "entity_type": "prompt",
+         "reason": "the kickoff is Stage 20's write and this fixture stops before it"},
     ])
     assert result["ok"], result
 
@@ -1444,6 +1448,31 @@ class McpContractTest(unittest.TestCase):
         self.assertFalse(again["ok"])
         self.assertIn("Nothing to migrate", again["error"])
 
+    def test_migrate_kickoff_by_the_entry_points_file_name(self):
+        """Plan 198 (P19, P4's rule 1 widened): the header's entry_point names the kickoff by
+        FILE NAME on any path prefix. The generated sample still carries the v2 path
+        `handoff/initial-prompt.md`. A dead `.md` entry point that names no converted file
+        is cleared and said."""
+        self._v4_with_prompt_files(files={
+            "initial-prompt.md": "# Initial\n\nGo.\n",
+            "review-prompts.md": "# Review\n\nAudit.\n",
+        }, entry_point="handoff/initial-prompt.md")
+        rep = srv.package_migrate("demo")["report"]
+        by_file = {f["file"]: f for f in rep["prompt_files"]}
+        self.assertEqual(by_file["prompts/initial-prompt.md"]["kind"], "kickoff")
+        self.assertEqual(by_file["prompts/review-prompts.md"]["kind"], "situational")
+        self.assertEqual(rep["entry_point"], {"from": "handoff/initial-prompt.md", "to": "PRT-001"})
+        out = srv.package_migrate("demo", confirm=True)
+        self.assertTrue(out["ok"], out)
+        self.assertTrue(srv.package_open("demo")["ok"])
+        self.assertEqual(srv.server_info()["package"]["entry_point"], "PRT-001")
+        srv.package_close()
+        self._v4_with_prompt_files(name="dead", files={"notes.md": "# Notes\n\nx\n"},
+                                   entry_point="handoff/gone.md")
+        rep2 = srv.package_migrate("dead", confirm=True)["report"]["entry_point"]
+        self.assertEqual((rep2["from"], rep2["to"]), ("handoff/gone.md", None))
+        self.assertIn("converted as nothing", rep2["note"])
+
     def test_migrate_prompt_files_customised_guide_and_backup_refusal(self):
         """Plan 195: a customised prompts/README.md is moved and named, never converted; a
         backup folder from a previous run refuses the whole migration; a package without a
@@ -2529,9 +2558,29 @@ class McpContractTest(unittest.TestCase):
             [{"type": "omission", "entity_type": t, "reason": "not needed at this size"}
              for t in ("requirement", "constraint", "assumption", "open-question", "decision",
                        "risk", "phase", "acceptance-criterion", "narrative-document",
-                       "document-section")])
+                       "document-section", "prompt")])
         self.assertTrue(result["ok"], result)
         self.assertEqual(srv.gate_run()["gates"]["G-SET"]["status"], "pass")
+
+    def test_g_set_names_prompt_until_a_kickoff_or_an_omission(self):
+        """Plan 198 (v6): the prompt family is Always. A fresh package fails G-SET naming
+        `prompt`. The Stage-20 kickoff row clears it, and so does an omission that records
+        the choice (a planning-only package)."""
+        srv.package_create("demo", "Demo", "unknown")
+        g = srv.gate_run()["gates"]["G-SET"]
+        self.assertEqual(g["status"], "fail")
+        self.assertIn("prompt", g["failures"])
+        out = srv.entity_upsert([{"type": "prompt", "id": "PRT-001", "kind": "kickoff",
+                                  "title": "Kickoff", "body": "Start with the charter.",
+                                  "lifecycle_status": "Proposed"}])
+        self.assertTrue(out["ok"], out)
+        self.assertNotIn("prompt", srv.gate_run()["gates"]["G-SET"].get("failures", []))
+        srv.package_close()
+        srv.package_create("other", "Other", "unknown")
+        out = srv.entity_upsert([{"type": "omission", "entity_type": "prompt",
+                                  "reason": "no handoff stage in this fixture"}])
+        self.assertTrue(out["ok"], out)
+        self.assertNotIn("prompt", srv.gate_run()["gates"]["G-SET"].get("failures", []))
 
     def test_omission_reason_revision_lands(self):
         """Plan 051: INSERT OR IGNORE dropped a revised reason and said ok/unchanged."""

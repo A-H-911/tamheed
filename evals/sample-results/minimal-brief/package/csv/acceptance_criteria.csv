@@ -1,0 +1,2 @@
+id,title,statement,requirement_id,slice_id,lifecycle_status,disposition,disposition_reason_ref,superseded_by,introduced_in,retired_in,source_kind,source_span,custom_attributes,last_referenced
+AC-001,Round-trip works,"Given a fresh home dir, when add/list/open/rm run in sequence, then each prints the expected state and the JSON file matches.",FR-001,SL-001,Approved,,,,1,,brief,brief: commands list,,

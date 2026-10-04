@@ -1,0 +1,4 @@
+id,kind,title,body,phase_id,plugin_skill,lifecycle_status,disposition,disposition_reason_ref,source_kind,source_span,custom_attributes,last_referenced
+PRT-001,kickoff,tick — SL-002 kickoff,"Work EP-001 in order. The recording obligations in the target CLAUDE.md are mandatory — the package is the record.
+History: the export bug was `DEF-090` and the fix landed in `SL-007`.
+",,,Approved,,,,,"{""converted_from"": ""prompts/project-kickoff.md"", ""kind"": ""kickoff""}",

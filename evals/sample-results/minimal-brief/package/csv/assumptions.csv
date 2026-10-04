@@ -1,0 +1,2 @@
+id,title,statement,risk_if_wrong,validation_date,lifecycle_status,disposition,disposition_reason_ref,source_kind,source_span,custom_attributes,last_referenced
+ASM-001,Bookmark volume stays small,"A single user's collection stays well under 10k bookmarks, so a flat JSON file suffices.",JSON rewrite-per-mutation becomes slow; move to SQLite.,,Draft,,,inferred,brief: single-user scope,,

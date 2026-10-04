@@ -8,14 +8,60 @@ All notable changes to Tamheed are documented here. The format is based on
 > original repository (<https://github.com/A-H-911/keystone>). Tamheed carries Keystone's full git
 > history; the Keystone repository stays frozen at 1.0.x for existing v1 packages.
 
-## [Unreleased]
+## [6.0.0] - 2026-10-04
 
-- **Prompts return to the store** (plans 192-200, the 6.0.0 batch in progress). Migration
-  `008_prompts.sql` adds the `prompts` family (`PRT-`): the kickoff, phase and situational prompts the
-  agent starts from in the execution half, as rows with a status, provenance and a `plugin_skill` binding to the
-  bundled scenario skill that reads them. The file path in `<package>/prompts/` and the stock
-  operator guide's new location follow in the later beats of the batch; the full migration note lands
-  with the 6.0.0 entry.
+**MAJOR — prompts return to the store (plans 192–200).** The project's prompts are `prompt` rows
+(`PRT-`) again. A row is a kickoff, a phase or a situational prompt, with a status the operator
+approves. It carries its provenance and a `plugin_skill` binding to the scenario skill that reads it.
+The handoff contract changes: `handoff_emit` requires the Approved kickoff the header's `entry_point`
+names, and it screens rows, not files. The layout changes: no `prompts/` folder, and the stock
+operator guide lives at `<package>/README.md`. A package migrates. Hence MAJOR. Migration
+`008_prompts.sql` adds the table (`schema_version` 8). `package_version` stays `4.0.0` (the plan-031
+pattern: an additive store change with an explicit migration). One agent, two halves: the planning
+half and the execution half replace the two-agent wording on every surface.
+
+**For a live package (the migration note).** `package_migrate` runs on a closed package.
+`package_migrate(name)` previews.
+`package_migrate(name, confirm=true)` on the operator's word converts every project prompt file
+under `prompts/` to a Proposed `prompt` row. The provenance is in `custom_attributes.converted_from`.
+The files move to `prompts-v5-backup/`, a shipped stock body is removed, and the folder goes. The
+guide is seeded at `<package>/README.md`, and `entry_point` becomes the kickoff row. The emit then
+refuses until the operator approves the kickoff. That STOP is the design. The family is Always: after
+the migrate's registry sync (or on a package created under 6.0), a package with no prompt row fails
+G-SET naming `prompt` until the kickoff or an omission exists.
+`handoff_emit(..., refresh_stock=true)` rebuilds the note as `tamheed:note v7` with the roster of
+Approved prompt rows. The hook reads the v5, v6 and v7 sentences, so an older note still resumes.
+
+**Measured cross-version behaviour (2026-10-04).** A 5.9 server opens a 6.0-migrated package,
+because `entity_index` is never serialised. It ignores `prompts.jsonl`, names `prompt` in G-SET and
+refuses `handoff_emit` for want of files. A trace edge to a `PRT-` row makes that open fail with an
+uncaught load error (engine candidate E3, logged).
+
+### Added
+- Migration `008_prompts.sql`: the `prompts` table (`PRT-`) with kind kickoff, phase or situational,
+  title, body, `phase_id`, `plugin_skill` and the STD8 lifecycle. `entity_query("prompt",
+  plugin_skill=...)`. The write guard admits only the sixteen scenario skills that read their rows
+  (P17), never the brake `loop-guard`.
+- `review.html`: the Prompts section (P13), the queue awaiting approval first. The stock operator
+  guide at `<package>/README.md` (the 6.0.0 body). `vocabulary.md`: the terms `planning half` and
+  `execution half`.
+- The rules read rows: `prompt-ids-resolve` and `prose-plain-english` over `prompts.body`. G-INJECT,
+  the stale scan and the restated scan run over the Approved rows at emit.
+
+### Changed
+- `handoff_emit` requires an Approved kickoff named by `entry_point`. It writes no prompt copies,
+  refreshes the stock guide at the package root, and reports leftovers under `prompts/`.
+- `package_migrate` converts prompt files to rows (above). Its v4 registry branch proceeds on a
+  third reason: project prompt files present. The kickoff is the file `entry_point` names, by file
+  name on any path prefix (P19).
+- The note marker is `v7`. Sixteen scenario skills read their bound rows at their first step.
+  `package-onboarding` reads the kickoff row. The `prompt` family is Always.
+- Every surface says the planning half and the execution half: one agent, Claude Code, in both.
+  The guide's actors section is "The operator and the two halves".
+
+### Removed
+- Prompt files as the live surface. `<package>/prompts/` is a leftover location the engine reads
+  only to classify what is still there.
 
 ## [5.9.0] - 2026-10-03
 

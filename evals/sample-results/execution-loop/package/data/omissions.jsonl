@@ -1,1 +1,2 @@
 {"entity_type":"progress-entry","reason":"Continuous artifacts created at execution time (Stage 21); empty at handoff, so omitted to avoid stubs."}
+{"entity_type":"prompt","reason":"this recorded fixture never carried a prompt file and no handoff stage was run (plan 198, the prompt family is Always since 6.0.0)"}

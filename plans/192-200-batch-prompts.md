@@ -57,6 +57,8 @@ The reverse move is MAJOR, as plan 027's was: the handoff contract changes.
 | P16 | `package_migrate` removes a shipped stock body found under `prompts/` on confirm, never moves it (the history reproduces it; the confirm is the operator's word); `prompts-v5-backup/` holds the project's own files only (plan 195 review). |
 | P17 | P14 amended: `plugin_skill` admits only the scenario skills that read their bound rows (the sixteen with the step), never the brake `loop-guard`; the guard reads the skills' own text, so a skill that gains the step becomes legal (plan 196 review). |
 | P18 | The G2 sweep's tail (nine bundle and CHANGELOG lines the repo-wide census found after 196) lands in 197 with the docs, not in 198; P12's split holds for the rest (plan 197 review). |
+| P19 | P4's rule 1 widened: the kickoff is the file `entry_point` names, matched by file name on any path prefix (the sample's v2 `handoff/initial-prompt.md`); a dead `.md` entry point that names no converted file is cleared and said (plan 198 review). |
+| P20 | The recorded planning-only fixtures (`minimal-brief`, `execution-loop`) take the registry sync and one omission row for `prompt` through the server, with a reason true of each, disclosed in the ledger and the lab report; never re-recorded for this (plan 198 review). |
 
 Measured 2026-10-04 with the live 5.9.0 server on scratch packages (the CHANGELOG states it):
 `entity_index` is never serialised, so a 5.9 server opens a 6.0-migrated package, leaves
@@ -75,7 +77,7 @@ fails with a foreign-key load error, raised from `package_open` as an uncaught `
 | 195 | `package_migrate` converts files to rows, proven on temporary packages and the ACMP replay copy | DONE 2026-10-04 |
 | 196 | The bundle's teaching surface and the halves wording | DONE 2026-10-04 |
 | 197 | The docs, the README and the guide's prose | DONE 2026-10-04 |
-| 198 | Stamp 6.0.0; the fixture and the sample migrated by the tool (after the stamp, never to an unreleased body); the family becomes Always (owed: the test for zero rows + Always, the one case that writes the migrate report's G-SET line); the evals re-aimed; lab beat 34 | planned |
+| 198 | Stamp 6.0.0; the fixtures and the sample migrated by the engine; the family becomes Always; the evals re-aimed; the Prompts section; lab beat 34 | DONE 2026-10-04 |
 | 199 | The ACMP brief 6.0.0 | planned |
 | 200 | Release 6.0.0 | planned |
 
@@ -140,6 +142,15 @@ flips the family to Always, and re-aims the evals in the same commit.
   EN + AR (the actors section, the package section, the gates, the glossary; "executor repository"
   -> "target repository"; the D1/D2 label words, geometry untouched). Pins 0 missing; two modal
   drops explained; lint 14 at 0.
+- **198 — the stamp, the Always flip, the fixtures, the evals, lab beat 34.** (the commit this
+  record lands in) `plugin.json` 6.0.0 and the CHANGELOG entry (the MAJOR headline, the migration
+  note, the measured cross-version behaviour); the six version surfaces and the stock guide's title
+  with its history key; `prompt` is Always (G-SET names it on a fresh package); the kickoff rule
+  matches `entry_point` by file name on any path (P19); `review.html` gains the Prompts section
+  (P13); `minimal-brief` and `execution-loop` took the registry sync and an omission row (P20); the
+  generated sample's three files became rows (`initial-prompt` the kickoff); 11 eval checks re-aimed and 3
+  added (counted from the staged diff); lab beat 34 by a real agent on a scratch copy, then the fixture
+  (`lab-continuation-report-198-2026-10-04.md`).
 
 ## 4. Errors owned
 
@@ -160,6 +171,9 @@ flips the family to Always, and re-aims the evals in the same commit.
 - **197.** Eight of my sentences failed lint 14 (seven English, one Arabic); the residue census had to
   run twice (six executor lines survived the first pattern); beat 192 had left the Arabic of
   `col.packages.entry_point` naming a file path while the English said a row.
+- **198.** T1's words to the lab agent ordered `package_open` before `package_migrate`, which runs on
+  a closed package; the agent stopped and the words were corrected in T1b. A ledger line claimed the
+  pin re-check before it was run (then run: clean).
 
 ## 5. Not built, by ruling or on purpose
 

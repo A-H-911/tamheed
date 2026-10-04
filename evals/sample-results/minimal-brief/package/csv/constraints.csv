@@ -1,0 +1,2 @@
+id,title,statement,lifecycle_status,disposition,disposition_reason_ref,source_kind,source_span,custom_attributes,last_referenced
+CON-001,"No accounts, no sync service",The tool operates for a single local user; the only network use is the browser launched by `open`.,Draft,,,brief,brief: constraints,,

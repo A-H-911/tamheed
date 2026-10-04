@@ -308,8 +308,8 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("needle")
     p.set_defaults(fn=cmd_grep_file)
 
-    p = sub.add_parser("ste-clean", help="every Tamheed-owned prompt file under <package>/prompts/"
-                                         " passes the strict plain-English rules (plan 189)")
+    p = sub.add_parser("ste-clean", help="the Tamheed-owned stock guide (<package>/README.md since v6,"
+                                         " else the pre-v6 prompt files) passes the strict plain-English rules (plan 189)")
     p.add_argument("package")
     p.set_defaults(fn=cmd_ste_clean)
 

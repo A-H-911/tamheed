@@ -78,7 +78,7 @@ class UserGuideTest(unittest.TestCase):
         f = self.facts
         self.assertEqual(len(f["schema"]["tables"]), 42)
         self.assertEqual(len(f["families"]), len(srv.BASELINE_ENTITY_TYPES))
-        self.assertEqual(sum(1 for x in f["families"] if x["cls"] == "Always"), 10)
+        self.assertEqual(sum(1 for x in f["families"] if x["cls"] == "Always"), 11)   # + prompt (plan 198, v6)
         rel = next(t for t in f["schema"]["tables"] if t["table"] == "trace_edges")
         check = next(c["check_in"] for c in rel["columns"] if c["name"] == "relation")
         self.assertEqual(sorted(check), sorted(set(srv.RELATION_RULES) | {"relates_to"}))
@@ -169,7 +169,7 @@ class UserGuideTest(unittest.TestCase):
             line = src[src.rfind("\n", 0, m.start()) + 1: m.start()]
             self.assertIn("sorted(", line, f"unsorted enumeration: {line.strip()}")
         fixture = REPO_ROOT / "evals/sample-results/lab-tracker/package"
-        for name in ("data", "csv", "exports", "prompts", "review.html"):
+        for name in ("data", "csv", "exports", "README.md", "review.html"):   # v6: the root guide, no prompts/
             self.assertTrue((fixture / name).exists(), name)
 
 

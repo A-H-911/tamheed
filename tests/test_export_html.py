@@ -181,6 +181,40 @@ class ExportHtmlTest(unittest.TestCase):
         self.assertIn("verifiable history", html)
         self.assertIn("operator:test", html)
 
+    def test_prompts_section_renders_kind_skill_status_body_and_the_entry_point(self):
+        """Plan 198 (v6, P13): the Prompts section is the operator's working surface for
+        prompt rows: the queue awaiting approval, then the Approved rows the execution half
+        reads, the kickoff entry_point names marked, the body in its cell."""
+        srv.package_create("demo", "Demo", "rnd")
+        out = srv.entity_upsert([
+            {"type": "prompt", "id": "PRT-001", "kind": "kickoff", "title": "Kickoff",
+             "body": "Read the charter first. Then one slice.", "lifecycle_status": "Approved"},
+            {"type": "prompt", "id": "PRT-002", "kind": "situational", "title": "Integrity pass",
+             "body": "Treat a vacuous pass as a finding.", "plugin_skill": "integrity-check",
+             "lifecycle_status": "Proposed"}])
+        self.assertTrue(out["ok"], out)
+        self.assertTrue(srv.entity_upsert([{"type": "package", "entry_point": "PRT-001"}])["ok"])
+        html = self._export()
+        self.assertIn('<section id="prompts">', html)
+        section = html.split('<section id="prompts">')[1].split("</section>")[0]
+        queue = section.split("Awaiting the operator")[1].split("</details>")[0]
+        self.assertIn("PRT-002", queue)
+        self.assertIn("integrity-check", queue)
+        self.assertIn("Treat a vacuous pass", queue)
+        self.assertNotIn("PRT-001", queue)
+        approved = section.split("Approved (the execution half")[1].split("</details>")[0]
+        self.assertIn("PRT-001", approved)
+        self.assertIn("Read the charter first", approved)
+        self.assertIn("<td>yes</td>", approved)                     # the entry point marked
+        self.assertNotIn("<td>yes</td>", queue)
+
+    def test_prompts_section_says_what_the_emit_needs_when_empty(self):
+        srv.package_create("demo", "Demo", "rnd")
+        html = self._export()
+        section = html.split('<section id="prompts">')[1].split("</section>")[0]
+        self.assertIn("No prompt rows", section)
+        self.assertIn("handoff_emit", section)
+
     # -------------------------------------------- plan 027: flow view + graph rework
 
     def test_flow_section_lanes_and_arrowheads(self):

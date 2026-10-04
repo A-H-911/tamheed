@@ -244,7 +244,7 @@ that is not the one in service.
    (another host, a container). There, removing `data/.lock` by hand stays the deliberate path.
 3. `package_open(name)`, then `gate_run()` / `readiness_check("package")`. Compare with the baseline.
 4. `handoff_emit(target_dir, refresh_stock=true)` refreshes the operator guide when you never
-   customised it, and re-renders the tool-owned note. The note is v5 since 5.0.0 and v6 since 5.9.0:
+   customised it, and re-renders the tool-owned note. The note is v5 since 5.0.0, v6 since 5.9.0 and v7 since 6.0.0:
    obligations + lessons, the cheat-sheet gone, the plugin's skills named. It **removes the retired 4.x scenario files that
    are byte-equal to a shipped release** (reported `retired`). A customised copy is kept and named.
    Keep it as a project prompt under a new name, or remove it yourself. A customised guide is

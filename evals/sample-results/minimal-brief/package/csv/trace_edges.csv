@@ -1,0 +1,16 @@
+from_id,to_id,relation
+FR-001,DEC-001,derives_from
+FR-002,DEC-001,derives_from
+FR-003,DEC-001,derives_from
+FR-004,DEC-001,derives_from
+NFR-001,DEC-001,derives_from
+SL-001,FR-001,implements
+SL-001,FR-002,implements
+SL-001,FR-003,implements
+SL-001,FR-004,implements
+SL-001,NFR-001,implements
+TEST-001,FR-001,tests
+TEST-001,FR-002,tests
+TEST-001,FR-003,tests
+TEST-001,FR-004,tests
+TEST-001,NFR-001,tests

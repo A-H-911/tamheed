@@ -1,0 +1,1 @@
+{"id":"PE-001","event_type":"note","entry":"REGISTRY-SYNC: entity types added (lesson, skill, feedback, prompt); prompt files converted to rows (3), moved to prompts-v5-backup/ (3 file(s))","subject_id":null,"actor":"system:migrate","corrects":null,"phase_id":null,"slice_id":null,"occurred_at":null,"custom_attributes":null,"last_referenced":null}

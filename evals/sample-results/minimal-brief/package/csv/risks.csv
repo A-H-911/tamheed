@@ -1,0 +1,2 @@
+id,title,description,probability,impact,owner,response_strategy,mitigation,risk_state,discharged_by,lifecycle_status,disposition,disposition_reason_ref,source_kind,source_span,custom_attributes,last_referenced
+RISK-001,Concurrent invocations corrupt the JSON file,Two simultaneous `mark` processes could interleave read-modify-write cycles.,low,medium,,,Write via temp file + atomic rename.,open,,Draft,,,inferred,brief: persistence,,

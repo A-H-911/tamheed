@@ -90,10 +90,10 @@ class EvalRunnerTest(unittest.TestCase):
         self.assertIn("no such table file: prompts.jsonl", proc.stdout)
 
     def test_pkg_check_grep_tree(self):
-        """grep-tree-present/absent read a directory of files (e.g. generated
-        prompts/), not canonical JSONL tables. Plan 118: the needle is one the v5 guide
-        carries - the retired stock scenarios (where `gate_run` lived) are gone from the folder."""
-        prompts = str(SAMPLE / "lab-tracker" / "package" / "prompts")
+        """grep-tree-present/absent read a directory of files, not canonical JSONL tables.
+        Plan 118: the needle is one the stock guide carries. Plan 198 (v6): the guide is
+        `<package>/README.md` and the prompts folder is gone, so the tree is the package dir."""
+        prompts = str(SAMPLE / "lab-tracker" / "package")
         proc = run(str(PKG_CHECK), "grep-tree-present", prompts, "Which skill, when")
         self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
         self.assertIn("found in:", proc.stdout)
