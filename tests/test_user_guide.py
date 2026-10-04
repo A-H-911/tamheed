@@ -31,7 +31,7 @@ srv = extract.srv
 class UserGuideTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.html, cls.required = build.build()
+        cls.html, cls.required, cls.figures = build.build()
         cls.facts = extract.facts()
 
     def test_index_html_is_the_fresh_build(self):
@@ -42,6 +42,17 @@ class UserGuideTest(unittest.TestCase):
             line = next((i for i, (x, y) in enumerate(zip(a, b), 1) if x != y), min(len(a), len(b)) + 1)
             self.fail(f"index.html is stale (first difference at line {line}); run "
                       f"`python docs/guide/build.py` (a CRLF checkout needs `git add --renormalize index.html`)")
+
+    def test_figures_folder_is_the_fresh_build(self):
+        """Plan 203 (G13): docs/guide/figures/ is exactly the generated set, byte for byte, LF."""
+        self.assertTrue(self.figures, "no file figure was rendered")
+        stale = build.stale_figures(self.figures)
+        self.assertEqual(stale, [], "run `python docs/guide/build.py`")
+        for name, blob in self.figures.items():
+            self.assertNotIn(b"\r", blob, name)
+            self.assertIn(b"<style>", blob, name)
+            if "-ar" in name:
+                self.assertIn(b"direction:rtl", blob, name)
 
     def test_every_rendered_id_has_en_and_ar(self):
         missing = build.missing(self.required)

@@ -60,6 +60,7 @@ class R:
         self.t = text
         self.out: list[str] = []
         self.subs: dict[str, list[tuple[str, str]]] = {}   # plan 202: each section's H3 anchors
+        self.figures: list[tuple[str, dict, str]] = []   # plan 203: (fid, model, caption id) of the file figures
 
     # ---- bilingual helpers -------------------------------------------------------
     def T(self, cid: str, tag: str = "span", cls: str = "") -> str:
@@ -134,11 +135,34 @@ class R:
         return (f'<figure{iso}><div class="dia-wrap">{"".join(parts)}</div>{step_bar}{extra_html}'
                 f'<figcaption>{self.T(caption_cid)}</figcaption></figure>')
 
+    def figure_file(self, fid: str, caption_cid: str, title_cid: str) -> str:
+        """Plan 203 (G13): a per-item figure as sibling files, one per language and theme, embedded
+        through <picture> (the dark source by media query; the script swaps on the explicit toggle)."""
+        model = diagrams.FILE_MODELS[fid](self.f)
+        W, H = model["w"], model["h"]
+        self.figures.append((fid, model, caption_cid))
+        pics = []
+        for lg in LANGS:
+            # the labels are rendered into the files by build.py; resolve them here once so the
+            # ids count as used (the missing-strings and orphan checks)
+            diagrams.svg(model, rtl=(lg == "ar"), lang=lg, resolve=lambda cid, lg=lg: self.t.get(cid, lg), title="")
+            alt = f"{self.t.get(title_cid, lg)} — {self.t.get(caption_cid, lg)}"
+            light, dark = f"docs/guide/figures/{fid}-{lg}.svg", f"docs/guide/figures/{fid}-{lg}-dark.svg"
+            pics.append(f'<picture lang="{lg}" data-fig=""><source media="(prefers-color-scheme: dark)" srcset="{dark}">'
+                        f'<img class="fig" src="{light}" data-light="{light}" data-dark="{dark}" alt="{esc(alt)}"'
+                        f' width="{W}" height="{H}" loading="lazy"></picture>')
+        return (f'<figure class="file"><div class="dia-wrap">{"".join(pics)}</div>'
+                f'<figcaption>{self.T(caption_cid)}</figcaption></figure>')
+
 
 # ------------------------------------------------------------------------------ page
 
+FIGURES: list[tuple[str, dict, str]] = []   # plan 203: filled by render_page for build.py
+
+
 def render_page(f: dict, text_table: dict, css: str, js: str) -> str:
     USED_IDS.clear()
+    FIGURES.clear()
     diagrams.DIAGRAM_LABELS.clear()
     r = R(f, Text(text_table))
     v = f["version"]
@@ -166,6 +190,7 @@ def render_page(f: dict, text_table: dict, css: str, js: str) -> str:
     _glossary(r)
     _about(r)
     toc = _toc(r)
+    FIGURES.extend(r.figures)
     title_en, title_ar = r.t.get("ui.title", "en"), r.t.get("ui.title", "ar")
     logo_light = (diagrams_logo("logo-light.svg"))
     logo_dark = (diagrams_logo("logo-dark.svg"))
@@ -360,20 +385,7 @@ def _stages(r: R) -> None:
     r.section("stages", body)
 
 
-RECIPES = [
-    ("new-project", ["tamheed", "entity_upsert", "gate_run", "readiness_check", "handoff_emit"], 6),
-    ("intake-only", ["tamheed", "entity_upsert"], 4),
-    ("resume", ["package_open", "orient-resume", "gate_run"], 4),
-    ("update", ["tamheed", "entity_upsert", "progress_update", "audit_record"], 5),
-    ("adopt", ["package_adopt", "gate_run", "readiness_check"], 5),
-    ("migrate", ["package_migrate", "package_open", "gate_run"], 5),
-    ("upgrade", ["package_close", "server_info", "package_migrate", "handoff_emit", "export_html"], 6),
-    ("lock-recovery", ["package_open", "package_unlock"], 4),
-    ("semi-auto", ["orient-resume", "slice-kickoff", "progress-sync", "slice-review", "phase-close"], 6),
-    ("fully-auto", ["loop-guard", "loop-iteration"], 5),
-    ("skill-promote", ["skill-promote", "entity_upsert", "handoff_emit"], 5),
-    ("release", ["release-close-out", "readiness_check", "work_bind", "export_html", "package_verify"], 6),
-]
+RECIPES = diagrams.RECIPES   # plan 203: the recipes live beside their swimlanes
 
 
 def _workflows(r: R) -> None:
@@ -388,9 +400,10 @@ def _workflows(r: R) -> None:
             else:
                 chips.append(f'<code>/tamheed:{n}</code>')
         lis = "".join(f"<li>{r.T(f'workflow.{slug}.s{k}')}</li>" for k in range(1, steps + 1))
+        fig = r.figure_file(f"wf-{slug}", "dia.wf.caption", f"workflow.{slug}.title") if slug in diagrams.SWIMLANES else ""
         body += (f'<div class="recipe" id="wf-{slug}"><h3>{i}. {r.T(f"workflow.{slug}.title")}</h3>'
                  f'<p class="who">{r.UI("recipe.when")} {r.T(f"workflow.{slug}.when")}</p>'
-                 f'<p class="who">{r.UI("recipe.uses")} {" ".join(chips)}</p><ol>{lis}</ol></div>')
+                 f'<p class="who">{r.UI("recipe.uses")} {" ".join(chips)}</p>{fig}<ol>{lis}</ol></div>')
     r.section("workflows", body)
 
 

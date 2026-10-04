@@ -33,6 +33,7 @@ the engine as it is after 6.0.0.
 | G13 | Per-item figures as sibling files (`docs/guide/figures/*.svg`) via `<picture>` and the script swap; D1-D8 inline; the byte-twin covers the folder; LF-pinned. |
 | G16 | The word is "half": the planning half, the execution half; lanes labelled "Planning" and "Execution". |
 | G17 | (plan 201 review) A **frame** is a region, not an object: a dashed box drawn behind the edges with a short top-left title, never a click target. The geometry lint checks it stays on the canvas and that every member it names lies inside it, and skips it for crossings, borders and label touches. The fallback declined: two adjacent lane boxes with no frame. |
+| G18 | (plan 203 review) The lane rule of a swimlane: a step sits in the lane of the party that acts. An operator's command or word is the operator's; a tool the agent calls, or a skill it runs, is the agent's; the engine's own behaviour is the engine's. Three postures of G13 accepted: the explicit-dark flash on file figures (210 decides a fix), the system serif in file figures, the Latin-run isolate in every Arabic SVG text. |
 
 ## 2. The beat map
 
@@ -40,7 +41,7 @@ the engine as it is after 6.0.0.
 |---|---|---|
 | 201 | D1 and D2 as one agent with two halves; the README overview image | DONE 2026-10-04 |
 | 202 | The chrome: the two-level nav, D3's returns, D5's header pills, the pager in rem | DONE 2026-10-04 |
-| 203 | The figures folder proven on the twelve workflow swimlanes (`<picture>`, the swap, the LF rule, the folder byte-twin) | planned |
+| 203 | The figures folder proven on the twelve workflow swimlanes (`<picture>`, the swap, the LF rule, the folder byte-twin) | DONE 2026-10-04 |
 | 204 | Family relations figures | planned |
 | 205 | Family flow figures with the Writes parser | planned |
 | 206 | Tool figures | planned |
@@ -62,6 +63,13 @@ the engine as it is after 6.0.0.
   900 closed (754 px); D3's three loop-backs as orthogonal dashed returns in a channel above the
   lane; D5's row headers as boxes; the pager in rem with mono digits, identical in both languages
   (945 x 32, buttons 38.4 x 32); three titles sharpened; captures.
+- **203 — the figures folder on the twelve swimlanes.** (the commit this record lands in) The
+  per-item figures are sibling files under `docs/guide/figures/` (one per language and theme, LF,
+  written exactly by the build, covered by the byte-twin and `--check`), embedded through
+  `<picture>` with the script swap on the explicit toggle; a standalone file embeds the theme's
+  tokens and its language's direction; the twelve recipes as three-lane swimlanes (the frame
+  primitive, one node per step in the acting party's lane, 61 short labels EN + AR); the
+  label-width rule for file figures; Latin runs isolated in RTL text.
 
 ## 4. Errors owned
 
@@ -72,6 +80,9 @@ the engine as it is after 6.0.0.
   would have swallowed the sub-lists until scoped; the tools section's pre-id'd H3s were left out of
   the sub-list at first; the Arabic numbers sat flush against their titles (a logical margin on an
   LTR element); two shell heredocs mangled backslashes again (scripts from files).
+- **203.** The file figures' labels were orphans at first; the Arabic files reordered Latin tokens
+  until the isolate; 26 label lines failed the width rule across four builds; the embedded style
+  string tripped lint 14, then one label's semicolon; one import was missing on the first build.
 
 ## 5. Not built, by ruling or on purpose
 

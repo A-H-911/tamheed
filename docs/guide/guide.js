@@ -41,6 +41,13 @@
       b.setAttribute("aria-pressed", b.getAttribute("data-theme-btn") === theme ? "true" : "false");
     });
     if (persist) save({ theme: theme });
+    // plan 203 (G13): the file figures follow the explicit toggle; "system" leaves the media query to the browser
+    document.querySelectorAll("picture[data-fig]").forEach(function (p) {
+      var src = p.querySelector("source"), img = p.querySelector("img");
+      if (!src || !img) return;
+      if (theme === "system") { src.setAttribute("media", "(prefers-color-scheme: dark)"); img.src = img.getAttribute("data-light"); }
+      else { src.setAttribute("media", "not all"); img.src = img.getAttribute(theme === "dark" ? "data-dark" : "data-light"); }
+    });
   }
   document.querySelectorAll("[data-theme-btn]").forEach(function (b) {
     b.addEventListener("click", function () { setTheme(b.getAttribute("data-theme-btn"), true); });

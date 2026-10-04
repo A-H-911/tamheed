@@ -14,6 +14,7 @@ over a box. `lint()` checks all of it on both copies and the build fails on a vi
 """
 from __future__ import annotations
 
+import re
 from html import escape as esc
 
 # Every content id a diagram label uses (the build adds these to the required ids).
@@ -143,10 +144,21 @@ def _label_pos(pts, curve, rtl):
     return x, (ay + by) / 2, "start"            # RTL copies inherit direction:rtl, so start = the right edge
 
 
+_LATIN_RUN = re.compile(r"[A-Za-z0-9_/:\-.=*@#'\"]+(?: [A-Za-z0-9_/:\-.=*@#'\"·]+)*")   # a middle-dot list stays one run
+
+
+def _isolate_latin(line: str) -> str:
+    """Plan 203: in a right-to-left copy a Latin token keeps its own order (a command, a flag, a
+    tool name) by a left-to-right isolate around every Latin run; brackets stay outside it."""
+    return _LATIN_RUN.sub(lambda m: "⁦" + m.group(0) + "⁩", line)
+
+
 def _text(lines, x, y, rtl, cls, anchor="middle", lh=14, keys=None):
     out = []
     n = len(lines)
     y0 = y - (n - 1) * lh / 2
+    if rtl:
+        lines = [_isolate_latin(l) for l in lines]
     for i, line in enumerate(lines):
         extra = ' style="direction:ltr;unicode-bidi:isolate"' if cls and "num" in cls else ""
         key = f' data-key="{esc(keys[i])}"' if keys else ""
@@ -634,6 +646,138 @@ def session(f) -> dict:
         edge("close", "resume", _L("session.next"), "", step=6, side=("b", "t"), offset=(0, -260)),
     ]
     return {"id": "d8", "w": 760, "h": 270, "nodes": ns, "edges": es}
+
+
+# ----------------------------------------------------------------------------- the file figures
+
+RECIPES = [
+    ("new-project", ["tamheed", "entity_upsert", "gate_run", "readiness_check", "handoff_emit"], 6),
+    ("intake-only", ["tamheed", "entity_upsert"], 4),
+    ("resume", ["package_open", "orient-resume", "gate_run"], 4),
+    ("update", ["tamheed", "entity_upsert", "progress_update", "audit_record"], 5),
+    ("adopt", ["package_adopt", "gate_run", "readiness_check"], 5),
+    ("migrate", ["package_migrate", "package_open", "gate_run"], 5),
+    ("upgrade", ["package_close", "server_info", "package_migrate", "handoff_emit", "export_html"], 6),
+    ("lock-recovery", ["package_open", "package_unlock"], 4),
+    ("semi-auto", ["orient-resume", "slice-kickoff", "progress-sync", "slice-review", "phase-close"], 6),
+    ("fully-auto", ["loop-guard", "loop-iteration"], 5),
+    ("skill-promote", ["skill-promote", "entity_upsert", "handoff_emit"], 5),
+    ("release", ["release-close-out", "readiness_check", "work_bind", "export_html", "package_verify"], 6),
+]
+LANES = ("operator", "agent", "engine")
+LANE_Y = {"operator": 10, "agent": 104, "engine": 198}
+# Plan 203 (G12): the party that acts at each step of a recipe, by one rule. An operator's command
+# or word is the operator's lane; a tool the agent calls, or a skill it runs, is the agent's; the
+# engine's own behaviour (a hook, a refusal, a verdict, a sync) is the engine's.
+SWIMLANES = {
+    "new-project": ['operator', 'operator', 'operator', 'agent', 'agent', 'operator'],
+    "intake-only": ['operator', 'agent', 'agent', 'operator'],
+    "resume": ['engine', 'agent', 'engine', 'operator'],
+    "update": ['operator', 'agent', 'agent', 'agent', 'operator'],
+    "adopt": ['agent', 'operator', 'operator', 'engine', 'operator'],
+    "migrate": ['agent', 'operator', 'operator', 'engine', 'engine'],
+    "upgrade": ['operator', 'operator', 'agent', 'agent', 'agent', 'agent'],
+    "lock-recovery": ['engine', 'operator', 'operator', 'agent'],
+    "semi-auto": ['agent', 'agent', 'agent', 'agent', 'operator', 'operator'],
+    "fully-auto": ['operator', 'agent', 'engine', 'engine', 'operator'],
+    "skill-promote": ['agent', 'operator', 'agent', 'agent', 'operator'],
+    "release": ['agent', 'operator', 'engine', 'agent', 'agent', 'operator'],
+}
+
+
+def swimlane(f, slug) -> dict:
+    """One recipe as three lanes (the frame primitive), one node per step in the lane of the party
+    that acts, the steps linked in order: departures from the right side, arrivals at the top or
+    the bottom centre, so no two edges share an anchor and no edge crosses a node."""
+    steps = next(s for sl, _names, s in RECIPES if sl == slug)
+    lanes = SWIMLANES[slug]
+    assert len(lanes) == steps, (slug, len(lanes), steps)
+    ns, es = [], []
+    col = 860 // steps                       # the columns share the lanes' width: fewer steps, wider boxes
+    w = min(col - 8, 200)
+    for k, lane in enumerate(lanes, 1):
+        cls = {"operator": "acc", "agent": "", "engine": "pill"}[lane]
+        ns.append(node(f"s{k}", 30 + (k - 1) * col, LANE_Y[lane] + 30, w, 44, _L(f"wf.{slug}.s{k}"), cls))
+    for k in range(1, steps):
+        a, b = lanes[k - 1], lanes[k]
+        side = ("r", "l") if a == b else (("r", "t") if LANE_Y[b] > LANE_Y[a] else ("r", "b"))
+        es.append(edge(f"s{k}", f"s{k + 1}", side=side))
+    frs = [frame(f"lane-{lane}", 10, LANE_Y[lane], 880, 86, _L(f"lane.{lane}"),
+                 [f"s{k}" for k, ln in enumerate(lanes, 1) if ln == lane]) for lane in LANES]
+    return {"id": f"wf-{slug}", "w": 900, "h": 294, "nodes": ns, "edges": es, "frames": frs}
+
+
+FILE_MODELS = {f"wf-{slug}": (lambda f, s=slug: swimlane(f, s)) for slug in SWIMLANES}
+
+
+def label_problems(model, resolve) -> list[str]:
+    """A file figure renders in fallback fonts with no inline twin to compare against, so every
+    node label line must fit its box by the width estimate (plan 203)."""
+    out = []
+    for n in model["nodes"]:
+        if not (n["w"] and n["h"]):
+            continue
+        lines = n["label"] if isinstance(n["label"], list) else resolve(n["label"]).split("\n")
+        px = 13 if "strong" in n["cls"] else (10.5 if n["small"] else 12)
+        for line in lines:
+            if _text_width(line, px) > n["w"] - 10:
+                out.append(f"{model['id']}: label of {n['key']} is wider than its box: {line!r}")
+    return out
+
+
+_FILE_FONTS = {"en": 'Georgia, "Times New Roman", serif', "ar": '"Noto Naskh Arabic", "Segoe UI", Tahoma, serif'}
+_FILE_MONO = 'Consolas, Menlo, monospace'
+
+
+def _mix(a: str, b: str, pct: int) -> str:
+    """pct % of colour a over colour b, both #rrggbb (the page uses color-mix, which an SVG
+    loaded as an image may not resolve)."""
+    ra, ga, ba = (int(a[i:i + 2], 16) for i in (1, 3, 5))
+    rb, gb, bb = (int(b[i:i + 2], 16) for i in (1, 3, 5))
+    m = lambda x, y: round(x * pct / 100 + y * (100 - pct) / 100)
+    return f"#{m(ra, rb):02x}{m(ga, gb):02x}{m(ba, bb):02x}"
+
+
+def file_style(tokens: dict, lang: str) -> str:
+    """The embedded style of a standalone figure: the theme's tokens resolved, no web fonts, the
+    direction of the language on the root (an SVG loaded as an image inherits nothing). Built
+    from declarations, never written as one string."""
+    t = tokens
+    rtl = "rtl" if lang == "ar" else "ltr"
+    rules = [
+        ("svg", [f"font-family:{_FILE_FONTS[lang]}", f"color:{t['ink']}", f"direction:{rtl}"]),
+        ("text", ["fill:currentColor"]),
+        (".box", [f"fill:{t['panel-2']}", f"stroke:{t['line']}", "stroke-width:1.2"]),
+        (".box.acc", [f"fill:{t['accent-soft']}", f"stroke:{t['accent']}"]),
+        (".box.good", [f"fill:{_mix(t['good'], t['panel'], 14)}", f"stroke:{t['good']}"]),
+        (".box.bad", [f"fill:{_mix(t['bad'], t['panel'], 12)}", f"stroke:{t['bad']}"]),
+        (".box.warn", [f"fill:{_mix(t['warn'], t['panel'], 14)}", f"stroke:{t['warn']}"]),
+        (".box.frame", ["fill:none", f"stroke:{t['line']}", "stroke-dasharray:5 4"]),
+        (".frame .lbl", [f"fill:{t['ink-2']}"]),
+        (".edge", ["fill:none", f"stroke:{t['ink-2']}", "stroke-width:1.4"]),
+        (".edge.acc", [f"stroke:{t['accent']}", "stroke-width:1.8"]),
+        (".edge.loop", ["stroke-dasharray:4 3"]),
+        (".lbl", ["font-size:12px"]),
+        (".lbl.small", ["font-size:10.5px", f"fill:{t['ink-2']}", "paint-order:stroke fill", f"stroke:{t['panel']}",
+                        "stroke-width:4px", "stroke-linejoin:round"]),
+        (".lbl.strong", ["font-weight:600", "font-size:13px"]),
+        (".num", [f"font-family:{_FILE_MONO}", "font-size:11px", "direction:ltr", "unicode-bidi:isolate"]),
+        (".arrow", [f"fill:{t['ink-2']}"]),
+        (".arrow.acc", [f"fill:{t['accent']}"]),
+    ]
+    sep = chr(59)   # the declaration separator, kept out of every literal on purpose
+    return "".join(f"{selector}{{{sep.join(decls)}}}" for selector, decls in rules)
+
+
+def svg_file(model, rtl: bool, lang: str, resolve, title: str, tokens: dict) -> str:
+    """One standalone copy: the inline markup with an intrinsic size and the resolved style."""
+    body = svg(model, rtl, lang, resolve, title)
+    W, H = model["w"], model["h"]
+    head = f'<svg class="dia" lang="{lang}" viewBox="0 0 {W} {H}"'
+    assert body.startswith(head), body[:80]
+    body = head + f' width="{W}" height="{H}"' + body[len(head):]
+    cut = body.index(">") + 1
+    return body[:cut] + f"<style>{file_style(tokens, lang)}</style>" + body[cut:]
 
 
 MODELS = {"d1": overview, "d2": actors, "d3": stage_track, "d4": package_tree, "d5": relations_map,

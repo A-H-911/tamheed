@@ -188,7 +188,7 @@ PROGRESS / DONE.
 |---|---|---|---|
 | 201 | [D1 and D2 as one agent with two halves](201-d1-d2-two-halves.md) -- the frame primitive (G17) with its lint rule; the operator on top, the two lanes, the handoff, the server and the package; the README overview image re-exported | 200 | DONE -- 2026-10-04 (the commit this row lands in, after the operator's review) |
 | 202 | [The chrome](202-chrome-nav-d3-d5-pager.md) -- numbered sections with chapter kickers, the two-level TOC that fits 1280 x 900 closed, D3's loop returns in channels, D5's row headers as boxes, the pager in rem identical in both languages | 201 | DONE -- 2026-10-04 (the commit this row lands in, after the operator's review) |
-| 203 | The figures folder proven on the twelve workflow swimlanes | 202 | PLANNED |
+| 203 | [The figures folder on the twelve workflow swimlanes](203-figures-folder-workflow-swimlanes.md) -- sibling SVG files per language and theme, `<picture>` with the toggle swap, LF-pinned, the folder byte-twin; three-lane swimlanes on the frame primitive with the label-width rule | 202 | DONE -- 2026-10-04 (the commit this row lands in, after the operator's review) |
 | 204 | Family relations figures | 203 | PLANNED |
 | 205 | Family flow figures with the Writes parser | 204 | PLANNED |
 | 206 | Tool figures | 205 | PLANNED |

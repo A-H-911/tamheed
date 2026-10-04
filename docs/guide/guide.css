@@ -203,6 +203,10 @@ details.blk > .body { padding: 0 .9rem .9rem; }
 .dia-wrap { border: 1px solid var(--line); border-radius: var(--radius); background: var(--panel); padding: .6rem; overflow-x: auto; }
 svg.dia { display: block; width: 100%; height: auto; max-width: 100%; font-family: var(--serif-en); color: var(--ink); }
 @media (max-width: 640px) { svg.dia { min-width: 40rem; } }
+/* plan 203 (G13): the per-item figures are files, embedded as images */
+.dia-wrap img.fig { display: block; width: 100%; height: auto; max-width: 100%; }
+@media (max-width: 640px) { .dia-wrap img.fig { min-width: 40rem; } }
+figure.file { margin-block: .6rem 1rem; }
 svg.dia[lang="ar"] { font-family: var(--serif-ar); }
 svg.dia text { fill: currentColor; }
 svg.dia .box { fill: var(--panel-2); stroke: var(--line); stroke-width: 1.2; }
