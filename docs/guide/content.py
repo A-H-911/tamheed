@@ -290,7 +290,6 @@ TEXT: dict[str, dict[str, str]] = {
                              "ar": "نقاط التدخّل البشري: المرحلة 7 (التوضيح)، و8 (اعتماد النطاق)، و14 (اعتماد القرارات الأساسية)، و18 (يودع المشغّل `data/`)، و22 (المضي أو التوقف النهائي). وتسع مراحل أخرى تؤكد مع المشغّل قبل عمل ثقيل أو مكلف أو ملزم. وهي 1 (نطاق الطلب ووضعه)، و2 (الملف التعريفي)، و9 (عمق البحث)، و13 (ميزانيات التجارب)، و15 (شهية المخاطرة). و16 (خارطة الطريق)، و19 (تحذيرات البوابات)، و20 (التسليم)، و21 (التغييرات الجوهرية)."},
     "dia.stages.caption": {"en": "The track: three lanes, 22 stops, human points in green, loop-backs dashed to the start of their lane. The exact stage you return to depends on what failed. Click a stage to read what it produces.",
                            "ar": "المسار: ثلاث حارات و22 محطة، نقاط التدخّل البشري بالأخضر، والعودات منقَّطة إلى بداية حارتها (المرحلة التي تعود إليها فعلًا تتوقف على ما فشل). انقر مرحلة لتقرأ ما تنتجه."},
-    "dia.stages.loop": {"en": "loop back", "ar": "عودة"},
     "dia.stages.legend.human": {"en": "human point", "ar": "نقطة تدخّل بشري"},
     "dia.stages.legend.loop": {"en": "dashed: loops upstream", "ar": "منقَّط: يعود إلى الخلف"},
     "phase.A": {"en": "Understand", "ar": "الفهم"},
@@ -370,7 +369,7 @@ TEXT: dict[str, dict[str, str]] = {
                  "ar": "**نقطة تدخّل بشري.** `gate_run` **و** `readiness_check(\"package\")` كلاهما إلزامي، مع `package_verify` قبل أن يودع المشغّل الحكم. تلخيص البوابات والأسئلة المقبولة مفتوحة والمخاطر المتبقية وتوزّع الأحكام (مُدلَّل، مَروي، غير مُقيَّم) والمضي أو التوقف. يكتب: لا شيء (حقل الترويسة `go_no_go` للمشغّل)."},
 
     # ---------------------------------------------------------------- workflows
-    "section.workflows.title": {"en": "Workflows", "ar": "تدفقات العمل"},
+    "section.workflows.title": {"en": 'Workflows: the recipes', "ar": 'سير العمل: الوصفات'},
     "section.workflows.1": {"en": "The operational recipes, as numbered steps naming the tools and skills each step calls. Every tool and skill named here exists in the installed plugin (the guide's test checks). Recipes 1 to 8 set a package up or move it. Recipes 9 to 12 run and close execution.",
                             "ar": "الوصفات التشغيلية، كخطوات مرقَّمة تسمّي الأدوات والمهارات التي تستدعيها كل خطوة. كل أداة ومهارة مذكورة هنا موجودة في الإضافة المثبَّتة (يتحقق اختبار الدليل من ذلك). الوصفات من 1 إلى 8 تُنشئ الحزمة أو تنقلها. والوصفات من 9 إلى 12 تدير التنفيذ وتُغلقه."},
     "section.workflows.2": {"en": "Two styles run execution. **Semi-auto**, where you drive each ceremony and every STOP waits for your words. **Fully-auto**, where a loop repeats one skill under a brake you read first.",
@@ -954,7 +953,7 @@ TEXT: dict[str, dict[str, str]] = {
                        "ar": "البديل غير المُصنَّف: أي صفين، حين يكون الرابط حقيقيًا ولا تناسبه علاقة مُصنَّفة. تحسب `G-TRACE` النوع المرتبط أيًا كان نوع العلاقة، فهذه تُحتسب أيضًا. استخدمها لرابط حقيقي لا لإرضاء بوابة."},
 
     # ---------------------------------------------------------------- statuses
-    "section.statuses.title": {"en": "Status sets", "ar": "مجموعات الحالة"},
+    "section.statuses.title": {"en": 'Statuses and lifecycles', "ar": 'الحالات ودورات الحياة'},
     "section.statuses.1": {"en": "Three independent axes describe a row. `lifecycle_status` (approval), a domain `verdict` where the family has one (tests, experiments, audit verdicts), and `disposition` (how it left, when not by lifecycle). Risks add a fourth, `risk_state`. Mixing them is the classic error: a cancelled criterion is `void`, not `Not-met`.",
                            "ar": "ثلاثة محاور مستقلة تصف الصف. `lifecycle_status` (الاعتماد)، و`verdict` خاص بالمجال حيث تملكه العائلة (الاختبارات والتجارب وأحكام التدقيق)، و`disposition` (كيف خرج، حين لا يكون ذلك عبر دورة الحياة). وتضيف المخاطر رابعًا، `risk_state`. والخلط بينها هو الخطأ الكلاسيكي: المعيار الملغى `void` لا `Not-met`."},
     "section.statuses.2": {"en": "Which values a column accepts is a CHECK constraint in the schema, so the sets below are exactly what the store enforces. There is no general state machine in code: the CHECK limits the values, and only the transitions named in the next sections are guarded.",
@@ -1369,7 +1368,7 @@ TEXT: dict[str, dict[str, str]] = {
     "faq.github-page.a": {"en": "`index.html` is a plain file in the repository. Open it from a clone in a browser, or enable GitHub Pages on `main` (root) to serve it at the repository's Pages address.", "ar": "`index.html` ملف عادي في المستودع. افتحه من نسخة محلية في متصفح، أو فعِّل GitHub Pages على `main` (الجذر) ليُقدَّم على عنوان Pages الخاص بالمستودع."},
 
     # ---------------------------------------------------------------- maintainer
-    "section.maintainer.title": {"en": "Appendix: maintaining the repository", "ar": "ملحق: صيانة المستودع"},
+    "section.maintainer.title": {"en": 'Maintaining the repository', "ar": 'صيانة المستودع'},
     "section.maintainer.1": {"en": "For contributors to Tamheed itself. There is no build step. Python 3.10+ and the standard library are the only requirements. One command is the merge bar, and CI runs exactly it on Ubuntu and Windows across Python 3.10 to 3.13.",
                              "ar": "للمساهمين في تمهيد نفسه. لا خطوة بناء. وPython 3.10+ والمكتبة القياسية هما المتطلبان الوحيدان. أمر واحد هو معيار الدمج، ويشغّله CI بالضبط على Ubuntu وWindows عبر Python من 3.10 إلى 3.13."},
     "section.maintainer.2": {"en": "The governing invariant: the bundle `plugins/tamheed/` is self-contained and never links out. The DDL is the single source of data shape. The registry, the catalog, the table map and the DDL stay in sync by lint. `schema.sql` is a byte-twin of `migrations/001_init.sql`.",

@@ -462,10 +462,20 @@ def stage_track(f) -> dict:
                 es.append(edge(f"s{p['stages'][i - 1]}", f"s{n}", side=("r", "l")))
     es.append(edge("s8", "s9", "", "", side=("b", "t"), via=[(694, 90), (134, 90)], offset=(0, -14)))
     es.append(edge("s15", "s16", "", "", side=("b", "t"), via=[(616, 170), (134, 170)], offset=(0, -14)))
+    # plan 202 (G5): a loop-back is an orthogonal dashed return in a channel 18 px above its lane,
+    # landing on the lane's first pill from the top. s9 and s16 already receive the phase-crossing
+    # drop at centre - 14, so the return lands at centre + 14; s1 has no other arrival.
     lane_start = {n: p["stages"][0] for p in st["phases"] for n in p["stages"]}
+    lane_of = {n: p["letter"] for p in st["phases"] for n in p["stages"]}
+    idx = {n: i for p in st["phases"] for i, n in enumerate(p["stages"])}
     for n in sorted(loops):
-        es.append(edge(f"s{n}", f"s{lane_start[n]}", _L("stages.loop"), "loop", draw=False,
-                       side=("t", "t"), bend=-28, offset=(0, 14)))
+        s0 = lane_start[n]
+        ch = lane_y[lane_of[n]] - 18
+        t_off = 0 if s0 == 1 else 14
+        x_from = 120 + idx[n] * 78 + 28
+        x_to = 120 + idx[s0] * 78 + 28 + t_off
+        es.append(edge(f"s{n}", f"s{s0}", None, "loop", draw=False, side=("t", "t"),
+                       via=[(x_from, ch), (x_to, ch)], offset=(0, t_off)))
     ns.append(node("legend-l", 360, 256, 190, 24, _L("stages.legend.loop"), "pill"))
     ns.append(node("legend-h", 560, 256, 190, 24, _L("stages.legend.human"), "good pill"))
     return {"id": "d3", "w": 760, "h": 294, "nodes": ns, "edges": es}
@@ -544,7 +554,7 @@ def relations_map(f) -> dict:
     y = y0
     for i, a in enumerate(names):
         h = rows_h[i]
-        ns.append(node(f"row-{a}", 10, y, hx - 4, h - 4, _L(f"relations.h.{a}"), "acc pill", keyed=False))
+        ns.append(node(f"row-{a}", 10, y, hx - 4, h - 4, _L(f"relations.h.{a}"), "acc", keyed=False))   # plan 202: a box, not a tall pill
         for j, b in enumerate(names):
             rels = cells.get((a, b), [])
             cls = "cell" if rels else "cell empty"

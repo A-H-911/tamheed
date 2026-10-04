@@ -59,6 +59,7 @@ class R:
         self.f = f
         self.t = text
         self.out: list[str] = []
+        self.subs: dict[str, list[tuple[str, str]]] = {}   # plan 202: each section's H3 anchors
 
     # ---- bilingual helpers -------------------------------------------------------
     def T(self, cid: str, tag: str = "span", cls: str = "") -> str:
@@ -98,8 +99,23 @@ class R:
         return self.T(f"ui.tier.{which}", "span", f"tier {which}")
 
     def section(self, sid: str, body: str, kicker: str | None = None) -> None:
-        k = f'<p class="sec-kicker">{self.T(kicker)}</p>' if kicker else ""
-        self.out.append(f'<section class="sec" id="{sid}">{k}{self.H(2, f"section.{sid}.title")}{body}</section>')
+        """Plan 202 (G10): the chapter as the kicker, the section number in the H2, and every H3
+        gets a deterministic id ({sid}-h{n}) the two-level TOC links to."""
+        subs: list[tuple[str, str]] = []
+
+        def _anchor(m: re.Match) -> str:
+            aid = m.group(1) or f"{sid}-h{len(subs) + 1}"   # an H3 that carries its own id keeps it
+            subs.append((aid, m.group(2)))
+            return f'<h3 id="{aid}">{m.group(2)}</h3>'
+
+        body = re.sub(r'<h3(?: id="([^"]+)")?>(.*?)</h3>', _anchor, body, flags=re.S)
+        self.subs[sid] = subs
+        k = f'<p class="sec-kicker">{self.UI(f"toc.{SECTION_GROUP[sid]}")}</p>'
+        if kicker:
+            k += f'<p class="sec-kicker">{self.T(kicker)}</p>'
+        h2 = (f'<h2><span class="sec-num">{SECTION_NUMBERS[sid]}</span>'
+              f'{self.T(f"section.{sid}.title")}</h2>')
+        self.out.append(f'<section class="sec" id="{sid}">{k}{h2}{body}</section>')
 
     def figure(self, did: str, caption_cid: str, isolate: bool = False, steps: int = 0,
                keys: bool = False, extra_html: str = "") -> str:
@@ -212,15 +228,28 @@ SECTIONS = [
     ("writing", "agents"), ("faq", "agents"), ("maintainer", "appendix"), ("glossary", "appendix"),
     ("about", "appendix"),
 ]
+SECTION_NUMBERS = {sid: i + 1 for i, (sid, _g) in enumerate(SECTIONS)}
+SECTION_GROUP = dict(SECTIONS)
 
 
 def _toc(r: R) -> str:
+    """Plan 202 (G10): chapters as groups, numbered section links, and a closed <details> per
+    section holding its H3 anchors. The script opens the active section's; with no script the
+    section links alone read."""
     items, last = [], None
     for sid, group in SECTIONS:
         if group != last:
             items.append(f'<li class="toc-group">{r.UI(f"toc.{group}")}</li>')
             last = group
-        items.append(f'<li><a href="#{sid}">{r.T(f"section.{sid}.title")}</a></li>')
+        link = (f'<a href="#{sid}"><span class="sec-num">{SECTION_NUMBERS[sid]}</span>'
+                f'{r.T(f"section.{sid}.title")}</a>')
+        subs = r.subs.get(sid, [])
+        if subs:
+            inner = "".join(f'<li><a href="#{aid}">{text}</a></li>' for aid, text in subs)
+            items.append(f'<li data-sid="{sid}">{link}<details class="sub"><summary>{len(subs)}</summary>'
+                         f'<ol>{inner}</ol></details></li>')
+        else:
+            items.append(f'<li data-sid="{sid}">{link}</li>')
     return (f'<nav class="toc" aria-label="Sections"><details open><summary>{r.UI("toc.contents")}</summary>'
             f'<ol>{"".join(items)}</ol></details></nav>')
 

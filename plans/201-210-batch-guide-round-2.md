@@ -39,7 +39,7 @@ the engine as it is after 6.0.0.
 | # | Beat | Status |
 |---|---|---|
 | 201 | D1 and D2 as one agent with two halves; the README overview image | DONE 2026-10-04 |
-| 202 | The chrome: the two-level nav, D3's returns, D5's header pills, the pager in rem | planned |
+| 202 | The chrome: the two-level nav, D3's returns, D5's header pills, the pager in rem | DONE 2026-10-04 |
 | 203 | The figures folder proven on the twelve workflow swimlanes (`<picture>`, the swap, the LF rule, the folder byte-twin) | planned |
 | 204 | Family relations figures | planned |
 | 205 | Family flow figures with the Writes parser | planned |
@@ -56,12 +56,22 @@ the engine as it is after 6.0.0.
   execution lanes, the handoff, the server, the package, the review page; D2: the same shape with
   what each party may do, the isolate by party kept; the captions and labels EN + AR; six overview
   labels retired; the README alt text and image re-exported; captures EN/AR light/dark and 390 px.
+- **202 — the chrome.** (the commit this record lands in) Numbered sections with the chapter as
+  the kicker; the two-level TOC (each section's H3s get ids, a closed `<details>` per section the
+  script opens for the active one, the summary a floating count and chevron); the nav fits 1280 x
+  900 closed (754 px); D3's three loop-backs as orthogonal dashed returns in a channel above the
+  lane; D5's row headers as boxes; the pager in rem with mono digits, identical in both languages
+  (945 x 32, buttons 38.4 x 32); three titles sharpened; captures.
 
 ## 4. Errors owned
 
 - **201.** The frame label id was written without the `dia.` prefix the label helper adds (an
   orphan and two missing strings until renamed). The alt text carried three semicolons and a caption
   one 26-word sentence. The first README capture showed the page background behind the widened SVG.
+- **202.** The first nav did not fit 1280 x 900 (the summaries took a line each); the desktop nav CSS
+  would have swallowed the sub-lists until scoped; the tools section's pre-id'd H3s were left out of
+  the sub-list at first; the Arabic numbers sat flush against their titles (a logical margin on an
+  LTR element); two shell heredocs mangled backslashes again (scripts from files).
 
 ## 5. Not built, by ruling or on purpose
 

@@ -96,17 +96,33 @@ button { font: inherit; color: inherit; cursor: pointer; }
 nav.toc { position: sticky; top: 4rem; align-self: start; max-height: calc(100vh - 5rem); overflow: auto; font-size: .92rem; }
 nav.toc ol { list-style: none; padding: 0; margin: 0; }
 nav.toc li { margin: 0; }
-nav.toc a { display: block; padding: .18rem .6rem; line-height: 1.3; border-inline-start: 2px solid transparent; color: var(--ink-2); text-decoration: none; border-radius: 0 4px 4px 0; }
+nav.toc li[data-sid] > a { padding-inline-end: 2.4rem; }
+nav.toc a { display: block; padding: .12rem .6rem; line-height: 1.3; border-inline-start: 2px solid transparent; color: var(--ink-2); text-decoration: none; border-radius: 0 4px 4px 0; }
 nav.toc a:hover { color: var(--ink); background: var(--panel-2); }
 nav.toc a.active { color: var(--accent-ink); border-color: var(--accent); font-weight: 600; }
-nav.toc .toc-group { margin-top: .55rem; padding: 0 .6rem; font-size: .75rem; color: var(--ink-2); letter-spacing: .04em; }
+nav.toc .toc-group { margin-top: .4rem; padding: 0 .6rem; font-size: .75rem; color: var(--ink-2); letter-spacing: .04em; }
 @media (max-width: 960px) {
   nav.toc { position: static; max-height: none; }
-  nav.toc details { border: 1px solid var(--line); border-radius: var(--radius); background: var(--panel); }
-  nav.toc summary { padding: .6rem .8rem; cursor: pointer; font-weight: 600; }
+  nav.toc > details { border: 1px solid var(--line); border-radius: var(--radius); background: var(--panel); }
+  nav.toc > details > summary { padding: .6rem .8rem; cursor: pointer; font-weight: 600; }
+  nav.toc details.sub { display: none; }   /* plan 202: the second level is a desktop affordance */
+  nav.toc li[data-sid] > a { padding-inline-end: .6rem; }
   nav.toc ol { padding: .4rem .5rem .8rem; columns: 2; }
 }
-@media (min-width: 961px) { nav.toc details { display: contents; } nav.toc summary { display: none; } }
+@media (min-width: 961px) { nav.toc > details { display: contents; } nav.toc > details > summary { display: none; } }
+/* plan 202 (G10): the second level, closed at rest; the script opens the active section's */
+nav.toc li[data-sid] { position: relative; }
+nav.toc details.sub { margin: 0; }
+nav.toc details.sub > summary { list-style: none; cursor: pointer; position: absolute; top: .12rem; inset-inline-end: .2rem; font-size: .68rem; line-height: 1.6; color: var(--ink-2); padding: 0 .3rem; white-space: nowrap; }
+nav.toc details.sub > summary::-webkit-details-marker { display: none; }
+nav.toc details.sub > summary::after { content: " \25B8"; }
+nav.toc details.sub[open] > summary::after { content: " \25BE"; }
+nav.toc details.sub ol { padding-inline-start: 1.1rem; }
+nav.toc details.sub a { font-size: .84rem; padding: .08rem .5rem; }
+/* the number's own direction is ltr, so a logical end margin would land on the wrong side in RTL: physical margins per direction */
+html[dir="rtl"] .sec-num { margin-right: 0; margin-left: .6rem; }
+.sec-num { display: inline-block; min-width: 1.5em; margin-right: .6rem; text-align: center; font-family: var(--mono); font-size: .78em; font-weight: 600; color: var(--accent-ink); direction: ltr; unicode-bidi: isolate; }
+nav.toc a .sec-num { min-width: 1.4em; font-size: .76em; }
 main { min-width: 0; }
 section.sec { padding-block: 2rem 1.5rem; border-top: 1px solid var(--line); }
 section.sec:first-of-type { border-top: 0; padding-top: 0; }
@@ -216,8 +232,9 @@ html.js svg.dia .draw { opacity: 0; transition: opacity .3s ease-out; }
 html.js svg.dia.in .draw { opacity: 1; }
 svg.dia .step { transition: opacity .3s; }
 html.js svg.dia .step:not([data-on]) { opacity: .18; }
-.steps { display: flex; flex-wrap: wrap; gap: .4rem; margin-top: .6rem; align-items: center; }
-.steps button { border: 1px solid var(--line); background: var(--panel); border-radius: 999px; padding: .25rem .7rem; font-size: .88em; }
+.steps { display: flex; flex-wrap: wrap; gap: .4rem; margin-top: .6rem; align-items: center; font-size: .95rem; line-height: 2rem; }
+/* plan 202 (G6): the pager in rem and mono digits, so both languages render the same bar */
+.steps button { border: 1px solid var(--line); background: var(--panel); border-radius: 999px; padding: 0 .75rem; height: 2rem; min-width: 2.4rem; font-family: var(--mono); font-size: .9rem; line-height: 1.9rem; direction: ltr; }
 .steps button[aria-pressed="true"] { background: var(--accent-soft); border-color: var(--accent); color: var(--accent-ink); font-weight: 600; }
 .stage-detail { min-height: 3.2rem; margin-top: .6rem; padding: .6rem .9rem; border-radius: var(--radius); background: var(--panel-2); max-width: var(--measure); }
 .stage-detail:empty { display: none; }

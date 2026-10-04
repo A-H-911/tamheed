@@ -7,6 +7,9 @@
   root.classList.add("js");
   var tocDetails = document.querySelector("nav.toc details");
   if (tocDetails && window.innerWidth < 960) tocDetails.open = false;
+  // plan 202: a page opened narrow and widened keeps its nav (the desktop rule shows the
+  // details' contents only while it is open)
+  window.addEventListener("resize", function () { if (tocDetails && window.innerWidth >= 960) tocDetails.open = true; });
   var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
   function load() { try { return JSON.parse(localStorage.getItem(KEY) || "{}") || {}; } catch (e) { return {}; } }
@@ -56,6 +59,10 @@
         if (e.isIntersecting && byId[e.target.id]) {
           if (current) current.classList.remove("active");
           current = byId[e.target.id]; current.classList.add("active");
+          // plan 202 (G10): the two-level TOC opens the active section's topics and closes the rest
+          document.querySelectorAll("nav.toc details.sub[open]").forEach(function (d) { d.open = false; });
+          var li = current.closest("li"); var sub = li && li.querySelector("details.sub");
+          if (sub) sub.open = true;
         }
       });
     }, { rootMargin: "-20% 0px -70% 0px" });

@@ -161,6 +161,24 @@ class UserGuideTest(unittest.TestCase):
         for name in tools:
             self.assertIn(f"<code>{name}</code>", self.html, name)
 
+    def test_nav_is_numbered_two_level_and_closed_at_rest(self):
+        """Plan 202 (G10): every section H2 carries its number, the TOC repeats it, each section's
+        H3 anchors sit in a closed <details class="sub"> (the script opens the active one), and
+        every sub-link resolves to an id on the page."""
+        import render
+        h2_nums = re.findall(r'<h2><span class="sec-num">(\d+)</span>', self.html)
+        self.assertEqual([int(n) for n in h2_nums], list(range(1, len(render.SECTIONS) + 1)))
+        toc = self.html.split('<nav class="toc"')[1].split("</nav>")[0]
+        self.assertEqual(len(re.findall(r'<a href="#[a-z]+"><span class="sec-num">', toc)), len(render.SECTIONS))
+        self.assertIn('<details class="sub">', toc)
+        self.assertNotIn('<details class="sub" open', toc)
+        all_ids = re.findall(r' id="([^"]+)"', self.html)
+        ids = set(all_ids)
+        self.assertEqual(len(all_ids), len(ids), "duplicate ids on the page")
+        for href in re.findall(r'<details class="sub">.*?</details>', toc, re.S):
+            for target in re.findall(r'href="#([^"]+)"', href):
+                self.assertIn(target, ids, target)
+
     def test_page_hygiene(self):
         self.assertNotRegex(self.html, r"\son[a-z]+=")
         self.assertEqual(self.html.count("<script"), 2)
