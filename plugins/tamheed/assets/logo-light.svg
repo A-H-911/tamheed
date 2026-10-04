@@ -1,12 +1,13 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="24 52 842 200" width="842" height="200" role="img" aria-label="Tamheed">
   <title>Tamheed — تمهيد</title>
-  <desc>The Tamheed logo (for light backgrounds): ascending paving-step blocks, the two-tone wordmark Tamheed beside the Arabic تمهيد on a shared baseline, a paved-path underline running into an arrow, and the tagline GROUND WORK FOR EXECUTION.</desc>
-  <g>
-    <rect x="44"  y="124" width="32" height="18" rx="4" fill="#a5b4fc"/>
-    <rect x="74"  y="99.5" width="32" height="18" rx="4" fill="#818cf8"/>
-    <rect x="104" y="75"  width="32" height="18" rx="4" fill="#7c3aed"/>
-  </g>
-  <text x="184" y="142" font-family="'Segoe UI', system-ui, -apple-system, sans-serif" font-size="96" font-weight="800"><tspan fill="#312e81">Tam</tspan><tspan fill="#7c3aed">heed</tspan></text>
+  <desc>The Tamheed logo (for light backgrounds): the two-half paving mark (three ascending steps, a flat slab, an arc returning to the first step), the two-tone wordmark Tamheed beside the Arabic تمهيد on a shared baseline, a paved-path underline running into an arrow, and the tagline PLAN THE GROUND, KEEP THE RECORD.</desc>
+  <rect x="44.0" y="127.0" width="32.0" height="18.0" rx="4.4" fill="#a5b4fc"/>
+  <rect x="74.0" y="101.0" width="32.0" height="18.0" rx="4.4" fill="#818cf8"/>
+  <rect x="104.0" y="75.0" width="32.0" height="18.0" rx="4.4" fill="#7c3aed"/>
+  <rect x="142.0" y="78.0" width="40.0" height="12.0" rx="4.4" fill="#a5b4fc"/>
+  <path d="M164.0 70.0 A66.0 66.0 0 0 0 60.0 113.0" fill="none" stroke="#7c3aed" stroke-width="5.60" stroke-linecap="round"/>
+  <path d="M51.0 110.0 L69.0 110.0 L60.0 124.0 Z" fill="#7c3aed"/>
+  <text x="196" y="142" font-family="'Segoe UI', system-ui, -apple-system, sans-serif" font-size="92" font-weight="800"><tspan fill="#312e81">Tam</tspan><tspan fill="#7c3aed">heed</tspan></text>
   <text x="840" y="142" text-anchor="end" font-family="'Segoe UI', Tahoma, 'Noto Naskh Arabic', 'Geeza Pro', sans-serif" font-size="86" font-weight="700" fill="#7c3aed">تمهيد</text>
   <g fill="#a5b4fc">
     <rect x="44"  y="178" width="150" height="14" rx="7"/>
@@ -15,5 +16,5 @@
     <rect x="590" y="178" width="210" height="14" rx="7" opacity=".55"/>
     <path d="M808 170 L840 185 L808 200 Z" fill="#7c3aed"/>
   </g>
-  <text x="442" y="232" text-anchor="middle" font-family="'Segoe UI', system-ui, -apple-system, sans-serif" font-size="26" font-weight="600" letter-spacing="6" fill="#6d28d9">GROUND WORK FOR EXECUTION</text>
+  <text x="442" y="232" text-anchor="middle" font-family="'Segoe UI', system-ui, -apple-system, sans-serif" font-size="24" font-weight="600" letter-spacing="5" fill="#6d28d9">PLAN THE GROUND, KEEP THE RECORD</text>
 </svg>

@@ -194,7 +194,7 @@ PROGRESS / DONE.
 | 206 | [The tool figures](206-tool-figures.md) -- an effects canvas per tool with a server line per claim, a call-sequence strip per tool a recipe names, the step accented from its own label | 205 | DONE -- 2026-10-04 (the commit this row lands in, after the operator's review) |
 | 207 | [The gate figures](207-gate-figures.md) -- the pipeline in the server's order, one figure per gate from the gate map, the Check clauses parsed and the definitions table read, one canvas helper | 206 | DONE -- 2026-10-05 (the commit this row lands in, after the operator's review) |
 | 208 | [The skill figures](208-skill-figures.md) -- the skills' text read once, the citation matrix, the lifecycle map with only the stated moves, a strip per skill in a fold | 207 | DONE -- 2026-10-05 (the commit this row lands in, after the operator's review) |
-| 209 | Logo, icon, tagline | 208 | PLANNED |
+| 209 | [The logo, the icon and the tagline](209-logo-icon-tagline.md) -- the two-half paving mark with a return arc on the icon, the lockups and the favicon; the tagline reconsidered on every surface | 208 | DONE -- 2026-10-05 (the commit this row lands in, after the operator's review) |
 | 210 | Release 6.1.0 | 209 | PLANNED |
 
 ### Prompts return to the store -- plans 192-200 -> v6.0.0 (released 2026-10-04; maintainer-executed)

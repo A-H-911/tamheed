@@ -43,6 +43,8 @@ the engine as it is after 6.0.0.
 | G25 | (plan 207 review) Each gate's figure sits closed in a fold under its tier's table, dressed like the family folds; the pipeline sits open above. |
 | G26 | (plan 208 review) A skill strip marks STOP only in the bold ceremony form; prose about stops is not a step. |
 | G27 | (plan 208 review) The citation matrix has the nine discipline skills as columns only. |
+| G28 | (plan 209 review) The tagline is "Plan the ground, keep the record"; the Arabic is mirrored, not reviewed. |
+| G29 | (plan 209 review) The mark: three ascending steps, a path slab, a return arc; one committed generator is the source of the icon, the lockups and the favicon. |
 
 ## 2. The beat map
 
@@ -56,7 +58,7 @@ the engine as it is after 6.0.0.
 | 206 | Tool figures | DONE 2026-10-04 |
 | 207 | Gate figures | DONE 2026-10-05 |
 | 208 | Skill figures | DONE 2026-10-05 |
-| 209 | Logo, icon, tagline | planned |
+| 209 | Logo, icon, tagline | DONE 2026-10-05 |
 | 210 | Release 6.1.0 | planned |
 
 ## 3. What shipped, per plan
@@ -101,6 +103,9 @@ the engine as it is after 6.0.0.
   citation matrix (27 rows by 9 disciplines, 54 marks); the lifecycle map (pills in CHECK order,
   arrows only for the stated moves); a strip per skill of the tools its text names in order with its
   STOPs, in a fold; 724 files.
+- **209 — the logo, the icon and the tagline.** (the commit this record lands in) The two-half paving
+  mark with a return arc, drawn once and emitted as the icon (a Keystone arch until now), the three
+  lockups and the guide's favicon; the tagline "Plan the ground, keep the record" on every surface.
 
 ## 4. Errors owned
 
@@ -125,6 +130,8 @@ the engine as it is after 6.0.0.
   `UI()` prefixes its namespace, so a `ui.`-prefixed id doubled; two labels overflowed their columns.
 - **208.** The skill names were read from the file name instead of the folder; `tamheed:note` (the note
   span's marker) tripped the citation check until named as the one non-skill token.
+- **209.** An edit anchored on a line that read differently failed and the generator ran unchanged;
+  the assets README is rostered and a 29-word sentence failed the gate.
 
 ## 5. Not built, by ruling or on purpose
 

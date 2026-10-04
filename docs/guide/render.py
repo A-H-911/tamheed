@@ -211,11 +211,7 @@ def render_page(f: dict, text_table: dict, css: str, js: str) -> str:
         f'<title data-en="{esc(title_en)}" data-ar="{esc(title_ar)}">{esc(title_en)}</title>\n'
         f'<meta name="description" content="{esc(r.t.get("ui.description", "en"))}">\n'
         f'<meta name="generator" content="tamheed-guide {esc(v)}">\n'
-        '<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22%3E'
-        '%3Crect width=%2232%22 height=%2232%22 rx=%226%22 fill=%22%235b3fd6%22/%3E'
-        '%3Crect x=%226%22 y=%2219%22 width=%227%22 height=%225%22 rx=%221.5%22 fill=%22%23e0e7ff%22/%3E'
-        '%3Crect x=%2213%22 y=%2214%22 width=%227%22 height=%225%22 rx=%221.5%22 fill=%22%23c4b5fd%22/%3E'
-        '%3Crect x=%2220%22 y=%229%22 width=%227%22 height=%225%22 rx=%221.5%22 fill=%22%23a78bfa%22/%3E%3C/svg%3E">\n'
+        '<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2032%2032%22%3E%3Crect%20width%3D%2232%22%20height%3D%2232%22%20rx%3D%226%22%20fill%3D%22%235b3fd6%22%2F%3E%3Crect%20x%3D%222.5%22%20y%3D%2222.9%22%20width%3D%226.7%22%20height%3D%223.8%22%20rx%3D%220.9%22%20fill%3D%22%23e0e7ff%22%2F%3E%3Crect%20x%3D%228.8%22%20y%3D%2217.5%22%20width%3D%226.7%22%20height%3D%223.8%22%20rx%3D%220.9%22%20fill%3D%22%23c4b5fd%22%2F%3E%3Crect%20x%3D%2215.1%22%20y%3D%2212.0%22%20width%3D%226.7%22%20height%3D%223.8%22%20rx%3D%220.9%22%20fill%3D%22%23a78bfa%22%2F%3E%3Crect%20x%3D%2223.1%22%20y%3D%2212.6%22%20width%3D%228.4%22%20height%3D%222.5%22%20rx%3D%220.9%22%20fill%3D%22%23ede9fe%22%2F%3E%3Cpath%20d%3D%22M27.7%2010.9%20A13.9%2013.9%200%200%200%205.9%2020.0%22%20fill%3D%22none%22%20stroke%3D%22%23ffffff%22%20stroke-width%3D%221.18%22%20stroke-linecap%3D%22round%22%2F%3E%3Cpath%20d%3D%22M4.0%2019.4%20L7.8%2019.4%20L5.9%2022.3%20Z%22%20fill%3D%22%23ffffff%22%2F%3E%3C%2Fsvg%3E">\n'
         '<link rel="preconnect" href="https://fonts.googleapis.com">\n'
         '<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>\n'
         f"<script>{boot}</script>\n<style>\n{css}</style>\n</head>\n<body>\n"
