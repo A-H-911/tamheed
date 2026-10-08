@@ -186,7 +186,7 @@ Status values: PLANNED / IN PROGRESS / DONE.
 | # | Plan | Depends on | Status |
 |---|---|---|---|
 | 212 | [Wired at birth](212-wired-at-birth.md) -- `_wire_project` at create, adopt and open (served processes only, `_WIRE_ROOT`): the root `CLAUDE.md` stub or the three-line pointer section, the planning-era note in the package's own `CLAUDE.md`, the emit replacing it in silence, the note-only report, the resume block's `half`; nine contract tests and one hook test; the docs and the guide; lab beat 35 by a real agent; the symlink guard as a follow-up (`ff4c09a`) | 211 | DONE -- 2026-10-08 (`6085448`) |
-| 213 | [Release 6.2.0](213-release-6.2.0.md) -- the stamp on every surface, the stock guide's history key, the lab fixture refreshed through the engine, push and tag on the operator's word | 212 | DONE -- 2026-10-08 UTC (the commit this row lands in, after the operator's review) |
+| 213 | [Release 6.2.0](213-release-6.2.0.md) -- the stamp on every surface, the stock guide's history key, the lab fixture refreshed through the engine, push and tag on the operator's word | 212 | DONE -- 2026-10-08 UTC (`f0d31c6`, tag `v6.2.0`, CI run 37773642894 green on 9 jobs) |
 
 ### Field fixes after v6.1.0 (2026-10-08 ->; maintainer-executed)
 

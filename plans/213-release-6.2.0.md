@@ -45,7 +45,21 @@ references, `pins_missing.py` 0. Grepped and left alone: "the only write path in
 
 ## As it landed
 
-(filled: the commit, the push, the CI run, the tag, the bundle diff)
+- The release commit `f0d31c6`; `git push origin main` `d2cf2a6..f0d31c6` at 11:58 UTC on
+  2026-10-08 (three commits: `6085448`, `ff4c09a`, `f0d31c6`).
+- CI run 37773642894 on `f0d31c6`: conclusion success, 9 jobs, every job success (the Windows jobs
+  included; the symlink test skips there and runs on Ubuntu).
+- Tag `v6.2.0` on `f0d31c6`, pushed. `git diff v6.2.0 HEAD -- plugins/tamheed`: 0 lines.
+- The operator's machine: `claude plugin marketplace update tamheed`, then `claude plugin update
+  tamheed@tamheed`, which updated "for scope local (C:\Users\ahammo\Repos\tamheed)" only: the
+  `enable --scope local` of plan 211 had re-created a local-scope install record beside the user one.
+  `claude plugin update tamheed@tamheed --scope user` moved the user record too; both records read
+  6.2.0 (`claude plugin list`, the registry). Measured, recorded in the batch memory.
+- Handed to the operator for `jisr`: a fresh session after the update; the planning session that
+  ran under 6.1.0 may still hold the lock, so the first `package_open` may refuse on a lock naming a
+  dead process (`package_unlock(confirm=true)` on their word); the open then reports
+  `wiring: {root: created, package_note: planning}`, and the session after prints PE-003 through
+  the hook.
 
 ## Rulings taken at the review
 
