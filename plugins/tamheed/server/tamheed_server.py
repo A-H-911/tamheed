@@ -1035,6 +1035,10 @@ def _wire_project(pkg_dir: Path, name: str, conn) -> dict | None:
     or None when this process does not serve a project (the switch above)."""
     if not _WIRE_ROOT:
         return None
+    # A symlink at either path would carry the write wherever it points (a cloned repository
+    # chooses its own files). The wiring writes regular files only and names what it skipped.
+    if (Path(PACKAGE_ROOT) / "CLAUDE.md").is_symlink() or (pkg_dir / "CLAUDE.md").is_symlink():
+        return {"root": "symlink", "package_note": "symlink"}
     row = conn.execute("SELECT title FROM packages LIMIT 1").fetchone()
     title = (row[0] if row and row[0] else None) or Path(PACKAGE_ROOT).resolve().name
     root = Path(PACKAGE_ROOT) / "CLAUDE.md"

@@ -9,6 +9,7 @@ export_html -> the missing-SDK error path (simulated ImportError) -> --selftest.
 import contextlib
 import io
 import json
+import os
 import re
 import sys
 import tempfile
@@ -5623,6 +5624,21 @@ class WiredAtBirthTest(unittest.TestCase):
         self.assertIsNone(out["wiring"])
         self.assertFalse(self._root().exists())
         self.assertEqual(sorted(p.name for p in (srv.PACKAGE_ROOT / "demo").glob("*.md")), ["README.md"])
+
+    def test_a_symlinked_root_is_never_written_through(self):
+        """A cloned repository chooses its own files: a CLAUDE.md that is a symlink would carry the
+        pointer wherever it points. The wiring writes regular files only and says what it skipped."""
+        elsewhere = srv.PACKAGE_ROOT / "elsewhere.md"
+        elsewhere.write_text("# Not the project's file\n", encoding="utf-8")
+        try:
+            os.symlink(elsewhere, self._root())
+        except (OSError, NotImplementedError):       # Windows without Developer Mode
+            self.skipTest("symlinks need a privilege this runner lacks")
+        out = srv.package_create("demo", "Demo", "rnd")
+        self.assertTrue(out["ok"], out)
+        self.assertEqual(out["wiring"], {"root": "symlink", "package_note": "symlink"})
+        self.assertEqual(elsewhere.read_text(encoding="utf-8"), "# Not the project's file\n")
+        self.assertFalse((srv.PACKAGE_ROOT / "demo" / "CLAUDE.md").exists())
 
 
 if __name__ == "__main__":

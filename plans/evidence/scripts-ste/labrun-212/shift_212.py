@@ -57,9 +57,20 @@ def add_write(tool: str, ln: int):
     d = d[:m.start()] + m.group(1) + m.group(2) + f', ("CLAUDE.md", {ln})' + m.group(3) + d[m.end():]
 
 
-add_write("package_create", create_ln)
-add_write("package_open", open_ln)
-add_write("package_adopt", adopt_ln)
+import sys  # noqa: E402
+
+if "--remap-only" not in sys.argv:          # the first run adds the writes; later runs only re-aim
+    add_write("package_create", create_ln)
+    add_write("package_open", open_ln)
+    add_write("package_adopt", adopt_ln)
 D.write_text(d, encoding="utf-8", newline="\n")
+
+# the guide test pins four server lines by number: re-aim them by the same map
+T = R / "tests/test_user_guide.py"
+tt = T.read_text(encoding="utf-8")
+tt = re.sub(r"(lines\.append\()(\d{4})(\))", remap, tt)
+tt = re.sub(r"(src\[)(\d{4})(\])", lambda m: (f"{m.group(1)}{line_map[int(m.group(2)) + 1] - 1}{m.group(3)}"
+                                              if int(m.group(2)) + 1 in line_map else m.group(0)), tt)
+T.write_text(tt, encoding="utf-8", newline="\n")
 print("unmapped citations:", sorted(set(unmapped)))
 print("shift applied")

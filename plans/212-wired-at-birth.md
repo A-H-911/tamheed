@@ -125,6 +125,18 @@ browser servers did not connect this session). A capture includes its caption.
 - Rewording the stock guide's four "the target's `CLAUDE.md` note" lines: still true (the note is
   reached through the root file); lint 9 and 213's stamp assert the body does not move before the key.
 
+## Addendum after the commit (the commit's security review, 2026-10-08)
+
+The review of `6085448` named a symlink-following write in `_wire_project`: a `CLAUDE.md` that is a
+symlink at the project root or in the package directory would carry the pointer or the planning
+note wherever it points, and a cloned repository chooses its own files. The same posture existed in
+the emit's root write; the wiring now writes regular files only and returns `{"root": "symlink",
+"package_note": "symlink"}` when either path is a symlink. One test
+(`test_a_symlinked_root_is_never_written_through`; skipped where symlink creation needs a
+privilege, so the Ubuntu jobs run it). The four new server lines moved every citation below them:
+`shift_212.py --remap-only` re-aimed the guide's maps and the guide test's pins, and the guide was
+rebuilt. Landed as a follow-up commit before the 213 stamp.
+
 ## Rulings taken at the review
 
 - **R69 (2026-10-08): the lab's words route accepted.** Beat 35 ran by a real agent through the
