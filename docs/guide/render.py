@@ -312,10 +312,11 @@ def _install(r: R) -> None:
     body += r.P("section.install.plugin.2")
     body += r.pre("claude --plugin-dir ./plugins/tamheed")
     body += r.H(3, "section.install.scope") + r.P("section.install.scope.1")
-    body += r.pre("claude plugin install tamheed@tamheed --scope project\n"
-                  "# already enabled at user scope? disable there first, then enable for the project\n"
-                  "claude plugin disable tamheed@tamheed --scope user\n"
-                  "claude plugin enable tamheed@tamheed --scope project")
+    body += r.pre("claude plugin disable tamheed@tamheed --scope user\n"
+                  "claude plugin enable tamheed@tamheed --scope project\n"
+                  "# a machine with no tamheed record (a collaborator's clone): install at project scope\n"
+                  "claude plugin install tamheed@tamheed --scope project")
+    body += r.P("section.install.scope.2")
     body += r.H(3, "section.install.server") + r.P("section.install.server.1")
     body += r.pre(f["mcp"]["command"], copy=False)
     body += r.P("section.install.server.2")

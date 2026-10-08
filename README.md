@@ -86,6 +86,21 @@ Tamheed ships as a self-contained bundle at [`plugins/tamheed/`](plugins/tamheed
 /plugin install tamheed@tamheed
 ```
 
+**Project only.** The install above is user scope and reaches every project on the machine. To limit
+tamheed to one repository, disable it at user scope and then enable it at project scope, from that
+repository's root:
+
+```text
+claude plugin disable tamheed@tamheed --scope user
+claude plugin enable tamheed@tamheed --scope project
+```
+
+If the `/plugin` panel answers "already installed globally" at project scope, the plugin is already on
+the machine. Run the enable command above from the shell. A collaborator who clones the repository
+runs `claude plugin marketplace add A-H-911/tamheed` and then
+`claude plugin install tamheed@tamheed --scope project` once. The full recipe is on the
+[install page](docs/install.md).
+
 Then invoke it as **`/tamheed:tamheed`** (plugin skills are namespaced), or just describe a planning task.
 The skill triggers on planning/scoping/handoff intent on its own. Approve the `tamheed` MCP server when
 Claude Code asks (per-server approval). It is the package's only write path.

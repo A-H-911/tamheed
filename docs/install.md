@@ -55,12 +55,33 @@ To enable tamheed for one project only, install (or enable) it at **project scop
 --scope user`, then `claude plugin enable tamheed@tamheed --scope project`. That writes
 `{"enabledPlugins": {"tamheed@tamheed": true}}` into `.claude/settings.json`. Run in that order. The
 enable command checks the merged effective state, not the project file. It refuses "already enabled
-at project scope" while the user entry exists (a Claude Code bug, reported 2026-09-25). Between the disable
-and the enable the project has no plugin, so do it with no package open. A project without a package
-sees only the discipline descriptions, which never fire without one. When Claude Code asks to approve the
-`tamheed` MCP server (per-server approval), say yes. It is the only write path into a package. To update
-later, see [Upgrading](#upgrading-an-installed-plugin). Refreshing the marketplace alone does not update
-the plugin.
+at project scope" while a user entry says `true` (a Claude Code bug, reported 2026-09-25). Between the
+disable and the enable the project has no plugin, so do it with no package open. A project without a
+package sees only the discipline descriptions, which never fire without one. An uninstall at a scope
+also removes that scope's `enabledPlugins` entry (measured on the local scope, 2026-10-08), so enable
+again after one. When Claude Code asks to approve the `tamheed` MCP server (per-server approval), say
+yes. It is the only write path into a package. To update later, see
+[Upgrading](#upgrading-an-installed-plugin). Refreshing the marketplace alone does not update the plugin.
+
+**When the install refuses (measured 2026-10-08, Claude Code 2.1.294).** A plugin installed at user
+scope has a record in `~/.claude/plugins/installed_plugins.json`, and the `/plugin` panel refuses a
+second install:
+
+```text
+Plugin 'tamheed@tamheed' is already installed globally. Use '/plugin' to manage existing plugins.
+```
+
+It writes nothing. A project with no `enabledPlugins` entry inherits the user-level value, so a
+user-level `false` leaves the plugin invisible there after a reload. Two shell commands succeed where
+the panel refuses, both run from the repository's root. `claude plugin enable tamheed@tamheed --scope
+project` wrote `{"enabledPlugins": {"tamheed@tamheed": true}}` into `.claude/settings.json` while the
+user entry said `false`, and added no record. `claude plugin install tamheed@tamheed --scope project`
+succeeded too, and added a project-scope record beside the user one. Use the enable command: one
+record, one cached copy. Update the user-scope copy first (`claude plugin update tamheed@tamheed`, see
+[Upgrading](#upgrading-an-installed-plugin)): the project file enables whatever version the record
+names. A collaborator who clones the repository has the project entry and no record, and Claude Code
+reports the plugin as enabled but not installed. They run `claude plugin marketplace add
+A-H-911/tamheed` and then `claude plugin install tamheed@tamheed --scope project` once.
 
 To try it before installing (no marketplace needed):
 

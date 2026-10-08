@@ -176,6 +176,14 @@ devil's-advocate review; execution order is the row order below). Status values:
 | 089 | [Lab beat 18](089-lab-beat-18-findings-27.md) | 085-088 + full test (15/15 vs 0/15 on `v4.10.0`; 9 suites; selftest) | DONE `762b98b` — 9 new assertions, each failing on the pre-beat fixture; D-1 registry-sync unscripted, F-3 fixed |
 | 090 | [Release v4.11.0](090-release-v4110.md) — plan-058 recipe + the fixture follows the stamp | 089 | DONE — 2026-09-22, tag `v4.11.0` (SHA in the tag) |
 
+### Field fixes after v6.1.0 (2026-10-08 ->; maintainer-executed)
+
+Docs-only beats between releases, one ledger each, no version bump. Status values: DONE (the commit).
+
+| # | Plan | Depends on | Status |
+|---|---|---|---|
+| 211 | [The per-project install refusal](211-install-scope-docs.md) -- `/plugin install` at project scope refuses "already installed globally" once a user-scope record exists; the route is `claude plugin enable --scope project` (measured: writes the project file, adds no record; the shell install also succeeds and adds a record); README, install page and the guide lead with it; the maintainer's stale 5.1.0 local record removed and the user copy lifted 5.8.1 -> 6.1.0 | 210 | DONE -- 2026-10-08 (the commit this row lands in, after the operator's review) |
+
 ### The user guide round 2 -- plans 201-210 -> v6.1.0 (released 2026-10-04 UTC; maintainer-executed)
 
 Master record: [201-210-batch-guide-round-2.md](201-210-batch-guide-round-2.md) (the operator's
