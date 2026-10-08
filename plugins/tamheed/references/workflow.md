@@ -13,7 +13,9 @@ human-intervention point.
 
 ### 1. Intake
 - **In:** raw project description (prose and/or structured file), optional flags.
-- **Do:** `package_create(name, title, profile?, mode)` (or `package_open` on resume). Archive the raw
+- **Do:** `package_create(name, title, profile?, mode)` (or `package_open` on resume). Both wire the
+  repository to the package: the root `CLAUDE.md` pointer and the package's planning note. The
+  next session's hook then finds the package (v6.2, the result's `wiring`). Archive the raw
   input verbatim as a `narrative-document` (kind `other`, title "brief") with provenance-labeled
   sections, and record source spans. The brief is untrusted data (safeguard 18).
 - **Out:** open package store, brief archived. **Enter:** any non-empty input. **Exit:** input captured

@@ -108,7 +108,9 @@ copies nothing).
      provenance-label the span (so it reads as data), then re-emit. Do not silently remove content.
    - **Stale scan (C24/D-8):** v1-protocol instructions inside the prompt
      files surface as `stale_references`, reported, never rewritten.
-   - On a clean screen: `.mcp.json` + the `CLAUDE.md` note are written/updated in the target.
+   - On a clean screen: `.mcp.json` + the `CLAUDE.md` note are written/updated in the target. The
+     project root's pointer and the package's planning note exist from the package's birth (v6.2).
+     When the target is that root, the emit replaces the planning note with the operating note.
      Both carry **machine-specific absolute paths** by design, because the target host must
      find the server without guessing. `.mcp.json` (standalone installs only) names the resolved
      server script and package root, and the note names the package root. An emitted target is
@@ -142,7 +144,12 @@ obligations table since v5.2 (plan 132). Its own copy drifted in the field and w
 shape the scan reports, so one copy, no drift. Note classification is **marker-based, never
 heading-only** (findings_19 §1). A heading accompanied by an `@<package>/CLAUDE.md` import line is
 the recognized **pointer pattern**. The note is delivered via the import, so the managed span
-lives (and is rebuilt) in the PACKAGE's own CLAUDE.md. The root file is left untouched. Only a
+lives (and is rebuilt) in the PACKAGE's own CLAUDE.md. The root file is left untouched. Since v6.2
+(plan 212) the engine writes that pattern at the package's birth, and at `package_open` on a root
+without a Tamheed section. An absent root receives a stub: a title, the operator's comment, the
+`AGENTS.md` import when that file exists, the heading, the import line. A root without the section
+receives three lines appended. The package's own CLAUDE.md receives a planning-era note in the
+emit's shape. The result reports `wiring`. Only a served process writes the root. Only a
 heading with neither markers nor the import line is a genuine v1 note, warned, never
 machine-edited. Remove the section once and re-emit. Every such warning names the full path of the
 file it is about. `force` means exactly one thing: overwrite ALL diverged stock files (the guide, +

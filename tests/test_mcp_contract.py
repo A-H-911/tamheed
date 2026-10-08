@@ -5488,5 +5488,142 @@ class V4EngineTest(unittest.TestCase):
             self.assertIn("expired_waivers", text, name)
 
 
+class WiredAtBirthTest(unittest.TestCase):
+    """Plan 212 (v6.2): the repository is wired to its package at birth (create, adopt) and at
+    open on an unwired root, in a SERVED process only (`_WIRE_ROOT`). The root gets the pointer
+    pattern, the package's own CLAUDE.md gets the planning-era note the emit later replaces."""
+
+    def setUp(self):
+        self._tmp = tempfile.TemporaryDirectory()
+        srv.PACKAGE_ROOT = Path(self._tmp.name)
+        srv._WIRE_ROOT = True
+
+    def tearDown(self):
+        srv._WIRE_ROOT = False
+        if srv._CURRENT is not None:
+            srv.package_close()
+        self._tmp.cleanup()
+
+    def _root(self) -> Path:
+        return srv.PACKAGE_ROOT / "CLAUDE.md"
+
+    def test_create_on_an_empty_root_writes_the_pointer_stub_and_the_planning_note(self):
+        out = srv.package_create("demo", "Demo title", "rnd")
+        self.assertTrue(out["ok"], out)
+        self.assertEqual(out["wiring"], {"root": "created", "package_note": "planning"})
+        root = self._root().read_text(encoding="utf-8")
+        self.assertTrue(root.startswith("# Demo title\n"), root)
+        self.assertIn("## Tamheed progress tracking\n\n@demo/CLAUDE.md\n", root)
+        self.assertNotIn("<!-- tamheed:note", root)                      # the span is not here
+        # no line but the pointer starts with `@` (an import to Claude Code, a target to the hook)
+        self.assertEqual([ln for ln in root.splitlines() if ln.startswith("@")], ["@demo/CLAUDE.md"])
+        pkg = (srv.PACKAGE_ROOT / "demo" / "CLAUDE.md").read_text(encoding="utf-8")
+        self.assertEqual(pkg.count("<!-- tamheed:note v7 -->"), 1)
+        self.assertIn("## Tamheed progress tracking", pkg)                # the emit's shape
+        self.assertIn("The Tamheed package for this project is `demo`", pkg)   # the hook's phrase
+        self.assertIn(srv._PLANNING_MARK, pkg)
+        self.assertEqual(srv.server_info()["resume"]["half"], "planning")
+
+    def test_an_existing_agents_md_is_imported_by_the_stub(self):
+        (srv.PACKAGE_ROOT / "AGENTS.md").write_text("# Agents\n", encoding="utf-8")
+        self.assertTrue(srv.package_create("demo", "Demo", "rnd")["ok"])
+        root = self._root().read_text(encoding="utf-8")
+        self.assertEqual([ln for ln in root.splitlines() if ln.startswith("@")],
+                         ["@AGENTS.md", "@demo/CLAUDE.md"])
+
+    def test_a_root_without_a_tamheed_section_gets_the_pointer_appended(self):
+        self._root().write_text("# Mine\n\nRules.\n", encoding="utf-8")
+        out = srv.package_create("demo", "Demo", "rnd")
+        self.assertEqual(out["wiring"], {"root": "appended", "package_note": "planning"})
+        root = self._root().read_text(encoding="utf-8")
+        self.assertTrue(root.startswith("# Mine\n\nRules.\n"), root)
+        self.assertTrue(root.endswith("\n## Tamheed progress tracking\n\n@demo/CLAUDE.md\n"), root)
+
+    def test_a_root_with_an_inline_span_is_left_alone_and_gets_no_package_note(self):
+        inline = ("# Mine\n\n## Tamheed progress tracking\n<!-- tamheed:note v7 -->\n"
+                  "The Tamheed package for this project is `demo`.\n<!-- /tamheed:note -->\n")
+        self._root().write_text(inline, encoding="utf-8")
+        out = srv.package_create("demo", "Demo", "rnd")
+        self.assertEqual(out["wiring"], {"root": "present", "package_note": "present"})
+        self.assertEqual(self._root().read_text(encoding="utf-8"), inline)
+        self.assertFalse((srv.PACKAGE_ROOT / "demo" / "CLAUDE.md").exists())
+
+    def test_open_wires_an_unwired_root_once(self):
+        srv._WIRE_ROOT = False
+        out = srv.package_create("demo", "Demo", "rnd")
+        self.assertIsNone(out["wiring"])                                   # in-process: no write
+        srv.package_close()
+        self.assertFalse(self._root().exists())
+        self.assertEqual(sorted(p.name for p in (srv.PACKAGE_ROOT / "demo").glob("*.md")), ["README.md"])
+        srv._WIRE_ROOT = True
+        first = srv.package_open("demo")
+        self.assertEqual(first["wiring"], {"root": "created", "package_note": "planning"})
+        srv.package_close()
+        root_bytes = self._root().read_bytes()
+        pkg_bytes = (srv.PACKAGE_ROOT / "demo" / "CLAUDE.md").read_bytes()
+        again = srv.package_open("demo")
+        self.assertEqual(again["wiring"], {"root": "present", "package_note": "present"})
+        self.assertEqual(self._root().read_bytes(), root_bytes)
+        self.assertEqual((srv.PACKAGE_ROOT / "demo" / "CLAUDE.md").read_bytes(), pkg_bytes)
+
+    def test_adopt_wires_on_confirm(self):
+        with tempfile.TemporaryDirectory() as src:
+            (Path(src) / "README.md").write_text(
+                "# Widget\n\n- Users can frobnicate widgets\n", encoding="utf-8")
+            out = srv.package_adopt(src, name="widget", confirm=True)
+        self.assertTrue(out["ok"], out)
+        self.assertEqual(out["stage"], "post-flight")
+        self.assertEqual(out["wiring"], {"root": "created", "package_note": "planning"})
+        self.assertIn("@widget/CLAUDE.md", self._root().read_text(encoding="utf-8"))
+
+    def test_the_emit_replaces_the_planning_note_and_leaves_the_root_alone(self):
+        make_complete_package("demo")                      # born wired: the stub + the planning note
+        self.assertTrue(srv.entity_upsert([
+            {"type": "prompt", "id": "PRT-001", "kind": "kickoff", "title": "Kickoff",
+             "body": "Start with SL-001.", "lifecycle_status": "Approved"},
+            {"type": "package", "entry_point": "PRT-001"}])["ok"])
+        root_before = self._root().read_bytes()
+        out = srv.handoff_emit(str(srv.PACKAGE_ROOT))      # the project root is the target
+        self.assertTrue(out["ok"], out)
+        pkg = (srv.PACKAGE_ROOT / "demo" / "CLAUDE.md").read_text(encoding="utf-8")
+        self.assertEqual(pkg.count("<!-- tamheed:note"), 1)          # one span, not two
+        self.assertNotIn(srv._PLANNING_MARK, pkg)
+        self.assertIn("Recording obligations", pkg)
+        self.assertEqual(self._root().read_bytes(), root_before)
+        self.assertTrue(any("planning-era note" in w and "replaced by the operating note" in w
+                            for w in out["warnings"]), out["warnings"])
+        self.assertFalse(any("tool-owned" in w for w in out["warnings"]), out["warnings"])
+        self.assertFalse(any("note-only" in w for w in out["warnings"]), out["warnings"])
+        # the stub's comment sits outside the span: the plan-125 scans read it and find nothing
+        self.assertEqual([f for f in out["stale_references"] if f["file"] == "CLAUDE.md"], [])
+        self.assertEqual([f for f in out["restated_content"] if f["file"] == "CLAUDE.md"], [])
+        self.assertEqual(srv.server_info()["resume"]["half"], "execution")
+
+    def test_a_note_only_root_on_a_foreign_target_is_reported_not_rewritten(self):
+        srv._WIRE_ROOT = False
+        make_complete_package("demo")
+        self.assertTrue(srv.entity_upsert([
+            {"type": "prompt", "id": "PRT-001", "kind": "kickoff", "title": "Kickoff",
+             "body": "Start with SL-001.", "lifecycle_status": "Approved"},
+            {"type": "package", "entry_point": "PRT-001"}])["ok"])
+        with tempfile.TemporaryDirectory() as target:
+            first = srv.handoff_emit(target)                # an empty target: the pre-6.2 shape
+            self.assertTrue(first["ok"], first)
+            self.assertFalse(any("note-only" in w for w in first["warnings"]))
+            text = (Path(target) / "CLAUDE.md").read_text(encoding="utf-8")
+            self.assertTrue(text.lstrip().startswith("## Tamheed progress tracking"))
+            second = srv.handoff_emit(target)
+            self.assertTrue(any("note-only" in w for w in second["warnings"]), second["warnings"])
+            self.assertIn("CLAUDE.md", second["unchanged"])
+            self.assertEqual((Path(target) / "CLAUDE.md").read_text(encoding="utf-8"), text)
+
+    def test_in_process_callers_write_nothing(self):
+        srv._WIRE_ROOT = False
+        out = srv.package_create("demo", "Demo", "rnd")
+        self.assertIsNone(out["wiring"])
+        self.assertFalse(self._root().exists())
+        self.assertEqual(sorted(p.name for p in (srv.PACKAGE_ROOT / "demo").glob("*.md")), ["README.md"])
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)

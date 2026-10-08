@@ -382,5 +382,27 @@ class ResumeHookTest(unittest.TestCase):
         self.assertLessEqual(cmd["timeout"], 30)
 
 
+    def test_a_birth_wired_planning_package_resumes_through_the_hook(self):
+        """Plan 212 (v6.2): a package the engine wired at birth (the root pointer, the planning
+        note in the package's own CLAUDE.md) resumes through the hook before any handoff_emit, and
+        the block speaks to the planning half."""
+        srv._WIRE_ROOT = True
+        try:
+            out = srv.package_create("pl", "Planning", "rnd")
+            self.assertEqual(out["wiring"], {"root": "created", "package_note": "planning"})
+            srv.progress_update([{"entry": "Resume at: stage 7 (clarification).",
+                                  "event_type": "handoff", "actor": "agent:planner"}])
+            srv.package_close()
+        finally:
+            srv._WIRE_ROOT = False
+        out, code = run_hook(self.project, source="startup")
+        self.assertEqual(code, 0)
+        lines = out.splitlines()
+        self.assertTrue(lines[0].startswith("tamheed resume — package `pl` (schema 8) — unlocked"), lines[0])
+        self.assertIn("Resume at: stage 7 (clarification).", out)
+        self.assertIn("continue the planning half with /tamheed:tamheed", out)
+        self.assertIn("Skill: tamheed:package-writes", out)
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=1)

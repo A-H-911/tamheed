@@ -982,9 +982,86 @@ def package_create(name: str, title: str, profile: str, mode: str = "full") -> d
     # exists from birth, seeded with the operator guide (v5: README.md alone; the
     # scenarios are the plugin's skills).
     library = _emit_prompt_library(pkg_dir, name)
+    # plan 212 (v6.2): the root pointer and the package's planning note, served processes only
+    wiring = _wire_project(pkg_dir, name, s.conn)
     return {"ok": True, "package": name, "dir": str(pkg_dir),
             "package_root": str(Path(PACKAGE_ROOT).resolve()),
-            "prompt_library": library}
+            "prompt_library": library, "wiring": wiring}
+
+
+# --------------------------------------------------------------------------- plan 212: wired at birth
+#
+# A repository's SessionStart hook finds its package only through the note span in the root
+# CLAUDE.md or one `@` import. Until v6.1 nothing wrote that before stage 20's handoff_emit, so a
+# planning half ran with no resume block and the first CLAUDE.md a new repository got was the
+# Tamheed note alone. Since 6.2 the engine writes the recognized POINTER PATTERN at the package's
+# birth (package_create, package_adopt) and at package_open on an unwired root: the root gets the
+# heading plus `@<package>/CLAUDE.md` (a stub when absent, three lines appended when present
+# without a Tamheed section, untouched otherwise), and the package's own CLAUDE.md gets a
+# planning-era note in the exact shape handoff_emit later rebuilds. Only a SERVED process writes
+# the project's root: in-process callers (the tests, evals/pkg_check.py, the fixture scripts)
+# open committed packages under the gate and must leave the tree as they found it.
+_WIRE_ROOT = False                 # set by main() after PACKAGE_ROOT resolves; never by an import
+_NOTE_HEADING = "## Tamheed progress tracking"
+_PLANNING_MARK = "The planning half is in progress"
+
+
+def _planning_note(name: str) -> str:
+    """The package file's note at birth: the heading the emit's _apply_note looks for, then one
+    span the hook parses (`_PKG_RE` keys on the first sentence) and the emit replaces."""
+    return (f"\n{_NOTE_HEADING}\n<!-- tamheed:note v7 -->\n"
+            f"The Tamheed package for this project is `{name}`. {_PLANNING_MARK}: resume with"
+            f" `package_open(\"{name}\")`, read the `resume` block (`server_info()` carries it),"
+            " and continue from the stage the latest handoff names. The operating note, the"
+            " recording obligations and the rosters arrive with `handoff_emit` at stage 20.\n"
+            "<!-- /tamheed:note -->\n")
+
+
+def _root_stub(title: str, name: str, agents: bool) -> str:
+    """The root CLAUDE.md when the project has none. The operator's file: one title, one comment
+    saying where project rules go, the `AGENTS.md` import only when that file exists (a CLAUDE.md
+    beside an AGENTS.md makes Claude Code read the CLAUDE.md alone unless it imports the other),
+    then the Tamheed section as the pointer. No line but the imports starts with `@`."""
+    return (f"# {title}\n\n"
+            "<!-- Created by tamheed at the package's birth. This file is yours: project rules go"
+            " above this\n     comment, or in `AGENTS.md`, imported with a line reading `@AGENTS.md`."
+            " The section below points\n     at the tool-owned Tamheed note; keep it. -->\n\n"
+            + ("@AGENTS.md\n\n" if agents else "")
+            + f"{_NOTE_HEADING}\n\n@{name}/CLAUDE.md\n")
+
+
+def _wire_project(pkg_dir: Path, name: str, conn) -> dict | None:
+    """Plan 212. Returns {"root": created|appended|present, "package_note": planning|present},
+    or None when this process does not serve a project (the switch above)."""
+    if not _WIRE_ROOT:
+        return None
+    row = conn.execute("SELECT title FROM packages LIMIT 1").fetchone()
+    title = (row[0] if row and row[0] else None) or Path(PACKAGE_ROOT).resolve().name
+    root = Path(PACKAGE_ROOT) / "CLAUDE.md"
+    import_re = re.compile(rf"^@\S*{re.escape(name)}/CLAUDE\.md\s*$", re.M)
+    if root.exists():
+        text = root.read_text(encoding="utf-8")
+        if _NOTE_HEADING in text:
+            root_state = "present"
+            # the pointer shape only: a heading with the import line and no inline span
+            pointer = _NOTE_BLOCK_RE.search(text) is None and import_re.search(text) is not None
+        else:
+            sep = "" if not text or text.endswith("\n") else "\n"
+            root.write_text(text + sep + f"\n{_NOTE_HEADING}\n\n@{name}/CLAUDE.md\n",
+                            encoding="utf-8", newline="\n")
+            root_state, pointer = "appended", True
+    else:
+        root.write_text(_root_stub(title, name, (Path(PACKAGE_ROOT) / "AGENTS.md").is_file()),
+                        encoding="utf-8", newline="\n")
+        root_state, pointer = "created", True
+    note_state = "present"
+    if pointer:
+        pkg_md = pkg_dir / "CLAUDE.md"
+        existing = pkg_md.read_text(encoding="utf-8") if pkg_md.exists() else ""
+        if _NOTE_BLOCK_RE.search(existing) is None and _NOTE_HEADING not in existing:
+            pkg_md.write_text(existing + _planning_note(name), encoding="utf-8", newline="\n")
+            note_state = "planning"
+    return {"root": root_state, "package_note": note_state}
 
 
 def _strip_identical_h1(title: str, body: str) -> str:
@@ -1261,7 +1338,22 @@ def _resume_block(conn, name: str, data_dir: Path | None = None) -> dict:
                 lock["observed"], lock["evidence"] = seen["outcome"], seen["evidence"]
             except Exception as exc:  # noqa: BLE001 — a read of state, never a failure
                 lock["observed"], lock["evidence"] = "unobservable", exc.__class__.__name__
-    if handoff and behind:
+    # plan 212 (v6.2): the block serves both halves. Until the header names a kickoff row
+    # (`entry_point`), the package is in its planning half and the next step is the front door.
+    ep = conn.execute("SELECT entry_point FROM packages LIMIT 1").fetchone()
+    half = "execution" if ep and ep[0] else "planning"
+    if half == "planning" and handoff:
+        nxt = (f"Read handoff {handoff['id']} and its corrections, then continue the planning"
+               " half with /tamheed:tamheed at the stage it names."
+               + (f" Note that {len(behind)} work-done/transition entries followed it."
+                  if behind else "")
+               + " Invoke tamheed:package-writes before your first write, and write a fresh"
+               " handoff (tamheed:session-handoff) before the next compaction")
+    elif half == "planning":
+        nxt = ("No handoff recorded: read the latest journal entries and continue the planning"
+               " half with /tamheed:tamheed. Invoke tamheed:package-writes before your first"
+               " write, and write a handoff (tamheed:session-handoff) before the next compaction")
+    elif handoff and behind:
         nxt = (f"Read handoff {handoff['id']} and its corrections. Then note that"
                f" {len(behind)} work-done/transition entries followed it: orient from the"
                " journal for those. Invoke tamheed:package-writes before your first write,"
@@ -1275,7 +1367,7 @@ def _resume_block(conn, name: str, data_dir: Path | None = None) -> dict:
                " (tamheed:session-handoff) before the next compaction")
     return {"package": name, "handoff": handoff, "handoff_behind": len(behind),
             "open_feedback": open_fb, "slices_active": slices, "last_entries": last,
-            "lock": lock, "next": nxt, "skill": "tamheed:package-writes"}
+            "lock": lock, "next": nxt, "skill": "tamheed:package-writes", "half": half}
 
 
 def package_open(name: str) -> dict:
@@ -1306,9 +1398,12 @@ def package_open(name: str) -> dict:
     except store.StoreLockedError as exc:
         return _err(str(exc))
     _CURRENT, _CURRENT_NAME = s, name
+    # plan 212 (v6.2): a repository wired before 6.2 reads present/present here; one that was
+    # not (a package born under 6.1 or earlier) is wired by this open, once.
+    wiring = _wire_project(pkg_dir, name, s.conn)
     return {"ok": True, "package": name,
             "package_root": str(Path(PACKAGE_ROOT).resolve()),
-            "resume": _resume_block(s.conn, name, pkg_dir / "data")}
+            "resume": _resume_block(s.conn, name, pkg_dir / "data"), "wiring": wiring}
 
 
 def package_close() -> dict:
@@ -4416,6 +4511,14 @@ def handoff_emit(target_dir: str, subdir: str = "handoff", force: bool = False,
     note = "\n## Tamheed progress tracking\n" + note_block
     claude_md = target / "CLAUDE.md"
     existing = claude_md.read_text(encoding="utf-8") if claude_md.exists() else ""
+    if existing.lstrip().startswith(_NOTE_HEADING):
+        # plan 212: a root that is the Tamheed section and nothing else (the shape an emit into
+        # an empty target left before 6.2). Reported, never rewritten: the root is the operator's.
+        warnings.append(
+            f"{claude_md.resolve()} is note-only: it holds the Tamheed section and nothing of"
+            " the project. Put the project's rules above the section. Or keep the section as"
+            f" the pointer (the heading plus `@{_CURRENT_NAME}/CLAUDE.md`), with the span in"
+            " the package's own CLAUDE.md")
     # Marker-managed warning block (C20/B2): rebuilt on EVERY emit — added while the scan
     # finds stale references, REMOVED once it is clean.
     content = _strip_stale_block(existing)
@@ -4436,6 +4539,11 @@ def handoff_emit(target_dir: str, subdir: str = "handoff", force: bool = False,
         if m is None:
             return text  # caller classifies (pointer vs v1) and warns
         if m.group(0) != note_block.rstrip("\n"):
+            if _PLANNING_MARK in m.group(0):
+                # plan 212: the birth-time planning note is the engine's own, replaced in silence
+                warnings.append(f"the planning-era note in {path.resolve()} was replaced by"
+                                " the operating note")
+                return text.replace(m.group(0), note_block.rstrip("\n"))
             # Plan 029 (C35/N1): the marker-delimited span is TOOL-OWNED and
             # rebuilt on EVERY emit. A hand edit inside the markers is
             # overwritten — warned, never silent.
@@ -5225,6 +5333,8 @@ def package_adopt(source_dir: str, name: str | None = None, confirm: bool = Fals
     if out.get("stage") == "post-flight" and out.get("package_dir"):
         pkg = Path(out["package_dir"])
         out["prompt_library"] = _emit_prompt_library(pkg, pkg.name)
+        with store.PackageStore(pkg) as s_wire:       # plan 212: the root pointer at birth
+            out["wiring"] = _wire_project(pkg, pkg.name, s_wire.conn)
         # v4 (plan 031): adopt writes via raw SQL, bypassing per-write relation
         # enforcement — run the same edge sweep G-REL blocks on, HERE, so an adopted
         # package cannot fail readiness on day one without the operator being told.
@@ -5489,8 +5599,8 @@ _AUDIT_RECORD_DESC = (
 
 TOOLS = {
     "server_info": (server_info, "Report server version, resolved package root, store state"),
-    "package_create": (package_create, "Create a package under the package root (takes the lock)"),
-    "package_open": (package_open, "Open an existing package (takes the single-writer lock)"),
+    "package_create": (package_create, "Create a package under the package root (takes the lock) and wire the project: the root CLAUDE.md pointer and the package's planning note"),
+    "package_open": (package_open, "Open an existing package (takes the single-writer lock) and wire the root CLAUDE.md pointer when the project has none"),
     "package_unlock": (package_unlock,
                        "Report a lock's holder. confirm=true (operator words only) removes"
                        " a lock whose holder was observed dead, and journals it"),
@@ -5504,9 +5614,9 @@ TOOLS = {
     "progress_update": (progress_update, _PROGRESS_UPDATE_DESC),
     "audit_record": (audit_record, _AUDIT_RECORD_DESC),
     "work_bind": (work_bind, "Bind a commit/PR to the entities it satisfies (stamps last_referenced)"),
-    "handoff_emit": (handoff_emit, "Wire a target project to the package: write the CLAUDE.md note and the stock README at the package root, plus `.mcp.json` for a standalone install. Injection-screened."),
+    "handoff_emit": (handoff_emit, "Wire a target project to the package: write the CLAUDE.md note and the stock README at the package root, plus `.mcp.json` for a standalone install. The note replaces the birth-time planning note. Injection-screened."),
     "package_migrate": (package_migrate, "Migrate a v2/v3 package in place to the v4 store (staged: preview, then confirm)"),
-    "package_adopt": (package_adopt, "Adopt a brownfield repo (staged: scan/preview, then confirm)"),
+    "package_adopt": (package_adopt, "Adopt a brownfield repo (staged: scan/preview, then confirm). The confirm wires the root CLAUDE.md pointer"),
     "export_html": (export_html, "Export the HTML review surface to <package>/review.html"),
     "package_verify": (package_verify,
                        "Canonical round-trip of the on-disk store (byte-equality, foreign"
@@ -5629,6 +5739,8 @@ def main(argv: list[str] | None = None) -> int:
     PACKAGE_ROOT = Path(package_dir).resolve()
     if args.selftest:
         return selftest()
+    global _WIRE_ROOT
+    _WIRE_ROOT = True        # plan 212: only the served process writes the project's root CLAUDE.md
     return serve()
 
 

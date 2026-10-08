@@ -176,6 +176,18 @@ devil's-advocate review; execution order is the row order below). Status values:
 | 089 | [Lab beat 18](089-lab-beat-18-findings-27.md) | 085-088 + full test (15/15 vs 0/15 on `v4.10.0`; 9 suites; selftest) | DONE `762b98b` — 9 new assertions, each failing on the pre-beat fixture; D-1 registry-sync unscripted, F-3 fixed |
 | 090 | [Release v4.11.0](090-release-v4110.md) — plan-058 recipe + the fixture follows the stamp | 089 | DONE — 2026-09-22, tag `v4.11.0` (SHA in the tag) |
 
+### Wired at birth -- plans 212-213 -> v6.2.0 (opened 2026-10-08; maintainer-executed)
+
+The operator ran the planning half in a new repository with no `CLAUDE.md`; nothing pointed the
+repository at its package before stage 20, so no session could resume through the hook. The engine now
+writes the pointer pattern at the package's birth and at `package_open` on an unwired root (R67, R68).
+Status values: PLANNED / IN PROGRESS / DONE.
+
+| # | Plan | Depends on | Status |
+|---|---|---|---|
+| 212 | [Wired at birth](212-wired-at-birth.md) -- `_wire_project` at create, adopt and open (served processes only, `_WIRE_ROOT`): the root `CLAUDE.md` stub or the three-line pointer section, the planning-era note in the package's own `CLAUDE.md`, the emit replacing it in silence, the note-only report, the resume block's `half`; nine contract tests and one hook test; the docs and the guide; lab beat 35 by a real agent | 211 | DONE -- 2026-10-08 (the commit this row lands in, after the operator's review) |
+| 213 | Release 6.2.0 -- the stamp on every surface, the stock guide's history key, the lab fixture refreshed through the engine, push and tag on the operator's word | 212 | PLANNED |
+
 ### Field fixes after v6.1.0 (2026-10-08 ->; maintainer-executed)
 
 Docs-only beats between releases, one ledger each, no version bump. Status values: DONE (the commit).

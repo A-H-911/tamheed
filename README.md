@@ -234,7 +234,10 @@ first-class output. Injection-shaped repository content is fenced as data, never
 ### During and after execution
 
 `handoff_emit` wires the target project to the package, and nothing is copied. It writes `.mcp.json` on
-standalone installs (plugin installs already register the server) plus the `CLAUDE.md` operating note. The
+standalone installs (plugin installs already register the server) plus the `CLAUDE.md` operating note.
+Since v6.2 the repository is wired from the package's birth. `package_create` writes the root `CLAUDE.md`
+pointer and a planning note in the package's own file. The session-start hook then resumes the planning
+half too, and the emit replaces that note. The
 note is a **tool-owned marker span** rebuilt on every emit (always current, no force involved). You keep
 your own content outside the `<!-- tamheed:note -->` markers. The note carries the **mandatory
 recording-obligations table**. Defect found → `DEF-` row *before* the fix. Out-of-scope discovery →

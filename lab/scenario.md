@@ -1009,6 +1009,32 @@ must fire; the resulting package replaces `evals/sample-results/lab-tracker/pack
       `rule prompt-ids-resolve` = pass, the review page's `section id="prompts"`, the root guide's
       `tamheed v6.0.0`.
 
+35. **The v6.2.0 continuation. Wired at birth: a fresh repository with no `CLAUDE.md`, the
+    package created by a real agent, the hook in the next process, the emit that replaces the
+    planning note.** The scratch phase is the whole beat (plan 212): a repository built from the
+    lab seed, no `CLAUDE.md`, no `AGENTS.md`, outside the repository, never committed. This record
+    does not move: its root pointer was written by hand in beat 21 and the engine reads it `present`.
+    ✔ THE BIRTH: `package_create("lab", "Lab tracker", "rnd", "full")` by the served process
+      returns `wiring: {root: created, package_note: planning}`. The root `CLAUDE.md` is the stub
+      (the title, the operator's comment, the heading, `@lab/CLAUDE.md`; no other line starts
+      with `@`). `lab/CLAUDE.md` holds the heading and one `<!-- tamheed:note v7 -->` span whose
+      first sentence names the package and whose words say the planning half is in progress.
+      One `handoff` entry, `PE-001`, then `package_close`.
+    ✔ THE HOOK: a NEW client process. The SessionStart hook prints the resume block through the
+      pointer: `PE-001`'s text, `Next:` naming the planning half and `/tamheed:tamheed`. The hook
+      trace reads `status=printed`; the first process's line read `status=silent` (no root file
+      at its start). `package_open` reports `wiring: {root: present, package_note: present}` and
+      `resume.half` `planning`.
+    ✔ THE EMISSION: on the operator's word the agent approves `PRT-001` as the kickoff and sets
+      `entry_point`. `handoff_emit` on the workspace root warns "the planning-era note ... was
+      replaced by the operating note" and "the root file was left untouched"; `unchanged`
+      carries `CLAUDE.md`. `lab/CLAUDE.md` holds one span and the planning words no more; the root
+      is byte-equal to the birth's. `resume.half` reads `execution`. The handoff last, then
+      `package_close`.
+    ✔ THE EVAL: the contract suite's `WiredAtBirthTest` (nine tests) and the hook test
+      `test_a_birth_wired_planning_package_resumes_through_the_hook`; the evidence report
+      `plans/evidence/lab-continuation-report-212-2026-10-08.md`.
+
 **Pass bar:** every ✔ observed; `gate_run` ready (or failing ONLY on deliberately-open
 items the scenario names); the eval runner's lab checks green. `readiness_check` is
 expectedly NOT ready on the scenario's deliberately-open items (AC-003 and, since beat

@@ -106,8 +106,9 @@ removed in v4).
 coexist. Agents keep reading the stale v1 instructions, editing dead registers, and running
 the v1 validator, silently undoing the migration.
 
-1. Open the migrated package and run `handoff_emit(<repo>)`. It appends the "Tamheed progress
-   tracking" operating note to the repo's `CLAUDE.md`. That is the obligations table, which since v5
+1. Open the migrated package and run `handoff_emit(<repo>)`. It writes the "Tamheed progress
+   tracking" operating note into the repo's `CLAUDE.md`. When the root carries the pointer section
+   (the open writes it since v6.2), the note goes into the package's own `CLAUDE.md`. That is the obligations table, which since v5
    points at the plugin's skills instead of carrying a cheat-sheet. It emits the operator guide at
    `<package>/README.md` (the scenarios are `/tamheed:<name>` skills since v5). It returns
    `stale_references`: every v1-flow pointer found in `CLAUDE.md`/`AGENTS.md` as `file:line` + a

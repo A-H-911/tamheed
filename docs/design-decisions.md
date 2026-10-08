@@ -664,6 +664,32 @@ could not tell a listing from a server (O21). The 5.8.0 brief's "then your
 reload route", which left the route to the field (O22). Record: plan
 [`170-174-batch-fb028.md`](../plans/170-174-batch-fb028.md).
 
+## 24. Wired at birth (2026-10-08, v6.2)
+
+- **D-WIRED-AT-BIRTH, the repository is wired to its package when the package is born.** Until
+  v6.1 nothing pointed a repository at its package before stage 20's `handoff_emit`. The
+  SessionStart hook finds a package through the note span in the root `CLAUDE.md`, or through one
+  `@` import. So a planning half ran with no resume block. A new session, a compaction or a fork in
+  a fresh repository knew nothing of the package. Yet the planning half's own `handoff` journal
+  entries were the block the hook prints. The first `CLAUDE.md` such a repository got was the
+  Tamheed note alone. The field wrote the pointer pattern by hand from the first month: a root
+  heading plus `@<package>/CLAUDE.md`, the span in the package's own file. Every lab setup script
+  wrote it too. The engine recognised it (findings_19, plan 036) and never wrote it. Since 6.2
+  `package_create`, `package_adopt` and `package_open` on an unwired root write it. An absent root
+  receives a stub: a title, the operator's comment, the `AGENTS.md` import when that file exists,
+  the heading, the import line. A root without a Tamheed section receives three lines appended. A
+  root with the section is left alone. The package's own `CLAUDE.md` receives a planning-era note
+  in the exact shape the emit rebuilds. The emit replaces it without the hand-edit warning. The
+  resume block names its half. Kept: ASM-B (no repository scaffolding, the root's rules are the
+  operator's, the template is `AGENTS.md`). Kept: plan 029 (content outside the markers is never
+  touched). Kept: D-STALE-HOME (nothing of the tool's in a file it does not own, beyond the three
+  pointer lines). Only a served process writes the root (`_WIRE_ROOT`, set in `main()`). The tests,
+  the eval checker and the fixture scripts open committed packages in-process under the gate. They
+  must leave the tree as they found it. Rejected: wiring at the emit alone, because the gap is the
+  planning half. Rejected: a stub that never imports `AGENTS.md`, because a `CLAUDE.md` beside an
+  `AGENTS.md` makes Claude Code read the `CLAUDE.md` alone. Rejected: a span-only package file,
+  because the emit would append a second note.
+
 ## 23. Prompts return to the store (2026-10-04, v6.0)
 
 - **D-PROMPT-ROWS, prompts are `prompt` rows (`PRT-`).** Plan 027 (v3) made them

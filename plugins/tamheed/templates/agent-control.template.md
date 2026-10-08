@@ -14,7 +14,8 @@ owner: <name-or-role>
      CLAUDE.md, not AGENTS.md; create a CLAUDE.md that imports it"), so this file is where the plan's
      non-negotiables KEEP governing the work after the one-time kickoff prompt. The content lives here in
      AGENTS.md; CLAUDE.md is the loaded entry that pulls it in (@AGENTS.md) and may add Claude-specific notes
-     below the import.
+     below the import. Since v6.2 the engine writes the root CLAUDE.md stub at the package's birth when the
+     repository has none (the title, this import when AGENTS.md exists, the Tamheed pointer section).
 
      v3 (plan 027): the package is RELATIONAL — entities read via the tamheed MCP tools, reviewed via
      review.html. Reference the package, never restate it: quote the few load-bearing invariants inline,
