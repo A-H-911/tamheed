@@ -33,7 +33,8 @@ Always state the chosen mode and what it will and will not do, then proceed.
 
 - Every mode operates on the package store through the MCP tools. `stage:<id>` requires an existing
   package (`package_open`).
-- `plan` and `intake` must be side-effect-free outside the package directory.
+- `plan` and `intake` must be side-effect-free outside the package directory. The one exception is
+  the root `CLAUDE.md` pointer section `package_create` writes at the package's birth (v6.2).
 - `full` and `update` honor approval gates: do not pass an approval gate on the user's behalf.
 - One package open at a time. The store's lockfile makes concurrent writers fail loud.
 

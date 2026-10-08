@@ -27,10 +27,13 @@ Markdown registers.
 ├── exports/                       # v4.7: entity_export files — a read tool's whole result, digest-
 │   └── <name>.json                #   stamped, deterministic; the sanctioned read for committed scripts
 │                                  #   (derived, regenerable; commit or ignore — never under data/)
+├── CLAUDE.md                      # v6.2: the note behind the root's pointer (the planning note at birth,
+│                                  #   the operating note after handoff_emit)
 └── (target project root)          # handoff_emit writes there (wiring only, no prompt copies):
     ├── .mcp.json                  #   executor-side MCP config → the tamheed server
-    └── CLAUDE.md                  #   the marker-managed operating note (v5: obligations table + lessons,
-                                   #   naming the plugin's skills; no cheat-sheet)
+    └── CLAUDE.md                  #   the pointer section from the package's birth (v6.2), or the
+                                   #   marker-managed operating note inline (v5: obligations table +
+                                   #   lessons, naming the plugin's skills; no cheat-sheet)
 ```
 
 The operator commits `<project-package>/data/` to whichever repository they choose — the package

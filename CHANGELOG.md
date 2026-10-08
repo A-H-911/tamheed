@@ -8,6 +8,42 @@ All notable changes to Tamheed are documented here. The format is based on
 > original repository (<https://github.com/A-H-911/keystone>). Tamheed carries Keystone's full git
 > history; the Keystone repository stays frozen at 1.0.x for existing v1 packages.
 
+## [6.2.0] - 2026-10-08
+
+**MINOR — the repository is wired to its package at birth (plans 212–213).** Until 6.1 nothing
+pointed a repository at its package before stage 20's `handoff_emit`: the SessionStart hook finds a
+package through the note span in the root `CLAUDE.md` or one `@` import, so a planning half ran with
+no resume block, and the first `CLAUDE.md` a new repository got was the Tamheed note alone. Now
+`package_create`, `package_adopt` and `package_open` on an unwired root write the recognized pointer
+pattern: the root `CLAUDE.md` gets a stub (the package title, the operator's comment, the `AGENTS.md`
+import when that file exists, the heading, the `@<package>/CLAUDE.md` line) or three lines appended
+when it exists without a Tamheed section, and the package's own `CLAUDE.md` gets a planning-era note
+in the exact shape the emit later rebuilds. The emit replaces that note without the hand-edit warning
+and reports a note-only root. The resume block names its `half`, and the planning `next` names
+`/tamheed:tamheed`. Results carry `wiring`. Only a served process writes the root (`_WIRE_ROOT`):
+in-process callers leave the tree as they found it. No schema migration: `schema_version` stays 8,
+the store's bytes do not move. Beyond the release stamp's own lines, the bundle changes in the server
+and three teaching files (`handoff.md`, `workflow.md` stage 1, the agent-control template).
+
+**For a live package (the migration note).** Nothing to run. The first `package_open` under 6.2.0 in
+a repository whose root `CLAUDE.md` has no Tamheed section writes the pointer section (a stub when the
+file is absent) and the package's own `CLAUDE.md` with the planning note, once; the result's `wiring`
+names what moved. A repository already carrying the pointer or an inline note reads
+`present/present`, and nothing is written.
+
+### Added
+- `_wire_project` in the server: the root pointer stub or section and the package's planning note at
+  `package_create`, `package_adopt` and `package_open`; `wiring` in their results; `half` in the
+  resume block (`package_open`, `server_info`, the hook).
+- `handoff_emit`: the planning-era note is replaced in silence ("the planning-era note ... was
+  replaced by the operating note"); a root whose first non-blank line is the Tamheed heading is
+  reported "note-only", never rewritten.
+
+### Changed
+- The descriptions of `package_create`, `package_open`, `package_adopt` and `handoff_emit` name the
+  wiring. `handoff.md`, `workflow.md` stage 1 and the agent-control template say the pointer is the
+  engine's at birth. The guide's effects canvases for the three tools gain the `CLAUDE.md` write.
+
 ## [6.1.0] - 2026-10-04
 
 **MINOR — the user guide round 2 (plans 201–210).** The generated user guide (`index.html`) gains

@@ -1,4 +1,4 @@
-# Artifact Catalog — the entity families and their rules (tamheed v6.1.0)
+# Artifact Catalog — the entity families and their rules (tamheed v6.2.0)
 
 The authoritative, human-facing list of every artifact a Tamheed package carries. Since v2
 the package **is a relational store** (`data/*.jsonl`, one file per entity family, see
