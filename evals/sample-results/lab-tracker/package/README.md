@@ -1,4 +1,4 @@
-# How to use this package — the `package` operator guide (tamheed v6.2.0)
+# How to use this package — the `package` operator guide (tamheed v6.2.1)
 
 This guide sits at the root of the `package` Tamheed package. Since v5.0.0 the stock
 scenarios are not files. They are the tamheed plugin's **slash skills**, `/tamheed:<name>`,
