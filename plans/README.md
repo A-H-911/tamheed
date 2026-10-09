@@ -186,7 +186,7 @@ spans since plan 017. Both scans now read one text (R71). Status values: PLANNED
 | # | Plan | Depends on | Status |
 |---|---|---|---|
 | 214 | [One text for both scans](214-one-text-for-both-scans.md) -- `_graded_text` feeds the placeholder loop and `_scan_markers`: the report columns (`progress_entries.entry`, `audit_verdicts.evidence`) and code spans leave the marker check; the demo sample's `PRT-002` (a backticked marker) passes; the fact in `package-writes`; the field's option 2 rejected (no resolution timestamp, and it would not fix PE-011) | 213 | DONE -- 2026-10-09 UTC (`1d18b74`; R71 full parity, R72 the field's words trimmed from the evidence) |
-| 215 | [Release 6.2.1](215-release-6.2.1.md) -- PATCH: the stamp, the stock guide's history key, the lab fixture refreshed through the engine, push and tag on the operator's word | 214 | DONE -- 2026-10-09 UTC (the release commit; CI and the tag recorded in the follow-up) |
+| 215 | [Release 6.2.1](215-release-6.2.1.md) -- PATCH: the stamp, the stock guide's history key, the lab fixture refreshed through the engine, push and tag on the operator's word | 214 | DONE -- 2026-10-09 UTC (`c2cf2eb`, tag `v6.2.1`, CI run 37928500599 green on 9 jobs; R73) |
 
 ### Wired at birth -- plans 212-213 -> v6.2.0 (released 2026-10-08 UTC; maintainer-executed)
 

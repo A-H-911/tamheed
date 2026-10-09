@@ -37,7 +37,19 @@ journal was always exempt from the placeholder scan, and is now exempt from both
 
 ## As it landed
 
-(filled: the commit, the push, the CI run, the tag, the bundle diff, the field's two values)
+- The release commit `c2cf2eb`; `git push origin main` `5bf35ad..c2cf2eb` at 12:12 UTC on
+  2026-10-09 (two commits: `1d18b74`, `c2cf2eb`).
+- CI run 37928500599 on `c2cf2eb`: conclusion success, 9 jobs, every job success (eight `check`
+  jobs over Python 3.10 to 3.13 on Windows and Ubuntu, and the MCP server smoke).
+- Tag `v6.2.1` on `c2cf2eb`, pushed. `git diff v6.2.1 HEAD -- plugins/tamheed`: 0 lines.
+- The field's two values for FB-001: `resolved_in` `6.2.1`; `upstream_ref`
+  `https://github.com/A-H-911/tamheed/blob/main/plans/214-one-text-for-both-scans.md` (tag
+  `v6.2.1`, commit `c2cf2eb`). The feedback register takes full rows, so the field writes FB-001
+  whole with `lifecycle_status` Resolved and those two values.
+- Handed to the operator for `jisr`: `claude plugin marketplace update tamheed`, then
+  `claude plugin update tamheed@tamheed --scope user` (jisr has no local record, so its sessions
+  load the user record), a fresh session, `gate_run` reads G-COMPLETE pass with G-SET still failing
+  on acceptance-criterion, phase and prompt, as handoff PE-018 says.
 
 ## Rulings taken at the review
 
