@@ -140,7 +140,7 @@ class UserGuideTest(unittest.TestCase):
             kind, where = diagrams.GATE_HOW[g]
             if kind == "view":
                 self.assertIn(f"CREATE VIEW {where}", schema, g)
-                lines.append(2622)
+                lines.append(2634)
             else:
                 self.assertIn(f'"{g}"', src[where - 1], (g, where))
                 lines.append(where)
@@ -164,9 +164,9 @@ class UserGuideTest(unittest.TestCase):
             self.assertTrue(set(t["tokens"]) <= tools | {"STOP"}, n)
         self.assertTrue(any(t["tokens"] for t in st.values()))
         src = extract.SERVER_SRC.split("\n")
-        self.assertIn("lesson-confirmed", src[1950])
-        self.assertIn("lesson-promoted", src[1951])
-        self.assertIn("'Superseded'", src[2225] + src[2226])      # the successor retires the old lessons
+        self.assertIn("lesson-confirmed", src[1962])
+        self.assertIn("lesson-promoted", src[1963])
+        self.assertIn("'Superseded'", src[2237] + src[2238])      # the successor retires the old lessons
         rules = {r["rule"] for sc in self.facts["rules"].values() for r in sc}
         self.assertTrue({"lessons-confirmed", "lessons-stranded", "lessons-superseded-binding"} <= rules)
         self.assertEqual(self.facts["lifecycles"]["domain"]["skills"], ["Approved", "Superseded", "Obsolete"])

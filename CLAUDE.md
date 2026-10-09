@@ -120,7 +120,8 @@ output content, not stale references to this repo's layout.
 - **G-DEC-STATUS**: decision statuses in the allowed set (also CHECK-enforced at write).
 - **G-REQ-SRC**: every requirement has non-empty provenance (whitespace-only caught).
 - **G-COMPLETE**: no unfinished markers. `[NEEDS-CLARIFICATION: OQ-NNN]` is legal only while the
-  cited OQ is live.
+  cited OQ is live. The journal and verdict evidence are not scanned, and code spans are
+  stripped first, for both scans.
 - **G-TRACE**: every MVP requirement links to ≥1 decision, ≥1 work item, ≥1 test (vacuous-pass
   warning at zero MVP rows).
 - **G-SET**: every Always family present or omission-recorded (vacuous-pass warning for

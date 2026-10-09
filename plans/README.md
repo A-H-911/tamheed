@@ -176,6 +176,18 @@ devil's-advocate review; execution order is the row order below). Status values:
 | 089 | [Lab beat 18](089-lab-beat-18-findings-27.md) | 085-088 + full test (15/15 vs 0/15 on `v4.10.0`; 9 suites; selftest) | DONE `762b98b` — 9 new assertions, each failing on the pre-beat fixture; D-1 registry-sync unscripted, F-3 fixed |
 | 090 | [Release v4.11.0](090-release-v4110.md) — plan-058 recipe + the fixture follows the stamp | 089 | DONE — 2026-09-22, tag `v4.11.0` (SHA in the tag) |
 
+### Field cycle jisr-01 -- plans 214-215 -> v6.2.1 (2026-10-09; maintainer-executed)
+
+The `jisr` planning package (tamheed 6.2.0) handed up FB-001: G-COMPLETE's marker scan read the
+append-only journal, so a journal entry quoting a removed `[NEEDS-CLARIFICATION]` marker failed the
+gate with no repair. The placeholder scan had exempted the journal since plan 038 and stripped code
+spans since plan 017. Both scans now read one text (R71). Status values: PLANNED / IN PROGRESS / DONE.
+
+| # | Plan | Depends on | Status |
+|---|---|---|---|
+| 214 | [One text for both scans](214-one-text-for-both-scans.md) -- `_graded_text` feeds the placeholder loop and `_scan_markers`: the report columns (`progress_entries.entry`, `audit_verdicts.evidence`) and code spans leave the marker check; the demo sample's `PRT-002` (a backticked marker) passes; the fact in `package-writes`; the field's option 2 rejected (no resolution timestamp, and it would not fix PE-011) | 213 | DONE -- 2026-10-09 UTC (the commit this row lands in, after the operator's review) |
+| 215 | [Release 6.2.1](215-release-6.2.1.md) -- PATCH: the stamp, the stock guide's history key, the lab fixture refreshed through the engine, push and tag on the operator's word | 214 | PLANNED |
+
 ### Wired at birth -- plans 212-213 -> v6.2.0 (released 2026-10-08 UTC; maintainer-executed)
 
 The operator ran the planning half in a new repository with no `CLAUDE.md`; nothing pointed the

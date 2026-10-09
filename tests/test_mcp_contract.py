@@ -4229,6 +4229,63 @@ class V4EngineTest(unittest.TestCase):
         self.assertEqual(gate["status"], "fail")                # live rows stay screened
         self.assertTrue(any(f.get("id") == "CON-011" for f in gate["failures"]))
 
+    def test_marker_quoted_in_journal_or_code_span_is_a_quotation(self):
+        """Plan 214 (the field's FB-001): both G-COMPLETE scans read one text. The
+        append-only journal and verdict evidence are never graded, and a marker inside
+        backticks is a quotation. A bare marker on a live row still fails (plan 046)."""
+        self.assertEqual(srv.gate_run()["gates"]["G-COMPLETE"]["status"], "pass")
+        # the field's sequence: resolve the question, remove the marker from the live row
+        out = srv.entity_upsert([
+            {"type": "open-question", "id": "OQ-001", "title": "q", "question": "which db?",
+             "owner": "anas", "due_by": "2020-01-01", "lifecycle_status": "Deferred",
+             "resolution": "deferred 2026-10-09 on the operator's word", "resolved_by": "SC-001"},
+            {"type": "constraint", "id": "CON-001", "title": "c", "statement": "runs on-prem",
+             "source_kind": "brief", "source_span": "b:1"}])
+        self.assertTrue(out["ok"], out)
+        # ...then journal the change, quoting the marker it removed (PE-011 in the field)
+        pe = srv.progress_update([{"entry": "CON-001: replaced [NEEDS-CLARIFICATION: OQ-001]"
+                                            " with the ruling", "event_type": "work-done",
+                                   "subject_id": "CON-001"}])
+        self.assertTrue(pe["ok"], pe)
+        av = srv.audit_record([{"ac_id": "AC-001", "verdict": "Pending",
+                                "evidence": "the review quoted [NEEDS-CLARIFICATION: OQ-001]"}])
+        self.assertTrue(av["ok"], av)
+        # a live row QUOTING a marker inside backticks (the demo sample's PRT-002 shape)
+        out = srv.entity_upsert([{"type": "constraint", "id": "CON-020", "title": "c20",
+                                  "statement": "write `[NEEDS-CLARIFICATION: OQ-099]` at the spot",
+                                  "source_kind": "brief", "source_span": "b:20"}])
+        self.assertTrue(out["ok"], out)
+        gate = srv.gate_run()["gates"]["G-COMPLETE"]
+        self.assertEqual(gate["status"], "pass", gate)
+        adv = {r["rule"]: r for r in srv.readiness_check("package")["rules"]}
+        ents = adv.get("clarifications-open", {}).get("entities", [])
+        self.assertFalse(any(e.startswith(("PE-", "AV-")) for e in ents), ents)
+        # the same text bare on a live row: still a failure, naming that row alone
+        out = srv.entity_upsert([{"type": "constraint", "id": "CON-021", "title": "c21",
+                                  "statement": "write [NEEDS-CLARIFICATION: OQ-099] at the spot",
+                                  "source_kind": "brief", "source_span": "b:21"}])
+        self.assertTrue(out["ok"], out)
+        gate = srv.gate_run()["gates"]["G-COMPLETE"]
+        self.assertEqual(gate["status"], "fail")
+        self.assertEqual([f["id"] for f in gate["failures"]], ["CON-021"])
+
+    def test_demo_sample_passes_g_complete(self):
+        """Plan 214: the demo sample's PRT-002 quotes a marker inside backticks. It failed
+        G-COMPLETE unseen since v6.0.0 because no eval pins the demo's gates. The in-process
+        open and close leave the committed bytes as they were (check.py's round-trip)."""
+        srv.package_close()
+        root = REPO_ROOT / "generated-samples"
+        data = root / "support-triage-agent-v2" / "data"
+        before = {p.name: p.read_bytes() for p in data.glob("*.jsonl")}
+        srv.PACKAGE_ROOT = root
+        self.assertTrue(srv.package_open("support-triage-agent-v2")["ok"])
+        try:
+            gate = srv.gate_run()["gates"]["G-COMPLETE"]
+            self.assertEqual(gate["status"], "pass", gate)
+        finally:
+            srv.package_close()
+        self.assertEqual({p.name: p.read_bytes() for p in data.glob("*.jsonl")}, before)
+
     def test_waiver_satisfies_rule_and_expiry_is_honored(self):
         srv.entity_upsert([{"type": "waiver", "id": "WVR-001",
                             "rule": "defects-closed", "applies_to": "DEF-002",

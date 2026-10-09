@@ -395,6 +395,11 @@ _MARKER_RE = re.compile(r"\[NEEDS-CLARIFICATION(?::\s*([A-Za-z]+-\d+))?[^\]]*\]"
 _PROSE_ID_EXEMPT_TABLES = frozenset({"progress_entries", "audit_verdicts", "feedback",
                                      "prompts"})  # plan 193: prompt-ids-resolve owns the prompt rows
 _PROSE_ID_CAP = 50
+# Plan 038 (findings_21/C42), plan 214 (the field's FB-001): the append-only report columns
+# are never graded by G-COMPLETE. A journal entry is a report of what happened. It cannot
+# be "unfinished". One slip in a row nobody can edit would fail the gate forever. Both
+# scans (placeholders and markers) skip them, through _graded_text.
+_REPORT_COLUMNS = {"progress_entries": {"entry"}, "audit_verdicts": {"evidence"}}
 # Plan 057: version strings compare numerically — "4.10.0" is newer than "4.9.0".
 _vkey = lambda v: tuple(int(p) for p in v.split("."))  # noqa: E731
 _SNIPPETS_PER_COLUMN = 5        # plan 092: a census caps its snippets, never its counts
@@ -619,43 +624,50 @@ def _scan_prompt_ids(conn) -> dict:
     return out
 
 
-def _scan_markers(conn) -> list[dict]:
-    """Every [NEEDS-CLARIFICATION…] marker in prose columns; `invalid` is None for a
-    legal marker (cites an existing unresolved OQ), else the operator-facing reason."""
-    found = []
+def _graded_text(conn):
+    """The text G-COMPLETE grades, one value at a time: (row id, column, text). Every entity
+    table, its TEXT columns. Skipped: custom_attributes (C14, provenance kept verbatim) and
+    the report columns (_REPORT_COLUMNS). Live rows only: Superseded and Obsolete rows are
+    history, and supersession must repair (plan 038, plan 046). Code spans are stripped
+    first (D-017-4): a quoted token is example text. Plan 214: the placeholder scan and the
+    marker scan read this one source, so no third difference can grow between them."""
     for table in ENTITY_TABLES.values():
-        all_cols = {r[1] for r in conn.execute(f"PRAGMA table_info({table})")}
-        text_cols = [r[1] for r in conn.execute(f"PRAGMA table_info({table})")
-                     if (r[2] or "").upper() == "TEXT" and r[1] != "custom_attributes"]
+        info = conn.execute(f"PRAGMA table_info({table})").fetchall()
+        skip = {"custom_attributes"} | _REPORT_COLUMNS.get(table, set())
+        text_cols = [r[1] for r in info if (r[2] or "").upper() == "TEXT" and r[1] not in skip]
         if not text_cols:
             continue
         pk = _NON_ID_TABLES.get(table, "id")
-        # Plan 046: parity with the placeholder scan (plan 038) — Superseded/Obsolete
-        # rows are history; an immutable row's stale marker is repaired by supersession.
         where = (" WHERE lifecycle_status NOT IN ('Superseded','Obsolete')"
-                 if "lifecycle_status" in all_cols else "")
+                 if "lifecycle_status" in {r[1] for r in info} else "")
         for row in conn.execute(f"SELECT {pk}, {', '.join(text_cols)} FROM {table}{where}"):
             for col, value in zip(text_cols, row[1:]):
-                if not value:
-                    continue
-                for m in _MARKER_RE.finditer(str(value)):
-                    cited = (m.group(1) or "").upper()
-                    invalid = None
-                    if not cited.startswith("OQ-"):
-                        invalid = ("marker cites no OQ id — write"
-                                   " [NEEDS-CLARIFICATION: OQ-NNN] and create the OQ")
-                    else:
-                        oq = conn.execute(
-                            "SELECT resolution, resolved_by, lifecycle_status"
-                            " FROM open_questions WHERE id = ?", (cited,)).fetchone()
-                        if oq is None:
-                            invalid = f"{cited} does not exist"
-                        elif oq[0] is not None or oq[1] is not None:
-                            invalid = f"{cited} is resolved — remove the marker"
-                        elif oq[2] in ("Superseded", "Obsolete", "Rejected"):
-                            invalid = f"{cited} is {oq[2]} — remove or re-cite"
-                    found.append({"id": row[0], "column": col,
-                                  "oq": cited or None, "invalid": invalid})
+                if value:
+                    yield row[0], col, _strip_code(str(value))
+
+
+def _scan_markers(conn) -> list[dict]:
+    """Every [NEEDS-CLARIFICATION…] marker in the graded text (_graded_text). `invalid` is None
+    for a legal marker (cites an existing unresolved OQ), else the operator-facing reason."""
+    found = []
+    for rid, col, text in _graded_text(conn):
+        for m in _MARKER_RE.finditer(text):
+            cited = (m.group(1) or "").upper()
+            invalid = None
+            if not cited.startswith("OQ-"):
+                invalid = ("marker cites no OQ id — write"
+                           " [NEEDS-CLARIFICATION: OQ-NNN] and create the OQ")
+            else:
+                oq = conn.execute(
+                    "SELECT resolution, resolved_by, lifecycle_status"
+                    " FROM open_questions WHERE id = ?", (cited,)).fetchone()
+                if oq is None:
+                    invalid = f"{cited} does not exist"
+                elif oq[0] is not None or oq[1] is not None:
+                    invalid = f"{cited} is resolved — remove the marker"
+                elif oq[2] in ("Superseded", "Obsolete", "Rejected"):
+                    invalid = f"{cited} is {oq[2]} — remove or re-cite"
+            found.append({"id": rid, "column": col, "oq": cited or None, "invalid": invalid})
     return found
 # G-INJECT-style screen on handoff emission. Stored text is data; these patterns catch
 # text that tries to become instructions when a downstream agent reads it.
@@ -1712,8 +1724,8 @@ def entity_upsert(entities: list[dict]) -> dict:
     beside a `substitute` every column is carried); JSON columns compare as parsed values; id-keyed rows only, never
     the append-only journal. It proves the write alters nothing you named — not that
     you saw the row correctly: re-fetch through entity_query and paste that.
-    Entity prose is screened by G-COMPLETE's placeholder scan (TODO/TBD/FIXME/
-    {{...}}): to QUOTE such a token in prose, wrap it in backticks — the code-span
+    Entity prose is screened by both G-COMPLETE scans (TODO/TBD/FIXME/{{...}} and the
+    markers): to QUOTE such a token in prose, wrap it in backticks — the code-span
     exemption (findings_21: the note about the rule must not break the rule).
     JSON columns (custom_attributes) accept either a JSON string or a JSON
     object/array — objects are serialized at binding (C28: a raw dict used to fail
@@ -2641,37 +2653,13 @@ def gate_run() -> dict:
             f"0 audit verdicts — G-PROGRESS passed vacuously over {active_acs} active"
             " AC(s). Every one of them is unverified (expected only pre-execution)")
     findings = []
-    # Column exemptions: custom_attributes everywhere (C14: provenance preserved
-    # verbatim, not authored content — grading it fails the package for being
-    # faithful), plus the append-only report columns (findings_21/C42: a journal
-    # entry is a REPORT of what happened and cannot be "unfinished" — grading it
-    # fails the package for being accurate about its own tooling, and the
-    # append-only design means one authoring slip would fail the gate FOREVER).
-    # The G-INJECT screen still applies to everything it screened at handoff_emit.
-    _EXEMPT = {"progress_entries": {"entry"}, "audit_verdicts": {"evidence"}}
-    for table in ENTITY_TABLES.values():
-        skip = {"custom_attributes"} | _EXEMPT.get(table, set())
-        all_cols = {r[1] for r in conn.execute(f"PRAGMA table_info({table})")}
-        text_cols = [r[1] for r in conn.execute(f"PRAGMA table_info({table})")
-                     if (r[2] or "").upper() == "TEXT" and r[1] not in skip]
-        if not text_cols:
-            continue
-        pk = _NON_ID_TABLES.get(table, "id")
-        # Superseded/Obsolete rows are HISTORY, not the plan (plan 038, the
-        # trap-class completed): immutable-after-approval content is unreachable
-        # by edit, and supersession — the sanctioned repair — must actually
-        # repair. Live rows of every family stay fully screened.
-        where = (" WHERE lifecycle_status NOT IN ('Superseded','Obsolete')"
-                 if "lifecycle_status" in all_cols else "")
-        for row in conn.execute(
-                f"SELECT {pk}, {', '.join(text_cols)} FROM {table}{where}"):
-            for col, value in zip(text_cols, row[1:]):
-                # strip_code first — parity with the retired v1 gate (D-017-4, C14):
-                # `TODO`/{{...}} inside code spans is example text, not an unfinished marker.
-                if value and (m := _PLACEHOLDER_RE.search(_strip_code(str(value)))):
-                    # findings_21 §3: name WHAT was found, not just where.
-                    findings.append({"id": row[0], "column": col,
-                                     "matched": m.group(0)})
+    # Plan 214: one graded text for both scans. _graded_text carries the column exemptions
+    # (C14, findings_21/C42), the Superseded/Obsolete filter (plan 038) and the code-span strip
+    # (D-017-4). The G-INJECT screen still applies to everything it screened at handoff_emit.
+    for rid, col, text in _graded_text(conn):
+        if (m := _PLACEHOLDER_RE.search(text)):
+            # findings_21 §3: name WHAT was found, not just where.
+            findings.append({"id": rid, "column": col, "matched": m.group(0)})
     # v4 (plan 031): NEEDS-CLARIFICATION markers are legal ONLY when they cite an
     # existing unresolved OQ — a dangling/uncited/resolved-cite marker is an
     # unfinished marker like any other. Valid markers do NOT fail (they are the
@@ -3407,7 +3395,7 @@ def progress_update(entries: list[dict]) -> dict:
     namespace and a caller-supplied one is refused (plan 086); `corrects`
     points at an earlier PE- — journals are corrected by compensating events, never
     edited, and a corrected entry is collapsed under its correction in review.html.
-    `entry` text is EXEMPT from G-COMPLETE's placeholder screen (findings_21/C42:
+    `entry` text is EXEMPT from both G-COMPLETE screens, placeholders and markers (findings_21/C42, plan 214:
     a report of what happened is never "unfinished" — and an append-only row that
     failed a content gate could never be repaired). Plan 161 (v5.7): a key outside
     the item's list is refused, never dropped, and a missing `entry` is refused in
@@ -3479,7 +3467,7 @@ def audit_record(verdicts: list[dict]) -> dict:
     (auto-test|manual|inspection), and against WHAT commit — a Met the readiness
     engine can audit is worth more than a Met it must take on faith. The requirement
     auto-advance trigger cascades in the same transaction (C4), on LATEST-verdict
-    semantics. `evidence` text is EXEMPT from G-COMPLETE's placeholder screen
+    semantics. `evidence` text is EXEMPT from both G-COMPLETE screens, placeholders and markers
     (findings_21/C42: append-only report text, never "unfinished" plan prose). Plan 161
     (v5.7): a key outside the item's list is refused, never dropped, and a missing
     `ac_id` or `verdict` is refused in words (_VERDICT_KEYS — the registered

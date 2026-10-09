@@ -83,6 +83,11 @@ id resolves, and the damage stays until someone reads it.
   activity" for two months. On a journal of fifteen hundred entries it returned the first ten.
   Until v5.7 the order was the id's text order. A typed `after_id` returned entries hundreds of
   numbers older, and once it dropped three matching entries with no sign in the result.
+- **The journal is a record, never graded.** Both G-COMPLETE scans skip `entry` and `evidence`.
+  A marker or a token quoted there is a quotation. Elsewhere, quote a marker inside backticks.
+  *Field evidence:* a planning package journaled the marker it had just removed from a
+  requirement. Until v6.2.1 the marker scan read the journal, and the gate failed on an entry
+  nobody could edit (the field's defect report, plan 214).
 - **The two journal tools take the keys they name, and refuse any other.** `progress_update`
   items: `entry` (required), `event_type`, `subject_id`, `actor`, `corrects`, `phase_id`,
   `slice_id`. `audit_record` items: `ac_id` and `verdict` (required), `evidence`, `verified_by`,

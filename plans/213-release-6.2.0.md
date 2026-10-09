@@ -61,6 +61,16 @@ references, `pins_missing.py` 0. Grepped and left alone: "the only write path in
   `wiring: {root: created, package_note: planning}`, and the session after prints PE-003 through
   the hook.
 
+### Post-acceptance addendum (2026-10-09, plan 214's review)
+
+Measured in `jisr` from this repository, read-only: the root `CLAUDE.md` (2026-10-08 15:47) is the
+stub byte for byte, `tamheed-package/CLAUDE.md` holds the planning note, `AGENTS.md` is absent (the
+stub imports one only when the operator writes it), no lock is held, and the hook printed the
+resume block for handoff PE-018 with the planning `next`. The jisr session log records the same
+open from the other side ("root CLAUDE.md created, resume block matched expectations"). The 6.2.0
+mechanism applied in full. The field's first report under 6.2.0 (FB-001, the marker scan over the
+journal) is plan 214.
+
 ## Rulings taken at the review
 
 - **R70 (2026-10-08): commit, push, then tag on CI green.** The push carries three commits: 212

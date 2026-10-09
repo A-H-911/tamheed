@@ -214,7 +214,8 @@ word, everywhere, is the JSON boolean `true`.** A truthy string never attests.
 Never assume. Where prose is ambiguous, write `[NEEDS-CLARIFICATION: OQ-NNN]` in place and
 create the OQ (with owner + due_by). G-COMPLETE checks markers. One citing an existing,
 unresolved OQ is legal. A marker with no id, a dangling id, or a resolved cite is an
-unfinished-marker failure. The `clarifications-open` advisory counts live markers.
+unfinished-marker failure. The journal and verdict evidence are not scanned. A marker inside
+backticks is a quotation. The `clarifications-open` advisory counts live markers.
 
 ## Versioning
 
