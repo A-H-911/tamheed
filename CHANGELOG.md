@@ -8,6 +8,50 @@ All notable changes to Tamheed are documented here. The format is based on
 > original repository (<https://github.com/A-H-911/keystone>). Tamheed carries Keystone's full git
 > history; the Keystone repository stays frozen at 1.0.x for existing v1 packages.
 
+## [6.3.0] - 2026-10-10
+
+**MINOR — the flush writes only what changed, atomically, and reports what landed (ACMP's FB-029);
+tamheed per repository, nothing at user level (plans 216–218).** A store write that failed mid-flush
+with an OS error on one file had applied the row and written another file, reported a bare exception,
+and left the session's own partial flush reading as an outside change until a close and reopen. The
+store's dump wrote every table file on every commit with a truncating write, and the fingerprints
+updated only after the whole dump. Now a commit writes only the files whose canonical bytes changed,
+each to a `<table>.jsonl.writing` temp beside the target and replaced in one step, five attempts on
+any OS error with four sleeps of 50 to 400 ms between them, the fingerprint set per file as it lands.
+A flush that stops on one file raises `StoreFlushError`, and the tool returns its own facts (`items`,
+`ids`) with `ok: false`, `applied: true` and a `flush` report naming the written, the failed and the
+pending files. `package_close` keeps a pending table's bytes as `data/<table>.jsonl.unflushed` and
+names them (`flushed: false`, `unflushed`). `package_open` warns on such a sidecar and removes a stale
+`.writing` temp, never a migrate's `.tmp`. The temp and the sidecar are created anew with `O_EXCL`,
+so a planted symlink carries nothing. The install posture moved: a project-scope record and a
+project-declared marketplace per repository, nothing at user scope, because a user-scope record wins
+the load over a repository's own (measured on Claude Code 2.1.294). No schema move: `schema_version`
+stays 8, the store's bytes do not move. Beyond the release stamp's own lines, the bundle changes in
+`db/store.py`, the server, `db/CANONICAL.md`, two skills and the server README.
+
+**For a live package (the migration note).** Nothing to run. A package that saw a partial flush
+flushes the pending file at its next write under 6.3.0. A `data/<table>.jsonl.unflushed` sidecar left
+by an earlier close is named at `package_open` until the operator compares it with the `.jsonl`, keeps
+one, and removes it. The field sets its feedback row `Resolved` with `resolved_in` 6.3.0 and the plan
+217 reference. To install per repository: `claude plugin marketplace add A-H-911/tamheed --scope
+project`, then `claude plugin install tamheed@tamheed --scope project`, from the repository's root.
+
+### Added
+- `store._flush`, `_write_atomic`, `_write_fresh`, `_table_bytes` and `StoreFlushError`: the
+  changed-files-only, atomic, per-file-fingerprinted flush with its failure report. `dump()` and
+  `commit()` return the flush report.
+- `_commit(partial)`: a flush failure merged with the caller's own result at six sites.
+- `package_close`: `unflushed` and the sidecar; `package_open`: the `warning` on a sidecar or a stale
+  temp. `TOOL_EFFECTS` names the sidecar write; the guide's `entity_upsert`, `package_open` and
+  `package_close` strings say so (EN and AR).
+
+### Changed
+- `CANONICAL.md`'s write-back section, the `package-writes` and `session-handoff` skills, and the
+  server README rows for `entity_upsert`, `progress_update`, `package_open` and `package_close`.
+- The install docs (README, `docs/install.md`, the guide's install section): per repository, no user
+  scope, the measured loading rule, the update per repository, the collaborator's one command, and a
+  recipe for moving a project to a newer release.
+
 ## [6.2.1] - 2026-10-09
 
 **PATCH — one text for both G-COMPLETE scans (the field's FB-001, plans 214–215).** A planning

@@ -1,7 +1,7 @@
 {
   "name": "tamheed",
   "description": "Turn a project description into a validated, traceable, execution-ready planning and handoff package for Claude Code to implement. Then keep it the record of the build while execution runs.",
-  "version": "6.2.1",
+  "version": "6.3.0",
   "author": {
     "name": "Anas Hammo"
   },

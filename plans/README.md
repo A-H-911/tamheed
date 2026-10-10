@@ -187,9 +187,9 @@ repository with nothing at user level (R74). Status values: PLANNED / IN PROGRES
 
 | # | Plan | Depends on | Status |
 |---|---|---|---|
-| 216 | [Per repository, nothing at user level](216-per-repo-install.md) -- the user-scope record removed (R74), a project-scope record and a project-declared marketplace per repository, the measured loading rule (a user record wins the load), the docs' three copies plus the upgrade recipe | 217 | DONE -- 2026-10-10 UTC (the commit this row lands in, after the operator's review) |
-| 217 | [The flush writes only what changed](217-flush-only-what-changed.md) -- `_graded`-style parity for the store: `_write_atomic` (`.writing` temp, five-attempt backoff), per-file fingerprints, `StoreFlushError`, `_commit(partial)` at six sites, the `.unflushed` sidecar at close, the warning at open; ACMP's FB-029 | 215 | DONE -- 2026-10-10 UTC (the commit this row lands in, after the operator's review) |
-| 218 | [Release 6.3.0](218-release-6.3.0.md) -- MINOR (R75): the stamp, the stock guide's history key, the lab fixture refreshed through the engine, push and tag on the operator's word | 216, 217 | PLANNED |
+| 216 | [Per repository, nothing at user level](216-per-repo-install.md) -- the user-scope record removed (R74), a project-scope record and a project-declared marketplace per repository, the measured loading rule (a user record wins the load), the docs' three copies plus the upgrade recipe | 217 | DONE -- 2026-10-10 UTC (`3305d1e`; R74, R76) |
+| 217 | [The flush writes only what changed](217-flush-only-what-changed.md) -- `_graded`-style parity for the store: `_write_atomic` (`.writing` temp, five-attempt backoff), per-file fingerprints, `StoreFlushError`, `_commit(partial)` at six sites, the `.unflushed` sidecar at close, the warning at open; ACMP's FB-029 | 215 | DONE -- 2026-10-10 UTC (`ba613ec`; R75) |
+| 218 | [Release 6.3.0](218-release-6.3.0.md) -- MINOR (R75): the stamp, the stock guide's history key, the lab fixture refreshed through the engine, push and tag on the operator's word | 216, 217 | DONE -- 2026-10-10 UTC (the release commit; CI and the tag recorded in the follow-up) |
 
 ### Field cycle jisr-01 -- plans 214-215 -> v6.2.1 (2026-10-09; maintainer-executed)
 
