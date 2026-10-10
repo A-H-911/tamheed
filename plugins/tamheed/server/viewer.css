@@ -66,11 +66,18 @@ details > summary:hover { color: var(--ink); text-shadow: 0 0 10px var(--a1); }
        padding: 0 .45rem; }
 .csv:hover, .csv:focus { color: var(--bg); background: var(--a1);
                          box-shadow: 0 0 10px var(--a1); }
-.tablewrap { margin: 0; }
-/* C25 (maintainer decision, supersedes the 019 scroll fix): long text WRAPS in place —
-   no horizontal scrolling. overflow-wrap breaks even unbroken runs (ids, paths). */
-table { border-collapse: collapse; width: 100%; font-size: .85rem; }
-td { overflow-wrap: anywhere; }
+/* R78 (plan 219, the operator): a table wider than its fold scrolls sideways, a long one
+   scrolls inside its fold under a header that stays put, and text wraps inside columns sized
+   by kind (the exporter's <col> classes). Supersedes C25 ("wrap in place, no horizontal
+   scrolling"). overflow-wrap still breaks even unbroken runs (ids, paths) inside a column. */
+.tablewrap { margin: 0; overflow: auto; max-height: 70vh; }
+table { border-collapse: collapse; table-layout: fixed; width: 100%; font-size: .85rem; }
+col.w-s { width: 9rem; } col.w-m { width: 14rem; } col.w-l { width: 36rem; }
+td { overflow-wrap: anywhere; white-space: normal; }
+thead th { position: sticky; top: 0; z-index: 1; }
+tbody tr { scroll-margin-top: 3.2rem; }   /* below the sticky nav, like `section` */
+pre.handoff { white-space: pre-wrap; overflow-wrap: anywhere; background: var(--panel);
+              border: 1px solid var(--line); border-radius: .35rem; padding: .7rem .9rem; }
 th, td { border: 1px solid var(--line); padding: .35rem .55rem; text-align: left;
          vertical-align: top; }
 th { background: var(--panel-2); color: var(--ink-2); text-transform: uppercase;
@@ -157,6 +164,7 @@ circle.ring { stroke: var(--ink-2); stroke-width: 1; }
   h1 { background: none; -webkit-background-clip: unset; background-clip: unset;
        color: #000; }
   .toc { display: none; }
+  .tablewrap { max-height: none; overflow: visible; }
   /* ponytail: closed details still hide in print; add [open]-forcing here if a
      printed report ever asks for it */
 }

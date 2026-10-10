@@ -69,12 +69,50 @@ def _fold(title: str, count: int, inner: str, anchor: str | None = None,
             f"{inner}</details>")
 
 
+# Plan 219 (R78): the exporter sizes columns by the KIND of header, so a wide table scrolls
+# inside its fold instead of squeezing every column. Three constant class names, chosen from
+# code strings (the hand-written header lists and the DDL column names). No header text
+# reaches a class attribute, so the CSS stays the only unescaped content of the page.
+_COL_LONG = frozenset({
+    "entry", "statement", "rationale", "detail", "question", "body", "description",
+    "evidence", "resolution", "context", "recommendation", "justification", "consequences",
+    "decision", "workaround", "note", "definition", "plan", "results", "objective",
+    "mitigation", "risk if wrong", "exit criteria", "activation trigger", "invariant at stake",
+    "mvp definition", "go no go", "confirmation", "impact if followed", "impact if ignored",
+    "reason", "outcome", "measure", "method", "enforcement", "heading", "source span", "value",
+})
+_COL_SHORT = frozenset({
+    "id", "corrects", "corrected by", "subject", "phase", "slice", "event", "event type",
+    "status", "lifecycle", "lifecycle status", "kind", "mvp", "severity", "priority",
+    "probability", "impact", "effort", "interest", "level", "mode", "profile", "family",
+    "field", "relation", "from", "to", "from id", "to id", "version", "pinned", "ac", "ac id",
+    "requirement", "requirement id", "waiver", "gate", "gate kind", "rule", "verdict",
+    "disposition", "source kind", "doc kind", "risk state", "response strategy",
+    "generation class", "id prefix", "type id", "entity type", "document id", "parent id",
+    "phase id", "slice id", "decision ref", "disposition reason ref", "promoted to",
+    "superseded by", "supersession", "resolved by", "fixed by", "found in", "discharged by",
+    "applies to", "timebox", "threshold", "target", "metric", "label", "term", "role", "skill",
+})
+
+
+def _col_class(header) -> str:
+    """One of three constant class names for a column, by the kind of its header. Dates,
+    actors, names and anything unknown read the middle width."""
+    key = str(header).lower().replace("_", " ").split(" (")[0].strip()
+    if key in _COL_LONG:
+        return "w-l"
+    if key in _COL_SHORT:
+        return "w-s"
+    return "w-m"
+
+
 def _table(headers, rows, row_ids: bool = False) -> str:
     """Plan 166 (v5.8): one row per line. A field page held its journal table on one line of
     840 KB that moved on every export — about 4 MB of patch text each time, the whole cost
     of a history scanner reading `git log -p`. Whitespace between table rows is nothing to
     a browser; to a diff it is everything."""
     head = "".join(f"<th>{esc(h)}</th>" for h in headers)
+    cols = "".join(f'<col class="{_col_class(h)}">' for h in headers)
     body = "\n".join(
         # row_ids: column 0 is a globally unique entity id (entity_index PK) — the <tr>
         # anchor is the jump target for graph node links; same esc() as the hrefs, so
@@ -82,7 +120,8 @@ def _table(headers, rows, row_ids: bool = False) -> str:
         (f'<tr id="{esc(row[0])}">' if row_ids else "<tr>")
         + "".join(f"<td>{esc(cell)}</td>" for cell in row) + "</tr>" for row in rows
     )
-    return (f'<div class="tablewrap"><table><thead><tr>{head}</tr></thead>\n'
+    return (f'<div class="tablewrap"><table><colgroup>{cols}</colgroup>'
+            f'<thead><tr>{head}</tr></thead>\n'
             f"<tbody>\n{body}\n</tbody></table></div>")
 
 

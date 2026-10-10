@@ -176,6 +176,19 @@ devil's-advocate review; execution order is the row order below). Status values:
 | 089 | [Lab beat 18](089-lab-beat-18-findings-27.md) | 085-088 + full test (15/15 vs 0/15 on `v4.10.0`; 9 suites; selftest) | DONE `762b98b` — 9 new assertions, each failing on the pre-beat fixture; D-1 registry-sync unscripted, F-3 fixed |
 | 090 | [Release v4.11.0](090-release-v4110.md) — plan-058 recipe + the fixture follows the stamp | 089 | DONE — 2026-09-22, tag `v4.11.0` (SHA in the tag) |
 
+### Field cycle review-page -- plans 219-220 -> v6.4.0 (2026-10-10; maintainer-executed)
+
+After the 216-218 upgrades (both repositories verified on 6.3.0, nothing to fix) the operator asked for
+a readable `review.html`: every data table's columns were narrow and the Resume handoff overflowed.
+A wide table now scrolls inside its fold under a sticky header, text wraps inside columns sized by
+kind through the exporter's `<col>` classes, and the handoff wraps (R78 supersedes C25). Status
+values: PLANNED / IN PROGRESS / DONE.
+
+| # | Plan | Depends on | Status |
+|---|---|---|---|
+| 219 | [The review page reads](219-review-page-reads.md) -- `_col_class` and the `<colgroup>` hint in `_table`, `viewer.css` (`overflow: auto`, `table-layout: fixed`, three column widths, a sticky header, `pre.handoff` wraps), the C25 test re-aimed, before/after captures on scratch copies; R79 (the plugin's own repository on one project record, committed) | 218 | IN PROGRESS -- 2026-10-10 |
+| 220 | [Release 6.4.0](220-release-6.4.0.md) -- MINOR: the stamp, the stock guide's history key, the lab fixture refreshed through the engine, push and tag on the operator's word | 219 | PLANNED |
+
 ### Field cycle acmp-FB-029 + per-repo install -- plans 216-218 -> v6.3.0 (2026-10-10; maintainer-executed)
 
 ACMP's FB-029: a store write that failed mid-flush with an OS error on one file had applied the row and

@@ -444,11 +444,45 @@ class ExportHtmlTest(unittest.TestCase):
         self.assertIn("position: sticky", out)          # CSS is embedded in the page
 
     def test_long_text_wraps_in_place(self):
-        """Plan 020 (C25 req 2, supersedes the 019 scroll fix): wrap, don't scroll."""
+        """Plan 020 (C25 req 2) kept text wrapping; plan 219 (R78, the operator) lets a wide
+        table scroll inside its fold under a sticky header, with columns sized by kind, and
+        wraps the Resume handoff. Never max-content: a breakable 2,000-character entry would
+        size its column to the full line."""
         self._open_demo_copy()
         out = self._export()
         self.assertIn("overflow-wrap: anywhere", out)
         self.assertNotIn("max-content", out)
+        self.assertIn(".tablewrap { margin: 0; overflow: auto; max-height: 70vh; }", out)
+        self.assertIn("table-layout: fixed", out)
+        self.assertIn("thead th { position: sticky; top: 0;", out)
+        self.assertIn("pre.handoff { white-space: pre-wrap; overflow-wrap: anywhere;", out)
+        self.assertIn("<colgroup>", out)
+
+    def test_colgroup_classes_follow_header_kinds(self):
+        """Plan 219: every table carries one <col> per header, classed by the header's kind.
+        The three names are constants chosen from code strings; a header's text never reaches
+        the attribute. Dates and actors read the middle width (an ISO stamp is 20 characters)."""
+        self._open_demo_copy()
+        srv.progress_update([{"entry": "a row so the progress log renders"}])
+        html = self._export()
+        log = html.split("Progress log (typed events)")[1]
+        colgroup = log.split("<colgroup>")[1].split("</colgroup>")[0]
+        classes = re.findall(r'<col class="(w-[sml])">', colgroup)
+        # id, occurred at, event, entry, subject, actor, corrects, phase, slice
+        self.assertEqual(classes, ["w-s", "w-m", "w-s", "w-l", "w-s", "w-m", "w-s", "w-s", "w-s"])
+        self.assertEqual(viewer._col_class("statement"), "w-l")
+        self.assertEqual(viewer._col_class("lifecycle_status"), "w-s")
+        self.assertEqual(viewer._col_class("note (rendered at the next emit)"), "w-l")
+        self.assertEqual(viewer._col_class("confirmed at"), "w-m")
+        self.assertEqual(viewer._col_class("no such header"), "w-m")
+        self.assertEqual(viewer._col_class(XSS_ATTR), "w-m")             # data never names a class
+        ddl = (REPO_ROOT / "plugins" / "tamheed" / "db" / "schema.sql").read_text(encoding="utf-8")
+        cols = set(re.findall(r"^\s*([a-z_]+)\s+TEXT", ddl, re.M))
+        self.assertGreater(len(cols), 90)
+        self.assertTrue({viewer._col_class(c) for c in cols} <= {"w-s", "w-m", "w-l"})
+        # every table on the page has exactly one <col> per <th>
+        for table in re.findall(r"<table>(.*?)</table>", html, re.S):
+            self.assertEqual(table.count("<col "), table.count("<th>"), table[:120])
 
     def test_section_order_state_relations_data(self):
         """Plan 027: the full SECTIONS order, no hardcoded subset (this test missed

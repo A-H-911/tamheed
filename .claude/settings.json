@@ -1,0 +1,13 @@
+{
+  "extraKnownMarketplaces": {
+    "tamheed": {
+      "source": {
+        "source": "github",
+        "repo": "A-H-911/tamheed"
+      }
+    }
+  },
+  "enabledPlugins": {
+    "tamheed@tamheed": true
+  }
+}

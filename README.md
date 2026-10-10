@@ -333,8 +333,9 @@ traceability matrix, and execution progress with a **per-phase readiness panel**
 semantics) and a **per-slice readiness panel** (Review counts as open). Then the declared human gates with
 their `Go/Hold/Redirect/Kill` outcomes, recorded waivers, and every register folded with its row count and
 a **per-table CSV download**. Hovering a node isolates its own edges (pure CSS `:has()`, and older browsers
-simply keep the normal view). Long text wraps in place. The freshness line distinguishes real recorded
-activity from a just-migrated package. Migration results also carry **fidelity ledgers** (truncation
+simply keep the normal view). A wide table scrolls inside its fold under a header that stays put,
+and long text wraps inside columns sized by kind (v6.4). The freshness line distinguishes real
+recorded activity from a just-migrated package. Migration results also carry **fidelity ledgers** (truncation
 histograms, column-starvation, field-mapping coverage), column-level honesty that row-level counts cannot
 see.
 
