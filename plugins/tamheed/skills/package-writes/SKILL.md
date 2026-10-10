@@ -83,6 +83,12 @@ id resolves, and the damage stays until someone reads it.
   activity" for two months. On a journal of fifteen hundred entries it returned the first ten.
   Until v5.7 the order was the id's text order. A typed `after_id` returned entries hundreds of
   numbers older, and once it dropped three matching entries with no sign in the result.
+- **A failed flush says what landed.** The result reads `ok: false` and `applied: true`. A `flush`
+  report sits beside the write's own ids. The batch is in memory. The next write
+  flushes the rest. `package_verify` reads `memory_matches_disk` false until then.
+  *Field evidence:* a write failed mid-flush on Windows. The row had applied, one file had landed,
+  and the next write was refused as an outside change. The fix is v6.3 (the field's defect report,
+  plan 217).
 - **The journal is a record, never graded.** Both G-COMPLETE scans skip `entry` and `evidence`.
   A marker or a token quoted there is a quotation. Elsewhere, quote a marker inside backticks.
   *Field evidence:* a planning package journaled the marker it had just removed from a

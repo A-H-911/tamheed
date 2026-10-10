@@ -11,17 +11,42 @@ import os
 import socket
 import sqlite3
 import sys
+import time
 from datetime import datetime, timezone
 from pathlib import Path
 
 SCHEMA_PATH = Path(__file__).with_name("schema.sql")
 MIGRATIONS_DIR = Path(__file__).with_name("migrations")
 LOCK_NAME = ".lock"
+# Plan 217 (ACMP's FB-029): the replace step and the retry sleep, named so a test can stand
+# in for them. Five attempts on any OSError: a Windows scanner or indexer can hold a file
+# for a moment, and it reaches Python as errno 13 or 22.
+_replace = os.replace
+_sleep = time.sleep
+_RETRY_SLEEPS_S = (0.05, 0.1, 0.2, 0.4)
+_WRITING_SUFFIX = ".writing"          # never .tmp: package_migrate stages its swap as .tmp
 DERIVED_TABLES = frozenset({"entity_index"})  # trigger-maintained; never serialized
 
 
 class StoreLockedError(RuntimeError):
     """Another writer holds this package's data/.lock — fail loud, never wait."""
+
+
+class StoreFlushError(RuntimeError):
+    """A flush that stopped on one file after the SQLite commit (plan 217, ACMP's FB-029).
+
+    The batch is applied in memory. The files in `written` reached disk, and their
+    fingerprints are current. `failed` names the file, its errno and the OS text.
+    `pending` names the files the flush never reached. The next commit writes them."""
+
+    def __init__(self, written: list[str], failed: dict, pending: list[str], retried: list[str]):
+        self.written, self.failed, self.pending, self.retried = written, failed, pending, retried
+        landed = f" ({', '.join(written)})" if written else ""
+        left = f" Not reached: {', '.join(pending)}." if pending else ""
+        super().__init__(
+            f"The batch is applied in memory. {len(written)} file(s) reached disk{landed}."
+            f" {failed['file']} did not (errno {failed['errno']}, {failed['error']}).{left}"
+            " The next write flushes them again.")
 
 
 class StoreStaleError(RuntimeError):
@@ -357,26 +382,100 @@ def load(data_dir: str | os.PathLike) -> sqlite3.Connection:
     return conn
 
 
-def dump(conn: sqlite3.Connection, data_dir: str | os.PathLike) -> None:
-    """Write normalized canonical JSONL back (CANONICAL.md rules; empty table = no file)."""
-    data_dir = Path(data_dir)
-    data_dir.mkdir(parents=True, exist_ok=True)
-    for table in _tables(conn):
-        cols = _columns(conn, table)
-        order = ", ".join(_pk_columns(conn, table))
-        rows = conn.execute(
-            f"SELECT {', '.join(cols)} FROM {table} ORDER BY {order}"
-        ).fetchall()
-        path = data_dir / f"{table}.jsonl"
-        if not rows:
+def _table_bytes(conn: sqlite3.Connection, table: str) -> bytes | None:
+    """The canonical JSONL bytes of one table, or None for an empty table (no file)."""
+    cols = _columns(conn, table)
+    order = ", ".join(_pk_columns(conn, table))
+    rows = conn.execute(f"SELECT {', '.join(cols)} FROM {table} ORDER BY {order}").fetchall()
+    if not rows:
+        return None
+    lines = [json.dumps(dict(zip(cols, row)), ensure_ascii=False, separators=(",", ":"))
+             for row in rows]
+    return ("\n".join(lines) + "\n").encode("utf-8")
+
+
+def _write_fresh(path: Path, data: bytes) -> None:
+    """Create `path` anew and write `data` into it. An existing path is removed first, a
+    symlink included, and the create is O_EXCL, so the bytes never travel through a planted
+    link (the plan 212 class, the lock file's own answer)."""
+    try:
+        path.unlink()
+    except FileNotFoundError:
+        pass
+    fd = os.open(path, os.O_CREAT | os.O_EXCL | os.O_WRONLY | getattr(os, "O_BINARY", 0))
+    with os.fdopen(fd, "wb") as fh:
+        fh.write(data)
+
+
+def _write_atomic(path: Path, data: bytes) -> int:
+    """Write `data` to `<name>.writing` beside the target, then replace the target in one step.
+    Five attempts on any OSError. Returns the attempt count. The temp never survives a failure."""
+    temp = path.with_name(path.name + _WRITING_SUFFIX)
+    attempt = 0
+    while True:
+        attempt += 1
+        try:
+            _write_fresh(temp, data)
+            _replace(temp, path)
+            return attempt
+        except OSError:
+            try:
+                temp.unlink()
+            except OSError:
+                pass
+            if attempt > len(_RETRY_SLEEPS_S):
+                raise
+            _sleep(_RETRY_SLEEPS_S[attempt - 1])
+
+
+def _flush(conn: sqlite3.Connection, data_dir: Path, fingerprints: dict[str, str] | None) -> dict:
+    """Write the tables whose bytes differ from `fingerprints` (every table when None).
+    A now-empty table's stale file is removed. `fingerprints` follows each file as it lands,
+    so a flush that stops halfway leaves the guard honest (plan 217). Raises StoreFlushError
+    on a file that five attempts could not write."""
+    report: dict = {"written": [], "removed": [], "unchanged": [], "retried": []}
+    tables = _tables(conn)
+    for i, table in enumerate(tables):
+        name = f"{table}.jsonl"
+        path = data_dir / name
+        data = _table_bytes(conn, table)
+        if data is None:
             if path.exists():
                 path.unlink()  # stale file for a now-empty table
+                report["removed"].append(name)
+            if fingerprints is not None:
+                fingerprints.pop(name, None)
             continue
-        lines = [
-            json.dumps(dict(zip(cols, row)), ensure_ascii=False, separators=(",", ":"))
-            for row in rows
-        ]
-        path.write_bytes(("\n".join(lines) + "\n").encode("utf-8"))
+        sha = hashlib.sha256(data).hexdigest()
+        if fingerprints is not None and fingerprints.get(name) == sha:
+            report["unchanged"].append(name)
+            continue
+        try:
+            attempts = _write_atomic(path, data)
+        except OSError as exc:
+            pending = []
+            for later in tables[i + 1:]:
+                body = _table_bytes(conn, later)
+                if body is None:
+                    continue
+                if fingerprints is None or fingerprints.get(f"{later}.jsonl") != hashlib.sha256(body).hexdigest():
+                    pending.append(f"{later}.jsonl")
+            failed = {"file": name, "errno": exc.errno, "error": exc.strerror or str(exc)}
+            raise StoreFlushError(report["written"], failed, pending, report["retried"]) from exc
+        report["written"].append(name)
+        if attempts > 1:
+            report["retried"].append(name)
+        if fingerprints is not None:
+            fingerprints[name] = sha
+    return report
+
+
+def dump(conn: sqlite3.Connection, data_dir: str | os.PathLike) -> dict:
+    """Write normalized canonical JSONL back (CANONICAL.md rules; empty table = no file).
+    Every table, each file atomically. Returns the flush report."""
+    data_dir = Path(data_dir)
+    data_dir.mkdir(parents=True, exist_ok=True)
+    return _flush(conn, data_dir, None)
 
 
 class PackageStore:
@@ -425,7 +524,7 @@ class PackageStore:
         self._fingerprints = self._fingerprint()
         return self
 
-    def commit(self) -> None:
+    def commit(self) -> dict:
         # C31 (C1): verify the tree did not move underneath the session BEFORE the
         # unconditional dump — the field cost of skipping this is silent overwrite of
         # every incoming change (measured guard cost on a real package: 29 files /
@@ -440,8 +539,10 @@ class PackageStore:
                 f"data/ changed on disk since this session loaded it ({', '.join(changed)})"
                 " — refusing to overwrite")
         self.conn.commit()
-        dump(self.conn, self.data_dir)
-        self._fingerprints = self._fingerprint()
+        # Plan 217: only the files whose bytes changed, each atomically, the fingerprint set
+        # per file as it lands. A flush that stops halfway raises StoreFlushError with the
+        # written, the failed and the pending files named. The SQLite state stays committed.
+        return _flush(self.conn, self.data_dir, self._fingerprints)
 
     def __exit__(self, exc_type, exc, tb) -> None:
         if self.conn is not None:

@@ -4286,6 +4286,78 @@ class V4EngineTest(unittest.TestCase):
             srv.package_close()
         self.assertEqual({p.name: p.read_bytes() for p in data.glob("*.jsonl")}, before)
 
+
+    def test_flush_failure_result_says_what_landed_and_the_next_write_flushes(self):
+        """Plan 217 (ACMP's FB-029): a write whose flush fails on one file returns ok false,
+        applied true, the flush report and its own facts (items, ids). package_verify reads
+        memory_matches_disk false until the next write flushes the pending file."""
+        from unittest import mock
+        data = Path(self._tmp.name) / "demo" / "data"
+
+        def failing(src, dst):
+            # the package's own file only: package_verify dumps into a scratch dir
+            if Path(dst).name == "constraints.jsonl" and Path(dst).parent == data:
+                raise OSError(22, "Invalid argument", str(dst))
+            return os.replace(src, dst)
+        with mock.patch.object(srv.store, "_replace", failing), \
+                mock.patch.object(srv.store, "_sleep", lambda _s: None):
+            out = srv.entity_upsert([{"type": "constraint", "id": "CON-030", "title": "c30",
+                                      "statement": "thirty", "source_kind": "brief",
+                                      "source_span": "b:30"}])
+            self.assertFalse(out["ok"], out)
+            self.assertIs(out["applied"], True)
+            self.assertEqual(out["flush"]["failed"]["file"], "constraints.jsonl")
+            self.assertEqual(out["flush"]["failed"]["errno"], 22)
+            self.assertEqual(out["items"][0]["id"], "CON-030")            # the batch's own facts
+            self.assertIn("applied in memory", out["error"])
+            pe = srv.progress_update([{"entry": "a note while the flush is failing"}])
+            self.assertFalse(pe["ok"], pe)
+            self.assertTrue(pe["ids"][0].startswith("PE-"), pe)            # the id still comes back
+            v = srv.package_verify()
+            self.assertIs(v["memory_matches_disk"], False)
+        out = srv.entity_upsert([{"type": "constraint", "id": "CON-031", "title": "c31",
+                                  "statement": "thirty-one", "source_kind": "brief",
+                                  "source_span": "b:31"}])
+        self.assertTrue(out["ok"], out)                                   # no stale refusal
+        self.assertIs(srv.package_verify()["memory_matches_disk"], True)
+        rows = srv.entity_query("constraint", ids=["CON-030", "CON-031"])["rows"]
+        self.assertEqual([r["id"] for r in rows], ["CON-030", "CON-031"])
+
+    def test_close_keeps_unflushed_bytes_beside_the_store_and_open_names_them(self):
+        """Plan 217: a close whose final flush fails writes data/<table>.jsonl.unflushed, reports
+        it, package_verify lists it under foreign, and the next package_open warns on it. A stale
+        .writing temp is removed at open; a migrate's .tmp staging file is never touched."""
+        from unittest import mock
+        data = Path(self._tmp.name) / "demo" / "data"
+
+        def failing(src, dst):
+            if Path(dst).name == "progress_entries.jsonl" and Path(dst).parent == data:
+                raise OSError(22, "Invalid argument", str(dst))
+            return os.replace(src, dst)
+        with mock.patch.object(srv.store, "_replace", failing), \
+                mock.patch.object(srv.store, "_sleep", lambda _s: None):
+            pe = srv.progress_update([{"entry": "the row that never reaches disk"}])
+            self.assertFalse(pe["ok"], pe)
+            out = srv.package_close()
+        self.assertTrue(out["ok"], out)
+        self.assertIs(out["flushed"], False)
+        self.assertEqual(out["unflushed"], ["progress_entries.jsonl"])
+        side = data / "progress_entries.jsonl.unflushed"
+        self.assertTrue(side.exists())
+        self.assertIn("the row that never reaches disk", side.read_text(encoding="utf-8"))
+        self.assertIn("progress_entries.jsonl.unflushed", out["warning"])
+        self.assertFalse((data / ".lock").exists())
+        self.assertIn("progress_entries.jsonl.unflushed", srv.package_verify("demo")["foreign"])
+        (data / "risks.jsonl.writing").write_bytes(b"half a file")
+        (data / "risks.jsonl.tmp").write_bytes(b"a migrate's staged copy")
+        opened = srv.package_open("demo")
+        self.assertTrue(opened["ok"], opened)
+        self.assertIn("progress_entries.jsonl.unflushed", opened["warning"])
+        self.assertIn("risks.jsonl.writing", opened["warning"])
+        self.assertFalse((data / "risks.jsonl.writing").exists())        # the temp is removed
+        self.assertTrue((data / "risks.jsonl.tmp").exists())             # the migrate's file is not
+        self.assertTrue(side.exists())                                   # the sidecar is the operator's
+
     def test_waiver_satisfies_rule_and_expiry_is_honored(self):
         srv.entity_upsert([{"type": "waiver", "id": "WVR-001",
                             "rule": "defects-closed", "applies_to": "DEF-002",

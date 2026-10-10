@@ -86,6 +86,9 @@ truncation marker and has to query for the rest. Write the sections in this orde
   tracked a ruling that could never be executed. Reading the code was the re-measurement,
   and no handoff made it.
 - **Ids, never pasted rows.** The rows are live. A copy rots. Name them and say what to read.
+- **`package_close` with `flushed: false` names what it kept.** After a partial flush the pending
+  tables stay beside the store as `data/<table>.jsonl.unflushed`. Name them in the handoff. The
+  next `package_open` warns on them until the operator reconciles and removes them (plan 217).
 - **A stale handoff is corrected, never edited.** The journal is append-only: `progress_update`
   with `event_type: "correction"` and `corrects: "<the handoff's PE-id>"`. The resume block returns
   the handoff WITH its correction chain, so the correction is read beside the sentence it retracts.

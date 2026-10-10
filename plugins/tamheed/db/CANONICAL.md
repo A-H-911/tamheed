@@ -36,8 +36,17 @@ implementation. On any disagreement, `store.py`'s output is canonical.
 
 ## Write-back
 
-Every mutation cycle ends with a full rewrite of the affected table files from SQLite state
-(normalize-on-write). Hand-edits to `data/*.jsonl` are legal *at rest* (that is the point of
+Every mutation cycle rewrites the table files whose canonical bytes changed, from SQLite state
+(normalize-on-write). A file whose bytes are unchanged is not touched (plan 217). Each file is
+written to `<table>.jsonl.writing` beside it and replaced in one step. An OS error gets up to five
+attempts, because a Windows scanner or indexer can hold a file for a moment. The store's
+fingerprint of each file follows it as it lands, so a flush that stops halfway never reads as an
+outside change. A flush that stops on one file raises `StoreFlushError`, which names the written,
+the failed and the pending files. The SQLite state stays committed, and the next commit writes the
+rest. A close that cannot flush keeps each pending table's bytes as `data/<table>.jsonl.unflushed`
+beside the store, named in the result. The next open names them again until the operator
+reconciles them. `package_migrate` stages its own swap as `<table>.jsonl.tmp`, a different suffix,
+never touched by the store. Hand-edits to `data/*.jsonl` are legal *at rest* (that is the point of
 text-canonical storage) but are checked on next load. Unknown keys, FK violations, CHECK
 violations, and bad JSON fail loud. Nothing is silently fixed.
 

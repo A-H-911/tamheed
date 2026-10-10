@@ -298,6 +298,115 @@ class RoundTripTest(unittest.TestCase):
                     else "unobservable")
         self.assertIn(f"observed: {expected}", str(ctx.exception))
 
+
+    # ---- plan 217 (ACMP's FB-029): the flush writes only what changed, atomically ----
+
+    def _recording_replace(self, fail_on=None, fail_times=0):
+        """A stand-in for store._replace: records every target name, and raises
+        OSError(22) `fail_times` times (forever when fail_times is None) for targets
+        whose name contains `fail_on`."""
+        import os as _os
+        calls = []
+        state = {"left": fail_times}
+
+        def fake(src, dst):
+            calls.append(Path(dst).name)
+            if fail_on and fail_on in Path(dst).name and (state["left"] is None or state["left"] > 0):
+                if state["left"] is not None:
+                    state["left"] -= 1
+                raise OSError(22, "Invalid argument", str(dst))
+            return _os.replace(src, dst)
+        return fake, calls
+
+    def test_commit_writes_only_the_changed_files(self):
+        from unittest import mock
+        with store.PackageStore(self.pkg) as s:
+            seed(s.conn)
+            s.commit()
+            fake, calls = self._recording_replace()
+            s.conn.execute("UPDATE requirements SET title = 'Triage inbound mail' WHERE id = 'FR-001'")
+            s.conn.execute("DELETE FROM prompts")
+            with mock.patch.object(store, "_replace", fake), mock.patch.object(store, "_sleep", lambda _s: None):
+                report = s.commit()
+            self.assertEqual(calls, ["requirements.jsonl"])          # one changed file, one write
+            self.assertEqual(report["written"], ["requirements.jsonl"])
+            self.assertEqual(report["removed"], ["prompts.jsonl"])    # the now-empty table's file goes
+            self.assertFalse((self.data / "prompts.jsonl").exists())
+            self.assertNotIn("prompts.jsonl", s._fingerprints)
+            self.assertIn("decisions.jsonl", report["unchanged"])
+            self.assertEqual(report["retried"], [])
+
+    def test_transient_os_error_is_retried_and_reported(self):
+        from unittest import mock
+        with store.PackageStore(self.pkg) as s:
+            seed(s.conn)
+            s.commit()
+            fake, calls = self._recording_replace(fail_on="requirements", fail_times=1)
+            s.conn.execute("UPDATE requirements SET title = 'again' WHERE id = 'FR-001'")
+            with mock.patch.object(store, "_replace", fake), mock.patch.object(store, "_sleep", lambda _s: None):
+                report = s.commit()
+            self.assertEqual(report["written"], ["requirements.jsonl"])
+            self.assertEqual(report["retried"], ["requirements.jsonl"])
+            self.assertEqual(calls.count("requirements.jsonl"), 2)
+            self.assertEqual(list(self.data.glob("*.writing")), [])
+
+    def test_partial_flush_names_what_landed_and_never_trips_the_guard(self):
+        """FB-029: a flush that fails on one file after others landed. The error names the
+        written, the failed and the pending files; the SQLite state is committed; the written
+        files' fingerprints are current, so the NEXT commit is not refused as a stale tree and
+        it writes the failed file."""
+        from unittest import mock
+        with store.PackageStore(self.pkg) as s:
+            seed(s.conn)
+            s.commit()
+            s.conn.execute("UPDATE decisions SET title = 'Human gate, approved' WHERE id = 'DEC-001'")
+            s.conn.execute("UPDATE requirements SET title = 'Triage mail' WHERE id = 'FR-001'")
+            fake, calls = self._recording_replace(fail_on="requirements", fail_times=None)
+            with mock.patch.object(store, "_replace", fake), mock.patch.object(store, "_sleep", lambda _s: None):
+                with self.assertRaises(store.StoreFlushError) as ctx:
+                    s.commit()
+            exc = ctx.exception
+            self.assertEqual(exc.failed["file"], "requirements.jsonl")
+            self.assertEqual(exc.failed["errno"], 22)
+            self.assertEqual(calls.count("requirements.jsonl"), 5)   # five attempts, then the error
+            self.assertEqual(sorted(exc.written + [exc.failed["file"]] + exc.pending),
+                             sorted(set(exc.written + [exc.failed["file"]] + exc.pending)))
+            self.assertIn("requirements.jsonl", str(exc))
+            self.assertIn("decisions.jsonl", exc.written + exc.pending)
+            # the batch is committed in memory ...
+            row = s.conn.execute("SELECT title FROM requirements WHERE id = 'FR-001'").fetchone()
+            self.assertEqual(row[0], "Triage mail")
+            # ... the written files' fingerprints follow the bytes on disk ...
+            for name in exc.written:
+                self.assertEqual(s._fingerprints[name],
+                                 __import__("hashlib").sha256((self.data / name).read_bytes()).hexdigest())
+            self.assertEqual(list(self.data.glob("*.writing")), [])  # no temp left behind
+            # ... and the next commit is NOT a stale-tree refusal: it writes the failed file
+            # and every file the failed flush never reached, nothing else
+            report = s.commit()
+            self.assertEqual(sorted(report["written"]), sorted(["requirements.jsonl"] + exc.pending))
+        with store.PackageStore(self.pkg) as s2:
+            row = s2.conn.execute("SELECT title FROM requirements WHERE id = 'FR-001'").fetchone()
+            self.assertEqual(row[0], "Triage mail")
+
+
+    @unittest.skipIf(sys.platform == "win32", "symlinks need a privilege on Windows; CI runs this on Ubuntu")
+    def test_write_temp_never_follows_a_planted_symlink(self):
+        """Plan 217 review (the 212 class): a symlink planted at `<table>.jsonl.writing` must not
+        carry the store's bytes to its target. The temp is created anew with O_EXCL."""
+        victim = Path(self._tmp.name) / "victim.txt"
+        victim.write_bytes(b"untouched")
+        with store.PackageStore(self.pkg) as s:
+            seed(s.conn)
+            s.commit()
+            planted = self.data / "requirements.jsonl.writing"
+            planted.symlink_to(victim)
+            s.conn.execute("UPDATE requirements SET title = 'planted?' WHERE id = 'FR-001'")
+            s.commit()
+        self.assertEqual(victim.read_bytes(), b"untouched")
+        self.assertIn(b"planted?", (self.data / "requirements.jsonl").read_bytes())
+        self.assertFalse(planted.exists() or planted.is_symlink())
+
     def test_lock_error_names_holder(self):
         """Plan 025 (C31/D): the lock says WHO and SINCE WHEN — a bare PID invited an
         unsound liveness check (PID reuse); legacy bare-int locks still describe."""

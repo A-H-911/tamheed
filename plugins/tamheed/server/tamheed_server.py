@@ -697,16 +697,24 @@ def _need_open():
     return None
 
 
-def _commit() -> dict | None:
+def _commit(partial: dict | None = None) -> dict | None:
     """Write-back via the store; a tree that moved underneath the session is refused
     loudly (C31/C1) and the pending batch is rolled back so it cannot ride a LATER
-    commit. Returns an error dict to surface, or None on success."""
+    commit. Returns an error dict to surface, or None on success. Plan 217 (ACMP's
+    FB-029): a flush that stopped on one file AFTER the SQLite commit returns the caller's
+    `partial` result merged with `ok: False`, `applied: True` and the `flush` report. The
+    batch is applied, the written files are on disk, and the next write flushes the rest."""
     try:
         _CURRENT.commit()
     except store.StoreStaleError as exc:
         _CURRENT.conn.rollback()
         return _err(f"{exc} — the batch was NOT applied. Close the package, reconcile "
                     "data/ via git, then reopen and retry")
+    except store.StoreFlushError as exc:
+        return {**(partial or {}), "ok": False, "applied": True,
+                "flush": {"written": exc.written, "failed": exc.failed,
+                          "pending": exc.pending, "retried": exc.retried},
+                "error": f"{exc} package_verify reads memory_matches_disk false until then."}
     return None
 
 
@@ -1417,9 +1425,26 @@ def package_open(name: str) -> dict:
     # plan 212 (v6.2): a repository wired before 6.2 reads present/present here; one that was
     # not (a package born under 6.1 or earlier) is wired by this open, once.
     wiring = _wire_project(pkg_dir, name, s.conn)
-    return {"ok": True, "package": name,
-            "package_root": str(Path(PACKAGE_ROOT).resolve()),
-            "resume": _resume_block(s.conn, name, pkg_dir / "data"), "wiring": wiring}
+    out = {"ok": True, "package": name,
+           "package_root": str(Path(PACKAGE_ROOT).resolve()),
+           "resume": _resume_block(s.conn, name, pkg_dir / "data"), "wiring": wiring}
+    # Plan 217: what an earlier session left beside the store. A .unflushed sidecar is the
+    # operator's to reconcile, named here. A .writing temp holds nothing the store needs and
+    # is removed. A .tmp file is package_migrate's staging and is never touched.
+    data = pkg_dir / "data"
+    sidecars = sorted(p.name for p in data.glob("*.jsonl.unflushed"))
+    temps = sorted(p.name for p in data.glob(f"*.jsonl{store._WRITING_SUFFIX}"))
+    for temp in temps:
+        (data / temp).unlink(missing_ok=True)
+    notes = []
+    if sidecars:
+        notes.append(f"unflushed bytes from an earlier close: {', '.join(sidecars)}."
+                     " Compare each with its .jsonl, keep one, remove the sidecar.")
+    if temps:
+        notes.append(f"stale write temp(s) removed: {', '.join(temps)}.")
+    if notes:
+        out["warning"] = " ".join(notes)
+    return out
 
 
 def package_close() -> dict:
@@ -1431,8 +1456,29 @@ def package_close() -> dict:
     # lock, but skips the final flush (every refused write was already reported "NOT
     # applied" at write time, so nothing unreported is discarded).
     err = _commit()
+    unflushed: list[str] = []
+    if err and err.get("flush"):
+        # Plan 217 (ACMP's FB-029): a partial flush at close. The pending bytes stay beside
+        # the store as data/<table>.jsonl.unflushed, one attempt each, and the result names
+        # them. package_verify lists them under foreign, package_open warns on them.
+        data_dir = _CURRENT.data_dir
+        for fname in [err["flush"]["failed"]["file"], *err["flush"]["pending"]]:
+            body = store._table_bytes(_CURRENT.conn, fname[:-len(".jsonl")])
+            if body is None:
+                continue
+            try:
+                store._write_fresh(data_dir / f"{fname}.unflushed", body)
+                unflushed.append(fname)
+            except OSError as exc:
+                err["error"] += f" The sidecar for {fname} could not be written ({exc.strerror})."
     _CURRENT.__exit__(None, None, None)
     name, _CURRENT, _CURRENT_NAME = _CURRENT_NAME, None, None
+    if err and err.get("flush"):
+        sidecars = ", ".join(f"data/{n}.unflushed" for n in unflushed) or "none"
+        return {"ok": True, "package": name, "flushed": False, "unflushed": unflushed,
+                "warning": f"closed with {len(unflushed)} table(s) unflushed. The bytes are beside"
+                           f" the store as {sidecars}. Compare each with its .jsonl, keep one,"
+                           f" remove the sidecar. {err['error']}"}
     if err:
         return {"ok": True, "package": name, "flushed": False,
                 "warning": f"closed WITHOUT the final flush — {err['error']}"}
@@ -1557,7 +1603,7 @@ def package_verify(name: str | None = None, record: bool = False,
             "INSERT INTO progress_entries (id, event_type, entry, actor, occurred_at)"
             " VALUES (?, 'integrity-verified', ?, 'system:package-verify', ?)",
             (pe_id, entry, _now()))
-        if err := _commit():
+        if err := _commit({"recorded": pe_id}):
             return err
         report["recorded"] = pe_id
     return report
@@ -2386,7 +2432,7 @@ def entity_upsert(entities: list[dict]) -> dict:
         return {"ok": False, "applied": 0,
                 "error": "batch rolled back — one or more items violated constraints",
                 "items": results}
-    if err := _commit():
+    if err := _commit({"items": results}):
         return err
     # C31 (A3): `applied` counts WRITES, not attempts — ignored duplicates are ok
     # per-item (`unchanged`) but never counted as applied.
@@ -3431,7 +3477,7 @@ def progress_update(entries: list[dict]) -> dict:
     except Exception as exc:
         conn.rollback()
         return _err(str(exc))
-    if err := _commit():
+    if err := _commit({"ids": ids}):
         return err
     out = {"ok": True, "ids": ids}
     if any(e.get("event_type") == "handoff" for e in entries):
@@ -3498,7 +3544,7 @@ def audit_record(verdicts: list[dict]) -> dict:
     except Exception as exc:
         conn.rollback()
         return _err(str(exc))
-    if err := _commit():
+    if err := _commit({"ids": ids}):
         return err
     skills = sorted({s for v in verdicts for s in _evidence_skills(v.get("verification_method"))},
                     key=_ALL_EVIDENCE_SKILLS.index)
@@ -3545,7 +3591,7 @@ def work_bind(ref: str, entity_ids: list[str], note: str | None = None) -> dict:
     except Exception as exc:
         conn.rollback()
         return _err(str(exc))
-    if err := _commit():
+    if err := _commit({"bound": stamped, "progress_entry": pe_id}):
         return err
     return {"ok": True, "bound": stamped, "progress_entry": pe_id}
 
@@ -5297,7 +5343,7 @@ def package_unlock(name: str, confirm: bool = False) -> dict:
                     f" since {str(seen.get('taken_at'))[:40]} was observed"
                     f" `{seen['outcome']}` ({str(seen['evidence'])[:300]}). Removed on the"
                     " operator's word (package_unlock confirm=true)", _now()))
-        if (err := _commit()) is not None:
+        if (err := _commit({"journal_id": pe_id})) is not None:
             out["note"] = f"lock removed. The journal row was NOT written: {err['error']}"
         else:
             out.update({"journaled": True, "journal_id": pe_id})
