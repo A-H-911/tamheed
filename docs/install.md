@@ -29,10 +29,11 @@ v2, ASM-B. The chat-only generation path ended with v1.)
 ## Claude Code — plugin (recommended)
 
 This repository is its own plugin marketplace (see [`../.claude-plugin/marketplace.json`](../.claude-plugin/marketplace.json)).
+Install it per repository, from the repository's root, with nothing at user scope:
 
 ```text
-/plugin marketplace add A-H-911/tamheed
-/plugin install tamheed@tamheed
+claude plugin marketplace add A-H-911/tamheed --scope project
+claude plugin install tamheed@tamheed --scope project
 ```
 
 Invoke the front door as **`/tamheed:tamheed`**. Plugin skills are namespaced by the plugin name (since
@@ -46,42 +47,35 @@ There are nine discipline skills, model-invoked and named by the note and the to
 emitted `<package>/README.md` maps every situation. Since v5.1 eight of the nine are hidden
 from the `/` menu (`user-invocable: false`) and the ninth, `/tamheed:session-handoff`, takes both routes.
 
-**Project-only enablement (the field's FB-022, measured).** `enabledPlugins` merges **key by key across
-scopes**. The highest-precedence scope that mentions the plugin id wins (user < project < local). A
-`true` at user scope therefore reaches every project, and adding a project entry alone never narrows it.
-To enable tamheed for one project only, install (or enable) it at **project scope from the start**
-(`claude plugin install tamheed@tamheed --scope project`). When it is already enabled at user scope,
-**disable it there first, then enable it at project scope**: `claude plugin disable tamheed@tamheed
---scope user`, then `claude plugin enable tamheed@tamheed --scope project`. That writes
-`{"enabledPlugins": {"tamheed@tamheed": true}}` into `.claude/settings.json`. Run in that order. The
-enable command checks the merged effective state, not the project file. It refuses "already enabled
-at project scope" while a user entry says `true` (a Claude Code bug, reported 2026-09-25). Between the
-disable and the enable the project has no plugin, so do it with no package open. A project without a
-package sees only the discipline descriptions, which never fire without one. An uninstall at a scope
-also removes that scope's `enabledPlugins` entry (measured on the local scope, 2026-10-08), so enable
-again after one. When Claude Code asks to approve the `tamheed` MCP server (per-server approval), say
-yes. It is the only write path into a package. To update later, see
+**Per repository (plan 216, measured).** The first command declares the marketplace in the
+repository's `.claude/settings.json` under `extraKnownMarketplaces`. The key is an object keyed by
+marketplace name, written by the CLI. The marketplace clone itself lives once per machine under
+`~/.claude/plugins/marketplaces/`, and a repository's declaration re-clones it when missing. The
+second command adds a project-scope record to `~/.claude/plugins/installed_plugins.json` and writes
+`{"enabledPlugins": {"tamheed@tamheed": true}}` into `.claude/settings.json`. Each repository then
+moves on its own: `claude plugin update tamheed@tamheed --scope project`. Two repositories on one
+machine can run two versions. Measured 2026-10-10: a project-scope record at 6.2.1 and a local-scope
+record at 6.2.0 each loaded its own. Keep no user-scope record. With a user record and a repository
+record side by side, the session loaded the user record's version (measured 2026-10-09, Claude Code
+2.1.294). One user install pins every repository. Remove one with `claude plugin uninstall
+tamheed@tamheed --scope user`. The command removes that scope's record and its `enabledPlugins`
+entry. The old version folder gets an `.orphaned_at` marker and stays 14 days, so a session that
+already loaded it keeps running (the vendor's loading page). `enabledPlugins` merges key by key across
+scopes, the highest scope that mentions the plugin winning (user < project < local). With no user
+entry the project entry decides. When Claude Code asks to approve the `tamheed` MCP server (per-server
+approval), say yes. It is the only write path into a package. To update later, see
 [Upgrading](#upgrading-an-installed-plugin). Refreshing the marketplace alone does not update the plugin.
 
-**When the install refuses (measured 2026-10-08, Claude Code 2.1.294).** A plugin installed at user
-scope has a record in `~/.claude/plugins/installed_plugins.json`, and the `/plugin` panel refuses a
-second install:
-
-```text
-Plugin 'tamheed@tamheed' is already installed globally. Use '/plugin' to manage existing plugins.
-```
-
-It writes nothing. A project with no `enabledPlugins` entry inherits the user-level value, so a
-user-level `false` leaves the plugin invisible there after a reload. Two shell commands succeed where
-the panel refuses, both run from the repository's root. `claude plugin enable tamheed@tamheed --scope
-project` wrote `{"enabledPlugins": {"tamheed@tamheed": true}}` into `.claude/settings.json` while the
-user entry said `false`, and added no record. `claude plugin install tamheed@tamheed --scope project`
-succeeded too, and added a project-scope record beside the user one. Use the enable command: one
-record, one cached copy. Update the user-scope copy first (`claude plugin update tamheed@tamheed`, see
-[Upgrading](#upgrading-an-installed-plugin)): the project file enables whatever version the record
-names. A collaborator who clones the repository has the project entry and no record, and Claude Code
-reports the plugin as enabled but not installed. They run `claude plugin marketplace add
-A-H-911/tamheed` and then `claude plugin install tamheed@tamheed --scope project` once.
+**A collaborator's clone, and a machine that still holds a user record.** A clone carries the
+declaration and the enable, and no record. Claude Code reports the plugin as enabled but not
+installed. A project `true` alone fetches nothing onto a machine with no record (the vendor's loading
+page). A `true` in a gitignored `.claude/settings.local.json` does. The collaborator runs
+`claude plugin install tamheed@tamheed --scope project` once. On a machine with a user-scope record,
+the `/plugin` panel refuses a project install with `Plugin 'tamheed@tamheed' is already installed
+globally` and writes nothing (measured 2026-10-08). The shell command succeeds and adds a second
+record, but the user record still wins the load. Remove the user record first (above), then install
+per repository. `claude plugin uninstall --scope <scope>` also removes that scope's `enabledPlugins`
+entry. An enable at another scope is not undone by it.
 
 To try it before installing (no marketplace needed):
 
@@ -177,6 +171,19 @@ free copy after a compaction.
 
 ## Upgrading an installed plugin
 
+### Moving a project to a newer release
+
+The shape every project upgrade takes, in order. Close the running session with a handoff
+(`tamheed:session-handoff`) and `package_close()`. Commit the package. Update the repository's own
+record: `claude plugin marketplace update tamheed`, then `claude plugin update tamheed@tamheed --scope
+project` (or `install --scope project` on a repository with no record yet). Start a fresh session: a
+reload keeps the tool descriptions the client already recorded. Read `server_info()` and quote the
+version. Read the CHANGELOG's "For a live package" note for every release the project skipped. When it
+names `package_migrate`, run the preview on the closed package, quote it, and convert on the operator's
+word. Open the package and quote `gate_run()` and `readiness_check("package")` against the baseline
+the handoff recorded. Run `handoff_emit(<repository root>, refresh_stock=true)` so the note and the
+stock guide carry the release, then `export_html()` and `package_verify()`. Write the handoff last.
+
 Refreshing the marketplace only refreshes the catalog. The installed plugin is a second step, and
 the running MCP server keeps the old code until the plugin is reloaded. The reload is
 `/reload-plugins` or a full Claude Code restart. The field observed the reload sufficient for the
@@ -195,7 +202,7 @@ by a compaction. See §"What a session meets at 5.7.0", the corrected condition.
 
 ```text
 claude plugin marketplace update tamheed
-claude plugin update tamheed@tamheed      # "restart required to apply"
+claude plugin update tamheed@tamheed --scope project      # "restart required to apply"
 ```
 
 Updated skills in a cached marketplace plugin arrive with `/reload-plugins` followed by `/reload-skills`.
@@ -380,17 +387,17 @@ docs say it loads there as a plugin named `tamheed@skills-dir`. Whether that rou
 measured. The marketplace route above is the supported one.
 
 ```text
-# user scope (available in every project)
-~/.claude/skills/tamheed/           ← the contents of plugins/tamheed/
+# project scope (this repo only), the posture this project keeps
+<your-repo>/.claude/skills/tamheed/   ← the contents of plugins/tamheed/
 
-# or project scope (this repo only)
-<your-repo>/.claude/skills/tamheed/
+# user scope exists too (every project on the machine), and is not recommended here
+~/.claude/skills/tamheed/
 ```
 
 ```bash
-# example, user scope
-mkdir -p ~/.claude/skills/tamheed
-cp -r plugins/tamheed/* ~/.claude/skills/tamheed/
+# example, project scope
+mkdir -p .claude/skills/tamheed
+cp -r plugins/tamheed/* .claude/skills/tamheed/
 ```
 
 ## Other MCP-capable agents (generic)

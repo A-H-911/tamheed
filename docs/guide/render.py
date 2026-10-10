@@ -308,20 +308,20 @@ def _install(r: R) -> None:
     body = r.P("section.install.1")
     body += r.H(3, "section.install.prereq") + r.P("section.install.prereq.1")
     body += r.H(3, "section.install.plugin") + r.P("section.install.plugin.1")
-    body += r.pre("/plugin marketplace add A-H-911/tamheed\n/plugin install tamheed@tamheed")
+    body += r.pre("claude plugin marketplace add A-H-911/tamheed --scope project\n"
+                  "claude plugin install tamheed@tamheed --scope project")
     body += r.P("section.install.plugin.2")
     body += r.pre("claude --plugin-dir ./plugins/tamheed")
     body += r.H(3, "section.install.scope") + r.P("section.install.scope.1")
-    body += r.pre("claude plugin disable tamheed@tamheed --scope user\n"
-                  "claude plugin enable tamheed@tamheed --scope project\n"
-                  "# a machine with no tamheed record (a collaborator's clone): install at project scope\n"
-                  "claude plugin install tamheed@tamheed --scope project")
+    body += r.pre("claude plugin update tamheed@tamheed --scope project\n"
+                  "# a user-scope record wins the load over the repository's own: remove it\n"
+                  "claude plugin uninstall tamheed@tamheed --scope user")
     body += r.P("section.install.scope.2")
     body += r.H(3, "section.install.server") + r.P("section.install.server.1")
     body += r.pre(f["mcp"]["command"], copy=False)
     body += r.P("section.install.server.2")
     body += r.H(3, "section.install.upgrade") + r.P("section.install.upgrade.1")
-    body += r.pre("claude plugin marketplace update tamheed\nclaude plugin update tamheed@tamheed")
+    body += r.pre("claude plugin marketplace update tamheed\nclaude plugin update tamheed@tamheed --scope project")
     body += r.P("section.install.upgrade.2")
     body += r.H(3, "section.install.verify") + r.P("section.install.verify.1")
     body += r.pre("python check.py\nuv run plugins/tamheed/server/tamheed_server.py --selftest")

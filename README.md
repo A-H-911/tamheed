@@ -79,26 +79,24 @@ without the server. That trade is deliberate: the store is where the integrity g
 
 Tamheed ships as a self-contained bundle at [`plugins/tamheed/`](plugins/tamheed).
 
-**Claude Code (plugin, recommended).** This repo is its own plugin marketplace:
+**Claude Code (plugin, recommended).** This repo is its own plugin marketplace. Install it per
+repository, from the repository's root, with nothing at user scope:
 
 ```text
-/plugin marketplace add A-H-911/tamheed
-/plugin install tamheed@tamheed
+claude plugin marketplace add A-H-911/tamheed --scope project
+claude plugin install tamheed@tamheed --scope project
 ```
 
-**Project only.** The install above is user scope and reaches every project on the machine. To limit
-tamheed to one repository, disable it at user scope and then enable it at project scope, from that
-repository's root:
-
-```text
-claude plugin disable tamheed@tamheed --scope user
-claude plugin enable tamheed@tamheed --scope project
-```
-
-If the `/plugin` panel answers "already installed globally" at project scope, the plugin is already on
-the machine. Run the enable command above from the shell. A collaborator who clones the repository
-runs `claude plugin marketplace add A-H-911/tamheed` and then
-`claude plugin install tamheed@tamheed --scope project` once. The full recipe is on the
+**Per repository.** The first command declares the marketplace in the repository's
+`.claude/settings.json` (the clone itself lives once per machine). The second adds a project-scope
+record and the `enabledPlugins` entry. Each repository then moves on its own:
+`claude plugin update tamheed@tamheed --scope project`. Keep no user-scope record. On Claude Code
+2.1.294 a user-scope record wins the load over a repository's own record (measured 2026-10-09). One
+user install therefore pins every repository to its version. Remove one with
+`claude plugin uninstall tamheed@tamheed --scope user`. A session that already loaded it keeps
+running, and the old folder stays 14 days (the vendor's rule). A collaborator's clone carries the
+declaration and the enable, and runs the install command once. A project `true` alone fetches
+nothing onto a machine with no record (the vendor's loading page). The full recipe is on the
 [install page](docs/install.md).
 
 Then invoke it as **`/tamheed:tamheed`** (plugin skills are namespaced), or just describe a planning task.
