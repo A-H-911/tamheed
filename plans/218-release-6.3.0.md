@@ -38,8 +38,21 @@ plans index rows for 216 and 217 gain their commit SHAs. Grepped and left alone:
 
 ## As it landed
 
-(filled: the commit, the push, the CI run, the tag, the bundle diff, M3 repeated at 6.3.0, the
-field's values)
+- The release commit `68a0874`; `git push origin main` `64ce9de..68a0874` on 2026-10-10 (three
+  commits: `ba613ec` plan 217, `3305d1e` plan 216, `68a0874` this release).
+- CI run 38042777874 on `68a0874`: conclusion success, 9 jobs, every job success (eight `check`
+  jobs over Python 3.10 to 3.13 on Windows and Ubuntu, the symlink test running on Ubuntu, and
+  the MCP server smoke). The watcher polled `gh run list --commit` with the short SHA, which
+  matches nothing, so the green run was found by hand: the lesson is in the batch memory.
+- Tag `v6.3.0` on `68a0874`, pushed. `git diff v6.3.0 HEAD -- plugins/tamheed`: 0 lines.
+- The machine after the release: `claude plugin marketplace update tamheed` (clone at 6.3.0),
+  the tamheed repository's local record `6.2.1 -> 6.3.0`; M3 repeated at 6.3.0 in the scratch
+  folder (`install --scope project` -> a project record at 6.3.0, the session loaded 6.3.0,
+  `uninstall --scope project` after). One record remains: the tamheed repository, local, 6.3.0.
+- The field's values. ACMP FB-029: `resolved_in` `6.3.0`, `upstream_ref`
+  `https://github.com/A-H-911/tamheed/blob/main/plans/217-flush-only-what-changed.md` (tag
+  `v6.3.0`, commit `68a0874`). jisr FB-001 keeps `resolved_in` `6.2.1`. Both repositories install
+  their own record with the two prompts handed in the maintainer session.
 
 ## Rulings taken at the review
 
