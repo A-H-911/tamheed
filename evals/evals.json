@@ -1954,7 +1954,7 @@
           "expect_exit": 0
         },
         {
-          "check": "The guide followed the stamp: refresh_stock carried it to the 6.3.0 body that names nine discipline skills (plans 120, 127, 183, 189, 198, 210, 213, 215, 218).",
+          "check": "The guide followed the stamp: refresh_stock carried it to the 6.4.0 body that names nine discipline skills (plans 120, 127, 183, 189, 198, 210, 213, 215, 218, 220).",
           "cmd": [
             "python",
             "evals/pkg_check.py",
@@ -1965,13 +1965,13 @@
           "expect_exit": 0
         },
         {
-          "check": "The guide followed the 6.3.0 stamp: refresh_stock carried it to the shipped body at the package root, whose history key landed with the stamp (plans 168, 173, 189, 198, 210, 213, 215, 218).",
+          "check": "The guide followed the 6.4.0 stamp: refresh_stock carried it to the shipped body at the package root, whose history key landed with the stamp (plans 168, 173, 189, 198, 210, 213, 215, 218, 220).",
           "cmd": [
             "python",
             "evals/pkg_check.py",
             "grep-file",
             "{case_dir}/package/README.md",
-            "tamheed v6.3.0"
+            "tamheed v6.4.0"
           ],
           "expect_exit": 0
         },
@@ -2155,7 +2155,7 @@
             "evals/pkg_check.py",
             "grep-file",
             "{case_dir}/package/review.html",
-            "<meta name=\"tamheed-version\" content=\"6.3.0\">"
+            "<meta name=\"tamheed-version\" content=\"6.4.0\">"
           ],
           "expect_exit": 0
         },

@@ -8,6 +8,38 @@ All notable changes to Tamheed are documented here. The format is based on
 > original repository (<https://github.com/A-H-911/keystone>). Tamheed carries Keystone's full git
 > history; the Keystone repository stays frozen at 1.0.x for existing v1 packages.
 
+## [6.4.0] - 2026-10-10
+
+**MINOR — the review page reads (plans 219–220).** Every data table on `review.html` shared the
+body's width, so a nine-column table showed its id column one character wide and every cell tall,
+and the Resume handoff ran off the right edge. The exporter now emits a `<colgroup>` with one of three
+constant classes per header, chosen by the header's kind (long prose, ids and enums, everything else
+including dates, actors and titles) from code strings only. The stylesheet sizes the columns
+(9/14/36rem) under a fixed table layout, lets a wide table scroll inside its fold under a header that
+stays put (70vh), keeps text wrapping inside its column, lands a row link below the sticky navigation,
+wraps the handoff in its panel, and lifts the height cap in print. R78 supersedes the C25 decision
+("wrap in place, no horizontal scrolling") on the operator's word. No schema move: `schema_version`
+stays 8, the store's bytes do not move. Beyond the release stamp's own lines, the bundle changes in
+`server/export_html.py` and `server/viewer.css`. Two releases carry this UTC date: 6.3.0 earlier in
+the day, this one after it.
+
+**For a live package (the migration note).** Nothing to run. One `export_html()` under 6.4.0
+re-renders the page; `package_verify` then reads `review_exported_by` 6.4.0. For the plugin's own
+repository, `.claude/settings.json` is now committed with the marketplace declaration and the enable
+(plan 219, R79): a clone that has no install record sees "enabled in project settings but isn't
+installed here" in `/plugin` until `claude plugin install tamheed@tamheed --scope project` runs once.
+
+### Added
+- `export_html._col_class` and the `<colgroup>` in every table: one constant class per header by
+  kind; a column-kind test and the C25 test re-aimed.
+- `viewer.css`: `.tablewrap` scrolls on both axes inside its fold, `table-layout: fixed` with
+  `col.w-s/w-m/w-l`, a sticky `thead th`, `tbody tr { scroll-margin-top }`, `pre.handoff` wrapping,
+  the print rule.
+
+### Changed
+- `README.md` and the guide's review-page sentence say a wide table scrolls inside its fold under a
+  header that stays put, and long text wraps inside columns sized by kind.
+
 ## [6.3.0] - 2026-10-10
 
 **MINOR — the flush writes only what changed, atomically, and reports what landed (ACMP's FB-029);

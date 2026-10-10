@@ -1,6 +1,6 @@
 # Tamheed MCP server
 
-Documents the tool surface as of **tamheed v6.3.0**. The bilingual user guide
+Documents the tool surface as of **tamheed v6.4.0**. The bilingual user guide
 (<https://github.com/A-H-911/tamheed/blob/main/index.html>) renders the same surface with every
 parameter, read from this server at build time.
 

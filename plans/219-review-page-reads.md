@@ -1,6 +1,6 @@
 # Plan 219 -- the review page reads: wide tables scroll, long text wraps, the handoff wraps
 
-> Status: IN PROGRESS 2026-10-10 UTC (maintainer-executed). Field cycle review-page (plans
+> Status: DONE 2026-10-10 UTC (maintainer-executed, the operator's word at the review). Field cycle review-page (plans
 > 219-220). Released by plan 220 as 6.4.0 (MINOR). Evidence: `plans/evidence/captures-219/` (the
 > before/after pictures), `plans/evidence/scripts-219/` (the capture script).
 
