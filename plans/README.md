@@ -187,7 +187,7 @@ values: PLANNED / IN PROGRESS / DONE.
 | # | Plan | Depends on | Status |
 |---|---|---|---|
 | 219 | [The review page reads](219-review-page-reads.md) -- `_col_class` and the `<colgroup>` hint in `_table`, `viewer.css` (`overflow: auto`, `table-layout: fixed`, three column widths, a sticky header, `pre.handoff` wraps), the C25 test re-aimed, before/after captures on scratch copies; R79 (the plugin's own repository on one project record, committed) | 218 | DONE -- 2026-10-10 UTC (`4b3dc37`; R78, R79) |
-| 220 | [Release 6.4.0](220-release-6.4.0.md) -- MINOR: the stamp, the stock guide's history key, the lab fixture refreshed through the engine, push and tag on the operator's word | 219 | DONE -- 2026-10-10 UTC (the release commit; CI and the tag recorded in the follow-up) |
+| 220 | [Release 6.4.0](220-release-6.4.0.md) -- MINOR: the stamp, the stock guide's history key, the lab fixture refreshed through the engine, push and tag on the operator's word | 219 | DONE -- 2026-10-10 UTC (`3745944`, tag `v6.4.0`, CI run 38076705513 green on 9 jobs; R80) |
 
 ### Field cycle acmp-FB-029 + per-repo install -- plans 216-218 -> v6.3.0 (2026-10-10; maintainer-executed)
 

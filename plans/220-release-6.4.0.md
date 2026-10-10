@@ -33,7 +33,16 @@ and nothing else on the package.
 
 ## As it landed
 
-(filled: the commit, the push, the CI run, the tag, the bundle diff, the repository's own record)
+- The release commit `3745944`; `git push origin main` `49454c0..3745944` on 2026-10-10 (two
+  commits: `4b3dc37` plan 219, `3745944` this release).
+- CI run 38076705513 on `3745944`: conclusion success, 9 jobs, every job success (eight `check`
+  jobs over Python 3.10 to 3.13 on Windows and Ubuntu, and the MCP server smoke). The watcher
+  polled `gh run list --commit` with the full SHA this time and saw the run.
+- Tag `v6.4.0` on `3745944`, pushed. `git diff v6.4.0 HEAD -- plugins/tamheed`: 0 lines.
+- The machine after the release: `claude plugin marketplace update tamheed` (clone at 6.4.0),
+  the tamheed repository's project record `6.3.0 -> 6.4.0` (R79: a project record, so
+  `--scope project`). ACMP's and jisr's records stay 6.3.0 until the operator runs the two
+  prompts handed in the maintainer session.
 
 ## Rulings taken at the review
 
