@@ -26,6 +26,13 @@ jobs:
       matrix:
         os: [ubuntu-latest, windows-latest]
         python: ['3.10', '3.11', '3.12', '3.13']
+        include:
+          # Plan 224 (R86): the lock's process probe has a macOS path of its own, and only a
+          # real macOS run can test it. Two legs (the floor and the newest) keep the cost low.
+          - os: macos-latest
+            python: '3.10'
+          - os: macos-latest
+            python: '3.13'
     steps:
       - uses: actions/checkout@v4
 
