@@ -19,7 +19,8 @@ Invoke this (`/tamheed:slice-review`) when a slice of `<package>` is believed co
 Review the just-completed slice of the `<package>` Tamheed package:
 
 1. `package_open("<package>")`. Identify the slice: `entity_query("slice")` and its
-   bound ACs (`trace_query("<SL-x>", direction="in")`).
+   bound ACs (`trace_query("<SL-x>", direction="in")`). They are under `column_links`, in
+   `acceptance_criteria.slice_id`: a criterion names its slice in a column, not in an edge.
    Then read the prompt rows bound to this skill: `entity_query("prompt", status="Approved", plugin_skill="slice-review")`. Each carries what is true of this project for this ceremony.
 2. The per-item verdict is taken against the criterion's OWN text, quoted from the
    store, never paraphrased, never re-typed. Run `entity_export("<slice>-review.json",

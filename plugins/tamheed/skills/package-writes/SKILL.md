@@ -102,7 +102,9 @@ id resolves, and the damage stays until someone reads it.
   *Field evidence:* until v5.7 such a key was dropped in silence. One journal write lost its
   attributes on a write that returned `ok`, and `summary` sent for `entry` came back as the
   database's own error.
-- `trace_query(entity_id, direction, relation?)` for typed links. `server_info()` for the version, the
+- `trace_query(entity_id?, direction, relation?, type?, limit?)` for links: `edges` and
+  `column_links`. Without `entity_id` it reads every link, or one family with `type`.
+  `server_info()` for the version, the
   root and the package header. `package_verify()` proves the on-disk store canonical (per-file
   byte-equality, foreign files, a citable digest). `record=true` (open package, passing verification)
   appends the server-witnessed `integrity-verified` row. Journal a verification when the operator

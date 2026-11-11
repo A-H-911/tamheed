@@ -21,9 +21,14 @@ behavior links to ≥1 acceptance criterion.
 
 ## Representation
 
-The matrix is read, not written: `review.html#traceability` is the human surface, `trace_query` walks
-edges per entity, and the `v_req_links` view is what `gate_run` checks. There is no matrix file to keep
-current.
+The matrix is read, not written. `review.html#traceability` is the human surface. `trace_query` reads
+the links of one entity, one family or the whole store. The `v_req_links` view is what `gate_run`
+checks. There is no matrix file to keep current.
+
+A link lives in ONE place. Most links are `trace_edges` rows. Some are columns: a criterion names its
+requirement in `requirement_id` and its slice in `slice_id`. Never copy a column link into an edge,
+because two copies of one fact part. `trace_query` returns the column links beside the edges, as
+`column_links`. A census reads both, and it names which it read.
 
 ## Recording & checking
 

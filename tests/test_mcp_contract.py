@@ -511,6 +511,7 @@ class McpContractTest(unittest.TestCase):
         self.assertFalse(out["ok"])
         self.assertIn("write-only", out["error"])
         self.assertIn("trace_query", out["error"])
+        self.assertIn("every edge", out["error"])          # plan 221: the bulk form is named
         self.assertIn("unknown entity type",
                       srv.entity_query("trace_edge")["error"])   # underscore: genuinely unknown
 
@@ -2539,6 +2540,145 @@ class McpContractTest(unittest.TestCase):
         out = srv.trace_query("FR-001", direction="out", relation="derives_from")
         self.assertEqual(out["edges"], [{"from": "FR-001", "to": "DEC-001",
                                         "relation": "derives_from"}])
+
+    def test_trace_query_reads_one_entity_one_family_or_everything(self):
+        """Plan 221 (the field's bulk-read report): every edge in one call, in a fixed
+        order, with the uncut total - a census needed one call per entity before."""
+        make_complete_package("demo")
+        every = srv.trace_query()
+        self.assertTrue(every["ok"], every)
+        self.assertEqual(every["edges"], [
+            {"from": "FR-001", "to": "DEC-001", "relation": "derives_from"},
+            {"from": "SL-001", "to": "FR-001", "relation": "implements"},
+            {"from": "TEST-001", "to": "FR-001", "relation": "tests"}])
+        self.assertEqual((every["count"], every["total"]), (3, 3))
+        self.assertEqual([e["from"] for e in srv.trace_query(type="test")["edges"]],
+                         ["TEST-001"])
+        self.assertEqual([e["from"] for e in
+                          srv.trace_query(type="requirement", direction="out")["edges"]],
+                         ["FR-001"])                       # the family as the SOURCE only
+        cut = srv.trace_query(limit=1)
+        self.assertEqual((cut["count"], cut["total"]), (1, 3))
+        self.assertIn("unknown entity type", srv.trace_query(type="nope")["error"])
+        self.assertFalse(srv.trace_query("FR-001", type="requirement")["ok"])
+        # a write-only type is never called unknown (plan 025's rule): it gets its own words
+        edge_type = srv.trace_query(type="trace-edge")["error"]
+        self.assertNotIn("unknown", edge_type)
+        self.assertIn("leave `type` out", edge_type)
+        self.assertNotIn("unknown", srv.trace_query(type="omission")["error"])
+
+    def test_trace_query_shows_the_links_a_column_holds(self):
+        """Plan 221 (the field's column-link report): a criterion names its requirement
+        in a COLUMN. That link is read beside the edges and never copied into them."""
+        make_complete_package("demo")
+        out = srv.trace_query("FR-001")
+        self.assertIn(["AC-001", "FR-001"],
+                      out["column_links"]["acceptance_criteria.requirement_id"])
+        self.assertNotIn("AC-001", {e["from"] for e in out["edges"]})
+        self.assertIn("acceptance_criteria.requirement_id", out["columns_read"])
+        self.assertTrue(out["columns_skipped"])
+        self.assertTrue(all(c.startswith("progress_entries.")
+                            for c in out["columns_skipped"]))
+        sl = srv.trace_query("SL-001")                     # a slice finds its criteria
+        self.assertIn(["AC-001", "SL-001"], sl["column_links"]["acceptance_criteria.slice_id"])
+        self.assertIn(["SL-001", "PH-1"], sl["column_links"]["slices.phase_id"])
+        self.assertEqual(sl["column_count"], sl["column_total"])
+        # one relation asked for: edges of that relation, and no column links
+        self.assertEqual(srv.trace_query("FR-001", relation="tests")["column_links"], {})
+        # the journal is skipped and named: a journal row about the entity adds no link
+        srv.progress_update([{"entry": "about it", "subject_id": "FR-001"}])
+        self.assertEqual(srv.trace_query("FR-001")["column_links"], out["column_links"])
+        # the whole store: every column link, grouped by its column
+        everything = srv.trace_query()["column_links"]
+        self.assertIn(["SEC-001", "DOC-001"], everything["document_sections.document_id"])
+
+    def test_trace_query_warns_on_a_name_that_matches_nothing(self):
+        """Plan 221: a mistyped id or relation still answers ok and empty, as before,
+        and now says why - an empty answer used to read as "no links"."""
+        make_complete_package("demo")
+        out = srv.trace_query("FR-999")
+        self.assertTrue(out["ok"])
+        self.assertEqual(out["edges"], [])
+        self.assertIn("FR-999", out["warning"])
+        out = srv.trace_query("FR-001", relation="test")
+        self.assertTrue(out["ok"])
+        self.assertIn("tests", out["warning"])             # the vocabulary is named
+        self.assertNotIn("warning", srv.trace_query("FR-001"))
+
+    def test_read_tools_echo_the_arguments_they_answered(self):
+        """Plan 221 (the field's echo report): parallel results are matched to their
+        calls by content, not by position."""
+        make_complete_package("demo")
+        out = srv.entity_query("decision", search="Human", limit=5)
+        self.assertEqual(out["query"], {"type": "decision", "search": "Human", "limit": 5})
+        self.assertEqual(srv.entity_query("decision")["query"], {"type": "decision"})
+        self.assertEqual(srv.trace_query("FR-001", direction="in")["query"],
+                         {"entity_id": "FR-001", "direction": "in"})
+        self.assertEqual(srv.trace_query()["query"], {})
+        self.assertEqual(srv.trace_query(type="test", relation="tests", limit=2)["query"],
+                         {"type": "test", "relation": "tests", "limit": 2})
+        # the echo is the caller's own value, never the clamped one
+        self.assertEqual(srv.trace_query(limit=-5)["query"], {"limit": -5})
+        self.assertEqual(srv.entity_query("decision", limit=-5)["query"],
+                         {"type": "decision", "limit": -5})
+        self.assertEqual(srv.entity_query("decision", ids=["DEC-001"],
+                                          columns=["id"])["query"],
+                         {"type": "decision", "ids": ["DEC-001"], "columns": ["id"]})
+
+    def test_trace_query_column_links_follow_direction_family_and_limit(self):
+        """Plan 221 (review): the column links obey the same three arguments the edges do."""
+        make_complete_package("demo")
+        col = "acceptance_criteria.requirement_id"
+        # one entity: `in` is the rows that name it, `out` the rows it names
+        self.assertIn(col, srv.trace_query("FR-001", direction="in")["column_links"])
+        self.assertNotIn(col, srv.trace_query("FR-001", direction="out")["column_links"])
+        self.assertEqual(srv.trace_query("AC-001", direction="out")["column_links"][col],
+                         [["AC-001", "FR-001"]])
+        self.assertNotIn(col, srv.trace_query("AC-001", direction="in")["column_links"])
+        # one family: the same pair is seen from either end
+        self.assertEqual(srv.trace_query(type="requirement")["column_links"][col],
+                         [["AC-001", "FR-001"]])
+        self.assertEqual(
+            srv.trace_query(type="acceptance-criterion", direction="out")["column_links"][col],
+            [["AC-001", "FR-001"]])
+        self.assertNotIn(
+            col, srv.trace_query(type="acceptance-criterion", direction="in")["column_links"])
+        # `limit` cuts the column links too, and the uncut size stays told
+        whole = srv.trace_query()
+        cut = srv.trace_query(limit=1)
+        self.assertEqual((cut["column_count"], cut["column_total"]),
+                         (1, whole["column_total"]))
+        none = srv.trace_query(limit=0)
+        self.assertEqual((none["edges"], none["column_links"]), ([], {}))
+        self.assertEqual((none["total"], none["column_total"]),
+                         (whole["total"], whole["column_total"]))
+        self.assertEqual(srv.trace_query(limit=-5)["count"], 0)      # a negative cap reads as 0
+        # a column that names a row of its own table (a work item's parent)
+        self.assertTrue(srv.entity_upsert([
+            {"type": "wbs-item", "id": "WBS-1", "title": "parent", "slice_id": "SL-001"},
+            {"type": "wbs-item", "id": "WBS-1.1", "title": "child", "slice_id": "SL-001",
+             "parent_id": "WBS-1"}])["ok"])
+        self.assertEqual(srv.trace_query("WBS-1")["column_links"]["wbs_items.parent_id"],
+                         [["WBS-1.1", "WBS-1"]])
+
+    def test_an_export_of_every_link_is_deterministic_and_says_when_it_is_cut(self):
+        """Plan 221: the census file a script reads - the same bytes twice, and
+        `partial` when either list was cut."""
+        make_complete_package("demo")
+        first = srv.entity_export("links.json", tool="trace_query")
+        self.assertTrue(first["ok"], first)
+        self.assertFalse(first["partial"])
+        held = Path(first["path"]).read_bytes()
+        again = srv.entity_export("links.json", tool="trace_query")
+        self.assertEqual(Path(again["path"]).read_bytes(), held)
+        self.assertTrue(srv.entity_export("cut.json", tool="trace_query",
+                                          args={"limit": 1})["partial"])
+        # the edges fit under this limit and the column links do not: the note says which
+        # list is short, and it names no paging argument this tool does not take
+        cols = srv.entity_export("cols.json", tool="trace_query", args={"limit": 3})
+        self.assertTrue(cols["partial"])
+        self.assertIn("column links", cols["note"])
+        self.assertNotIn("after_id", cols["note"])
 
     # ---------------------------------------------------------------- gates
 

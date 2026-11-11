@@ -48,6 +48,7 @@ Three capabilities, each with a concrete tool sequence. All three end with `gate
 A change to an entity regenerates its dependents, and only its dependents.
 
 1. `trace_query(entity_id, direction="in")` (repeat transitively as needed) → the impact set.
+   Read `edges` and `column_links`: a link lives in one of the two.
 2. Preview to the operator: the impact set + what would be regenerated.
 3. On approval: `entity_upsert` the changed row, then regenerate ONLY dependent narrative
    sections/prompts. Derived views need nothing (they are queries).

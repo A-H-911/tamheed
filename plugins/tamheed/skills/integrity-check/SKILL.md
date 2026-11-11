@@ -38,8 +38,12 @@ Run a read-only integrity check on the `<package>` Tamheed package:
    positive control chosen from OUTSIDE the set you are sweeping for. A control
    from inside it proves only that the scan reached the corpus. It cannot prove that your
    pattern matches the corpus's spelling of the thing you want.
-3. `trace_query` a sample of MVP requirements. Each should reach a decision,
-   a work item, and a test. Note any that only reach one bucket.
+3. Read every requirement's links in one call: `trace_query(type="requirement")`. Each MVP
+   requirement should reach a decision, a work item, and a test. A link lives in ONE place.
+   `edges` hold the trace edges. `column_links` hold the links a column carries: a criterion
+   names its requirement in `requirement_id`. Read both, and say which you read
+   (`columns_read`). For a script, write the same read with `entity_export`. Note any
+   requirement that reaches only one bucket.
 4. Audit honesty: `gate_run`'s `audit_evidence` reads each ACTIVE AC's LATEST verdict
    (superseded verdicts are history). `narrated_ids` names the graded verdicts with
    no evidence. Each is the graded party grading itself. `ungraded_ids` names the

@@ -26,7 +26,8 @@ Start the next slice of the `<package>` Tamheed package:
 3. Read its contract: `entity_query("execution-plan")` for the slice's `EP-` row, then the
    bound criteria via `trace_query("<SL-x>", direction="both")`, then
    `entity_query("acceptance-criterion", ids=[...the bound AC ids...])` (full rows
-   in one call). Read the invariants in force (`entity_query("invariant")`, and a large
+   in one call). The bound criteria are under `column_links`, in
+   `acceptance_criteria.slice_id`. Read the invariants in force (`entity_query("invariant")`, and a large
    family pages: pass `next_after` back as `after_id`).
 4. Propose a bounded, acceptance-criteria-first plan: per `AC-`, the failing test you
    will write, the implementation step, and the pass/fail observable. **STOP for

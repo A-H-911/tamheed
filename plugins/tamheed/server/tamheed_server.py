@@ -1707,12 +1707,15 @@ def entity_export(path: str, tool: str = "entity_query", args: dict | None = Non
         "memory_matches_disk": in_memory == on_disk},
         # plan 131: a script's input never carries a model cue (and never churns for one)
         "result": {k: v for k, v in result.items() if k != "skill"}}
+    # plan 221: a read with two lists (edges and column links) is short when EITHER was cut
+    partial = ("count" in result and "total" in result
+               and (result["count"] < result["total"]
+                    or result.get("column_count", 0) < result.get("column_total", 0)))
     if "count" in result and "total" in result:
         # plan 067: the FILE says whether it is short - a reader should not have to
         # re-derive it from count/total/next_after (still deterministic: no clock)
         envelope["tamheed_export"].update({
-            "count": result["count"], "total": result["total"],
-            "partial": result["count"] < result["total"]})
+            "count": result["count"], "total": result["total"], "partial": partial})
     text = json.dumps(envelope, ensure_ascii=False, indent=1) + "\n"
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_text(text, encoding="utf-8", newline="\n")
@@ -1720,9 +1723,15 @@ def entity_export(path: str, tool: str = "entity_query", args: dict | None = Non
            "tool": tool, "digest": envelope["tamheed_export"]["digest"],
            "memory_matches_disk": envelope["tamheed_export"]["memory_matches_disk"]}
     if "count" in result and "total" in result:
-        out.update({"count": result["count"], "total": result["total"],
-                    "partial": result["count"] < result["total"]})
-        if out["partial"]:
+        out.update({"count": result["count"], "total": result["total"], "partial": partial})
+        if out["partial"] and "column_total" in result:
+            # plan 221: a read with two lists says which one is short, and names its own
+            # remedy (trace_query has no after_id)
+            out["note"] = (f"PARTIAL: {result['count']} of {result['total']} edges and"
+                           f" {result['column_count']} of {result['column_total']} column"
+                           " links. The file has no payload cap. Pass no limit, or a limit"
+                           " above both totals, to export every link")
+        elif out["partial"]:
             out["note"] = (f"PARTIAL: {result['count']} of {result['total']} rows."
                            " The file has no payload cap. Pass a limit above total"
                            " (or page with after_id) to export the whole family")
@@ -2488,7 +2497,8 @@ def entity_query(type: str, id: str | None = None, status: str | None = None,
         # C31 (A2): write-only is not nonexistent — the old "unknown entity type"
         # message here sent a false statement into a package's permanent record.
         return _err(f"entity type {type!r} is write-only (composite key, no id column)"
-                    " — writable via entity_upsert. Query edges via trace_query")
+                    " — writable via entity_upsert. Read edges with trace_query: one"
+                    " entity, one family (`type`), or every edge")
     all_cols = _columns(table)
     cols = columns or all_cols
     if bad := set(cols) - set(all_cols):
@@ -2537,6 +2547,7 @@ def entity_query(type: str, id: str | None = None, status: str | None = None,
         cut, binds = _after_id()
         where_sql += (" AND " if where_sql else " WHERE ") + cut
         page_params.extend([after_id] * binds)
+    asked_limit = limit                 # plan 221: the echo carries the caller's own value
     limit = max(int(limit), 0)
     sql = (f"SELECT {', '.join(cols)} FROM {table}{where_sql} ORDER BY {order}"
            f" LIMIT {limit + 1}")  # one extra row decides next_after exactly
@@ -2554,6 +2565,15 @@ def entity_query(type: str, id: str | None = None, status: str | None = None,
     # discipline skill loaded without a tool result naming it, and the always-loaded note
     # naming all eight cued none — reading-the-record was named by no result at all.
     out["skill"] = "tamheed:reading-the-record"
+    # Plan 221 (the field's echo report): the arguments this result answered, the ones
+    # that differ from the defaults. A client that runs calls in parallel matches each
+    # result to its call by content, never by the order they came back in.
+    out["query"] = {"type": type, **{k: v for k, v in (
+        ("id", id), ("ids", ids), ("status", status), ("search", search),
+        ("context", context), ("columns", columns), ("after_id", after_id),
+        ("plugin_skill", plugin_skill)) if v is not None}}
+    if asked_limit != 100:
+        out["query"]["limit"] = asked_limit
     # Plan 068: a row cut announces itself through `total`; a projection announced
     # nothing, and `search` never said WHERE it matched (it reads every TEXT column,
     # custom_attributes included). Top-level siblings of `rows`, never per-row keys.
@@ -2608,23 +2628,131 @@ def entity_query(type: str, id: str | None = None, status: str | None = None,
     return out
 
 
-def trace_query(entity_id: str, direction: str = "both", relation: str | None = None) -> dict:
-    """Traverse trace_edges: what does this entity link to / what depends on it?"""
+def _fk_columns(conn) -> tuple[list, list]:
+    """Plan 221 (the field's column-link report): the foreign-key columns that name another
+    row, read from the schema itself, so a column a later migration adds is read with no
+    code change. Returns (read, skipped) as (table, column) pairs. The journal is skipped
+    by rule: its rows are reports ABOUT an entity, and one phase holds hundreds of them."""
+    read, skipped = [], []
+    for table in sorted(set(ENTITY_TABLES.values()) - set(_NON_ID_TABLES)):
+        for row in conn.execute(f"PRAGMA foreign_key_list({table})"):
+            (skipped if table == "progress_entries" else read).append((table, row[3]))
+    return sorted(read), sorted(skipped)
+
+
+def _column_links(conn, entity_id: str | None, etype: str | None, direction: str) -> list:
+    """Every (column, from, to) a foreign-key column holds for one entity, one family or
+    the whole store. `from` is the row that carries the column, `to` the row it names."""
+    read, _ = _fk_columns(conn)
+    pairs: set = set()
+    for table, col in read:
+        label = f"{table}.{col}"
+        if entity_id is not None:
+            if direction in ("in", "both"):
+                pairs.update((label, r[0], entity_id) for r in conn.execute(
+                    f"SELECT id FROM {table} WHERE {col} = ?", (entity_id,)))
+            if direction in ("out", "both"):
+                pairs.update((label, entity_id, r[0]) for r in conn.execute(
+                    f"SELECT {col} FROM {table} WHERE id = ? AND {col} IS NOT NULL",
+                    (entity_id,)))
+            continue
+        sql, params = f"SELECT t.id, t.{col} FROM {table} t WHERE t.{col} IS NOT NULL", []
+        if etype is not None:
+            sides = []
+            if direction in ("out", "both") and table == ENTITY_TABLES[etype]:
+                sides.append("1")
+            if direction in ("in", "both"):
+                sides.append("EXISTS (SELECT 1 FROM entity_index x WHERE x.id ="
+                             f" t.{col} AND x.entity_type = ?)")
+                params.append(etype)
+            if not sides:
+                continue
+            sql += " AND (" + " OR ".join(sides) + ")"
+        pairs.update((label, a, b) for a, b in conn.execute(sql, params))
+    return sorted(pairs)
+
+
+def trace_query(entity_id: str | None = None, direction: str = "both",
+                relation: str | None = None, type: str | None = None,
+                limit: int | None = None) -> dict:
+    """Read trace links: one entity (`entity_id`), one family (`type`), or the whole store.
+
+    Plan 221. `edges` are the stored trace edges, ordered (from, to, relation), with `total`
+    uncut. `column_links` are the links a foreign-key COLUMN holds (a criterion names its
+    requirement in `requirement_id`), grouped by `table.column` as [from, to] pairs: a link
+    lives in ONE place, so they are returned beside the edges and never copied into them.
+    `columns_read` names the columns that were read and `columns_skipped` the journal's. A
+    `relation` asks for edges of that relation only. `limit` caps each list. A name that
+    can match nothing (an id no row has, a relation outside the vocabulary) still answers
+    ok and empty, with a `warning`. `query` echoes the arguments. NO CLIENT RECEIVES THIS
+    TEXT: the registered description is TOOLS["trace_query"][1]."""
     if guard := _need_open():
         return guard
     if direction not in ("out", "in", "both"):
         return _err("direction must be out | in | both")
-    clauses, params = [], []
-    if direction in ("out", "both"):
-        clauses.append("from_id = ?"); params.append(entity_id)
-    if direction in ("in", "both"):
-        clauses.append("to_id = ?"); params.append(entity_id)
-    sql = f"SELECT from_id, to_id, relation FROM trace_edges WHERE ({' OR '.join(clauses)})"
+    if entity_id is not None and type is not None:
+        return _err("pass `entity_id` for one entity or `type` for one family, never both")
+    if type in ("trace-edge", "omission"):
+        # Plan 025's rule holds here too: a write-only type is never called unknown.
+        return _err(f"`type` names a family of rows that have ids, and {type!r} rows have"
+                    " none. To read every edge, leave `type` out")
+    if type is not None and type not in ENTITY_TABLES:
+        return _err(f"unknown entity type {type!r} — one of: "
+                    f"{', '.join(sorted(t for t, tbl in ENTITY_TABLES.items() if tbl not in _NON_ID_TABLES))}")
+    asked_limit = limit                 # the echo carries the caller's own value
+    if limit is not None:
+        limit = max(int(limit), 0)
+    conn = _CURRENT.conn
+    where, params = [], []
+    for value, a_side, b_side in ((entity_id, "e.from_id = ?", "e.to_id = ?"),
+                                  (type, "a.entity_type = ?", "b.entity_type = ?")):
+        if value is None:
+            continue
+        sides = ([a_side] if direction in ("out", "both") else []) + (
+            [b_side] if direction in ("in", "both") else [])
+        where.append("(" + " OR ".join(sides) + ")")
+        params.extend([value] * len(sides))
     if relation is not None:
-        sql += " AND relation = ?"; params.append(relation)
-    edges = [{"from": f, "to": t, "relation": r}
-             for f, t, r in _CURRENT.conn.execute(sql, params)]
-    return {"ok": True, "edges": edges, "count": len(edges)}
+        where.append("e.relation = ?")
+        params.append(relation)
+    base = (" FROM trace_edges e JOIN entity_index a ON a.id = e.from_id"
+            " JOIN entity_index b ON b.id = e.to_id"
+            + (" WHERE " + " AND ".join(where) if where else ""))
+    total = conn.execute("SELECT COUNT(*)" + base, params).fetchone()[0]
+    edges = [{"from": f, "to": t, "relation": r} for f, t, r in conn.execute(
+        "SELECT e.from_id, e.to_id, e.relation" + base
+        + " ORDER BY e.from_id, e.to_id, e.relation"
+        + (f" LIMIT {limit}" if limit is not None else ""), params)]
+    grouped: dict[str, list] = {}
+    pairs, read, skipped = [], [], []
+    if relation is None:
+        pairs = _column_links(conn, entity_id, type, direction)
+        read, skipped = _fk_columns(conn)
+    for label, a, b in (pairs if limit is None else pairs[:limit]):
+        grouped.setdefault(label, []).append([a, b])
+    out = {"ok": True, "edges": edges, "count": len(edges), "total": total,
+           "column_links": grouped,
+           "column_count": sum(len(v) for v in grouped.values()),
+           "column_total": len(pairs),
+           "columns_read": [f"{t}.{c}" for t, c in read],
+           "columns_skipped": [f"{t}.{c}" for t, c in skipped],
+           "query": {k: v for k, v in (("entity_id", entity_id), ("relation", relation),
+                                       ("type", type), ("limit", asked_limit))
+                     if v is not None}}
+    if direction != "both":
+        out["query"]["direction"] = direction
+    warnings = []
+    if entity_id is not None and conn.execute(
+            "SELECT 1 FROM entity_index WHERE id = ?", (entity_id,)).fetchone() is None:
+        warnings.append(f"no row has the id {entity_id!r}. An empty answer here means the"
+                        " id is unknown, not that the row has no links")
+    vocabulary = sorted(set(RELATION_RULES) | {"relates_to"})
+    if relation is not None and relation not in vocabulary:
+        warnings.append(f"{relation!r} is not a trace relation, so no edge can match. The"
+                        f" relations are: {', '.join(vocabulary)}")
+    if warnings:
+        out["warning"] = ". ".join(warnings)
+    return out
 
 
 # --------------------------------------------------------------------------- gates
@@ -5622,6 +5750,15 @@ _ENTITY_QUERY_DESC = (
     " limited read never returns the newest rows. `after_id` returns the rows after"
     " that id in the same order. Pass the result's `next_after`, or an id you type (it"
     " need not name a row). `total` is the size of the filtered set, uncut.")
+# Plan 221: the two places a link lives, and the three scopes of the read.
+_TRACE_QUERY_DESC = (
+    "Read trace links. With `entity_id`, the links of one entity. Without it, every link,"
+    " or the links of one family with `type`. `edges` are the stored trace edges, in a"
+    " fixed order. `column_links` are the links a foreign-key column holds, such as"
+    " `acceptance_criteria.requirement_id`, grouped by column. A link lives in one place,"
+    " so a column link is never copied into an edge. `relation` keeps one relation and"
+    " leaves `column_links` empty. `limit` caps each list. `total` and `column_total` are"
+    " the uncut sizes. For a whole read in a file, use `entity_export`.")
 # Plan 167 (v5.8): the argument is named — one field call sent `items` for `verdicts`
 # under the 5.7.0 text, which spoke of "each item" and named no argument.
 _PROGRESS_UPDATE_DESC = (
@@ -5645,7 +5782,7 @@ TOOLS = {
     "package_close": (package_close, "Write back canonical text and release the lock"),
     "entity_upsert": (entity_upsert, "Batch upsert entities in one transaction, with per-item verdicts"),
     "entity_query": (entity_query, _ENTITY_QUERY_DESC),
-    "trace_query": (trace_query, "Traverse typed trace edges from/to an entity"),
+    "trace_query": (trace_query, _TRACE_QUERY_DESC),
     "gate_run": (gate_run, "Run the mechanical quality gates and return the gate report"),
     "readiness_check": (readiness_check,
                         "Lifecycle readiness at a close boundary (package/phase/slice)"),
