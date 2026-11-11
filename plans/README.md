@@ -176,6 +176,28 @@ devil's-advocate review; execution order is the row order below). Status values:
 | 089 | [Lab beat 18](089-lab-beat-18-findings-27.md) | 085-088 + full test (15/15 vs 0/15 on `v4.10.0`; 9 suites; selftest) | DONE `762b98b` — 9 new assertions, each failing on the pre-beat fixture; D-1 registry-sync unscripted, F-3 fixed |
 | 090 | [Release v4.11.0](090-release-v4110.md) — plan-058 recipe + the fixture follows the stamp | 089 | DONE — 2026-09-22, tag `v4.11.0` (SHA in the tag) |
 
+### Field round 2026-11 -- plans 221-229 -> v6.5.0 (2026-11-11 ->; maintainer-executed)
+
+Two field projects on 6.4.0 handed up operator-confirmed feedback: three rows from the first, eleven
+from the second (two of them local-tool registrations). All ten actionable rows held against the
+source. The round answers each one in a single MINOR release. The record of the evaluation, the
+rulings R81-R89, the risks and the execution order is
+[field-round-2026-11-record.md](evidence/field-round-2026-11-record.md). Plans 226, 227 and the macOS
+half of 224 wait on a read-only export from the second field's machine. Status values: PLANNED /
+IN PROGRESS / DONE.
+
+| # | Plan | Depends on | Status |
+|---|---|---|---|
+| 221 | [The read names every link](221-the-read-names-every-link.md) -- `trace_query` for one entity, one family or everything, ordered, with totals. Foreign-key columns as `column_links`. Both read tools echo their arguments | -- | IN PROGRESS -- built and validated 2026-11-11, awaiting its commit |
+| 222 | [requirements-wired reads the legs](222-requirements-wired-legs.md) -- decision, work and test, all three once `Implemented`, the missing leg named, a waiver honoured on both surfaces (R84) | -- | PLANNED |
+| 223 | [A refused value names what the column takes](223-a-refused-value-names-its-set.md) -- one DDL-derived hint at five write sites. The four gate words defined (R83) | -- | PLANNED |
+| 224 | [The lock survives a host rename inside one boot](224-lock-boot-session.md) -- the boot session, the migrate lock with its staging guard, the live-holder hint, the macOS start time (R86, R88, R89) | the export (224b) | PLANNED (the macOS CI legs landed first: `1f15d98`, baseline run 43080522933 green on eleven jobs) |
+| 225 | [A section can be retired](225-section-status.md) -- migration 009, a nullable status, one NULL-safe live filter (R85) | -- | PLANNED |
+| 226 | [Project registers](226-project-registers.md) -- migration 010, a register declares its fields, entries are checked at write (R81) | the export, 223 | PLANNED |
+| 227 | [The interview page](227-interview-page.md) -- `slate_export` and `slate_read`, a separate page with its own content policy (R82) | the export | PLANNED |
+| 228 | [The guide, its diagrams, the docs sweep](228-guide-diagrams-docs.md) | 221-227 | PLANNED |
+| 229 | [Acceptance, release 6.5.0, the two field prompts](229-release-6.5.0.md) | 221-228 | PLANNED |
+
 ### Field cycle review-page -- plans 219-220 -> v6.4.0 (2026-10-10; maintainer-executed)
 
 After the 216-218 upgrades (both repositories verified on 6.3.0, nothing to fix) the operator asked for
