@@ -255,7 +255,8 @@ omission with a reason, or G-SET fails.)
 
 **Design decisions behind it.** Decision 6 added `rationale` and `verification_method`,
 the two 29148 attributes with a mechanical payoff, instead of the full 29148 attribute
-set. The liveness advisory `requirements-wired` flags rows with zero trace edges. The
+set. The liveness advisory `requirements-wired` flags a row with no decision, work or test
+leg. It also flags an `Implemented` row that lacks any of the three (v6.5, plan 222). The
 `mvp` flag implements the sustainable-granularity traceability finding: MVP-scoped
 tracing, no requirement→code-file edges (they rot).
 

@@ -92,7 +92,10 @@ is the only wrong answer.
     operator: close it Done (the work landed), or bind the item that carries it.
 12. **Execution plans** (`execution-plans-approved`): plans still Draft/Proposed for
     active slices. Finish them and **STOP for operator approval**.
-13. **Unwired requirements** (`requirements-wired`): every listed requirement receives its
+13. **Unwired requirements** (`requirements-wired`): the rule's `missing` names the legs each
+    listed requirement lacks (decision, work, test). A requirement owes one leg, and an
+    `Implemented` one owes all three. A scope-change edge is not a leg. Every listed
+    requirement receives its
     real edges. `derives_from` the deciding DEC-/ADR-, `implements` from its slice/
     work item, `tests` from its test. Use `relates_to` only when nothing typed fits. When
     a typed edge replaces an old `relates_to` (or any wrong edge), RETIRE the old

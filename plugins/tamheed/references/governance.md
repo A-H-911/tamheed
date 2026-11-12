@@ -253,7 +253,10 @@ backticks is a quotation. The `clarifications-open` advisory counts live markers
   with `ok: true`). It is opt-in, the immutability trigger's self-verifying property for the
   long-text registers that have no trigger.
 - Every MVP `FR-/NFR-` must be reachable to ≥1 decision, ≥1 work item, and ≥1 test (G-TRACE).
-  A requirement with zero edges trips the `requirements-wired` advisory.
+  The `requirements-wired` advisory reads the same three legs for every live requirement. It
+  lists one that has none of them, and an `Implemented` one that lacks any. Its `missing` names
+  the legs. A scope-change edge is not a leg. The operator can waive a deliberate omission
+  (`WVR-`), and `gate_run` then names the id under `waived`.
 - Waivers and gates point at entities via their own `applies_to` column, not edges.
 
 ## Supersession & deprecation

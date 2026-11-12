@@ -1295,7 +1295,7 @@ TEXT: dict[str, dict[str, str]] = {
     "rule.deferred-work-carried": {"en": "An `Activated` deferred-work row that no open work item carries (`carries` edge).", "ar": "صف عمل مؤجَّل `Activated` لا يحمله أي بند عمل مفتوح (حافة `carries`)."},
     "rule.open-questions-resolved": {"en": "Open questions still unresolved: resolve or carry deliberately as accepted-open.", "ar": "أسئلة مفتوحة ما زالت دون حل: احلّها أو احملها عن قصد كمقبولة مفتوحة."},
     "rule.execution-plans-approved": {"en": "Execution plans not yet Approved.", "ar": "خطط تنفيذ لم تُعتمد بعد."},
-    "rule.requirements-wired": {"en": "Non-retired requirements with zero trace edges.", "ar": "متطلبات غير مُحالة بلا أي حافة تتبّع."},
+    "rule.requirements-wired": {"en": "Non-retired requirements that miss a leg they owe. A leg is a link to a decision, a work item or a test. A requirement owes one leg, and an `Implemented` one owes all three. `missing` names the legs.", "ar": "متطلبات غير مُحالة ينقصها رابط واجب. الرابط هو صلة بقرار أو ببند عمل أو باختبار. يلزم المتطلب رابط واحد، ويلزم المتطلب `Implemented` الثلاثة كلها. ويسمّي `missing` الروابط الناقصة."},
     "rule.decisions-look-architectural": {"en": "An Approved or Implemented decision that work implements, or that touches an invariant or constraint, but was never promoted to an ADR.", "ar": "قرار Approved أو Implemented ينفّذه عمل، أو يمس ثابتًا أو قيدًا، ولم يُرقَّ إلى ADR."},
     "rule.scope-changes-merged": {"en": "Scope changes `Approved` but not yet `Merged`: the rows they name may not all be applied.", "ar": "تغييرات نطاق `Approved` لم تصبح `Merged` بعد: قد لا تكون كل الصفوف التي تسمّيها مُطبَّقة."},
     "rule.open-questions-overdue": {"en": "Open questions past `due_by`.", "ar": "أسئلة مفتوحة تجاوزت `due_by`."},

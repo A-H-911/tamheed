@@ -10,7 +10,8 @@
   descriptions under 2,048), the browser pass of 227, the replay of both fields on scratch copies.
 - Release by the 220 recipe: `stamp_650.py` (six version surfaces, the stock guide body with its
   `stock-history.json` key, the lab-tracker pins, the CHANGELOG entry naming both migrations and
-  the live-package note), `docs/guide/build.py`, `refresh_lab_650.py`, a lab beat that exercises a
+  the live-package note), `docs/guide/build.py`, `refresh_lab_650.py` (it also re-exports the lab fixture's recorded
+  `gates.json`, whose wired-rule note plan 222 changed), a lab beat that exercises a
   register and a slate. Then the operator's word: merge, push, `gh workflow run CI`, the tag
   `v6.5.0` on green, the ledger follow-up.
 - Records: `plans/221..229`, the `plans/README.md` section, `plans/evidence/` with the fields' private words trimmed (R72).

@@ -2757,6 +2757,32 @@ def trace_query(entity_id: str | None = None, direction: str = "both",
 
 # --------------------------------------------------------------------------- gates
 
+# Plan 222 (R84): the three legs a requirement can have, by the type of the linked row.
+# The same reading as G-TRACE (the view v_req_links): any relation counts, the type decides.
+_LEGS = (("decision", ("decision", "adr")), ("work", ("wbs-item", "slice")),
+         ("test", ("test",)))
+
+
+def _requirement_legs(conn) -> dict:
+    """The live requirements that miss a leg they owe, as {id: [missing legs]} in id order.
+
+    Plan 222 (the field's wired-rule report). A requirement owes at least ONE leg. An
+    Implemented requirement owes all three: a completion claim names what built it and
+    what proved it. A link to a scope change, a lesson or a criterion is not a leg, so a
+    requirement born inside a scope change no longer reads as wired."""
+    has_leg = ", ".join(
+        "EXISTS (SELECT 1 FROM v_req_links l WHERE l.req_id = r.id AND l.other_type IN"
+        f" ({', '.join(repr(t) for t in types)}))" for _, types in _LEGS)
+    missing = {}
+    for rid, status, *has in conn.execute(
+            f"SELECT r.id, r.lifecycle_status, {has_leg} FROM requirements r"
+            f" WHERE r.retired_in IS NULL ORDER BY {_by_id('r.id')}"):
+        lack = [name for (name, _), ok in zip(_LEGS, has) if not ok]
+        if len(lack) == len(_LEGS) or (status == "Implemented" and lack):
+            missing[rid] = lack
+    return missing
+
+
 def gate_run() -> dict:
     """Run the mechanical gates. Plan 027: the referential gates VERIFY at gate time
     (the old hardcoded "enforced at write time" literals asserted integrity the gate
@@ -2887,15 +2913,40 @@ def gate_run() -> dict:
     # never get wired — work_bind stamps commits, it does not create trace edges, and
     # G-TRACE only sees mvp=1 matrix rows. Advisory on the habitual every-session
     # surface so a new unwired requirement surfaces within a session of being created.
-    unwired = [r[0] for r in conn.execute(
-        "SELECT id FROM requirements WHERE retired_in IS NULL"
-        " AND id NOT IN (SELECT from_id FROM trace_edges)"
-        " AND id NOT IN (SELECT to_id FROM trace_edges) ORDER BY id")]
+    # Plan 222 (R84, the field's wired-rule report): the old predicate counted ANY edge, and
+    # the write that creates such a requirement now adds a scope edge, so it listed nothing.
+    # It reads the three legs now, through the helper the readiness rule uses. A waiver for
+    # the rule clears an id here too, named under `waived`, or a deliberate omission would
+    # stay on the every-session surface for good.
+    legs = _requirement_legs(conn)
+    today = _now()[:10]
+    per_entity, whole_rule = {}, []
+    for wid, applies, expires in conn.execute(
+            "SELECT id, applies_to, expires FROM waivers WHERE rule = 'requirements-wired'"
+            " ORDER BY id"):
+        if expires is not None and str(expires)[:10] < today:
+            continue                        # an expired waiver waives nothing
+        if applies is None:
+            whole_rule.append(wid)
+        else:
+            per_entity[applies] = wid
+    waived = [{"entity": rid, "waiver": per_entity.get(rid) or whole_rule[0]}
+              for rid in legs if rid in per_entity or whole_rule]
+    waived_ids = {w["entity"] for w in waived}
+    unwired = [rid for rid in legs if rid not in waived_ids]
     report["requirements_unwired"] = {
         "status": "advisory", "requirements": unwired,
-        "note": "non-retired requirements with ZERO trace edges — wire derives_from/"
-                "implements/tests in the session that creates them. This rule never fails the"
+        "missing": {rid: legs[rid] for rid in unwired},
+        "note": "non-retired requirements that miss a leg they owe. A leg is any link to a"
+                " decision or ADR, a work item or slice, or a test (the G-TRACE reading). A"
+                " requirement owes one leg. An Implemented requirement owes all three."
+                " `missing` names the legs per id. Wire derives_from, implements and tests"
+                " in the session that creates the row. A scope-change link is not a leg."
+                " `waived` names an id the operator waived for `requirements-wired`. You"
+                " never author a waiver on your own judgment. This rule never fails the"
                 " gate"}
+    if waived:
+        report["requirements_unwired"]["waived"] = waived
     ready = all(v.get("status") == "pass" for k, v in report.items() if k.startswith("G-"))
     return {"ok": True, "ready": ready, "gates": report}
 
@@ -3116,12 +3167,19 @@ def _readiness_report(conn, scope: str, scope_id: str | None) -> dict:
              ids("SELECT id FROM execution_plans WHERE lifecycle_status NOT IN"
                  " ('Approved','Implemented','Superseded','Obsolete')"),
              "execution plans never approved")
-        rule("requirements-wired", "advisory",
-             ids("SELECT id FROM requirements WHERE retired_in IS NULL"
-                 " AND id NOT IN (SELECT from_id FROM trace_edges)"
-                 " AND id NOT IN (SELECT to_id FROM trace_edges)"),
-             "requirements with zero trace edges — execution-created rows never wired"
-             " (work_bind stamps commits, it does not wire traceability)")
+        # Plan 222 (R84): the three legs, through the helper gate_run uses. The list is
+        # registered as ids() registers one, so the rule keeps its population and its
+        # empty-family reading.
+        legs = _requirement_legs(conn)
+        listed = list(legs)
+        measured.update({"list": listed, "table": "requirements", "rows": None})
+        rule("requirements-wired", "advisory", listed,
+             "requirements that miss a leg they owe. A leg is any link to a decision or ADR,"
+             " a work item or slice, or a test (the G-TRACE reading). A requirement owes one"
+             " leg. An Implemented requirement owes all three. `missing` names the legs per"
+             " id. A scope-change link is not a leg (work_bind stamps commits, it does not"
+             " wire traceability)")
+        rules[-1]["missing"] = {rid: legs[rid] for rid in rules[-1]["entities"]}
         # ---- v4 liveness advisories (plan 031: registers stay alive because the
         # engine nags, not because columns exist) ----
         rule("decisions-look-architectural", "advisory",

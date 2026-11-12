@@ -878,11 +878,166 @@ class McpContractTest(unittest.TestCase):
         adv = out["gates"]["requirements_unwired"]
         self.assertEqual(adv["status"], "advisory")
         self.assertEqual(adv["requirements"], ["FR-777"])
+        self.assertEqual(adv["missing"], {"FR-777": ["decision", "work", "test"]})
         self.assertTrue(out["ready"])                       # never blocks
         rules = {r["rule"]: r for r in srv.readiness_check("package")["rules"]}
         wired = rules["requirements-wired"]
         self.assertEqual(wired["severity"], "advisory")
         self.assertEqual(wired["entities"], ["FR-777"])
+        self.assertEqual(wired["missing"], {"FR-777": ["decision", "work", "test"]})
+        self.assertEqual(wired["population"]["table"], "requirements")   # still measured
+
+    def _requirement(self, rid: str, status: str = "Approved") -> dict:
+        return {"type": "requirement", "id": rid, "kind": "functional", "title": rid,
+                "mvp": 0, "lifecycle_status": status, "source_kind": "code",
+                "source_span": "src/x.py"}
+
+    def _wired(self) -> tuple[list, dict]:
+        adv = srv.gate_run()["gates"]["requirements_unwired"]
+        rule = {r["rule"]: r for r in srv.readiness_check("package")["rules"]}[
+            "requirements-wired"]
+        self.assertEqual(adv["requirements"], rule["entities"])   # one predicate, two surfaces
+        self.assertEqual(adv["missing"], rule["missing"])
+        return adv["requirements"], adv["missing"]
+
+    def test_a_scope_change_edge_is_not_a_leg(self):
+        """Plan 222 (the field's wired-rule report): a requirement born in a scope change
+        gets a scope edge in the same write. The old rule counted ANY edge, so it passed."""
+        make_complete_package("demo")
+        out = srv.entity_upsert([
+            self._requirement("FR-778"),
+            {"type": "scope-change", "id": "SC-001", "decision_ref": "DEC-001",
+             "description": "adds FR-778", "iteration": 1},
+            {"type": "trace-edge", "from_id": "SC-001", "to_id": "FR-778",
+             "relation": "scope_adds"}])
+        self.assertTrue(out["ok"], out)
+        listed, missing = self._wired()
+        self.assertEqual(listed, ["FR-778"])
+        self.assertEqual(missing, {"FR-778": ["decision", "work", "test"]})
+        self.assertTrue(srv.gate_run()["ready"])            # advisory: the gate never moves
+
+    def test_an_implemented_requirement_owes_all_three_legs(self):
+        """Plan 222 (R84): one leg keeps a requirement off the list until it claims to be
+        built. An Implemented requirement names what built it and what proved it."""
+        make_complete_package("demo")
+        out = srv.entity_upsert([
+            self._requirement("FR-779", "Implemented"),      # decision and test, no work
+            {"type": "trace-edge", "from_id": "FR-779", "to_id": "DEC-001",
+             "relation": "derives_from"},
+            {"type": "trace-edge", "from_id": "TEST-001", "to_id": "FR-779",
+             "relation": "tests"},
+            self._requirement("FR-780"),                     # Approved with one leg: passes
+            {"type": "trace-edge", "from_id": "FR-780", "to_id": "DEC-001",
+             "relation": "derives_from"},
+            self._requirement("FR-781", "Implemented"),      # all three, the decision by relates_to
+            {"type": "trace-edge", "from_id": "DEC-001", "to_id": "FR-781",
+             "relation": "relates_to"},
+            {"type": "trace-edge", "from_id": "SL-001", "to_id": "FR-781",
+             "relation": "implements"},
+            {"type": "trace-edge", "from_id": "TEST-001", "to_id": "FR-781",
+             "relation": "tests"}])
+        self.assertTrue(out["ok"], out)
+        listed, missing = self._wired()
+        self.assertEqual(listed, ["FR-779"])
+        self.assertEqual(missing, {"FR-779": ["work"]})
+
+    def test_a_waiver_clears_the_wired_rule_on_both_surfaces(self):
+        """Plan 222: a deliberate omission is waived by the operator, and then it leaves
+        the every-session surface too - named under `waived`, never hidden."""
+        make_complete_package("demo")
+        out = srv.entity_upsert([
+            self._requirement("FR-777"),
+            {"type": "waiver", "id": "WVR-001", "rule": "requirements-wired",
+             "applies_to": "FR-777", "justification": "built before the package existed",
+             "approver": "human:operator", "operator_confirm": True}])
+        self.assertTrue(out["ok"], out)
+        adv = srv.gate_run()["gates"]["requirements_unwired"]
+        self.assertEqual(adv["requirements"], [])
+        self.assertEqual(adv["waived"], [{"entity": "FR-777", "waiver": "WVR-001"}])
+        rule = {r["rule"]: r for r in srv.readiness_check("package")["rules"]}[
+            "requirements-wired"]
+        self.assertEqual((rule["status"], rule["entities"]), ("waived", []))
+        # an expired waiver waives nothing
+        self.assertTrue(srv.entity_upsert([
+            {"type": "waiver", "id": "WVR-001", "rule": "requirements-wired",
+             "applies_to": "FR-777", "justification": "built before the package existed",
+             "approver": "human:operator", "expires": "2020-01-01",
+             "operator_confirm": True}])["ok"])
+        adv = srv.gate_run()["gates"]["requirements_unwired"]
+        self.assertEqual(adv["requirements"], ["FR-777"])
+        self.assertNotIn("waived", adv)
+        # a whole-rule waiver (no applies_to) waives every listed id, on both surfaces
+        self.assertTrue(srv.entity_upsert([
+            self._requirement("FR-776"),
+            {"type": "waiver", "id": "WVR-002", "rule": "requirements-wired",
+             "justification": "the whole rule, for this release", "approver": "human:operator",
+             "operator_confirm": True}])["ok"])
+        adv = srv.gate_run()["gates"]["requirements_unwired"]
+        self.assertEqual(adv["requirements"], [])
+        self.assertEqual(adv["waived"], [{"entity": "FR-776", "waiver": "WVR-002"},
+                                         {"entity": "FR-777", "waiver": "WVR-002"}])
+        rule = {r["rule"]: r for r in srv.readiness_check("package")["rules"]}[
+            "requirements-wired"]
+        self.assertEqual((rule["status"], rule["entities"], rule["missing"]),
+                         ("waived", [], {}))
+        self.assertIn("never author a waiver", adv["note"])   # the note invites no waiver
+
+    def test_the_wired_rule_over_no_requirement_measures_nothing(self):
+        """Plan 222 (review): the list comes from a helper now, and an empty family still
+        reads indeterminate, as it did when ids() built the list."""
+        srv.package_create("demo", "Demo", "rnd")
+        rule = {r["rule"]: r for r in srv.readiness_check("package")["rules"]}[
+            "requirements-wired"]
+        self.assertEqual(rule["status"], "indeterminate")
+        self.assertEqual(rule["population"]["rows"], 0)
+        self.assertEqual(rule["missing"], {})
+
+    def test_the_wired_rule_orders_by_number_and_keeps_missing_with_its_entities(self):
+        """Plan 222 (review): id order is numeric, a work ITEM is a work leg, a waiver for
+        one id leaves the others listed with their legs, and it beats a whole-rule one."""
+        make_complete_package("demo")
+        self.assertTrue(srv.entity_upsert([
+            self._requirement("FR-10"), self._requirement("FR-2"), self._requirement("FR-3"),
+            self._requirement("FR-11", "Implemented"),
+            {"type": "wbs-item", "id": "WBS-1", "title": "w", "slice_id": "SL-001"},
+            {"type": "trace-edge", "from_id": "FR-11", "to_id": "DEC-001",
+             "relation": "derives_from"},
+            {"type": "trace-edge", "from_id": "WBS-1", "to_id": "FR-11",
+             "relation": "implements"},
+            {"type": "trace-edge", "from_id": "TEST-001", "to_id": "FR-11",
+             "relation": "tests"},
+            {"type": "waiver", "id": "WVR-001", "rule": "requirements-wired",
+             "applies_to": "FR-3", "justification": "ruled out of scope",
+             "approver": "human:operator", "operator_confirm": True}])["ok"])
+        rule = {r["rule"]: r for r in srv.readiness_check("package")["rules"]}[
+            "requirements-wired"]
+        self.assertEqual(rule["entities"], ["FR-2", "FR-10"])      # FR-2 before FR-10
+        self.assertEqual(list(rule["missing"]), ["FR-2", "FR-10"])  # the same ids, no other
+        self.assertEqual(rule["waived"], [{"entity": "FR-3", "waiver": "WVR-001"}])
+        self.assertTrue(srv.entity_upsert([
+            {"type": "waiver", "id": "WVR-002", "rule": "requirements-wired",
+             "justification": "the whole rule", "approver": "human:operator",
+             "operator_confirm": True}])["ok"])
+        waived = srv.gate_run()["gates"]["requirements_unwired"]["waived"]
+        self.assertEqual(waived, [{"entity": "FR-2", "waiver": "WVR-002"},
+                                  {"entity": "FR-3", "waiver": "WVR-001"},
+                                  {"entity": "FR-10", "waiver": "WVR-002"}])
+
+    def test_the_wired_rule_reads_live_rows_by_retired_in(self):
+        """Plan 222: a requirement is out of the rule when `retired_in` is set, as it is
+        out of G-TRACE. A Rejected row with only a `scope_removes` edge is still live by
+        that reading, so it is listed: the status alone does not retire a row."""
+        make_complete_package("demo")
+        self.assertTrue(srv.entity_upsert([
+            self._requirement("FR-782", "Rejected"),
+            self._requirement("FR-783") | {"retired_in": 1},
+            {"type": "scope-change", "id": "SC-001", "decision_ref": "DEC-001",
+             "description": "removes FR-782", "iteration": 1},
+            {"type": "trace-edge", "from_id": "SC-001", "to_id": "FR-782",
+             "relation": "scope_removes"}])["ok"])
+        listed, missing = self._wired()
+        self.assertEqual(listed, ["FR-782"])                 # FR-783 is retired: not read
+        self.assertEqual(missing, {"FR-782": ["decision", "work", "test"]})
 
     def test_journal_is_append_only(self):
         """Plan 025 (C31/A4): recorded history cannot be rewritten via entity_upsert."""

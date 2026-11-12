@@ -119,6 +119,8 @@ operator again (R88, R89).
   It does not survive a restart. After one, and on Windows, removal stays manual.
 - **R89** (re-put after the review) The migrate lock becomes readable, and `package_unlock` refuses
   while any `data/*.jsonl.tmp` staging file exists.
+- **R90** (at plan 222's commit) `requirements-wired` reads a requirement as live until its
+  `retired_in` is set, as G-TRACE does. A dead status alone does not take a row out of the rule.
 
 ## Step 0
 

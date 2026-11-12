@@ -182,6 +182,9 @@ id resolves, and the damage stays until someone reads it.
 - Apply the delta to every row its `scope_adds` / `scope_modifies` / `scope_removes` / `amends` edges
   name. RE-READ those rows, then set the `SC-` to `Merged`. An `amends` target merges by full-row
   upsert of a decision or by supersession of an ADR.
+- A requirement that a scope change adds still owes its legs. Write its `derives_from`,
+  `implements` and `tests` edges in the same batch. A scope edge is not a leg, and
+  `requirements-wired` lists the requirement until it has one.
 - If it is already `Merged`, run `trace_query` on it and open each target. The edges are the checklist.
 - A sentence in a target that the scope change discharges ("needs a scope change first") is part of the
   delta. Rewrite it too.
