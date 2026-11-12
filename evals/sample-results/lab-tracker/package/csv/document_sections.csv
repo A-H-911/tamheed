@@ -1,4 +1,4 @@
-id,document_id,heading,body,sort_order,custom_attributes,last_referenced
+id,document_id,heading,body,sort_order,custom_attributes,last_referenced,lifecycle_status
 SEC-001,DOC-001,Brief (verbatim),"# Project brief — ""tick"", a tiny CLI task tracker
 
 We want a small command-line task tracker for our four-person team. Python, no third-party
@@ -21,5 +21,5 @@ help text should be polished — this will be shown to the whole team.
 P.S. — mid-project note from the team lead: if this goes well we'll also want
 `tick export --csv` for the monthly report. Not part of the original ask; treat it as a
 change if you take it on.
-",1,,
-SEC-002,DOC-002,Problem & objective,"A four-person team tracks tasks in chat and loses them. tick is a stdlib-only Python CLI that adds, lists (overdue-flagged), completes, and audits tasks, persisting between runs.",1,,
+",1,,,
+SEC-002,DOC-002,Problem & objective,"A four-person team tracks tasks in chat and loses them. tick is a stdlib-only Python CLI that adds, lists (overdue-flagged), completes, and audits tasks, persisting between runs.",1,,,

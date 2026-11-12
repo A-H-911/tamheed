@@ -1,4 +1,4 @@
-# How to use this package — the `{package}` operator guide (tamheed v6.4.0)
+# How to use this package — the `{package}` operator guide (tamheed v6.5.0)
 
 This guide sits at the root of the `{package}` Tamheed package. Since v5.0.0 the stock
 scenarios are not files. They are the tamheed plugin's **slash skills**, `/tamheed:<name>`,
@@ -114,6 +114,10 @@ lock and the observation. `confirm=true` removes it and journals the removal,
 **on the operator's words only**, and only for a holder observed dead. It refuses on
 `alive` and on `unobservable` (another host, a container, access denied). Removing
 `data/.lock` by hand stays the deliberate path for what this host cannot see.
+Since v6.5 a host that was renamed is still recognised inside one boot, on Linux and
+macOS, for a lock that v6.5 or later wrote. It is not recognised after a restart, on
+Windows, or on another machine. `package_unlock` also refuses while staging files of a
+stopped migration remain.
 Never auto-clear. When unsure, ask the other session's operator.
 
 ## Asking the operator
@@ -121,6 +125,11 @@ Never auto-clear. When unsure, ask the other session's operator.
 When a decision is the operator's (a verdict, a waiver, `force`, `package_unlock`, a
 scope change, a lesson), START THE INTERVIEW. Do not report a blocker and wait
 (`tamheed:operator-interview` is the full procedure).
+
+For a long interview, `slate_export` writes a local page of questions under `slates/`.
+`slate_read` returns a checked transcript of the answers file that the operator saved.
+The transcript is a record of a file. It is never the operator's word: the agent reads
+it back and the operator confirms it in the session.
 
 1. **Do the homework first.** Never ask what the package or the repository already
    answers. The operator should be deciding, not researching.

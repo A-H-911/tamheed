@@ -8,25 +8,48 @@ All notable changes to Tamheed are documented here. The format is based on
 > original repository (<https://github.com/A-H-911/keystone>). Tamheed carries Keystone's full git
 > history; the Keystone repository stays frozen at 1.0.x for existing v1 packages.
 
-## [Unreleased]
+## [6.5.0] - 2026-11-12
 
-The 6.5.0 round is in progress on the branch `round/6.5.0` (plans 221-229). This section becomes
-the 6.5.0 entry at the release.
+**MINOR — the field round of 2026-11 (plans 221–229).** Two field projects handed up fourteen
+operator-confirmed feedback rows. Ten asked for a change, and each is answered here.
 
+**For a live package (the migration note).** Close the package, then run `package_migrate`: a
+preview first, then `confirm=true` on the operator's word. The registry-sync teaches the package
+two families and one column. It moves three files: `entity_types.jsonl` and
+`progress_entries.jsonl` gain rows, and `document_sections.jsonl` is written once in full. Commit
+that change alone. Then run `export_html()` and `package_verify()`. One behaviour changes for
+every family: a write with no `id` returned ok before and is refused now.
+
+### Added
 - `009_section_status.sql` (plan 225): a nullable `lifecycle_status` on `document_sections`, so a
-  section can be retired. Each package's `document_sections.jsonl` re-serialises once.
+  section can be retired with `Superseded` or `Obsolete`. A retired section leaves the scans.
 - `010_registers.sql` (plan 226): two families, `registers` (`REG-`) and `register_entries`
-  (`ENT-`). A register declares its fields, and an entry is checked against them at write. A
-  package written before this release learns both through `package_migrate`'s registry-sync.
+  (`ENT-`). A register declares its fields, and an entry is checked against them at write. The
+  advisory `register-entries-conform`, `entity_query(register_id=)`, one review-page fold per
+  register.
+- `slate_export` and `slate_read` (plan 227): an interview page for the operator, and a reader
+  for the answers file that the page saves. The page runs one script, named by hash in a content
+  policy, and it loads and sends nothing. The reader writes nothing, and its result says that
+  nothing proves who wrote the file. The tools number 21.
+- `trace_query` without an id (plan 221): every link, or one family's, in a fixed order with a
+  total. `column_links` returns the links that a foreign-key column holds. `entity_query` and
+  `trace_query` echo their arguments under `query`.
+- The lock (plan 224): a host that was renamed is recognised inside one boot on Linux and macOS.
+  macOS reads a process start time. The migrate lock names its holder.
+
+### Changed
+- `requirements-wired` (plan 222) reads the three legs of a requirement: a decision, work and a
+  test. A requirement owes one leg, and an `Implemented` one owes all three. The result names the
+  missing leg, and the review page shows it (plan 228).
+- A refused value names the values that the column takes (plan 223). The four gate outcomes are
+  defined: `Go`, `Hold`, `Redirect`, `Kill`.
+- `package_unlock` refuses while staging files of a stopped migration remain (plan 224).
 - `entity_upsert`, for every family (plan 226, found in its review): a row of an id-keyed family
   needs a text `id`, and a key is never a list. A `custom_attributes` value nests 32 levels at
   most. An exception that escapes the tool rolls its batch back. Before, a row with no `id` was
   stored with a NULL key, and a value 1,500 levels deep was stored as it was. After either,
   `readiness_check` and `export_html` raised. The earlier items of a batch that raised were
   committed by the next write.
-- `slate_export` and `slate_read` (plan 227): an interview page for the operator, and a reader
-  for the answers file that the page saves. The page runs one script, named by hash in a content
-  policy, and it loads and sends nothing. The reader writes nothing. The tools number 21.
 
 ## [6.4.0] - 2026-10-10
 

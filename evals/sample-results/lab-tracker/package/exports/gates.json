@@ -1,10 +1,10 @@
 {
  "tamheed_export": {
-  "version": "4.7.0",
+  "version": "6.5.0",
   "package": "package",
   "tool": "gate_run",
   "args": {},
-  "digest": "48e5d2e35cf1ff9a43340f629d07fa21ea5823eab9f3b5f547c6c4cda65a29b3",
+  "digest": "475fa55128c77e5ef22fd5d6913c4344513ba8089e0e01851a5da6c69134a936",
   "memory_matches_disk": true
  },
  "result": {
@@ -14,7 +14,7 @@
    "G-IDS": {
     "status": "pass",
     "failures": [],
-    "note": "verified now: foreign_key_check clean, entity_index consistent (67 ids)"
+    "note": "verified now: foreign_key_check clean, entity_index consistent (132 ids)"
    },
    "G-DEC-STATUS": {
     "status": "pass",
@@ -43,24 +43,25 @@
     "failures": []
    },
    "audit_evidence": {
-    "evidenced": 3,
+    "evidenced": 4,
     "narrated": 0,
     "ungraded": 1,
     "narrated_ids": [],
     "ungraded_ids": [
      "AV-005"
     ],
-    "note": "over each active AC's LATEST verdict (superseded verdicts are history, as acs-met reads them): narrated = a graded verdict with no evidence — the graded party grading itself (C7); ungraded = a Pending placeholder nobody has graded"
+    "note": "over each active AC's LATEST verdict (superseded verdicts are history, as acs-met reads them). Narrated = a graded verdict with no evidence, the graded party grading itself (C7). Ungraded = a Pending placeholder nobody has graded"
    },
    "G-REL": {
     "status": "pass",
     "mistyped": [],
-    "note": "stored edges must satisfy RELATION_RULES; retype a wrong edge in ONE entity_upsert batch: {retire: true} on the old triple + the correct relation (relates_to only when no typed relation fits and the link itself is real)"
+    "note": "stored edges must satisfy RELATION_RULES. Retype a wrong edge in ONE entity_upsert batch: {retire: true} on the old triple + the correct relation. Use relates_to only when no typed relation fits and the link itself is real"
    },
    "requirements_unwired": {
     "status": "advisory",
     "requirements": [],
-    "note": "non-retired requirements with ZERO trace edges — wire derives_from/implements/tests in the session that creates them; never fails the gate"
+    "missing": {},
+    "note": "non-retired requirements that miss a leg they owe. A leg is any link to a decision or ADR, a work item or slice, or a test (the G-TRACE reading). A requirement owes one leg. An Implemented requirement owes all three. `missing` names the legs per id. Wire derives_from, implements and tests in the session that creates the row. A scope-change link is not a leg. `waived` names an id the operator waived for `requirements-wired`. You never author a waiver on your own judgment. This rule never fails the gate"
    }
   }
  }

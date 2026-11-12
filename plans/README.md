@@ -195,8 +195,8 @@ IN PROGRESS / DONE.
 | 225 | [A section can be retired](225-section-status.md) -- migration 009, a nullable status, one NULL-safe live filter (R85) | -- | DONE -- 2026-11-12 (`524c9b8`, CI run 43135043872 green on eleven jobs) |
 | 226 | [Project registers](226-project-registers.md) -- migration 010, a register declares its fields, entries are checked at write (R81, R93, R94) | the export, 223 | committed 2026-11-12 (`27fa85f`: 255 contract tests, both field replays clean, three older write-path defects closed). Its first CI run failed on the Python 3.10 and 3.11 legs for one line of a test. DONE with the correction `451a333` (CI run 43194586349 green on eleven jobs) |
 | 227 | [The interview page](227-interview-page.md) -- `slate_export` and `slate_read`, a separate page with its own content policy (R82) | the export | DONE 2026-11-12 (`054c7c0`: a suite of 18, two reviews folded in, a browser pass, CI run 43205808062 green on eleven jobs) |
-| 228 | [The guide, its diagrams, the docs sweep](228-guide-diagrams-docs.md) | 221-227 | built and validated 2026-11-12, awaiting its commit |
-| 229 | [Acceptance, release 6.5.0, the two field prompts](229-release-6.5.0.md) | 221-228 | PLANNED |
+| 228 | [The guide, its diagrams, the docs sweep](228-guide-diagrams-docs.md) | 221-227 | DONE 2026-11-12 (`151239e`, CI run 43207066805 green on eleven jobs) |
+| 229 | [Acceptance, release 6.5.0, the two field prompts](229-release-6.5.0.md) | 221-228 | acceptance passed and the stamp built 2026-11-12, awaiting its commit, then the release on the operator's word |
 
 ### Field cycle review-page -- plans 219-220 -> v6.4.0 (2026-10-10; maintainer-executed)
 

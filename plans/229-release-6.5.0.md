@@ -47,3 +47,32 @@
   by key, so the new `lifecycle_status` key in every section row does not break them. One of
   them skips bank rows whose `custom_attributes.kind` is `superseded`. Two section rows carry
   that mark. One was retired with the typed status on a scratch copy, and every gate kept its status.
+
+## As built: acceptance and the stamp (2026-11-12)
+
+Acceptance on the branch, at the stamped tree:
+
+| Check | Result |
+|---|---|
+| `python check.py` on Python 3.13 | passes, thirteen suites |
+| `python check.py` on Python 3.10 | passes |
+| the same with deprecation warnings as errors | passes |
+| the selftest | 21 of 21 tools, longest description 677 characters |
+| `scripts-229/acceptance_650.py`, one scenario through plans 221 to 228 | 21 observations hold |
+| the first field's package on a scratch copy | the sync moves three files, verifies clean |
+| the second field's 620 register rows | all admitted with fitted declarations, gates equal |
+| the second field's question bank through the slate tools | 75 and 227 questions, store verifies |
+
+The stamp (`scripts-229/stamp_650.py`): six version surfaces, the stock guide's two new
+paragraphs with its history key, the lab-tracker pins, and the changelog. The `[Unreleased]`
+block is REPLACED by the 6.5.0 entry, which names both migrations and carries the note for a
+live package. The fixture refresh (`refresh_lab_650.py`) ran the engine over the lab fixture:
+the stock guide, the review page, one CSV and the recorded gate report follow the release.
+
+Deviation from this plan, stated to the operator with the commit question: no register and no
+slate were written into the recorded lab fixture. The acceptance scenario exercises both on a
+package made for the run. The fixtures stay packages written before 6.5, which is a tested
+state: such a package is told the route at its first register write.
+
+Still open at this point: a person clicks Save on an interview page once, the merge and the tag
+on the operator's word, and the two field prompts.
