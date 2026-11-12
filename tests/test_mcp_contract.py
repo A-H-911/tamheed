@@ -1902,9 +1902,12 @@ class McpContractTest(unittest.TestCase):
         base = {"type": "constraint", "id": "CON-900", "title": "t"}
         self.assertTrue(srv.entity_upsert([base | {"custom_attributes": nested(32)}])["ok"])
         deep_text = "[" * 1500 + "]" * 1500
-        for value in (nested(33), nested(1500), deep_text, '{"a": ' + deep_text + "}"):
+        # the case is named by its number: printing a list 1,500 levels deep raises on
+        # Python 3.10 and 3.11, which is how this test first failed in CI
+        for case, value in enumerate((nested(33), nested(1500), deep_text,
+                                      '{"a": ' + deep_text + "}")):
             self.assertIn("nests deeper than 32 levels", self._refused(
-                base | {"custom_attributes": value}), str(value)[:20])
+                base | {"custom_attributes": value}), f"case {case}")
         self.assertIn("nests deeper than 32 levels", self._refused({
             "type": "register-entry", "id": "ENT-001", "register_id": "REG-001",
             "title": "t", "custom_attributes": {"a": nested(32)}}))

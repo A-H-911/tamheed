@@ -202,3 +202,15 @@ Every refusal came from a reference field or from the meaning of required. Value
 - **R98**: moving the second field's rows is put in its prompt at the release (plan 229), with
   the strict and fitted measurement and the maintainer's recommendation.
 - **R99**: one commit carries the registers and the three older write-path fixes.
+
+## As it landed (2026-11-12)
+
+- The commit is `27fa85f`. CI run 43191956903 FAILED on five of eleven jobs: every Python 3.10
+  and 3.11 leg. Python 3.12 and 3.13 passed, as did the server smoke.
+- Cause: one line of the new depth test. It built its failure message with `str()` of a list
+  1,500 levels deep, and that raises `RecursionError` on Python 3.10 and 3.11. The engine was
+  not at fault: with the line corrected, the refusal and the stored-value read both pass there.
+- Reproduced and proven locally on Python 3.10.19 and 3.11, which `uv run --python 3.10
+  --no-project` supplies. The whole gate passes on 3.10 and on 3.13, and the contract suite on
+  3.11. The correction is its own small commit.
+- Lesson: the gate runs on the oldest supported Python before a push. This machine can do it.
