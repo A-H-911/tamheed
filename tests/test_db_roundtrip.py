@@ -233,6 +233,88 @@ class RoundTripTest(unittest.TestCase):
         self.assertEqual(out["outcome"], "unobservable")                      # never probed
         self.assertIn("another host", out["evidence"])
 
+    def test_a_host_rename_inside_one_boot_is_still_this_machine(self):
+        """Plan 224 (R88, the field's lock report): a host name can change while the
+        machine runs. The boot session bridges that. Nothing else does: a machine made
+        from the same image has its own boot, a restart ends the session, and a lock
+        written before the marker existed carries none."""
+        here = store.socket.gethostname()
+        # the lock carries this process's own pid namespace, as a real lock does (on Linux
+        # the bridge needs it proven equal - see the container test below)
+        base = dict(pid=4242, taken_at="2026-09-19T20:13:02+00:00", started=1000.0,
+                    pidns=store._pid_namespace())
+        dead = lambda pid: ("not-running", None)
+        lock = self._lock(host="old-name.local", boot="boot-A", **base)
+        out = store.observe_lock(lock, probe=dead, boot=lambda: "boot-A")
+        self.assertEqual(out["outcome"], "not-running")           # observed, so unlockable
+        self.assertIn("old-name.local", out["evidence"])          # both names are told
+        self.assertIn(here, out["evidence"])
+        out = store.observe_lock(lock, probe=lambda pid: ("running", 1000.5),
+                                 boot=lambda: "boot-A")
+        self.assertEqual(out["outcome"], "alive")                 # a live holder is still seen
+        for lock_boot, now_boot in (("boot-A", "boot-B"),         # a restart, or another machine
+                                    (None, "boot-A"),             # a lock from before 6.5.0
+                                    ("boot-A", None)):            # a platform with no marker
+            holder = dict(base, host="old-name.local")
+            if lock_boot:
+                holder["boot"] = lock_boot
+            probed = []
+            out = store.observe_lock(self._lock(**holder),
+                                     probe=lambda pid: probed.append(pid) or ("not-running", None),
+                                     boot=lambda b=now_boot: b)
+            self.assertEqual(out["outcome"], "unobservable", (lock_boot, now_boot))
+            self.assertIn("another host", out["evidence"])
+            self.assertEqual(probed, [])                          # never probed
+        # the same host name never asks for the marker: that path is unchanged
+        out = store.observe_lock(self._lock(host=here, **base), probe=dead,
+                                 boot=lambda: self.fail("the marker was read"))
+        self.assertEqual(out["outcome"], "not-running")
+
+    def test_containers_that_share_a_boot_are_not_bridged_without_a_proven_namespace(self):
+        """Plan 224 (review): containers on one Linux host share the kernel's boot id. The
+        bridge there needs the pid namespace recorded AND equal, or a pid that this
+        container cannot see would read as not-running while its writer lives."""
+        base = dict(pid=4242, host="other-container", boot="boot-A", started=1000.0,
+                    taken_at="2026-09-19T20:13:02+00:00")
+        probed = []
+        dead = lambda pid: probed.append(pid) or ("not-running", None)
+        real_platform, real_ns = store.sys.platform, store._pid_namespace
+        self.addCleanup(setattr, store.sys, "platform", real_platform)
+        self.addCleanup(setattr, store, "_pid_namespace", real_ns)
+        store.sys.platform = "linux"
+        store._pid_namespace = lambda: "pid:[1]"
+        for pidns in (None, "pid:[2]"):                           # none recorded, or another
+            holder = dict(base) if pidns is None else dict(base, pidns=pidns)
+            out = store.observe_lock(self._lock(**holder), probe=dead, boot=lambda: "boot-A")
+            self.assertEqual(out["outcome"], "unobservable", pidns)
+        self.assertEqual(probed, [])                              # never probed
+        out = store.observe_lock(self._lock(**dict(base, pidns="pid:[1]")), probe=dead,
+                                 boot=lambda: "boot-A")
+        self.assertEqual(out["outcome"], "not-running")           # proven the same: bridged
+
+    def test_the_lock_records_the_boot_session_and_has_one_writer(self):
+        """Plan 224: the store and package_migrate write the SAME payload (lock_payload), and
+        the boot marker is the same in two processes of one boot, or absent in both."""
+        payload = store.lock_payload()
+        self.assertEqual(set(payload), {"pid", "host", "taken_at", "started", "identity",
+                                        "pidns", "boot"})
+        self.assertEqual(payload["boot"], store.boot_session())
+        with store.PackageStore(self.pkg):
+            held = json.loads((Path(self.pkg) / "data" / ".lock").read_text(encoding="utf-8"))
+        self.assertEqual(set(held), set(payload))
+        other = subprocess.run(
+            [sys.executable, "-c", "import sys; sys.path.insert(0, sys.argv[1]);"
+             " import store; print(store.boot_session())", str(Path(store.__file__).parent)],
+            capture_output=True, text=True)
+        self.assertEqual(other.stdout.strip(), str(store.boot_session()))
+        if sys.platform.startswith("linux"):
+            self.assertTrue(store.boot_session())                 # the kernel always has one
+            # recorded for the reasoning in plan 224: the initial pid namespace has one
+            # constant id on every Linux host, so this check alone tells no two hosts apart
+            self.assertRegex(store._pid_namespace(), r"^pid:\[\d+\]$")
+        if sys.platform == "win32":
+            self.assertIsNone(store.boot_session())               # no marker a user can read
+
     def test_observe_lock_legacy_lock_falls_back_to_ordering(self):
         """A lock without a recorded start (pre-4.9.0, or a legacy bare pid) can only be
         judged by ordering: a process that started AFTER the lock was taken is not the

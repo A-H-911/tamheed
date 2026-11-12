@@ -82,6 +82,15 @@ the trust model and how to report a problem.
   spawns no process and sends no signal (`os.kill(pid, 0)` never runs on Windows, where it
   terminates the target). A pid from the lock file is probed only if it is a real, bounded
   integer. The lock's strings are length-capped before they reach the journal (plans 063–064).
+  Since v6.5 (plan 224) a lock also records the boot session, read on Linux from the kernel's
+  boot id. It is no hardware identifier: it changes at every boot and names no machine. A machine
+  id is not read, because machines made from one image share it. A host-name mismatch is bridged
+  only by an equal boot session. On Linux it also needs an equal, recorded pid namespace, because
+  containers on one host share a boot. `package_unlock` refuses while a stopped migration's
+  staging files remain. The stated limit: two machines restored from one memory snapshot share
+  the boot id, as they share every pid. If one is renamed and its copy of the writer is killed,
+  it reads a live writer on the other machine as gone. The operator's word is the guard for
+  that case, as it already is when two such machines keep one host name.
 - **One destructive lifecycle tool, operator-only.** `package_unlock(confirm=true)` removes
   `data/.lock` only for a holder OBSERVED dead (`not-running` / `reused`). It refuses on `alive`
   and `unobservable`, proves the store loads first, removes only the exact bytes it judged,

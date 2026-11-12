@@ -121,6 +121,13 @@ operator again (R88, R89).
   while any `data/*.jsonl.tmp` staging file exists.
 - **R90** (at plan 222's commit) `requirements-wired` reads a requirement as live until its
   `retired_in` is set, as G-TRACE does. A dead status alone does not take a row out of the rule.
+- **R91** (at plan 224a's commit, after the lock review) The boot-session bridge stays as built.
+  Its limit is stated in the code, in `SECURITY.md` and in both field prompts: two machines
+  restored from one memory snapshot share the boot id. The other option, a bridge that only
+  reports, was declined.
+- **R92** (the same question round) Reviews for the rest of the round run through the general
+  code reviewer with a security brief, and plan 227 gets a second independent pass. The hook
+  that refuses the security-review agent on this branch stays untouched.
 
 ## Step 0
 

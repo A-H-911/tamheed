@@ -954,9 +954,9 @@ def trace_path(f, ftype: str) -> dict:
 # identifier drawn as written (a table, a file, a journal event type).
 TOOL_EFFECTS = {
     "server_info": {
-        "needs": [("@need.none", 5824)],
-        "reads": [("plugin.json", 5798), ("packages", 5826), ("@resume", 5842)],
-        "writes": [("@nothing", 5805)]},
+        "needs": [("@need.none", 5864)],
+        "reads": [("plugin.json", 5838), ("packages", 5866), ("@resume", 5882)],
+        "writes": [("@nothing", 5845)]},
     "package_create": {
         "needs": [("@need.closed", 1023), ("@need.lockfree", 1032)],
         "reads": [("@nothing", 1020)],
@@ -970,9 +970,9 @@ TOOL_EFFECTS = {
         "reads": [("@nothing", 1501)],
         "writes": [("@canonical", 1509), ("@lock_released", 1525), ("data/*.unflushed", 1521)]},
     "package_unlock": {
-        "needs": [("@need.name", 5492), ("@need.word", 5533)],
-        "reads": [("@lock_file", 5529)],
-        "writes": [("@lock_removed", 5566), ("progress_entries", 5583), ("forced-override", 5586)]},
+        "needs": [("@need.name", 5515), ("@need.word", 5568)],
+        "reads": [("@lock_file", 5552)],
+        "writes": [("@lock_removed", 5606), ("progress_entries", 5623), ("forced-override", 5626)]},
     "entity_upsert": {
         "needs": [("@need.open", 1840)],
         "reads": [("@readiness", 1955), ("@skill_names", 2075)],
@@ -1012,18 +1012,18 @@ TOOL_EFFECTS = {
         "writes": [("README.md", 4468), ("<target>/CLAUDE.md", 4888), ("<target>/.mcp.json", 4544),
                    ("<package>/CLAUDE.md", 4847)]},
     "package_migrate": {
-        "needs": [("@need.name", 5121), ("@need.lockfree", 5161), ("@need.word", 5121)],
-        "reads": [("@canonical", 5201)],
-        "writes": [("data-v3-backup/", 5197), ("data/*.jsonl", 5416), ("progress_entries", 5345),
-                   ("README.md", 5479)]},
+        "needs": [("@need.name", 5139), ("@need.lockfree", 5179), ("@need.word", 5139)],
+        "reads": [("@canonical", 5224)],
+        "writes": [("data-v3-backup/", 5220), ("data/*.jsonl", 5439), ("progress_entries", 5368),
+                   ("README.md", 5502)]},
     "package_adopt": {
-        "needs": [("@need.source", 5609), ("@need.word", 5614)],
-        "reads": [("@source_repo", 5614)],
-        "writes": [("@new_package", 5625), ("README.md", 5618), ("CLAUDE.md", 5620)]},
+        "needs": [("@need.source", 5649), ("@need.word", 5654)],
+        "reads": [("@source_repo", 5654)],
+        "writes": [("@new_package", 5665), ("README.md", 5658), ("CLAUDE.md", 5660)]},
     "export_html": {
-        "needs": [("@need.open", 5669)],
-        "reads": [("@all_tables", 5672), ("@readiness", 5675)],
-        "writes": [("review.html", 5712), ("csv/*.csv", 5741)]},
+        "needs": [("@need.open", 5709)],
+        "reads": [("@all_tables", 5712), ("@readiness", 5715)],
+        "writes": [("review.html", 5752), ("csv/*.csv", 5781)]},
     "package_verify": {
         "needs": [("@need.name", 1539)],
         "reads": [("data/*.jsonl", 1592), ("review.html", 1603)],

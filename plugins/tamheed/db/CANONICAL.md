@@ -55,12 +55,15 @@ violations, and bad JSON fail loud. Nothing is silently fixed.
 One loader/writer per package, guarded by a lockfile:
 
 - `data/.lock` is created with `O_CREAT | O_EXCL` on open-for-write. It contains a JSON
-  object `{pid, host, taken_at, started, identity, pidns}` for diagnostics (legacy bare-integer
-  locks are tolerated when read).
+  object `{pid, host, taken_at, started, identity, pidns, boot}` for diagnostics (legacy
+  bare-integer locks are tolerated when read). The store and `package_migrate` write the same
+  object. `boot` is the boot session where the platform offers one (v6.5, plan 224).
 - If `data/.lock` already exists, opening the store **fails loud** (`StoreLockedError`): no
-  waiting, no stealing. A crashed writer's stale lock is removed by the operator, deliberately.
-  Remove it when EITHER staleness discriminator proves the holder cannot be live. The pid is
-  not a plausible agent session, or the process started after `taken_at`.
+  waiting, no stealing. A crashed writer's stale lock is removed through `package_unlock`. It
+  observes the holder and removes the lock on the operator's word, only when the holder was
+  observed dead. A host name that changed inside one boot session is still observed. On Linux
+  the pid namespace must also be recorded and equal, because containers share a boot. A lock
+  the tool cannot observe is removed by the operator, deliberately.
 - The lock is released (file removed) when the store closes, including on error exit.
 
 ## Byte-stability guarantee (field-proven, plan 019)

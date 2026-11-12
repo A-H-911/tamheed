@@ -4930,12 +4930,30 @@ def _restore_from_backup(data: Path, backup: Path, conversion: dict | None) -> N
     """plan 045: undo a partial confirm — copy every backed-up file back, drop files the
     conversion wrote, delete the backup so the operator can retry."""
     import shutil
-    for f in data.glob("*.jsonl"):
-        f.unlink()
+    # Plan 224 (review): the restore goes through staging files too. The old order removed
+    # every table file and only then copied the backup in. A crash between the two left a
+    # partial table set and no staging file: a state the store loads as empty tables, and
+    # one that package_unlock's staging guard could not see.
     for f in data.glob("*.tmp"):
-        f.unlink()
-    for f in backup.iterdir():
-        shutil.copy2(f, data / f.name)
+        f.unlink()                                   # the failed attempt's own staging
+    staged = []
+    for f in sorted(backup.iterdir()):
+        dst = data / (f.name + ".tmp")
+        shutil.copy2(f, dst)
+        staged.append(dst)
+    keep = {dst.name[:-4] for dst in staged}
+    for f in data.glob("*.jsonl"):
+        if f.name not in keep:
+            f.unlink()                                # a table the failed attempt created
+    for dst in staged:
+        final = data / dst.name[:-4]
+        try:
+            os.replace(dst, final)
+        except OSError:
+            # the restore often runs BECAUSE a rename failed: a copy still lands the file,
+            # and the staging file stays until it has
+            shutil.copy2(dst, final)
+            dst.unlink()
     for rel in (conversion or {}).get("prompts_converted", []):
         (data.parent / rel).unlink(missing_ok=True)
     prompts = data.parent / "prompts"
@@ -5162,6 +5180,11 @@ def package_migrate(name: str, confirm: bool = False) -> dict:
                         " - package_unlock(name) reports the holder and is the"
                         " sanctioned removal")
     try:
+        if fd is not None:
+            # Plan 224 (R89): the lock names its holder, as the store's own lock does. It
+            # was an empty file, which nothing could observe, so a crash left it for good.
+            # Written inside the try: a failed write still closes and removes the lock.
+            os.write(fd, json.dumps(store.lock_payload()).encode("utf-8"))
         # plan 035: a v4 store never re-migrates, but it CAN learn baseline entity
         # types added by later MINOR releases (extension.md's "registry-row write
         # path"). Staged like everything else; pure append — no data-v3-backup taken
@@ -5527,24 +5550,41 @@ def package_unlock(name: str, confirm: bool = False) -> dict:
         return _err(f"package '{name}': the lock could not be read ({exc}) - its"
                     " holder may have it open. Nothing was removed")
     seen = _observe_lock(lock)
+    # Plan 224 (R89): a migration that stopped mid-write leaves `*.jsonl.tmp` staging files,
+    # and a table file that is missing loads as an empty table. The store can then LOAD
+    # half-swapped, so the load check below proves nothing while a staging file exists.
+    staged = sorted(p.name for p in data.glob("*.jsonl.tmp"))
+    staged_note = (f" data/ holds staging file(s) of a migration that stopped mid-write"
+                   f" ({', '.join(staged)}). The store on disk may be half-swapped."
+                   " Reconcile data/ through git first, then unlock.") if staged else ""
+    # A server that a client left behind keeps its lock and stays alive: name the remedy.
+    alive_note = (" The holder is a live process. If it is a server that a client left"
+                  " behind, end that process first. The lock then reads not-running."
+                  ) if seen["outcome"] == "alive" else ""
     report = {"ok": True, "stage": "report", "package": name, "locked": True,
               "lock": {k: seen.get(k) for k in ("pid", "host", "taken_at")},
               "observed": seen["outcome"], "evidence": seen["evidence"],
-              "would_unlock": seen["outcome"] in _UNLOCKABLE}
+              "staged": staged,
+              "would_unlock": seen["outcome"] in _UNLOCKABLE and not staged}
     if not confirm:
         report["note"] = (
             "nothing written. confirm=true removes the lock and journals it - on the"
             " OPERATOR's word only." if report["would_unlock"] else
+            "nothing written. confirm=true would be REFUSED." + staged_note
+            if staged and seen["outcome"] in _UNLOCKABLE else
             "nothing written. confirm=true would be REFUSED: the holder was not"
             " observed dead. If you KNOW the writer is gone (another host, a container),"
-            " removing data/.lock by hand remains the deliberate manual path.")
+            " removing data/.lock by hand remains the deliberate manual path."
+            + alive_note + staged_note)
         return report
-    if not report["would_unlock"]:
+    if seen["outcome"] not in _UNLOCKABLE:
         return _err(f"package '{name}': the lock's holder was observed"
                     f" `{seen['outcome']}` ({seen['evidence']}) - not removed. Only a"
                     " holder observed not-running or reused is unlocked by this tool."
                     " A manual removal of data/.lock stays the deliberate path when YOU"
-                    " know what this host cannot see")
+                    " know what this host cannot see." + alive_note)
+    if staged:
+        return _err(f"package '{name}':{staged_note} The lock was left in place")
     try:
         stored = _stored_package_version(pkg_dir)
     except ValueError as exc:
@@ -5897,7 +5937,8 @@ TOOLS = {
     "package_open": (package_open, "Open an existing package (takes the single-writer lock) and wire the root CLAUDE.md pointer when the project has none"),
     "package_unlock": (package_unlock,
                        "Report a lock's holder. confirm=true (operator words only) removes"
-                       " a lock whose holder was observed dead, and journals it"),
+                       " a lock whose holder was observed dead, and journals it. It refuses"
+                       " while staging files of a stopped migration remain"),
     "package_close": (package_close, "Write back canonical text and release the lock"),
     "entity_upsert": (entity_upsert, "Batch upsert entities in one transaction, with per-item verdicts"),
     "entity_query": (entity_query, _ENTITY_QUERY_DESC),

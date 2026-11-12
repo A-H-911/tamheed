@@ -215,6 +215,10 @@ id resolves, and the damage stays until someone reads it.
   `package_unlock(name, confirm=true)` is the OPERATOR's word, never yours, and refuses on `alive` and
   `unobservable`. Never remove `data/.lock` on your own judgment. When the tool refuses, the manual
   removal is the operator's deliberate act. Interview them. It is never yours.
+- The tool also refuses while `data/*.jsonl.tmp` files exist. They are the staging files of a
+  migration that stopped, and the report lists them under `staged`. Reconcile `data/` through git
+  first. For an `alive` holder the refusal says to end that process first: a server that a client
+  left behind keeps its lock.
 - Every `operator_confirm: true`, every `force: true`, every `go_no_go`, every waiver row is the
   operator's explicit words. They come from an interview in this session
   (`tamheed:operator-interview`). The JSON

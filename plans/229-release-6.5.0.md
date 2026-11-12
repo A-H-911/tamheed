@@ -23,7 +23,7 @@
   (a history work item as DEC-499 q2 chose, or a waiver). FB-030, FB-031, FB-032: `Resolved`,
   `resolved_in 6.5.0`, `upstream_ref` the plan URL. What was not built. A failed class is an FB row.
 - **Jisr prompt**: the same upgrade. The lock's limits stated (new locks only, not across a restart,
-  another machine stays manual). One line that runs the macOS probe through the installed plugin. FB-001, 002, 003, 009,
+  another machine stays manual, and the memory-snapshot limit of R91). One line that runs the macOS probe through the installed plugin. FB-001, 002, 003, 009,
   011, 004, 005, 006, 007: `Resolved` with plan URLs. FB-003's answer is `Hold`, and GATE-001's outcome is
   the operator's to write. Moving the three registers into the family, and what becomes of the local
   page's FB-008 row, are the operator's calls in Jisr, each put with a recommendation. FB-010's

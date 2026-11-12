@@ -185,8 +185,39 @@ def _read_lock(lock_path: Path) -> dict:
     return parsed if isinstance(parsed, dict) else {}
 
 
+def boot_session() -> str | None:
+    """Plan 224 (R88): an identity of THIS BOOT of this machine, or None where the platform
+    offers none that a standard user can read. Linux: the kernel's boot id, a random value
+    per boot. A machine built from the same disk image boots by itself, so it has its own
+    (a machine id is shared by such clones, which is why it is not used here). The stated
+    limit: two machines restored from ONE MEMORY SNAPSHOT share the boot id, as they share
+    every pid. Windows: None. No readable marker was found, and a rename there needs a
+    restart."""
+    try:
+        if sys.platform.startswith("linux"):
+            return "linux:" + Path("/proc/sys/kernel/random/boot_id").read_text(
+                encoding="utf-8").strip()
+    except OSError:
+        return None
+    return None
+
+
+def lock_payload() -> dict:
+    """What a lock file holds. ONE writer of the shape, for the store and for
+    package_migrate (plan 224, R89): a lock that names no holder can never be observed,
+    so the tool could never remove it."""
+    return {"pid": os.getpid(), "host": socket.gethostname(),
+            "taken_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+            # plan 063: the writer's own start time is what makes pid REUSE decidable
+            "started": process_start_time(os.getpid())[1],
+            "identity": process_identity(os.getpid()),
+            "pidns": _pid_namespace(),
+            # plan 224: the boot session bridges a host-name change inside one boot
+            "boot": boot_session()}
+
+
 def observe_lock(lock_path: Path, probe=process_start_time,
-                 identity=process_identity) -> dict:
+                 identity=process_identity, boot=None) -> dict:
     """Plan 063 (findings_25 s1): what can be OBSERVED about a lock's holder, with the
     evidence - the store declines to GUESS, and reporting an observation is not
     guessing. Outcomes: `not-running` (no such process), `reused` (the pid belongs
@@ -200,9 +231,38 @@ def observe_lock(lock_path: Path, probe=process_start_time,
     if not holder.get("pid") or not holder.get("host"):
         return {**out, "evidence": "the lock does not name a pid and a host (legacy or"
                                    " unreadable) - nothing to observe"}
-    if holder["host"] != socket.gethostname():
-        return {**out, "evidence": f"held on another host ({holder['host']}) - this host"
-                                   " cannot observe that process"}
+    here = socket.gethostname()
+    if holder["host"] != here:
+        # Plan 224 (R88): a host name can change while the machine runs (a laptop that
+        # moves between networks). The boot session tells that case from another machine:
+        # equal markers mean the same running system. Anything else stays unobservable -
+        # no marker in the lock (written before 6.5.0), none on this platform, or a
+        # different one (a restart, or truly another machine). Never probed in that case.
+        now_boot = (boot or boot_session)()
+        if not (holder.get("boot") and now_boot and holder["boot"] == now_boot):
+            return {**out, "evidence": f"held on another host ({holder['host']}) - this"
+                                       " host cannot observe that process"}
+        # Containers on one Linux host share the kernel, so they share its boot id. The
+        # bridge therefore needs the pid namespace PROVEN equal there: a lock that
+        # recorded none is not bridged, or a pid this container cannot see would read
+        # as not-running while its writer lives next door.
+        if sys.platform.startswith("linux") and not (
+                holder.get("pidns") and holder["pidns"] == _pid_namespace()):
+            return {**out, "evidence": f"held on another host ({holder['host']}) in the"
+                                       " same boot session. The pid namespace is not"
+                                       " proven the same, so this host cannot observe"
+                                       " that process"}
+        seen = _observe_holder(holder, out, probe, identity)
+        # the evidence states what was observed, never a conclusion about why
+        return {**seen, "evidence": seen["evidence"] + (
+            f". The lock names host {str(holder['host'])[:80]} and this host is {here}. Observed:"
+            " the same boot session"
+            + (" and the same pid namespace" if sys.platform.startswith("linux") else ""))}
+    return _observe_holder(holder, out, probe, identity)
+
+
+def _observe_holder(holder: dict, out: dict, probe, identity) -> dict:
+    """The pid-namespace check and the pid probe, for a holder on THIS machine."""
     if holder.get("pidns") and holder["pidns"] != _pid_namespace():
         return {**out, "evidence": "held in another pid namespace (a container sharing"
                                    " this hostname) - its pids are not visible here"}
@@ -508,14 +568,7 @@ class PackageStore:
                 "package_unlock(name) reports the holder and removes the lock only "
                 "on the operator's word"
             ) from None
-        os.write(self._lock_fd, json.dumps({
-            "pid": os.getpid(), "host": socket.gethostname(),
-            "taken_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
-            # plan 063: the writer's own start time is what makes pid REUSE decidable
-            "started": process_start_time(os.getpid())[1],
-            "identity": process_identity(os.getpid()),
-            "pidns": _pid_namespace(),
-        }).encode("utf-8"))
+        os.write(self._lock_fd, json.dumps(lock_payload()).encode("utf-8"))
         try:
             self.conn = load(self.data_dir)
         except BaseException:

@@ -5729,6 +5729,92 @@ class V4EngineTest(unittest.TestCase):
             self.assertIn(outcome, out["error"])
             self.assertTrue(lock.exists())                           # untouched
 
+    def test_package_unlock_refuses_while_a_migration_left_staging_files(self):
+        """Plan 224 (R89): a migration that stopped mid-write leaves `*.jsonl.tmp` files, and
+        a missing table file loads as an empty table. The store can load half-swapped, so
+        the unlock refuses until the staging files are gone."""
+        lock = self._plant_lock("not-running")
+        staged = lock.parent / "requirements.jsonl.tmp"
+        staged.write_text("{}\n", encoding="utf-8")
+        self.addCleanup(lambda: staged.exists() and staged.unlink())
+        report = srv.package_unlock("demo")
+        self.assertFalse(report["would_unlock"])
+        self.assertEqual(report["staged"], ["requirements.jsonl.tmp"])
+        self.assertIn("requirements.jsonl.tmp", report["note"])
+        out = srv.package_unlock("demo", confirm=True)
+        self.assertFalse(out["ok"], out)
+        self.assertIn("requirements.jsonl.tmp", out["error"])
+        self.assertTrue(lock.exists())                              # untouched
+        staged.unlink()
+        self.assertEqual(srv.package_unlock("demo")["staged"], [])
+        self.assertTrue(srv.package_unlock("demo", confirm=True)["ok"])
+
+    def test_a_restore_that_stops_midway_leaves_staging_files_the_guard_sees(self):
+        """Plan 224 (review): the migration's restore removed every table file before it
+        copied the backup in. It stages first now, so a restore that stops leaves
+        `*.jsonl.tmp` files, which package_unlock refuses on."""
+        root = Path(tempfile.mkdtemp())
+        self.addCleanup(__import__("shutil").rmtree, root, True)
+        data, backup = root / "data", root / "backup"
+        data.mkdir()
+        backup.mkdir()
+        (backup / "a.jsonl").write_text("old\n", encoding="utf-8")
+        (data / "a.jsonl").write_text("half-migrated\n", encoding="utf-8")
+        (data / "b.jsonl").write_text("made by the failed attempt\n", encoding="utf-8")
+        import shutil
+        real_replace, real_copy = srv.os.replace, shutil.copy2
+
+        def stop(*_args):
+            raise OSError("stopped")
+
+        def copy_staging_only(src, dst, *args, **kwargs):
+            if not str(dst).endswith(".tmp"):
+                raise OSError("stopped")                             # the swap never lands
+            return real_copy(src, dst, *args, **kwargs)
+
+        srv.os.replace, shutil.copy2 = stop, copy_staging_only
+        self.addCleanup(setattr, srv.os, "replace", real_replace)
+        self.addCleanup(setattr, shutil, "copy2", real_copy)
+        with self.assertRaises(OSError):
+            srv._restore_from_backup(data, backup, None)
+        self.assertEqual(sorted(p.name for p in data.glob("*.jsonl.tmp")), ["a.jsonl.tmp"])
+        self.assertTrue((data / "a.jsonl").exists())                 # nothing lost meanwhile
+        # a rename that fails while a copy works still restores (the restore often runs
+        # because a rename failed)
+        shutil.copy2 = real_copy
+        srv._restore_from_backup(data, backup, None)
+        self.assertEqual({p.name: p.read_text(encoding="utf-8") for p in data.iterdir()},
+                         {"a.jsonl": "old\n"})
+        self.assertFalse(backup.exists())
+
+    def test_package_unlock_says_what_to_do_about_a_live_holder(self):
+        """Plan 224: a server that a client left behind keeps the lock and stays alive. The
+        refusal names the remedy: end that process, then the lock reads not-running."""
+        self._plant_lock("alive")
+        self.assertIn("end that process", srv.package_unlock("demo")["note"])
+        self.assertIn("end that process", srv.package_unlock("demo", confirm=True)["error"])
+        self._plant_lock("unobservable")
+        self.assertNotIn("end that process", srv.package_unlock("demo")["note"])
+
+    def test_package_migrate_writes_a_lock_that_names_its_holder(self):
+        """Plan 224 (R89): the migrate lock was an empty file. An empty lock names no
+        holder, so after a crash the tool could never observe it or remove it."""
+        srv.package_close()
+        seen = {}
+        real = srv._stored_package_version
+
+        def spy(pkg_dir):
+            seen["lock"] = (Path(pkg_dir) / "data" / ".lock").read_text(encoding="utf-8")
+            return real(pkg_dir)
+
+        srv._stored_package_version = spy
+        self.addCleanup(setattr, srv, "_stored_package_version", real)
+        srv.package_migrate("demo", confirm=True)       # nothing to migrate: the lock is still taken
+        held = json.loads(seen["lock"])
+        self.assertEqual(held["pid"], os.getpid())
+        self.assertEqual(set(held), set(srv.store.lock_payload()))
+        self.assertFalse((srv.PACKAGE_ROOT / "demo" / "data" / ".lock").exists())   # released
+
     def test_package_unlock_removes_a_dead_holders_lock_and_journals_it(self):
         for outcome in ("not-running", "reused"):
             lock = self._plant_lock(outcome, evidence=f"evidence for {outcome}")
