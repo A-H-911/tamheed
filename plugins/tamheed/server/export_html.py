@@ -764,7 +764,12 @@ def _readiness(conn, gates, ready, readiness=None):
             if pop.get("scoped"):
                 pop_s += " (scoped)"
         ents = list(r.get("entities") or [])
-        ents_s = ", ".join(ents[:8]) + (f" … +{len(ents) - 8}" if len(ents) > 8 else "")
+        # plan 228: `requirements-wired` names the legs that each requirement misses. The
+        # page showed the ids alone, so the operator had to run the tool to read the cause.
+        legs = r.get("missing") if isinstance(r.get("missing"), dict) else {}
+        ents_s = ", ".join(
+            f"{e} ({', '.join(map(str, legs[e]))})" if legs.get(e) else str(e)
+            for e in ents[:8]) + (f" … +{len(ents) - 8}" if len(ents) > 8 else "")
         omitted = r.get("omitted") or {}
         rows.append([r.get("rule"), r.get("severity"), r.get("status"), pop_s,
                      "" if r.get("discriminating", True) else "no",

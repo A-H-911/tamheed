@@ -635,6 +635,7 @@ TEXT: dict[str, dict[str, str]] = {
     "dia.package.readme": {"en": "README.md\nthe stock operator guide", "ar": "README.md\nدليل المشغّل المخزون"},
     "dia.package.review": {"en": "review.html\n12 sections", "ar": "review.html\n12 قسمًا"},
     "dia.package.exports": {"en": "exports/*.json\ndigest-stamped reads", "ar": "exports/*.json\nقراءات موسومة بالبصمة"},
+    "dia.package.slates": {"en": "slates/*.html\ninterview pages", "ar": "slates/*.html\nصفحات المقابلة"},
     "dia.package.csv": {"en": "csv/*.csv", "ar": "csv/*.csv"},
     "dia.package.target": {"en": "<target repo>/", "ar": "<target repo>/"},
     "dia.package.mcp": {"en": ".mcp.json — the tamheed server entry", "ar": ".mcp.json — مدخل خادم tamheed"},

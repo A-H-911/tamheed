@@ -640,6 +640,29 @@ class ExportHtmlTest(unittest.TestCase):
                          + out.count('<div class="graphwrap">'))
         self.assertEqual(out, self._export())                  # byte-identical again
 
+    def test_the_readiness_table_names_the_legs_a_requirement_misses(self):
+        """Plan 228 (R84): `requirements-wired` names the missing legs per requirement. The
+        page showed the ids alone, so the operator ran the tool to read the cause. The
+        legs now stand beside each id, and a rule with no such detail shows its ids as
+        before."""
+        srv.package_create("legs", "Legs", "rnd")
+        self.assertTrue(srv.entity_upsert([
+            {"type": "requirement", "id": "FR-001", "kind": "functional", "title": "t",
+             "lifecycle_status": "Approved", "source_kind": "brief", "source_span": "x"},
+            {"type": "requirement", "id": "FR-002", "kind": "functional", "title": "u",
+             "lifecycle_status": "Approved", "source_kind": "brief", "source_span": "y"},
+            {"type": "decision", "id": "DEC-001", "title": "d", "lifecycle_status": "Proposed"},
+            {"type": "trace-edge", "from_id": "FR-002", "to_id": "DEC-001",
+             "relation": "derives_from"}])["ok"])
+        rule = {r["rule"]: r for r in srv.readiness_check("package")["rules"]}[
+            "requirements-wired"]
+        self.assertEqual(rule["missing"], {"FR-001": ["decision", "work", "test"]})
+        out = self._export()
+        row = out[out.index("<td>requirements-wired</td>"):]
+        row = row[:row.index("</tr>")]
+        self.assertIn("<td>FR-001 (decision, work, test)</td>", row)
+        self.assertNotIn("FR-002", row)
+
     def test_gap_warning_cards_never_fold(self):
         """The sole folding exception: screening warnings exist to be SEEN."""
         srv.package_create("gappy", "Gappy", "rnd")

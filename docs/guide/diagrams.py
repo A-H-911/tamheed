@@ -506,6 +506,7 @@ def package_tree(f) -> dict:
         node("review", 240, 194, 190, 48, _L("package.review"), ""),
         node("exports", 240, 256, 190, 48, _L("package.exports"), ""),
         node("csv", 240, 318, 190, 36, _L("package.csv"), ""),
+        node("slates", 240, 368, 190, 48, _L("package.slates"), ""),   # plan 227: interview pages
         node("target", 480, 20, 150, 36, _L("package.target"), "strong"),
         node("mcp", 480, 80, 270, 40, _L("package.mcp"), ""),
         node("claude", 480, 134, 270, 48, _L("package.claude"), ""),
@@ -514,11 +515,12 @@ def package_tree(f) -> dict:
         edge("root", "data", side=("r", "l"), bus="tree"), edge("root", "readme", side=("r", "l"), bus="tree"),
         edge("root", "review", side=("r", "l"), bus="tree"), edge("root", "exports", side=("r", "l"), bus="tree"),
         edge("root", "csv", side=("r", "l"), bus="tree"),
+        edge("root", "slates", side=("r", "l"), bus="tree"),
         edge("tools", "data", _L("package.flush"), "acc", side=("b", "t"), label_at=(327, 55, "end")),
         edge("target", "mcp", side=("l", "l"), via=[(460, 38), (460, 100)], bus="target"),
         edge("target", "claude", side=("l", "l"), via=[(460, 38), (460, 158)], bus="target"),
     ]
-    return {"id": "d4", "w": 760, "h": 364, "nodes": ns, "edges": es}
+    return {"id": "d4", "w": 760, "h": 426, "nodes": ns, "edges": es}
 
 
 BUCKETS = [

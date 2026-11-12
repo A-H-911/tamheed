@@ -26,7 +26,8 @@ re-implements the methodology. This is enforceable (gate **G-CMD-THIN**). The co
    MCP SERVER     the capability's MECHANICAL HALF (successor of the v1 validator)
                   entity_upsert · entity_query · trace_query · gate_run · handoff_emit ·
                   progress_update · audit_record · work_bind · package_migrate · package_adopt ·
-                  export_html · package_verify · entity_export — the ONLY write path into a
+                  export_html · slate_export · slate_read · package_verify · entity_export —
+                  the ONLY write path into a
                   package (and the read path: a committed script quotes an exports/ file)
                         │  loads / writes back
                         ▼
@@ -106,6 +107,15 @@ so a slate's currency is one `package_verify` away. The same file is how a proje
 (v4.11). What the tools lack, and what the project built instead, is an `FB-` row. The operator
 confirms it, the project exports it into its findings, and the maintainer collects it. It is never a
 side utility over `data/`.
+
+Since v6.5 a long interview has its own route. **`slate_export`** writes a local interview page
+from a slate of questions, and it quotes every cited row from the store. The page runs one
+script, named by hash, and it loads and sends nothing. **`slate_read`** returns a checked
+transcript of the answers file that the operator saved, and it writes nothing. The transcript
+is a record of a file. An approval is still spoken in the session.
+
+A record type that no family holds takes a declared **register** (`REG-`) and its entries
+(`ENT-`), also since v6.5. The register declares its fields, and the write checks each entry.
 
 ```mermaid
 flowchart LR

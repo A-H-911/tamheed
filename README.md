@@ -322,6 +322,17 @@ situation, semi-auto vs fully-auto, and the single-writer-lock discipline. Your 
 beside it: purpose-named, operator-owned, screened (G-INJECT + stale/restated scans) but never rewritten
 by the tool.
 
+**New in v6.5.** A record type that no family holds takes a declared **register** (`REG-`) and its
+entries (`ENT-`). The register declares its fields, and the write checks each entry against them. A
+document section can be retired, and it then leaves the scans. `trace_query` reads every link in one
+call, in a fixed order with a total. It also returns the links that a foreign-key column holds, beside
+the stored edges. `requirements-wired` reads the three legs of a requirement and names the missing
+one. A refused value names the values that the column takes. The four gate outcomes are defined:
+`Go`, `Hold`, `Redirect` and `Kill`. The lock survives a host rename inside one boot on Linux and
+macOS. For a long interview, `slate_export` writes a local **interview page** from a slate of
+questions. `slate_read` returns a checked transcript of the answers file that the operator saved. The
+page runs one script named by hash, and the transcript is never the operator's word.
+
 You follow along through the committed **`review.html`** (regenerated via `export_html`, deterministic,
 so its diffs are meaningful, zero JavaScript). It is a dark, maximalist single page. Verdict and identity
 come first, then the **traceability flow**. The flow has layered Needs → Decisions → Work →
@@ -348,7 +359,7 @@ see.
 | `package_unlock(name, confirm?)` | Report a lock's holder. `confirm=true` (operator's words) removes a dead holder's lock, journaled |
 | `entity_upsert(entities[])` | Batch writes: full rows (or the NOT NULL columns, because omitted columns of an existing row are preserved), per-item verdicts. `expect_unchanged` refuses transport drift on a sent column. `retire` removes a wrong edge. `substitute` changes one token without the row passing through the agent (refused when it would widen or compound). An update reports `changed_columns` with text lengths. A `feedback` row (`FB-`) exists on the operator's word and is journaled at every move. The header (`type: "package"`) names `go_no_go` only on the word |
 | `entity_query(type, …)` | Targeted rows + `total`, in id order (prefix, then the id's first number, the review page's rule since v5.7). `limit` cuts from the lowest, never the newest rows. `after_id` returns the rows after an id, typed or taken from `next_after`. `ids` reads a known set, `search` sweeps by keyword. A projection reports `omitted_columns`, a search reports which column `matched` |
-| `trace_query(entity_id, …)` | Typed traceability links |
+| `trace_query(entity_id?, …)` | The trace links of one entity, of one family, or all of them: the stored edges, and the links that a foreign-key column holds (v6.5) |
 | `gate_run()` | Mechanical quality-gate verdict including the blocking G-REL relation gate |
 | `readiness_check(scope, id?)` | Deep lifecycle readiness at a close boundary: "is this actually DONE?" |
 | `progress_update / audit_record / work_bind` | The execution-tracking loop. Since v5.7 the first two refuse an item key they do not take, by name, and their registered descriptions name the keys |
@@ -356,6 +367,7 @@ see.
 | `package_verify(name?, record?, expect?)` | The canonical round-trip as a tool: per-file byte-equality, foreign files, a citable digest. `expect=` answers "is this slate still current", `review_current` whether `review.html` is, `review_exported_by` which release exported it (v5.6) |
 | `entity_export(path, tool?, args?)` | A read tool's WHOLE result as a digest-stamped JSON file under `exports/`, the sanctioned read for committed scripts that quote the store |
 | `handoff_emit / export_html` | Target-repository wiring + the HTML review surface |
+| `slate_export / slate_read` | An interview page for the operator from a slate of questions, and a checked transcript of the answers file that the page saves (v6.5) |
 
 Full signatures and semantics: [`plugins/tamheed/server/README.md`](plugins/tamheed/server/README.md).
 
@@ -456,7 +468,7 @@ tamheed/
 │   ├── skills/                       # the plugin's skills: the front door + 9 discipline + 17 operator-invoked scenarios (v5)
 │   ├── prompts/                      # the stock operator guide (emitted to <package>/README.md) + the stock history
 │   ├── db/                           # relational store: schema.sql, migrations/ (append-only), store.py, CANONICAL.md
-│   ├── server/                       # the Tamheed MCP server (the only write path into a package)
+│   ├── server/                       # the Tamheed MCP server (the only write path into a package), the review page, the interview page
 │   └── assets/                       # logos
 ├── docs/                             # architecture, methodology, workflow, design decisions, install
 ├── evals/                            # behavioral eval spec + deterministic eval runner
