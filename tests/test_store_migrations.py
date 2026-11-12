@@ -180,6 +180,25 @@ class StoreMigrationTest(unittest.TestCase):
                          " ('WBS-1', 'DW-1', 'frobs')")
         conn.close()
 
+    def test_migration_009_section_status_lands(self):
+        """Plan 225 (v6.5): head is at least 9. A section takes a status only to retire, the
+        column is appended (the JSONL key lands last), and it is nullable: the loader binds
+        an explicit NULL for a column an old row lacks, so NOT NULL would refuse every
+        package written before this release."""
+        conn = store.connect()
+        self.assertGreaterEqual(conn.execute("PRAGMA user_version").fetchone()[0], 9)
+        info = conn.execute("PRAGMA table_info(document_sections)").fetchall()
+        self.assertEqual(info[-1][1], "lifecycle_status")
+        self.assertEqual(info[-1][3], 0)                     # nullable
+        conn.execute("PRAGMA foreign_keys = OFF")
+        for sid, status in (("SEC-1", None), ("SEC-2", "Superseded"), ("SEC-3", "Obsolete")):
+            conn.execute("INSERT INTO document_sections (id, document_id, heading,"
+                         " lifecycle_status) VALUES (?, 'DOC-1', 'h', ?)", (sid, status))
+        with self.assertRaises(Exception):                   # the full lifecycle is not offered
+            conn.execute("INSERT INTO document_sections (id, document_id, heading,"
+                         " lifecycle_status) VALUES ('SEC-4', 'DOC-1', 'h', 'Draft')")
+        conn.close()
+
     def test_migration_007_handoff_lands(self):
         """Plan 121 (v5.1): head is 7; `handoff` is a legal journal kind, the vocabulary stays
         closed, the trigger pair survives the recreation, and skills carry `upstreamed_to`."""

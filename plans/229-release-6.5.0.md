@@ -30,3 +30,20 @@
   script reads the plugin by a versioned cache path: the path moves to 6.5.0.
 - Every recipe of both prompts is dry-run on a scratch copy first. The prompts are handed in the
   maintainer session, as for 6.3.0 and 6.4.0.
+
+## Owed to this plan by the earlier ones (added as they landed)
+
+- From 225: the CHANGELOG holds an `[Unreleased]` section that names the migrations. The 6.4.0
+  stamp inserted its entry above the newest release heading. A stamp derived from it must
+  REPLACE the `[Unreleased]` block with the 6.5.0 entry, or the block stays above the release.
+- From 225: the fixtures rewrote `document_sections.jsonl`, so their recorded pages, CSVs and
+  exports lag the data. `package_verify` on the lab fixture reads `verified: true`, `dirty: []`,
+  `review_current: false`, `review_exported_by: 6.4.0`. The fixture refresh re-exports them.
+- From 224a: the stock guide `prompts/README.md` names the lock outcomes. Its body is pinned by
+  `stock-history.json`, so its lock paragraph changes with the history key at the stamp.
+- From 222: the lab fixture's recorded `gates.json` keeps the old wired-rule note until the refresh.
+- From 222, owed to 228: the review page's readiness table does not show a rule's `missing` legs.
+- For the Jisr prompt, measured on the export of 2026-11-12: its two review scripts read rows
+  by key, so the new `lifecycle_status` key in every section row does not break them. One of
+  them skips bank rows whose `custom_attributes.kind` is `superseded`. Two section rows carry
+  that mark. One was retired with the typed status on a scratch copy, and every gate kept its status.

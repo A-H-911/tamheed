@@ -424,6 +424,12 @@ _LESSON_CONTENT_COLS = ("title", "statement", "context", "recommendation",
                         "rationale", "kind", "category", "impact_if_followed",
                         "impact_if_ignored", "recorded_at")
 
+# Plan 225 (v6.5): the rows a scan reads as LIVE, in one place. Superseded and Obsolete rows
+# are history. The form is NULL-safe on purpose: a document section carries a status only
+# once it is retired, and a bare `NOT IN` drops a row whose status is NULL - so the old
+# literal would have taken every live section out of the content gate without a word.
+_LIVE_ROWS = "COALESCE(lifecycle_status, '') NOT IN ('Superseded','Obsolete')"
+
 # G-COMPLETE-style placeholder screen (content tier — stays outside the schema).
 _PLACEHOLDER_RE = re.compile(
     r"\bTODO\b|\bTBD\b|\bFIXME\b|<placeholder>|\{\{[^}]*\}\}|lorem ipsum", re.IGNORECASE
@@ -503,7 +509,7 @@ def _scan_prose_ids(conn) -> dict[str, list[str]]:
         text_cols = [r[1] for r in info if (r[2] or "").upper() == "TEXT" and r[1] != "id"]
         if not text_cols:
             continue
-        where = (" WHERE lifecycle_status NOT IN ('Superseded','Obsolete')"
+        where = (" WHERE " + _LIVE_ROWS
                  if "lifecycle_status" in names else "")
         for row in conn.execute(f"SELECT id, {', '.join(text_cols)} FROM {table}{where}"):
             for col, value in zip(text_cols, row[1:]):
@@ -595,7 +601,7 @@ def _scan_prose_plain(conn) -> dict:
         present = [c for c in cols if c in names]
         if "id" not in names or not present:
             continue
-        where = (" WHERE lifecycle_status NOT IN ('Superseded','Obsolete')"
+        where = (" WHERE " + _LIVE_ROWS
                  if "lifecycle_status" in names else "")
         for row in conn.execute(f"SELECT id, {', '.join(present)} FROM {table}{where}"):
             for col, value in zip(present, row[1:]):
@@ -655,7 +661,7 @@ def _scan_prompt_ids(conn) -> dict:
     rows = 0
     for pid, title, body in conn.execute(
             "SELECT id, title, body FROM prompts"
-            " WHERE lifecycle_status NOT IN ('Superseded','Obsolete')"
+            " WHERE " + _LIVE_ROWS +
             " ORDER BY CAST(SUBSTR(id, 5) AS INTEGER)"):
         rows += 1
         _classify_id_hits(pattern, known, min_width, str(title or ""),
@@ -687,7 +693,7 @@ def _graded_text(conn):
         if not text_cols:
             continue
         pk = _NON_ID_TABLES.get(table, "id")
-        where = (" WHERE lifecycle_status NOT IN ('Superseded','Obsolete')"
+        where = (" WHERE " + _LIVE_ROWS
                  if "lifecycle_status" in {r[1] for r in info} else "")
         for row in conn.execute(f"SELECT {pk}, {', '.join(text_cols)} FROM {table}{where}"):
             for col, value in zip(text_cols, row[1:]):
@@ -4647,7 +4653,7 @@ def handoff_emit(target_dir: str, subdir: str = "handoff", force: bool = False,
     # holds the same words split in two columns).
     live_rows = conn.execute(
         "SELECT id, title, body FROM prompts"
-        " WHERE lifecycle_status NOT IN ('Superseded','Obsolete')").fetchall() if leftovers else []
+        " WHERE " + _LIVE_ROWS).fetchall() if leftovers else []
     for left in leftovers:
         verdict = None
         left_norm = _normalized_prompt(left.read_text(encoding="utf-8"))
@@ -4668,7 +4674,7 @@ def handoff_emit(target_dir: str, subdir: str = "handoff", force: bool = False,
     converted = []
     for pid, _kind, ca in conn.execute(
             "SELECT id, kind, custom_attributes FROM prompts"
-            " WHERE lifecycle_status NOT IN ('Superseded','Obsolete')"
+            " WHERE " + _LIVE_ROWS +
             " ORDER BY CAST(SUBSTR(id, 5) AS INTEGER)"):
         try:
             attrs = json.loads(ca) if ca else {}
@@ -5906,7 +5912,9 @@ _ENTITY_QUERY_DESC = (
     " then by the id's first number, then by id. `limit` cuts from the lowest, so a"
     " limited read never returns the newest rows. `after_id` returns the rows after"
     " that id in the same order. Pass the result's `next_after`, or an id you type (it"
-    " need not name a row). `total` is the size of the filtered set, uncut.")
+    " need not name a row). `total` is the size of the filtered set, uncut. `query`"
+    " echoes the arguments. A document section carries a status only once it is retired,"
+    " so `status` returns retired sections for that family.")
 # Plan 221: the two places a link lives, and the three scopes of the read.
 _TRACE_QUERY_DESC = (
     "Read trace links. With `entity_id`, the links of one entity. Without it, every link,"

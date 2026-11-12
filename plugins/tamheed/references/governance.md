@@ -281,3 +281,7 @@ backticks is a quotation. The `clarifications-open` advisory counts live markers
   stays (status Superseded) so history and rationale survive.
 - Deprecating marks an item Obsolete with a one-line reason. Downstream references are
   updated or explicitly noted as historical.
+- A document section takes a status only to retire (v6.5). A live section carries none: it
+  follows its document. To retire one, set `lifecycle_status` to `Superseded` or `Obsolete`. Name
+  the section that replaces it with a `supersedes` edge from the kept section. A retired section
+  leaves the content gate and the prose-id rule, its id still resolves, and no row leaves the store.

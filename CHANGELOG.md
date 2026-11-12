@@ -8,6 +8,14 @@ All notable changes to Tamheed are documented here. The format is based on
 > original repository (<https://github.com/A-H-911/keystone>). Tamheed carries Keystone's full git
 > history; the Keystone repository stays frozen at 1.0.x for existing v1 packages.
 
+## [Unreleased]
+
+The 6.5.0 round is in progress on the branch `round/6.5.0` (plans 221-229). This section becomes
+the 6.5.0 entry at the release.
+
+- `009_section_status.sql` (plan 225): a nullable `lifecycle_status` on `document_sections`, so a
+  section can be retired. Each package's `document_sections.jsonl` re-serialises once.
+
 ## [6.4.0] - 2026-10-10
 
 **MINOR — the review page reads (plans 219–220).** Every data table on `review.html` shared the

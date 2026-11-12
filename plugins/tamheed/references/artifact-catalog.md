@@ -165,7 +165,7 @@ One `data/<table>.jsonl` file per non-empty family. Class = the registry's gener
 | Family | Prefix | Class | Purpose |
 |---|---|---|---|
 | narrative-document | `DOC-` | Always | Charter-class prose (charter, executive summary, architecture, research plan, …) |
-| document-section | `SEC-` | Always | The sections of narrative documents (heading/body/order) |
+| document-section | `SEC-` | Always | The sections of narrative documents (heading/body/order). A section takes `lifecycle_status` (`Superseded` or `Obsolete`) only to retire. A live one carries none |
 | diagram | `DIA-` | Conditional | Diagram source (mermaid) by kind: context/component/integration/deployment/data-flow |
 | prompt | `PRT-` | Always | The prompts the agent starts from in the execution half, as rows since v6 (plan 192). `kickoff` is the row `packages.entry_point` names, and `handoff_emit` demands it Approved. `phase` is one per phase gate, with `phase_id` set. `situational` accompanies one scenario skill. `plugin_skill` binds a row to the bundled scenario skill that reads its rows, and the server refuses any other name (the brake `loop-guard` reads none). Approved rows are edited in place. The project's own package README is not a prompt: that is a `narrative-document` of kind `readme`. The stock operator guide is a file (below) |
 

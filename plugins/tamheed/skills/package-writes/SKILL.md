@@ -182,6 +182,13 @@ id resolves, and the damage stays until someone reads it.
   rewrites a stdin heredoc or an inline literal. A flag inside a quoted message can be read as
   the command's own. Write the file, pass its path, and read the subject back.
 
+## 7b. Retire a section, never blank it
+
+- A document section takes a status only to retire. Send the full row with `lifecycle_status`
+  `Superseded` or `Obsolete`. In the same batch, write a `supersedes` edge from the section that
+  replaces it. A live section has no status, so `entity_query("document-section", status=...)`
+  returns retired sections only.
+
 ## 8. Set a scope change to `Merged` last
 
 - Apply the delta to every row its `scope_adds` / `scope_modifies` / `scope_removes` / `amends` edges

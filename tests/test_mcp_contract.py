@@ -241,7 +241,7 @@ class McpContractTest(unittest.TestCase):
         folder name, and the refusal names the legal set; the registry and the schema
         head say so."""
         srv.package_create("pr", "Prompts", "rnd")
-        self.assertEqual(srv.server_info()["schema_version"], 8)
+        self.assertEqual(srv.server_info()["schema_version"], 9)
         self.assertIn(("prompt", "prompts"), srv.ENTITY_TABLES.items())
         self.assertTrue(srv.entity_upsert([{"type": "phase", "id": "PH-1", "title": "P1",
                                             "lifecycle_status": "Approved"}])["ok"])
@@ -1134,6 +1134,88 @@ class McpContractTest(unittest.TestCase):
             self.assertNotIn(kind, journal)
         for desc in (audit, journal):
             self.assertLessEqual(len(desc), srv._DESCRIPTION_CAP)
+
+    def test_a_section_can_be_retired_and_a_live_one_is_still_graded(self):
+        """Plan 225 (R85, the field's section report): a section had no way out of the store's
+        scans. It takes a status now, and only to retire: a live section carries none. The
+        scans kept their live rows by a literal that drops a row with no status, so this
+        test holds a LIVE section in both scans as well as a retired one out of them."""
+        make_complete_package("demo")
+        section = {"type": "document-section", "id": "SEC-002", "document_id": "DOC-001",
+                   "heading": "Open", "body": "TODO write this, see FR-999"}
+        self.assertTrue(srv.entity_upsert([section])["ok"])
+
+        def scans():
+            failures = {f["id"] for f in srv.gate_run()["gates"]["G-COMPLETE"]["failures"]}
+            rule = {r["rule"]: r for r in srv.readiness_check("package")["rules"]}[
+                "prose-ids-resolve"]
+            return "SEC-002" in failures, any("SEC-002" in str(e) for e in rule["entities"])
+
+        self.assertEqual(scans(), (True, True))              # live: graded, and its ids read
+        self.assertTrue(srv.entity_upsert([
+            section | {"lifecycle_status": "Superseded"},
+            {"type": "trace-edge", "from_id": "SEC-001", "to_id": "SEC-002",
+             "relation": "supersedes"}])["ok"])
+        self.assertEqual(scans(), (False, False))            # retired: history, out of both
+        retired = srv.entity_query("document-section", status="Superseded")
+        self.assertEqual([r["id"] for r in retired["rows"]], ["SEC-002"])
+        self.assertEqual(srv.entity_query("document-section")["total"], 2)   # no row left
+        self.assertEqual(srv.entity_query("document-section", id="SEC-001")["rows"][0][
+            "lifecycle_status"], None)                       # a live section has no status
+        out = srv.entity_upsert([section | {"lifecycle_status": "Draft"}])
+        self.assertIn("`lifecycle_status` 'Draft' is not one of: Superseded, Obsolete",
+                      out["items"][0]["error"])
+
+    def test_a_retired_section_on_the_page_in_the_file_and_across_a_reopen(self):
+        """Plan 225 (reviews): the status shows on the review page and in the CSV, it
+        survives a close and a reopen, `Obsolete` leaves the scans as `Superseded` does,
+        an omitted key keeps the status, and an explicit null un-retires in the open
+        (`changed_columns` names it). A file written before the column existed loads."""
+        make_complete_package("demo")
+        section = {"type": "document-section", "id": "SEC-002", "document_id": "DOC-001",
+                   "heading": "Open", "body": "TODO later", "lifecycle_status": "Obsolete"}
+        self.assertTrue(srv.entity_upsert([section])["ok"])
+        failures = {f["id"] for f in srv.gate_run()["gates"]["G-COMPLETE"]["failures"]}
+        self.assertNotIn("SEC-002", failures)                # Obsolete is history too
+        out = srv.export_html()
+        self.assertTrue(out["ok"], out)
+        page = Path(out["path"]).read_text(encoding="utf-8")
+        rows = re.findall(r"<tr[^>]*>.*?</tr>", page, re.S)
+        self.assertTrue(any("SEC-002" in r and "Open" in r and "Obsolete" in r for r in rows))
+        csv_lines = (Path(out["path"]).parent / "csv" / "document_sections.csv").read_text(
+            encoding="utf-8").splitlines()
+        self.assertTrue(csv_lines[0].endswith("lifecycle_status"), csv_lines[0])
+        self.assertTrue(any(line.startswith("SEC-002,") and line.endswith("Obsolete")
+                            for line in csv_lines))
+        # an omitted key keeps the status: the update assigns only the columns it was sent
+        kept = {k: v for k, v in section.items() if k != "lifecycle_status"}
+        self.assertTrue(srv.entity_upsert([kept])["ok"])
+        row = lambda: srv.entity_query("document-section", id="SEC-002")["rows"][0]
+        self.assertEqual(row()["lifecycle_status"], "Obsolete")
+        # across a close and a reopen
+        srv.package_close()
+        self.assertTrue(srv.package_open("demo")["ok"])
+        self.assertEqual(row()["lifecycle_status"], "Obsolete")
+        # an explicit null un-retires, and the write says which column moved
+        out = srv.entity_upsert([kept | {"lifecycle_status": None}])
+        self.assertTrue(out["ok"], out)
+        self.assertIn("lifecycle_status",
+                      {c["column"] for c in out["items"][0]["changed_columns"]})
+        self.assertIsNone(row()["lifecycle_status"])
+        # a file from before the column: strip the key, reopen, and the store still loads
+        srv.package_close()
+        path = srv.PACKAGE_ROOT / "demo" / "data" / "document_sections.jsonl"
+        old = [json.dumps({k: v for k, v in json.loads(line).items() if k != "lifecycle_status"},
+                          ensure_ascii=False, separators=(",", ":"))
+               for line in path.read_text(encoding="utf-8").splitlines()]
+        path.write_text("\n".join(old) + "\n", encoding="utf-8", newline="\n")
+        self.assertTrue(srv.package_open("demo")["ok"])
+        self.assertIsNone(row()["lifecycle_status"])
+        verify = srv.package_verify()
+        self.assertEqual(verify["dirty"], ["document_sections.jsonl"])   # until the first close
+        srv.package_close()
+        self.assertTrue(srv.package_open("demo")["ok"])
+        self.assertEqual(srv.package_verify()["dirty"], [])             # rewritten once
 
     def test_journal_is_append_only(self):
         """Plan 025 (C31/A4): recorded history cannot be rewritten via entity_upsert."""
@@ -3627,8 +3709,8 @@ class V4EngineTest(unittest.TestCase):
         edge; the `deferred-work-carried` advisory lists Activated rows with no OPEN carrier
         (Review counts as open) - bind one, or close the row Done."""
         info = srv.server_info()                 # setUp created "demo" with PH-1 / SL-001
-        self.assertEqual(info["migrations_head"], "008_prompts.sql")   # plan 192 (v6)
-        self.assertEqual(info["schema_version"], 8)
+        self.assertEqual(info["migrations_head"], "009_section_status.sql")   # plan 225 (v6.5)
+        self.assertEqual(info["schema_version"], 9)
         rules = lambda: {r["rule"]: r for r in srv.readiness_check("package")["rules"]}
         out = srv.entity_upsert([
             {"type": "deferred-work", "id": "DW-001", "title": "later", "severity": "low",

@@ -1256,6 +1256,12 @@ are gone, so no later row can cite a source span.
 | `heading` | NOT NULL | Section heading |
 | `body` | TEXT | The prose |
 | `sort_order` | INTEGER NOT NULL DEFAULT 0 | Order |
+| `lifecycle_status` | CHECK: `Superseded` / `Obsolete`, nullable | Empty while live. Set only to retire the section (v6.5, plan 225) |
+
+A section takes no lifecycle of its own while it lives: it follows its document. The column
+exists so that a section can leave the scans. It is nullable by necessity, because the loader
+binds an explicit NULL for a column that an older row lacks. The kept section is named by a
+`supersedes` edge.
 
 **Purpose.** The addressable unit of prose. Sections, not blobs, are what markers are
 found in, what provenance labels attach to, and what a review can point at.
