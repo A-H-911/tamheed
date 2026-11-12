@@ -78,12 +78,12 @@ the trust model and how to report a problem.
   `output` directory, and symlinks are reported, never touched (plan 065).
 - **Lock observation reads process metadata and nothing else.** To tell a dead lock holder
   from a recycled pid the server queries process existence and start time. It uses Windows
-  `OpenProcess`/`GetProcessTimes` with query-limited access, and Linux `/proc/<pid>/stat`. It
+  `OpenProcess`/`GetProcessTimes` with query-limited access, and Linux `/proc/<pid>/stat`. On macOS it uses `proc_pidinfo` through libproc (v6.5). It
   spawns no process and sends no signal (`os.kill(pid, 0)` never runs on Windows, where it
   terminates the target). A pid from the lock file is probed only if it is a real, bounded
   integer. The lock's strings are length-capped before they reach the journal (plans 063–064).
-  Since v6.5 (plan 224) a lock also records the boot session, read on Linux from the kernel's
-  boot id. It is no hardware identifier: it changes at every boot and names no machine. A machine
+  Since v6.5 (plan 224) a lock also records the boot session. It is read on Linux from the
+  kernel's boot id, and on macOS from the kernel's boot-session id. It is no hardware identifier: it changes at every boot and names no machine. A machine
   id is not read, because machines made from one image share it. A host-name mismatch is bridged
   only by an equal boot session. On Linux it also needs an equal, recorded pid namespace, because
   containers on one host share a boot. `package_unlock` refuses while a stopped migration's

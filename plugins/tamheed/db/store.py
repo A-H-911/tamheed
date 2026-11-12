@@ -76,7 +76,26 @@ def process_start_time(pid: int) -> tuple[str, float | None]:
         return ("unobservable", None)
     if sys.platform == "win32":
         return _windows_process_start(pid)
-    if Path("/proc/self/stat").exists():                # Linux: start = boot time + ticks
+    if sys.platform == "darwin":                        # plan 224b: libproc reports the start
+        try:
+            state, start = _darwin_bsdinfo(pid)
+        except Exception:                               # noqa: BLE001 - ctypes or the library
+            state, start = None, None                   # failed: the liveness probe answers
+        if state == "running":
+            return ("running", start[0] + start[1] / 1e6)
+        if state == "not-running":
+            # A lock is removed on this answer, so it needs TWO signals: the library
+            # found no such process, and the kernel agrees. Anything else is unobservable.
+            try:
+                os.kill(pid, 0)                         # sends no signal on macOS
+            except ProcessLookupError:
+                return ("not-running", None)
+            except OSError:
+                pass
+            return ("unobservable", None)
+        if state is not None:
+            return (state, None)
+    elif Path("/proc/self/stat").exists():              # Linux: start = boot time + ticks
         return _linux_process_start(pid)
     try:                                                # other POSIX: liveness only
         os.kill(pid, 0)
@@ -160,6 +179,14 @@ def process_identity(pid: int) -> str | None:
         return None
     if sys.platform == "win32":
         return f"win:{round(started * 1e7)}"
+    if sys.platform == "darwin":
+        # plan 224b: the start is fixed at creation, seconds and microseconds, read whole
+        # (never through the float, which would round it)
+        try:
+            state, start = _darwin_bsdinfo(pid)
+        except Exception:                               # noqa: BLE001
+            return None
+        return f"mac:{start[0]}:{start[1]}" if state == "running" else None
     try:
         boot = Path("/proc/sys/kernel/random/boot_id").read_text(encoding="utf-8").strip()
         ticks = (Path(f"/proc/{pid}/stat").read_text(encoding="utf-8")
@@ -188,7 +215,7 @@ def _read_lock(lock_path: Path) -> dict:
 def boot_session() -> str | None:
     """Plan 224 (R88): an identity of THIS BOOT of this machine, or None where the platform
     offers none that a standard user can read. Linux: the kernel's boot id, a random value
-    per boot. A machine built from the same disk image boots by itself, so it has its own
+    per boot. macOS: the kernel's boot-session id (plan 224b). A machine built from the same disk image boots by itself, so it has its own
     (a machine id is shared by such clones, which is why it is not used here). The stated
     limit: two machines restored from ONE MEMORY SNAPSHOT share the boot id, as they share
     every pid. Windows: None. No readable marker was found, and a rename there needs a
@@ -197,9 +224,57 @@ def boot_session() -> str | None:
         if sys.platform.startswith("linux"):
             return "linux:" + Path("/proc/sys/kernel/random/boot_id").read_text(
                 encoding="utf-8").strip()
-    except OSError:
+        if sys.platform == "darwin":
+            # plan 224b: the kernel's boot-session id, a new value at every boot. Measured
+            # on the field's Mac: rc 0, 37 bytes, the same value in two processes.
+            import ctypes
+            import ctypes.util
+            libc = ctypes.CDLL(ctypes.util.find_library("c"), use_errno=True)
+            libc.sysctlbyname.argtypes = [ctypes.c_char_p, ctypes.c_void_p,
+                                          ctypes.POINTER(ctypes.c_size_t), ctypes.c_void_p,
+                                          ctypes.c_size_t]
+            libc.sysctlbyname.restype = ctypes.c_int
+            buf = ctypes.create_string_buffer(64)
+            size = ctypes.c_size_t(64)
+            if libc.sysctlbyname(b"kern.bootsessionuuid", buf, ctypes.byref(size),
+                                 None, 0) == 0 and buf.value:
+                return "mac:" + buf.value.decode("ascii", "replace")
+    except Exception:                                   # noqa: BLE001 - no marker, never a raise
         return None
     return None
+
+
+_LIBPROC = None
+_BSDINFO_SIZE = 136      # sizeof(struct proc_bsdinfo), measured on macOS 27.2 arm64
+_PROC_PIDTBSDINFO = 3
+
+
+def _darwin_bsdinfo(pid: int) -> tuple:
+    """Plan 224b: (state, (seconds, microseconds) | None) for a pid on macOS, through
+    libproc. Stdlib ctypes, spawns nothing, signals nothing. `proc_pidinfo` fills the
+    proc_bsdinfo struct and returns its size. It returns 0 with errno ESRCH when no such
+    process exists, and 0 with errno EPERM when the process is another user's: that one
+    EXISTS and cannot be inspected. The start sits in the last two 64-bit fields."""
+    global _LIBPROC
+    import ctypes
+    import ctypes.util
+    import errno
+    if _LIBPROC is None:
+        lib = ctypes.CDLL(ctypes.util.find_library("proc") or "/usr/lib/libproc.dylib",
+                          use_errno=True)
+        lib.proc_pidinfo.argtypes = [ctypes.c_int, ctypes.c_int, ctypes.c_uint64,
+                                     ctypes.c_void_p, ctypes.c_int]
+        lib.proc_pidinfo.restype = ctypes.c_int
+        _LIBPROC = lib
+    buf = (ctypes.c_ubyte * _BSDINFO_SIZE)()
+    ctypes.set_errno(0)
+    if _LIBPROC.proc_pidinfo(pid, _PROC_PIDTBSDINFO, 0, buf, _BSDINFO_SIZE) == _BSDINFO_SIZE:
+        raw = bytes(buf)
+        return ("running", (int.from_bytes(raw[120:128], sys.byteorder),
+                            int.from_bytes(raw[128:136], sys.byteorder)))
+    if ctypes.get_errno() == errno.ESRCH:
+        return ("not-running", None)
+    return ("unobservable", None)
 
 
 def lock_payload() -> dict:

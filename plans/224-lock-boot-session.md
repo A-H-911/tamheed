@@ -98,3 +98,39 @@ time, built only on calls the probe showed working. A call that failed there goe
   `SECURITY.md` and in both field prompts.
 - **R92 (2026-11-12): the code reviewer with a security brief reviews the rest of the round.**
   Plan 227 gets a second independent pass. The refusing hook stays untouched.
+
+## As built: 224b (2026-11-12, after the field probe)
+
+- The probe ran on the field machine first (macOS 27.2, arm64, Python 3.13.4), twice, as two
+  processes. Every call worked: `proc_pidinfo` flavour 3 returned 136 for the caller and its
+  parent, with the same start for the same pid in both runs. It returned 0 with errno 3 for a
+  missing pid and 0 with errno 1 for pid 1. The struct is 136 bytes. `kern.bootsessionuuid` read
+  37 bytes with the same hash in both runs.
+- `_darwin_bsdinfo(pid)` in the store: stdlib ctypes, no subprocess, no signal. `process_start_time`
+  uses it on macOS and falls back to the old liveness probe when the library call raises.
+  `process_identity` returns `mac:<seconds>:<microseconds>`, read whole and never through a float.
+- `boot_session()` reads `kern.bootsessionuuid` on macOS.
+- So on macOS a live holder reads `alive`, a reused pid is told from the writer, and a host name
+  that changed inside one boot is bridged. Before, a running pid there was always `unobservable`.
+- Docs: `SECURITY.md` (the macOS calls), the server README row, the `boot_session` docstring.
+
+## Validation of 224b
+
+- A seam test drives every macOS branch on all platforms (running, not-running, another user's
+  pid, and a failed library call that falls back). A second test makes the real calls and runs
+  only on macOS, so the macOS CI legs are its first run. The store suite runs 25 tests here, two
+  skipped (the symlink test and the real macOS test).
+- `python check.py`: ALL CHECKS PASSED on this machine.
+- CI before this commit: plan 225 at `524c9b8`, run 43135043872, green on eleven jobs.
+- The field proof is the upgrade prompt: it reads a live holder as `alive` on the field machine.
+- Review of 224b, folded in: approved, no critical or high finding. The struct offsets match the
+  layout of `proc_bsdinfo`, and the errno pattern is right. Two hardening steps were added. A
+  macOS process is called gone only on TWO signals: the library found none, and the kernel
+  agrees (`os.kill(pid, 0)`, which sends no signal there). And the mapping from the library call
+  to a state is tested on every platform through a stand-in library: only the full struct means
+  running, only no-such-process means gone, every other answer is unobservable. The store suite
+  runs 26 tests here.
+- Stated, not changed: the two libraries are found as they were in the field probe
+  (`find_library`). Loading them by a fixed path was proposed, and it is unmeasured on that machine.
+- A lock written on macOS before this release recorded no start. For a live holder of such a lock
+  the engine falls back to ordering against the lock time, as Linux does for old locks.

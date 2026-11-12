@@ -315,6 +315,94 @@ class RoundTripTest(unittest.TestCase):
         if sys.platform == "win32":
             self.assertIsNone(store.boot_session())               # no marker a user can read
 
+    def test_macos_reads_a_start_time_through_the_seam(self):
+        """Plan 224b (R86): macOS had no start time, so a running pid was always
+        unobservable and a reused pid could not be told from the writer. The calls were
+        measured on the field's Mac first (macOS 27.2, arm64): proc_pidinfo flavour 3 fills
+        the 136-byte proc_bsdinfo, and answers errno 3 for no such pid and errno 1 for
+        another user's. This drives the branches on every platform. The real calls run on
+        the macOS CI legs (the next test)."""
+        self.addCleanup(setattr, store.sys, "platform", store.sys.platform)
+        self.addCleanup(setattr, store, "_darwin_bsdinfo", store._darwin_bsdinfo)
+        self.addCleanup(setattr, store.os, "kill", store.os.kill)
+        store.sys.platform = "darwin"
+        store.os.kill = lambda pid, sig: self.fail("the liveness fallback ran")
+        store._darwin_bsdinfo = lambda pid: ("running", (1000, 500000))
+        self.assertEqual(store.process_start_time(4242), ("running", 1000.5))
+        self.assertEqual(store.process_identity(4242), "mac:1000:500000")   # exact, no float
+        # gone needs two signals: the library found no process AND the kernel agrees
+        store._darwin_bsdinfo = lambda pid: ("not-running", None)
+        store.os.kill = lambda pid, sig: None                 # the kernel still has it
+        self.assertEqual(store.process_start_time(4242), ("unobservable", None))
+
+        def no_such(pid, sig):
+            raise ProcessLookupError()
+
+        store.os.kill = no_such
+        self.assertEqual(store.process_start_time(4242), ("not-running", None))
+        self.assertIsNone(store.process_identity(4242))
+        store.os.kill = lambda pid, sig: self.fail("the liveness fallback ran")
+        store._darwin_bsdinfo = lambda pid: ("unobservable", None)             # another user's pid
+        self.assertEqual(store.process_start_time(4242), ("unobservable", None))
+
+        def broken(pid):
+            raise OSError("no libproc")
+
+        # the library fails: the old liveness probe still answers, with no start time
+        store._darwin_bsdinfo = broken
+        store.os.kill = lambda pid, sig: None
+        self.assertEqual(store.process_start_time(4242), ("running", None))
+        self.assertIsNone(store.process_identity(4242))
+
+    def test_the_macos_library_answer_is_mapped_safely(self):
+        """Plan 224b (review): the mapping from the library call to a state, on every
+        platform, through a stand-in library. Only the full struct means running. Only
+        "no such process" means gone. Every other answer is unobservable."""
+        import ctypes
+        import errno
+
+        class Lib:
+            def __init__(self, returned, err, sec=0, usec=0):
+                self.returned, self.err, self.sec, self.usec = returned, err, sec, usec
+
+            def proc_pidinfo(self, pid, flavor, arg, buf, size):
+                assert (flavor, arg, size) == (3, 0, 136)
+                raw = (self.sec.to_bytes(8, sys.byteorder)
+                       + self.usec.to_bytes(8, sys.byteorder))
+                for i, byte in enumerate(raw):
+                    buf[120 + i] = byte
+                ctypes.set_errno(self.err)
+                return self.returned
+
+        self.addCleanup(setattr, store, "_LIBPROC", store._LIBPROC)
+        for lib, expected in (
+                (Lib(136, 0, 1794445618, 789145), ("running", (1794445618, 789145))),
+                (Lib(0, errno.ESRCH), ("not-running", None)),       # no such process
+                (Lib(0, errno.EPERM), ("unobservable", None)),      # another user's process
+                (Lib(96, 0), ("unobservable", None)),               # a short struct
+                (Lib(-1, errno.EINVAL), ("unobservable", None))):
+            store._LIBPROC = lib
+            self.assertEqual(store._darwin_bsdinfo(4242), expected, (lib.returned, lib.err))
+
+    @unittest.skipUnless(sys.platform == "darwin", "the real macOS calls run on the macOS CI legs")
+    def test_macos_real_calls(self):
+        """Plan 224b: the three system calls on a real macOS."""
+        import time
+        state, started = store.process_start_time(os.getpid())
+        self.assertEqual(state, "running")
+        self.assertIsInstance(started, float)
+        self.assertLess(abs(started - time.time()), 6 * 3600)        # this process is young
+        token = store.process_identity(os.getpid())
+        self.assertRegex(token, r"^mac:\d+:\d+$")
+        self.assertEqual(token, store.process_identity(os.getpid()))  # fixed at creation
+        self.assertRegex(store.boot_session(), r"^mac:[0-9A-Fa-f-]{36}$")
+        self.assertEqual(store.process_start_time(4194000)[0], "not-running")   # no such pid
+        self.assertIn(store.process_start_time(1)[0], ("unobservable", "running"))  # launchd
+        with store.PackageStore(self.pkg):                           # a live holder reads alive
+            with self.assertRaises(store.StoreLockedError) as ctx:
+                store.PackageStore(self.pkg).__enter__()
+        self.assertIn("observed: alive", str(ctx.exception))
+
     def test_observe_lock_legacy_lock_falls_back_to_ordering(self):
         """A lock without a recorded start (pre-4.9.0, or a legacy bare pid) can only be
         judged by ordering: a process that started AFTER the lock was taken is not the
