@@ -112,7 +112,9 @@ APPEND: corrections are new rows, and only the latest counts.
 ### Phase-exit summary
 Write a short phase-exit summary: per-item verdicts vs the phase's exit/acceptance criteria, decisions
 taken, and any plan deviations (→ ADR). Add engineering notes to carry into the next phase, and a
-go/no-go recommendation. STOP for approval before starting the next phase.
+go/no-go recommendation. That recommendation is prose. A gate row's `outcome` takes `Go`, `Hold`,
+`Redirect` or `Kill`, and a no-go that will be put again is `Hold`. STOP for approval before starting
+the next phase.
 
 ### Spike / experiment report
 Run a planned `EXP-`/`POC-` (one at a time, timeboxed). A subagent is a good fit for an isolated

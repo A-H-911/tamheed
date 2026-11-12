@@ -822,7 +822,10 @@ PE- event, so the history lives in the journal while the row carries the current
 
 **Design decisions behind it.** Decisions 8 (gates absorb everything milestone-shaped
 that actually gates) and 9 (Go/Hold/Redirect/Kill, richer than pass/fail). Per the stage-gate
-literature, Hold and Redirect are real outcomes pass/fail regimes force into lies.
+literature, Hold and Redirect are real outcomes pass/fail regimes force into lies. The four words
+are defined in the bundle's `governance.md` since v6.5 (plan 223). `Hold` keeps the plan and puts the
+gate again. `Redirect` changes the plan first. `Kill` stops the guarded work. A no-go is one of the
+three, and the column takes no fifth word.
 
 **What you lose without it.** Human judgment points go unrecorded. The readiness report
 shows only mechanical rules, and "we agreed a human signs off before X" evaporates.

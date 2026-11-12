@@ -314,6 +314,55 @@ _PROGRESS_REQUIRED = ("entry",)
 _VERDICT_KEYS = ("ac_id", "verdict", "evidence", "verified_by", "verification_method",
                  "against_commit")
 _VERDICT_REQUIRED = ("ac_id", "verdict")
+# Plan 223 (the field's enum report): the values the description tells. The description is
+# built before any package opens, so it reads these constants. A contract test holds them
+# equal to the DDL's own sets, which the refusal reads (_enum_sets).
+_VERDICT_VALUES = {"verdict": ("Met", "Partial", "Not-met", "Pending"),
+                   "verified_by": ("human", "agent", "ci"),
+                   "verification_method": ("auto-test", "manual", "inspection")}
+_ENUM_BODY_RE = re.compile(r"\s*(\w+)\s+IN\s*\(([^()]*)\)\s*", re.IGNORECASE | re.DOTALL)
+
+
+def _check_bodies(sql: str):
+    """Every `CHECK (...)` body of a CREATE TABLE text, with its parentheses balanced."""
+    for m in re.finditer(r"\bCHECK\s*\(", sql, re.IGNORECASE):
+        depth, j = 1, m.end()
+        while depth and j < len(sql):
+            depth += {"(": 1, ")": -1}.get(sql[j], 0)
+            j += 1
+        yield sql[m.end():j - 1]
+
+
+def _enum_sets(conn, table: str) -> dict:
+    """The value sets the DDL gives a table's columns: {column: [values]}.
+
+    Plan 223. Read from the schema itself (`CHECK (col IN (...))` in sqlite_master), so a
+    set a later migration changes is told with no code change. Never read from SQLite's
+    error text: it differs by build and names only the FIRST failed CHECK of an insert.
+    Only a CHECK that is a value set and NOTHING else is read. A compound one
+    (`mode IN (...) OR mode GLOB 'stage:*'`) admits values outside its list, so naming the
+    list would blame a legal value. A set with no text value (an integer flag) is skipped."""
+    row = conn.execute("SELECT sql FROM sqlite_master WHERE type = 'table' AND name = ?",
+                       (table,)).fetchone()
+    sets = {}
+    for body in _check_bodies(row[0] if row and row[0] else ""):
+        m = _ENUM_BODY_RE.fullmatch(body)
+        if not m:
+            continue
+        values = [v.replace("''", "'") for v in re.findall(r"'((?:[^']|'')*)'", m.group(2))]
+        if values:
+            sets[m.group(1)] = values
+    return sets
+
+
+def _enum_hint(conn, table: str, cols: dict) -> str:
+    """The words for EVERY value of an item that its column does not take, or ''. The
+    store's CHECK still refuses the write. This only says which value, and what the
+    column takes, for all of them at once."""
+    bad = [f"`{col}` {cols[col]!r} is not one of: {', '.join(values)}"
+           for col, values in _enum_sets(conn, table).items()
+           if cols.get(col) is not None and cols[col] not in values]
+    return (" — " + ". ".join(bad)) if bad else ""
 
 
 def _item_error(item, takes: tuple, required: tuple) -> str | None:
@@ -995,8 +1044,10 @@ def package_create(name: str, title: str, profile: str, mode: str = "full") -> d
         )
         s.commit()
     except Exception as exc:
+        # plan 223: a profile outside its set is named with the set, before the store closes
+        hint = _enum_hint(s.conn, "packages", {"profile": profile})
         s.__exit__(None, None, None)
-        return _err(f"create failed: {exc}")
+        return _err(f"create failed: {exc}{hint}")
     _CURRENT, _CURRENT_NAME = s, name
     # v3.0.0 (plan 027): <package>/prompts/ is the Stage-20 authoring surface — it
     # exists from birth, seeded with the operator guide (v5: README.md alone; the
@@ -2230,7 +2281,8 @@ def entity_upsert(entities: list[dict]) -> dict:
                 else:
                     results.append({"index": i, "ok": False, "id": cols.get("id"),
                                     "error": "row rejected by a constraint "
-                                             "(CHECK/NOT NULL) — not written"})
+                                             "(CHECK/NOT NULL) — not written"
+                                             + _enum_hint(conn, table, cols)})
                     failed = True
             else:
                 res = {"index": i, "ok": True, "id": cols.get("id")}
@@ -2400,7 +2452,8 @@ def entity_upsert(entities: list[dict]) -> dict:
                 results.append(res)
         except Exception as exc:  # IntegrityError carries the constraint name
             conn.execute(f"ROLLBACK TO item{i}")
-            msg = str(exc)
+            # plan 223: every value outside its column's set is named, with the set
+            msg = str(exc) + _enum_hint(conn, table, cols)
             if "NOT NULL constraint failed" in msg and cols.get("id") is not None:
                 exists = conn.execute(f"SELECT 1 FROM {table} WHERE id = ?",
                                       (cols["id"],)).fetchone()
@@ -3646,8 +3699,9 @@ def progress_update(entries: list[dict]) -> dict:
             return _err(f"entries[{i}]: {msg}. Batch NOT applied.")
     conn = _CURRENT.conn
     ids = []
+    i, e = 0, {}
     try:
-        for e in entries:
+        for i, e in enumerate(entries):
             pe_id = _next_id("PE-", "progress_entries")
             conn.execute(
                 "INSERT INTO progress_entries (id, event_type, entry, subject_id,"
@@ -3662,7 +3716,9 @@ def progress_update(entries: list[dict]) -> dict:
             ids.append(pe_id)
     except Exception as exc:
         conn.rollback()
-        return _err(str(exc))
+        # plan 223: the refusal names the item, and every value its column does not take
+        return _err(f"entries[{i}]: {exc}{_enum_hint(conn, 'progress_entries', e)}."
+                    " Batch NOT applied.")
     if err := _commit({"ids": ids}):
         return err
     out = {"ok": True, "ids": ids}
@@ -3714,8 +3770,9 @@ def audit_record(verdicts: list[dict]) -> dict:
     conn = _CURRENT.conn
     iteration = conn.execute("SELECT iteration FROM packages LIMIT 1").fetchone()
     ids = []
+    i, v = 0, {}
     try:
-        for v in verdicts:
+        for i, v in enumerate(verdicts):
             av_id = _next_id("AV-", "audit_verdicts")
             conn.execute(
                 "INSERT INTO audit_verdicts (id, ac_id, verdict, evidence,"
@@ -3729,7 +3786,9 @@ def audit_record(verdicts: list[dict]) -> dict:
             ids.append(av_id)
     except Exception as exc:
         conn.rollback()
-        return _err(str(exc))
+        # plan 223: SQLite names only the first failed CHECK. This names every bad value.
+        return _err(f"verdicts[{i}]: {exc}{_enum_hint(conn, 'audit_verdicts', v)}."
+                    " Batch NOT applied.")
     if err := _commit({"ids": ids}):
         return err
     skills = sorted({s for v in verdicts for s in _evidence_skills(v.get("verification_method"))},
@@ -4720,8 +4779,8 @@ def handoff_emit(target_dir: str, subdir: str = "handoff", force: bool = False,
         " **Review** (done-claimed). `Implemented` means VERIFIED and is"
         " readiness-guarded |\n"
         "| you verify an acceptance criterion | `audit_record(...)` with evidence +"
-        " `verified_by` + `verification_method` + `against_commit`. Never Met without"
-        " proof |\n"
+        " `verified_by` (human, agent, ci) + `verification_method` (auto-test, manual,"
+        " inspection) + `against_commit`. Never Met without proof |\n"
         "| you create a commit or PR | `work_bind(ref, entity_ids=[...])` |\n"
         "| you declare a slice/phase/release done | `readiness_check(scope)` first."
         " Resolve every blocking failure, or ask the OPERATOR for a `WVR-` waiver"
@@ -5823,12 +5882,14 @@ _PROGRESS_UPDATE_DESC = (
     "Append progress entries (execution tracking), one transaction. `entries` is a"
     f" list. Each entry is an object with these keys: {_keys_told(_PROGRESS_KEYS, _PROGRESS_REQUIRED)}."
     " A key outside this list is refused and nothing is written. `event_type` defaults"
-    " to note. The server assigns the id and the time.")
+    f" to note. It is one of {', '.join(sorted(PE_EVENT_TYPES - set(_SERVER_ONLY_EVENTS)))}."
+    " The server assigns the id and the time.")
 _AUDIT_RECORD_DESC = (
     "Record AC verdicts, optionally evidence-bound, one transaction. `verdicts` is a"
     f" list. Each verdict is an object with these keys: {_keys_told(_VERDICT_KEYS, _VERDICT_REQUIRED)}."
-    " A key outside this list is refused and nothing is written. The server assigns"
-    " the id and the time.")
+    " A key outside this list is refused and nothing is written. "
+    + " ".join(f"`{col}` is one of {', '.join(values)}." for col, values in _VERDICT_VALUES.items())
+    + " The server assigns the id and the time.")
 
 TOOLS = {
     "server_info": (server_info, "Report server version, resolved package root, store state"),

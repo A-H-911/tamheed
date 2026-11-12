@@ -99,6 +99,11 @@ id resolves, and the damage stays until someone reads it.
   `slice_id`. `audit_record` items: `ac_id` and `verdict` (required), `evidence`, `verified_by`,
   `verification_method`, `against_commit`. The server assigns the id and the time. A key outside
   the list refuses the whole batch by name and writes nothing.
+- **A column with a value set takes only its values.** `verdict` is `Met`, `Partial`, `Not-met`
+  or `Pending`. `verified_by` is `human`, `agent` or `ci`. `verification_method` is `auto-test`,
+  `manual` or `inspection`. An execution gate's `outcome` is `Go`, `Hold`, `Redirect` or `Kill`,
+  and a no-go that will be put again is `Hold`. A refusal names every value the item got wrong
+  and what its column takes. Carry any other word in `evidence` or in the row's prose.
   *Field evidence:* until v5.7 such a key was dropped in silence. One journal write lost its
   attributes on a write that returned `ok`, and `summary` sent for `entry` came back as the
   database's own error.

@@ -1039,6 +1039,102 @@ class McpContractTest(unittest.TestCase):
         self.assertEqual(listed, ["FR-782"])                 # FR-783 is retired: not read
         self.assertEqual(missing, {"FR-782": ["decision", "work", "test"]})
 
+    def test_a_refused_value_names_what_the_column_takes(self):
+        """Plan 223 (the field's enum report): a value outside a column's set was refused
+        with SQLite's bare text, one column per call. The refusal now names every bad
+        value of the item and what its column takes, read from the DDL."""
+        make_complete_package("demo")
+        held = srv.entity_query("audit-verdict")["total"]
+        out = srv.audit_record([
+            {"ac_id": "AC-001", "verdict": "Met"},
+            {"ac_id": "AC-001", "verdict": "Met", "verified_by": "operator",
+             "verification_method": "review"}])
+        self.assertFalse(out["ok"])
+        for needle in ("verdicts[1]", "`verified_by` 'operator'", "human, agent, ci",
+                       "`verification_method` 'review'", "auto-test, manual, inspection",
+                       "Batch NOT applied"):
+            self.assertIn(needle, out["error"])
+        self.assertEqual(srv.entity_query("audit-verdict")["total"], held)   # nothing landed
+        # the journal: the store still refuses, and the words name the set and the item
+        out = srv.progress_update([{"entry": "ok"}, {"entry": "e", "event_type": "nope"}])
+        self.assertIn("CHECK constraint failed", out["error"])
+        for needle in ("entries[1]", "`event_type` 'nope'", "work-done", "handoff"):
+            self.assertIn(needle, out["error"])
+        # a gate outcome outside the four words (the field's No-go)
+        out = srv.entity_upsert([{"type": "execution-gate", "id": "GATE-001",
+                                  "gate_kind": "approval", "definition": "d",
+                                  "outcome": "No-go"}])
+        self.assertIn("`outcome` 'No-go' is not one of: Go, Hold, Redirect, Kill",
+                      out["items"][0]["error"])
+        # a relation outside the vocabulary: the ignore path named no set at all
+        out = srv.entity_upsert([{"type": "trace-edge", "from_id": "FR-001",
+                                  "to_id": "DEC-001", "relation": "depends_on"}])
+        err = out["items"][0]["error"]
+        self.assertIn("`relation` 'depends_on' is not one of:", err)
+        for rel in sorted(set(srv.RELATION_RULES) | {"relates_to"}):
+            self.assertIn(rel, err)
+        # a set whose value holds an apostrophe reads whole
+        out = srv.entity_upsert([{"type": "defect", "id": "DEF-001", "title": "t",
+                                  "severity": "high", "lifecycle_status": "Closed"}])
+        self.assertIn("Won't-fix", out["items"][0]["error"])
+        # the header's `mode` CHECK is compound (a list OR `stage:*`): its list is never
+        # named, because a value outside the list can be legal
+        out = srv.entity_upsert([{"type": "package", "mode": "nope"}])
+        self.assertFalse(out["ok"])
+        self.assertNotIn("is not one of", out["items"][0]["error"])
+        # a legal `stage:` mode is never blamed when the item fails for another reason
+        out = srv.entity_upsert([{"type": "package", "mode": "stage:3", "title": None}])
+        self.assertFalse(out["ok"])
+        self.assertNotIn("is not one of", out["items"][0]["error"])
+        # a failure that is no value-set failure gains no words
+        out = srv.entity_upsert([{"type": "decision", "id": "DEC-900"}])
+        self.assertNotIn("is not one of", out["items"][0]["error"])
+        # a value that is no text is named too, and an absent (NULL) one is never blamed
+        out = srv.audit_record([{"ac_id": "AC-001", "verdict": 5, "verified_by": None}])
+        self.assertIn("`verdict` 5 is not one of: Met, Partial, Not-met, Pending",
+                      out["error"])
+        self.assertNotIn("`verified_by`", out["error"])
+
+    def test_the_journal_tool_descriptions_name_their_values(self):
+        """Plan 223: the description a client receives names the values, from constants
+        that a test ties to the DDL (the description is built before any package opens)."""
+        conn = srv.store.connect()
+        try:
+            sets = srv._enum_sets(conn, "audit_verdicts")
+            self.assertEqual({k: tuple(v) for k, v in sets.items()}, srv._VERDICT_VALUES)
+            self.assertEqual(set(srv._enum_sets(conn, "progress_entries")["event_type"]),
+                             set(srv.PE_EVENT_TYPES))
+            self.assertEqual(srv._enum_sets(conn, "execution_gates")["outcome"],
+                             ["Go", "Hold", "Redirect", "Kill"])
+            self.assertNotIn("mvp", srv._enum_sets(conn, "requirements"))   # an integer flag
+            header = srv._enum_sets(conn, "packages")
+            self.assertIn("profile", header)
+            self.assertNotIn("mode", header)                 # compound: never read as a set
+            # every set that is read is a real column of its table, with text values
+            for (table,) in conn.execute(
+                    "SELECT name FROM sqlite_master WHERE type = 'table'").fetchall():
+                columns = {r[1] for r in conn.execute(f"PRAGMA table_info({table})")}
+                for col, values in srv._enum_sets(conn, table).items():
+                    self.assertIn(col, columns, (table, col))
+                    self.assertTrue(values and all(isinstance(v, str) for v in values))
+        finally:
+            conn.close()
+        # package_create: a profile outside its set is named with the set
+        refused = srv.package_create("demo", "Demo", "nope-profile")
+        self.assertFalse(refused["ok"])
+        self.assertIn("`profile` 'nope-profile' is not one of: enterprise, rnd, legacy,"
+                      " ai-agentic, unknown", refused["error"])
+        audit = srv.TOOLS["audit_record"][1]
+        for values in srv._VERDICT_VALUES.values():
+            self.assertIn(", ".join(values), audit)
+        journal = srv.TOOLS["progress_update"][1]
+        for kind in set(srv.PE_EVENT_TYPES) - set(srv._SERVER_ONLY_EVENTS):
+            self.assertIn(kind, journal)
+        for kind in srv._SERVER_ONLY_EVENTS:                 # the server's own kinds are not offered
+            self.assertNotIn(kind, journal)
+        for desc in (audit, journal):
+            self.assertLessEqual(len(desc), srv._DESCRIPTION_CAP)
+
     def test_journal_is_append_only(self):
         """Plan 025 (C31/A4): recorded history cannot be rewritten via entity_upsert."""
         make_complete_package("demo")

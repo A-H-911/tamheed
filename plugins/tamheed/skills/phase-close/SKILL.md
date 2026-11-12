@@ -43,7 +43,7 @@ Close phase `<PH-x>` of the `<package>` Tamheed package:
 5. `human_required` gates for the phase: read each `GATE-` definition to the operator
    and take their explicit decision. Upsert the gate row's `outcome`
    (Go/Hold/Redirect/Kill), and record it as a `progress_update` (event_type
-   "gate-decision", subject_id the `GATE-` id).
+   "gate-decision", subject_id the `GATE-` id). A no-go that will be put again is `Hold`.
 6. The transition: upsert the phase full-row with `lifecycle_status: "Implemented"`.
    If the guard refuses, the blockers are real. Resolve them, or for one stubborn
    item ask the operator for a `WVR-` waiver. `"force": true` overrides the whole

@@ -25,7 +25,8 @@ Re-run the quality gates against the current repository (the DoR/DoD gates:
 `entity_query("execution-gate")`). Run `gate_run()`, the full mechanical set, plus
 `readiness_check`. The set is `G-IDS`, `G-DEC-STATUS`, `G-REQ-SRC`, `G-TRACE`, `G-SET`,
 `G-PROGRESS`, `G-COMPLETE`, `G-REL`. Report each gate as pass/fail with offending IDs, then give an
-overall **go / no-go**. Never report "ready" while a Critical gate fails.
+overall **go / no-go**. That is the package verdict (`go_no_go`), not a gate's `outcome`, which takes
+Go, Hold, Redirect or Kill. Never report "ready" while a Critical gate fails.
 
 ## PR review against acceptance criteria
 

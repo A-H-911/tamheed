@@ -189,8 +189,8 @@ IN PROGRESS / DONE.
 | # | Plan | Depends on | Status |
 |---|---|---|---|
 | 221 | [The read names every link](221-the-read-names-every-link.md) -- `trace_query` for one entity, one family or everything, ordered, with totals. Foreign-key columns as `column_links`. Both read tools echo their arguments | -- | DONE -- 2026-11-11 (`1189b6e`, CI run 43091590198 green on eleven jobs: Python 3.10 to 3.13 on Ubuntu, Windows and macOS) |
-| 222 | [requirements-wired reads the legs](222-requirements-wired-legs.md) -- decision, work and test, all three once `Implemented`, the missing leg named, a waiver honoured on both surfaces (R84) | -- | IN PROGRESS -- built and validated 2026-11-11, awaiting its commit |
-| 223 | [A refused value names what the column takes](223-a-refused-value-names-its-set.md) -- one DDL-derived hint at five write sites. The four gate words defined (R83) | -- | PLANNED |
+| 222 | [requirements-wired reads the legs](222-requirements-wired-legs.md) -- decision, work and test, all three once `Implemented`, the missing leg named, a waiver honoured on both surfaces (R84) | -- | DONE -- 2026-11-12 (`1703b02`, CI run 43127018023 green on eleven jobs; R90) |
+| 223 | [A refused value names what the column takes](223-a-refused-value-names-its-set.md) -- one DDL-derived hint at five write sites. The four gate words defined (R83) | -- | IN PROGRESS -- built and validated 2026-11-12, awaiting its commit |
 | 224 | [The lock survives a host rename inside one boot](224-lock-boot-session.md) -- the boot session, the migrate lock with its staging guard, the live-holder hint, the macOS start time (R86, R88, R89) | the export (224b) | PLANNED (the macOS CI legs landed first: `1f15d98`, baseline run 43080522933 green on eleven jobs) |
 | 225 | [A section can be retired](225-section-status.md) -- migration 009, a nullable status, one NULL-safe live filter (R85) | -- | PLANNED |
 | 226 | [Project registers](226-project-registers.md) -- migration 010, a register declares its fields, entries are checked at write (R81) | the export, 223 | PLANNED |

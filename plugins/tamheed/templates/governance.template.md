@@ -75,6 +75,17 @@ Draft → Proposed → Approved → Implemented
 - **Supersede:** new ID, set `superseded_by`/`supersedes` on both ends. The old item stays at status Superseded.
 - **Deprecate:** mark Obsolete with a one-line reason + date. Update or annotate downstream references.
 
+## Execution gate outcomes
+
+An execution gate's `outcome` takes one of four words: `Go`, `Hold`, `Redirect`, `Kill`.
+
+- `Go`: the gate is passed. The guarded work proceeds.
+- `Hold`: not passed now. The plan stands, the blockers are recorded, and the gate is put again.
+- `Redirect`: not passed. The plan or the scope changes first, then the gate is put again.
+- `Kill`: not passed. The guarded work stops.
+
+A no-go is one of the last three. Write these words in a gate's definition, never "No-go".
+
 ## Roles and approval
 
 <!-- Who can approve decisions, accept gate exceptions, and lock scope for this project. -->

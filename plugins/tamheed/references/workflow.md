@@ -147,7 +147,8 @@ human-intervention point.
   slices), `milestone` rows (FK to phase), and `acceptance-criterion` rows (bound to requirement + slice).
   Then `execution-gate` rows (ready/done/checkpoint/approval definitions), per-slice `execution-plan` rows
   and durable `convention` rows. Then `deferred-work` rows for consciously-postponed work (severity +
-  activation trigger + invariant-at-stake).
+  activation trigger + invariant-at-stake). A gate's `definition` names the four outcome words
+  (`Go`, `Hold`, `Redirect`, `Kill`), never "No-go": `governance.md` defines them.
 - **Out:** the execution plan as data. **Enter:** Stages 14–15. **Exit:** MVP path sequenced, each phase
   has exit criteria, each AC binds to a slice. **Check:** G-EXEC (leaf items actionable+testable).
 - **Fail:** abstract phase → decompose into slices. **Human:** approve roadmap.

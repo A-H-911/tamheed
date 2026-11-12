@@ -183,6 +183,7 @@ Traceability is built live, not assembled at the end.
 **Plan & generate (stages 16–17).** `phase` rows, then **`slice` rows under each phase**. Slices are
 what branches/PRs/ACs bind to. Then `wbs-item`, `milestone` (a roadmap LABEL: no lifecycle, never
 gates, v4), `acceptance-criterion` (bound to requirement + slice), `execution-gate` and `test` rows.
+A gate's definition names the outcome words `Go`, `Hold`, `Redirect` and `Kill`, never "No-go".
 Then per-slice `execution-plan` and `convention` rows. Narrative documents come from the surviving section
 templates. Trace edges: requirement → decision, slice → requirement, test → requirement (G-TRACE runs
 over these).

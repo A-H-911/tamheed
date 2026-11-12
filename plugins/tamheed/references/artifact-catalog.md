@@ -152,7 +152,7 @@ One `data/<table>.jsonl` file per non-empty family. Class = the registry's gener
 | milestone | `MS-` | Conditional | A named roadmap **label** (title/phase/due) with no lifecycle, never gates (v4 demotion). A milestone that gates is an execution-gate |
 | wbs-item | `WBS-` | Conditional | Work breakdown (self-parenting hierarchy). The lifecycle includes Review |
 | execution-plan | `EP-` | Conditional | Per-slice how-to, package-resident |
-| execution-gate | `GATE-` | Conditional | DoR/DoD/checkpoint/approval definitions (prose a HUMAN evaluates, surfaced as human_required). `outcome` records the latest Go/Hold/Redirect/Kill decision |
+| execution-gate | `GATE-` | Conditional | DoR/DoD/checkpoint/approval definitions (prose a HUMAN evaluates, surfaced as human_required). `outcome` records the latest Go/Hold/Redirect/Kill decision. A no-go is `Hold`, `Redirect` or `Kill` (`governance.md` defines the four words) |
 | convention | `CONV-` | Conditional | Durable conventions the agent must honor during execution |
 | defect | `DEF-` | Conditional | Found bugs. Severity critical/high/medium/low. **Open critical/high block readiness, medium/low advise.** `found_in` locates it |
 | deferred-work | `DW-` | Conditional | Postponed work with severity + activation trigger + invariant at stake. Once Activated, the wbs-item that carries it says so with a `carries` edge (v5). `deferred-work-carried` lists Activated rows no open item carries |

@@ -197,6 +197,22 @@ every row that still awaits the operator or the export, and every reported row u
 answered. The `feedback-unanswered` advisory lists the same rows (registers excluded, because a
 local-tool row never resolves).
 
+## Execution gate outcomes — four words (v6.5)
+
+An execution gate's `outcome` is the operator's latest decision at that gate. The column takes one
+of four words, and it takes no other.
+
+- `Go`: the gate is passed. The guarded work proceeds.
+- `Hold`: the gate is not passed now. The plan stands and the blockers are recorded. The gate is put
+  again when they clear.
+- `Redirect`: the gate is not passed. The plan or the scope changes first, through a decision or a
+  scope change. The gate is then put again on the changed plan.
+- `Kill`: the gate is not passed. The guarded work stops.
+
+A no-go is one of the last three, so say which one. A no-go whose blockers will be worked and put
+again is `Hold`. Write these four words in a gate's `definition`, never "No-go". The package
+verdict `go_no_go` is a different field: free text on the header row, written on the operator's word.
+
 ## The package header — on the operator's word (v4.12)
 
 The header (`server_info().package`) is written with `entity_upsert(type="package")`. `title`,

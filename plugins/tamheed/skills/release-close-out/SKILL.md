@@ -44,7 +44,7 @@ Close out the release against the `<package>` Tamheed package:
 5. `human_required` gates: read each `GATE-` definition to the operator and take their
    explicit decision. Upsert the gate row's `outcome` (Go/Hold/Redirect/Kill), and
    record it as a `progress_update` (event_type "gate-decision", subject_id the
-   `GATE-` id).
+   `GATE-` id). A no-go that will be put again is `Hold`.
 6. `gate_run()` must pass.
 7. Release notes from `entity_query("progress-entry")` since the last release.
    `work_bind` the release tag/commit to the phase and headline entities.
