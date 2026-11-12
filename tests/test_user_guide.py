@@ -212,7 +212,7 @@ class UserGuideTest(unittest.TestCase):
         check = next(c["check_in"] for c in rel["columns"] if c["name"] == "relation")
         self.assertEqual(sorted(check), sorted(set(srv.RELATION_RULES) | {"relates_to"}))
         self.assertEqual(len(f["events"]["all"]), 12)
-        self.assertEqual(len(f["tools"]), 19)
+        self.assertEqual(len(f["tools"]), 21)
         self.assertEqual({s["group"] for s in f["skills"]}, {"front", "scenario", "discipline"})
         self.assertEqual(len(f["skills"]), 27)
         self.assertEqual(len(f["stages"]["stages"]), 22)

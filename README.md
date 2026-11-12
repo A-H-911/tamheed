@@ -462,7 +462,7 @@ tamheed/
 ├── evals/                            # behavioral eval spec + deterministic eval runner
 ├── generated-samples/                # the demonstration package (migrated in place through v2→v3→v4)
 ├── lab/                              # the permanent execution lab (brief + seed package + scenario)
-├── tests/                            # the twelve test suites
+├── tests/                            # the thirteen test suites
 ├── check.py                          # THE one deterministic gate — CI job 1 runs exactly this
 ├── .github/workflows/                # CI (check.py + server smoke) + scheduled eval-spec lint
 └── SECURITY.md                       # trust model, untrusted-content posture, reporting
@@ -471,7 +471,7 @@ tamheed/
 ## Verifying a local checkout
 
 ```bash
-python check.py        # everything CI runs: 12 suites + the lint battery, canonical form, eval fixtures
+python check.py        # everything CI runs: 13 suites + the lint battery, canonical form, eval fixtures
 ```
 
 ## Contributing

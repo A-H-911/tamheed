@@ -44,11 +44,11 @@ TAIL_SERVER = {"last_referenced"}  # stamped by work_bind on every table that ca
 STORE_TABLES = ("packages", "entity_types", "entity_index")  # the store's own furniture
 GROUPS = {
     "read": ("server_info", "package_unlock", "entity_query", "trace_query", "gate_run",
-             "readiness_check", "package_verify"),
+             "readiness_check", "package_verify", "slate_read"),
     "mutate": ("package_create", "package_open", "package_close", "entity_upsert",
                "progress_update", "audit_record", "work_bind", "entity_export", "handoff_emit"),
     "staged": ("package_migrate", "package_adopt"),
-    "export": ("export_html",),
+    "export": ("export_html", "slate_export"),
 }
 
 

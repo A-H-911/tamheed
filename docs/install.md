@@ -411,7 +411,7 @@ the methodology is readable but packages cannot be created. See the capability t
 ## Verifying a local checkout
 
 ```bash
-# everything CI runs — the 12 suites, the lint battery, canonical form, eval fixtures
+# everything CI runs — the 13 suites, the lint battery, canonical form, eval fixtures
 python check.py
 
 # the MCP server's tool surface (uv fetches the SDK via PEP 723; no install step)

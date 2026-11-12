@@ -1,0 +1,58 @@
+/* Tamheed interview page (plan 227). Added after viewer.css, whose colours it uses. */
+.meta { color: var(--ink-2); }
+.notice { color: var(--ink-2); font-size: .9rem; border-left: 3px solid var(--line);
+  padding-left: .8rem; }
+.toolbar { display: flex; flex-wrap: wrap; gap: .5rem; margin: 1rem 0; position: sticky;
+  top: 0; padding: .5rem 0; background: var(--bg); z-index: 2; }
+button, .filebtn { font: inherit; color: var(--ink); background: transparent;
+  border: 1px solid var(--line); border-radius: .4rem; padding: .35rem .8rem; cursor: pointer; }
+button[aria-pressed="true"] { border-color: var(--a1); color: var(--a1); }
+.filebtn input { max-width: 14rem; }
+#status { min-height: 1.4rem; font-weight: 600; }
+
+section.round { margin: 2rem 0; }
+fieldset.question { border: 1px solid var(--line); border-radius: .5rem; margin: 1.2rem 0;
+  padding: .8rem 1rem; }
+fieldset.question.answered { border-color: var(--good); }
+fieldset.question legend { font-weight: 700; padding: 0 .4rem; }
+.qid, .oid, .kind { font-family: ui-monospace, monospace; color: var(--ink-2);
+  font-size: .85em; margin-right: .3rem; }
+.detail, .odetail { color: var(--ink-2); margin: .3rem 0 .6rem; white-space: pre-wrap; }
+.odetail { margin-left: 1.8rem; }
+.options { margin: .6rem 0; }
+label.option { display: block; padding: .3rem .4rem; border-radius: .3rem; }
+label.option:hover { background: #ffffff10; }
+textarea, input[type="text"] { font: inherit; color: var(--ink); background: transparent;
+  border: 1px solid var(--line); border-radius: .3rem; padding: .3rem .5rem;
+  width: 100%; box-sizing: border-box; }
+label.note, label.attendance, .closure label { display: block; margin: .6rem 0;
+  color: var(--ink-2); }
+.closure { border-top: 1px dashed var(--line); margin-top: 1.5rem; padding-top: .6rem; }
+details.quote dl { margin: .4rem .9rem .8rem; }
+details.quote dt { font-family: ui-monospace, monospace; color: var(--ink-2);
+  font-size: .85em; margin-top: .5rem; }
+details.quote dd { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+
+/* The recommendation is hidden until the script has applied the stored audience mode. So
+   a page that was left in audience mode never shows the pick, and a page with no script
+   shows none at all. */
+.recmark, .recreason { display: none; }
+html.ready:not(.audience) .recmark { display: inline; margin-left: .6rem; padding: 0 .4rem;
+  border: 1px solid var(--a1); border-radius: .3rem; color: var(--a1); font-size: .8em; }
+html.ready:not(.audience) .recreason { display: block; color: var(--ink-2); }
+html.ready:not(.audience) label.option.rec { outline: 1px solid var(--a1); }
+
+/* One question at a time: only the current question and its round show. */
+.pager { display: none; gap: 1rem; align-items: center; margin: 1rem 0; }
+html.one .pager { display: flex; }
+html.one fieldset.question:not(.current) { display: none; }
+html.one section.round:not(.current-round) { display: none; }
+
+.copy textarea { font-family: ui-monospace, monospace; font-size: .8rem; }
+
+@media print {
+  .toolbar, .pager, .copy, #status, .notice { display: none; }
+  html.one fieldset.question:not(.current), html.one section.round:not(.current-round) {
+    display: block; }
+  fieldset.question { break-inside: avoid; }
+}

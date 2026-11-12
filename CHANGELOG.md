@@ -24,6 +24,9 @@ the 6.5.0 entry at the release.
   stored with a NULL key, and a value 1,500 levels deep was stored as it was. After either,
   `readiness_check` and `export_html` raised. The earlier items of a batch that raised were
   committed by the next write.
+- `slate_export` and `slate_read` (plan 227): an interview page for the operator, and a reader
+  for the answers file that the page saves. The page runs one script, named by hash in a content
+  policy, and it loads and sends nothing. The reader writes nothing. The tools number 21.
 
 ## [6.4.0] - 2026-10-10
 

@@ -15,7 +15,7 @@ python check.py     # everything CI runs — if this is green, you are set up
 ```
 
 - **Python ≥ 3.10** (program decision ASM-D, the MCP SDK's floor).
-- `python check.py` is **the one command**. It runs the twelve test suites and the check.py lint
+- `python check.py` is **the one command**. It runs the thirteen test suites and the check.py lint
   battery (registry ↔ table map ↔ DDL sync, `schema.sql` == `migrations/001_init.sql`, and friends).
   It runs the canonical-form round-trip and the eval runner's sample. CI job 1 runs exactly this, so
   green locally means green in CI. CI runs on Python 3.10, 3.11, 3.12 and 3.13 × Ubuntu and Windows,

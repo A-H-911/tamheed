@@ -143,6 +143,9 @@ operator again (R88, R89).
   into the register family is put in that field's prompt at the release. The upgrade moves no row.
 - **R99** (the same question) The three write-path defects that the review of plan 226 found ride
   in plan 226's commit. They are older than the plan and touch every family.
+- **R100** (plan 227, before its build, 2026-11-12) A slate reaches the tool inline, or from a
+  spec file at one fixed place under the package, named by the slate. Measured premise: a round
+  of 71 questions is 66,610 bytes, about 16,600 tokens for an agent to write in one call.
 
 ## Step 0
 

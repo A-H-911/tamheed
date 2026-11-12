@@ -8,3 +8,7 @@
 
 # The per-item figures are generated with LF too (plan 203); the byte-twin covers the folder.
 docs/guide/figures/*.svg text eol=lf
+
+# Plan 227: an interview page and its record are generated files. Keep their line ends as written.
+**/slates/*.html text eol=lf
+**/slates/*.json text eol=lf

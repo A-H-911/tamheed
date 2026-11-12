@@ -168,6 +168,31 @@ the trust model and how to report a problem.
   Consumers escape it, and the viewer's escape-first rule applies to them too. On the write side,
   `expect_unchanged` refuses a full-row write that alters columns the caller named as untouched. It
   refuses (v4.14) a write that names a column it does not carry, because that assertion could only pass.
+- **The interview page runs one script, named by hash** (v6.5, plan 227). `slate_export` writes
+  `<package>/slates/<name>.html` from a slate that an agent wrote and from rows of the store. Both
+  are untrusted text. Every text passes the one escape function at render. The page carries ONE
+  script, the bundled static file `slate.js`, the same for every slate. A content policy in the
+  page names that script by its SHA-256 hash and allows nothing else: `default-src 'none'`,
+  `base-uri 'none'`, `form-action 'none'`. So an inline handler, a second script block and a
+  script added by a row's text do not run. The page loads nothing and sends nothing.
+  The script reads ids from data attributes, sets values and classes, and writes no markup. The
+  page holds no data block. Measured in Chrome 157 on a `file://` page: the hashed script runs,
+  and each of the other three is blocked and reported. Limits, stated plainly. A policy in a meta
+  tag cannot set `frame-ancestors` or `sandbox`. The answers stay in the browser's storage under
+  the slate's digest until the operator clears them. So a shared browser profile shows them to
+  its next user. Both tools refuse a slate folder or file that is a link or that leads outside
+  the package. A hard link cannot be told from a file, and it is not caught. A page is bounded
+  before it is built: a row is printed once per citation, and the quoted text is counted first.
+  The review page is unchanged: it still runs no script.
+- **An answers file is a record of a page, never the operator's word.** `slate_read` reads one
+  fixed file, `<package>/slates/<name>.answers.json`, and the caller names no path. It refuses a
+  file over its size cap, a key written twice and a head for another slate. It refuses an answer
+  that the slate does not offer. It computes the slate's digest from the record's content and trusts no
+  stored field. Nothing proves who wrote the file, and the result says so (`provenance:
+  unverified`). It WRITES NOTHING: no row, no journal entry, no stamp. Free text of the file is
+  screened by the `G-INJECT` pattern, and a hit is named in `screened`, never removed and never
+  obeyed. An approval, a waiver and a `force` are still spoken in the session
+  (`tamheed:operator-interview`, step 7).
 - **Safe-by-default store.** No raw-SQL tool. Batch mutations are transactional (all-or-nothing).
   Approval-bearing rows are immutable (supersede, never edit). One writer per package via a fail-loud
   lockfile. `handoff_emit` refuses emission when the injection screen finds instruction-shaped text.

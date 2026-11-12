@@ -24,6 +24,11 @@ Markdown registers.
 │                                  #   The project's prompts are `prompt` rows in data/prompts.jsonl (v6, plan 192)
 ├── prompts-v5-backup/             # only after a v6 package_migrate: the pre-v6 prompt files it converted
 ├── review.html (+ csv/)           # the human review surface, exported on demand
+├── slates/                        # v6.5 (plan 227): interview pages for the operator
+│   ├── <name>.html                #   the page: one script named by hash, loads and sends nothing
+│   ├── <name>.slate.json          #   the slate record: the questions and the quoted rows (the record)
+│   ├── <name>.spec.json           #   optional: a slate that a project script wrote for slate_export
+│   └── <name>.answers.json        #   the file the operator saved from the page, read by slate_read
 ├── exports/                       # v4.7: entity_export files — a read tool's whole result, digest-
 │   └── <name>.json                #   stamped, deterministic; the sanctioned read for committed scripts
 │                                  #   (derived, regenerable; commit or ignore — never under data/)
