@@ -53,6 +53,8 @@ owner: <name-or-role>
 | Lesson | `LL-NNN` | LL-001 |
 | Skill | `SKL-NNN` | SKL-001 |
 | Feedback (upstream feedback / local tool) | `FB-NNN` | FB-001 |
+| Project register | `REG-NNN` | REG-001 |
+| Register entry | `ENT-NNN` | ENT-001 |
 | Prompt (kickoff, phase, situational) | `PRT-NNN` | PRT-001 |
 
 `DEC` vs `ADR`: use `DEC-` for ANY decision. **Promote** to `ADR-NNNN` when the one-way-door

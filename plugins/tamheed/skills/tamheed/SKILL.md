@@ -144,7 +144,9 @@ go through the tools too. A committed script that must QUOTE the store byte-exac
 slate, a docket) reads an `entity_export` file the tool wrote under `<package>/exports/`. It
 never reads `data/*.jsonl` or a pasted display (v4.7). A full-row update that only means to
 flip a status names the columns it did not mean to change (`expect_unchanged`). The
-store then refuses transport drift. **A function the tools lack is a `feedback` row (`FB-`)
+store then refuses transport drift. **A record type that no family holds takes a declared register (`REG-`) and
+its entries (`ENT-`), never borrowed rows** (v6.5). The register declares its fields, and the
+write checks each entry against them. **A function the tools lack is a `feedback` row (`FB-`)
 first, never a side utility** (v4.11). Record what you needed and what you did instead,
 born Proposed (`kind`: `missing-capability` | `defect` | `doc-error` | `question`). The OPERATOR
 confirms it, and only then does it leave the package. Run `entity_export("feedback")` and

@@ -128,6 +128,21 @@ operator again (R88, R89).
 - **R92** (the same question round) Reviews for the rest of the round run through the general
   code reviewer with a security brief, and plan 227 gets a second independent pass. The hook
   that refuses the security-review agent on this branch stays untouched.
+- **R93** (design checkpoint, 2026-11-12) A reference field of a register holds one id or a list
+  of ids, and each must name a row. A string of joined ids is not split.
+- **R94** (the same checkpoint) The prefixes are `REG-` and `ENT-`.
+- **R95** (the same checkpoint) An interview page takes its questions from a slate that the agent
+  passes. One mechanism.
+- **R96** (the same checkpoint) The page includes a one-question view, attendance and closure per
+  round, and an audience mode, beyond the core.
+- **R97** (plan 226's commit question, 2026-11-12) Four rules of the register grammar stand as
+  the maintainer built them. `required` means present and not null. A value set applies to text.
+  A declared field never takes the name of an entry column. Only a stored entry retired as it is
+  escapes the check.
+- **R98** (the same question) The recommendation about moving the second field's existing rows
+  into the register family is put in that field's prompt at the release. The upgrade moves no row.
+- **R99** (the same question) The three write-path defects that the review of plan 226 found ride
+  in plan 226's commit. They are older than the plan and touch every family.
 
 ## Step 0
 

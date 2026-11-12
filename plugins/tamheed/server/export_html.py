@@ -781,11 +781,86 @@ def _readiness(conn, gates, ready, readiness=None):
                     anchor="readiness-rules"))
 
 
+def _field_cell(value) -> str | None:
+    """One declared field's value as cell text: text as it is, a list of text joined, and
+    anything else (a mapping, a number, a boolean) as compact JSON with sorted keys."""
+    if value is None or isinstance(value, str):
+        return value
+    if isinstance(value, list) and all(isinstance(x, str) for x in value):
+        return ", ".join(value)
+    try:
+        return json.dumps(value, ensure_ascii=False, sort_keys=True)
+    except RecursionError:      # a file edited by hand: the write refuses such a value
+        return "(nested too deep to show)"
+
+
+def _declared(field: dict) -> str:
+    """One declared field in words: `status (required, one of: a / b)`."""
+    values = field.get("values")           # a file edited by hand can hold a set that is no list
+    marks = (["required"] if field.get("required") else []) \
+        + (["one of: " + " / ".join(map(str, values))] if isinstance(values, list) and values
+           else []) \
+        + (["a reference"] if field.get("refs") else [])
+    return str(field.get("name")) + (f" ({', '.join(marks)})" if marks else "")
+
+
+def _project_registers(conn) -> list[str]:
+    """Plan 226: one fold per project register. The generic loop drops `custom_attributes`,
+    and a register entry keeps its field values there, so the page showed none of them.
+    The columns are the declared fields, in declared order. A key that the declaration
+    no longer names shows under `(undeclared)`, so no stored value is hidden. The brackets
+    keep that header apart from a field that a project names `undeclared`."""
+    parts, first = [], True
+    for reg_id, title, raw in conn.execute(
+            f"SELECT id, title, custom_attributes FROM registers ORDER BY {_by_id()}"):
+        try:
+            fields = (json.loads(raw) if raw else {}).get("fields") or []
+        except (ValueError, AttributeError, RecursionError):
+            fields = []
+        fields = [f for f in (fields if isinstance(fields, list) else [])
+                  if isinstance(f, dict) and isinstance(f.get("name"), str)]
+        names = [f["name"] for f in fields]
+        rows, extra = [], False
+        for eid, etitle, status, body, values in conn.execute(
+                "SELECT id, title, lifecycle_status, body, custom_attributes"
+                f" FROM register_entries WHERE register_id = ? ORDER BY {_by_id()}", (reg_id,)):
+            try:
+                values = json.loads(values) if values else {}
+            except (ValueError, RecursionError):
+                values = {}
+            values = values if isinstance(values, dict) else {}
+            other = {k: v for k, v in values.items() if k not in names}
+            extra = extra or bool(other)
+            rows.append([eid, etitle, status] + [_field_cell(values.get(n)) for n in names]
+                        + [body, _field_cell(other) if other else None])
+        if not rows:
+            continue
+        headers = ["id", "title", "lifecycle_status"] + names + ["body", "(undeclared)"]
+        if not extra:
+            headers, rows = headers[:-1], [r[:-1] for r in rows]
+        declared = ("Declared fields: " + ". ".join(_declared(f) for f in fields)
+                    if fields else "This register declares no field")
+        parts.append(_fold(f"{reg_id} {title}", len(rows),
+                           f'<p class="lead">{esc(declared)}.</p>\n'
+                           + _table(headers, rows, row_ids=True),
+                           anchor="reg-register_entries" if first else None,
+                           csv="register_entries"))
+        first = False
+    return parts
+
+
 def _registers(conn, gates, ready, readiness=None):
     parts, empty = [_design_ahead(conn)], []
     for table in ENTITY_TABLES.values():
         if table == "trace_edges":
             continue  # rendered in Traceability
+        if table == "register_entries":
+            # plan 226: one fold per register, with the declared fields as its columns
+            folds = _project_registers(conn)
+            parts.extend(folds)
+            if not folds:
+                empty.append("Register entries")
+            continue
         cols = [c for c in _cols(conn, table) if c != "custom_attributes"]
         order = _by_id(cols[0]) if cols[0] == "id" else cols[0]
         rows = conn.execute(

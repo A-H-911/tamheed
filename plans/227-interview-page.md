@@ -34,3 +34,25 @@
   mismatch, unknown option, a bad name, oversize, a changed quoted row, an injection flag.
 - **Check:** red-first tests, `check.py`, a security review of the page and the reader, the browser
   pass with captures. **Expected:** tools 21, suites 13, a slate answered and read back end to end.
+
+## Design checkpoint (2026-11-12, on the second field's export; shapes only)
+
+- The field's own page is one file of 1.3 MB with three script blocks: one is a data block of
+  1.2 MB, and the code is 40 KB. It declares NO content policy. It has no inline event handler, no
+  file input and no print call. It keeps state in browser storage and saves by a blob download.
+  It runs in Chrome 157.
+- Correction (2026-11-12): this record first said that the page carries a content policy in a meta
+  tag. That was a false match: the phrase stands in the page's data text. So the field's page
+  proves nothing about a hash policy on a `file://` page. The browser pass of this plan proves it.
+- Its views: all questions, one at a time, the whole round. It has an operator mode and a workshop
+  mode, and light and dark.
+- Its answers file holds the round, attendance, closure, voices, the topics decided and not asked,
+  and per answer the selected option, its label, the recommended option and an outcome block.
+
+### Rulings taken at the checkpoint
+
+- **R95 (2026-11-12): the questions come from a slate that the agent passes.** One mechanism. The
+  tool still quotes every cited row from the store. Building straight from a register was declined.
+- **R96 (2026-11-12): the page includes three extras beyond the core.** A view of one question at
+  a time, attendance and closure per round, and an audience mode that hides the recommendations.
+  The maintainer had recommended the core only. Each extra is more script to test and to review.

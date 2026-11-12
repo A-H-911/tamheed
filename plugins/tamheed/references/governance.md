@@ -47,6 +47,8 @@ reused (retire, do not recycle). Every entity lives in its `data/<table>.jsonl` 
 | Lesson | `LL-NNN` | lessons |
 | Skill | `SKL-NNN` | skills |
 | Feedback (upstream feedback / local tool) | `FB-NNN` | feedback |
+| Project register | `REG-NNN` | registers |
+| Register entry | `ENT-NNN` | register_entries |
 | Prompt (kickoff, phase, situational) | `PRT-NNN` | prompts |
 
 Retired prefixes: `PRM-` (v3, when prompts became files under `<package>/prompts/`). Ids of that
@@ -196,6 +198,46 @@ journaled too (v4.13, the field's FB-014). The row says which it was. `handoff_e
 every row that still awaits the operator or the export, and every reported row until it is
 answered. The `feedback-unanswered` advisory lists the same rows (registers excluded, because a
 local-tool row never resolves).
+
+## Project registers — declared fields (v6.5)
+
+A project keeps record types that no family holds: a source authorization, an evidence
+finding, an interview topic. Declare a `register` row (`REG-`) for each such type. Never put
+those records into dependency, open-question or section rows: the rows then fill registers
+that mean something else, and nothing checks their fields.
+
+A register DECLARES its fields under `custom_attributes.fields`. Each field is an object:
+
+| Key | Meaning |
+|---|---|
+| `name` | The key that an entry uses. Required, and unique in the register. |
+| `required` | `true` when every entry must carry the key with a value that is not null. An empty list, `false` and `0` are values. |
+| `values` | A list of text values. An entry's value must be one of them. |
+| `refs` | `true` when the value is a reference: one id or a list of ids. Each id must name a row. |
+
+A field takes `values` or `refs`, never both. A field never takes the name of an entry
+column, such as `title` or `body`. A field with neither accepts any value: text,
+a list, a mapping, a number or a boolean. A string of joined ids is never split, because it
+cannot be told from prose that names an id. Keep such a value in a plain field, or send a list.
+
+A `register-entry` row (`ENT-`) is one record. It names its register (`register_id`), and the
+values of the declared fields live in its `custom_attributes`. The write refuses an undeclared
+key, a missing required field, a value outside the set, and a reference that names no row.
+One refusal names every cause. The guard reads the row as it would be stored, so a partial
+write and a `substitute` are judged as a full row is.
+
+A declaration changes on the operator's word. The advisory `register-entries-conform` then
+lists the live entries that the new declaration does not admit, with the cause per entry.
+Retire an entry with `Superseded` or `Obsolete`. A write that retires a stored entry as it is
+is not judged, so an entry that no longer fits can still be retired. Every other write is
+judged: one that keeps the entry live, one that changes a value while it retires, and a row
+born retired. So correct the values of a live entry in the same write that edits its title or
+body. A register with no entry reads `indeterminate`. Link an entry to other rows with a
+`relates_to` edge, or with a `refs` field. The review page shows one table per register, and
+its columns are the declared fields.
+
+A package written before v6.5 does not know the two families. The write then names the route:
+`package_migrate`, whose staged registry-sync teaches the package both.
 
 ## Execution gate outcomes — four words (v6.5)
 

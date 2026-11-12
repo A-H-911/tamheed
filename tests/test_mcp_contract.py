@@ -241,7 +241,7 @@ class McpContractTest(unittest.TestCase):
         folder name, and the refusal names the legal set; the registry and the schema
         head say so."""
         srv.package_create("pr", "Prompts", "rnd")
-        self.assertEqual(srv.server_info()["schema_version"], 9)
+        self.assertEqual(srv.server_info()["schema_version"], 10)
         self.assertIn(("prompt", "prompts"), srv.ENTITY_TABLES.items())
         self.assertTrue(srv.entity_upsert([{"type": "phase", "id": "PH-1", "title": "P1",
                                             "lifecycle_status": "Approved"}])["ok"])
@@ -1586,6 +1586,470 @@ class McpContractTest(unittest.TestCase):
         self.assertIn("the payments module", err)
         self.assertIn("foreign key", err)
         srv.package_close()
+
+    # ------------------------------------------------- plan 226 (project registers)
+
+    _REGISTER = {"type": "register", "id": "REG-001", "title": "Source authorizations",
+                 "purpose": "One entry per source the operator authorized.",
+                 "custom_attributes": {"fields": [
+                     {"name": "status", "required": True,
+                      "values": ["requested", "approved", "refused"]},
+                     {"name": "grants", "refs": True},
+                     {"name": "scope", "required": True},
+                     {"name": "notes"}]}}
+
+    def _entry(self, eid: str, **values) -> dict:
+        return {"type": "register-entry", "id": eid, "register_id": "REG-001",
+                "title": "An entry", "custom_attributes": values}
+
+    def _refused(self, item: dict) -> str:
+        out = srv.entity_upsert([item])
+        self.assertFalse(out["ok"], out)
+        return out["items"][0]["error"]
+
+    def test_a_register_declares_its_fields_and_an_entry_is_checked(self):
+        """Plan 226 (R81, the field's three register reports): a project record type had no
+        family, so its rows went into registers that mean something else and nothing
+        checked their fields. A register DECLARES its fields. An entry is checked at
+        write: an undeclared key, a missing required field, a value outside the declared
+        set and a reference that names no row are each refused, all named in one answer."""
+        make_complete_package("demo")
+        self.assertTrue(srv.entity_upsert([self._REGISTER])["ok"])
+        good = self._entry("ENT-001", status="approved", scope="read only",
+                           grants=["FR-001", "DOC-001"])
+        self.assertTrue(srv.entity_upsert([good])["ok"])
+        self.assertEqual(srv.entity_query("register-entry", id="ENT-001")["rows"][0][
+            "lifecycle_status"], "Proposed")
+        err = self._refused(self._entry("ENT-002", status="maybe", owner="x",
+                                        grants=["FR-001", "FR-999"]))
+        for needle in ("REG-001 does not admit this entry",
+                       "`owner` is not a declared field",
+                       "`status` 'maybe' is not one of: requested, approved, refused",
+                       "`scope` is required",
+                       "`grants` names no row: FR-999"):
+            self.assertIn(needle, err)
+        self.assertEqual(srv.entity_query("register-entry")["total"], 1)   # nothing landed
+
+    def test_a_register_reference_is_an_id_or_a_list_never_a_joined_string(self):
+        """Plan 226 (R93): a reference field holds one id or a LIST of ids. A string of
+        joined ids is never split: it cannot be told from prose that names an id. Measured
+        on a field's rows: five fields held joined ids, and every row was refused."""
+        make_complete_package("demo")
+        srv.entity_upsert([self._REGISTER])
+        ok = dict(status="approved", scope="s")
+        self.assertTrue(srv.entity_upsert([self._entry("ENT-001", grants="FR-001", **ok)])["ok"])
+        self.assertTrue(srv.entity_upsert([self._entry("ENT-002", grants=[], **ok)])["ok"])
+        err = self._refused(self._entry("ENT-003", grants="FR-001, DOC-001", **ok))
+        self.assertIn("`grants` names no row: FR-001, DOC-001", err)
+        self.assertIn("A reference is one id or a list of ids", err)
+        err = self._refused(self._entry("ENT-003", grants=["FR-001", 7], **ok))
+        self.assertIn("`grants` names no row: 7", err)
+
+    def test_a_register_value_can_be_a_list_a_mapping_a_number_or_a_boolean(self):
+        """Plan 226 (the checkpoint measurement): a field's rows held lists, one mapping,
+        booleans and numbers. A field with no declared set accepts them as they are.
+        REQUIRED means the key is present and not null: an empty list, false and 0 are
+        values. A value set applies to text, so a list in such a field is refused."""
+        make_complete_package("demo")
+        srv.entity_upsert([self._REGISTER | {"custom_attributes": {"fields": [
+            {"name": "options", "required": True}, {"name": "approved", "required": True},
+            {"name": "count", "required": True}, {"name": "ids", "required": True},
+            {"name": "axis", "values": ["as-is", "to-be"]}]}}])
+        full = dict(options={"A": "keep", "B": "drop"}, approved=False, count=0, ids=[])
+        self.assertTrue(srv.entity_upsert([self._entry("ENT-001", **full)])["ok"])
+        stored = json.loads(srv.entity_query("register-entry", id="ENT-001")["rows"][0][
+            "custom_attributes"])
+        self.assertEqual(stored, full)
+        self.assertIn("`count` is required",
+                      self._refused(self._entry("ENT-002", **(full | {"count": None}))))
+        self.assertIn("`axis` ['as-is'] is not one of: as-is, to-be",
+                      self._refused(self._entry("ENT-002", axis=["as-is"], **full)))
+
+    def test_a_malformed_register_declaration_is_refused(self):
+        """Plan 226: the declaration is the list under `custom_attributes.fields`. A
+        register with no list, a field with no name, an unknown key, a name declared
+        twice, a set that is no list of text, and a field with both a set and `refs`
+        are each refused. An empty list declares no field, and then no key is admitted."""
+        make_complete_package("demo")
+        base = {"type": "register", "id": "REG-001", "title": "T"}
+        for attrs, needle in (
+                (None, "a register declares its fields"),
+                ({"fields": "status"}, "a register declares its fields"),
+                ({"fields": [{"required": True}]}, "fields[0] must be an object with a text `name`"),
+                ({"fields": [{"name": "a", "type": "text"}]}, "unknown key(s) ['type']"),
+                ({"fields": [{"name": "a"}, {"name": "a"}]}, "'a' is declared twice"),
+                ({"fields": [{"name": "a", "values": []}]}, "`values` is a non-empty list"),
+                ({"fields": [{"name": "a", "values": ["x", 1]}]}, "`values` is a non-empty list"),
+                ({"fields": [{"name": "a", "required": "yes"}]}, "`required` is true or false"),
+                ({"fields": [{"name": "title"}]}, "takes the name of a column of the entry"),
+                ({"fields": [{"name": "a", "values": ["x"], "refs": True}]}, "Choose one")):
+            self.assertIn(needle, self._refused(base | {"custom_attributes": attrs}), attrs)
+        # the reserved names ARE the entry table's columns, read from the live schema
+        self.assertEqual(set(srv._REGISTER_ENTRY_COLUMNS),
+                         set(srv._columns("register_entries")))
+        self.assertTrue(srv.entity_upsert([base | {"custom_attributes": {"fields": []}}])["ok"])
+        self.assertTrue(srv.entity_upsert([{
+            "type": "register-entry", "id": "ENT-001", "register_id": "REG-001",
+            "title": "bare"}])["ok"])
+        self.assertIn("`x` is not a declared field", self._refused({
+            "type": "register-entry", "id": "ENT-002", "register_id": "REG-001",
+            "title": "t", "custom_attributes": {"x": 1}}))
+        self.assertIn("FOREIGN KEY", self._refused({
+            "type": "register-entry", "id": "ENT-002", "register_id": "REG-404", "title": "t"}))
+
+    def test_the_register_guard_reads_the_materialised_row(self):
+        """Plan 226: the guard judges the row as it would be stored. A partial write that
+        omits the values keeps them and passes. A partial write of the register that
+        omits the declaration keeps it. A `substitute` that moves a value outside its
+        set is refused, and one that keeps it inside is written."""
+        make_complete_package("demo")
+        srv.entity_upsert([self._REGISTER,
+                           self._entry("ENT-001", status="requested", scope="s")])
+        partial = {"type": "register-entry", "id": "ENT-001", "register_id": "REG-001",
+                   "title": "Renamed"}
+        self.assertTrue(srv.entity_upsert([partial])["ok"])
+        self.assertTrue(srv.entity_upsert([{"type": "register", "id": "REG-001",
+                                            "title": "Authorizations"}])["ok"])
+        err = self._refused({"type": "register-entry", "id": "ENT-001",
+                             "substitute": {"custom_attributes": ["requested", "wanted"]}})
+        self.assertIn("`status` 'wanted' is not one of", err)
+        self.assertTrue(srv.entity_upsert([{
+            "type": "register-entry", "id": "ENT-001",
+            "substitute": {"custom_attributes": ["requested", "approved"]}}])["ok"])
+        row = srv.entity_query("register-entry", id="ENT-001")["rows"][0]
+        self.assertEqual((row["title"], json.loads(row["custom_attributes"])["status"]),
+                         ("Renamed", "approved"))
+        self.assertIn("a register declares its fields", self._refused({
+            "type": "register", "id": "REG-001", "title": "T",
+            "custom_attributes": {"note": "the declaration was dropped"}}))
+
+    def test_register_entries_conform_is_advisory_and_reads_the_current_declaration(self):
+        """Plan 226: the rule is emitted only when the package has a register. It lists the
+        live entries that the CURRENT declaration does not admit, because a declaration
+        can change after its entries exist. It names the cause per entry, a retired entry
+        is not read, and `ready` never moves."""
+        make_complete_package("demo")
+
+        def rule():
+            report = srv.readiness_check("package")
+            return report["ready"], {r["rule"]: r for r in report["rules"]}.get(
+                "register-entries-conform")
+
+        ready_before, absent = rule()
+        self.assertIsNone(absent)
+        srv.entity_upsert([self._REGISTER])
+        ready, found = rule()                    # a register with no entry measured nothing
+        self.assertEqual((found["status"], found["population"]["rows"]), ("indeterminate", 0))
+        self.assertEqual(ready, ready_before)
+        srv.entity_upsert([self._entry("ENT-001", status="approved", scope="s"),
+                           self._entry("ENT-002", status="refused", scope="s")])
+        ready, found = rule()
+        self.assertEqual((found["status"], found["entities"], found["severity"]),
+                         ("pass", [], "advisory"))
+        self.assertEqual(found["population"],
+                         {"table": "register_entries", "rows": 2, "scoped": False})
+        tightened = self._REGISTER | {"custom_attributes": {"fields": [
+            {"name": "status", "required": True, "values": ["requested", "approved"]},
+            {"name": "scope", "required": True}, {"name": "owner", "required": True}]}}
+        self.assertTrue(srv.entity_upsert([tightened])["ok"])
+        ready, found = rule()
+        self.assertEqual(found["entities"], ["ENT-001", "ENT-002"])
+        self.assertEqual(found["problems"]["ENT-001"], ["`owner` is required"])
+        self.assertIn("`status` 'refused' is not one of: requested, approved",
+                      found["problems"]["ENT-002"])
+        self.assertEqual(ready, ready_before)                # advisory: never moves ready
+        retire = {"type": "register-entry", "id": "ENT-002", "register_id": "REG-001",
+                  "title": "An entry", "lifecycle_status": "Obsolete",
+                  "custom_attributes": {"status": "approved", "scope": "s", "owner": "o"}}
+        unfit = {"status": "refused", "scope": "s"}
+        self.assertIn("`owner` is required", self._refused(      # a write that keeps it live
+            retire | {"lifecycle_status": "Approved", "custom_attributes": unfit}))
+        # An entry that no longer fits can still be RETIRED as it is: no value is invented
+        self.assertTrue(srv.entity_upsert([retire | {"custom_attributes": unfit}])["ok"])
+        ready, found = rule()
+        self.assertEqual((found["entities"], found["population"]["rows"]), (["ENT-001"], 2))
+        # ... and it cannot come back unchecked: the write that un-retires it is judged
+        back = {"type": "register-entry", "id": "ENT-002", "register_id": "REG-001",
+                "title": "An entry", "lifecycle_status": "Proposed"}
+        self.assertIn("`owner` is required", self._refused(back))
+        self.assertEqual(srv.entity_query("register-entry", id="ENT-002")["rows"][0][
+            "lifecycle_status"], "Obsolete")
+
+    def test_the_register_guard_has_no_side_door(self):
+        """Plan 226 (the review's bypass hunt): an entry that moves to another register is
+        judged against that register, as a partial row and as a `substitute`. In one batch,
+        an entry written after a tightened declaration is refused, and one written before
+        it lands and is then listed. A retired row cannot be BORN with refused values, and a
+        retiring write that changes a value is judged. A key written twice and a non-finite
+        number are refused. A refusal caps the keys and the ids that it lists."""
+        make_complete_package("demo")
+        other = {"type": "register", "id": "REG-002", "title": "Findings",
+                 "custom_attributes": {"fields": [{"name": "claim", "required": True}]}}
+        srv.entity_upsert([self._REGISTER, other,
+                           self._entry("ENT-001", status="approved", scope="s")])
+        move = {"type": "register-entry", "id": "ENT-001", "register_id": "REG-002",
+                "title": "An entry"}
+        self.assertIn("REG-002 does not admit this entry", self._refused(move))
+        self.assertIn("REG-002 does not admit this entry", self._refused({
+            "type": "register-entry", "id": "ENT-001",
+            "substitute": {"register_id": ["REG-001", "REG-002"]}}))
+        self.assertTrue(srv.entity_upsert([move | {"custom_attributes": {"claim": "c"}}])["ok"])
+        # one batch, both orders
+        tight = other | {"custom_attributes": {"fields": [
+            {"name": "claim", "required": True}, {"name": "owner", "required": True}]}}
+        late = {"type": "register-entry", "id": "ENT-002", "register_id": "REG-002",
+                "title": "t", "custom_attributes": {"claim": "c"}}
+        self.assertFalse(srv.entity_upsert([tight, late])["ok"])
+        self.assertTrue(srv.entity_upsert([late, tight])["ok"])
+        rule = {r["rule"]: r for r in srv.readiness_check("package")["rules"]}[
+            "register-entries-conform"]
+        self.assertEqual(rule["entities"], ["ENT-001", "ENT-002"])
+        # the retire door is as narrow as its purpose
+        junk = {"type": "register-entry", "id": "ENT-003", "register_id": "REG-001",
+                "title": "x", "lifecycle_status": "Obsolete",
+                "custom_attributes": {"junk": 1, "status": "nope"}}
+        self.assertIn("`junk` is not a declared field", self._refused(junk))
+        self.assertIn("`owner` is required", self._refused(      # retiring AND changing a value
+            late | {"lifecycle_status": "Obsolete", "custom_attributes": {"claim": "other"}}))
+        self.assertTrue(srv.entity_upsert([late | {"lifecycle_status": "Obsolete"}])["ok"])
+        # text that two readers would read two ways
+        for raw in ('{"status":"zzz","status":"approved","scope":"s"}',
+                    '{"status":"approved","scope":NaN}', '["a", "list"]', "not json"):
+            self.assertIn("must be a JSON object", self._refused({
+                "type": "register-entry", "id": "ENT-004", "register_id": "REG-001",
+                "title": "t", "custom_attributes": raw}), raw[:30])
+        # a refusal stays short
+        many = self._refused(self._entry("ENT-004", status="approved", scope="s",
+                                         grants=[f"FR-{n}" for n in range(900, 908)],
+                                         **{f"k{n}": n for n in range(9)}))
+        self.assertIn("(+3 more)", many)
+        self.assertIn("4 more keys are not declared fields", many)
+        self.assertEqual(many.count("is not a declared field"), 5)
+
+    def test_a_write_needs_a_text_key_and_a_raise_leaves_no_half_batch(self):
+        """Plan 226 (the review, two defects older than the plan). A row with no `id` was
+        stored with a NULL key, and every later readiness_check and export_html raised.
+        A list sent as a key raised at the first lookup, and the earlier items of that
+        refused batch were committed by the next write. Both are refused now, for every
+        family, and an exception that escapes the tool rolls the batch back."""
+        make_complete_package("demo")
+        srv.entity_upsert([self._REGISTER])
+        good = {"type": "constraint", "id": "CON-777", "title": "an earlier item"}
+
+        def stored() -> int:
+            return srv._CURRENT.conn.execute(
+                "SELECT COUNT(*) FROM constraints WHERE id = 'CON-777'").fetchone()[0]
+
+        for bad, needle in (
+                ({"type": "constraint", "title": "no id"}, "needs a text `id`, such as CON-001"),
+                ({"type": "constraint", "id": ["CON-9"], "title": "x"}, "needs a text `id`"),
+                ({"type": "register-entry", "register_id": "REG-001", "title": "x"},
+                 "needs a text `id`, such as ENT-001"),
+                ({"type": "register-entry", "id": "ENT-009", "register_id": ["REG-001"],
+                  "title": "x"}, "`register_id` is the text id of a register"),
+                ({"type": "trace-edge", "from_id": ["FR-001"], "to_id": "FR-001",
+                  "relation": "relates_to"}, "needs a text `from_id`")):
+            out = srv.entity_upsert([good, bad])
+            self.assertFalse(out["ok"], bad)
+            self.assertIn(needle, out["items"][1]["error"])
+            self.assertEqual((stored(), srv._CURRENT.conn.in_transaction), (0, False), bad)
+        # a list in a foreign-key column is refused with the column named. It raised
+        # inside the error handler, where the culprit lookup bound the raw list.
+        phase = srv.entity_query("phase", limit=1)["rows"][0]["id"]
+        out = srv.entity_upsert([good, {"type": "slice", "id": "SL-900", "title": "x",
+                                        "phase_id": [phase]}])
+        self.assertFalse(out["ok"])
+        self.assertIn("phase_id=", out["items"][1]["error"])
+        self.assertIn("is a foreign key", out["items"][1]["error"])
+        self.assertEqual((stored(), srv._CURRENT.conn.in_transaction), (0, False))
+        null_keys = srv._CURRENT.conn.execute(
+            "SELECT (SELECT COUNT(*) FROM constraints WHERE id IS NULL)"
+            " + (SELECT COUNT(*) FROM register_entries WHERE id IS NULL)"
+            " + (SELECT COUNT(*) FROM entity_index WHERE id IS NULL)").fetchone()[0]
+        self.assertEqual(null_keys, 0)
+        self.assertTrue(srv.readiness_check("package")["ok"])
+        # the safety net: an exception that no check foresaw still leaves no half batch
+        keep = srv._register_write_error
+
+        def boom(*_args):
+            raise RuntimeError("an error that no check foresaw")
+
+        srv._register_write_error = boom
+        self.addCleanup(setattr, srv, "_register_write_error", keep)
+        with self.assertRaises(RuntimeError):
+            srv.entity_upsert([good, self._entry("ENT-001", status="approved", scope="s")])
+        self.assertEqual((stored(), srv._CURRENT.conn.in_transaction), (0, False))
+        srv._register_write_error = keep
+        self.assertTrue(srv.entity_upsert([{"type": "constraint", "id": "CON-778",
+                                            "title": "the next write"}])["ok"])
+        self.assertEqual(stored(), 0)            # the refused batch did not ride this commit
+
+    def test_a_value_nested_too_deep_is_refused_and_a_stored_one_is_read(self):
+        """Plan 226 (the review, a third defect older than the plan): a `custom_attributes`
+        value 1,500 levels deep was stored on any family, and every later readiness_check
+        and export_html raised. A write refuses a value deeper than 32 levels, as text and
+        as an object. A file that already holds one is read: the scans walk with their own
+        stack, and the page shows a marker in place of the value."""
+        make_complete_package("demo")
+        srv.entity_upsert([self._REGISTER | {"custom_attributes": {"fields": [{"name": "a"}]}}])
+
+        def nested(levels: int):
+            value = "leaf FR-999"
+            for _ in range(levels):
+                value = [value]
+            return value
+
+        base = {"type": "constraint", "id": "CON-900", "title": "t"}
+        self.assertTrue(srv.entity_upsert([base | {"custom_attributes": nested(32)}])["ok"])
+        deep_text = "[" * 1500 + "]" * 1500
+        for value in (nested(33), nested(1500), deep_text, '{"a": ' + deep_text + "}"):
+            self.assertIn("nests deeper than 32 levels", self._refused(
+                base | {"custom_attributes": value}), str(value)[:20])
+        self.assertIn("nests deeper than 32 levels", self._refused({
+            "type": "register-entry", "id": "ENT-001", "register_id": "REG-001",
+            "title": "t", "custom_attributes": {"a": nested(32)}}))
+        self.assertTrue(srv.entity_upsert([{
+            "type": "register-entry", "id": "ENT-001", "register_id": "REG-001",
+            "title": "t", "custom_attributes": {"a": "shallow"}}])["ok"])
+        srv.package_close()
+        data = srv.PACKAGE_ROOT / "demo" / "data"
+        for name, deep in (("constraints.jsonl", deep_text),
+                           ("register_entries.jsonl", '{"a": ' + deep_text + "}")):
+            lines = (data / name).read_text(encoding="utf-8").splitlines()
+            row = json.loads(lines[-1])
+            row["custom_attributes"] = deep
+            lines[-1] = json.dumps(row, ensure_ascii=False, separators=(",", ":"))
+            (data / name).write_text("\n".join(lines) + "\n", encoding="utf-8")
+        self.assertTrue(srv.package_open("demo")["ok"])
+        report = srv.readiness_check("package")
+        self.assertTrue(report["ok"], report.get("error"))
+        self.assertTrue(srv.gate_run()["ok"])
+        page = srv.export_html()
+        self.assertTrue(page["ok"], page.get("error"))
+        self.assertIn("ENT-001", Path(page["path"]).read_text(encoding="utf-8"))
+        # the walk keeps document order, and reads values, never keys
+        self.assertEqual(list(srv._json_values({"k1": ["a", {"k2": "b", "k3": ["c"]}], "k4": "d",
+                                                "k5": 7})), ["a", "b", "c", "d"])
+
+    def test_a_hand_edited_declaration_is_read_without_a_crash(self):
+        """Plan 226 (hardening): the write refuses a malformed declaration, and a file
+        edited by hand can still hold one. The rule and a later write read it defensively:
+        a field with no text name is not a field, and a set that is no list is no set."""
+        make_complete_package("demo")
+        srv.entity_upsert([self._REGISTER,
+                           self._entry("ENT-001", status="approved", scope="s")])
+        srv.package_close()
+        path = srv.PACKAGE_ROOT / "demo" / "data" / "registers.jsonl"
+        row = json.loads(path.read_text(encoding="utf-8"))
+        row["custom_attributes"] = json.dumps({"fields": [
+            {"name": ["status"]}, "scope", {"name": "status", "values": 5},
+            {"name": "scope", "refs": "yes"}]})
+        path.write_text(json.dumps(row, ensure_ascii=False, separators=(",", ":")) + "\n",
+                        encoding="utf-8")
+        self.assertTrue(srv.package_open("demo")["ok"])
+        rule = {r["rule"]: r for r in srv.readiness_check("package")["rules"]}[
+            "register-entries-conform"]
+        self.assertEqual(rule["entities"], ["ENT-001"])       # `scope` names no row
+        self.assertIn("`scope` names no row: s", rule["problems"]["ENT-001"][0])
+        self.assertIn("names no row", self._refused(
+            self._entry("ENT-002", status="anything", scope="s")))
+        self.assertTrue(srv.export_html()["ok"])
+        for broken in ('{"fields": 5}', '{"fields": {"a": 1}}', "[1, 2]", "not json", "7"):
+            srv.package_close()
+            row["custom_attributes"] = broken
+            path.write_text(json.dumps(row, ensure_ascii=False, separators=(",", ":"))
+                            + "\n", encoding="utf-8")
+            self.assertTrue(srv.package_open("demo")["ok"], broken)
+            rule = {r["rule"]: r for r in srv.readiness_check("package")["rules"]}[
+                "register-entries-conform"]
+            self.assertEqual(rule["entities"], ["ENT-001"], broken)   # no field is declared
+            self.assertTrue(srv.export_html()["ok"], broken)
+
+    def test_entity_query_selects_one_registers_entries(self):
+        """Plan 226: `register_id` selects the entries of one register, and the answer
+        echoes it. On any other family it is refused, as `plugin_skill` is."""
+        make_complete_package("demo")
+        second = self._REGISTER | {"id": "REG-002", "title": "Findings",
+                                   "custom_attributes": {"fields": [{"name": "claim"}]}}
+        srv.entity_upsert([self._REGISTER, second,
+                           self._entry("ENT-001", status="approved", scope="s"),
+                           self._entry("ENT-002", status="refused", scope="s"),
+                           {"type": "register-entry", "id": "ENT-003", "register_id": "REG-002",
+                            "title": "A finding", "custom_attributes": {"claim": "c"}}])
+        out = srv.entity_query("register-entry", register_id="REG-001")
+        self.assertEqual(([r["id"] for r in out["rows"]], out["total"]),
+                         (["ENT-001", "ENT-002"], 2))
+        self.assertEqual(out["query"], {"type": "register-entry", "register_id": "REG-001"})
+        self.assertEqual(srv.entity_query("register-entry", register_id="REG-404")["total"], 0)
+        refused = srv.entity_query("dependency", register_id="REG-001")
+        self.assertIn("register_id filters register-entry rows only", refused["error"])
+
+    def test_a_register_entry_links_by_relates_to_and_supersedes(self):
+        """Plan 226: no typed relation was guessed for the two families (the `binds_to`
+        lesson). An entry links by `relates_to` to any row and by `supersedes` to another
+        entry. A typed relation that the endpoint rules do not grant stays refused. The
+        gates still pass, and a text field that names a missing id is read by the id scan."""
+        make_complete_package("demo")
+        srv.entity_upsert([self._REGISTER,
+                           self._entry("ENT-001", status="approved", scope="s"),
+                           self._entry("ENT-002", status="approved", scope="see FR-999")])
+        edges = [{"type": "trace-edge", "from_id": "ENT-001", "to_id": "FR-001",
+                  "relation": "relates_to"},
+                 {"type": "trace-edge", "from_id": "ENT-002", "to_id": "ENT-001",
+                  "relation": "supersedes"}]
+        self.assertTrue(srv.entity_upsert(edges)["ok"])
+        self.assertFalse(srv.entity_upsert([{
+            "type": "trace-edge", "from_id": "ENT-001", "to_id": "FR-001",
+            "relation": "implements"}])["ok"])
+        gates = srv.gate_run()["gates"]
+        self.assertEqual((gates["G-REL"]["status"], gates["G-IDS"]["status"]),
+                         ("pass", "pass"))
+        rule = {r["rule"]: r for r in srv.readiness_check("package")["rules"]}[
+            "prose-ids-resolve"]
+        self.assertTrue(any("ENT-002" in str(e) for e in rule["entities"]), rule["entities"])
+
+    def test_a_package_older_than_the_register_family_is_told_the_route(self):
+        """Plan 226: a package written before a family existed does not know it. The write
+        failed with a bare foreign-key text that named nothing. It now names the family
+        and the route. package_migrate's registry-sync then teaches the package both
+        families, the write lands, and the rows survive a close and a reopen."""
+        make_complete_package("demo")
+        srv.package_close()
+        types = srv.PACKAGE_ROOT / "demo" / "data" / "entity_types.jsonl"
+        kept = [line for line in types.read_text(encoding="utf-8").splitlines()
+                if json.loads(line)["type_id"] not in ("register", "register-entry")]
+        types.write_text("\n".join(kept) + "\n", encoding="utf-8")
+        srv.package_open("demo")
+        err = self._refused(self._REGISTER)
+        self.assertIn("does not know the family 'register' yet", err)
+        self.assertIn("package_migrate", err)
+        # the route is for a missing FAMILY only. An edge to a missing id and an omission
+        # for an unknown type fail on a foreign key too, and neither is a registry gap
+        for other in ({"type": "trace-edge", "from_id": "FR-001", "to_id": "FR-999",
+                       "relation": "relates_to"},
+                      {"type": "omission", "entity_type": "no-such-type", "reason": "r"},
+                      {"type": "defect", "id": "DEF-900", "severity": "low", "title": "t",
+                       "fixed_by": "WBS-999"}):
+            refused = self._refused(other)
+            self.assertNotIn("package_migrate", refused, other["type"])
+            self.assertNotIn("does not know the family", refused, other["type"])
+        srv.package_close()
+        preview = srv.package_migrate("demo")
+        self.assertEqual(preview["report"]["mode"], "registry-sync")
+        self.assertEqual(preview["report"]["entity_types_added"], ["register", "register-entry"])
+        self.assertTrue(srv.package_migrate("demo", confirm=True)["ok"])
+        srv.package_open("demo")
+        self.assertTrue(srv.entity_upsert([
+            self._REGISTER, self._entry("ENT-001", status="approved", scope="s")])["ok"])
+        srv.package_close()
+        data = srv.PACKAGE_ROOT / "demo" / "data"
+        self.assertTrue((data / "registers.jsonl").exists())
+        self.assertTrue((data / "register_entries.jsonl").exists())
+        srv.package_open("demo")
+        self.assertEqual(srv.entity_query("register-entry", register_id="REG-001")["total"], 1)
+        self.assertTrue(srv.package_verify()["verified"])
+        self.assertEqual(srv.trace_query("ENT-001")["column_links"],
+                         {"register_entries.register_id": [["ENT-001", "REG-001"]]})
 
     def test_registry_sync_teaches_v4_package_new_types(self):
         """Plan 035: extension.md's 'registry-row write path'. A v4 package created
@@ -3709,8 +4173,8 @@ class V4EngineTest(unittest.TestCase):
         edge; the `deferred-work-carried` advisory lists Activated rows with no OPEN carrier
         (Review counts as open) - bind one, or close the row Done."""
         info = srv.server_info()                 # setUp created "demo" with PH-1 / SL-001
-        self.assertEqual(info["migrations_head"], "009_section_status.sql")   # plan 225 (v6.5)
-        self.assertEqual(info["schema_version"], 9)
+        self.assertEqual(info["migrations_head"], "010_registers.sql")   # plan 226 (v6.5)
+        self.assertEqual(info["schema_version"], 10)
         rules = lambda: {r["rule"]: r for r in srv.readiness_check("package")["rules"]}
         out = srv.entity_upsert([
             {"type": "deferred-work", "id": "DW-001", "title": "later", "severity": "low",

@@ -15,6 +15,15 @@ the 6.5.0 entry at the release.
 
 - `009_section_status.sql` (plan 225): a nullable `lifecycle_status` on `document_sections`, so a
   section can be retired. Each package's `document_sections.jsonl` re-serialises once.
+- `010_registers.sql` (plan 226): two families, `registers` (`REG-`) and `register_entries`
+  (`ENT-`). A register declares its fields, and an entry is checked against them at write. A
+  package written before this release learns both through `package_migrate`'s registry-sync.
+- `entity_upsert`, for every family (plan 226, found in its review): a row of an id-keyed family
+  needs a text `id`, and a key is never a list. A `custom_attributes` value nests 32 levels at
+  most. An exception that escapes the tool rolls its batch back. Before, a row with no `id` was
+  stored with a NULL key, and a value 1,500 levels deep was stored as it was. After either,
+  `readiness_check` and `export_html` raised. The earlier items of a batch that raised were
+  committed by the next write.
 
 ## [6.4.0] - 2026-10-10
 

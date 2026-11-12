@@ -140,7 +140,7 @@ class UserGuideTest(unittest.TestCase):
             kind, where = diagrams.GATE_HOW[g]
             if kind == "view":
                 self.assertIn(f"CREATE VIEW {where}", schema, g)
-                lines.append(2893)
+                lines.append(3187)
             else:
                 self.assertIn(f'"{g}"', src[where - 1], (g, where))
                 lines.append(where)
@@ -164,9 +164,9 @@ class UserGuideTest(unittest.TestCase):
             self.assertTrue(set(t["tokens"]) <= tools | {"STOP"}, n)
         self.assertTrue(any(t["tokens"] for t in st.values()))
         src = extract.SERVER_SRC.split("\n")
-        self.assertIn("lesson-confirmed", src[2074])
-        self.assertIn("lesson-promoted", src[2075])
-        self.assertIn("'Superseded'", src[2350] + src[2351])      # the successor retires the old lessons
+        self.assertIn("lesson-confirmed", src[2342])
+        self.assertIn("lesson-promoted", src[2343])
+        self.assertIn("'Superseded'", src[2618] + src[2619])      # the successor retires the old lessons
         rules = {r["rule"] for sc in self.facts["rules"].values() for r in sc}
         self.assertTrue({"lessons-confirmed", "lessons-stranded", "lessons-superseded-binding"} <= rules)
         self.assertEqual(self.facts["lifecycles"]["domain"]["skills"], ["Approved", "Superseded", "Obsolete"])
@@ -191,7 +191,8 @@ class UserGuideTest(unittest.TestCase):
         live = [r["rule"] for r in srv.readiness_check("package")["rules"]]
         self.assertEqual(live, [r["rule"] for r in static["package"] if not r["conditional"]])
         self.assertEqual(sorted(r["rule"] for r in static["package"] if r["conditional"]),
-                         ["feedback-unanswered", "handoff-repeated", "lessons-stranded", "waivers-open-ended"])
+                         ["feedback-unanswered", "handoff-repeated", "lessons-stranded",
+                          "register-entries-conform", "waivers-open-ended"])
         up = srv.entity_upsert([
             {"type": "phase", "id": "PH-1", "title": "P", "lifecycle_status": "Approved"},
             {"type": "slice", "id": "SL-001", "title": "S", "phase_id": "PH-1", "lifecycle_status": "Approved"}])
@@ -204,7 +205,7 @@ class UserGuideTest(unittest.TestCase):
 
     def test_structural_counts(self):
         f = self.facts
-        self.assertEqual(len(f["schema"]["tables"]), 42)
+        self.assertEqual(len(f["schema"]["tables"]), 44)
         self.assertEqual(len(f["families"]), len(srv.BASELINE_ENTITY_TYPES))
         self.assertEqual(sum(1 for x in f["families"] if x["cls"] == "Always"), 11)   # + prompt (plan 198, v6)
         rel = next(t for t in f["schema"]["tables"] if t["table"] == "trace_edges")

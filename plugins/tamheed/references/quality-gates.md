@@ -99,7 +99,9 @@ three tiers (engine / judgment / warn) synced against this file in both directio
   id RESOLVES, never that the sentence about it is true. The field found seven true-looking
   sentences about a row that now exists. `feedback-unanswered` (v4.13) names every reported
   feedback row until `resolved_in` is set. Like `waivers-open-ended` it exists only when the package
-  has rows of that family. Since v4.12 `review.html` renders this report too, evaluated as of its
+  has rows of that family. `register-entries-conform` (v6.5) lists the live register
+  entries that the current declaration of their register does not admit. It exists only when
+  the package has a register. Since v4.12 `review.html` renders this report too, evaluated as of its
   export date.
 - Judgment gates: perform the check and record the verdict (a `progress-entry` note with the evidence).
 - Stage 19 runs everything. Stage 22 re-confirms criticals + `readiness_check("package")` for the

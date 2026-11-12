@@ -433,7 +433,7 @@ def gate_lint() -> None:
     skill_problems = []
     id_re = re.compile(r"\b(?:FR|NFR|CON|INV|ASM|DEP|OQ|DEC|ADR|RISK|HYP|EXP|POC|TEST|KPI|STK"
                        r"|PH|MS|SL|WBS|AC|AV|PE|DEF|DW|GATE|EP|CONV|SC|WVR|DOC|SEC|DIA|GT|LL"
-                       r"|SKL|FB)-\d+(?:\.\d+)?\b|(?<![\w`])#\d+\b")
+                       r"|SKL|FB|REG|ENT)-\d+(?:\.\d+)?\b|(?<![\w`])#\d+\b")
     stack_re = re.compile(r"\b(?:Kestrel|TestServer|MediatR|InMemory|EF Core|Dependabot|Playwright"
                           r"|Keycloak|Webex|MinIO|Vitest|Jest|axe|Docker|Kubernetes|Terraform"
                           r"|ACMP|acmp)\b")

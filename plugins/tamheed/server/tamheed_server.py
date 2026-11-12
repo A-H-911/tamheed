@@ -21,6 +21,7 @@ from __future__ import annotations
 import argparse
 import csv as _csv
 import datetime as _dt
+import functools
 import io
 import json
 import os
@@ -109,6 +110,8 @@ ENTITY_TABLES = {
     "lesson": "lessons",           # migration 002 (plan 035): execution-taught, operator-confirmed
     "skill": "skills",             # migration 003 (plan 036): procedural memory distilled from lessons
     "feedback": "feedback",        # migration 005 (plan 087): upstream feedback + local tools, on the operator's word
+    "register": "registers",       # migration 010 (plan 226): a project register, which declares its fields
+    "register-entry": "register_entries",   # migration 010: one record, checked against that declaration
     "trace-edge": "trace_edges",   # composite PK; write surface for relations
     "omission": "omissions",       # G-SET recorded-omitted rows (entity_type + reason)
 }
@@ -276,6 +279,8 @@ BASELINE_ENTITY_TYPES = [
     ("skill", "Skill (SKL-, distilled from lessons)", "SKL-", "On-request"),
     ("feedback", "Upstream feedback / local tool (FB-)", "FB-", "Continuous"),
     ("prompt", "Prompt (PRT-)", "PRT-", "Always"),  # migration 008 (plan 192): rows, not files. Always since plan 198 (6.0.0): the kickoff is Stage 20's write, or an omission records the choice
+    ("register", "Project register (REG-)", "REG-", "On-request"),          # migration 010 (plan 226)
+    ("register-entry", "Register entry (ENT-)", "ENT-", "On-request"),
 ]
 
 # Taught-vocabulary rosters (plan 032): the single source the check.py teaching lint
@@ -428,7 +433,9 @@ _LESSON_CONTENT_COLS = ("title", "statement", "context", "recommendation",
 # are history. The form is NULL-safe on purpose: a document section carries a status only
 # once it is retired, and a bare `NOT IN` drops a row whose status is NULL - so the old
 # literal would have taken every live section out of the content gate without a word.
-_LIVE_ROWS = "COALESCE(lifecycle_status, '') NOT IN ('Superseded','Obsolete')"
+_RETIRED_STATUSES = ("Superseded", "Obsolete")      # the ONE definition of a retired row
+_LIVE_ROWS = ("COALESCE(lifecycle_status, '') NOT IN ("
+              + ",".join(f"'{s}'" for s in _RETIRED_STATUSES) + ")")
 
 # G-COMPLETE-style placeholder screen (content tier — stays outside the schema).
 _PLACEHOLDER_RE = re.compile(
@@ -476,16 +483,37 @@ def _prose_id_pattern(conn) -> "re.Pattern[str]":
                       + r")(\d+)(?:\.\d+)*(?![A-Za-z0-9_])(?!-\d)")
 
 
+_JSON_MAX_DEPTH = 32     # a stored JSON value nests this deep at most (plan 226, review)
+
+
+def _json_too_deep(value) -> bool:
+    """True when a JSON value nests deeper than `_JSON_MAX_DEPTH`. It walks with its own
+    stack, so the check cannot exhaust the interpreter's."""
+    stack = [(value, 1)]
+    while stack:
+        node, depth = stack.pop()
+        if isinstance(node, (dict, list)):
+            if depth > _JSON_MAX_DEPTH:
+                return True
+            stack.extend((child, depth + 1)
+                         for child in (node.values() if isinstance(node, dict) else node))
+    return False
+
+
 def _json_values(value):
-    """Scan VALUES, never keys: a custom_attributes key is a label, not a claim."""
-    if isinstance(value, dict):
-        for v in value.values():
-            yield from _json_values(v)
-    elif isinstance(value, list):
-        for v in value:
-            yield from _json_values(v)
-    elif isinstance(value, str):
-        yield value
+    """Scan VALUES, never keys: a custom_attributes key is a label, not a claim. The walk
+    keeps its own stack, in document order. A value stored 1,500 levels deep made the
+    recursive walk raise, and then every readiness_check and export_html raised (plan
+    226's review). A write refuses such a value now, and a file that holds one is read."""
+    stack = [value]
+    while stack:
+        node = stack.pop()
+        if isinstance(node, dict):
+            stack.extend(reversed(list(node.values())))
+        elif isinstance(node, list):
+            stack.extend(reversed(node))
+        elif isinstance(node, str):
+            yield node
 
 
 def _scan_prose_ids(conn) -> dict[str, list[str]]:
@@ -519,7 +547,7 @@ def _scan_prose_ids(conn) -> dict[str, list[str]]:
                 if col == "custom_attributes":
                     try:
                         texts = list(_json_values(json.loads(value)))
-                    except (TypeError, ValueError):
+                    except (TypeError, ValueError, RecursionError):
                         pass
                 for text in texts:
                     _classify_id_hits(pattern, known, min_width, text,
@@ -1795,8 +1823,213 @@ def entity_export(path: str, tool: str = "entity_query", args: dict | None = Non
     return out
 
 
+# --------------------------------------------------------------------------- project registers
+
+# Plan 226 (R81, R93): a project register DECLARES its fields, and an entry is checked at
+# write. The declaration is the list under the register's `custom_attributes.fields`. An
+# entry's values are its own `custom_attributes`. No rule of any one project lives here.
+_REGISTER_FIELD_KEYS = ("name", "required", "values", "refs")
+# A declared field never takes the name of an entry column: `title` would then mean two
+# things to a reader of the row, and the review page would show two headers of one name.
+_REGISTER_ENTRY_COLUMNS = frozenset({"id", "register_id", "title", "body", "lifecycle_status",
+                                     "custom_attributes", "last_referenced"})
+
+
+def _attrs(value) -> dict | None:
+    """`custom_attributes` as a mapping: a dict as it is, a JSON string parsed, None as {}.
+    Returns None when the value is no mapping (a list, a number, text that does not parse)."""
+    if value is None:
+        return {}
+    if isinstance(value, str):
+        try:
+            # A key written twice and a non-finite number are refused: Python reads the
+            # LAST of two keys and another reader the first, so the guard and that reader
+            # would judge two different values. A text nested too deep is no object either.
+            value = json.loads(value, object_pairs_hook=_unique_keys,
+                               parse_constant=_no_constant)
+        except (ValueError, RecursionError):
+            return None
+    return value if isinstance(value, dict) else None
+
+
+def _unique_keys(pairs: list) -> dict:
+    out = dict(pairs)
+    if len(out) != len(pairs):
+        raise ValueError("a key is written twice")
+    return out
+
+
+def _no_constant(name: str):
+    raise ValueError(f"{name} is not a JSON value")
+
+
+def _declaration_error(attrs: dict | None) -> str | None:
+    """Why a register's declaration is malformed, or None."""
+    fields = attrs.get("fields") if isinstance(attrs, dict) else None
+    if not isinstance(fields, list):
+        return ("a register declares its fields. Send custom_attributes {\"fields\": [...]}: a"
+                " list of {name, required?, values?, refs?}. An empty list declares no field")
+    seen = set()
+    for n, field in enumerate(fields):
+        if not isinstance(field, dict) or not isinstance(field.get("name"), str) \
+                or not field["name"]:
+            return f"fields[{n}] must be an object with a text `name`"
+        name = field["name"]
+        if extra := sorted(str(k) for k in set(field) - set(_REGISTER_FIELD_KEYS)):
+            return (f"the field {name!r} has unknown key(s) {extra}. A field takes"
+                    f" {', '.join(_REGISTER_FIELD_KEYS)}")
+        if name in seen:
+            return f"the field {name!r} is declared twice"
+        if name in _REGISTER_ENTRY_COLUMNS:
+            return (f"the field {name!r} takes the name of a column of the entry. Use the"
+                    " column, or choose another name")
+        seen.add(name)
+        for flag in ("required", "refs"):
+            if flag in field and not isinstance(field[flag], bool):
+                return f"the field {name!r}: `{flag}` is true or false"
+        values = field.get("values")
+        if "values" in field and not (isinstance(values, list) and values
+                                      and all(isinstance(v, str) for v in values)):
+            return f"the field {name!r}: `values` is a non-empty list of text values"
+        if "values" in field and field.get("refs"):
+            return f"the field {name!r} declares both `values` and `refs`. Choose one"
+    return None
+
+
+def _entry_problems(fields: list, values: dict, known_ids) -> list[str]:
+    """Every way an entry's values break its register's declaration. `known_ids` answers
+    `id in known_ids`. A field is REQUIRED when its key must be present and not null: an
+    empty list, false and 0 are values. A value set applies to a text value. A reference
+    is one id or a LIST of ids, and each must name a row (R93): a string of joined ids is
+    never split, because it cannot be told from prose that names an id."""
+    # The write refuses a malformed declaration, and a file edited by hand can still hold
+    # one. So this reads defensively: a field with no text name is not a field.
+    declared = {f["name"]: f for f in fields
+                if isinstance(f, dict) and isinstance(f.get("name"), str)}
+    undeclared = [key for key in values if key not in declared]
+    problems = [f"`{key}` is not a declared field" for key in undeclared[:5]]
+    if len(undeclared) > 5:                                   # capped, as the references are
+        problems.append(f"{len(undeclared) - 5} more keys are not declared fields")
+    for name, field in declared.items():
+        value = values.get(name)
+        if value is None:
+            if field.get("required"):
+                problems.append(f"`{name}` is required")
+            continue
+        allowed = field.get("values")
+        if isinstance(allowed, list) and allowed and value not in allowed:
+            problems.append(f"`{name}` {value!r} is not one of: "
+                            + ", ".join(map(str, allowed)))
+        if field.get("refs"):
+            items = value if isinstance(value, list) else [value]
+            bad = [str(x) for x in items if not (isinstance(x, str) and x in known_ids)]
+            if bad:
+                problems.append(f"`{name}` names no row: {', '.join(bad[:5])}"
+                                + (f" (+{len(bad) - 5} more)" if len(bad) > 5 else "")
+                                + ". A reference is one id or a list of ids")
+    return problems
+
+
+class _KnownIds:
+    """`id in _KnownIds(conn)`: the id names a row of the open package."""
+
+    def __init__(self, conn):
+        self._conn = conn
+
+    def __contains__(self, entity_id) -> bool:
+        return self._conn.execute("SELECT 1 FROM entity_index WHERE id = ?",
+                                  (entity_id,)).fetchone() is not None
+
+
+def _register_fields(conn, register_id) -> list | None:
+    """The declared fields of a register, [] when it declares none, None when no such row."""
+    row = conn.execute("SELECT custom_attributes FROM registers WHERE id = ?",
+                       (register_id,)).fetchone()
+    if row is None:
+        return None
+    fields = (_attrs(row[0]) or {}).get("fields")
+    return fields if isinstance(fields, list) else []
+
+
+def _register_write_error(conn, etype: str, table: str, cols: dict) -> str | None:
+    """The write guard of the two register families, on the MATERIALISED row: a column the
+    item omits is read from the stored row, so a partial update and a `substitute` are
+    judged exactly as a full row is. An entry is judged when the write leaves it live."""
+    stored = {}
+    if cols.get("id") is not None:
+        wanted = ("register_id, custom_attributes, lifecycle_status"
+                  if etype == "register-entry" else "custom_attributes")
+        row = conn.execute(f"SELECT {wanted} FROM {table} WHERE id = ?",
+                           (cols["id"],)).fetchone()
+        if row is not None:
+            stored = dict(zip(wanted.split(", "), row))
+    raw = cols["custom_attributes"] if "custom_attributes" in cols \
+        else stored.get("custom_attributes")
+    attrs = _attrs(raw)
+    if etype == "register":
+        return _declaration_error(attrs)
+    register_id = cols.get("register_id") or stored.get("register_id")
+    if register_id is not None and not isinstance(register_id, str):
+        return "`register_id` is the text id of a register, such as REG-001"
+    fields = _register_fields(conn, register_id) if register_id else None
+    if fields is None:
+        return None                 # no register named, or none such: the store refuses it
+    if attrs is None:
+        return ("custom_attributes must be a JSON object: the values of the declared fields."
+                " A key written twice and a non-finite number are refused")
+    status = (cols["lifecycle_status"] if "lifecycle_status" in cols
+              else stored.get("lifecycle_status"))
+    if (status in _RETIRED_STATUSES and stored
+            and register_id == stored.get("register_id")
+            and attrs == _attrs(stored.get("custom_attributes"))):
+        # A write that RETIRES a stored entry AS IT IS is not judged: an entry that a
+        # changed declaration no longer admits must still be retirable, and no value is
+        # invented for it. The door is that narrow on purpose. A row born retired, a
+        # retiring write that also changes a value or the register, and any write that
+        # leaves the entry live are all judged.
+        return None
+    problems = _entry_problems(fields, attrs, _KnownIds(conn))
+    return (f"{register_id} does not admit this entry: " + ". ".join(problems)
+            ) if problems else None
+
+
+def _nonconforming_entries(conn) -> dict:
+    """{entry id: [problems]} for every live entry that its register's CURRENT declaration
+    does not admit, in id order. A declaration can change after entries exist."""
+    known, out, cache = _KnownIds(conn), {}, {}
+    for eid, register_id, raw in conn.execute(
+            "SELECT id, register_id, custom_attributes FROM register_entries WHERE "
+            + _LIVE_ROWS + f" ORDER BY {_by_id()}"):
+        if register_id not in cache:
+            cache[register_id] = _register_fields(conn, register_id) or []
+        attrs = _attrs(raw)
+        problems = (["custom_attributes is not a JSON object"] if attrs is None
+                    else _entry_problems(cache[register_id], attrs, known))
+        if problems:
+            out[eid] = problems
+    return out
+
+
 # --------------------------------------------------------------------------- entity tools
 
+def _no_half_batch(tool):
+    """A batch is all or nothing, on every way out. `entity_upsert` rolls its batch back
+    when an item is refused. An EXCEPTION that escaped it did not: the batch savepoint stayed
+    open, and the earlier items of the refused batch were committed by the next write
+    (plan 226's review, reproduced with a list sent as an id). The exception still rises,
+    so the caller reads it. The store no longer keeps what the caller was told failed."""
+    @functools.wraps(tool)
+    def guarded(*args, **kwargs):
+        try:
+            return tool(*args, **kwargs)
+        except Exception:
+            if _CURRENT is not None and _CURRENT.conn.in_transaction:
+                _CURRENT.conn.rollback()
+            raise
+    return guarded
+
+
+@_no_half_batch
 def entity_upsert(entities: list[dict]) -> dict:
     """Batch upsert (one transaction, all-or-nothing). Each item: {'type': ..., <columns>}.
 
@@ -1876,6 +2109,20 @@ def entity_upsert(entities: list[dict]) -> dict:
         cols = {k: v for k, v in item.items()
                 if k not in ("type", "force", "operator_confirm", "retire",
                              "expect_unchanged", "substitute")}
+        # Plan 226 (review): the key is text, and an id-keyed row has one. A row with no
+        # `id` was stored with a NULL key (SQLite allows NULL in a text primary key), and
+        # every later readiness_check and export_html then raised. A list sent as a key
+        # raised at the first lookup, outside any item savepoint.
+        key_col = _NON_ID_TABLES.get(table, "id")
+        key_val = cols.get(key_col)
+        if (key_val is None and key_col == "id") or not isinstance(key_val, (str, type(None))):
+            prefix = next((row[2] for row in BASELINE_ENTITY_TYPES if row[0] == etype), "")
+            results.append({"index": i, "ok": False, "id": None,
+                            "error": f"{etype} needs a text `{key_col}`"
+                                     + (f", such as {prefix}001" if prefix and key_col == "id"
+                                        else "") + ". Nothing is assigned for you"})
+            failed = True
+            continue
         substituted = None
         if "substitute" in item:
             # Plan 095 (the field's FB-004): one token in one column, without the
@@ -1933,6 +2180,27 @@ def entity_upsert(entities: list[dict]) -> dict:
                             "error": f"unknown columns for {etype}: {sorted(unknown)}"})
             failed = True
             continue
+        try:                     # plan 226 (review): for every family, never stored too deep
+            raw_attrs = cols.get("custom_attributes")
+            too_deep = _json_too_deep(json.loads(raw_attrs) if isinstance(raw_attrs, str)
+                                      else raw_attrs)
+        except RecursionError:
+            too_deep = True
+        except ValueError:
+            too_deep = False     # text that is no JSON: the rules that were there judge it
+        if too_deep:
+            results.append({"index": i, "ok": False, "id": cols.get("id"),
+                            "error": f"`custom_attributes` nests deeper than {_JSON_MAX_DEPTH}"
+                                     " levels. Flatten the value"})
+            failed = True
+            continue
+        if etype in ("register", "register-entry"):
+            # Plan 226: a register declares its fields, and an entry must fit them. The row
+            # judged is the materialised one, so a `substitute` cannot pass it.
+            if err := _register_write_error(conn, etype, table, cols):
+                results.append({"index": i, "ok": False, "id": cols.get("id"), "error": err})
+                failed = True
+                continue
         forced_note = None
         if (etype in ("phase", "slice") and cols.get("id")
                 and cols.get("lifecycle_status") == "Implemented"):
@@ -2460,6 +2728,19 @@ def entity_upsert(entities: list[dict]) -> dict:
             conn.execute(f"ROLLBACK TO item{i}")
             # plan 223: every value outside its column's set is named, with the set
             msg = str(exc) + _enum_hint(conn, table, cols)
+            if ("FOREIGN KEY constraint failed" in msg
+                    and any(etype == row[0] for row in BASELINE_ENTITY_TYPES)
+                    and conn.execute("SELECT 1 FROM entity_types WHERE type_id = ?",
+                                     (etype,)).fetchone() is None):
+                # Plan 226: a package written before a family existed does not know it. The
+                # index trigger then fails on the registry, and SQLite names nothing. Only a
+                # family that THIS release's registry names can be missing from a package:
+                # `trace-edge` and `omission` have no registry row, and their foreign-key
+                # failure is a missing endpoint, never a missing family.
+                msg += (f" — this package's registry does not know the family {etype!r} yet."
+                        " The package was written before the release that added it. Run"
+                        " package_migrate: its staged registry-sync teaches the package the"
+                        " family. Then write again")
             if "NOT NULL constraint failed" in msg and cols.get("id") is not None:
                 exists = conn.execute(f"SELECT 1 FROM {table} WHERE id = ?",
                                       (cols["id"],)).fetchone()
@@ -2477,7 +2758,9 @@ def entity_upsert(entities: list[dict]) -> dict:
                     if val is None:
                         continue
                     ref_col = to_col or "id"
-                    if conn.execute(
+                    # a list or a mapping names no row, and SQLite cannot bind one: the
+                    # lookup raised here, inside this handler (plan 226, review)
+                    if isinstance(val, (dict, list)) or conn.execute(
                             f"SELECT 1 FROM {ref_table} WHERE {ref_col} = ?",
                             (val,)).fetchone() is None:
                         culprits.append(f"{from_col}={val!r} (references"
@@ -2513,13 +2796,17 @@ def entity_query(type: str, id: str | None = None, status: str | None = None,
                  columns: list[str] | None = None, limit: int = 100,
                  after_id: str | None = None, ids: list[str] | None = None,
                  search: str | None = None, context: int | None = None,
-                 plugin_skill: str | None = None) -> dict:
+                 plugin_skill: str | None = None,
+                 register_id: str | None = None) -> dict:
     """Query one entity family with targeted columns — rows, not documents.
 
     `plugin_skill` (v6, plan 193) filters `prompt` rows to the ones bound to that bundled
     scenario skill, exact match on the column — the query a scenario skill runs to read
     its project half, and the one the note's prompt roster is built from. Refused for
     any other family.
+
+    `register_id` (v6.5, plan 226) filters `register-entry` rows to the entries of one
+    project register, exact match. Refused for any other family.
 
     `limit` truncates ROWS (never fields — there is NO field truncation anywhere in
     the query path; a payload cap is the CLIENT's, and a family of long-text rows
@@ -2583,6 +2870,12 @@ def entity_query(type: str, id: str | None = None, status: str | None = None,
             return _err("plugin_skill filters prompt rows only — it binds a prompt to the"
                         " bundled scenario skill that reads it")
         where.append("plugin_skill = ?"); params.append(str(plugin_skill))
+    if register_id is not None:
+        # Plan 226: the entries of ONE register (the `plugin_skill` precedent).
+        if type != "register-entry":
+            return _err("register_id filters register-entry rows only — it selects the"
+                        " entries of one project register")
+        where.append("register_id = ?"); params.append(str(register_id))
     if search is not None:
         text_cols = [r[1] for r in _CURRENT.conn.execute(f"PRAGMA table_info({table})")
                      if str(r[2]).upper() == "TEXT"]
@@ -2630,7 +2923,8 @@ def entity_query(type: str, id: str | None = None, status: str | None = None,
     out["query"] = {"type": type, **{k: v for k, v in (
         ("id", id), ("ids", ids), ("status", status), ("search", search),
         ("context", context), ("columns", columns), ("after_id", after_id),
-        ("plugin_skill", plugin_skill)) if v is not None}}
+        ("plugin_skill", plugin_skill), ("register_id", register_id))
+        if v is not None}}
     if asked_limit != 100:
         out["query"]["limit"] = asked_limit
     # Plan 068: a row cut announces itself through `total`; a projection announced
@@ -3425,6 +3719,21 @@ def _readiness_report(conn, scope: str, scope_id: str | None) -> dict:
                  " are preserved, and the engine journals the move). Set `Rejected` on the"
                  " operator's word if upstream rejected it. A local-tool row is a register: it"
                  " never resolves and is not listed here")
+        # Plan 226 (R81): an entry is checked at write, and a register's declaration can
+        # change after its entries exist. Emitted only when the package HAS a register.
+        if conn.execute("SELECT 1 FROM registers LIMIT 1").fetchone():
+            nonconforming = _nonconforming_entries(conn)
+            listed = list(nonconforming)
+            # registered as `ids()` registers a list: the helper counts the family, and a
+            # register with no entry reads indeterminate, as every empty family does
+            measured.update({"list": listed, "table": "register_entries", "rows": None})
+            rule("register-entries-conform", "advisory", listed,
+                 "register entries that the declared fields of their register do not"
+                 " admit. The causes: an undeclared key, a missing required field, a"
+                 " value outside the declared set, a reference that names no row."
+                 " `problems` names the cause per entry. Correct the entry, or change"
+                 " the declaration on the operator's word. A retired entry is not read")
+            rules[-1]["problems"] = nonconforming
         # Plan 039 (the ACMP register: 57 Approved lessons, 48 pinned, 0 promoted —
         # 57 lines in the always-loaded note): pinning bypasses the cap by design,
         # so the cost of a pin is made visible instead. Entities = the rows that
@@ -5497,9 +5806,15 @@ def package_migrate(name: str, confirm: bool = False) -> dict:
                             " converts nothing twice (a converted file is only moved)",
                             report=rep)
         moved = bool(pplan and pplan["moves"])
+        # plan 226 (the field replay): a new column is appended to every row of its table,
+        # so that one file is written whole, once. Said on both branches of the sync.
+        rewritten = (". A table that gained a column is written once in full: "
+                     + ", ".join(f"{t}.jsonl" for t in sorted(rep["columns_added"]))
+                     if rep.get("columns_added") else "")
         out = {"ok": True, "stage": "migrated", "package": name, "report": rep,
-               "backup": ((f"{_PROMPT_BACKUP_DIR}/ (the prompt files)" if moved
-                           else "none (registry-sync is a pure append)") if v4_sync
+               "backup": (((f"{_PROMPT_BACKUP_DIR}/ (the prompt files)" if moved
+                            else "none (registry-sync is a pure append)") + rewritten)
+                          if v4_sync
                           else "data-v3-backup/" + (f" + {_PROMPT_BACKUP_DIR}/" if moved else "")),
                "package_root": str(Path(PACKAGE_ROOT).resolve()),
                "note": "review the report, commit the diff, then package_open"}
@@ -5914,7 +6229,9 @@ _ENTITY_QUERY_DESC = (
     " that id in the same order. Pass the result's `next_after`, or an id you type (it"
     " need not name a row). `total` is the size of the filtered set, uncut. `query`"
     " echoes the arguments. A document section carries a status only once it is retired,"
-    " so `status` returns retired sections for that family.")
+    " so `status` returns retired sections for that family. `register_id` returns the"
+    " entries of one project register. A register entry keeps the values of its declared"
+    " fields in `custom_attributes`.")
 # Plan 221: the two places a link lives, and the three scopes of the read.
 _TRACE_QUERY_DESC = (
     "Read trace links. With `entity_id`, the links of one entity. Without it, every link,"

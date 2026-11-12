@@ -87,11 +87,12 @@ per-stage spec: `plugins/tamheed/references/workflow.md`.
   (`BASELINE_ENTITY_TYPES`) is the machine mirror of the Always class. `check.py` lints the
   registry ↔ catalog ↔ table-map ↔ DDL sync and the `schema.sql` == `migrations/001_init.sql`
   byte-twin.
-<!-- ste:allow long-sentence: the identifier scheme is a list of 36 names -->
+<!-- ste:allow long-sentence: the identifier scheme is a list of 38 names -->
 - **Identifier scheme** (`plugins/tamheed/references/governance.md`): `FR-`/`NFR-`, `CON-`, `INV-`,
   `ASM-`, `DEP-`, `OQ-`, `DEC-`, `ADR-`, `RISK-`, `HYP-`, `EXP-`, `POC-`, `TEST-`, `KPI-`, `STK-`,
   `PH-`, `MS-`, `SL-`, `WBS-`, `AC-`, `AV-`, `PE-`, `DEF-`, `DW-`, `GATE-`, `EP-`, `CONV-`, `SC-`,
-  `WVR-`, `DOC-`/`SEC-`, `DIA-`, `GT-`, `LL-`, `SKL-`, `FB-`, `PRT-`. Statuses: `Draft → Proposed → Approved / Rejected /
+  `WVR-`, `DOC-`/`SEC-`, `DIA-`, `GT-`, `LL-`, `SKL-`, `FB-`, `PRT-`, `REG-`,
+  `ENT-`. Statuses: `Draft → Proposed → Approved / Rejected /
   Superseded / Deferred → Implemented` (+ `Review` = done-claimed, wbs/slices only, and `Obsolete`).
   A *proposed* decision is never rendered as *approved*. `Review` never counts as done.
 - **A new entity family** = DDL table + `ENTITY_TABLES` + `BASELINE_ENTITY_TYPES` + catalog row +

@@ -570,6 +570,76 @@ class ExportHtmlTest(unittest.TestCase):
         # determinism at scale: byte-identical re-export
         self.assertEqual(out_a, self._export(str(Path(self._tmp.name) / "b.html")))
 
+    def test_a_project_register_renders_its_declared_fields(self):
+        """Plan 226 (the field's register reports): the page dropped `custom_attributes`
+        from every table, and a register entry keeps its field values there. Each
+        register now has one fold whose columns are its declared fields, in declared
+        order. Every name, value and title is escaped. A key the declaration no longer
+        names shows under `undeclared`. The family keeps one anchor and its CSV."""
+        srv.package_create("reg", "Reg", "rnd")
+        hostile = "<script>alert(1)</script>"
+        self.assertTrue(srv.entity_upsert([
+            {"type": "register", "id": "REG-001", "title": "Sources " + hostile,
+             "custom_attributes": {"fields": [
+                 {"name": "status", "required": True, "values": ["approved", "refused"]},
+                 {"name": "grants", "refs": True}, {"name": "options"},
+                 {"name": hostile}]}},
+            {"type": "register", "id": "REG-002", "title": "Findings",
+             "custom_attributes": {"fields": [{"name": "claim"}, {"name": "old"}]}},
+            {"type": "register", "id": "REG-004", "title": "Named",
+             "custom_attributes": {"fields": [{"name": "undeclared"}, {"name": "gone"}]}},
+            {"type": "register-entry", "id": "ENT-004", "register_id": "REG-004",
+             "title": "A field named as the extra column",
+             "custom_attributes": {"undeclared": "its own value", "gone": "left over"}},
+            {"type": "register", "id": "REG-003", "title": "Empty",
+             "custom_attributes": {"fields": []}},
+            {"type": "register-entry", "id": "ENT-002", "register_id": "REG-001",
+             "title": "Second", "custom_attributes": {
+                 "status": "refused", "options": {"B": "drop", "A": hostile}, hostile: True}},
+            {"type": "register-entry", "id": "ENT-001", "register_id": "REG-001",
+             "title": "First " + hostile, "body": "prose",
+             "custom_attributes": {"status": "approved", "grants": ["REG-002", "REG-003"]}},
+            {"type": "register-entry", "id": "ENT-003", "register_id": "REG-002",
+             "title": "A finding", "custom_attributes": {"claim": "c", "old": "kept"}}])["ok"])
+        self.assertTrue(srv.entity_upsert([          # the declaration drops a field later
+            {"type": "register", "id": "REG-002", "title": "Findings",
+             "custom_attributes": {"fields": [{"name": "claim"}]}},
+            {"type": "register", "id": "REG-004", "title": "Named",
+             "custom_attributes": {"fields": [{"name": "undeclared"}]}}])["ok"])
+        out = self._export()
+        safe = "&lt;script&gt;alert(1)&lt;/script&gt;"
+        self.assertNotIn("<script", out)
+        self.assertIn('<details id="reg-register_entries"><summary>REG-001 Sources '
+                      + safe + " (2 rows)", out)
+        self.assertEqual(out.count('id="reg-register_entries"'), 1)
+        self.assertIn("<details><summary>REG-002 Findings (1 row)", out)
+        self.assertNotIn("REG-003 Empty (", out)               # no entry, no fold
+        self.assertNotIn("<summary>Register entries (", out)   # the generic fold is gone
+        self.assertIn("<summary>Registers (4 rows)", out)
+        first = out[out.index('id="reg-register_entries"'):out.index("REG-002 Findings (")]
+        self.assertIn("Declared fields: status (required, one of: approved / refused). grants"
+                      " (a reference). options. " + safe + ".</p>", first)
+        self.assertIn("<th>id</th><th>title</th><th>lifecycle_status</th><th>status</th>"
+                      "<th>grants</th><th>options</th><th>" + safe + "</th><th>body</th></tr>",
+                      first)                                   # no `undeclared` column here
+        self.assertLess(first.index('<tr id="ENT-001">'), first.index('<tr id="ENT-002">'))
+        self.assertIn("<td>approved</td><td>REG-002, REG-003</td><td></td><td></td>"
+                      "<td>prose</td></tr>", first)
+        self.assertIn("<td>{&quot;A&quot;: &quot;" + safe + "&quot;, &quot;B&quot;:"
+                      " &quot;drop&quot;}</td><td>true</td>", first)
+        second = out[out.index("REG-002 Findings ("):]
+        self.assertIn("<th>claim</th><th>body</th><th>(undeclared)</th>", second)
+        self.assertIn("<td>c</td><td></td><td>{&quot;old&quot;: &quot;kept&quot;}</td>", second)
+        # a project may name a field `undeclared`: the extra column stays apart from it
+        third = out[out.index("REG-004 Named ("):]
+        self.assertIn("<th>undeclared</th><th>body</th><th>(undeclared)</th>", third)
+        self.assertIn("<td>its own value</td><td></td>"
+                      "<td>{&quot;gone&quot;: &quot;left over&quot;}</td>", third)
+        self.assertIn('href="csv/register_entries.csv"', first)
+        self.assertEqual(out.count("<details"), out.count('<div class="tablewrap">')
+                         + out.count('<div class="graphwrap">'))
+        self.assertEqual(out, self._export())                  # byte-identical again
+
     def test_gap_warning_cards_never_fold(self):
         """The sole folding exception: screening warnings exist to be SEEN."""
         srv.package_create("gappy", "Gappy", "rnd")

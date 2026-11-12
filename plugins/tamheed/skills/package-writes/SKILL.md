@@ -189,6 +189,24 @@ id resolves, and the damage stays until someone reads it.
   replaces it. A live section has no status, so `entity_query("document-section", status=...)`
   returns retired sections only.
 
+## 7c. A project record type takes a register, never a borrowed family
+
+The project keeps a record type that no family holds. Do not store it as dependency,
+open-question or section rows with the fields in `custom_attributes`. Nothing checks such
+fields, and the rows fill a register that means something else.
+
+1. Write one `register` row (`REG-`). Declare its fields under `custom_attributes.fields`, as
+   `references/governance.md` (Project registers) defines them.
+2. Write one `register-entry` row (`ENT-`) per record, with `register_id` and the field values
+   in `custom_attributes`. Send a reference as one id or as a list of ids.
+3. Read the refusal. It names every cause at once: an undeclared key, a missing required
+   field, a value outside the set, a reference that names no row.
+4. Change a declaration only on the operator's word. Then read the rule
+   `register-entries-conform`, and correct every entry that it lists.
+
+A package written before v6.5 refuses the first write and names `package_migrate`. Close the
+package, run the preview, and confirm on the operator's word.
+
 ## 8. Set a scope change to `Merged` last
 
 - Apply the delta to every row its `scope_adds` / `scope_modifies` / `scope_removes` / `amends` edges

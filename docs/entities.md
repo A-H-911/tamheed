@@ -1055,6 +1055,36 @@ stateDiagram-v2
     Reported --> Rejected : upstream declined - upstream_ref names why
 ```
 
+#### register (`REG-`) and register-entry (`ENT-`) — On-request
+
+A project keeps record types that the plugin has no family for (v6.5, migration
+`010_registers.sql`). One field project stored three such types as dependency, open-question
+and section rows, with the fields in `custom_attributes`. Nothing checked the fields, and the
+rows filled registers that mean something else. A register DECLARES its fields, and the write
+checks each entry against them. The plugin holds no rule of any one project.
+
+The declaration is the list under the register's `custom_attributes.fields`, and the values of
+an entry live in its own `custom_attributes`. No new JSON column was added. The content gate
+grades every other text column, so an allowed value such as `TBD` would fail it there. A
+reference is one id or a list of ids: a string of joined ids cannot be told from prose. A
+project-defined rule over the fields was not built, because a rule language is a second engine.
+
+Both families take the standard statuses, and no transition needs the operator's word. The
+write guard reads the status all the same. A stored entry is retired as it is without a
+check. A write that leaves an entry live is checked, and so is a return from retirement.
+An entry links to other rows by a `refs` field, by a `relates_to` edge, or by `supersedes`
+to another entry.
+
+```mermaid
+stateDiagram-v2
+    [*] --> Proposed : the agent writes an entry - the write checks it against the declaration
+    Proposed --> Approved : the record stands
+    Proposed --> Rejected : it was only a draft
+    Approved --> Superseded : another entry replaces it - a supersedes edge names the successor
+    Approved --> Obsolete : the record no longer applies
+    Approved --> Approved : register-entries-conform names it when the declaration no longer admits it
+```
+
 #### lesson (`LL-`) — Continuous
 
 What BINDS is the status, never a pointer (v4.10). The always-loaded note and the

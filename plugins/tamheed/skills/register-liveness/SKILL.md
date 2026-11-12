@@ -191,7 +191,12 @@ is the only wrong answer.
     package is never a finding. Write new text with `tamheed:plain-english`. Do not rewrite
     the existing rows on your own. The operator runs `/tamheed:ste-rewrite`, which proposes
     a batch, STOPs, and supersedes an immutable row instead of editing it.
-23. Close the sweep: `progress_update([{"entry": "liveness sweep: <per-family tally:
+23. **Register entries that no longer fit** (`register-entries-conform`, v6.5): the live
+    `ENT-` rows that the current declaration of their register does not admit. The rule is
+    emitted only when the package has a register. `problems` names the cause per entry.
+    Correct the values of the entry. Change a declaration only on the operator's word.
+    A retired entry is never listed.
+24. Close the sweep: `progress_update([{"entry": "liveness sweep: <per-family tally:
     resolved / carried / escalated / awaiting operator>", "event_type": "note",
     "actor": "agent:<session>"}])`, then `readiness_check("package")` again and report
     the advisory delta plus everything now awaiting operator words (promotions,

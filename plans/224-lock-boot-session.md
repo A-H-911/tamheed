@@ -134,3 +134,7 @@ time, built only on calls the probe showed working. A call that failed there goe
   (`find_library`). Loading them by a fixed path was proposed, and it is unmeasured on that machine.
 - A lock written on macOS before this release recorded no start. For a live holder of such a lock
   the engine falls back to ordering against the lock time, as Linux does for old locks.
+- As it landed: 224b is `5462802`. CI run 43137263038 is green on eleven jobs. Both macOS legs
+  ran the real calls for the first time: image `macos-26-arm64` (release 20261102.0473), Python
+  3.10 and 3.13. The field machine is macOS 27.2 on arm64, where the probe ran. An Intel Mac is
+  unproven: no leg covers it, and the struct offsets are fixed numbers.

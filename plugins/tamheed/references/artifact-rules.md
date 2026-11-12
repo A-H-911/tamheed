@@ -85,4 +85,5 @@ which registers earned their keep.
 - If a family would only restate another, **link** (trace edge) instead of duplicating.
 - If a narrative section has no project-specific content, omit it rather than emit a placeholder.
 - Prefer one well-populated register over several thin ones.
+- A record type that no family holds takes a declared `register` (`REG-`) and its entries (`ENT-`). Never overload dependency, open-question or section rows with it.
 - A diagram must add understanding a paragraph cannot. Otherwise skip it.
