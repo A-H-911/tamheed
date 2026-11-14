@@ -250,3 +250,4 @@ has been executed.
 - **R112** A slate key sets how the page opens: for reading, or for a session.
 - **R113** Three more features are built: hand-outs, ids named in a text, the row that an answer settles.
 - **R114** A browser check file in the repository verifies the script. CI does not run it.
+- **R115** (2026-11-14) `package_open` refuses a package whose data file lacks a column of this engine, and it names `package_migrate`. An idle open moves no byte. It reverses what plan 225 pinned: an open that worked, and a first close that wrote the file again.

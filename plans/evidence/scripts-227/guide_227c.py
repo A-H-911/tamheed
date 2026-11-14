@@ -75,7 +75,8 @@ EFFECTS = {
         "reads": [("slates/*.spec.json", '_read_capped(files["spec"]'),
                   ("@cited_rows", "slates.derive(_CURRENT.conn, checked)")],
         "writes": [("slates/*.slate.json", '"record": _managed_emit(files["record"]'),
-                   ("slates/*.html", '"page": _managed_emit(files["page"]')]},
+                   ("slates/*.html", '"page": _managed_emit(files["page"]'),
+                   ("slates/*.md", "_managed_emit(files[kind], sheet")]},
     "slate_read": {
         "needs": [("@need.open", "if guard := _need_open():")],
         "reads": [("slates/*.answers.json", "_read_capped(path, slates.MAX_FILE_BYTES)"),

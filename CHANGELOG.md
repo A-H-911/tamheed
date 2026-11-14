@@ -13,11 +13,15 @@ All notable changes to Tamheed are documented here. The format is based on
 **MINOR — the field round of 2026-11 (plans 221–229).** Two field projects handed up fourteen
 operator-confirmed feedback rows. Ten asked for a change, and each is answered here.
 
-**For a live package (the migration note).** Close the package, then run `package_migrate`: a
-preview first, then `confirm=true` on the operator's word. The registry-sync teaches the package
+**For a live package (the migration note).** Commit the package first: the migration takes no
+backup, and git is the way back. `package_open` refuses the package until the migration has
+run, and it moves no byte. Run `package_migrate`: a preview first, then `confirm=true` on the
+operator's word. The registry-sync teaches the package
 two families and one column. It moves three files: `entity_types.jsonl` and
 `progress_entries.jsonl` gain rows, and `document_sections.jsonl` is written once in full. Commit
-that change alone. Then run `export_html()` and `package_verify()`. One behaviour changes for
+that change alone. Then run `export_html()` and `package_verify()`. To go back, restore the
+package's data from git and pin the plugin to the earlier tag: `docs/install.md` has both
+routes. 6.4.0 does not open a migrated package, and it moves no file when it stops. One behaviour changes for
 every family: a write with no `id` returned ok before and is refused now.
 
 ### Added
@@ -46,6 +50,12 @@ every family: a write with no `id` returned ok before and is refused now.
   macOS reads a process start time. The migrate lock names its holder.
 
 ### Changed
+- `package_open` refuses a package whose data file lacks a column of this engine, and it names
+  `package_migrate`. Before, the open succeeded and the first close wrote that file again in
+  full, outside any migration. An idle open now moves no byte on any package. `package_migrate`
+  runs a registry sync for a column alone. Before, it answered "nothing to migrate".
+- `package_open` refuses a file that holds a key this server does not know, in plain words: a
+  later tamheed wrote it. Before, that raised a bare error.
 - `requirements-wired` (plan 222) reads the three legs of a requirement: a decision, work and a
   test. A requirement owes one leg, and an `Implemented` one owes all three. The result names the
   missing leg, and the review page shows it (plan 228).
@@ -58,6 +68,17 @@ every family: a write with no `id` returned ok before and is refused now.
   stored with a NULL key, and a value 1,500 levels deep was stored as it was. After either,
   `readiness_check` and `export_html` raised. The earlier items of a batch that raised were
   committed by the next write.
+
+### Fixed
+- **`package_migrate` could remove tables when its file swap failed** (present since 4.x, found
+  on a copy of a field package). The swap removed every old data file in a loop and then
+  renamed the new files in. One file that could not be removed stopped the loop, and the
+  handler then removed the staged copies too. The tables already removed were gone from disk,
+  and the tool said "package UNCHANGED". On Windows a program that holds one file open is
+  enough. Each new file now takes its place in one step, and no old file is removed first. A
+  file whose bytes do not change is not written. A stopped swap names the files that hold the
+  new form, and a second run finishes it. An earlier release keeps the fault: commit a package
+  before any `package_migrate` under 6.4.0 or older.
 
 ## [6.4.0] - 2026-10-10
 

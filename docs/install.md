@@ -180,9 +180,41 @@ project` (or `install --scope project` on a repository with no record yet). Star
 reload keeps the tool descriptions the client already recorded. Read `server_info()` and quote the
 version. Read the CHANGELOG's "For a live package" note for every release the project skipped. When it
 names `package_migrate`, run the preview on the closed package, quote it, and convert on the operator's
-word. Open the package and quote `gate_run()` and `readiness_check("package")` against the baseline
+word. Since 6.5.0 `package_open` refuses a package that the earlier release wrote until that
+migration has run. The refusal moves no byte, and it is the expected answer. Open the package and quote `gate_run()` and `readiness_check("package")` against the baseline
 the handoff recorded. Run `handoff_emit(<repository root>, refresh_stock=true)` so the note and the
 stock guide carry the release, then `export_html()` and `package_verify()`. Write the handoff last.
+
+### Going back to an earlier release
+
+Measured for 6.5.0 to 6.4.0 on copies of two field packages, with the real 6.4.0 code. The data
+and the plugin go back together. An earlier release does not open a package that a later release
+migrated. It stops on a key that it does not know, and it moves no file.
+
+**The data.** A registry sync takes no backup, so git is the way back. That is why an upgrade
+starts with a commit of the package, at a commit called PRE here. Before the migration is
+committed, `git checkout -- <package>/data` restores the files. After it, one command sets
+the folder back: `git restore --source=PRE --staged --worktree -- <package>`. Commit that.
+It removes the tracked files that PRE does not have, and it touches nothing outside the
+folder. `git checkout PRE -- <package>` does not do this: files of the new release stay.
+Every row that was written after the upgrade leaves the working tree. Git history keeps it.
+
+**The plugin.** Pin the repository's marketplace record to the earlier tag, then update:
+
+```text
+claude plugin marketplace add A-H-911/tamheed#v6.4.0 --scope project
+claude plugin marketplace update tamheed
+claude plugin update tamheed@tamheed --scope project
+```
+
+The last command answered "updated from 6.5.0 to 6.4.0" (Claude Code 2.1.323, Windows, a
+separate configuration folder). Quit the client and start it again. `claude plugin list --json`
+and `server_info()` then read the earlier version. The first command writes `"ref": "v6.4.0"`
+into the repository's `.claude/settings.json`. One machine keeps one marketplace record named
+`tamheed` for all its repositories. Measured with two repositories: the first pinned back, and
+the second was moved to 6.4.0 by its own next `plugin update`. Its settings still named
+another ref. Run no update in another repository while the pin stands. To follow releases
+again, run `claude plugin marketplace add A-H-911/tamheed --scope project`, and update.
 
 Refreshing the marketplace only refreshes the catalog. The installed plugin is a second step, and
 the running MCP server keeps the old code until the plugin is reloaded. The reload is

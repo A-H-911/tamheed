@@ -27,6 +27,7 @@ import json
 import os
 import re
 import sys
+import time
 from pathlib import Path
 
 _SERVER_DIR = Path(__file__).resolve().parent
@@ -1286,6 +1287,48 @@ def _convert_legacy_prompts(pkg_dir: Path) -> dict | None:
             "inject_warnings": warnings}
 
 
+def _missing_columns(columns: list, rows: list) -> list:
+    """The columns that at least one row of a table's file does not carry."""
+    return [c for c in columns if any(isinstance(r, dict) and c not in r for r in rows)]
+
+
+def _replace_held(src: Path, dst: Path) -> None:
+    """`os.replace`, tried again for a moment when another program holds the file. A scanner
+    or an indexer on Windows holds a file for milliseconds. The store's own flush waits the
+    same way."""
+    for delay in (0.05, 0.1, 0.2, 0.4, None):
+        try:
+            os.replace(src, dst)
+            return
+        except PermissionError:
+            if delay is None:
+                raise
+            time.sleep(delay)
+
+
+def _columns_behind(pkg_dir: Path) -> dict:
+    """{table: [columns]} for each data file in which ANY row lacks a column that this
+    engine's schema has. Such a file is written again in full by the next flush, because every
+    column always serializes (CANONICAL.md, rule 4). `package_migrate` judges by the same
+    rule (`_missing_columns`), so the open never refuses what the migration calls current.
+    An empty file is behind in nothing."""
+    behind = {}
+    ddl = store.connect()
+    try:
+        for path in sorted((pkg_dir / "data").glob("*.jsonl")):
+            columns = [r[1] for r in ddl.execute(f"PRAGMA table_info({path.stem})")] \
+                if re.fullmatch(r"[a-z_]+", path.stem) else []
+            if not columns:
+                continue                       # no table of this engine: the loader's matter
+            with path.open(encoding="utf-8") as handle:
+                rows = [json.loads(line) for line in handle if line.strip()]
+            if missing := _missing_columns(columns, rows):
+                behind[path.stem] = missing
+    finally:
+        ddl.close()
+    return behind
+
+
 def _stored_package_version(pkg_dir: Path) -> str | None:
     """Read package_version straight from data/packages.jsonl (no store open).
     Raises ValueError on a corrupt file (plan 045: None used to mean both 'no row'
@@ -1502,10 +1545,33 @@ def package_open(name: str) -> dict:
             " package_migrate(name=…) for a preview and"
             " package_migrate(name=…, confirm=true) to convert. The migration keeps a"
             " copy of the old files in data-v3-backup/.")
+    # An idle open moves no byte. A file that lacks a column of this engine would be written
+    # again in full by the first close, outside any migration: the open refuses, and
+    # package_migrate writes that file once, on the operator's word.
+    try:
+        behind = _columns_behind(pkg_dir)
+    except (OSError, ValueError) as exc:
+        return _err(f"package '{name}' could not be read: {exc}")
+    if behind:
+        return _err(
+            f"package '{name}' was last written by an earlier tamheed: "
+            + ". ".join(f"{table}.jsonl lacks {', '.join(f'`{c}`' for c in cols)}"
+                        for table, cols in sorted(behind.items()))
+            + ". This server does not open it, because its first close would write"
+            " that file again outside a migration. Commit the package first, so git holds the"
+            f" way back. Then run package_migrate(name='{name}') for a preview, and"
+            f" package_migrate(name='{name}', confirm=true) on the operator's word.")
     try:
         s = store.PackageStore(pkg_dir).__enter__()
     except store.StoreLockedError as exc:
         return _err(str(exc))
+    except ValueError as exc:
+        # a key that this server does not know: a later release wrote the file
+        if "unknown keys" not in str(exc):
+            raise
+        return _err(f"package '{name}' does not load: {exc}. A later tamheed wrote this"
+                    " file. Update the plugin to that release. Or restore the package's data"
+                    " from the commit before the upgrade, and open it again.")
     _CURRENT, _CURRENT_NAME = s, name
     # plan 212 (v6.2): a repository wired before 6.2 reads present/present here; one that was
     # not (a package born under 6.1 or earlier) is wired by this open, once.
@@ -5584,8 +5650,7 @@ def package_migrate(name: str, confirm: bool = False) -> dict:
                         f"PRAGMA table_info({tname})")]
                     if not ddl_cols:
                         continue  # orphan file of a dropped family — loader skips it
-                    have = set().union(*(set(r) for r in rows))
-                    new = [c for c in ddl_cols if c not in have]
+                    new = _missing_columns(ddl_cols, rows)
                     if new:
                         added_cols[tname] = new
             finally:
@@ -5641,7 +5706,9 @@ def package_migrate(name: str, confirm: bool = False) -> dict:
                 rep["relocate"] = relocate
         have = {r.get("type_id") for r in tables.get("entity_types", [])}
         added = [tid for tid, _, _, _ in BASELINE_ENTITY_TYPES if tid not in have]
-        if v4_sync and not added and not relocate and not pplan:
+        # R115: a file that is behind in a column is a reason to migrate, like a missing type
+        if v4_sync and not added and not relocate and not pplan \
+                and not rep.get("columns_added"):
             return _err(f"package is already v{stored}, its entity-type registry"
                         " is current, data/ holds no foreign audit-trail file, and"
                         " prompts/ holds no prompt file. Nothing to migrate (the expected"
@@ -5693,6 +5760,10 @@ def package_migrate(name: str, confirm: bool = False) -> dict:
             if pplan:
                 parts.append(f"prompt files converted to rows ({len(pplan['rows'])}),"
                              f" moved to {_PROMPT_BACKUP_DIR}/ ({len(pplan['files'])} file(s))")
+            if rep.get("columns_added"):       # a sync for a column alone still says what it did
+                parts.append("columns added (" + "; ".join(
+                    f"{table}: {', '.join(cols)}"
+                    for table, cols in sorted(rep["columns_added"].items())) + ")")
             entry = "REGISTRY-SYNC: " + "; ".join(parts)
         else:
             rewrites = sorted(k for k in rep
@@ -5732,63 +5803,56 @@ def package_migrate(name: str, confirm: bool = False) -> dict:
                 ts.commit()
             finally:
                 ts.__exit__(None, None, None)
-            # plan 045: write every new file beside the old ones first, THEN retire
-            # the stale files, THEN swap names in — nothing is deleted until every
-            # new byte is on disk (this also covers the v4 registry-sync path, which
-            # has no backup to fall back on). The residual non-atomic window is the
-            # rename loop itself (step 3) — rare on the same filesystem; not a
-            # journal, see plan 045's maintenance notes.
+            # Every new file is written beside the old ones first. Then each new file takes
+            # its place in ONE step (`os.replace`), and no old file is removed before its
+            # successor stands. So a failure anywhere leaves every table on disk. Plan 045
+            # removed the old files in a loop first: one file that another program held
+            # stopped that loop, and the tables already removed were lost (field assurance of
+            # 6.5.0). A file whose bytes do not change is not written at all.
             new_files = sorted((tmp_pkg / "data").glob("*.jsonl"))
-            staged = []
-            retired = False
+            staged, done, swapped = [], [], False
             try:
                 for f in new_files:                      # 1) every new byte on disk
                     dst = data / (f.name + ".tmp")
-                    shutil.copy2(f, dst)
-                    staged.append(dst)
-                stale = set(tables) | {p.stem for p in data.glob("*.jsonl")}
-                for tname in stale:                      # 2) then retire the old
-                    (data / f"{tname}.jsonl").unlink(missing_ok=True)
-                retired = True
-                for dst in staged:                        # 3) then swap names
-                    os.replace(dst, data / dst.name[:-4])
+                    staged.append(dst)                    # recorded first: a copy that fails
+                    shutil.copy2(f, dst)                  # halfway is still cleaned
+                for dst in staged:                        # 2) each takes its place, one step
+                    final = data / dst.name[:-4]
+                    if final.is_file() and final.read_bytes() == dst.read_bytes():
+                        dst.unlink()
+                        continue
+                    _replace_held(dst, final)
+                    done.append(final.name)
+                swapped = True
+                keep = {f.name for f in new_files}        # 3) a table that the store lost
+                for tname in sorted(set(tables) | {p.stem for p in data.glob("*.jsonl")}):
+                    if f"{tname}.jsonl" not in keep:
+                        (data / f"{tname}.jsonl").unlink(missing_ok=True)
             except Exception as exc:
-                # plan 045 review: once step 2 has run, the .tmp files are the ONLY
-                # copy of the not-yet-renamed tables — deleting them here would be
-                # data loss on the v4 registry-sync path, which has no backup to
-                # fall back on (the v3 path's restore always wins those tables back
-                # from data-v3-backup/, so it can still discard the .tmp files).
-                if not retired:
-                    for dst in staged:
+                for dst in staged:                        # the staged copies are never the
+                    try:                                  # only copy of a table
                         dst.unlink(missing_ok=True)
-                    if v4_sync:
-                        return _err(f"registry sync failed — package UNCHANGED"
-                                    f" (no package file was removed, the staged .tmp files"
-                                    f" are gone): {exc}")
-                    _restore_from_backup(data, backup, conversion)
-                    return _err(f"migration failed — package UNCHANGED (restored"
-                                f" from data-v3-backup/, now removed): {exc}")
+                    except OSError:
+                        pass
                 if not v4_sync:
                     _restore_from_backup(data, backup, conversion)
                     return _err(f"migration failed — package UNCHANGED (restored"
                                 f" from data-v3-backup/, now removed): {exc}")
-                # v4 registry-sync, no backup: best-effort finish the swap rather
-                # than strand the only copy of a table in a .tmp file.
-                finished, left = 0, []
-                for dst in staged:
-                    final = data / dst.name[:-4]
-                    if final.exists():
-                        finished += 1
-                        continue
-                    try:
-                        os.replace(dst, final)
-                        finished += 1
-                    except Exception:
-                        left.append(dst.name)
-                return _err(f"registry sync was interrupted during the file swap:"
-                            f" {exc} — {finished} file(s) completed, {len(left)} left"
-                            f" as data/<table>.jsonl.tmp: {left}; rename them to"
-                            f" finish, then package_open")
+                if swapped:
+                    return _err(f"registry sync wrote every file, and one old file of a table"
+                                f" that the store no longer has could not be removed: {exc}."
+                                " No table was removed. Remove that file by hand, then"
+                                " package_open")
+                if not done:
+                    return _err(f"registry sync failed — package UNCHANGED (no package file"
+                                f" was written or removed, the staged .tmp files are gone):"
+                                f" {exc}")
+                return _err(f"registry sync stopped during the file swap: {exc}. No table was"
+                            f" removed. {len(done)} file(s) hold the new form: "
+                            f"{', '.join(done)}. Every other file holds the old form, and each"
+                            " file loads. Close the program that holds the named file, then run"
+                            " package_migrate again: it finishes the sync. Or restore data/"
+                            " from git, to the commit before the migration")
         for r in relocate:  # the previewed actions, verbatim (plan 039)
             src = pkg_dir / r["file"]
             if r["action"] == "move":
@@ -6342,7 +6406,7 @@ def slate_export(slate: dict | None = None, name: str | None = None,
     page = slates.render(record, digest)             # built first: a failure writes nothing
     sheets = {"orientation": slates.orientation(record), "short": slates.short_sheet(record)}
     # <name>.slate.json is the record. <name>.html is the page derived from it. Two
-    # hand-outs for the people of the room stand beside them
+    # hand-outs for the room stand beside them: <name>.orientation.md and <name>.short.md
     emitted = {"record": _managed_emit(files["record"], text, force=True),
                "page": _managed_emit(files["page"], page, force=True)}
     emitted.update({kind: _managed_emit(files[kind], sheet, force=True)

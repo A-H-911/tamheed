@@ -92,3 +92,120 @@ on the operator's word, and the two field prompts.
 - Both briefs carry the operator's note of 2026-11-12: a valid answers file proves nothing
   about who wrote it, and an agent that acts on one without the operator's word in the session
   has committed a fault.
+
+## The field assurance of 2026-11-14
+
+The operator held the release: prove that both fields can take it, give them a tested way
+back, and sweep the documents. Every measurement ran on scratch copies of the two real
+packages. One was a clone of the ACMP repository, pinned at `e1e2d937` once it was seen that
+its live session wrote while the first copies were taken. The other came from the Jisr export
+of 2026-11-12. Each engine ran in its own process: the real
+6.4.0 code from the tag `v6.4.0`, and the 6.5.0 code. The scripts are in
+`plans/evidence/scripts-229/assure/`. They print file names, ids and counts.
+
+### What the measurements found, and what changed
+
+| Found | Change |
+|---|---|
+| With 6.5.0, an open and a close before the migration wrote `document_sections.jsonl` again in full | R115: the open refuses such a package and names the migration. Two tests |
+| `package_migrate` answered "nothing to migrate" for a package that was behind in a column alone | a column alone is a reason for a registry sync |
+| 6.4.0 on a migrated package raised a bare error, and moved no file | 6.5.0 refuses a file from a later release in plain words. 6.4.0 itself cannot be changed |
+| **A migration that failed in its file swap removed tables** (25 on the ACMP copy) and said "package UNCHANGED". The fault is in every release since plan 045 | each new file takes its place in one step, and no old file is removed first. A stopped swap names what moved, and a second run finishes it. Two tests, both red on the old code |
+| The migration takes no backup | both briefs start with a clean tree and a recorded commit |
+| The briefs had no way back | section 1b in both, from the measurements below |
+
+### The compatibility matrix (both packages gave the same answers)
+
+| Engine | Package as it is | Migrated package |
+|---|---|---|
+| 6.4.0, idle open and close | opens, moves no file | stops on an unknown key, moves no file |
+| 6.4.0, one write | writes one file | stops on an unknown key, moves no file |
+| 6.5.0, idle open and close | refuses and names the migration, moves no file | opens, moves no file |
+| 6.5.0, one write | refuses, moves no file | writes one file |
+
+The migration moved three files. Gates, blocking rules, row counts and trace edges were the
+same under 6.4.0 before it and under 6.5.0 after it. Only the journal grew.
+
+### The drill
+
+| Case | ACMP copy | Jisr copy |
+|---|---|---|
+| Three migrated files restored: the tree equals the original byte for byte, and 6.4.0 opens it with the same results | holds | holds |
+| The same after the migration, a full exercise of the 6.5.0 tools and an export | holds | holds |
+| The 6.5.0 tools over the real rows: every family read, every link, the review page, a register, a retired section, a slate | every check holds | every check holds |
+| A migration stopped by one unwritable file: no table lost, one file in the new form, a second run finishes | holds | holds |
+| Every export file written again by both engines holds the same rows in the same order | 29 of 29 | 35 of 35 |
+| The field's own scripts on the exports that 6.5.0 wrote | generator test 17 of 17 | page equal apart from the digest, 15 tests pass |
+
+### The plugin, forward and back
+
+Measured in a separate configuration folder (`CLAUDE_CONFIG_DIR`), in a scratch repository, at
+project scope, with Claude Code 2.1.323 on Windows. The machine's own records were read
+before and after, and they did not move.
+
+- `claude plugin marketplace add A-H-911/tamheed#<ref> --scope project` writes the `ref` into
+  the repository's `.claude/settings.json`.
+- From the branch of this round the plugin installed as 6.5.0. From the tag `v6.4.0`, the two
+  update commands answered "updated from 6.5.0 to 6.4.0".
+- The installed copies of both bundles ran their selftest (19 and 21 tools). The installed
+  6.5.0 copy opened the migrated copies of both packages.
+
+### Tested here, in CI, or only in the field
+
+| Aspect | Where |
+|---|---|
+| The engine's suites, lints, round-trip and evals | here on Python 3.13 and 3.10, and in CI on three systems |
+| The upgrade, the way back, and a stopped migration on the two real packages | here, on copies, on Windows |
+| The interview page's script | here, in Chrome, by the browser check. CI runs no browser |
+| A real link at a slate's answers path | CI, on Ubuntu and macOS |
+| Chrome on the field's Mac, and the lock on a real macOS host | the field, through a probe of its brief |
+| Rows that a field wrote after its copy was taken | the field: its preview must equal the brief's, or it stops |
+| An agent that reads a brief and runs it through MCP | not run here |
+
+### The way back, with git itself
+
+The first drill restored files by copying them. The briefs prescribe git commands, so the
+drill was run again in a clone of ACMP and in a scratch repository made from the Jisr export.
+
+| Command | Result on both |
+|---|---|
+| `git checkout -- <package>/data`, before the migration commit | three files go back, `git status` is clean, and 6.4.0 opens with the same results |
+| `git restore --source=PRE --staged --worktree -- <package>`, after two commits | `git diff PRE` is empty after its commit, and 6.4.0 opens with the same results |
+| `git revert --no-edit PRE..HEAD` | no conflict, the same end state |
+| `git checkout PRE -- <package>`, as the brief first said | WRONG: eight files of the new release stay, and `git status` does not name them |
+
+The briefs and `docs/install.md` now prescribe the first three and warn against the fourth.
+In ACMP's clone one file outside git's view stayed: its `exports/` folder is ignored.
+
+### The pin reaches every repository of a machine
+
+Measured in the separate configuration folder with two scratch repositories. The first was
+pinned back to `v6.4.0`. The second, whose own settings still named the branch of 6.5.0, was
+moved to 6.4.0 by its own next `plugin update`. One machine keeps one marketplace record of a
+name. Both briefs and the install guide say so.
+
+### The review of the swap and of the open's guard
+
+An independent review ran its own experiments. It found no way for the new swap to lose a
+table. Its findings, each reproduced by a failing test or by reading, and each fixed:
+
+| Finding | Fix |
+|---|---|
+| The open judged a file by its first row, and the migration by all rows together. A file with one short row was refused by the open and called current by the migration | one rule for both: a file is behind when any row lacks a column |
+| A sync for a column alone wrote a journal row with no content | the row names the table and the column |
+| A staging copy that failed halfway left one `.tmp` file while the answer said none was left | the staged name is recorded before the copy |
+| A failure of the last step, after every file was in place, was reported as a stopped swap | it says that every file is written, and names the old file to remove |
+| A file held for a moment by another program stopped the swap at once | the swap waits as the store's flush does: five tries in under a second |
+
+The review also confirmed that no other entry writes the data of a package that is behind.
+`package_verify`, the resume hook and `package_unlock` read, or go through the guarded open.
+Left as it is, and said: when a sync of types alone stops after the registry file, a second
+run finds nothing to do and the journal row of that sync is not written.
+
+### Not measured
+
+- An agent that reads a brief and runs it through the served process. Every measurement
+  called the handlers in a Python process, or the `claude plugin` commands.
+- The committed sample pages were not written again one by one. The gate's own stages cover
+  the samples that it reads.
+- Route A in the real Jisr repository: its ignore rules were not in the export.

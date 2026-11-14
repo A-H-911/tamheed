@@ -1202,17 +1202,20 @@ class McpContractTest(unittest.TestCase):
         self.assertIn("lifecycle_status",
                       {c["column"] for c in out["items"][0]["changed_columns"]})
         self.assertIsNone(row()["lifecycle_status"])
-        # a file from before the column: strip the key, reopen, and the store still loads
+        # a file from before the column: the open refuses (R115), the migration writes the
+        # file once, and the store then loads with no status on any section
         srv.package_close()
         path = srv.PACKAGE_ROOT / "demo" / "data" / "document_sections.jsonl"
         old = [json.dumps({k: v for k, v in json.loads(line).items() if k != "lifecycle_status"},
                           ensure_ascii=False, separators=(",", ":"))
                for line in path.read_text(encoding="utf-8").splitlines()]
         path.write_text("\n".join(old) + "\n", encoding="utf-8", newline="\n")
+        refused = srv.package_open("demo")
+        self.assertIn("document_sections.jsonl lacks `lifecycle_status`", refused["error"])
+        self.assertTrue(srv.package_migrate("demo", confirm=True)["ok"])
         self.assertTrue(srv.package_open("demo")["ok"])
         self.assertIsNone(row()["lifecycle_status"])
-        verify = srv.package_verify()
-        self.assertEqual(verify["dirty"], ["document_sections.jsonl"])   # until the first close
+        self.assertEqual(srv.package_verify()["dirty"], [])              # the file is current
         srv.package_close()
         self.assertTrue(srv.package_open("demo")["ok"])
         self.assertEqual(srv.package_verify()["dirty"], [])             # rewritten once
@@ -2130,6 +2133,196 @@ class McpContractTest(unittest.TestCase):
         row = srv.entity_query("lesson", id="LL-001")["rows"][0]
         self.assertIn("promoted_to", row)   # the column landed
         srv.package_close()
+
+    def test_an_open_never_rewrites_a_file_that_is_behind(self):
+        """Field assurance of 6.5.0 (measured on copies of both field packages): a store
+        whose file lacks a column that the engine has was opened, and its first close wrote
+        that file again in full, outside any migration. An idle open then moved a file, and
+        an earlier release could no longer open the package. The open now refuses and names
+        the migration. The migration writes the file once, on the operator's word."""
+        make_complete_package("demo")
+        srv.entity_upsert([{"type": "lesson", "id": "LL-001", "title": "t",
+                            "statement": "s", "kind": "improve"}])
+        srv.package_close()
+        data = srv.PACKAGE_ROOT / "demo" / "data"
+        lj = data / "lessons.jsonl"
+        rows = [json.loads(line) for line in lj.read_text(encoding="utf-8").splitlines()]
+        for r in rows:
+            r.pop("promoted_to", None)          # the file as an earlier release wrote it
+        lj.write_text("".join(json.dumps(r, ensure_ascii=False, separators=(",", ":")) + "\n"
+                              for r in rows), encoding="utf-8")
+        before = {p.name: p.read_bytes() for p in data.iterdir()}
+        refused = srv.package_open("demo")
+        self.assertFalse(refused["ok"], refused)
+        for needle in ("lessons.jsonl lacks `promoted_to`", "package_migrate(name='demo')",
+                       "confirm=true", "Commit the package"):
+            self.assertIn(needle, refused["error"], needle)
+        self.assertIsNone(srv._CURRENT)
+        self.assertEqual({p.name: p.read_bytes() for p in data.iterdir()}, before)  # no byte
+        preview = srv.package_migrate("demo")
+        self.assertEqual(preview["report"]["columns_added"], {"lessons": ["promoted_to"]})
+        self.assertTrue(srv.package_migrate("demo", confirm=True)["ok"])
+        self.assertTrue(srv.package_open("demo")["ok"])
+        srv.package_close()
+        after = {p.name: p.read_bytes() for p in data.iterdir()}
+        self.assertTrue(srv.package_open("demo")["ok"])       # an idle open moves no byte
+        srv.package_close()
+        self.assertEqual({p.name: p.read_bytes() for p in data.iterdir()}, after)
+
+    def test_a_store_from_a_newer_release_is_refused_in_plain_words(self):
+        """Field assurance of 6.5.0: the 6.4.0 server raised a bare error on a package that
+        6.5.0 had migrated. A file with a key that this server does not know is refused, with
+        the two ways out. No lock is left and no byte moves."""
+        make_complete_package("demo")
+        srv.package_close()
+        data = srv.PACKAGE_ROOT / "demo" / "data"
+        cj = data / "constraints.jsonl"
+        rows = [json.loads(line) for line in cj.read_text(encoding="utf-8").splitlines()]
+        self.assertTrue(rows)
+        cj.write_text("".join(json.dumps(r | {"a_later_column": None}, ensure_ascii=False,
+                                         separators=(",", ":")) + "\n" for r in rows),
+                      encoding="utf-8")
+        before = {p.name: p.read_bytes() for p in data.iterdir()}
+        refused = srv.package_open("demo")
+        self.assertFalse(refused["ok"], refused)
+        for needle in ("unknown keys ['a_later_column']", "A later tamheed", "Update the plugin",
+                       "restore the package's data"):
+            self.assertIn(needle, refused["error"], needle)
+        self.assertIsNone(srv._CURRENT)
+        self.assertEqual({p.name: p.read_bytes() for p in data.iterdir()}, before)
+
+    def _behind_in_one_type(self) -> Path:
+        """A package whose registry lacks one baseline type, so a registry sync is due."""
+        make_complete_package("demo")
+        srv.package_close()
+        data = srv.PACKAGE_ROOT / "demo" / "data"
+        et = data / "entity_types.jsonl"
+        et.write_text("".join(
+            json.dumps(r, ensure_ascii=False, separators=(",", ":")) + "\n"
+            for r in (json.loads(line) for line in et.read_text(encoding="utf-8").splitlines())
+            if r["type_id"] != "skill"), encoding="utf-8")
+        return data
+
+    def test_a_sync_that_cannot_remove_a_file_removes_no_table(self):
+        """Field assurance of 6.5.0 (found on a copy of a field package, present since plan
+        045): the swap removed every old file and then renamed the new ones in. One file that
+        could not be removed stopped the loop, and the handler then removed the staged copies
+        too. Twenty-five tables left the disk, and the tool said: package UNCHANGED. On
+        Windows a program that holds one file open is enough. A new file now takes its place
+        in one step, and no old file is removed first."""
+        data = self._behind_in_one_type()
+        before = {p.name: p.read_bytes() for p in data.iterdir()}
+        real = Path.unlink
+
+        def held(path, *args, **kwargs):
+            if path.name == "entity_types.jsonl":
+                raise PermissionError(13, "the file is held by another program")
+            return real(path, *args, **kwargs)
+
+        Path.unlink = held
+        try:
+            out = srv.package_migrate("demo", confirm=True)
+        finally:
+            Path.unlink = real
+        after = {p.name: p.read_bytes() for p in data.iterdir()}
+        self.assertEqual(sorted(set(before) - set(after)), [])          # no table left the disk
+        self.assertEqual(sorted(n for n in after if n.endswith(".tmp")), [])
+        if not out["ok"]:
+            self.assertEqual("UNCHANGED" in out["error"], after == before, out["error"])
+        self.assertTrue(srv.package_migrate("demo", confirm=True)["ok"] or out["ok"])
+        self.assertTrue(srv.package_open("demo")["ok"])
+        self.assertTrue(srv.package_verify()["verified"])
+        srv.package_close()
+
+    def test_a_sync_that_stops_in_its_swap_says_what_moved_and_runs_again(self):
+        """The same swap, stopped at a rename. Every table is still on disk and loads. The
+        refusal names the files that hold the new form, and it never says UNCHANGED over a
+        file that moved. A second run finishes the sync."""
+        data = self._behind_in_one_type()
+        lj = data / "constraints.jsonl"                 # a second file that the sync rewrites
+        rows = [json.loads(line) for line in lj.read_text(encoding="utf-8").splitlines()]
+        key = sorted(k for k in rows[0] if rows[0][k] is None)[0]
+        lj.write_text("".join(json.dumps({k: v for k, v in r.items() if k != key},
+                                         ensure_ascii=False, separators=(",", ":")) + "\n"
+                              for r in rows), encoding="utf-8")
+        before = {p.name: p.read_bytes() for p in data.iterdir()}
+        real = srv.os.replace
+
+        def held(src, dst, *args, **kwargs):
+            if Path(dst).name == "entity_types.jsonl":
+                raise PermissionError(13, "the file is held by another program")
+            return real(src, dst, *args, **kwargs)
+
+        srv.os.replace = held
+        try:
+            out = srv.package_migrate("demo", confirm=True)
+        finally:
+            srv.os.replace = real
+        self.assertFalse(out["ok"], out)
+        after = {p.name: p.read_bytes() for p in data.iterdir()}
+        self.assertEqual(set(after), set(before))                       # no table, no .tmp
+        moved = sorted(n for n in before if before[n] != after[n])
+        self.assertEqual(moved, ["constraints.jsonl"])
+        self.assertNotIn("UNCHANGED", out["error"])
+        for needle in ("No table was removed", "constraints.jsonl", "package_migrate again",
+                       "restore data/ from git"):
+            self.assertIn(needle, out["error"], needle)
+        self.assertTrue(srv.package_migrate("demo", confirm=True)["ok"])
+        self.assertTrue(srv.package_open("demo")["ok"])
+        self.assertTrue(srv.package_verify()["verified"])
+        srv.package_close()
+
+    def test_the_open_and_the_migration_judge_behind_by_one_rule(self):
+        """The review of R115: the open judged a file by its first row, and the migration by
+        the keys of all its rows together. A file edited by hand, with one row short of a
+        column, was refused by the open and called current by the migration: no way out. Both
+        now say: a file is behind when ANY row lacks a column. A sync for a column alone
+        names the file in its journal row."""
+        make_complete_package("demo")
+        srv.entity_upsert([{"type": "lesson", "id": f"LL-00{n}", "title": "t",
+                            "statement": "s", "kind": "improve"} for n in (1, 2)])
+        srv.package_close()
+        data = srv.PACKAGE_ROOT / "demo" / "data"
+        lj = data / "lessons.jsonl"
+        whole = [json.loads(line) for line in lj.read_text(encoding="utf-8").splitlines()]
+        for short_row in (0, 1):                       # the first row short, then a later row
+            rows = [dict(r) for r in whole]
+            rows[short_row].pop("promoted_to")
+            lj.write_text("".join(json.dumps(r, ensure_ascii=False, separators=(",", ":")) + "\n"
+                                  for r in rows), encoding="utf-8")
+            refused = srv.package_open("demo")
+            self.assertIn("lessons.jsonl lacks `promoted_to`", refused.get("error", ""), short_row)
+            preview = srv.package_migrate("demo")
+            self.assertEqual(preview["report"]["columns_added"], {"lessons": ["promoted_to"]})
+            self.assertTrue(srv.package_migrate("demo", confirm=True)["ok"])
+            self.assertTrue(srv.package_open("demo")["ok"])
+            entry = srv.entity_query("progress-entry", limit=100000)["rows"][-1]["entry"]
+            self.assertEqual(entry, "REGISTRY-SYNC: columns added (lessons: promoted_to)")
+            srv.package_close()
+            self.assertIn("Nothing to migrate", srv.package_migrate("demo")["error"])
+
+    def test_a_staging_copy_that_fails_leaves_no_staged_file(self):
+        """The review: the staged name was recorded after its copy, so a copy that failed
+        halfway left one `.tmp` behind while the answer said that none was left."""
+        data = self._behind_in_one_type()
+        before = {p.name: p.read_bytes() for p in data.iterdir()}
+        import shutil
+        real, seen = shutil.copy2, []
+
+        def half(src, dst, *args, **kwargs):
+            seen.append(dst)
+            if len(seen) == 2:
+                Path(dst).write_bytes(b"half a file")
+                raise OSError(28, "no space left on the device")
+            return real(src, dst, *args, **kwargs)
+
+        shutil.copy2 = half
+        try:
+            out = srv.package_migrate("demo", confirm=True)
+        finally:
+            shutil.copy2 = real
+        self.assertIn("UNCHANGED", out["error"])
+        self.assertEqual({p.name: p.read_bytes() for p in data.iterdir()}, before)
 
     def test_convert_legacy_prompts_on_migrate(self):
         """The v3 prompt converter runs inside package_migrate: data/prompts.jsonl
