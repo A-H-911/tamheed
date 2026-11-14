@@ -142,7 +142,7 @@ class CheckLintsTest(unittest.TestCase):
             self._restore(self._GUIDE)
 
     # ---- plan 190: the current field brief is rostered by its path; older briefs are not scanned
-    _BRIEF = "plans/briefs/acmp-6.0.0.md"
+    _BRIEF = "plans/briefs/acmp-6.5.0.md"
 
     def test_current_brief_is_in_the_roster(self):
         self.assertIn(self._BRIEF, check._ste_scope(REPO_ROOT))

@@ -110,9 +110,11 @@ side utility over `data/`.
 
 Since v6.5 a long interview has its own route. **`slate_export`** writes a local interview page
 from a slate of questions, and it quotes every cited row from the store. The page runs one
-script, named by hash, and it loads and sends nothing. **`slate_read`** returns a checked
-transcript of the answers file that the operator saved, and it writes nothing. The transcript
-is a record of a file. An approval is still spoken in the session.
+script, named by hash, and it loads and sends nothing. A slate may hold rounds, participants,
+decided topics and an owner for each question, so one page runs a workshop. The page saves one
+file for each round. **`slate_read`** returns one checked transcript of those files, and it
+writes nothing. The transcript is a record of files. An approval is still spoken in the
+session. `references/slate.md` in the bundle holds the slate's grammar.
 
 A record type that no family holds takes a declared **register** (`REG-`) and its entries
 (`ENT-`), also since v6.5. The register declares its fields, and the write checks each entry.

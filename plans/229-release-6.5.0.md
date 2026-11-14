@@ -76,3 +76,19 @@ state: such a package is told the route at its first register write.
 
 Still open at this point: a person clicks Save on an interview page once, the merge and the tag
 on the operator's word, and the two field prompts.
+
+## As built: the two briefs (2026-11-12)
+
+- The stamp is `f70a728`. CI run 43217708891 is green on eleven jobs.
+- `plans/briefs/acmp-6.5.0.md` and `plans/briefs/jisr-6.5.0.md` are written, and both are on
+  the plain-English roster. The second holds ids, statuses and counts only (R72).
+- Every recipe was dry-run on a scratch copy of each package with the 6.5.0 engine: the
+  preview, the confirm (three files move), the verify, the export, the gate result, the wired
+  rule, a partial resolve of a feedback row (three columns change), the export of every link.
+- The first field: the wired rule lists exactly FR-156 to FR-159 with the work leg missing, and
+  `trace_query("FR-166")` returns AC-184 as a column link. Its three rows stand `Confirmed`.
+- The second field: the gate result is the same as before the upgrade. Its eleven rows stand
+  `Confirmed`, two of them local tools. Its linter import searches the plugin cache.
+- Both briefs carry the operator's note of 2026-11-12: a valid answers file proves nothing
+  about who wrote it, and an agent that acts on one without the operator's word in the session
+  has committed a fault.

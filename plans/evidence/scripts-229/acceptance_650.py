@@ -112,20 +112,37 @@ def main() -> int:
     exported = srv.slate_export(slate)
     obs("227 the page and its record are written", exported["ok"] and exported["quoted_rows"] == 2,
         exported.get("files"))
-    obs("227 a second export moves no byte", srv.slate_export(slate)["files"] ==
-        {"record": "unchanged", "page": "unchanged"})
+    obs("227 a second export moves no byte",
+        set(srv.slate_export(slate)["files"].values()) == {"unchanged"})
+    obs("227c the export writes two hand-outs",
+        all(Path(sheet).is_file() for sheet in exported["handouts"].values()))
     page = Path(exported["page"]).read_text(encoding="utf-8")
     obs("227 the page holds one script", page.count("<script") == 1)
+    import slate as slates
+    digest_of_q1 = slates.question_digests(
+        json.loads(Path(exported["record"]).read_text(encoding="utf-8")))["q1"]
     Path(exported["answers_path"]).write_text(json.dumps({
-        "format": "tamheed-slate-answers", "version": 1, "slate": "accept-round",
+        "format": "tamheed-slate-answers", "version": 2, "slate": "accept-round",
         "slate_digest": exported["slate_digest"], "exported_at": "2026-11-12T10:00:00.000Z",
-        "rounds": [{"id": "r1", "attendance": "", "closed": False, "closed_by": "", "closure_note": ""}],
-        "answers": [{"question": "q1", "selected": "B", "other": "", "note": ""}]}), encoding="utf-8")
+        "rounds": [{"id": "r1", "closed": False, "closed_by": "", "closure": {}}],
+        "answers": [{"question": "q1", "selected": "B", "other": "", "note": "",
+                     "question_digest": digest_of_q1}]}), encoding="utf-8")
     before = srv._CURRENT.conn.total_changes
     read = srv.slate_read("accept-round")
     obs("227 the reader returns a transcript and writes nothing", read["ok"]
         and read["answers"][0]["selected_label"] == "Move" and read["provenance"] == "unverified"
         and srv._CURRENT.conn.total_changes == before)
+    obs("227c an unchanged question is not put again, and the round names what it lacks",
+        read["put_again"] == [] and read["question_changed"] == []
+        and read["rounds"][0]["complete"] is False and len(read["rounds"][0]["missing"]) == 1)
+    Path(exported["round_answers"]["r1"]).write_text(json.dumps({
+        "format": "tamheed-slate-answers", "version": 2, "slate": "accept-round", "round": "r1",
+        "rounds": [], "answers": [{"question": "q1", "selected": "A"}]}), encoding="utf-8")
+    both = srv.slate_read("accept-round")
+    obs("227c two files that disagree are a conflict, and neither is picked",
+        [c.get("question") for c in both["conflicts"]] == ["q1"]
+        and both["answers"][0]["selected"] is None)
+    Path(exported["round_answers"]["r1"]).unlink()
     assert up({"type": "register-entry", "id": "ENT-001", "register_id": "REG-001", "title": "One",
                "custom_attributes": {"status": "refused", "grants": ["FR-001"]}})["ok"]
     obs("227 a changed row puts its question again", srv.slate_read("accept-round")["put_again"] == ["q1"])

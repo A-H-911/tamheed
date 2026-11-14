@@ -25,7 +25,7 @@ plugins/tamheed/                     # THE installable bundle — self-contained
 ├── templates/                        # section templates for narrative prose + prompt patterns
 ├── db/                               # the store: schema.sql (v4 DDL), migrations/, store.py, CANONICAL.md
 ├── server/                           # Tamheed MCP server + migrate_v3to4 + adopt + export_html + viewer.css
-│                                     #   + slate.py, slate.js, slate.css (the interview page, v6.5)
+│                                     #   + slate*.py, slate.js, slate.css (the interview page, v6.5)
 ├── prompts/                          # the stock operator guide (emitted to <package>/README.md) + stock-history.json
 └── assets/                           # logos
 docs/                                 # architecture, methodology, workflow, entities (the v4 study), install

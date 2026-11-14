@@ -33,9 +33,11 @@ ADD = [
      " المقتبَس."),
     ("param.export_html.output", "param.slate_export.slate",
      "The slate, inline: a name, a title, and rounds of questions. Each question has two or"
-     " more options. One option at most is recommended, and it carries its reason.",
+     " more options. One option at most is recommended, and it carries its reason. An"
+     " optional `language`, `en` or `ar`, sets the page's direction and its fixed words.",
      "القائمة، مضمَّنة: اسم وعنوان وجولات من الأسئلة. لكل سؤال خياران أو أكثر. يُوصى بخيار"
-     " واحد على الأكثر، ومعه سببه."),
+     " واحد على الأكثر، ومعه سببه. والمفتاح الاختياري `language`، وقيمته `en` أو `ar`،"
+     " يحدّد اتجاه الصفحة وكلماتها الثابتة."),
     ("param.slate_export.slate", "param.slate_export.name",
      "Sent alone, without `slate`: the tool reads the slate from"
      " `<package>/slates/<name>.spec.json`, which a project script writes. The caller names"

@@ -28,9 +28,17 @@ every family: a write with no `id` returned ok before and is refused now.
   advisory `register-entries-conform`, `entity_query(register_id=)`, one review-page fold per
   register.
 - `slate_export` and `slate_read` (plan 227): an interview page for the operator, and a reader
-  for the answers file that the page saves. The page runs one script, named by hash in a content
-  policy, and it loads and sends nothing. The reader writes nothing, and its result says that
-  nothing proves who wrote the file. The tools number 21.
+  for the answers files that the page saves. The page runs one script, named by hash in a
+  content policy, and it loads and sends nothing. The reader writes nothing, and its result
+  says that nothing proves who wrote a file. The tools number 21.
+- The interview page runs a workshop (plan 227c): rounds with a navigator and blocks,
+  participants with attendance, an owner, a lead and consulted people for each question, a room
+  view and a presenter view, points from the room, a closure for each round, and topics
+  already decided. A question takes "Unknown" and "Requires evidence" as answers. The page
+  saves one file for each round. The reader names what a round lacks, what two files disagree
+  on, and which answers were made on an earlier version of their question. The export also
+  writes two hand-outs, matches glossary terms, and names the rows that a text cites.
+  `references/slate.md` holds the grammar.
 - `trace_query` without an id (plan 221): every link, or one family's, in a fixed order with a
   total. `column_links` returns the links that a foreign-key column holds. `entity_query` and
   `trace_query` echo their arguments under `query`.

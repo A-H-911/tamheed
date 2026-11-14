@@ -28,7 +28,10 @@ Markdown registers.
 │   ├── <name>.html                #   the page: one script named by hash, loads and sends nothing
 │   ├── <name>.slate.json          #   the slate record: the questions and the quoted rows (the record)
 │   ├── <name>.spec.json           #   optional: a slate that a project script wrote for slate_export
-│   └── <name>.answers.json        #   the file the operator saved from the page, read by slate_read
+│   ├── <name>.orientation.md      #   a hand-out: the room's questions with their text
+│   ├── <name>.short.md            #   a hand-out: one line for each question of the room
+│   ├── <name>.answers.json        #   the answers of the whole page, saved by the operator
+│   └── <name>.<round>.answers.json #  the answers of one round. slate_read reads both kinds
 ├── exports/                       # v4.7: entity_export files — a read tool's whole result, digest-
 │   └── <name>.json                #   stamped, deterministic; the sanctioned read for committed scripts
 │                                  #   (derived, regenerable; commit or ignore — never under data/)

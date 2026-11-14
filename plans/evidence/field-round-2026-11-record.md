@@ -146,6 +146,11 @@ operator again (R88, R89).
 - **R100** (plan 227, before its build, 2026-11-12) A slate reaches the tool inline, or from a
   spec file at one fixed place under the package, named by the slate. Measured premise: a round
   of 71 questions is 66,610 bytes, about 16,600 tokens for an agent to write in one call.
+- **R101** (2026-11-13, at the release question) The release is held until the interview page is
+  reviewed by eye and corrected. All 13 steps of plan 227b are approved. The operator's words:
+  go deeper, take screenshots and see, not only the markup.
+- **R102** (the same round) A slate may name its language, `en` or `ar`. The page then sets its
+  direction and shows its fixed words in that language.
 
 ## Step 0
 
@@ -230,3 +235,18 @@ has been executed.
    (lock, file reads, generated script), the advisor, then the operator's word for the commit.
 2. End to end: 229's acceptance list. Field proof: each prompt's probes hold in the field, or the
    field files a row.
+
+## Rulings of 2026-11-13 on the interview page (plan 227c)
+
+- **R103** Every group of Jisr's page features is built now: rounds, audience, round end, the card, answer safety.
+- **R104** Visibility has four parts: a filter by owner and by group, rounds that open and lock, a hidden recommendation, hidden operator-only parts.
+- **R105** The page saves one file per round and one file for the whole page.
+- **R106** Point kinds and closure fields default to four each. A slate may declare its own. The reader reports a round complete or names what is missing.
+- **R107** Approval is a flag on a question. The page holds no approval input.
+- **R108** A participant is a stakeholder row or a plain id with a name.
+- **R109** One page has a Presenter switch. It is a display rule, not a lock.
+- **R110** Terms are the package's glossary rows, matched at export.
+- **R111** `slate_read` reads a file from an earlier export and marks each question.
+- **R112** A slate key sets how the page opens: for reading, or for a session.
+- **R113** Three more features are built: hand-outs, ids named in a text, the row that an answer settles.
+- **R114** A browser check file in the repository verifies the script. CI does not run it.

@@ -1035,17 +1035,17 @@ TOOL_EFFECTS = {
         "reads": [("@tool_result", 1781)],
         "writes": [("@export_file", 1806)]},
     "slate_export": {
-        "needs": [("@need.open", 6284)],
-        "reads": [("slates/*.spec.json", 6288),
-                  ("@cited_rows", 6310)],
-        "writes": [("slates/*.slate.json", 6335),
-                   ("slates/*.html", 6335)]},
+        "needs": [("@need.open", 6294)],
+        "reads": [("slates/*.spec.json", 6303),
+                   ("@cited_rows", 6321)],
+        "writes": [("slates/*.slate.json", 6346),
+                    ("slates/*.html", 6347)]},
     "slate_read": {
-        "needs": [("@need.open", 6357)],
-        "reads": [("slates/*.answers.json", 6360),
-                  ("slates/*.slate.json", 6360),
-                  ("@cited_rows", 6386)],
-        "writes": [("@nothing", 6350)]},
+        "needs": [("@need.open", 6376)],
+        "reads": [("slates/*.answers.json", 6418),
+                   ("slates/*.slate.json", 6386),
+                   ("@cited_rows", 6431)],
+        "writes": [("@nothing", 6372)]},
 }
 
 

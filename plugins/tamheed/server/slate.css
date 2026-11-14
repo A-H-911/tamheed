@@ -1,58 +1,361 @@
-/* Tamheed interview page (plan 227). Added after viewer.css, whose colours it uses. */
-.meta { color: var(--ink-2); }
-.notice { color: var(--ink-2); font-size: .9rem; border-left: 3px solid var(--line);
-  padding-left: .8rem; }
-.toolbar { display: flex; flex-wrap: wrap; gap: .5rem; margin: 1rem 0; position: sticky;
-  top: 0; padding: .5rem 0; background: var(--bg); z-index: 2; }
-button, .filebtn { font: inherit; color: var(--ink); background: transparent;
-  border: 1px solid var(--line); border-radius: .4rem; padding: .35rem .8rem; cursor: pointer; }
-button[aria-pressed="true"] { border-color: var(--a1); color: var(--a1); }
-.filebtn input { max-width: 14rem; }
-#status { min-height: 1.4rem; font-weight: 600; }
+/* Tamheed interview page (plans 227, 227b, 227c). One file, no outside font and no image.
+   Tokens first: dark is the base, light follows the system or the page's own control.
+   What a view hides, it hides here, from classes on the root: presenter, recs, session, one. */
+:root {
+  color-scheme: dark;
+  --bg: #17171a; --panel: #212126; --panel-2: #2a2a31; --line: #3c3c46;
+  --ink: #f4f4f6; --ink-2: #b9b9c4; --accent: #6aa6ff; --accent-ink: #0b1220;
+  --chosen: #1d3557; --good: #4cc38a; --warn: #f0b354; --op: #c9a2ff;
+  --measure: 54rem; --bar-h: 3.4rem;
+}
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    color-scheme: light;
+    --bg: #fbfbfc; --panel: #ffffff; --panel-2: #f1f2f5; --line: #cfd2da;
+    --ink: #17181c; --ink-2: #4b4f5c; --accent: #1f5fd0; --accent-ink: #ffffff;
+    --chosen: #dce8ff; --good: #177a4d; --warn: #9a5b00; --op: #6b3fb5;
+  }
+}
+:root[data-theme="light"] {
+  color-scheme: light;
+  --bg: #fbfbfc; --panel: #ffffff; --panel-2: #f1f2f5; --line: #cfd2da;
+  --ink: #17181c; --ink-2: #4b4f5c; --accent: #1f5fd0; --accent-ink: #ffffff;
+  --chosen: #dce8ff; --good: #177a4d; --warn: #9a5b00; --op: #6b3fb5;
+}
 
-section.round { margin: 2rem 0; }
-fieldset.question { border: 1px solid var(--line); border-radius: .5rem; margin: 1.2rem 0;
-  padding: .8rem 1rem; }
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html { scroll-padding-top: calc(var(--bar-h) + 3.4rem); }
+html.presenter { scroll-padding-top: calc(var(--bar-h) + 6.2rem); }
+body { margin: 0; background: var(--bg); color: var(--ink);
+  font: 16px/1.6 system-ui, "Segoe UI", "Noto Sans Arabic", sans-serif; padding-bottom: 5rem; }
+h1 { font-size: 1.9rem; line-height: 1.25; margin: 2rem 0 .6rem; }
+.intro { color: var(--ink-2); font-size: 1.05rem; margin: 0 0 1rem; }
+code, .rid, .qid, .oid, .kind, .qname, dt { font-family: ui-monospace, Consolas, monospace; }
+.skip { position: absolute; inset-inline-start: -999rem; top: 0; z-index: 9; padding: .5rem 1rem;
+  background: var(--accent); color: var(--accent-ink); }
+.skip:focus { inset-inline-start: 0; }
+
+/* The bar: one row, a solid ground and an edge, so nothing shows through it. */
+.top { position: sticky; top: 0; z-index: 5; }
+.bar { display: flex; align-items: center; gap: .5rem;
+  min-height: var(--bar-h); padding: .45rem 1.25rem; background: var(--panel);
+  border-bottom: 1px solid var(--line); box-shadow: 0 2px 10px #00000030; }
+.progress { margin-inline-end: auto; font-weight: 600; white-space: nowrap; }
+button, summary, select { font: inherit; }
+button, select { color: var(--ink); background: var(--panel-2); border: 1px solid var(--line);
+  border-radius: .5rem; min-height: 2.5rem; padding: .3rem .9rem; }
+button { cursor: pointer; white-space: nowrap; }
+select { max-width: 100%; padding-inline: .6rem; }
+button:hover:not(:disabled) { border-color: var(--accent); }
+button:disabled { opacity: .5; cursor: default; }
+button[aria-pressed="true"] { background: var(--chosen); border-color: var(--accent); }
+button.primary { background: var(--accent); border-color: var(--accent);
+  color: var(--accent-ink); font-weight: 600; }
+:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.short { display: none; }
+#round-pick { flex: 0 1 18rem; min-width: 8rem; }
+.more { position: relative; }
+.more > summary { list-style: none; cursor: pointer; border: 1px solid var(--line);
+  border-radius: .5rem; min-height: 2.5rem; padding: .3rem .9rem; display: flex;
+  align-items: center; background: var(--panel-2); }
+.more > summary::-webkit-details-marker { display: none; }
+.menu { position: absolute; inset-inline-end: 0; top: calc(100% + .4rem); display: grid;
+  gap: .4rem; padding: .6rem; background: var(--panel); border: 1px solid var(--line);
+  border-radius: .6rem; box-shadow: 0 8px 24px #00000050; min-width: 13rem; }
+
+/* The presenter's controls: one row under the bar, only in the presenter view. */
+.controls { display: none; flex-wrap: wrap; align-items: center; gap: .5rem;
+  padding: .5rem 1.25rem; background: var(--panel-2); border-bottom: 1px solid var(--line); }
+html.presenter .controls { display: flex; }
+.ctitle { color: var(--op); font-weight: 700; font-size: .85rem; margin-inline-end: .5rem;
+  text-transform: uppercase; letter-spacing: .05em; }
+.controls button, .controls select { background: var(--panel); }
+.seg { display: inline-flex; }
+.seg button { border-radius: 0; margin-inline-start: -1px; }
+.seg button:first-child { border-start-start-radius: .5rem; border-end-start-radius: .5rem;
+  margin-inline-start: 0; }
+.seg button:last-child { border-start-end-radius: .5rem; border-end-end-radius: .5rem; }
+
+/* The banners stay under the bar, so a mode is seen wherever the page is scrolled. */
+.banner { margin: 0; padding: .3rem 1.25rem;
+  background: var(--panel-2); color: var(--ink-2); border-bottom: 1px solid var(--line);
+  font-size: .88rem; text-align: center; }
+html.presenter .roombanner { display: none; }
+.stalebanner, .storebanner { background: var(--warn); color: var(--bg); font-weight: 700; }
+#status { min-height: 1.6rem; margin: .6rem auto 0; max-width: var(--measure);
+  padding-inline: 1.25rem; font-weight: 600; color: var(--good); }
+
+/* The shell: the list of rounds beside the reading column on a wide screen. */
+.shell { display: block; }
+.column { max-width: var(--measure); margin-inline: auto; padding-inline: 1.25rem; }
+.roundnav { display: none; }
+@media (min-width: 78rem) {
+  .shell { display: grid; grid-template-columns: 17rem minmax(0, 1fr); gap: 1.5rem;
+    max-width: 76rem; margin-inline: auto; padding-inline: 1.25rem; }
+  .column { margin: 0; padding: 0; width: 100%; }
+  html.presenter .roundnav { top: calc(var(--bar-h) + 5.4rem); }
+  .roundnav { display: block; position: sticky; top: calc(var(--bar-h) + 3.2rem);
+    align-self: start; max-height: calc(100vh - var(--bar-h) - 4.5rem); overflow: auto;
+    margin-top: 2rem; padding: .9rem; background: var(--panel); border: 1px solid var(--line);
+    border-radius: .8rem; }
+  #round-pick { display: none; }
+}
+.navtitle { margin: 0; color: var(--ink-2); font-size: .8rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .06em; }
+.navready { margin: 0 0 .6rem; color: var(--ink-2); font-size: .82rem; }
+.jump { display: grid; gap: .1rem; width: 100%; text-align: start; white-space: normal;
+  margin-top: .35rem; padding: .5rem .7rem; background: transparent; border-color: transparent; }
+.jump.current-jump { background: var(--chosen); border-color: var(--accent); }
+.jnum { color: var(--ink-2); font-size: .75rem; }
+.jtitle { font-weight: 600; line-height: 1.3; }
+.jcount { color: var(--ink-2); font-size: .8rem; }
+.jump.done .jcount { color: var(--good); }
+.jstate { color: var(--warn); font-size: .8rem; font-weight: 600; }
+
+.how { margin: 0 0 .8rem; padding-inline-start: 1.3rem; color: var(--ink-2); }
+.legend { margin: 0 0 1rem; color: var(--ink-2); font-size: .9rem; }
+.owner { display: inline-block; padding: 0 .55rem; border-radius: 1rem; font-size: .78rem;
+  font-weight: 700; border: 1px solid var(--line); color: var(--ink); }
+.owner.operator { border-color: var(--op); color: var(--op); }
+.owner.room { border-color: var(--good); color: var(--good); }
+
+/* A round: its head carries its number, its count and its progress. */
+.roundtop { margin: 3rem 0 1rem; padding-bottom: .5rem; border-bottom: 2px solid var(--accent); }
+h2 { font-size: 1.35rem; margin: 0; }
+.rnum { color: var(--accent); margin-inline-end: .4rem; }
+.roundcount { margin: .15rem 0 .4rem; color: var(--ink-2); font-size: .9rem; }
+.meter { height: .3rem; background: var(--panel-2); border-radius: 1rem; overflow: hidden; }
+.meter span { display: block; height: 100%; width: 0; background: var(--good); }
+.notready .roundtop { border-bottom-color: var(--line); opacity: .7; }
+.blockhead { margin: 2rem 0 0; color: var(--ink-2); font-size: .85rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .05em; }
+.inblock { display: none; }
+
+/* What the room view hides. The text is still in the file: this protects nothing. */
+html:not(.presenter) .oponly,
+html:not(.presenter) fieldset.question[data-owner="operator"] { display: none; }
+html.session:not(.presenter) section.round:not(.open-round) > :not(.roundtop) { display: none; }
+.filtered { display: none !important; }
+
+/* A step: a question, or one of a round's blocks. */
+.step { border: 1px solid var(--line); border-radius: .8rem; margin: 1.4rem 0;
+  padding: 1.1rem 1.25rem 1.25rem; background: var(--panel); min-width: 0; }
+.roundhead.step { background: transparent; border-style: dashed; }
+.stepname { margin: 0 0 .5rem; color: var(--ink-2); font-size: .85rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .05em; }
+.hint { margin: 0 0 .8rem; color: var(--ink-2); font-size: .9rem; }
+.oponly .stepname { color: var(--op); }
+.roundhead .lead { margin: 0 0 .6rem; }
 fieldset.question.answered { border-color: var(--good); }
-fieldset.question legend { font-weight: 700; padding: 0 .4rem; }
-.qid, .oid, .kind { font-family: ui-monospace, monospace; color: var(--ink-2);
-  font-size: .85em; margin-right: .3rem; }
-.detail, .odetail { color: var(--ink-2); margin: .3rem 0 .6rem; white-space: pre-wrap; }
-.odetail { margin-left: 1.8rem; }
-.options { margin: .6rem 0; }
-label.option { display: block; padding: .3rem .4rem; border-radius: .3rem; }
-label.option:hover { background: #ffffff10; }
-textarea, input[type="text"] { font: inherit; color: var(--ink); background: transparent;
-  border: 1px solid var(--line); border-radius: .3rem; padding: .3rem .5rem;
-  width: 100%; box-sizing: border-box; }
-label.note, label.attendance, .closure label { display: block; margin: .6rem 0;
-  color: var(--ink-2); }
-.closure { border-top: 1px dashed var(--line); margin-top: 1.5rem; padding-top: .6rem; }
-details.quote dl { margin: .4rem .9rem .8rem; }
-details.quote dt { font-family: ui-monospace, monospace; color: var(--ink-2);
-  font-size: .85em; margin-top: .5rem; }
-details.quote dd { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+/* a legend that floats is laid out inside the box, so a long question wraps and the
+   border stays whole */
+legend { float: inline-start; width: 100%; padding: 0; margin: 0 0 .5rem; }
+fieldset.question > :not(legend) { clear: both; }
+.qmeta { display: flex; flex-wrap: wrap; align-items: center; gap: .3rem .6rem;
+  color: var(--ink-2); font-size: .85rem; margin-bottom: .3rem; }
+.place { font-weight: 700; color: var(--accent); direction: ltr; unicode-bidi: isolate; }
+.approval { color: var(--warn); font-weight: 700; }
+.state { display: none; margin-inline-start: auto; color: var(--good); font-weight: 600; }
+.answered .state { display: inline; }
+.qtitle { display: block; font-size: 1.3rem; font-weight: 700; line-height: 1.35; }
+.stale { margin: 0 0 .6rem; padding: .35rem .7rem; border-radius: .45rem; font-weight: 600;
+  background: var(--warn); color: var(--bg); }
+.detail { color: var(--ink-2); margin: .2rem 0 .7rem; white-space: pre-wrap; }
+.consulted { color: var(--ink-2); font-size: .88rem; margin: 0 0 .7rem; }
 
-/* The recommendation is hidden until the script has applied the stored audience mode. So
-   a page that was left in audience mode never shows the pick, and a page with no script
-   shows none at all. */
-.recmark, .recreason { display: none; }
-html.ready:not(.audience) .recmark { display: inline; margin-left: .6rem; padding: 0 .4rem;
-  border: 1px solid var(--a1); border-radius: .3rem; color: var(--a1); font-size: .8em; }
-html.ready:not(.audience) .recreason { display: block; color: var(--ink-2); }
-html.ready:not(.audience) label.option.rec { outline: 1px solid var(--a1); }
+/* Options are cards. The whole card is the target. A chosen card is filled. */
+.options { display: grid; gap: .6rem; margin-top: .4rem; }
+label.option { display: flex; gap: .8rem; align-items: flex-start; padding: .75rem .9rem;
+  border: 1px solid var(--line); border-radius: .6rem; background: var(--bg); cursor: pointer;
+  min-height: 2.75rem; }
+label.option:hover { border-color: var(--accent); }
+label.option:has(input:checked) { background: var(--chosen); border-color: var(--accent);
+  box-shadow: inset 0 0 0 1px var(--accent); }
+label.option input { width: 1.2rem; height: 1.2rem; margin: .2rem 0 0; flex: none;
+  accent-color: var(--accent); }
+.obody { display: grid; gap: .3rem; flex: 1; min-width: 0; }
+.ohead { display: flex; flex-wrap: wrap; gap: .5rem; align-items: baseline; }
+.oid { color: var(--ink-2); font-size: .85rem; }
+.otext { font-weight: 600; flex: 1 1 12rem; }
+.odetail { color: var(--ink-2); white-space: pre-wrap; }
+.unsure { margin: .3rem 0 0; color: var(--ink-2); font-size: .88rem; }
+.fallback { display: flex; flex-wrap: wrap; gap: .6rem; }
+label.option.small { flex: 0 1 auto; padding: .45rem .9rem; min-height: 2.5rem; }
+label.option.small .otext { flex: none; font-weight: 500; }
+/* the free answer's box opens when it is chosen, or when it already holds text */
+.other textarea { display: none; }
+.other:has(input:checked) textarea, .other.has-text textarea { display: block; }
 
-/* One question at a time: only the current question and its round show. */
-.pager { display: none; gap: 1rem; align-items: center; margin: 1rem 0; }
-html.one .pager { display: flex; }
-html.one fieldset.question:not(.current) { display: none; }
-html.one section.round:not(.current-round) { display: none; }
+/* The recommendation is a badge, its basis and its reason, inside its own card. All three
+   are hidden until the presenter shows them, and a page with no script shows none. */
+.recmark, .recbasis, .recreason { display: none; }
+html.recs .recmark { display: inline-block; padding: 0 .5rem; border-radius: 1rem;
+  background: var(--accent); color: var(--accent-ink); font-size: .78rem; font-weight: 700; }
+html.recs .recbasis { display: block; color: var(--ink-2); font-size: .85rem; }
+html.recs .recreason { display: block; padding-inline-start: .7rem;
+  border-inline-start: 3px solid var(--accent); color: var(--ink-2); }
 
-.copy textarea { font-family: ui-monospace, monospace; font-size: .8rem; }
+textarea, input[type="text"] { font: inherit; color: var(--ink); background: var(--bg);
+  border: 1px solid var(--line); border-radius: .45rem; padding: .45rem .6rem; width: 100%; }
+.who { display: flex; flex-wrap: wrap; align-items: center; gap: .6rem; margin-top: .9rem;
+  color: var(--ink-2); font-size: .9rem; }
+.noteblock { margin-top: .6rem; }
+.noteblock > summary { cursor: pointer; color: var(--accent); width: fit-content;
+  padding: .3rem 0; }
+.noteblock textarea { margin-top: .3rem; }
 
+/* Quoted rows: one quiet line of folds. */
+.rests, .named, .settles { display: grid; gap: .35rem; margin: .2rem 0 1rem; }
+.named, .settles { margin: .9rem 0 0; }
+.restslabel { color: var(--ink-2); font-size: .85rem; }
+.quote { border: 1px solid var(--line); border-radius: .5rem; background: var(--bg); }
+.quote.plain { padding: .4rem .7rem; display: flex; gap: .6rem; flex-wrap: wrap;
+  align-items: baseline; }
+details.quote > summary, details.ctx > summary { cursor: pointer; padding: .4rem .7rem;
+  display: flex; gap: .6rem; flex-wrap: wrap; align-items: baseline; list-style: none; }
+details.quote > summary::-webkit-details-marker,
+details.ctx > summary::-webkit-details-marker { display: none; }
+/* a flex summary loses its marker, so the fold draws its own: a corner that turns */
+details.quote > summary::before, details.ctx > summary::before { content: ""; flex: none;
+  width: .45rem; height: .45rem; align-self: center; border-inline-end: 2px solid var(--ink-2);
+  border-bottom: 2px solid var(--ink-2); transform: rotate(-45deg); }
+[dir="rtl"] details.quote > summary::before,
+[dir="rtl"] details.ctx > summary::before { transform: rotate(135deg); }
+details.quote[open] > summary::before, [dir="rtl"] details.quote[open] > summary::before,
+details.ctx[open] > summary::before, [dir="rtl"] details.ctx[open] > summary::before {
+  transform: rotate(45deg); }
+.rid { font-weight: 700; }
+.kind, .status { color: var(--ink-2); font-size: .82rem; }
+.status { border: 1px solid var(--line); border-radius: 1rem; padding: 0 .45rem; }
+.rtitle { flex: 1 1 14rem; }
+.qbody { padding: .2rem .9rem .8rem; border-top: 1px solid var(--line); }
+.qtext { margin: .7rem 0 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+.qname { display: block; color: var(--ink-2); font-size: .78rem; }
+dl { margin: .6rem 0 0; display: grid; grid-template-columns: max-content 1fr; gap: .2rem 1rem; }
+dt { color: var(--ink-2); font-size: .82rem; }
+dd { margin: 0; overflow-wrap: anywhere; white-space: pre-wrap; }
+details.fields { margin-top: .7rem; }
+details.fields > summary { cursor: pointer; color: var(--ink-2); font-size: .85rem; }
+
+/* The folds under a question's answers: what is known, decided, needed and missing. */
+details.ctx { margin-top: .5rem; border: 1px solid var(--line); border-radius: .5rem; }
+details.ctx > summary { font-weight: 600; }
+.count { color: var(--ink-2); font-weight: 400; }
+.ctxbody { display: grid; gap: .35rem; padding: .5rem .7rem .7rem;
+  border-top: 1px solid var(--line); }
+.ctxbody p { margin: 0; white-space: pre-wrap; }
+dl.termlist { grid-template-columns: minmax(8rem, max-content) 1fr; margin: 0; }
+dl.termlist dt { font-family: inherit; font-size: 1rem; font-weight: 700; color: var(--ink); }
+
+/* Attendance, the decided topics, the points and the closure. */
+.attgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
+  gap: .6rem; margin-bottom: .8rem; align-items: start; }
+.attrow { display: grid; gap: .3rem; align-content: start; padding: .6rem .7rem; border: 1px solid var(--line);
+  border-radius: .5rem; background: var(--bg); }
+.pname { font-weight: 600; display: grid; gap: .3rem; }
+.attrow input { display: none; }
+.attrow.covered input { display: block; }
+label.wide, .closuregrid label, .point label { display: grid; gap: .25rem; color: var(--ink-2);
+  font-size: .9rem; }
+.topic { padding: .6rem .8rem; margin-bottom: .6rem; border-inline-start: 3px solid var(--good);
+  background: var(--bg); border-radius: .3rem; display: grid; gap: .35rem; }
+.ttitle { margin: 0; font-weight: 700; }
+.tanswer { margin: 0; white-space: pre-wrap; }
+.point { display: grid; grid-template-columns: 1fr 1fr; gap: .6rem 1rem; padding: .7rem;
+  margin-bottom: .6rem; border: 1px solid var(--line); border-radius: .5rem;
+  background: var(--bg); }
+.point .wide { grid-column: 1 / -1; }
+.point .who { margin: 0; display: grid; gap: .25rem; }
+.point button { justify-self: start; }
+.closuregrid { display: grid; grid-template-columns: 1fr 1fr; gap: .8rem 1rem;
+  margin-bottom: .8rem; }
+.closure > label { display: grid; gap: .25rem; color: var(--ink-2); font-size: .9rem;
+  max-width: 24rem; }
+.closure label.check { display: flex; align-items: center; gap: .5rem; min-height: 2.5rem;
+  color: var(--ink); }
+input[type="checkbox"] { width: 1.2rem; height: 1.2rem; accent-color: var(--accent); }
+.roundactions { display: flex; flex-wrap: wrap; gap: .6rem; margin-top: .8rem; }
+
+.copy, .about { margin-block: 2.5rem 0; color: var(--ink-2); }
+.copy > summary, .about > summary { cursor: pointer; }
+.copy textarea { font-family: ui-monospace, Consolas, monospace; font-size: .8rem; }
+.pager { display: none; }
+
+/* One step at a time. Only the current step of the current round is on the screen. */
+html.one header.pagehead, html.one .copy, html.one .about, html.one .blockhead { display: none; }
+html.one .step:not(.current), html.one section.round:not(.current-round) { display: none; }
+html.one main { min-height: calc(100vh - var(--bar-h) - 9rem); display: grid;
+  align-content: center; }
+html.one .roundtop { margin-top: 1rem; }
+html.one .inblock { display: block; margin: 0 0 .4rem; color: var(--ink-2); font-size: .85rem;
+  font-weight: 700; text-transform: uppercase; letter-spacing: .05em; }
+html.one .qtitle { font-size: 1.7rem; }
+html.one .otext { font-size: 1.1rem; }
+html.one .pager { display: flex; position: fixed; inset: auto 0 0 0; z-index: 5;
+  justify-content: center; align-items: center; gap: 1rem; padding: .6rem 1rem;
+  background: var(--panel); border-top: 1px solid var(--line); }
+#position { color: var(--ink-2); min-width: 12rem; text-align: center; }
+
+/* Up to tablet width the bar is two short rows, so it never runs past the edge. */
+@media (max-width: 62rem) {
+  :root { --bar-h: 6.5rem; }
+  .bar { gap: .4rem; padding-inline: .6rem; flex-wrap: wrap; }
+  .bar button, .more > summary { padding-inline: .7rem; }
+  .progress { order: 1; }
+  #save { order: 2; }
+  .more { order: 3; }
+  .bar::after { content: ""; flex-basis: 100%; order: 4; }
+  #round-pick { order: 5; flex: 1 1 8rem; }
+  #view-all { order: 6; }
+  #view-one { order: 7; }
+  #theme { order: 8; }
+  .controls { padding-inline: .6rem; }
+  /* on a narrow screen only the bar stays in view: the controls would fill it */
+  .top { position: static; }
+  .bar { position: sticky; top: 0; z-index: 5; }
+  html.presenter { scroll-padding-top: calc(var(--bar-h) + 1rem); }
+}
+
+@media (max-width: 40rem) {
+  .long { display: none; }
+  .short { display: inline; }
+  .progress { font-size: .9rem; }
+  h1 { font-size: 1.5rem; }
+  .qtitle { font-size: 1.15rem; }
+  html.one .qtitle { font-size: 1.3rem; }
+  .closuregrid, .point { grid-template-columns: 1fr; }
+  /* the filter buttons wrap on the narrowest screen, so they never pass its edge */
+  .seg { display: flex; flex-wrap: wrap; gap: .3rem; }
+  .seg button, .seg button:first-child, .seg button:last-child { border-radius: .5rem;
+    margin: 0; padding-inline: .6rem; }
+  .controls button, .controls select { white-space: normal; text-align: start; }
+  dl { grid-template-columns: 1fr; }
+  .step { padding-inline: .9rem; }
+  .column { padding-inline: .8rem; }
+  #position { min-width: 0; font-size: .85rem; }
+}
+
+/* Print: dark text on white whatever the scheme, the folds open, no controls. The sheet
+   holds what the view shows: the room view prints no operator part. */
 @media print {
-  .toolbar, .pager, .copy, #status, .notice { display: none; }
-  html.one fieldset.question:not(.current), html.one section.round:not(.current-round) {
-    display: block; }
-  fieldset.question { break-inside: avoid; }
+  :root, :root[data-theme] { color-scheme: light; --bg: #fff; --panel: #fff; --panel-2: #fff;
+    --line: #999; --ink: #000; --ink-2: #333; --accent: #000; --accent-ink: #fff;
+    --chosen: #e8e8e8; --good: #000; --warn: #000; --op: #000; }
+  body { padding-bottom: 0; font-size: 11pt; }
+  .top, .roundnav, .pager, .banner, #status, .copy, .skip, .roundactions,
+  .noteblock > summary, .menu, button { display: none !important; }
+  .shell { display: block; }
+  html.one header.pagehead, html.one .about { display: block; }
+  html.one .step:not(.current), html.one section.round:not(.current-round) { display: block; }
+  html.one main { min-height: 0; display: block; }
+  html:not(.presenter) .oponly,
+  html:not(.presenter) fieldset.question[data-owner="operator"] { display: none !important; }
+  .step, details.quote { break-inside: avoid; }
+  label.option:has(input:checked) { border-width: 2px; font-weight: 700; }
+  .noteblock:not(.has-text), .other:not(.has-text):not(:has(input:checked)) textarea {
+    display: none; }
+  textarea, input[type="text"], select { border: 0; border-bottom: 1px solid #999;
+    border-radius: 0; }
+  .recmark, .stale { border: 1px solid #000; background: none !important; color: #000 !important; }
 }

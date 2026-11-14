@@ -330,8 +330,9 @@ the stored edges. `requirements-wired` reads the three legs of a requirement and
 one. A refused value names the values that the column takes. The four gate outcomes are defined:
 `Go`, `Hold`, `Redirect` and `Kill`. The lock survives a host rename inside one boot on Linux and
 macOS. For a long interview, `slate_export` writes a local **interview page** from a slate of
-questions. `slate_read` returns a checked transcript of the answers file that the operator saved. The
-page runs one script named by hash, and the transcript is never the operator's word.
+questions, with rounds, participants and a presenter view for a workshop. `slate_read` returns a
+checked transcript of the answers files that the page saved. The page runs one script named by
+hash, and the transcript is never the operator's word.
 
 You follow along through the committed **`review.html`** (regenerated via `export_html`, deterministic,
 so its diffs are meaningful, zero JavaScript). It is a dark, maximalist single page. Verdict and identity

@@ -1,5 +1,9 @@
-"""Tamheed interview page (plan 227): a slate of questions as one local page, and a reader
-for the answers file that the page saves.
+"""Tamheed interview page (plans 227, 227b, 227c): a slate of questions as one local page,
+and a reader for the answers files that the page saves.
+
+This module is the slate's grammar: what a slate may hold, and why one is refused. The rows
+that a page quotes are in `slate_rows`, the reader is in `slate_answers`, the markup is in
+`slate_page` and `slate_round`. Their names are also offered here.
 
 The page carries the questions. The session carries the word: an answers file is a record of
 what was clicked on a page, never the operator's approval (operator-interview, step 7).
@@ -9,60 +13,56 @@ Security doctrine, as for the review page, with one difference: this page runs O
 - The script is the static file `slate.js`, the same for every slate. The page names it by
   hash in a content policy, so no other script runs: not an inline handler, not a script
   that a row's text tries to add.
-- The script reads ids from data attributes, sets values and classes, and writes no markup.
-  The page holds no data block.
+- The script reads ids from data attributes, sets values and classes, and copies markup only
+  from a template that the server rendered. The page holds no data block.
 - The page loads nothing and sends nothing (`default-src 'none'`).
 
 Determinism: the same slate over the same rows gives the same bytes. The page has no clock.
 """
 from __future__ import annotations
 
-import base64
-import hashlib
 import json
 import re
-from pathlib import Path
-
-from export_html import esc, CSS_PATH
-from tamheed_server import ENTITY_TABLES
-
-HERE = Path(__file__).resolve().parent
-SCRIPT_PATH = HERE / "slate.js"
-STYLE_PATH = HERE / "slate.css"
 
 ID_RE = re.compile(r"[A-Za-z0-9][A-Za-z0-9_.-]{0,31}")      # used with fullmatch
-OTHER = "other"                       # the reserved option id of a free answer
+OTHER, UNKNOWN, EVIDENCE = "other", "unknown", "evidence"
+RESERVED = {OTHER: "the free answer", UNKNOWN: "the answer that nobody knows",
+            EVIDENCE: "the answer that needs evidence"}
+LANGUAGES = ("en", "ar")
+OPENS = ("reading", "session")        # R112: how a page opens
+OWNERS = ("room", "operator")
+BASES = ("evidence", "ruling", "practice")
+DEFAULT_KINDS = ("pain", "concern", "expectation", "requirement")
+DEFAULT_CLOSURE = ("conclusions", "open_questions", "approvals", "commitments")
 CAPS = {"title": 200, "intro": 8000, "question": 2000, "detail": 8000, "label": 500,
-        "reason": 2000}
+        "reason": 2000, "name": 200, "answer": 4000, "gap": 2000, "block": 200}
 MAX_ROUNDS, MAX_QUESTIONS, MAX_OPTIONS, MAX_CITES = 50, 500, 12, 30
+MAX_PARTICIPANTS, MAX_LABELLED, MAX_DECIDED, MAX_TERMS = 60, 12, 200, 200
 MAX_FILE_BYTES = 2_000_000            # a spec file and an answers file, each
 MAX_RECORD_BYTES = 20_000_000         # the slate record, at export and at read
 MAX_PAGE_CHARS = 20_000_000           # the quoted text of a page, every citation counted
-EXPORTED_AT_RE = re.compile(r"\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d(\.\d+)?Z")
-MAX_ANSWER_TEXT = 8000                # a note, an other answer, attendance, a closing note
-ANSWERS_FORMAT, RECORD_FORMAT, VERSION = "tamheed-slate-answers", "tamheed-slate", 1
-# `last_referenced` is stamped by work_bind: a bind is no change to what a row says
-UNQUOTED_COLUMNS = frozenset({"id", "last_referenced"})
+MAX_ANSWER_TEXT = 8000                # a note, a free answer, a point, a closure field
+MAX_POINTS = 200                      # the points of one round
+ANSWERS_FORMAT, RECORD_FORMAT, VERSION = "tamheed-slate-answers", "tamheed-slate", 2
 
-_SLATE_KEYS = {"name", "title", "intro", "rounds"}
-_ROUND_KEYS = {"id", "title", "intro", "cites", "questions"}
-_QUESTION_KEYS = {"id", "question", "detail", "cites", "allow_other", "options",
-                  "recommended", "reason"}
+_SLATE_KEYS = {"name", "title", "intro", "language", "opens", "participants", "point_kinds",
+               "closure_fields", "terms", "rounds"}
+_ROUND_KEYS = {"id", "title", "intro", "cites", "ready", "questions", "blocks", "decided"}
+_BLOCK_KEYS = {"title", "questions"}
+_DECIDED_KEYS = {"id", "title", "answer", "cites"}
+_QUESTION_KEYS = {"id", "question", "detail", "cites", "allow_other", "allow_unsure",
+                  "options", "recommended", "reason", "basis", "owner", "lead", "consulted",
+                  "approval", "known", "decided", "depends_on", "gap", "settles", "block"}
 _OPTION_KEYS = {"id", "label", "detail"}
+_PARTICIPANT_KEYS = {"id", "name", "attends"}
+_LABELLED_KEYS = {"id", "label"}
 
 
-# --------------------------------------------------------------------------- the slate
+class Refused(ValueError):
+    """Why a slate is refused. `check_slate` turns it into its second answer."""
 
-def _text(owner: str, obj: dict, key: str, required: bool = False) -> tuple[str, str | None]:
-    value = obj.get(key)
-    if value is None or value == "":
-        return "", (f"{owner} needs `{key}`" if required else None)
-    if not isinstance(value, str) or not encodable(value):
-        return "", f"{owner}: `{key}` is text"
-    if len(value) > CAPS[key]:
-        return "", f"{owner}: `{key}` holds {len(value)} characters (the cap is {CAPS[key]})"
-    return value, None
 
+# --------------------------------------------------------------------------- small checks
 
 def encodable(value: str) -> bool:
     """False for text that UTF-8 cannot hold (a lone surrogate): it cannot be written."""
@@ -80,433 +80,321 @@ def short(value) -> str:
     return text if len(text) <= 60 else text[:57] + "..."
 
 
-def _keys(owner: str, obj, allowed: set) -> str | None:
+def _keys(owner: str, obj, allowed: set) -> None:
     if not isinstance(obj, dict):
-        return f"{owner} is an object"
+        raise Refused(f"{owner} is an object")
     if extra := sorted(str(k) for k in set(obj) - allowed):
-        return f"{owner} has unknown key(s) {extra}. It takes {', '.join(sorted(allowed))}"
-    return None
+        raise Refused(f"{owner} has unknown key(s) {extra}. It takes"
+                      f" {', '.join(sorted(allowed))}")
 
 
-def _ident(owner: str, value) -> str | None:
+def _text(owner: str, obj: dict, key: str, required: bool = False) -> str:
+    value = obj.get(key)
+    if value is None or value == "":
+        if required:
+            raise Refused(f"{owner} needs `{key}`")
+        return ""
+    if not isinstance(value, str) or not encodable(value):
+        raise Refused(f"{owner}: `{key}` is text")
+    if len(value) > CAPS[key]:
+        raise Refused(f"{owner}: `{key}` holds {len(value)} characters (the cap is"
+                      f" {CAPS[key]})")
+    return value
+
+
+def _ident(owner: str, value) -> str:
     if not isinstance(value, str) or not ID_RE.fullmatch(value):
-        return (f"{owner} needs an `id` of 1 to 32 letters, digits, dots, dashes or underscores"
-                f" (got {short(value)})")
-    return None
+        raise Refused(f"{owner} needs an `id` of 1 to 32 letters, digits, dots, dashes or"
+                      f" underscores (got {short(value)})")
+    return value
 
 
-def _cites(owner: str, obj: dict) -> tuple[list, str | None]:
-    cites = [] if obj.get("cites") is None else obj["cites"]
-    if not isinstance(cites, list) or not all(isinstance(c, str) and c for c in cites):
-        return [], f"{owner}: `cites` is a list of row ids"
-    if len(cites) > MAX_CITES:
-        return [], f"{owner} cites {len(cites)} rows (the cap is {MAX_CITES})"
-    return list(dict.fromkeys(cites)), None           # in order, each id once
+def _flag(owner: str, obj: dict, key: str, default: bool) -> bool:
+    value = obj.get(key, default)
+    if not isinstance(value, bool):
+        raise Refused(f"{owner}: `{key}` is true or false")
+    return value
 
 
-def _check_question(owner: str, q) -> tuple[dict | None, str | None]:
-    if err := _keys(owner, q, _QUESTION_KEYS) or _ident(owner, q.get("id")):
-        return None, err
-    owner = f"question {q['id']}"
-    out = {"id": q["id"]}
-    for key, required in (("question", True), ("detail", False), ("reason", False)):
-        out[key], err = _text(owner, q, key, required)
-        if err:
-            return None, err
-    out["cites"], err = _cites(owner, q)
-    if err:
-        return None, err
-    if not isinstance(q.get("allow_other", True), bool):
-        return None, f"{owner}: `allow_other` is true or false"
-    out["allow_other"] = q.get("allow_other", True)
+def _choice(owner: str, obj: dict, key: str, allowed: tuple, default):
+    value = obj.get(key)
+    if value is None:
+        return default
+    if value not in allowed:
+        raise Refused(f"{owner}: `{key}` is one of: {', '.join(allowed)} (got {short(value)})")
+    return value
+
+
+def _ids(owner: str, obj: dict, key: str, what: str = "row ids") -> list:
+    """A list of ids under `key`: in order, each once, capped."""
+    items = [] if obj.get(key) is None else obj[key]
+    if not isinstance(items, list) \
+            or not all(isinstance(i, str) and i and encodable(i) for i in items):
+        raise Refused(f"{owner}: `{key}` is a list of {what}")
+    if len(items) > MAX_CITES:
+        raise Refused(f"{owner}: `{key}` holds {len(items)} ids (the cap is {MAX_CITES})")
+    return list(dict.fromkeys(items))
+
+
+# --------------------------------------------------------------------------- the parts
+
+def _participants(slate: dict) -> list:
+    """R108: each participant is the id of a row, or {id, name, attends}. A name left empty
+    is read from the row at export. `attends` false names a person who leads or is
+    consulted and has no attendance line."""
+    items = [] if slate.get("participants") is None else slate["participants"]
+    if not isinstance(items, list) or len(items) > MAX_PARTICIPANTS:
+        raise Refused(f"the slate's `participants` is a list of {MAX_PARTICIPANTS} at most")
+    out, seen = [], set()
+    for n, item in enumerate(items):
+        owner = f"participant {n + 1}"
+        item = {"id": item} if isinstance(item, str) else item
+        _keys(owner, item, _PARTICIPANT_KEYS)
+        pid = _ident(owner, item.get("id"))
+        if pid in seen:
+            raise Refused(f"the participant id {pid!r} is used twice")
+        seen.add(pid)
+        out.append({"id": pid, "name": _text(f"participant {pid}", item, "name"),
+                    "attends": _flag(f"participant {pid}", item, "attends", True)})
+    return out
+
+
+def _labelled(slate: dict, key: str, defaults: tuple) -> list:
+    """R106: the kinds of a round's points, or the fields of its closure. The defaults carry
+    no label: the page has words for them in its own language."""
+    if slate.get(key) is None:
+        return [{"id": ident, "label": ""} for ident in defaults]
+    items = slate[key]
+    if not isinstance(items, list) or not items or len(items) > MAX_LABELLED:
+        raise Refused(f"the slate's `{key}` is a list of one or more {{id, label}}, and of"
+                      f" {MAX_LABELLED} at most")
+    out, seen = [], set()
+    for n, item in enumerate(items):
+        owner = f"`{key}`, item {n + 1}"
+        _keys(owner, item, _LABELLED_KEYS)
+        ident = _ident(owner, item.get("id"))
+        if ident in seen:
+            raise Refused(f"the id {ident!r} is used twice in `{key}`")
+        seen.add(ident)
+        out.append({"id": ident, "label": _text(owner, item, "label", ident not in defaults)})
+    return out
+
+
+def _options(owner: str, q: dict) -> list:
     options = q.get("options")
     if not isinstance(options, list) or len(options) < 2:
-        return None, f"{owner} needs two or more options"
+        raise Refused(f"{owner} needs two or more options")
     if len(options) > MAX_OPTIONS:
-        return None, f"{owner} has {len(options)} options (the cap is {MAX_OPTIONS})"
-    out["options"], seen = [], set()
+        raise Refused(f"{owner} has {len(options)} options (the cap is {MAX_OPTIONS})")
+    out, seen = [], set()
     for n, option in enumerate(options):
         where = f"{owner}, option {n + 1}"
-        if err := _keys(where, option, _OPTION_KEYS) or _ident(where, option.get("id")):
-            return None, err
-        if option["id"] == OTHER or option["id"] in seen:
-            return None, (f"{where}: the id {option['id']!r} is "
-                          + ("reserved for the free answer" if option["id"] == OTHER
-                             else "used twice in this question"))
-        seen.add(option["id"])
-        label, err = _text(where, option, "label", True)
-        detail, err2 = _text(where, option, "detail")
-        if err or err2:
-            return None, err or err2
-        out["options"].append({"id": option["id"], "label": label, "detail": detail})
+        _keys(where, option, _OPTION_KEYS)
+        oid = _ident(where, option.get("id"))
+        if oid in RESERVED:
+            raise Refused(f"{where}: the id {oid!r} is reserved for {RESERVED[oid]}")
+        if oid in seen:
+            raise Refused(f"{where}: the id {oid!r} is used twice in this question")
+        seen.add(oid)
+        out.append({"id": oid, "label": _text(where, option, "label", True),
+                    "detail": _text(where, option, "detail")})
+    return out
+
+
+def _question(owner: str, q, block: str) -> dict:
+    _keys(owner, q, _QUESTION_KEYS)
+    out: dict = {"id": _ident(owner, q.get("id"))}
+    owner = f"question {out['id']}"
+    for key, required in (("question", True), ("detail", False), ("reason", False),
+                          ("gap", False)):
+        out[key] = _text(owner, q, key, required)
+    out["block"] = _text(owner, q, "block") or block
+    for key in ("cites", "known", "decided"):
+        out[key] = _ids(owner, q, key)
+    out["consulted"] = _ids(owner, q, "consulted", "participant ids")
+    out["depends_on"] = _ids(owner, q, "depends_on", "question ids")
+    for key, default in (("allow_other", True), ("allow_unsure", True), ("approval", False)):
+        out[key] = _flag(owner, q, key, default)
+    out["owner"] = _choice(owner, q, "owner", OWNERS, "room")
+    out["basis"] = _choice(owner, q, "basis", BASES, None)
+    for key in ("lead", "settles"):
+        value = q.get(key)
+        if value is not None and (not isinstance(value, str) or not value):
+            raise Refused(f"{owner}: `{key}` is one id")
+        out[key] = value
+    out["options"] = _options(owner, q)
     recommended = q.get("recommended")
     if recommended is None:
-        if out["reason"]:
-            return None, f"{owner} gives a `reason` and recommends no option"
-    elif not isinstance(recommended, str) or recommended not in seen:
-        return None, f"{owner} recommends {short(recommended)}, which is none of its options"
+        for key in ("reason", "basis"):
+            if out[key]:
+                raise Refused(f"{owner} gives a `{key}` and recommends no option")
+    elif not isinstance(recommended, str) \
+            or recommended not in {o["id"] for o in out["options"]}:
+        raise Refused(f"{owner} recommends {short(recommended)}, which is none of its options")
     elif not out["reason"]:
-        return None, (f"{owner} recommends an option and gives no `reason`. A recommendation"
+        raise Refused(f"{owner} recommends an option and gives no `reason`. A recommendation"
                       " carries its deciding reason")
     out["recommended"] = recommended
-    return out, None
+    return out
+
+
+def _round(n: int, rnd) -> dict:
+    owner = f"round {n + 1}"
+    _keys(owner, rnd, _ROUND_KEYS)
+    item = {"id": _ident(owner, rnd.get("id"))}
+    owner = f"round {item['id']}"
+    for key, required in (("title", True), ("intro", False)):
+        item[key] = _text(owner, rnd, key, required)
+    item["cites"] = _ids(owner, rnd, "cites")
+    item["ready"] = _flag(owner, rnd, "ready", True)
+    if rnd.get("blocks") is not None and rnd.get("questions") is not None:
+        raise Refused(f"{owner} gives `blocks` and `questions`. Give one")
+    groups = [{"title": "", "questions": rnd.get("questions")}]
+    if rnd.get("blocks") is not None:
+        groups = rnd["blocks"]
+        if not isinstance(groups, list):
+            raise Refused(f"{owner}: `blocks` is a list of {{title, questions}}")
+    item["questions"] = []
+    for b, group in enumerate(groups):
+        where = f"{owner}, block {b + 1}"
+        _keys(where, group, _BLOCK_KEYS)
+        questions = [] if group.get("questions") is None else group["questions"]
+        if not isinstance(questions, list):
+            raise Refused(f"{where}: `questions` is a list")
+        title = _text(where, group, "title") if "title" in group else ""
+        item["questions"].extend(_question(f"{owner}, question {m + 1}", q, title)
+                                 for m, q in enumerate(questions))
+    if item["ready"] and not item["questions"]:
+        raise Refused(f"{owner} needs one or more `questions`")
+    decided = [] if rnd.get("decided") is None else rnd["decided"]
+    if not isinstance(decided, list) or len(decided) > MAX_DECIDED:
+        raise Refused(f"{owner}: `decided` is a list of {MAX_DECIDED} at most")
+    item["decided"] = []
+    for d, topic in enumerate(decided):
+        where = f"{owner}, decided topic {d + 1}"
+        _keys(where, topic, _DECIDED_KEYS)
+        tid = _ident(where, topic.get("id"))
+        item["decided"].append({"id": tid, "title": _text(where, topic, "title", True),
+                                "answer": _text(where, topic, "answer", True),
+                                "cites": _ids(where, topic, "cites")})
+    return item
+
+
+def _cross_check(out: dict) -> None:
+    """Ids that name each other: one name space for questions and decided topics, people
+    that a question names, and what a question depends on."""
+    people = {p["id"] for p in out["participants"]}
+    seen: dict = {}
+    for rnd in out["rounds"]:
+        for kind, items in (("question ", rnd["questions"]), ("", rnd["decided"])):
+            for item in items:
+                if item["id"] in seen:
+                    raise Refused(f"the {kind}id {item['id']!r} is used twice in the slate")
+                seen[item["id"]] = True
+    questions = [q for rnd in out["rounds"] for q in rnd["questions"]]
+    if len(questions) > MAX_QUESTIONS:
+        raise Refused(f"the slate has {len(questions)} questions (the cap is {MAX_QUESTIONS})")
+    for q in questions:
+        owner = f"question {q['id']}"
+        for key, named in (("lead", [q["lead"]] if q["lead"] else []),
+                           ("consulted", q["consulted"])):
+            if missing := [p for p in named if p not in people]:
+                raise Refused(f"{owner}: `{key}` names {missing[0]!r}, which is no participant"
+                              " of the slate")
+        for target in q["depends_on"]:
+            if target == q["id"]:
+                raise Refused(f"{owner} depends on itself")
+            if target not in seen:
+                raise Refused(f"{owner} depends on {target!r}, which is no question or decided"
+                              " topic of the slate")
 
 
 def check_slate(slate) -> tuple[dict | None, str | None]:
     """(the slate with every default filled, None), or (None, why it is refused). The answer
-    holds known keys only, in one fixed shape, so the record's bytes follow from it."""
-    if err := _keys("the slate", slate, _SLATE_KEYS):
-        return None, err
-    out = {"name": slate.get("name")}
-    for key, required in (("title", True), ("intro", False)):
-        out[key], err = _text("the slate", slate, key, required)
-        if err:
-            return None, err
-    rounds = slate.get("rounds")
-    if not isinstance(rounds, list) or not rounds:
-        return None, "the slate needs one or more `rounds`"
-    if len(rounds) > MAX_ROUNDS:
-        return None, f"the slate has {len(rounds)} rounds (the cap is {MAX_ROUNDS})"
-    out["rounds"], round_ids, question_ids = [], set(), set()
-    for n, rnd in enumerate(rounds):
-        owner = f"round {n + 1}"
-        if err := _keys(owner, rnd, _ROUND_KEYS) or _ident(owner, rnd.get("id")):
-            return None, err
-        if rnd["id"] in round_ids:
-            return None, f"the round id {rnd['id']!r} is used twice"
-        round_ids.add(rnd["id"])
-        owner = f"round {rnd['id']}"
-        item = {"id": rnd["id"]}
+    holds known keys only, in one fixed shape, so the record's bytes follow from it. The
+    answer checks to itself."""
+    try:
+        _keys("the slate", slate, _SLATE_KEYS)
+        out = {"name": slate.get("name"),
+               "language": _choice("the slate", slate, "language", LANGUAGES, "en"),
+               "opens": _choice("the slate", slate, "opens", OPENS, "reading")}
         for key, required in (("title", True), ("intro", False)):
-            item[key], err = _text(owner, rnd, key, required)
-            if err:
-                return None, err
-        item["cites"], err = _cites(owner, rnd)
-        if err:
-            return None, err
-        questions = rnd.get("questions")
-        if not isinstance(questions, list) or not questions:
-            return None, f"{owner} needs one or more `questions`"
-        item["questions"] = []
-        for m, question in enumerate(questions):
-            checked, err = _check_question(f"{owner}, question {m + 1}", question)
-            if err:
-                return None, err
-            if checked["id"] in question_ids:
-                return None, f"the question id {checked['id']!r} is used twice in the slate"
-            question_ids.add(checked["id"])
-            item["questions"].append(checked)
-        out["rounds"].append(item)
-    if len(question_ids) > MAX_QUESTIONS:
-        return None, f"the slate has {len(question_ids)} questions (the cap is {MAX_QUESTIONS})"
+            out[key] = _text("the slate", slate, key, required)
+        out["participants"] = _participants(slate)
+        out["point_kinds"] = _labelled(slate, "point_kinds", DEFAULT_KINDS)
+        out["closure_fields"] = _labelled(slate, "closure_fields", DEFAULT_CLOSURE)
+        terms = slate.get("terms")                  # R110: None is every glossary row
+        if terms is not None and (not isinstance(terms, list) or len(terms) > MAX_TERMS
+                                  or not all(isinstance(t, str) and t for t in terms)):
+            raise Refused("the slate's `terms` is a list of glossary row ids, of"
+                          f" {MAX_TERMS} at most. Leave it out to match every glossary row")
+        out["terms"] = None if terms is None else list(dict.fromkeys(terms))
+        rounds = slate.get("rounds")
+        if not isinstance(rounds, list) or not rounds:
+            raise Refused("the slate needs one or more `rounds`")
+        if len(rounds) > MAX_ROUNDS:
+            raise Refused(f"the slate has {len(rounds)} rounds (the cap is {MAX_ROUNDS})")
+        out["rounds"], folded = [], {}
+        for n, rnd in enumerate(rounds):
+            item = _round(n, rnd)
+            if item["id"] in {r["id"] for r in out["rounds"]}:
+                raise Refused(f"the round id {item['id']!r} is used twice")
+            # a round's answers file is named by the round's id, and Windows folds case
+            if (other := folded.get(item["id"].lower())) is not None:
+                raise Refused(f"the round ids {other!r} and {item['id']!r} differ only by case")
+            folded[item["id"].lower()] = item["id"]
+            out["rounds"].append(item)
+        _cross_check(out)
+    except Refused as exc:
+        return None, str(exc)
     return out, None
 
 
+def questions_of(slate: dict) -> list:
+    """Every question of a checked slate, in order."""
+    return [q for rnd in slate["rounds"] for q in rnd["questions"]]
+
+
+def shown_ids(question: dict) -> list:
+    """The rows that one question quotes by its own keys, each once."""
+    ids = question["cites"] + question["known"] + question["decided"]
+    return list(dict.fromkeys(ids + ([question["settles"]] if question["settles"] else [])))
+
+
 def cited_ids(slate: dict) -> list[str]:
-    """Every row id that the slate cites, each once, in the order of first use."""
+    """Every row id that the slate names by a key, each once, in the order of first use."""
     ids: dict = {}
     for rnd in slate["rounds"]:
-        for cid in rnd["cites"]:
+        for cid in rnd["cites"] + [c for t in rnd["decided"] for c in t["cites"]]:
             ids[cid] = True
         for question in rnd["questions"]:
-            for cid in question["cites"]:
+            for cid in shown_ids(question):
                 ids[cid] = True
     return list(ids)
 
 
-# --------------------------------------------------------------------------- quoted rows
-
-def _canonical(value) -> str:
-    return json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
-
-
-def _sha(text: str) -> str:
-    return hashlib.sha256(text.encode("utf-8")).hexdigest()
-
-
-def quote_rows(conn, ids: list[str]) -> tuple[dict, list[str]]:
-    """({id: {type, columns, digest}}, the ids that name no row). A quote is the row as the
-    store holds it: every column that has a value, in column order, except the id itself
-    and `last_referenced`. `custom_attributes` is in, so a register entry shows its fields.
-    The digest is of that same set, so it moves only when what the row says moves."""
-    quotes, missing = {}, []
-    for rid in ids:
-        found = conn.execute("SELECT entity_type FROM entity_index WHERE id = ?",
-                             (rid,)).fetchone()
-        table = ENTITY_TABLES.get(found[0]) if found else None
-        if table is None:
-            missing.append(rid)
-            continue
-        names = [r[1] for r in conn.execute(f"PRAGMA table_info({table})")]
-        row = conn.execute(f"SELECT {', '.join(names)} FROM {table} WHERE id = ?",
-                           (rid,)).fetchone()
-        columns = [[name, value] for name, value in zip(names, row)
-                   if name not in UNQUOTED_COLUMNS and value not in (None, "")]
-        quote = {"type": found[0], "columns": columns}
-        quotes[rid] = quote | {"digest": _sha(_canonical(quote))}
-    return quotes, missing
-
-
-def quoted_size(slate: dict, quotes: dict) -> int:
-    """The characters of quoted text that the page will hold. A row is printed once per
-    citation, so one large row cited by many questions makes a very large page."""
-    size = {rid: sum(len(str(name)) + len(str(value)) for name, value in quote["columns"])
-            for rid, quote in quotes.items()}
-    return sum(size[cid] for rnd in slate["rounds"]
-               for cid in rnd["cites"] + [c for q in rnd["questions"] for c in q["cites"]])
-
-
-def build_record(slate: dict, quotes: dict) -> dict:
-    return {"format": RECORD_FORMAT, "version": VERSION, "slate": slate, "rows": quotes}
-
-
-def record_text(record: dict) -> str:
-    """The slate file's bytes: sorted keys, one space of indent, a final newline."""
-    return json.dumps(record, ensure_ascii=False, sort_keys=True, indent=1) + "\n"
-
-
-def record_digest(record: dict) -> str:
-    """The slate's name for one exact content. Computed from the content at every use, and
-    never read from a stored field: a field can be edited, and this cannot."""
-    return _sha(_canonical({k: record.get(k) for k in ("format", "version", "slate", "rows")}))
-
-
-# --------------------------------------------------------------------------- the page
-
-def script_text() -> str:
-    """`slate.js` with LF line ends. A checkout can turn them into CRLF, and a browser hashes
-    an inline script after it has read the line ends as LF (measured, plan 227)."""
-    return SCRIPT_PATH.read_text(encoding="utf-8").replace("\r\n", "\n")
-
-
-def script_hash(script: str) -> str:
-    return base64.b64encode(hashlib.sha256(script.encode("utf-8")).digest()).decode("ascii")
-
-
-def _policy(script: str) -> str:
-    # ste:allow semicolon: a content policy separates its directives with semicolons
-    return ("default-src 'none'; style-src 'unsafe-inline'; "
-            f"script-src 'sha256-{script_hash(script)}'; base-uri 'none'; form-action 'none'")
-
-
-def _quote_html(rid: str, quotes: dict) -> str:
-    quote = quotes[rid]
-    rows = "".join(f'<dt>{esc(name)}</dt><dd dir="auto">{esc(value)}</dd>\n'
-                   for name, value in quote["columns"])
-    return (f'<details class="quote"><summary>{esc(rid)} <span class="kind">'
-            f'{esc(quote["type"])}</span></summary>\n<dl>\n{rows}</dl></details>\n')
-
-
-def _question_html(question: dict, quotes: dict) -> str:
-    qid, parts = esc(question["id"]), []
-    parts.append(f'<fieldset class="question" data-question="{qid}">\n'
-                 f'<legend dir="auto"><span class="qid">{qid}</span> '
-                 f'{esc(question["question"])}</legend>\n')
-    if question["detail"]:
-        parts.append(f'<p class="detail" dir="auto">{esc(question["detail"])}</p>\n')
-    parts.extend(_quote_html(cid, quotes) for cid in question["cites"])
-    parts.append('<div class="options">\n')
-    for option in question["options"]:
-        recommended = option["id"] == question["recommended"]
-        parts.append(
-            f'<label class="option{" rec" if recommended else ""}">'
-            f'<input type="radio" name="q:{qid}" value="{esc(option["id"])}"> '
-            f'<span class="oid">{esc(option["id"])}</span> '
-            f'<span dir="auto">{esc(option["label"])}</span>'
-            + (' <span class="recmark">Recommended by the agent</span>' if recommended else "")
-            + "</label>\n")
-        if option["detail"]:
-            parts.append(f'<p class="odetail" dir="auto">{esc(option["detail"])}</p>\n')
-    if question["allow_other"]:
-        parts.append(f'<label class="option"><input type="radio" name="q:{qid}"'
-                     f' value="{OTHER}"> <span class="oid">Other</span></label>\n'
-                     f'<textarea data-field="other" name="other:{qid}" rows="2" dir="auto"'
-                     ' autocomplete="off" maxlength="8000" aria-label="Other answer"></textarea>\n')
-    parts.append("</div>\n")
-    if question["recommended"] is not None:
-        parts.append('<p class="recreason" dir="auto"><strong>The reason of the agent:'
-                     f'</strong> {esc(question["reason"])}</p>\n')
-    parts.append(f'<label class="note">Note <textarea data-field="note" name="note:{qid}"'
-                 ' rows="2" dir="auto" autocomplete="off" maxlength="8000"></textarea></label>\n</fieldset>\n')
-    return "".join(parts)
-
-
-def _round_html(rnd: dict, quotes: dict) -> str:
-    rid = esc(rnd["id"])
-    parts = [f'<section class="round" data-round="{rid}">\n'
-             f'<h2 dir="auto">{esc(rnd["title"])}</h2>\n']
-    if rnd["intro"]:
-        parts.append(f'<p class="lead" dir="auto">{esc(rnd["intro"])}</p>\n')
-    parts.extend(_quote_html(cid, quotes) for cid in rnd["cites"])
-    parts.append('<label class="attendance">Attendance <textarea data-field="attendance"'
-                 f' name="attendance:{rid}" rows="2" dir="auto" autocomplete="off" maxlength="8000">'
-                 '</textarea></label>\n')
-    parts.extend(_question_html(question, quotes) for question in rnd["questions"])
-    parts.append('<div class="closure">\n<label><input type="checkbox" data-field="closed"'
-                 f' name="closed:{rid}"> Round closed</label>\n'
-                 '<label>Closed by <input type="text" data-field="closed_by"'
-                 f' name="closed_by:{rid}" dir="auto" autocomplete="off" maxlength="8000"></label>\n'
-                 '<label>Closing note <textarea data-field="closure_note"'
-                 f' name="closure_note:{rid}" rows="2" dir="auto" autocomplete="off" maxlength="8000">'
-                 '</textarea></label>\n</div>\n</section>\n')
-    return "".join(parts)
-
-
-def render(record: dict, digest: str) -> str:
-    """The page for one slate record. Every data text passes `esc()`. The script is the one
-    static file, and the policy in the head names it by hash."""
-    slate, quotes, script = record["slate"], record["rows"], script_text()
-    css = (CSS_PATH.read_text(encoding="utf-8") + "\n"
-           + STYLE_PATH.read_text(encoding="utf-8")).replace("\r\n", "\n")
-    name = esc(slate["name"])
-    head = (
-        '<!doctype html>\n<html lang="en">\n<head>\n<meta charset="utf-8">\n'
-        f'<meta http-equiv="Content-Security-Policy" content="{esc(_policy(script))}">\n'
-        '<meta name="viewport" content="width=device-width, initial-scale=1">\n'
-        f"<title>{esc(slate['title'])}</title>\n<style>\n{css}</style>\n</head>\n")
-    intro = f'<p class="lead" dir="auto">{esc(slate["intro"])}</p>\n' if slate["intro"] else ""
-    top = (
-        f'<body data-slate="{name}" data-digest="{esc(digest)}">\n<header>\n'
-        f'<h1 dir="auto">{esc(slate["title"])}</h1>\n'
-        f'<p class="meta">Slate <code>{name}</code>, digest <code>{esc(digest[:12])}</code>.'
-        ' <span id="progress"></span></p>\n' + intro +
-        # the toolbar is a child of the body: inside the header it could not stay in view
-        '</header>\n<div class="toolbar">\n'
-        '<button type="button" id="view-all">All questions</button>\n'
-        '<button type="button" id="view-one">One at a time</button>\n'
-        '<button type="button" id="audience">Audience mode</button>\n'
-        '<button type="button" id="save">Save answers</button>\n'
-        '<label class="filebtn">Load answers <input type="file" id="load"'
-        ' accept=".json,application/json"></label>\n'
-        '<button type="button" id="print">Print</button>\n'
-        '<button type="button" id="clear">Clear</button>\n</div>\n'
-        '<p id="status" role="status"></p>\n'
-        '<p class="notice">This page loads nothing and sends nothing. It keeps your answers in'
-        " this browser. Save writes them to a file. The file is a record of this page. A"
-        " decision is confirmed in the session, never by the file.</p>\n<main>\n")
-    rounds = "".join(_round_html(rnd, quotes) for rnd in slate["rounds"])
-    tail = (
-        '</main>\n<nav class="pager"><button type="button" id="prev">Previous</button>'
-        ' <span id="position"></span> <button type="button" id="next">Next</button></nav>\n'
-        '<section class="copy">\n<h2>Answers as text</h2>\n'
-        "<p>If the download does not start, copy this text into a file named "
-        f"<code>{name}.answers.json</code>.</p>\n"
-        '<textarea id="answers-text" readonly rows="8" aria-label="Answers as text">'
-        "</textarea>\n</section>\n<a id=\"download\" hidden></a>\n"
-        f"<script>{script}</script>\n</body>\n</html>\n")
-    # one kind of line end in the file: a row can hold a carriage return, and the page is
-    # stored and compared as LF text (a browser reads both the same)
-    return (head + top + rounds + tail).replace("\r\n", "\n").replace("\r", "\n")
-
-
-# --------------------------------------------------------------------------- the answers
-
-def _unique_keys(pairs: list) -> dict:
-    out = dict(pairs)
-    if len(out) != len(pairs):
-        raise ValueError("a key is written twice")
-    return out
-
-
-def _no_constant(name: str):
-    raise ValueError(f"{name} is not a JSON value")
-
-
 def parse_strict(text: str):
     """JSON with no key written twice and no non-finite number. Raises ValueError."""
+    def unique(pairs: list) -> dict:
+        out = dict(pairs)
+        if len(out) != len(pairs):
+            raise ValueError("a key is written twice")
+        return out
+
+    def constant(name: str):
+        raise ValueError(f"{name} is not a JSON value")
+
     try:
-        return json.loads(text, object_pairs_hook=_unique_keys, parse_constant=_no_constant)
+        return json.loads(text, object_pairs_hook=unique, parse_constant=constant)
     except RecursionError:
         raise ValueError("the text nests too deep") from None
 
 
-def _answer_text(owner: str, obj: dict, key: str) -> tuple[str, str | None]:
-    value = obj.get(key, "")
-    if not isinstance(value, str) or not encodable(value):
-        return "", f"{owner}: `{key}` is text"
-    if len(value) > MAX_ANSWER_TEXT:
-        return "", f"{owner}: `{key}` holds {len(value)} characters (the cap is {MAX_ANSWER_TEXT})"
-    return value, None
-
-
-def read_answers(record: dict, digest: str, answers, changed: dict) -> dict:
-    """A checked transcript of one answers file against its slate record, or {"error": why}.
-    `changed` maps a quoted row id to what happened to it since the page was made. This
-    reads and judges. It decides nothing, and it writes nothing."""
-    slate = record["slate"]
-    if not isinstance(answers, dict):
-        return {"error": "the answers file is not a JSON object"}
-    head = (answers.get("format"), answers.get("version"), answers.get("slate"))
-    if head != (ANSWERS_FORMAT, VERSION, slate["name"]):
-        return {"error": "the file's head reads (" + ", ".join(short(h) for h in head)
-                         + "). This slate's answers file starts"
-                         f" with {(ANSWERS_FORMAT, VERSION, slate['name'])!r}"}
-    if answers.get("slate_digest") != digest:
-        return {"error": "the answers were saved from another version of this slate (the"
-                         " digest differs). Export the page again and put the questions again,"
-                         " or read the answers against the slate that made them"}
-    given, rounds_given = {}, {}
-    for kind, items, key, into in (("answer", answers.get("answers"), "question", given),
-                                   ("round", answers.get("rounds"), "id", rounds_given)):
-        if not isinstance(items, list) or not all(isinstance(i, dict) for i in items):
-            return {"error": f"the file's `{kind}s` is a list of objects"}
-        for item in items:
-            ident = item.get(key)
-            if not isinstance(ident, str) or ident in into:
-                return {"error": f"the file names the {kind} {short(ident)} twice, or without"
-                                 " an id"}
-            into[ident] = item
-    known_questions = {q["id"] for rnd in slate["rounds"] for q in rnd["questions"]}
-    if unknown := sorted(set(given) - known_questions):
-        return {"error": "the file answers question(s) that the slate does not ask: "
-                         + ", ".join(short(u) for u in unknown[:5])}
-    if unknown := sorted(set(rounds_given) - {rnd["id"] for rnd in slate["rounds"]}):
-        return {"error": "the file names round(s) that the slate does not have: "
-                         + ", ".join(short(u) for u in unknown[:5])}
-    out = {"rounds": [], "answers": [], "unanswered": [], "put_again": []}
-    for rnd in slate["rounds"]:
-        got = rounds_given.get(rnd["id"], {})
-        info = {"id": rnd["id"], "title": rnd["title"], "closed": got.get("closed") is True}
-        for key in ("attendance", "closed_by", "closure_note"):
-            info[key], err = _answer_text(f"round {rnd['id']}", got, key)
-            if err:
-                return {"error": err}
-        out["rounds"].append(info)
-        for question in rnd["questions"]:
-            got = given.get(question["id"], {})
-            owner = f"question {question['id']}"
-            labels = {o["id"]: o["label"] for o in question["options"]}
-            selected = got.get("selected")
-            legal = set(labels) | ({OTHER} if question["allow_other"] else set())
-            if selected is not None and (not isinstance(selected, str)
-                                         or selected not in legal):
-                return {"error": f"{owner}: the file selects {short(selected)}, which is none of"
-                                 f" its options ({', '.join(sorted(legal))})"}
-            other, err = _answer_text(owner, got, "other")
-            note, err2 = _answer_text(owner, got, "note")
-            if err or err2:
-                return {"error": err or err2}
-            moved = [cid for cid in dict.fromkeys(question["cites"] + rnd["cites"])
-                     if cid in changed]
-            answer = {"question": question["id"], "round": rnd["id"],
-                      "text": question["question"], "selected": selected,
-                      "selected_label": (labels.get(selected) if selected != OTHER
-                                         else other) if selected is not None else None,
-                      "recommended": question["recommended"],
-                      "equals_recommendation": (selected == question["recommended"]
-                                                if selected is not None
-                                                and question["recommended"] is not None
-                                                else None),
-                      # the free text is returned whatever is selected: text that was typed
-                      # and left unselected is still on the page, and it is screened
-                      "other": other, "note": note,
-                      "cites": question["cites"], "changed_rows": moved}
-            out["answers"].append(answer)
-            if selected is None or (selected == OTHER and not other.strip()):
-                out["unanswered"].append(question["id"])
-            if moved:
-                out["put_again"].append(question["id"])
-    stamp = answers.get("exported_at")           # a time in one fixed form, or nothing
-    out["exported_at"] = (stamp if isinstance(stamp, str) and EXPORTED_AT_RE.fullmatch(stamp)
-                          else None)
-    return out
+# The other modules of the page, offered under this one name. They import this module's
+# constants, so they are imported last.
+from slate_rows import (UNQUOTED_COLUMNS, build_record, derive, question_digests,  # noqa: E402,F401
+                        quote_rows, quoted_size, record_digest, record_text)
+from slate_answers import (EXPORTED_AT_RE, Unfit, check_file, join_files,  # noqa: E402,F401
+                           screened_texts)
+from slate_handout import orientation, short_sheet  # noqa: E402,F401
+from slate_page import SCRIPT_PATH, STYLE_PATH, render, script_hash, script_text  # noqa: E402,F401

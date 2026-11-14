@@ -175,20 +175,37 @@ the trust model and how to report a problem.
   page names that script by its SHA-256 hash and allows nothing else: `default-src 'none'`,
   `base-uri 'none'`, `form-action 'none'`. So an inline handler, a second script block and a
   script added by a row's text do not run. The page loads nothing and sends nothing.
-  The script reads ids from data attributes, sets values and classes, and writes no markup. The
-  page holds no data block. Measured in Chrome 157 on a `file://` page: the hashed script runs,
+  The script reads ids from data attributes, sets values and classes, and writes no markup. A
+  line of a round's points is copied from a template that the server rendered. The page
+  holds no data block. Measured in Chrome 157 on a `file://` page: the hashed script runs,
   and each of the other three is blocked and reported. Limits, stated plainly. A policy in a meta
-  tag cannot set `frame-ancestors` or `sandbox`. The answers stay in the browser's storage under
-  the slate's digest until the operator clears them. So a shared browser profile shows them to
-  its next user. Both tools refuse a slate folder or file that is a link or that leads outside
+  tag cannot set `frame-ancestors` or `sandbox`. The answers stay in the browser's storage until
+  the operator clears them, under a key that is the page's own address. So a shared browser
+  profile shows them to its next user. Measured in Chrome: every local page shares one storage
+  area, so another local page that is opened in that profile can read them.
+- **A view of the interview page protects nothing** (v6.5, plan 227c). The page has a room view
+  and a presenter view. The room view hides the operator's questions, attendance, closure and
+  the recommendations, and it can show one round. All of that is the style's work, from a
+  switch on the page. The hidden text is in the file, and anyone who holds the file can read
+  it. Text that a reader must not see does not belong in a slate.
+- **The hand-outs hold the room's questions only.** `slate_export` writes two Markdown sheets
+  beside the page. They leave out every option, every recommendation, every question of the
+  operator and every decided topic. Both tools refuse a slate folder or file that is a link or that leads outside
   the package. A hard link cannot be told from a file, and it is not caught. A page is bounded
   before it is built: a row is printed once per citation, and the quoted text is counted first.
   The review page is unchanged: it still runs no script.
-- **An answers file is a record of a page, never the operator's word.** `slate_read` reads one
-  fixed file, `<package>/slates/<name>.answers.json`, and the caller names no path. It refuses a
-  file over its size cap, a key written twice and a head for another slate. It refuses an answer
-  that the slate does not offer. It computes the slate's digest from the record's content and trusts no
-  stored field. Nothing proves who wrote the file, and the result says so (`provenance:
+- **An answers file is a record of a page, never the operator's word.** `slate_read` reads
+  `<package>/slates/<name>.answers.json` and one `<name>.<round id>.answers.json` for each ready
+  round. It builds those names from the record, the caller names no path, and it opens no
+  other file. A file beside the page that it did not read is named, never opened. It refuses a
+  file over its size cap, a key written twice and a head for another slate. It refuses an
+  answer that the slate does not offer. It refuses a person, a point kind and a closure field
+  that the slate did not declare. A round holds 200 points at most. Where two files disagree, the
+  answer is listed and neither file is picked. A file from an earlier export of the slate is
+  read. Each answer is compared with its question's digest, and a changed question is listed
+  to be put again. Every digest is computed from content, and no stored field is trusted. A
+  question may be marked as needing the operator's approval. The page holds no approval input,
+  and the reader lists such answers for the session. Nothing proves who wrote the file, and the result says so (`provenance:
   unverified`). It WRITES NOTHING: no row, no journal entry, no stamp. Free text of the file is
   screened by the `G-INJECT` pattern, and a hit is named in `screened`, never removed and never
   obeyed. An approval, a waiver and a `force` are still spoken in the session

@@ -41,6 +41,7 @@ SUITES = [
     "tests/test_adopt_sample.py",
     "tests/test_export_html.py",
     "tests/test_slate.py",
+    "tests/test_slate_rounds.py",
     "tests/test_resume_hook.py",
     "tests/test_eval_runner.py",
     "tests/test_scratch_diff.py",
@@ -85,7 +86,8 @@ _STE_SURFACES = (
     # wave 4b (plan 188): the guide's prose, read by import (every entry, EN and AR), flavored
     ("docs/guide/content.py", "flavored", "en+ar", ()),
     # the current field brief (plan 190): by explicit path, under the exempt plans/ prefix
-    ("plans/briefs/acmp-6.0.0.md", "strict", "en", ()),
+    ("plans/briefs/acmp-6.5.0.md", "strict", "en", ()),
+    ("plans/briefs/jisr-6.5.0.md", "strict", "en", ()),
 )
 _STE_PENDING: tuple[str, ...] = ()  # every wave has landed (R26: the last wave leaves it empty)
 # Never linted: the linter's own messages name rejected words; a verbatim license; the lab's
