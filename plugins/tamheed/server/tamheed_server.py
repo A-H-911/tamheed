@@ -6409,7 +6409,10 @@ def slate_read(name: str, round: str | None = None) -> dict:
     places = [(rid, path) for rid, path in round_files.items() if round in (None, rid)]
     if round is None:
         places.insert(0, (None, files["answers"]))
-    if err := _slate_place_error({str(rid): path for rid, path in places} | {"page": files["page"]}):
+    # every place that this read opens is checked. A key here never comes from a round's
+    # id: a round may be called `page`
+    if err := _slate_place_error({"page": files["page"]}
+                                 | {f"answers {n}": path for n, (_, path) in enumerate(places)}):
         return _err(err)
     read = []                # <name>.answers.json, and <name>.<round id>.answers.json
     for rid, path in places:

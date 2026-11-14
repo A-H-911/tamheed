@@ -686,3 +686,10 @@ from the field's whole bank on the private copy. Run it: `node tests/run_slate_b
 The last look, on captures of the final build, found three more defects. Each is fixed and
 pinned by a browser check. The view of one step opened with its top off the screen. A block's
 heading stayed when a filter hid all its questions. The status read "1 questions shown".
+
+### After the commit's automated review
+
+`slate_read` keyed its link check by a round's id as text. A round named `page` or `None`
+shared a key with another file, so that round's answers file was read without the check. The
+keys no longer come from a round's id. Two tests pin it: one on every system, and one with a
+real link on Ubuntu and macOS.

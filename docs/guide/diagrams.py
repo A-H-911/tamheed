@@ -1042,9 +1042,9 @@ TOOL_EFFECTS = {
                     ("slates/*.html", 6347)]},
     "slate_read": {
         "needs": [("@need.open", 6376)],
-        "reads": [("slates/*.answers.json", 6418),
+        "reads": [("slates/*.answers.json", 6421),
                    ("slates/*.slate.json", 6386),
-                   ("@cited_rows", 6431)],
+                   ("@cited_rows", 6434)],
         "writes": [("@nothing", 6372)]},
 }
 

@@ -447,6 +447,42 @@ class ReaderTest(Base):
         spec["rounds"][0]["cites"] = ["\ud800"]
         self.assertIn("`cites` is a list of row ids", self._refused(spec))
 
+    def test_every_file_that_the_reader_opens_passes_the_link_check(self):
+        """The commit's review: the link check was keyed by a round's id as text. A round
+        named `page` or `None` shared a key with another file, and its own file was not
+        checked. Every place that the reader opens is checked, whatever a round is called."""
+        seen = []
+        keep = srv._slate_place_error
+        self.addCleanup(setattr, srv, "_slate_place_error", keep)
+
+        def watch(files):
+            seen.append(sorted(path.name for path in files.values()))
+            return keep(files)
+
+        spec = workshop()
+        spec["rounds"][1] = {"id": "page", "title": "A", "questions": [
+            {"id": "q7", "question": "Q?", "options": TWO}]}
+        spec["rounds"].append({"id": "None", "title": "B", "questions": [
+            {"id": "q8", "question": "Q?", "options": TWO}]})
+        exported = self._export(spec)
+        srv._slate_place_error = watch
+        srv.slate_read("ws")
+        self.assertEqual(seen[-1], ["ws.None.answers.json", "ws.answers.json", "ws.html",
+                                    "ws.page.answers.json", "ws.r1.answers.json"])
+        self.assertEqual(len(exported["round_answers"]), 3)
+
+    @unittest.skipIf(sys.platform == "win32", "symlinks need a privilege on Windows; CI runs "
+                                              "this on Ubuntu and macOS")
+    def test_a_round_file_that_is_a_link_is_refused_whatever_the_round_is_called(self):
+        spec = workshop()
+        spec["rounds"][1] = {"id": "page", "title": "A", "questions": [
+            {"id": "q7", "question": "Q?", "options": TWO}]}
+        exported = self._export(spec)
+        outside = Path(self._tmp.name) / "outside.json"
+        outside.write_text("{}", encoding="utf-8")
+        Path(exported["round_answers"]["page"]).symlink_to(outside)
+        self.assertIn("is a link, or it leads outside the package", srv.slate_read("ws")["error"])
+
     def test_the_export_writes_two_hand_outs_for_the_room(self):
         """R113: the room's questions only. No option, no recommendation, no question of the
         operator, no decided topic."""
