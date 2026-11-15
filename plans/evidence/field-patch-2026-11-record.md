@@ -65,3 +65,16 @@ supports the order alone: this engine's retry recomputes from the files, never f
 
 Every surprise that a rehearsal agent reports goes to the operator as a list, before the
 release question.
+
+## Found in the review of plan 230, and ruled
+
+- **R120** (operator, 2026-11-15). The hook's failure line printed 160 characters of the error,
+  and an error can quote a key of a data row. The fault is older than this round. The operator
+  ruled: fix it in 6.5.1. The line now passes the screen that a handoff passes.
+- A data file named like an SQL keyword made the open and the hook raise a raw SQL error. The
+  check put the file's name into a statement unquoted. Fixed in plan 230, with a test.
+- "A second run always finishes the sync" was too strong. A file that differs only in its
+  spelling gives the second run no reason. The word left the documents, and the first field's
+  brief says what happens then.
+- The class guard reads dict rows and INSERT statements in one file. A row built another way,
+  or in another module, is outside it. No such writer exists today.

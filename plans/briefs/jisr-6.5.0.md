@@ -1,5 +1,9 @@
 # Brief to Jisr: tamheed 6.5.0 (nine rows answered, one guarded migration, a way back)
 
+> **Superseded on 2026-11-15 by [jisr-6.5.1.md](jisr-6.5.1.md). Do not execute this file.**
+> 6.5.0 was never installed at Jisr, and the plugin's update now installs 6.5.1. This file
+> stays as the record of what was measured for 6.5.0.
+
 > **How to use this file.** It is read by path, or its text is carried to the Mac. The Jisr
 > prompt is one line: *read this brief and execute it. Write no report unless a class fails.*
 > Every result below is the maintainer's own measurement on a scratch copy of the folder that

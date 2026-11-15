@@ -333,6 +333,11 @@ class McpContractTest(unittest.TestCase):
             w = next(w for w in srv.handoff_emit(target)["warnings"] if "feedback" in w)
         self.assertIn("entity_export", w)                                 # confirmed, not yet exported
         self.assertNotIn("await", w)
+        # plan 230 (a rehearsal of the 6.5.1 brief): a local tool never leaves the project, so
+        # the warning named it at every emit, for good. The review page already left it out.
+        self.assertIn("1 confirmed feedback row(s)", w)
+        self.assertIn("FB-001", w)
+        self.assertNotIn("FB-002", w)
         exp = srv.entity_export("feedback.json", args={"type": "feedback"})
         self.assertTrue(exp["ok"], exp)
         self.assertEqual(json.loads(Path(exp["path"]).read_text(encoding="utf-8"))

@@ -8,7 +8,15 @@ All notable changes to Tamheed are documented here. The format is based on
 > original repository (<https://github.com/A-H-911/keystone>). Tamheed carries Keystone's full git
 > history; the Keystone repository stays frozen at 1.0.x for existing v1 packages.
 
-## [Unreleased]
+## [6.5.1] - 2026-11-15
+
+**PATCH — one field row after the 6.5.0 upgrade (plans 230–231).** The first field handed up
+one operator-confirmed row. Two more faults came from the rehearsals of the 6.5.0 briefs.
+
+**For a live package.** No file changes form, and no migration runs. Update the plugin and
+start the client again. Then run `handoff_emit(<repository root>, refresh_stock=true)` and
+`export_html()`. A package that is still on 6.4.0 migrates as the 6.5.0 entry says, and its
+journal row then carries a time. From 6.5.1 back to 6.5.0 the plugin goes back alone.
 
 ### Fixed
 - The journal row that `package_migrate` writes carries its time (plan 230, the first field's
@@ -28,6 +36,9 @@ All notable changes to Tamheed are documented here. The format is based on
 - The hook's failure line passes the instruction screen (plan 230, found in review). The
   line printed 160 characters of the error, and an error can quote a key of a data row.
   A text that reads like an instruction is withheld now.
+- `handoff_emit` leaves a local-tool row out of its warning about confirmed rows that are not
+  yet reported (plan 231, found in a rehearsal). A local tool never leaves the project, so
+  the warning named it at every emit. The review page already left it out.
 
 ## [6.5.0] - 2026-11-15
 

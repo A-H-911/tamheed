@@ -4999,7 +4999,7 @@ def handoff_emit(target_dir: str, subdir: str = "handoff", force: bool = False,
             f"{len(awaiting)} feedback row(s) await the operator's word ({', '.join(awaiting)})"
             " — interview them: Confirmed with operator_confirm, or Rejected")
     unexported = [r[0] for r in conn.execute(
-        "SELECT id FROM feedback WHERE lifecycle_status = 'Confirmed' ORDER BY id")]
+        "SELECT id FROM feedback WHERE lifecycle_status = 'Confirmed' AND kind <> 'local-tool' ORDER BY id")]
     if unexported:
         warnings.append(
             f"{len(unexported)} confirmed feedback row(s) not yet reported upstream"
