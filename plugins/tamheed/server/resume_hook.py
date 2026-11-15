@@ -200,10 +200,23 @@ def main(argv: list[str] | None = None) -> int:
             print("\n".join(lines))
             status = "printed"
     except Exception as exc:  # noqa: BLE001 — one line, never a failed session start
-        print(f"tamheed: resume unavailable ({exc.__class__.__name__}: {str(exc)[:160]})")
+        print(f"tamheed: resume unavailable ({exc.__class__.__name__}: {_screened(str(exc)[:160])})")
         status = f"error:{exc.__class__.__name__}"
     _trace(source, lines, status, session)
     return 0
+
+
+def _screened(text: str) -> str:
+    """The failure line's message (R120, v6.5.1). An error can quote a key of a data row, so
+    the text passes `_INJECT_RE`, the screen that a handoff passes. A text that fails it, or
+    that cannot be screened because the server does not import, is withheld."""
+    try:
+        import tamheed_server as srv  # noqa: PLC0415
+        if not srv._INJECT_RE.search(text):
+            return text
+    except Exception:  # noqa: BLE001 - no screen, so no text
+        pass
+    return "message withheld: it reads like an instruction. package_open says it in full"
 
 
 def _token(value) -> str:

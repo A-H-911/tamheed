@@ -183,6 +183,11 @@ the trust model and how to report a problem.
   the operator clears them, under a key that is the page's own address. So a shared browser
   profile shows them to its next user. Measured in Chrome: every local page shares one storage
   area, so another local page that is opened in that profile can read them.
+- **The session-start hook's failure line is screened** (v6.5.1, plan 230). When the hook
+  fails it prints one line with the error's type and 160 characters of its text. That text
+  can quote a key of a data row. It passes the screen that a handoff passes, and a text
+  that fails the screen is withheld. The screen is a list of patterns, not a proof: it
+  stops known shapes of an instruction, and a new shape passes it.
 - **A view of the interview page protects nothing** (v6.5, plan 227c). The page has a room view
   and a presenter view. The room view hides the operator's questions, attendance, closure and
   the recommendations, and it can show one round. All of that is the style's work, from a

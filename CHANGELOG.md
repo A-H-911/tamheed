@@ -25,6 +25,9 @@ All notable changes to Tamheed are documented here. The format is based on
 - A data file named like an SQL keyword, such as `select.jsonl`, made `package_open` and the
   hook raise a raw SQL error (plan 230, found in review). Such a file is no table of the
   engine, and it is passed over now.
+- The hook's failure line passes the instruction screen (plan 230, found in review). The
+  line printed 160 characters of the error, and an error can quote a key of a data row.
+  A text that reads like an instruction is withheld now.
 
 ## [6.5.0] - 2026-11-15
 
