@@ -206,8 +206,8 @@ that a migration writes has no time. The record, with rulings R116-R119, is
 
 | # | Plan | Depends on | Status |
 |---|---|---|---|
-| 230 | [A migration's journal row carries its time](230-migration-row-time.md) -- the time, the order of the swap, the session-start line | 229 | IN PROGRESS |
-| 231 | [Acceptance, release 6.5.1, the two field prompts](231-release-6.5.1.md) | 230 | PLANNED |
+| 230 | [A migration's journal row carries its time](230-migration-row-time.md) -- the time, the order of the swap, the session-start line | 229 | DONE 2026-11-15 (`2c23dbf`, CI run 43676678644 green on eleven jobs). The hook's failure line, found in its review: `a4a0e06` (R120) |
+| 231 | [Acceptance, release 6.5.1, the two field prompts](231-release-6.5.1.md) | 230 | DONE 2026-11-15. Released as `3f94b4d` on `main` (CI run 43680633082 green on eleven jobs), tag `v6.5.1`. Two rehearsals by an agent corrected the briefs |
 
 ### Field cycle review-page -- plans 219-220 -> v6.4.0 (2026-10-10; maintainer-executed)
 

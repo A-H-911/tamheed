@@ -1,6 +1,6 @@
 # Plan 231 -- acceptance, release 6.5.1, the two field prompts (R116, R117)
 
-> Status: PLANNED 2026-11-15. Cycle: field patch 2026-11, branch `fix/6.5.1`. The record is
+> Status: DONE 2026-11-15. Cycle: field patch 2026-11, branch `fix/6.5.1`. The record is
 > [field-patch-2026-11-record.md](evidence/field-patch-2026-11-record.md).
 
 - **Assurance on copies of both field packages.** The scripts of plan 229 are copied to
@@ -43,8 +43,11 @@ is read from the bundle's manifest. The same result on both copies, unless a lin
 | The seven rows with no time | Each id resolves to one commit by `git log --reverse -S` |
 | The ref `#v6.5.0`, in a separate configuration folder, Claude Code 2.1.325 | "updated from 6.4.0 to 6.5.0" |
 
-`acceptance_651.py` holds on 16 observations. Not measured before the tag: the plugin going
-back from 6.5.1 to 6.5.0. No brief quotes an answer for that direction.
+`acceptance_651.py` holds on 16 observations.
+
+Measured after the tag, in the separate configuration folder: "updated from 6.5.0 to 6.5.1",
+then "updated from 6.5.1 to 6.5.0" with the ref `v6.5.0`, then "updated from 6.5.1 to 6.4.0"
+with the ref `v6.4.0`. Both briefs quote the answer for their own direction.
 
 ## Two rehearsals by an agent, through the served plugin (2026-11-15)
 

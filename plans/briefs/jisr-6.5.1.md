@@ -201,8 +201,8 @@ claude plugin marketplace update tamheed
 claude plugin update tamheed@tamheed --scope project
 ```
 
-In the measurement of 2026-11-14 the last command answered "updated from 6.5.0 to 6.4.0". That
-measurement left 6.5.0. Leaving 6.5.1 is measured after the tag exists. Then quit the client
+Measured after the tag, leaving 6.5.1: the last command answered "updated from 6.5.1 to
+6.4.0". Then quit the client
 and start it again. `claude plugin list --json` reads `6.4.0`, and so does `server_info`.
 
 - The first command writes `"ref": "v6.4.0"` into `.claude/settings.json`. That file is
@@ -215,7 +215,7 @@ and start it again. `claude plugin list --json` reads `6.4.0`, and so does `serv
 - To follow releases again: `claude plugin marketplace add A-H-911/tamheed --scope project`.
   It removes the pin. Then run the two update commands.
 
-Route B was measured in a separate configuration folder, on Windows, with Claude Code 2.1.323.
+Route B was measured in a separate configuration folder, on Windows, with Claude Code 2.1.325.
 
 ### After going back
 

@@ -159,8 +159,8 @@ claude plugin update tamheed@tamheed --scope project
 Then quit the client and start it again. `server_info` reads `6.5.0`.
 
 - Measured in a separate configuration folder, on Windows, with Claude Code 2.1.325: that ref
-  installs 6.5.0. The measurement left 6.4.0, and the last command answered "updated from 6.4.0
-  to 6.5.0". Leaving 6.5.1 is measured after the tag exists.
+  installs 6.5.0. Measured again after the tag, leaving 6.5.1: the last command answered
+  "updated from 6.5.1 to 6.5.0".
 - The first command writes `"ref": "v6.5.0"` into `.claude/settings.json`. That file is
   committed, so the pin is a change that you commit or revert on purpose.
 - **The pin reaches every repository on the machine.** One machine keeps ONE marketplace record

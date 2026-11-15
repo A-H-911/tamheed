@@ -1,6 +1,6 @@
 # Plan 230 -- a migration's journal row carries its time (FB-033, R118, R119)
 
-> Status: IN PROGRESS 2026-11-15. Cycle: field patch 2026-11, release 6.5.1, branch
+> Status: DONE 2026-11-15 (`2c23dbf`, `a4a0e06`). Cycle: field patch 2026-11, release 6.5.1, branch
 > `fix/6.5.1`. The record (evaluation, rulings R116-R119, the rehearsal items) is
 > [field-patch-2026-11-record.md](evidence/field-patch-2026-11-record.md).
 
