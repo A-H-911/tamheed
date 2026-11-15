@@ -4,7 +4,7 @@
 > *read `C:\Users\ahammo\Repos\tamheed\plans\briefs\acmp-6.5.0.md` and execute it. Write no
 > report unless a class fails.* Every id below is a stable row of yours. Every result below is
 > the maintainer's own measurement on scratch copies of your package. Your package was not
-> opened and not changed. Section 1 has four checks and two STOPs. Section 1b is the way back.
+> opened and not changed. Section 1 has four checks and several STOPs. Section 1b is the way back.
 >
 > **This brief prescribes writes to your record.** One migration (a preview, then a confirm on
 > the operator's word), three feedback rows resolved, and one STOP that is the operator's (§3).
@@ -38,14 +38,15 @@ repository. `server_info` in the new process reads `6.5.0`, `010_registers.sql`,
 
 ### 1.3 The package does not open yet, and that is the expected answer
 
-`package_open("tamheed-package")` is REFUSED until the migration has run. Its words start: "was last
-written by an earlier tamheed: document_sections.jsonl lacks `lifecycle_status`". It moves no
-byte. A skill that opens the package at the start of a session meets the same refusal. Nothing
+`package_open("tamheed-package")` is REFUSED until the migration has run. It says: "package 'tamheed-package'
+was last written by an earlier tamheed: document_sections.jsonl lacks `lifecycle_status`". It
+moves no byte. A skill that opens the package at the start of a session meets the same refusal. Nothing
 is wrong. Go on to the preview.
 
 ### 1.4 The preview, with a STOP
 
-`package_migrate("tamheed-package")` writes nothing. On the copy it read exactly this:
+`package_migrate("tamheed-package")` writes nothing. Its report held these three keys, with these
+values. It also holds `version_from` and a `note`.
 
 ```text
 mode                registry-sync
@@ -53,8 +54,8 @@ entity_types_added  ["register", "register-entry"]
 columns_added       {"document_sections": ["lifecycle_status"]}
 ```
 
-**If your preview reads anything else, STOP.** Change nothing, and file a feedback row with what
-it read. Your package has moved since the copy, and the measurements below do not cover it.
+**If one of the three reads otherwise, STOP.** Change nothing, and file a feedback row with
+what it read. Your package has moved since the copy, and the measurements below do not cover it.
 
 ### 1.5 The confirm, on the operator's word
 
@@ -70,7 +71,10 @@ tamheed-package/data/progress_entries.jsonl     one row more
 `git status --short -- tamheed-package` then lists those three files and no other. If it lists another
 file, STOP and go back (1b, route A).
 
-If the confirm is refused, it says one of two things, and neither loses a table:
+A confirm that succeeds also names `README.md` under `prompt_library.diverged`. That is the
+stock guide of 6.4.0, and step 1.7 refreshes it.
+
+If the confirm is refused, it says one of these, and none loses a table:
 
 - "registry sync failed, package UNCHANGED": nothing moved. Read the cause, and run it again.
 - "registry sync stopped during the file swap ... No table was removed": some files hold the
@@ -86,24 +90,27 @@ Open the package and read three results. Each must equal the copy's:
 |---|---|
 | `package_verify` | `verified true`, `dirty []`, `review_current false` |
 | `gate_run` | `ready true`, and no gate fails |
-| `readiness_check("package")` | the same blocking rules fail as before the upgrade |
+| `readiness_check("package")` | `ready true`, and no blocking rule fails |
 
 Every count of rows and every trace edge was the same before and after on the copy. Only the
 journal grew, by the migration's own row.
 
-- **Go:** close the package, and commit the three files alone. That commit is the migration.
+- **Go:** close the package, and commit the three files alone, for example with the message
+  `tamheed: migrate the package to 6.5.0 (registry-sync)`. That commit is the migration.
 - **No-go:** do not commit. Go back by route A in 1b. It restores three files.
 
 ### 1.7 After the commit
 
 Open the package and run `export_html()`. `package_verify` then reads `review_current true` and
-`review_exported_by "6.5.0"`. Commit the review page and its `csv/` as their own commit.
+`review_exported_by "6.5.0"`. Close the package, then commit the review page and its `csv/`
+as their own commit.
 
-Then run `handoff_emit("<repository root>", refresh_stock=true)`. On the copy it wrote
-`tamheed-package/README.md`, the stock guide of 6.5.0, and the root note. Read `git status`, and
-commit what it moved.
+Then run `handoff_emit("<repository root>", refresh_stock=true)`. On the clone it rewrote
+`tamheed-package/README.md`, the stock guide of 6.5.0, and `tamheed-package/CLAUDE.md`. It left the
+root `CLAUDE.md` as it was. Read `git status`, and commit
+what it moved.
 
-Your 29 export files were written again by both engines on the copies. Every file holds the same rows
+Your 29 export files were written again by both engines on the copies. This is a measurement, with nothing to run. Every file holds the same rows
 in the same order. 6.5.0 adds the key `query` in each result, and it drops nothing. Your `scripts/test-gen-slice-review-slate.py` ran on a copy against the exports that 6.5.0 wrote: 17 of 17 pass.
 
 ## 1b. Going back to 6.4.0
@@ -122,16 +129,24 @@ Every command below was run in a clone of your repository, with git itself.
 
 - **Before the migration commit:** `git checkout -- tamheed-package/data`. Three files go back, and
   `git status` is clean.
-- **After it, in one step:**
+- **After it, in one step.** Close the package first.
 
   ```text
   git restore --source=PRE --staged --worktree -- tamheed-package
   git commit -m "tamheed: back to the package as it was before 6.5.0"
   ```
 
-  The restore sets every tracked file of the folder to its PRE form. It removes the tracked
-  files that PRE does not have: the two new tables, the slates. `git diff PRE -- tamheed-package` is
-  then empty. It touches no file outside the folder, so your code commits stay.
+  The restore sets every tracked file of the folder to its PRE form, and it removes the
+  tracked files that PRE does not have. `git diff PRE -- tamheed-package` is then empty. It touches
+  no file outside the folder, so your code commits stay.
+- **Then the files that git does not track.** A new table or a slate that was never
+  committed stays after the restore. `git clean -nd -- tamheed-package` lists such files, and it
+  removes nothing. Read the list. Then `git clean -fd -- tamheed-package` removes them. Measured
+  on the copy: the folder then equalled the PRE folder byte for byte.
+- **`git clean` removes a file for good.** Git keeps no copy of a file that it never tracked. An
+  answers file that someone saved from an interview page is such a file, and so is a
+  slate that nobody committed. Copy each file of the list that you want to keep to a
+  place outside the folder first, or commit it on a branch. Then run the clean.
 - **Or by revert:** `git revert --no-edit PRE..HEAD`, when every commit after PRE touched the
   package alone. It ran with no conflict on the copy, over the migration and a later commit.
 
@@ -142,7 +157,9 @@ Your repository ignores `tamheed-package/exports/`, so a file there stays, and i
 harms nothing.
 
 What going back loses, said plainly: every row that was written after the upgrade. `git diff
---stat PRE -- tamheed-package` lists the files before you go back. Git history keeps them. A register
+--stat PRE -- tamheed-package` lists the tracked files before you go back, and `git status --short`
+lists the new ones. Git history keeps the committed ones, and it keeps nothing of a file that was never
+committed. A register
 row, a retired section and a slate have no place in 6.4.0. Decide to go back before the first
 of those is written.
 
@@ -179,12 +196,12 @@ probe that showed it, and the sha that you went back to.
 | # | Probe | Class | Your row |
 |---|---|---|---|
 | 1 | `trace_query("FR-166")` | `column_links` holds `acceptance_criteria.requirement_id: [["AC-184", "FR-166"]]` | FB-032 |
-| 2 | `trace_query()` with no id | every edge, in a fixed order, with `total` (1,933 on the clone) and a `query` echo | FB-030 |
+| 2 | `trace_query(limit=3)`, with no id | edges in a fixed order, `total` 1,933 on the clone, and a `query` echo. The full answer is large, so pass a small `limit` | FB-030 |
 | 3 | `entity_export(path="links.json", tool="trace_query", args={})` | one file holds every edge and every column link, `partial false` | FB-030 |
 | 4 | `gate_run`, key `requirements_unwired` | exactly FR-156, FR-157, FR-158, FR-159, each with `missing ["work"]` | FB-031 |
 | 5 | `readiness_check("package")`, rule `requirements-wired` | the same four ids, `missing` beside them, advisory | FB-031 |
 | 6 | `gate_run` | `ready true`, no gate fails | none |
-| 7 | the review page after the export | the readiness table shows `FR-156 (work)` | FB-031 |
+| 7 | the review page after the export: search it for the text | the page holds `FR-156 (work)` | FB-031 |
 
 A link lives in ONE place: a stored edge, or a foreign-key column. `edges` and `column_links`
 are the two lists, and a census names which it read. Your lessons LL-149 and LL-157 state that
@@ -216,8 +233,8 @@ listed, and nothing else happens.
 ## 4. Your three rows
 
 FB-030, FB-031 and FB-032 are answered by this release. For each, on the operator's word, send a
-PARTIAL row: `id`, `kind`, `title`, `lifecycle_status "Resolved"`, `resolved_in "6.5.0"` and
-`upstream_ref`. On the copy that write changed three columns and nothing else.
+PARTIAL row. It holds `type "feedback"`, the row's own `id`, `kind` and `title`,
+`lifecycle_status "Resolved"`, `resolved_in "6.5.0"` and `upstream_ref`. On the copy that write changed three columns and nothing else.
 
 | Row | `upstream_ref` |
 |---|---|

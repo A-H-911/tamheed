@@ -196,8 +196,13 @@ starts with a commit of the package, at a commit called PRE here. Before the mig
 committed, `git checkout -- <package>/data` restores the files. After it, one command sets
 the folder back: `git restore --source=PRE --staged --worktree -- <package>`. Commit that.
 It removes the tracked files that PRE does not have, and it touches nothing outside the
-folder. `git checkout PRE -- <package>` does not do this: files of the new release stay.
-Every row that was written after the upgrade leaves the working tree. Git history keeps it.
+folder. A new file that was never committed stays: `git clean -nd -- <package>` lists such
+files, and `git clean -fd -- <package>` removes them. That removal is for good. Git keeps no
+copy of a file that it never tracked, such as an answers file saved from an interview page.
+Copy out what you want to keep first. `git checkout PRE -- <package>` does not do this
+work: files of the new release stay.
+Every row that was written after the upgrade leaves the working tree. Git history keeps
+what was committed.
 
 **The plugin.** Pin the repository's marketplace record to the earlier tag, then update:
 

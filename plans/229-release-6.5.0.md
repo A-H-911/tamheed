@@ -160,7 +160,7 @@ before and after, and they did not move.
 | A real link at a slate's answers path | CI, on Ubuntu and macOS |
 | Chrome on the field's Mac, and the lock on a real macOS host | the field, through a probe of its brief |
 | Rows that a field wrote after its copy was taken | the field: its preview must equal the brief's, or it stops |
-| An agent that reads a brief and runs it through MCP | not run here |
+| An agent that reads a brief and runs it through the served plugin | here, twice: see the rehearsals below |
 
 ### The way back, with git itself
 
@@ -204,8 +204,41 @@ run finds nothing to do and the journal row of that sync is not written.
 
 ### Not measured
 
-- An agent that reads a brief and runs it through the served process. Every measurement
-  called the handlers in a Python process, or the `claude plugin` commands.
 - The committed sample pages were not written again one by one. The gate's own stages cover
   the samples that it reads.
 - Route A in the real Jisr repository: its ignore rules were not in the export.
+
+### Two rehearsals by an agent, through the served plugin (2026-11-15)
+
+The operator asked for them. A headless Claude session ran in each scratch repository, with
+the brief copied in and the 6.5.0 bundle loaded from the commit. It was told to execute the
+brief: section 1, the probes of section 2, and the way back after the migration commit. It
+was denied the `claude` command, because that command would have moved the machine's own
+plugin records. So check 4 of 1.1, section 1.2 and route B were skipped, and they rest on the
+measurement in the separate configuration folder.
+
+| | ACMP clone | Jisr scratch repository |
+|---|---|---|
+| Turns, and what the upgrade did | 41. Every step of section 1 matched the brief | 57. Every step of section 1 matched the brief |
+| The probes of section 2 | all seven classes hold | classes 1 to 7 hold. Class 8 needs a host rename |
+| The way back, as the agent ran it | `git diff PRE` empty | `git diff PRE` empty, and three new files that git did not track stayed |
+| Checked afterward with the real 6.4.0 code | opens, with the same gates, rules, counts and edges as PRE | the same |
+
+What the rehearsals found in the briefs, each corrected in both:
+
+| Found | Correction |
+|---|---|
+| The restore handles tracked files alone. A new table and a slate that were never committed stayed in the folder | a step after the restore: `git clean -nd`, read the list, then `git clean -fd`. Measured: the folder then equals PRE byte for byte |
+| The probe table led the agent to write throwaway rows: a section, a register, a slate | probes 1 to 4 run now. Classes 5 to 8 are read at the first real use, and no probe row is written |
+| "Exactly this" under the preview, while the report holds two more keys | the three keys are named, and so are the two others |
+| The refusal's words were quoted without their start | quoted as the tool says them |
+| "The same blocking rules as before", with no reading from before | the expected result is stated for each field |
+| No commit message, and no word on closing the package before a commit or the restore | a message is given, and both steps say: close the package first |
+| The stock refresh was said to write the root note | it rewrites the package's README and the package's own note. The root note stays |
+| A bare `trace_query()` returns every link | the probe passes a small `limit` |
+| "A PARTIAL row: id, kind, title" did not name the item's `type` | the row's `type` is named |
+
+Seen in the rehearsals and not a fault of the release: a root `.mcp.json` appeared, because the
+bundle was loaded from a scratch folder. An installed plugin writes none. The migration's
+journal row has no time, as the six earlier ones in ACMP's journal have none. The start hook
+says "unlocked" for a package that the open then refuses until its migration.
