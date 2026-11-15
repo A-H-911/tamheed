@@ -8,6 +8,24 @@ All notable changes to Tamheed are documented here. The format is based on
 > original repository (<https://github.com/A-H-911/keystone>). Tamheed carries Keystone's full git
 > history; the Keystone repository stays frozen at 1.0.x for existing v1 packages.
 
+## [Unreleased]
+
+### Fixed
+- The journal row that `package_migrate` writes carries its time (plan 230, the first field's
+  FB-033). It had none from 4.0.0 to 6.5.0, in both modes. A row that an earlier release
+  wrote keeps its empty time: the engine has no record of when that migration ran.
+- A registry sync writes the journal's file first (plan 230). Before, a sync that could not
+  write that file had already written the others. A second run then answered "Nothing to
+  migrate", and the sync had no journal row. Now a second run finishes the sync. A
+  sync that stopped at a later file leaves two rows, each with its time. Until the second
+  run, the first row reads ahead of the files.
+- The session-start hook names a package that is behind the engine (plan 230). It said
+  "(schema 10) - unlocked" for a package that `package_open` then refused. The number is
+  the engine's. One line now names the file, the column and `package_migrate`.
+- A data file named like an SQL keyword, such as `select.jsonl`, made `package_open` and the
+  hook raise a raw SQL error (plan 230, found in review). Such a file is no table of the
+  engine, and it is passed over now.
+
 ## [6.5.0] - 2026-11-15
 
 **MINOR — the field round of 2026-11 (plans 221–229).** Two field projects handed up fourteen

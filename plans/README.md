@@ -198,6 +198,17 @@ IN PROGRESS / DONE.
 | 228 | [The guide, its diagrams, the docs sweep](228-guide-diagrams-docs.md) | 221-227 | DONE 2026-11-12 (`151239e`, CI run 43207066805 green on eleven jobs) |
 | 229 | [Acceptance, release 6.5.0, the two field prompts](229-release-6.5.0.md) | 221-228 | DONE 2026-11-15. The stamp `f70a728`. The interview page was rebuilt twice on the operator's review (227b, 227c: `8c80174`, `e3016cc`). The field assurance on copies of both field packages found a migration that removed tables when its swap failed, and an open that wrote a file again: `28a9d17`. Two rehearsals by an agent corrected the briefs: `25193d1`. Released as `8a9855d` on `main` (CI run 43660180063 green on eleven jobs), tag `v6.5.0`. |
 
+### Field patch 2026-11 -- plans 230-231 -> v6.5.1 (2026-11-15 ->; maintainer-executed)
+
+The first field upgraded to 6.5.0 and handed up one operator-confirmed row: the journal row
+that a migration writes has no time. The record, with rulings R116-R119, is
+[field-patch-2026-11-record.md](evidence/field-patch-2026-11-record.md).
+
+| # | Plan | Depends on | Status |
+|---|---|---|---|
+| 230 | [A migration's journal row carries its time](230-migration-row-time.md) -- the time, the order of the swap, the session-start line | 229 | IN PROGRESS |
+| 231 | [Acceptance, release 6.5.1, the two field prompts](231-release-6.5.1.md) | 230 | PLANNED |
+
 ### Field cycle review-page -- plans 219-220 -> v6.4.0 (2026-10-10; maintainer-executed)
 
 After the 216-218 upgrades (both repositories verified on 6.3.0, nothing to fix) the operator asked for

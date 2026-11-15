@@ -191,6 +191,10 @@ Measured for 6.5.0 to 6.4.0 on copies of two field packages, with the real 6.4.0
 and the plugin go back together. An earlier release does not open a package that a later release
 migrated. It stops on a key that it does not know, and it moves no file.
 
+A release that changes the form of no file is the exception, and 6.5.1 is one. Measured on the
+same two copies: 6.5.0 opens a package that 6.5.1 migrated or wrote, and it moves no file. So
+from 6.5.1 to 6.5.0 the plugin goes back alone.
+
 **The data.** A registry sync takes no backup, so git is the way back. That is why an upgrade
 starts with a commit of the package, at a commit called PRE here. Before the migration is
 committed, `git checkout -- <package>/data` restores the files. After it, one command sets

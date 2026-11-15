@@ -18,6 +18,10 @@ a value that is absent or not a plain token is written `-`. The line opens `<utc
 (plan 151, v5.6) - the bundle's own manifest, read before any note is looked for, so a silent
 run names the hook that ran too: a running session keeps the hook it loaded, and only the line
 can say which one that was.
+Behind (plan 230, v6.5.1): when a data file lacks a column of this engine, one line after the
+header names the file, the column and `package_migrate`. It reads `_columns_behind`, the check
+that `package_open` refuses by, so the two never disagree. The header's schema number is the
+engine's own.
 Failure posture: one line, exit 0 — a hook must never cost the session.
 
 stdlib only, NO inline script metadata: `uv run --no-project` runs it on the interpreter uv
@@ -129,6 +133,13 @@ def build_lines(project: Path, source: str = "") -> list[str]:
               f" {lock.get('taken_at')}, holder observed {lock.get('observed')} — {remedy})"
               if lock else "unlocked")
     lines.append(f"tamheed resume — package `{name}` (schema {schema}) — {lock_s}")
+    behind = srv._columns_behind(pkg_dir)       # R115: the rule that package_open refuses by
+    if behind:
+        lines.append("BEHIND THIS ENGINE: " + ". ".join(
+            f"{table}.jsonl lacks {', '.join(f'`{c}`' for c in cols)}"
+            for table, cols in sorted(behind.items()))
+            + ". package_open refuses this package until package_migrate runs: a preview"
+              " first, then confirm=true on the operator's word.")
     if source == "compact":
         lines.append("Context was compacted mid-session: this is state re-injection, not a"
                      " session start — resume from the handoff below. Do not re-summarise it"

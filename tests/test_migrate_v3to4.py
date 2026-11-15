@@ -11,6 +11,7 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO_ROOT / "plugins" / "tamheed" / "server"))
@@ -254,6 +255,8 @@ class MigrateV3ToV4Test(unittest.TestCase):
         audit = [p for p in pes if "MIGRATED store v3.2.1 -> v4.0.0" in p["entry"]]
         self.assertEqual(len(audit), 1)
         self.assertEqual(audit[0]["actor"], "system:migrate")
+        # plan 230: the row says when the migration ran. It had no time from 4.0.0 to 6.5.0
+        self.assertRegex(str(audit[0].get("occurred_at")), r"^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\dZ$")
 
     def test_registry_scrubbed_and_completed(self):
         ets = rows(self.pkg, "entity_types.jsonl")
@@ -297,21 +300,40 @@ class MigrateV3ToV4Test(unittest.TestCase):
 
 
 class MigrateDeterminismTest(unittest.TestCase):
+    def _migrate(self, clock: str) -> dict:
+        """The files of one migration of the fixture, with the server's clock held at `clock`."""
+        with tempfile.TemporaryDirectory() as td, \
+                mock.patch.object(srv, "_now", return_value=clock):
+            srv.PACKAGE_ROOT = Path(td)
+            srv._CURRENT = srv._CURRENT_NAME = None
+            pkg = build_v3_fixture(srv.PACKAGE_ROOT)
+            res = srv.package_migrate("legacy", confirm=True)
+            self.assertTrue(res.get("ok"), res)
+            return {p.name: p.read_bytes() for p in sorted((pkg / "data").glob("*.jsonl"))}
+
     def test_same_input_same_bytes(self):
-        outs = []
-        for _ in range(2):
-            with tempfile.TemporaryDirectory() as td:
-                srv.PACKAGE_ROOT = Path(td)
-                srv._CURRENT = srv._CURRENT_NAME = None
-                pkg = build_v3_fixture(srv.PACKAGE_ROOT)
-                res = srv.package_migrate("legacy", confirm=True)
-                self.assertTrue(res.get("ok"), res)
-                outs.append({p.name: p.read_bytes()
-                             for p in sorted((pkg / "data").glob("*.jsonl"))})
-        self.assertEqual(set(outs[0]), set(outs[1]))
-        for name in outs[0]:
-            self.assertEqual(outs[0][name], outs[1][name],
+        """Under one clock. The migration's journal row carries the time of the run (plan
+        230), so two runs a second apart differ in that one value."""
+        first = self._migrate("2026-01-01T00:00:00Z")
+        second = self._migrate("2026-01-01T00:00:00Z")
+        self.assertEqual(set(first), set(second))
+        for name in first:
+            self.assertEqual(first[name], second[name],
                              f"{name} differs between identical migrations")
+
+    def test_the_clock_is_the_only_difference_between_two_runs(self):
+        """Plan 230: two runs under two clocks differ in one column of one row, and nowhere
+        else. So the bytes of a migration depend on its input and on the clock alone."""
+        first = self._migrate("2026-01-01T00:00:00Z")
+        second = self._migrate("2026-01-02T00:00:00Z")
+        self.assertEqual(sorted(n for n in first if first[n] != second[n]),
+                         ["progress_entries.jsonl"])
+        one, two = ([json.loads(line) for line in files["progress_entries.jsonl"]
+                     .decode("utf-8").splitlines()] for files in (first, second))
+        self.assertEqual(len(one), len(two))
+        differ = [(a["id"], sorted(k for k in a if a[k] != b[k]))
+                  for a, b in zip(one, two) if a != b]
+        self.assertEqual([cols for _, cols in differ], [["occurred_at"]], differ)
 
 
 class MigrateFailurePathTest(unittest.TestCase):

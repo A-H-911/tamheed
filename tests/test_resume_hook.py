@@ -103,6 +103,46 @@ class ResumeHookTest(unittest.TestCase):
         self.assertNotIn("compacted", out)
         self.assertLessEqual(len(lines), hook.MAX_LINES)
 
+    def test_a_package_that_is_behind_names_the_file_and_the_migration(self):
+        """R118 (plan 230). The header's schema number is the engine's. For a package with a
+        data file behind the engine, the hook said "unlocked", and `package_open` then refused
+        it. The hook now names the file, the column and `package_migrate`. It reads the same
+        check as the open, so the two never disagree."""
+        self._package()
+        current, _ = run_hook(self.project, source="startup")
+        self.assertNotIn("package_migrate", current)       # a current package gets no such line
+        path = self.project / "pkg" / "data" / "requirements.jsonl"
+        rows = [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines()]
+        key = sorted(k for k in rows[0] if rows[0][k] is None)[0]
+        path.write_text("".join(json.dumps({k: v for k, v in r.items() if k != key},
+                                           ensure_ascii=False, separators=(",", ":")) + "\n"
+                                for r in rows), encoding="utf-8")
+        before = path.read_bytes()
+        out, code = run_hook(self.project, source="startup")
+        self.assertEqual(code, 0)
+        lines = out.splitlines()
+        self.assertTrue(lines[0].startswith("tamheed resume — package `pkg` (schema 10)"), lines[0])
+        fact = f"requirements.jsonl lacks `{key}`"
+        self.assertIn(fact, lines[1])
+        for needle in ("BEHIND THIS ENGINE", "package_open refuses", "package_migrate"):
+            self.assertIn(needle, lines[1], needle)
+        self.assertIn(fact, srv.package_open("pkg").get("error", ""))   # the open says the same
+        self.assertEqual(path.read_bytes(), before)                     # the hook writes nothing
+        self.assertLessEqual(len(lines), hook.MAX_LINES)
+
+    def test_a_file_named_like_an_sql_keyword_is_no_table_and_costs_nothing(self):
+        """Plan 230, found in review: the check for a package that is behind put the file's
+        name into a statement unquoted. `select.jsonl` made the open and this hook raise a raw
+        SQL error. The name is quoted, and a file that is no table of the engine is passed over."""
+        self._package()
+        (self.project / "pkg" / "data" / "select.jsonl").write_text('{"id":"X-1"}\n', encoding="utf-8")
+        self.assertEqual(srv._columns_behind(self.project / "pkg"), {})
+        out, code = run_hook(self.project, source="startup")
+        self.assertEqual(code, 0)
+        self.assertTrue(out.splitlines()[0].startswith("tamheed resume — package `pkg`"), out)
+        self.assertNotIn("OperationalError", out)
+        self.assertNotIn("OperationalError", str(srv.package_open("pkg")))
+
     def test_a_v6_note_still_resumes(self):
         """Plan 193 (P8): the marker moved to v7 with the prompt roster; the sentence the
         hook parses is unchanged, so a v6 note resumes until the client re-emits."""

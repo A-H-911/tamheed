@@ -1316,7 +1316,7 @@ def _columns_behind(pkg_dir: Path) -> dict:
     ddl = store.connect()
     try:
         for path in sorted((pkg_dir / "data").glob("*.jsonl")):
-            columns = [r[1] for r in ddl.execute(f"PRAGMA table_info({path.stem})")] \
+            columns = [r[1] for r in ddl.execute(f'PRAGMA table_info("{path.stem}")')] \
                 if re.fullmatch(r"[a-z_]+", path.stem) else []
             if not columns:
                 continue                       # no table of this engine: the loader's matter
@@ -5772,7 +5772,7 @@ def package_migrate(name: str, confirm: bool = False) -> dict:
                      f" ({', '.join(rewrites) if rewrites else 'no value rewrites'})")
         pe_rows.append({
             "id": f"PE-{nxt:03d}", "event_type": "note", "entry": entry,
-            "actor": "system:migrate"})
+            "actor": "system:migrate", "occurred_at": _now()})
         if legacy_note:
             rep["legacy_prompts"] = legacy_note
         if not confirm:
@@ -5805,11 +5805,11 @@ def package_migrate(name: str, confirm: bool = False) -> dict:
                 ts.__exit__(None, None, None)
             # Every new file is written beside the old ones first. Then each new file takes
             # its place in ONE step (`os.replace`), and no old file is removed before its
-            # successor stands. So a failure anywhere leaves every table on disk. Plan 045
-            # removed the old files in a loop first: one file that another program held
-            # stopped that loop, and the tables already removed were lost (field assurance of
-            # 6.5.0). A file whose bytes do not change is not written at all.
-            new_files = sorted((tmp_pkg / "data").glob("*.jsonl"))
+            # successor stands. So a failure anywhere leaves every table on disk. A file whose
+            # bytes do not change is not written. The journal's file goes FIRST (R119, plan
+            # 230): a run that stops later is then finished by a second run, with its own row.
+            journal_first = lambda f: (f.name != "progress_entries.jsonl", f.name)  # noqa: E731
+            new_files = sorted((tmp_pkg / "data").glob("*.jsonl"), key=journal_first)
             staged, done, swapped = [], [], False
             try:
                 for f in new_files:                      # 1) every new byte on disk
