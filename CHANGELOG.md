@@ -8,7 +8,7 @@ All notable changes to Tamheed are documented here. The format is based on
 > original repository (<https://github.com/A-H-911/keystone>). Tamheed carries Keystone's full git
 > history; the Keystone repository stays frozen at 1.0.x for existing v1 packages.
 
-## [6.5.0] - 2026-11-12
+## [6.5.0] - 2026-11-15
 
 **MINOR — the field round of 2026-11 (plans 221–229).** Two field projects handed up fourteen
 operator-confirmed feedback rows. Ten asked for a change, and each is answered here.
