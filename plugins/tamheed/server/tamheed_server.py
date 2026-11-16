@@ -4617,7 +4617,7 @@ _STATUS_CLAIM_RE = re.compile(
     rf"|\b{_STATUS_WORDS}\b[^\n]{{0,40}}?\b(?P<p2>[A-Z]{{2,5}})-\d+(?:\.\d+)?")
 
 
-def _restated_findings(label: str, lines: list[str]) -> list[dict]:
+def _restated_findings(label: str, lines: list[str], claims: bool = True) -> list[dict]:
     """The C22 detectors over one file's lines (plan 028: also run over package prompt
     files — a hard-coded tally in a prompt drifts exactly like one in AGENTS.md).
     Anti-false-positive bounds unchanged: tally needs the word Met; blocks need >=3
@@ -4677,16 +4677,22 @@ def _restated_findings(label: str, lines: list[str]) -> list[dict]:
             for prefix, found in sorted(fam_ids.items()):
                 if len(found) >= _ID_DENSE_MIN:
                     tid = _PREFIX_TYPE[prefix]
+                    # Plan 242 (R122): a label in the paragraph or the 3 lines before it
+                    # names the live form, as a labeled run does. The kind stays id-dense.
+                    lab = labeled(para_start, i)
                     findings.append({
                         "file": label, "line": para_start + 1, "family": tid,
-                        "count": len(found), "kind": "id-dense",
-                        "suggestion": f"a paragraph naming {len(found)} {tid} rows is a"
-                                      " hand-maintained mirror of the register. It drifts on"
-                                      f" the next write. The live form is `entity_query(\"{tid}\")`"
-                                      " / review.html#registers"})
+                        "count": len(found), "kind": "id-dense", "labeled": lab,
+                        "suggestion": (
+                            f"labeled snapshot of {len(found)} {tid} rows. Verify it is still"
+                            f" current. The live form is `entity_query(\"{tid}\")`"
+                            " / review.html#registers" if lab else
+                            f"a paragraph naming {len(found)} {tid} rows is a hand-maintained"
+                            " mirror of the register. It drifts on the next write. The live"
+                            f" form is `entity_query(\"{tid}\")` / review.html#registers")})
         para_start = None
     for i, line in enumerate(lines):
-        if i in covered:
+        if i in covered or not claims:      # plan 242 (R122): a prompt's conditions
             continue
         for m in _STATUS_CLAIM_RE.finditer(line):
             prefix = m.group("p1") or m.group("p2")
@@ -5166,8 +5172,11 @@ def handoff_emit(target_dir: str, subdir: str = "handoff", force: bool = False,
     # Plan 028 (C34): the C22 detectors run over the prompt rows too — a converted
     # prompt's hard-coded audit tally had drifted factually wrong with no signal.
     # Advisory only; never blocks emission (that strength stays G-INJECT's alone).
-    for pid, _kind, _title, body, _sk, _ph, _ca in approved_prompts:
-        restated += _restated_findings(f"{pid}.body", str(body or "").splitlines())
+    # Plan 242 (the field's FB-021, R122): a phase or situational prompt states conditions
+    # to enter or leave work, so its status claims are scanned in a kickoff prompt only.
+    for pid, kind, _title, body, _sk, _ph, _ca in approved_prompts:
+        restated += _restated_findings(f"{pid}.body", str(body or "").splitlines(),
+                                       claims=kind == "kickoff")
     prompts_section = _note_prompts_section(approved_prompts, entry_point)
 
     server_line = ("The `tamheed` MCP server is provided by the installed tamheed plugin "

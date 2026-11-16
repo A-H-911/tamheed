@@ -178,9 +178,13 @@ the same check. A project prompt over 300 lines or 24,576 bytes is named as carr
 claim. The restated-content scan gained two detectors. `status-claim` is a lifecycle word beside
 an id or an id range. `id-dense` is a paragraph naming six or more ids of one family, reported
 at the paragraph's first line. That scan runs over the target's `CLAUDE.md` / `AGENTS.md` and
-over EVERY Approved `prompt` row of the package (`PRT-NNN.body`). The tool-owned spans are
-stripped before every scan, and in the
-pointer-import case the package's own `CLAUDE.md` is scanned too. Since v5.2 (plan 130, the
+over EVERY Approved `prompt` row of the package (`PRT-NNN.body`). Since v6.7 (plan 242, the
+field's FB-021), in prompt rows, a `status-claim` is scanned in a kickoff prompt only. The
+`CLAUDE.md` and `AGENTS.md` files keep it. A phase or situational prompt states the conditions
+to enter or leave work, and a condition stays true as written. An `id-dense` paragraph with a
+label in it, or in the three lines before it, reads `labeled: true`. The tool-owned spans are
+stripped before every scan, and in the pointer-import case the package's own `CLAUDE.md` is
+scanned too. Since v5.2 (plan 130, the
 field's FB-024) the self-retracting stale-warning block lives beside the note. It lives in the
 package's `CLAUDE.md` when the root imports it, never in a file the tool does not own. Its text names
 agent-control, prompt and skill files (the scan's scope since v5.1, not "v1 references"). The

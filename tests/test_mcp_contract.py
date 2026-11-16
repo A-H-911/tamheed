@@ -3362,6 +3362,41 @@ class McpContractTest(unittest.TestCase):
             self.assertEqual(len(tallies), 1)
             self.assertEqual(tallies[0]["family"], "audit-verdict")
 
+    def test_status_claims_in_prompts_are_scanned_in_kickoffs_only(self):
+        """Plan 242 (the field's FB-021, R122): a phase prompt states the conditions to enter
+        and leave its phase ("PH-1 is Implemented", "Pass: AC-001 Met"). The scan read them as
+        status copies: 24 of the field's 27 findings. A status claim is now scanned in a
+        kickoff prompt only, and the agent-control files keep the full scan. An id-dense
+        paragraph that names a live form (`entity_query(`) reads `labeled: true`."""
+        self._emit_ready()
+        line = "Resume context: PH-1 is Implemented. Pass: AC-001 Met."
+        dense = ("Snapshot of today. The live list is `entity_query(\"risk\")`: RISK-001,"
+                 " RISK-002, RISK-003, RISK-004, RISK-005, RISK-006.")
+        rows = [{"type": "prompt", "id": pid, "kind": kind, "title": kind, "body": body,
+                 "lifecycle_status": "Approved"}
+                for pid, kind, body in (("PRT-001", "kickoff", line), ("PRT-002", "phase", line),
+                                        ("PRT-003", "situational", line),
+                                        ("PRT-004", "situational", dense))]
+        self.assertTrue(srv.entity_upsert(rows)["ok"])
+        with tempfile.TemporaryDirectory() as target:
+            out = srv.handoff_emit(target)
+            self.assertTrue(out["ok"], out)
+            claims = sorted(f["file"] for f in out["restated_content"]
+                            if f["kind"] == "status-claim")
+            self.assertEqual(claims, ["PRT-001.body"])
+            found = [f for f in out["restated_content"]
+                     if f["file"] == "PRT-004.body" and f["kind"] == "id-dense"]
+            self.assertEqual(len(found), 1)
+            self.assertTrue(found[0]["labeled"])
+            self.assertIn("Verify it is still current", found[0]["suggestion"])
+        # the other detectors still read every prompt kind: a tally in a phase prompt
+        self.assertTrue(srv.entity_upsert([dict(rows[1], body="Status: 62 Met / 1 Pending.")])[
+            "ok"])
+        with tempfile.TemporaryDirectory() as target:
+            kinds = [f["kind"] for f in srv.handoff_emit(target)["restated_content"]
+                     if f["file"] == "PRT-002.body"]
+            self.assertEqual(kinds, ["unlabeled"])
+
     def test_claude_md_note_v5_keeps_the_obligations_and_points_at_the_skills(self):
         """Plan 116 (v5): the always-loaded note keeps the mandatory obligations table and
         the lessons, names the plugin's discipline skills and the operator-invoked scenario

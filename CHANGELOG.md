@@ -24,6 +24,15 @@ All notable changes to Tamheed are documented here. The format is based on
   type matches too: `1` is not `true`, `0` is not `false`, and `"true"` is not `true`. A set of
   both kinds is refused. A boolean set reads `true / false` on the review page and in a refusal.
 
+### Changed
+
+- **Status claims in prompt rows are scanned in kickoff prompts only (plan 242, the field's
+  FB-021, R122).** A phase or situational prompt states the conditions to enter or leave
+  work, such as "PH-1 is Implemented" or "Pass: AC-004 Met". The `restated_content` scan
+  read 24 such lines in the field's prompts as status copies. The target's `CLAUDE.md` and
+  `AGENTS.md` keep the full scan. An `id-dense` paragraph that names its live form reads
+  `labeled: true`.
+
 ### Fixed
 
 - **The retire door of a register entry compares by type (plan 240).** A write that retires a

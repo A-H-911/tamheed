@@ -38,6 +38,8 @@ One per phase gate. Each has a resume context ("Phase <N-1> is complete and appr
 were …"), the phase goal, the bounded tasks with pass/fail, the invariants still in force, and the
 exit gate. Plus situational prompts: fallback-invocation, fresh-session refresher, invariant audit,
 engine/dependency upgrade + baseline regen, bug triage, release prep, deviation ADR, status report.
+A phase or situational prompt may state its conditions with ids and status words, such as
+"Pass: `AC-004` Met". `handoff_emit` reads status claims in a kickoff prompt only (v6.7).
 
 ## Review prompts — shape
 
