@@ -198,6 +198,25 @@ IN PROGRESS / DONE.
 | 228 | [The guide, its diagrams, the docs sweep](228-guide-diagrams-docs.md) | 221-227 | DONE 2026-11-12 (`151239e`, CI run 43207066805 green on eleven jobs) |
 | 229 | [Acceptance, release 6.5.0, the two field prompts](229-release-6.5.0.md) | 221-228 | DONE 2026-11-15. The stamp `f70a728`. The interview page was rebuilt twice on the operator's review (227b, 227c: `8c80174`, `e3016cc`). The field assurance on copies of both field packages found a migration that removed tables when its swap failed, and an open that wrote a file again: `28a9d17`. Two rehearsals by an agent corrected the briefs: `25193d1`. Released as `8a9855d` on `main` (CI run 43660180063 green on eleven jobs), tag `v6.5.0`. |
 
+### Field round 6.7.0 -- plans 239-247 -> v6.7.0 (2026-11-16 ->; maintainer-executed)
+
+The second field handed up six rows on 6.6.0, and the operator asked for two standup actions:
+withdraw a recorded report, and regenerate a report. The record, with rulings R121-R140, is
+[field-round-6.7.0-record.md](evidence/field-round-6.7.0-record.md). Every plan row links to
+the one approved plan.
+
+| # | Plan | Depends on | Status |
+|---|---|---|---|
+| 239 | [The round record and the rulings R121-R140](239-field-round-6.7.0.md) | 238 | in progress on `round/6.7.0` |
+| 240 | [FB-019: a closed set of true and false, compared by type](239-field-round-6.7.0.md) | 239 | planned |
+| 241 | [FB-020: the settled rule, the blocked list, the advisory `blocks-lifted`](239-field-round-6.7.0.md) | 239 | planned |
+| 242 | [FB-021: status claims scanned in kickoff prompts only; a labelled id-dense paragraph](239-field-round-6.7.0.md) | 239 | planned |
+| 243 | [FB-017: `entity_export` runs `slate_read`](239-field-round-6.7.0.md) | 239 | planned |
+| 244 | [FB-018: the browser check reads the page's shape first; one-round mode](239-field-round-6.7.0.md) | 239 | planned |
+| 245 | [FB-015: the texts on a section that a register entry replaces](239-field-round-6.7.0.md) | 239 | planned |
+| 246 | [Standup: `withdraw` and `regenerate`, migration 012, ADR-0004](239-field-round-6.7.0.md) | 239 | planned |
+| 247 | [Acceptance, release 6.7.0, the two field briefs](239-field-round-6.7.0.md) | 240-246 | planned |
+
 ### Standup report -- plans 232-237 -> v6.6.0 (2026-11-16; maintainer-executed)
 
 The operator asked for a daily status report on demand: what we did, the challenges and
