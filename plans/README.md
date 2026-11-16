@@ -207,15 +207,15 @@ the one approved plan.
 
 | # | Plan | Depends on | Status |
 |---|---|---|---|
-| 239 | [The round record and the rulings R121-R140](239-field-round-6.7.0.md) | 238 | in progress on `round/6.7.0` |
-| 240 | [FB-019: a closed set of true and false, compared by type](239-field-round-6.7.0.md) | 239 | planned |
-| 241 | [FB-020: the settled rule, the blocked list, the advisory `blocks-lifted`](239-field-round-6.7.0.md) | 239 | planned |
-| 242 | [FB-021: status claims scanned in kickoff prompts only; a labelled id-dense paragraph](239-field-round-6.7.0.md) | 239 | planned |
-| 243 | [FB-017: `entity_export` runs `slate_read`](239-field-round-6.7.0.md) | 239 | planned |
-| 244 | [FB-018: the browser check reads the page's shape first; one-round mode](239-field-round-6.7.0.md) | 239 | planned |
-| 245 | [FB-015: the texts on a section that a register entry replaces](239-field-round-6.7.0.md) | 239 | planned |
-| 246 | [Standup: `withdraw` and `regenerate`, migration 012, ADR-0004](239-field-round-6.7.0.md) | 239 | planned |
-| 247 | [Acceptance, release 6.7.0, the two field briefs](239-field-round-6.7.0.md) | 240-246 | planned |
+| 239 | [The round record and the rulings R121-R140](239-field-round-6.7.0.md) | 238 | DONE 2026-11-16 (`23b1be2`) |
+| 240 | [FB-019: a closed set of true and false, compared by type](239-field-round-6.7.0.md) | 239 | DONE 2026-11-16 (`db98e8d`) |
+| 241 | [FB-020: the settled rule, the blocked list, the advisory `blocks-lifted`](239-field-round-6.7.0.md) | 239 | DONE 2026-11-16 (`f04526e`) |
+| 242 | [FB-021: status claims scanned in kickoff prompts only; a labelled id-dense paragraph](239-field-round-6.7.0.md) | 239 | DONE 2026-11-16 (`00c19a5`) |
+| 243 | [FB-017: `entity_export` runs `slate_read`](239-field-round-6.7.0.md) | 239 | DONE 2026-11-16 (`035b762`, R141 from its security review) |
+| 244 | [FB-018: the browser check reads the page's shape first; one-round mode](239-field-round-6.7.0.md) | 239 | DONE 2026-11-16 (`3bfd1a3`; Chrome: demo 48 passed, one round 41 passed 7 skipped) |
+| 245 | [FB-015: the texts on a section that a register entry replaces](239-field-round-6.7.0.md) | 239 | DONE 2026-11-16 (`2e8b1be`) |
+| 246 | [Standup: `withdraw` and `regenerate`, migration 012, ADR-0004](239-field-round-6.7.0.md) | 239 | DONE 2026-11-17 (`b6d2725`; 246b R144 `6939d2b`; the security fix `162570d`) |
+| 247 | [Acceptance, release 6.7.0, the two field briefs](239-field-round-6.7.0.md) | 240-246 | DONE 2026-11-17. Stamp `c5a3691`; released as `162570d` on `main` (CI run 43969391119 green on eleven jobs), tag `v6.7.0`. Both fields replayed under 6.6.0 and 6.7.0; both briefs rehearsed with a restart |
 
 ### Standup report -- plans 232-237 -> v6.6.0 (2026-11-16; maintainer-executed)
 

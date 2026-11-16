@@ -91,6 +91,8 @@ _STE_SURFACES = (
     ("plans/briefs/jisr-6.5.0.md", "strict", "en", ()),
     ("plans/briefs/acmp-6.6.0.md", "strict", "en", ()),
     ("plans/briefs/jisr-6.6.0.md", "strict", "en", ()),
+    ("plans/briefs/acmp-6.7.0.md", "strict", "en", ()),
+    ("plans/briefs/jisr-6.7.0.md", "strict", "en", ()),
 )
 _STE_PENDING: tuple[str, ...] = ()  # every wave has landed (R26: the last wave leaves it empty)
 # Never linted: the linter's own messages name rejected words; a verbatim license; the lab's
