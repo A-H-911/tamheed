@@ -212,7 +212,7 @@ store decision is ADR-0003.
 | 234 | [The standup page](234-standup-page.md) -- the page, the word budget, goldens | 233 | DONE 2026-11-16 on `feat/standup-report` (looked at in a browser; goldens; 32 tests) |
 | 235 | [The `standup_report` tool](235-standup-tool.md) -- draft, record, discard, the resume line, the docs (SR47 red first) | 234 | DONE 2026-11-16 on `feat/standup-report` (SR47 fixed at three sites; selftest 22/22; recorded on a scratch copy of the first field) |
 | 236 | [The `/tamheed:standup` skill](236-standup-skill.md) | 235 | DONE 2026-11-16 on `feat/standup-report` (dry run recorded a report on a lab copy; SR51) |
-| 237 | [Acceptance, release 6.6.0, the two field briefs](237-release-6.6.0.md) | 232-236 | PLANNED |
+| 237 | [Acceptance, release 6.6.0, the two field briefs](237-release-6.6.0.md) | 232-236 | IN PROGRESS: rehearsal green (5 reports, a real agent), 6.6.0 stamped; briefs and tag wait for the operator |
 
 ### Field patch 2026-11 -- plans 230-231 -> v6.5.1 (2026-11-15 ->; maintainer-executed)
 

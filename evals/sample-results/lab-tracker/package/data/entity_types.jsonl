@@ -26,12 +26,15 @@
 {"type_id":"poc","label":"Proof of concept","id_prefix":"POC-","generation_class":"Conditional","custom_attributes":null}
 {"type_id":"progress-entry","label":"Progress entry","id_prefix":"PE-","generation_class":"Continuous","custom_attributes":null}
 {"type_id":"prompt","label":"Prompt (PRT-)","id_prefix":"PRT-","generation_class":"Always","custom_attributes":null}
+{"type_id":"register","label":"Project register (REG-)","id_prefix":"REG-","generation_class":"On-request","custom_attributes":null}
+{"type_id":"register-entry","label":"Register entry (ENT-)","id_prefix":"ENT-","generation_class":"On-request","custom_attributes":null}
 {"type_id":"requirement","label":"Requirement (FR-/NFR-)","id_prefix":"FR-","generation_class":"Always","custom_attributes":null}
 {"type_id":"risk","label":"Risk","id_prefix":"RISK-","generation_class":"Always","custom_attributes":null}
 {"type_id":"scope-change","label":"Scope change","id_prefix":"SC-","generation_class":"Continuous","custom_attributes":null}
 {"type_id":"skill","label":"Skill (SKL-, distilled from lessons)","id_prefix":"SKL-","generation_class":"On-request","custom_attributes":null}
 {"type_id":"slice","label":"Slice","id_prefix":"SL-","generation_class":"Conditional","custom_attributes":null}
 {"type_id":"stakeholder","label":"Stakeholder","id_prefix":"STK-","generation_class":"Conditional","custom_attributes":null}
+{"type_id":"standup-report","label":"Standup report (RPT-)","id_prefix":"RPT-","generation_class":"On-request","custom_attributes":null}
 {"type_id":"test","label":"Test","id_prefix":"TEST-","generation_class":"Conditional","custom_attributes":null}
 {"type_id":"waiver","label":"Readiness waiver","id_prefix":"WVR-","generation_class":"Conditional","custom_attributes":null}
 {"type_id":"wbs-item","label":"Work item","id_prefix":"WBS-","generation_class":"Conditional","custom_attributes":null}

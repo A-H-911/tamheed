@@ -1,4 +1,4 @@
-# How to use this package — the `package` operator guide (tamheed v6.5.1)
+# How to use this package — the `package` operator guide (tamheed v6.6.0)
 
 This guide sits at the root of the `package` Tamheed package. Since v5.0.0 the stock
 scenarios are not files. They are the tamheed plugin's **slash skills**, `/tamheed:<name>`,
@@ -51,6 +51,7 @@ as a project prompt under a new name (the stock name is retired), or remove it y
 | Distilling confirmed lessons into a reusable skill | `/tamheed:skill-promote` — the operator-interview ceremony (project or user level) |
 | Read-only trust audit of the package | `/tamheed:integrity-check` |
 | Refresh + read the human report | `/tamheed:generate-report` |
+| A standup report for the team and a manager: what we did, the challenges and decisions, what comes next | `/tamheed:standup` |
 | Unattended execution — the repeated prompt | `/tamheed:loop-iteration` |
 | Unattended execution — the brake (read FIRST) | `/tamheed:loop-guard` |
 | The record's prose breaks the plain-English rules (`prose-plain-english` names the texts) | `/tamheed:ste-rewrite` |
