@@ -204,7 +204,7 @@ tamheed/
 └── plugins/tamheed/                       # THE PLUGIN — the self-contained skill bundle
     ├── .claude-plugin/plugin.json
     ├── .mcp.json                           # auto-starts the server when the plugin is enabled
-    ├── skills/                             # v5: tamheed/SKILL.md (the front door, owns the capability) + 9 discipline + 17 scenario skills
+    ├── skills/                             # v5: tamheed/SKILL.md (the front door, owns the capability) + 9 discipline + 18 scenario skills
     ├── references/                         # on-demand depth + artifact-catalog.md
     ├── templates/                          # surviving narrative section templates
     ├── scripts/                            # scratch_diff.py (package diff utility)
@@ -224,7 +224,7 @@ flowchart LR
     EMIT[handoff_emit] -->|rebuilds every emit| NOTE["CLAUDE.md note - tamheed:note v7<br/>AMBIENT: package pointer, the obligations table, Approved lessons, the prompt roster, the skills line"]
     EMIT -->|refreshes the guide, retires stale leftovers| GUIDE["package/README.md<br/>the one stock file (the project's prompts are rows since v6)"]
     UPD[claude plugin update] -->|ships| DISC["9 discipline skills (v5.1, plain-english v5.9)<br/>MODEL-INVOKED, out of the / menu: package-writes, reading-the-record, operator-interview, written-claims, plain-english, test-evidence, measurement-evidence, ci-evidence, session-handoff (both routes)"]
-    UPD -->|ships| SCEN["17 scenario skills<br/>OPERATOR-INVOKED /tamheed:name - description out of context"]
+    UPD -->|ships| SCEN["18 scenario skills<br/>OPERATOR-INVOKED /tamheed:name - description out of context"]
     UPD -->|ships| HOOK["hooks/hooks.json (v5.1)<br/>SessionStart: resume_hook.py prints the resume block - plain text, screened, capped"]
     PROMO["/tamheed:skill-promote"] -->|writes on the operator's word| PROJ[".claude/skills/name<br/>PROJECT: promoted lessons, operator-owned, SKL- rows"]
     NOTE -.->|names| DISC

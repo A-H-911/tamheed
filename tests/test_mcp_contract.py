@@ -278,7 +278,7 @@ class McpContractTest(unittest.TestCase):
         for not_reader in ("package-writes", "tamheed", "loop-guard"):
             out = srv.entity_upsert([dict(rows[2], id="PRT-007", plugin_skill=not_reader)])
             self.assertFalse(out["ok"], not_reader)
-        self.assertEqual(len(srv._plugin_skill_names()), 16)   # the scenario skills that read their rows
+        self.assertEqual(len(srv._plugin_skill_names()), 17)   # the scenario skills that read their rows
         # edited in place while Approved (ruling P11): no supersession column exists
         again = srv.entity_upsert([dict(rows[0], body="Read the record first. Then start SL-002.",
                                         expect_unchanged=["title"])])

@@ -56,7 +56,8 @@ GLOSSARY = (
     ("architecture decision", "A recorded choice about the structure of the system."),
     ("waiver", "The operator's permission to pass one readiness rule."),
     ("scope change", "An approved change to the plan."),
-    ("blocker rule", "A readiness rule that must pass before the work counts as done."),
+    ("ready to close", "Every release rule of the package passes. Until then, the page names"
+                       " the rules that fail."),
     ("journal", "The work log of the package."),
     ("checkpoint", "A report that keeps the full state, so later reports can be checked."),
 )
@@ -227,7 +228,7 @@ def challenges(f: dict, narrative: dict | None, caps: dict) -> str:
             + block("Risks that moved", c["risks_moved"], caps["challenges.risks_moved"])
             + block("Failed checks", c["checks_failed"], caps["challenges.checks_failed"])
             + block("Escalations", c["escalations"], caps["challenges.escalations"])
-            + block("Blocker rules that fail", c["blocker_rules"], VISIBLE)
+            + block("Not ready to close yet", c["blocker_rules"], VISIBLE)
             + block("Blocked work", c["blocked_work"], caps["challenges.blocked_work"])
             + "</section>")
 

@@ -11,7 +11,7 @@ superseded_by: none
 ## Status
 
 Approved (maintainer, 2026-11-16 — an eleven-round interview, a devil's-advocate review, and
-50 rulings filed as SR1–SR50 in `plans/README.md`; plans 232–237, release 6.6.0).
+51 rulings filed as SR1–SR51 in `plans/README.md`; plans 232–237, release 6.6.0).
 
 ## Context
 

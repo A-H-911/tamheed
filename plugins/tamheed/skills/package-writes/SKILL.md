@@ -3,8 +3,8 @@ name: package-writes
 user-invocable: false
 description: >-
   Use before any write to a Tamheed package (entity_upsert - full-row, substitute or retire items -
-  progress_update, audit_record, work_bind, package_verify with record). Use before export_html or
-  handoff_emit, which write package files. Use before any git operation that touches package data
+  progress_update, audit_record, work_bind, package_verify with record, standup_report). Use before
+  export_html or handoff_emit, which write package files. Use before any git operation that touches package data
   (commit, branch, checkout, reset, stash, merge, push). Use before writing a commit sha, a digest,
   or a claim that a row was written, into a row or a commit message.
 ---

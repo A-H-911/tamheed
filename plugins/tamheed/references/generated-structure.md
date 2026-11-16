@@ -20,7 +20,7 @@ Markdown registers.
 │   └── .lock                      # single-writer lock (transient; never committed)
 ├── data-v3-backup/                # only after a v3→v4 package_migrate: the pre-migration data/ files
 ├── README.md                      # v6 (plan 194): the operator guide ({package} substituted), seeded at create,
-│                                  #   the ONE stock file; the 17 scenarios are the plugin's /tamheed:<name> skills.
+│                                  #   the ONE stock file; the 18 scenarios are the plugin's /tamheed:<name> skills.
 │                                  #   The project's prompts are `prompt` rows in data/prompts.jsonl (v6, plan 192)
 ├── prompts-v5-backup/             # only after a v6 package_migrate: the pre-v6 prompt files it converted
 ├── review.html (+ csv/)           # the human review surface, exported on demand

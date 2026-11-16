@@ -1261,7 +1261,7 @@ decay**. There is no score to game and nothing rots silently. A wrong skill is s
 by a human, not decayed by a counter.
 
 **Plugin skills vs project skills (v5).** The plugin ships its own skills under
-`plugins/tamheed/skills/`: the front door, nine discipline skills and seventeen operator-invoked
+`plugins/tamheed/skills/`: the front door, nine discipline skills and eighteen operator-invoked
 scenario skills. The discipline skills (`tamheed:package-writes` and its neighbours) are
 model-invoked and out of the `/` menu. Since v5.1 the note and the tool results name the one to
 invoke. The scenario skills (`/tamheed:slice-kickoff`, …) are one source, updated with the

@@ -300,7 +300,7 @@ class EngineTest(unittest.TestCase):
         self.assertEqual(F.rule_colour(sections())[0], "green")
         self.assertEqual(F.rule_colour(sections(defects=("low",)))[0], "green")
         self.assertEqual(F.rule_colour(sections(defects=("critical",)))[0], "red")
-        self.assertEqual(F.rule_colour(sections(rules=1))[0], "red")
+        self.assertEqual(F.rule_colour(sections(rules=1))[0], "green")   # SR51
         self.assertEqual(F.rule_colour(sections(risks=1))[0], "amber")
         self.assertEqual(F.rule_colour(sections(overdue=2)), ("amber",
                                                               ["2 overdue questions"]))

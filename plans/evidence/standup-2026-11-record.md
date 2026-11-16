@@ -3,7 +3,7 @@
 The operator asked on 2026-11-15 for a daily status report on demand: from the latest report to
 now, answering what we did, the challenges and decisions, and what we expect to do next, read
 by a human in 5 to 10 minutes. An eleven-round interview, two advisor passes and a
-devil's-advocate review on the operator's request produced the rulings below (SR1-SR50). The
+devil's-advocate review on the operator's request produced the rulings below (SR1-SR51). The
 approved plan is revision 2 of the session plan; ADR-0003 holds the store decision.
 
 ## Measurements (2026-11-15/16)
@@ -63,6 +63,7 @@ approved plan is revision 2 of the session plan; ADR-0003 holds the store decisi
 | SR48 | The measured daily row (14.8-20.8 KB) is accepted as approved; the size limit is 25 KB a daily row (2026-11-16) |
 | SR49 | The report row keeps the operator's exact words (committed in `data/`), like lessons and feedback; the journal note and every page leave them out (2026-11-16) |
 | SR50 | The real engine measured a daily row of 18.2-30.8 KB on ACMP (about 8.3 MB a year); the operator kept the shape and raised the limit to 35 KB a daily row (2026-11-16) |
+| SR51 | The release rules (readiness's 5 package-scope blocking rules) are not a colour input: they fail during normal work (the lab's `acs-met`). The page lists them under "Not ready to close yet". Red is an open critical or high defect (2026-11-16) |
 
 ## Research (sourced, accessed 2026-11-16)
 

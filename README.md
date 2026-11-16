@@ -311,7 +311,7 @@ situational prompt. The operator approves it, `entity_query` reads it, the emit 
 (v3) made them plain `.md` files, and the field showed what a file escapes: lifecycle, approval, the
 review page, the scans. `package_migrate` converts a 5.x package's files on the operator's word, the
 files kept in `prompts-v5-backup/`. The one stock file is the operator guide at `<package>/README.md`.
-Since v5.0.0 the seventeen scenarios are the plugin's `/tamheed:<name>` skills, not files. They cover both operator styles.
+Since v5.0.0 the eighteen scenarios are the plugin's `/tamheed:<name>` skills, not files. They cover both operator styles.
 Orientation (`orient-resume`, `package-onboarding`) and execution (`slice-kickoff`, `progress-sync`,
 `defect-triage`, `drift-register`). Close-outs (`slice-review`, `phase-close`, `release-close-out`).
 Also the advisory playbook (`register-liveness`, the amber-list sweep) and replanning (`replan-deferred`).
@@ -467,7 +467,7 @@ tamheed/
 │   ├── references/                   # per-stage / per-concern depth (incl. artifact-catalog.md)
 │   ├── templates/                    # surviving narrative section templates
 │   ├── scripts/                      # scratch_diff.py (package diff utility)
-│   ├── skills/                       # the plugin's skills: the front door + 9 discipline + 17 operator-invoked scenarios (v5)
+│   ├── skills/                       # the plugin's skills: the front door + 9 discipline + 18 operator-invoked scenarios (v5)
 │   ├── prompts/                      # the stock operator guide (emitted to <package>/README.md) + the stock history
 │   ├── db/                           # relational store: schema.sql, migrations/ (append-only), store.py, CANONICAL.md
 │   ├── server/                       # the Tamheed MCP server (the only write path into a package), the review page, the interview page

@@ -48,7 +48,7 @@ gates against the current repo"), and a PR review against acceptance criteria.
 
 ## The scenario skills (plan 018, grown in plan 027, skills since v5, plan 116)
 
-Distinct from the project prompts above: seventeen operator-invoked scenario skills ship in the bundle
+Distinct from the project prompts above: eighteen operator-invoked scenario skills ship in the bundle
 (`../skills/<name>/SKILL.md`, `disable-model-invocation`). They are invoked as `/tamheed:<name>`, with an
 argument naming another package, and are updated with the plugin, never emitted per project. Only the
 operator guide (`<package>/README.md`) is still emitted, `{package}` substituted, by `package_create`,

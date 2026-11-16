@@ -222,6 +222,8 @@ human-intervention point.
   `handoff-current` names one the journal has moved past. `handoff-repeated` (v5.8) names the lines of
   the latest one carried word for word through three handoffs, to re-measure before they are carried
   again. A stale handoff is corrected (`corrects`), never edited.
+  For the team and a manager, `/tamheed:standup` (v6.6) writes a standup report for the
+  window since the last one. The operator's word records it (`standup_report`).
   Close boundaries run `readiness_check(scope)` (plan 027). Blocking rules guard the phase/slice
   `Implemented` transition. `"force": true` only on the operator's explicit words, and the server
   writes the FORCED audit row itself.

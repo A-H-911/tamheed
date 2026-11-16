@@ -285,15 +285,14 @@ def where_we_stand(live: dict) -> dict:
 
 
 def rule_colour(sections: dict) -> tuple[str, list[str]]:
-    """Red: an open critical/high defect or a failing blocking rule. Amber: an open high risk
-    or an overdue question. Green otherwise. Returns the colour and the reasons."""
+    """Red: an open critical/high defect. Amber: an open high risk or an overdue question.
+    Green otherwise. Returns the colour and the reasons. The release rules (readiness's
+    blocking rules) are not an input (SR51): they fail during normal work."""
     c, n = sections["challenges"], sections["needs"]
     severe = [it["id"] for it in c["defects_open"]["items"] if it.get("note") in
               ("critical", "high")]
     red = ([_n(len(severe), "open critical or high defect", "open critical or high defects")]
-           if severe else []) + (
-        [_n(c["blocker_rules"]["total"], "blocker rule fails", "blocker rules fail")]
-        if c["blocker_rules"]["total"] else [])
+           if severe else [])
     if red:
         return "red", red
     amber = ([_n(c["risks_high"]["total"], "open high risk", "open high risks")]

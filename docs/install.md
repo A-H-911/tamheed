@@ -42,7 +42,7 @@ task, and the skill's description triggers it automatically. The plugin also shi
 There are nine discipline skills, model-invoked and named by the note and the tool results. They are
 `tamheed:package-writes`, `tamheed:reading-the-record`, `tamheed:operator-interview`,
 `tamheed:written-claims`, `tamheed:plain-english`, `tamheed:test-evidence`, `tamheed:measurement-evidence`,
-`tamheed:ci-evidence`, `tamheed:session-handoff`. There are seventeen operator-invoked scenario skills
+`tamheed:ci-evidence`, `tamheed:session-handoff`. There are eighteen operator-invoked scenario skills
 (`/tamheed:orient-resume`, `/tamheed:slice-kickoff`, `/tamheed:progress-sync`, and the rest), and the
 emitted `<package>/README.md` maps every situation. Since v5.1 eight of the nine are hidden
 from the `/` menu (`user-invocable: false`) and the ninth, `/tamheed:session-handoff`, takes both routes.

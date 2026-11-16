@@ -176,7 +176,7 @@ One `data/<table>.jsonl` file per non-empty family. Class = the registry's gener
 
 | Artifact | Location | Class | Notes |
 |---|---|---|---|
-| Operator guide | `<package>/README.md` | Always | The one stock file since v5, at the package root since v6. Managed emission: emitted/unchanged/diverged, with diverged classified stale-stock vs customized against the bundled stock history. refresh_stock safely updates stale-stock and removes retired 4.x scenario leftovers byte-equal to shipped stock. The project's own prompts are `prompt` rows (above). The seventeen scenarios are the plugin's `/tamheed:<name>` skills |
+| Operator guide | `<package>/README.md` | Always | The one stock file since v5, at the package root since v6. Managed emission: emitted/unchanged/diverged, with diverged classified stale-stock vs customized against the bundled stock history. refresh_stock safely updates stale-stock and removes retired 4.x scenario leftovers byte-equal to shipped stock. The project's own prompts are `prompt` rows (above). The eighteen scenarios are the plugin's `/tamheed:<name>` skills |
 | Review surface | `<package>/review.html` (+ `csv/`) | Derived | `export_html`: deterministic, zero-JS, committed |
 | Agent-control note | executor repo `CLAUDE.md` (tool-owned marker span) | Derived | `handoff_emit`: carries the recording-obligations table |
 | Executor MCP config | executor repo `.mcp.json` | Derived | `handoff_emit` |
