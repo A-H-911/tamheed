@@ -1,11 +1,10 @@
 # Brief to Jisr: tamheed 6.6.0 (the standup report, one guarded sync, a way back)
 
 > **How to use this file.** The Jisr prompt is one line. It names this file at one commit of
-> `A-H-911/tamheed` and its sha256. Read the file verbatim:
-> `gh api -H "Accept: application/vnd.github.raw" "repos/A-H-911/tamheed/contents/plans/briefs/jisr-6.6.0.md?ref=<commit>"`.
-> Without `gh`, use `curl -fsSL https://raw.githubusercontent.com/A-H-911/tamheed/<commit>/plans/briefs/jisr-6.6.0.md`.
-> Check its sha256 against the prompt before you run anything. If they differ, STOP. Then
-> execute it. Write no report unless a class fails.
+> `A-H-911/tamheed`, its sha256, and the commands that read and check it. Run them in a terminal:
+> `gh api -H "Accept: application/vnd.github.raw" "repos/A-H-911/tamheed/contents/plans/briefs/jisr-6.6.0.md?ref=<commit>" | shasum -a 256`.
+> Without `gh`: `curl -fsSL https://raw.githubusercontent.com/A-H-911/tamheed/<commit>/plans/briefs/jisr-6.6.0.md | shasum -a 256`.
+> If the sum differs from the prompt's, STOP. Then execute the brief. Write no report unless a class fails.
 >
 > Every result below is the maintainer's own measurement of 2026-11-16, on the export that the
 > operator made of your commit `7b1c85c` (branch `feature/sl-008-workshops`). Your repository was
@@ -30,11 +29,12 @@ lock behind.
 
 1. `git status --short -- tamheed` prints nothing. If it prints a line, STOP: commit or
    discard that work first.
-2. Record the commit to go back to: `git rev-parse HEAD`. It is called PRE below. Write PRE into
-   a file outside the repository, such as `../tamheed-660-pre.txt`, because the restart in 2.2
-   ends this session.
+2. Record the commit to go back to. It is called PRE below. If `../tamheed-660-pre.txt` exists,
+   this is a re-entry after the restart. Read PRE and the list of step 3 from it, and do not write
+   it again. Otherwise write `git rev-parse HEAD` into that file. It is outside the repository,
+   because the restart in 2.2 ends this session.
 3. **Untracked files.** `git status --short --untracked-files=all -- tamheed` lists the
-   files that git does not track. Write the list into the same file. Ask the operator which of
+   files that git does not track. On a first entry, write the list into the same file. Ask the operator which of
    them to keep. They copy those to a place outside the repository before a `git clean` of
    section 4, because `git clean` removes such files for good.
 4. No file `tamheed/data/.lock` exists. Ask the operator to quit every other client that
@@ -124,11 +124,10 @@ that way. Measured on `7b1c85c`:
   offset once, for example `+03:00`. Later reports reuse it.
 - The facts call returns about 38 KB. The page is about 161 KB. Its visible words depend on the
   agent's words: 1,924 in the measured run. The tool warns when a page passes 2,000 words. A
-  first report is exempt from that budget, so the warning is expected.
+  first report is exempt from that budget, so such a warning is expected.
 - The rule colour read amber: 10 open high risks. The three failing release rules show under
   "Not ready to close yet", and they do not move the colour.
-- The narrative check refuses an id that names no row. In a rehearsal it refused two ids that the
-  agent had made up, and the agent wrote the sentence again.
+- The narrative check refuses an id that names no row.
 - Recording needs the operator's words. They stay in the report's row: the journal note and
   every page leave them out. The row is in `data/`, so a commit puts them in git history.
 - The record moved `data/standup_reports.jsonl`, `data/progress_entries.jsonl`,

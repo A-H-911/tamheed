@@ -1,10 +1,10 @@
 # Brief to ACMP: tamheed 6.6.0 (the standup report, one guarded sync, a way back)
 
 > **How to use this file.** The ACMP prompt is one line. It names this file at one commit of
-> `A-H-911/tamheed` and its sha256. Read the file verbatim:
-> `gh api -H "Accept: application/vnd.github.raw" "repos/A-H-911/tamheed/contents/plans/briefs/acmp-6.6.0.md?ref=<commit>"`.
-> Check its sha256 against the prompt before you run anything. If they differ, STOP. Then
-> execute it. Write no report unless a class fails.
+> `A-H-911/tamheed`, its sha256, and the commands that read and check it. Run them in Git Bash:
+> `gh api -H "Accept: application/vnd.github.raw" "repos/A-H-911/tamheed/contents/plans/briefs/acmp-6.6.0.md?ref=<commit>" | sha256sum`.
+> PowerShell's `>` changes the bytes, so do not save the file through it. If the sum differs
+> from the prompt's, STOP. Then execute the brief. Write no report unless a class fails.
 >
 > Every result below is the maintainer's own measurement of 2026-11-16, on a scratch export of
 > your commit `156398f8` (`git archive`, so your repository was only read). The measurements are
@@ -28,11 +28,12 @@ lock behind.
 
 1. `git status --short -- tamheed-package` prints nothing. If it prints a line, STOP: commit or
    discard that work first.
-2. Record the commit to go back to: `git rev-parse HEAD`. It is called PRE below. Write PRE into
-   a file outside the repository, such as `../tamheed-660-pre.txt`, because the restart in 2.2
-   ends this session.
+2. Record the commit to go back to. It is called PRE below. If `../tamheed-660-pre.txt` exists,
+   this is a re-entry after the restart. Read PRE and the list of step 3 from it, and do not write
+   it again. Otherwise write `git rev-parse HEAD` into that file. It is outside the repository,
+   because the restart in 2.2 ends this session.
 3. **Untracked files.** `git status --short --untracked-files=all -- tamheed-package` lists the
-   files that git does not track. Write the list into the same file. Ask the operator which of
+   files that git does not track. On a first entry, write the list into the same file. Ask the operator which of
    them to keep. They copy those to a place outside the repository before a `git clean` of
    section 4, because `git clean` removes such files for good.
 4. No file `tamheed-package/data/.lock` exists. Ask the operator to quit every other client that
