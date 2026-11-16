@@ -1074,7 +1074,8 @@ Both families take the standard statuses, and no transition needs the operator's
 write guard reads the status all the same. A stored entry is retired as it is without a
 check. A write that leaves an entry live is checked, and so is a return from retirement.
 An entry links to other rows by a `refs` field, by a `relates_to` edge, or by `supersedes`
-to another entry.
+to another entry. An entry that replaces a document section never takes `supersedes` to it
+(v6.7): name the section in a declared field, or by a `relates_to` edge.
 
 ```mermaid
 stateDiagram-v2
@@ -1316,7 +1317,8 @@ are gone, so no later row can cite a source span.
 A section takes no lifecycle of its own while it lives: it follows its document. The column
 exists so that a section can leave the scans. It is nullable by necessity, because the loader
 binds an explicit NULL for a column that an older row lacks. The kept section is named by a
-`supersedes` edge.
+`supersedes` edge. A register entry that replaces a section takes no such edge, because
+supersession stays within one family (v6.7).
 
 **Purpose.** The addressable unit of prose. Sections, not blobs, are what markers are
 found in, what provenance labels attach to, and what a review can point at.

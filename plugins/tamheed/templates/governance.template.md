@@ -75,7 +75,9 @@ Draft → Proposed → Approved → Implemented
 - **Supersede:** new ID, set `superseded_by`/`supersedes` on both ends. The old item stays at status Superseded.
 - **Deprecate:** mark Obsolete with a one-line reason + date. Update or annotate downstream references.
 - **Retire a section:** a document section takes a status only to retire: `Superseded` or `Obsolete`.
-  A `supersedes` edge from the kept section names what replaces it. A live section carries no status.
+  A `supersedes` edge from the kept section names what replaces it. A register entry that replaces
+  a section takes no such edge: link it by `relates_to` or a declared reference field. A live
+  section carries no status.
 
 ## Execution gate outcomes
 

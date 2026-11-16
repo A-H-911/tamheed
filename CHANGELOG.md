@@ -42,6 +42,12 @@ All notable changes to Tamheed are documented here. The format is based on
 
 ### Fixed
 
+- **A section that a register entry replaces (plan 245, the field's FB-015, R124).** Three
+  texts said to retire a section with a `supersedes` edge. When an entry replaced the section,
+  the engine refused that edge, because supersession stays within one family. The texts now
+  say: retire the section with no edge, and link the entry by `relates_to` or a declared
+  field that names the old section. The 6.5 field briefs stay as they were published.
+
 - **The browser check reads the page's shape first (plan 244, the field's FB-018, R126).** It
   cleared every answer on the page and then refused a page of one round. It now refuses only a
   page with no ready round that asks the room a question, and it changes nothing on it. A part

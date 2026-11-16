@@ -235,7 +235,9 @@ is not judged, so an entry that no longer fits can still be retired. Every other
 judged: one that keeps the entry live, one that changes a value while it retires, and a row
 born retired. So correct the values of a live entry in the same write that edits its title or
 body. A register with no entry reads `indeterminate`. Link an entry to other rows with a
-`relates_to` edge, or with a `refs` field. The review page shows one table per register, and
+`relates_to` edge, or with a `refs` field. When entries replace document sections, retire each
+section with no edge. Keep its id in a declared reference field of the entry (`refs: true`),
+or link the two by a `relates_to` edge. The review page shows one table per register, and
 its columns are the declared fields.
 
 A package written before v6.5 does not know the two families. The write then names the route:
@@ -355,5 +357,8 @@ backticks is a quotation. The `clarifications-open` advisory counts live markers
   updated or explicitly noted as historical.
 - A document section takes a status only to retire (v6.5). A live section carries none: it
   follows its document. To retire one, set `lifecycle_status` to `Superseded` or `Obsolete`. Name
-  the section that replaces it with a `supersedes` edge from the kept section. A retired section
+  the section that replaces it with a `supersedes` edge from the kept section. A register entry
+  that replaces a section takes no such edge (v6.7): `supersedes` stays within one family. Link
+  it by a `relates_to` edge, or by a declared reference field that names the old section.
+  A retired section
   leaves the content gate and the prose-id rule, its id still resolves, and no row leaves the store.
