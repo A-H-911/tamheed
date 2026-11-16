@@ -71,5 +71,15 @@ standup actions: withdraw a recorded report, and regenerate a report. The plan i
   met dependency again, as history, and to move that dependency to `Implemented`.
 - **R139** A withdrawal removes the row. The docs say it is not erasure: git history keeps it.
 - **R140** The action is `withdraw`, and the vocabulary gains its row.
+- **R141** (the security review of 243) An export refuses a target inside `slates/`, as it
+  refuses `data/`.
+- **R142** A correction and a regenerate keep a report's frozen facts. Fresh lists come only
+  from withdrawing the newest report and drafting again.
+- **R143** (2026-11-17, after the field's fresh export) The field's operator retired the two
+  DEP-002 edges by their own ruling. Their brief OFFERS writing the edges again as history and
+  moving the dependency to `Implemented`, and asks for a review of every dependency.
+- **R144** (2026-11-17) Supersedes R133 in part: a withdrawal takes the newest place in the
+  chain whole, the newest report with every report it corrects. An operator can withdraw
+  newest first down to none, and the next draft is a first report computed from today.
 
 The approval also covered eight defaults, listed in section 6 of the plan.

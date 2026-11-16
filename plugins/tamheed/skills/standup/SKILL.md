@@ -89,8 +89,8 @@ to 8. The old report moves to Superseded. A correction cannot change the facts.
 ## Withdraw a report
 
 The newest daily report, or an override report, can be withdrawn on the operator's word.
-A correction cannot, and neither can a report that another row names. Discard any draft
-first. Call `standup_report(action="withdraw", report="RPT-NNN", confirm={"operator_confirm":
+When it is a correction, the reports it corrects go with it. A report that another row
+names stays. Discard any draft first. Call `standup_report(action="withdraw", report="RPT-NNN", confirm={"operator_confirm":
 true, "by": "human:<name>", "words": "<what they said>"})`. The row leaves the store, and
 its page is removed. A journal note names the report, who and when. The words are not stored.
 The id is never used again. Git history keeps the removed row, so this is no erasure. Prose
@@ -100,7 +100,9 @@ that cites the id keeps it, and the advisory `prose-ids-resolve` then lists it. 
 ## Fresh lists, and the page alone
 
 A correction and a regenerate keep the frozen facts. Only the newest daily report can take
-fresh lists: withdraw it, then draft again. An older window cannot be counted again, because
+fresh lists: withdraw it, then draft again. To start the chain again, withdraw the newest
+report each time until none is left: the next draft is a first report, computed from
+today. An older window cannot be counted again, because
 the store keeps current state only. `standup_report(action="regenerate")` rebuilds the
 pages of recorded reports from their rows, for a lost page or a page of an older release.
 It changes no row.

@@ -255,8 +255,8 @@ The `standup_report` tool writes the row, and `entity_upsert` refuses the family
   confirmed, and what they said. The words are stored in the row only. The journal note names the report and who recorded it, never the words, and no page prints them.
 - **Superseded.** A correction is a new report over the same window. The old row moves to
   Superseded. Approved and Superseded rows are never edited, by a trigger. The newest daily report, or
-  an override report, can be withdrawn on the operator's word (v6.7, ADR-0004). A correction
-  and a report that another row names stay.
+  an override report, can be withdrawn on the operator's word (v6.7, ADR-0004). A correction takes
+  the reports it corrects with it. A report that another row names stays.
 
 A report the operator starts at an earlier date or report is an override. It is recorded, but
 it never starts the next window. A package written before v6.6 does not know the family. The

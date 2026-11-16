@@ -7265,7 +7265,7 @@ class StandupFamilyTest(unittest.TestCase):
             conn.execute("UPDATE standup_reports SET lifecycle_status = 'Superseded'"
                          " WHERE id = 'RPT-001'")
         self._insert(id="RPT-002", supersedes="RPT-001")       # the correction's draft
-        with self.assertRaisesRegex(store_err(), "nothing depends on"):   # plan 246: named
+        with self.assertRaisesRegex(store_err(), "nothing depends on|FOREIGN KEY"):   # 246: named
             conn.execute("DELETE FROM standup_reports WHERE id = 'RPT-001'")
         conn.execute("UPDATE standup_reports SET lifecycle_status = 'Superseded'"
                      " WHERE id = 'RPT-001'")
@@ -7490,12 +7490,54 @@ class StandupToolTest(unittest.TestCase):
                                             "to_id": "RPT-002", "relation": "relates_to",
                                             "retire": True}])["ok"])
         self.record_one(supersede="RPT-002")                      # RPT-003 corrects RPT-002
-        self.assertIn("corrects RPT-002", self._withdraw_refused(report="RPT-003", confirm=w))
+        # R144: a corrected report goes only with its newest correction
+        self.assertIn("corrected by RPT-003", self._withdraw_refused(report="RPT-002", confirm=w))
         self.assertEqual(srv.entity_query("standup-report")["total"], 3)
-        with self.assertRaises(Exception) as raised:
-            srv._CURRENT.conn.execute("DELETE FROM standup_reports WHERE id = 'RPT-001'")
-        self.assertIn("nothing depends on", str(raised.exception))
+        for rid in ("RPT-001", "RPT-003"):          # a raw delete keeps the chain whole too
+            with self.assertRaises(Exception) as raised:
+                srv._CURRENT.conn.execute(f"DELETE FROM standup_reports WHERE id = '{rid}'")
+            self.assertIn("nothing depends on", str(raised.exception))
+            srv._CURRENT.conn.rollback()
+        with self.assertRaises(Exception) as raised:   # the corrected report alone: its FK
+            srv._CURRENT.conn.execute("DELETE FROM standup_reports WHERE id = 'RPT-002'")
+        self.assertIn("FOREIGN KEY", str(raised.exception))
         srv._CURRENT.conn.rollback()
+
+    def test_withdraw_refuses_a_loop_of_corrections(self):
+        """Plan 246b (the review's HIGH finding): a hand-edited data/ file can hold two reports
+        that correct each other. The walk along the corrections stops and refuses; it never
+        runs forever."""
+        self.record_one()
+        conn = srv._CURRENT.conn
+        cols = ("checkpoint, pe_to, av_to, ended_at, utc_offset, state_digest, state_delta,"
+                " facts, narrative, rule_colour, colour, recorded_by, operator_words, recorded_at")
+        conn.execute("PRAGMA defer_foreign_keys = ON")
+        for rid, status, other in (("RPT-008", "Approved", "RPT-009"),
+                                   ("RPT-009", "Superseded", "RPT-008")):
+            conn.execute(f"INSERT INTO standup_reports (id, kind, lifecycle_status, supersedes,"
+                         f" {cols}) SELECT ?, 'override', ?, ?, {cols} FROM standup_reports"
+                         " WHERE id = 'RPT-001'", (rid, status, other))
+        self.assertIn("form a loop", self._withdraw_refused(report="RPT-008",
+                                                            confirm=self.WITHDRAW))
+        conn.rollback()
+
+    def test_withdraw_takes_a_correction_with_the_reports_it_corrects(self):
+        """Plan 246b (R144, the field's own case): the newest report is a correction of the
+        first one. One withdrawal removes the correction and the reports it corrects, newest
+        first. Then no report is left, and the next draft is a first report computed from
+        today, which asks for the offset again. A chain of three corrections goes the same."""
+        self.record_one()
+        self.record_one(supersede="RPT-001")                      # RPT-002 corrects RPT-001
+        self.record_one(supersede="RPT-002")                      # RPT-003 corrects RPT-002
+        out = srv.standup_report(action="withdraw", report="RPT-003", confirm=self.WITHDRAW)
+        self.assertTrue(out["ok"], out)
+        self.assertEqual(out["reports"], ["RPT-003", "RPT-002", "RPT-001"])
+        self.assertEqual(len(out["journal_ids"]), 3)
+        self.assertEqual(srv.entity_query("standup-report")["total"], 0)
+        self.assertEqual(sorted(p.name for p in self.reports.glob("RPT-*.html")), [])
+        self.assertIn("utc_offset", srv.standup_report()["error"])
+        first = srv.standup_report(utc_offset="+03:00")
+        self.assertEqual((first["report"], first["first"]), ("RPT-004", True))
 
     def test_withdraw_takes_an_override_and_then_the_whole_chain(self):
         """Plan 246 (R133): an override report is never a base, so it can be withdrawn. Then

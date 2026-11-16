@@ -10,7 +10,7 @@ superseded_by: none
 
 ## Status
 
-Approved (operator, 2026-11-16 — rulings R133, R134, R136, R139, R140 and R142 in
+Approved (operator, 2026-11-16 — rulings R133, R134, R136, R139, R140, R142 and R144 in
 `plans/evidence/field-round-6.7.0-record.md`; plan 246, release 6.7.0).
 
 ## Context
@@ -24,8 +24,10 @@ back would break.
 
 ## Decision
 
-- A recorded report that nothing depends on can be withdrawn: the newest daily report, or an
-  override report. A correction cannot, because its place in the chain would stay empty.
+- The newest place in the chain can be withdrawn whole (R144): the newest daily report
+  together with every report it corrects, or an override report. A report that another
+  report names stays. Withdrawn newest first down to none, the chain starts again with a
+  first report.
 - The tool checks every row that names the report, and it refuses while one is left. Migration
   012 replaces the trigger `trg_standup_reports_keep` under the same name, so a raw delete
   follows the same rule.
