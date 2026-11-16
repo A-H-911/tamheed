@@ -8,15 +8,18 @@ from __future__ import annotations
 
 import json
 import random
+import re
 import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO_ROOT / "plugins" / "tamheed" / "server"))
 
 import standup as S  # noqa: E402
+import standup_page as P  # noqa: E402
 import standup_facts as F  # noqa: E402
 import tamheed_server as srv  # noqa: E402
 
@@ -300,7 +303,9 @@ class EngineTest(unittest.TestCase):
         self.assertEqual(F.rule_colour(sections(rules=1))[0], "red")
         self.assertEqual(F.rule_colour(sections(risks=1))[0], "amber")
         self.assertEqual(F.rule_colour(sections(overdue=2)), ("amber",
-                                                              ["2 overdue question(s)"]))
+                                                              ["2 overdue questions"]))
+        self.assertEqual(F.rule_colour(sections(defects=("high",)))[1],
+                         ["1 open critical or high defect"])
 
     def _row(self, rid, base, kind, out, **extra):
         return dict({"id": rid, "kind": kind, "seq": out["seq"], "base_report":
@@ -375,5 +380,191 @@ class EngineTest(unittest.TestCase):
         self.assertFalse(S.verify(self.conn, dict(row, state_digest="0" * 64))[0])
 
 
+
+GOLDEN = REPO_ROOT / "tests" / "standup_golden"
+REGEN = "--regen" in sys.argv
+
+
+class PageTest(unittest.TestCase):
+    """Plan 234: the page is a pure function of its row, inside the review page's frame."""
+
+    def setUp(self):
+        self._tmp = tempfile.TemporaryDirectory()
+        srv.PACKAGE_ROOT = Path(self._tmp.name)
+        with mock.patch.object(srv, "_now", return_value="2026-11-15T05:00:00Z"):
+            srv.package_create("pkg", "Payments revamp", "rnd")
+        self.conn = srv._CURRENT.conn
+
+    def tearDown(self):
+        if srv._CURRENT is not None:
+            srv.package_close()
+        self._tmp.cleanup()
+
+    def up(self, *rows):
+        rows = [dict({"lifecycle_status": "Proposed"}, **r) if r["type"] == "decision"
+                else r for r in rows]
+        out = srv.entity_upsert(rows)
+        self.assertTrue(out["ok"], out)
+
+    def page(self, narrative=None, *, kind_start=None, row_extra=None, exempt=None,
+             reasons=()):
+        base, kind, snapped, err = S.select_base(self.conn, kind_start)
+        self.assertIsNone(err)
+        out = S.compute(self.conn, srv.ENTITY_TABLES.values(), base, kind)
+        facts = F.build(self.conn, cls=out["cls"], live=out["live"], first=out["first"],
+                        window=out, today="2026-11-16", blocker_rules=[], screen=NEVER)
+        colour, why = F.rule_colour(facts)
+        row = dict({"id": "RPT-001", "kind": kind, "utc_offset": "+03:00",
+                    "ended_at": "2026-11-16T06:05:00Z", "state_digest": out["digest"],
+                    "rule_colour": colour, "lifecycle_status": "Draft"}, **(row_extra or {}))
+        meta = P.meta(row, package="Payments revamp", base=base, birth="2026-11-15",
+                      window=out, snapped=snapped, rule_reasons=reasons or why)
+        first = out["first"] if exempt is None else exempt
+        return P.fit(meta, facts, narrative, exempt=first)
+
+    NARRATIVE = {"headline": "The export works end to end. One defect blocks the release.",
+                 "did": "We finished the export (WBS-001).",
+                 "challenges": "The login defect is open (DEF-001).",
+                 "next": "We fix the defect first.", "plan": "Fix DEF-001, then release.",
+                 "colour": "amber", "colour_reason": "One open high defect."}
+
+    def seed(self):
+        self.up({"type": "wbs-item", "id": "WBS-001", "title": "Export to CSV",
+                 "lifecycle_status": "Implemented"},
+                {"type": "defect", "id": "DEF-001", "title": "Login fails on Safari",
+                 "severity": "high"},
+                {"type": "decision", "id": "DEC-001", "title": "Use SQLite for the cache"})
+
+    def golden(self, name, page):
+        path = GOLDEN / f"{name}.html"
+        if REGEN:
+            GOLDEN.mkdir(exist_ok=True)
+            path.write_text(page, encoding="utf-8", newline="\n")
+        self.assertEqual(page, path.read_text(encoding="utf-8"), f"{name}: run with --regen")
+
+    def test_the_first_and_a_daily_page_match_their_goldens(self):
+        self.seed()
+        page, _words = self.page(self.NARRATIVE)
+        self.golden("first", page)
+        self.assertEqual(page, self.page(self.NARRATIVE)[0])       # same row, same bytes
+        self.conn.execute(
+            "INSERT INTO standup_reports (id, kind, seq, lifecycle_status, checkpoint, pe_to,"
+            " av_to, ended_at, utc_offset, state_digest, state_delta, facts, narrative,"
+            " rule_colour, colour, recorded_by, operator_words, recorded_at) VALUES"
+            " ('RPT-001', 'default', 1, 'Approved', 1, ?, 0, '2026-11-16T06:05:00Z', '+03:00',"
+            " ?, ?, '{}', '{}', 'amber', 'amber', 'human:op', 'record it',"
+            " '2026-11-16T06:10:00Z')",
+            (S.pe_max(self.conn), *self._first_state()))
+        self.up({"type": "wbs-item", "id": "WBS-002", "title": "Import from CSV",
+                 "lifecycle_status": "Review"},
+                {"type": "decision", "id": "DEC-001", "title": "Use SQLite for the cache",
+                 "lifecycle_status": "Approved"})
+        daily, _w = self.page(self.NARRATIVE, row_extra={"id": "RPT-002",
+                                                        "ended_at": "2026-11-17T06:05:00Z"})
+        self.golden("daily", daily)
+        self.assertIn("claimed done", daily)
+        self.assertIn("waiting for approval → approved", daily)
+
+    def _first_state(self):
+        live, cols = S.state(self.conn, srv.ENTITY_TABLES.values())
+        return S.digest(live), json.dumps(S.full(live, cols))
+
+    def test_the_frame_has_no_script_and_no_outward_link(self):
+        self.seed()
+        page, _w = self.page(self.NARRATIVE)
+        self.assertIn('content="default-src \'none\'; style-src \'unsafe-inline\'"', page)
+        self.assertNotIn("<script", page.lower())
+        for href in re.findall(r'href="([^"]*)"', page):
+            self.assertTrue(href.startswith("#"), href)
+        self.assertNotIn("src=", page)
+
+    def test_hostile_text_renders_as_text(self):
+        self.up({"type": "decision", "id": "DEC-001",
+                 "title": '<img src=x onerror=alert(1)>"quoted"'})
+        evil = dict(self.NARRATIVE, did="<script>alert(2)</script> & more",
+                    headline="<b>bold</b>", next="<i>n</i>", plan="<u>p</u>",
+                    colour_reason="<s>r</s>")
+        page, _w = self.page(evil)
+        for raw in ("<b>bold", "<i>n", "<u>p", "<s>r"):
+            self.assertNotIn(raw, page)
+        odd, _w = self.page(dict(self.NARRATIVE, colour=["red"]))   # never a crash
+        self.assertIn("Proposed overall:", odd)
+        self.assertNotIn("<img src=x", page)
+        self.assertNotIn("<script>alert(2)", page)
+        self.assertIn("&lt;img src=x onerror=alert(1)&gt;&quot;quoted&quot;", page)
+        self.assertIn("&lt;script&gt;alert(2)&lt;/script&gt; &amp; more", page)
+
+    def test_the_engine_part_stays_in_its_budget_on_a_large_package(self):
+        self.up(*[{"type": "wbs-item", "id": f"WBS-{k:03d}", "title": f"Task number {k} of"
+                   " the large migration plan", "lifecycle_status": "Draft"}
+                  for k in range(1, 501)],
+                *[{"type": "defect", "id": f"DEF-{k:03d}", "title": f"Defect {k} in the"
+                   " billing screen", "severity": "medium"} for k in range(1, 201)])
+        self.conn.execute(
+            "INSERT INTO standup_reports (id, kind, seq, lifecycle_status, checkpoint, pe_to,"
+            " av_to, ended_at, utc_offset, state_digest, state_delta, facts, narrative,"
+            " rule_colour, colour, recorded_by, operator_words, recorded_at) VALUES"
+            " ('RPT-001', 'default', 1, 'Approved', 1, 0, 0, '2026-11-16T06:05:00Z', '+03:00',"
+            " ?, ?, '{}', '{}', 'green', 'green', 'human:op', 'w', '2026-11-16T06:10:00Z')",
+            self._first_state())
+        self.up(*[{"type": "wbs-item", "id": f"WBS-{k:03d}", "title": f"Task number {k} of"
+                   " the large migration plan", "lifecycle_status": "Implemented"}
+                  for k in range(1, 501)],
+                *[{"type": "defect", "id": f"DEF-{k:03d}", "title": f"Defect {k} renamed",
+                   "severity": "medium"} for k in range(1, 151)])
+        page, words = self.page(self.NARRATIVE, row_extra={"id": "RPT-002"})
+        self.assertLessEqual(words - P.narrative_words(self.NARRATIVE), P.ENGINE_BUDGET)
+        self.assertEqual(words, P.visible_words(page))
+        self.assertIn("more in the record", page)                 # the 30-item freeze
+        long = dict(self.NARRATIVE, did="word " * 900)
+        page2, words2 = self.page(long, row_extra={"id": "RPT-002"})
+        self.assertGreaterEqual(words2 - words, 890)               # the narrative never shrinks
+        self.assertLessEqual(words2 - P.narrative_words(long), P.ENGINE_BUDGET)
+
+    def test_the_first_report_is_exempt_and_complete(self):
+        self.up(*[{"type": "wbs-item", "id": f"WBS-{k:03d}", "title": f"Done task {k}",
+                   "lifecycle_status": "Implemented"} for k in range(1, 121)])
+        page, _w = self.page(self.NARRATIVE)
+        for k in (1, 60, 120):
+            self.assertIn(f"WBS-{k:03d}", page)
+        self.assertNotIn("more in the record", page)
+        self.assertIn("Where we stand", page)
+
+    def test_the_glossary_names_only_the_terms_on_the_page(self):
+        self.up({"type": "wbs-item", "id": "WBS-001", "title": "Export",
+                 "lifecycle_status": "Implemented"})
+        page, _w = self.page(None)
+        terms = re.findall(r"<dt>([^<]+)</dt>", page)
+        self.assertIn("task", terms)
+        self.assertNotIn("waiver", terms)
+        self.assertNotIn("scope change", terms)
+
+    def test_times_show_in_the_rows_offset_and_the_words_never_show(self):
+        self.seed()
+        page, _w = self.page(self.NARRATIVE, row_extra={
+            "lifecycle_status": "Approved", "recorded_by": "human:op",
+            "recorded_at": "2026-11-16T06:10:00Z", "operator_words": "SECRET WORDS",
+            "colour": "amber"})
+        self.assertIn("Mon 16 Nov 2026, 09:05 (UTC+03:00)", page)
+        self.assertIn("Recorded by human:op on Mon 16 Nov 2026, 09:10 (UTC+03:00)", page)
+        self.assertNotIn("SECRET WORDS", page)
+        self.assertNotIn("Draft: not recorded yet", page)
+
+    def test_the_rule_colour_shows_when_the_confirmed_colour_differs(self):
+        self.seed()                                   # a high defect: the rule says red
+        page, _w = self.page(self.NARRATIVE, row_extra={"colour": "amber"})
+        self.assertIn("Proposed overall: At risk.", page)
+        self.assertIn("The default rule says: off track", page)
+        same, _w = self.page(dict(self.NARRATIVE, colour="red"),
+                             row_extra={"colour": "red"})
+        self.assertNotIn("The default rule says", same)
+
+    def test_the_visible_counter_skips_closed_folds_but_reads_their_summary(self):
+        page = ("<html><head><title>t t t</title><style>a b</style></head><body>"
+                "<p>one two</p><details><summary>three</summary><p>hidden words</p>"
+                "<details><summary>nested</summary></details></details>"
+                "<details open><summary>four</summary><p>five</p></details></body></html>")
+        self.assertEqual(P.visible_text(page).split(), ["one", "two", "three", "four", "five"])
+
 if __name__ == "__main__":
-    unittest.main(verbosity=2)
+    unittest.main(argv=[a for a in sys.argv if a != "--regen"], verbosity=2)

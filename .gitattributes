@@ -12,3 +12,6 @@ docs/guide/figures/*.svg text eol=lf
 # Plan 227: an interview page and its record are generated files. Keep their line ends as written.
 **/slates/*.html text eol=lf
 **/slates/*.json text eol=lf
+# plan 234: the standup page and its goldens are compared byte for byte
+tests/standup_golden/*.html text eol=lf
+**/reports/*.html text eol=lf

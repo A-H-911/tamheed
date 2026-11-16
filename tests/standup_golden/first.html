@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Standup report RPT-001 — Payments revamp</title>
+<style>
+/* The standup page (plan 234). Inlined into each page; no external resource. */
+:root { --fg: #1d1d1f; --muted: #5f6368; --bg: #ffffff; --card: #f6f7f9; --line: #dfe1e5;
+        --green: #1e7e34; --amber: #a15c00; --red: #b3261e; --accent: #4a3aa8; }
+@media (prefers-color-scheme: dark) {
+  :root { --fg: #e8eaed; --muted: #a8adb4; --bg: #161719; --card: #202226; --line: #33363b;
+          --green: #6fcf8a; --amber: #f2b05e; --red: #f28b82; --accent: #b4a7ff; }
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--fg);
+       font: 16px/1.55 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+main { max-width: 46rem; margin: 0 auto; padding: 1.5rem 1rem 3rem; }
+h1 { font-size: 1.5rem; margin: 0 0 .25rem; }
+h1 .pkg { color: var(--muted); font-weight: 400; }
+h2 { font-size: 1.2rem; margin: 2rem 0 .5rem; padding-bottom: .25rem;
+     border-bottom: 1px solid var(--line); }
+h4 { font-size: .95rem; margin: 1rem 0 .25rem; }
+h4 .count { color: var(--muted); font-weight: 400; }
+p { margin: .4rem 0; }
+ul { margin: .25rem 0; padding-left: 1.2rem; }
+li { margin: .15rem 0; }
+.banner { background: var(--card); border-left: 4px solid var(--amber); padding: .4rem .7rem; }
+.recorded, .window, .note-line, .rule, .more, .none, .added, .pending { color: var(--muted); }
+.colour { padding: .5rem .7rem; border-radius: 6px; background: var(--card); }
+.colour.green { border-left: 6px solid var(--green); }
+.colour.amber { border-left: 6px solid var(--amber); }
+.colour.red { border-left: 6px solid var(--red); }
+.glance { font-weight: 600; }
+.headline { font-size: 1.1rem; margin: 1rem 0; }
+.needs { background: var(--card); border-radius: 8px; padding: .2rem 1rem .6rem;
+         margin-top: 1rem; }
+.needs h2 { border-bottom: 0; margin-top: .8rem; }
+.ref { color: var(--muted); font-size: .8rem; margin-left: .3rem; }
+.mv, .note { color: var(--accent); font-size: .85rem; margin-left: .3rem; }
+.plan { border-left: 3px dashed var(--accent); padding-left: .7rem; }
+.plan .label { color: var(--accent); font-size: .85rem; font-weight: 600; }
+details { margin: .2rem 0 .4rem; }
+summary { cursor: pointer; color: var(--accent); }
+table { border-collapse: collapse; width: 100%; font-size: .9rem; }
+td { border-top: 1px solid var(--line); padding: .2rem .4rem; vertical-align: top; }
+dt { font-weight: 600; margin-top: .4rem; }
+dd { margin: 0 0 0 1rem; color: var(--muted); }
+footer { margin-top: 2.5rem; font-size: .85rem; color: var(--muted); }
+@media print { .needs { background: none; border: 1px solid var(--line); }
+               details > summary { color: var(--fg); } }
+</style>
+</head>
+<body>
+<main>
+<header><h1>Standup report RPT-001<span class="pkg"> · Payments revamp</span></h1><p class="banner">Draft: not recorded yet.</p><p class="window">From the start of the package (2026-11-15) to Mon 16 Nov 2026, 09:05 (UTC+03:00).</p><p class="colour amber"><strong>Proposed overall: At risk.</strong> One open high defect.</p><p class="rule">The default rule says: off track (1 open critical or high defect).</p></header><p class="glance">1 task done · 0 checks passed · 1 defect open · 1 item needs you</p><div class="headline"><p>The export works end to end. One defect blocks the release.</p></div><section id="needs" class="needs"><h2>Needs from you</h2><h4>Decisions waiting for approval <span class="count">1</span></h4><ul><li><span class="t">Use SQLite for the cache</span> <span class="ref">DEC-001</span></li></ul></section><section id="stand"><h2>Where we stand</h2><details><summary>Rows per family</summary><table><tr><td>decisions</td><td>waiting for approval 1</td></tr><tr><td>defects</td><td>open 1</td></tr><tr><td>tasks</td><td>done 1</td></tr></table></details></section><section id="did"><h2>1. What we did</h2><p>We finished the export (WBS-001).</p><h4>Tasks done <span class="count">1</span></h4><ul><li><span class="t">Export to CSV</span> <span class="ref">WBS-001</span> <span class="note">done</span></li></ul></section><section id="challenges"><h2>2. Challenges and decisions</h2><p>The login defect is open (DEF-001).</p><p class="pending">1 decision waits for approval: see Needs from you.</p><h4>Open defects <span class="count">1</span></h4><ul><li><span class="t">Login fails on Safari</span> <span class="ref">DEF-001</span> <span class="note">high</span></li></ul></section><section id="next"><h2>3. What we expect to do next</h2><p>We fix the defect first.</p><div class="plan"><p class="label">The agent's plan. A plan, not a record.</p><p>Fix DEF-001, then release.</p></div></section><section id="terms"><h2>Terms used</h2><dl><dt>task</dt><dd>One piece of planned work.</dd></dl></section><footer><details><summary>How this report was made</summary><p>Journal rows PE-1 to PE-0, check results AV-1 to AV-0.</p><p>Starts after the start of the package.</p><p>State digest 9e6e9a8d53fa3624.</p><p>The report sees new rows, status moves and content edits in the store. It never sees work that nobody recorded.</p></details></footer>
+</main>
+</body>
+</html>

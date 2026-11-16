@@ -290,15 +290,30 @@ def rule_colour(sections: dict) -> tuple[str, list[str]]:
     c, n = sections["challenges"], sections["needs"]
     severe = [it["id"] for it in c["defects_open"]["items"] if it.get("note") in
               ("critical", "high")]
-    red = ([f"open {len(severe)} critical or high defect(s)"] if severe else []) + (
-        [f"{c['blocker_rules']['total']} blocking rule(s) fail"]
+    red = ([_n(len(severe), "open critical or high defect", "open critical or high defects")]
+           if severe else []) + (
+        [_n(c["blocker_rules"]["total"], "blocker rule fails", "blocker rules fail")]
         if c["blocker_rules"]["total"] else [])
     if red:
         return "red", red
-    amber = ([f"{c['risks_high']['total']} open high risk(s)"] if c["risks_high"]["total"]
-             else []) + ([f"{n['questions_overdue']['total']} overdue question(s)"]
-                         if n["questions_overdue"]["total"] else [])
+    amber = ([_n(c["risks_high"]["total"], "open high risk", "open high risks")]
+             if c["risks_high"]["total"] else []) + (
+        [_n(n["questions_overdue"]["total"], "overdue question", "overdue questions")]
+        if n["questions_overdue"]["total"] else [])
     return ("amber", amber) if amber else ("green", [])
+
+
+def _as_status(sections: dict) -> None:
+    for part in sections.values():
+        for value in (part.values() if isinstance(part, dict) else ()):
+            for it in (value.get("items", []) if isinstance(value, dict) else ()):
+                move = it.pop("move", None)
+                if move and not it.get("note"):
+                    it["note"] = move[1]
+
+
+def _n(n: int, one: str, many: str) -> str:
+    return f"{n} {one if n == 1 else many}"
 
 
 def first_moves(live: dict) -> dict:
@@ -324,6 +339,7 @@ def build(conn, *, cls: dict, live: dict, first: bool, window: dict, today: str,
     sections["glance"] = glance(conn, sections)
     if first:
         sections["where_we_stand"] = where_we_stand(live)
+        _as_status(sections)          # a catch-up lists states, not moves: nothing is "new"
     sections["notes"] = {"first_counted": cls.get("first_counted", []),
                          "edits_paused": cls.get("paused", []),
                          "journal_rows": len(entries), "verdicts": len(verdicts)}

@@ -209,7 +209,7 @@ store decision is ADR-0003.
 |---|---|---|---|
 | 232 | [The standup-report family, store half](232-standup-store.md) -- migration 011, the registry, the refusals, the lean read (SR9, SR23, SR24, SR46) | 231 | DONE 2026-11-16 on `feat/standup-report` (gate green on 3.13, 3.10, and with deprecations as errors) |
 | 233 | [The standup engine](233-standup-engine.md) -- state, deltas, checkpoint replay, window, facts | 232 | DONE 2026-11-16 on `feat/standup-report` (23 tests; the chain ordered by `seq`; measured on ACMP copies, SR50) |
-| 234 | [The standup page](234-standup-page.md) -- the page, the word budget, goldens | 233 | PLANNED |
+| 234 | [The standup page](234-standup-page.md) -- the page, the word budget, goldens | 233 | DONE 2026-11-16 on `feat/standup-report` (looked at in a browser; goldens; 32 tests) |
 | 235 | [The `standup_report` tool](235-standup-tool.md) -- draft, record, discard, the resume line, the docs (SR47 red first) | 234 | PLANNED |
 | 236 | [The `/tamheed:standup` skill](236-standup-skill.md) | 235 | PLANNED |
 | 237 | [Acceptance, release 6.6.0, the two field briefs](237-release-6.6.0.md) | 232-236 | PLANNED |
