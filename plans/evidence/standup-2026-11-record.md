@@ -74,3 +74,10 @@ IPA delivery-confidence guide joins criteria with judgement and rates the curren
 pattern: snapshots every N events, upcasters on schema change. Veeam: a corrupt increment drops
 that point and every later one. The deep-research skill was not used; a research agent searched
 and fetched pages, and the Brysbaert figure was checked first-hand.
+
+## Later rulings (field round 6.7.0, 2026-11-16)
+
+| # | Ruling |
+|---|---|
+| SR52 (R133, R139) | Supersedes SR23 in part: a recorded report is still never edited, and the newest daily report or an override report can be withdrawn on the operator's word (ADR-0004) |
+| SR53 (R134) | Supersedes SR24's last clause in part: a discard removes a draft, and a withdrawal removes a recorded report that nothing depends on. A withdrawn id is never used again |

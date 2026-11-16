@@ -209,8 +209,10 @@ the trust model and how to report a problem.
   escaped. Journal and handoff text that reads as an instruction is withheld. The narrative
   is refused when it cites an id that names no row, breaks a plain-English hard rule, or
   reads as an instruction. Recording needs the operator's word as the JSON boolean `true`
-  with a `human:` name. A recorded row is immutable by a trigger, and `entity_upsert`
-  refuses the family. The operator's words stay in the row: the journal note and every page
+  with a `human:` name. A recorded row is never edited, by a trigger, and `entity_upsert`
+  refuses the family. A withdrawal (v6.7) removes a row that nothing depends on, on the
+  operator's word. Git history keeps the row: the words, the facts and the pages that were
+  committed. Real erasure needs a rewrite of the git history. The operator's words stay in the row: the journal note and every page
   leave them out. The words are still committed in `data/`.
 - **An answers file is a record of a page, never the operator's word.** `slate_read` reads
   `<package>/slates/<name>.answers.json` and one `<name>.<round id>.answers.json` for each ready

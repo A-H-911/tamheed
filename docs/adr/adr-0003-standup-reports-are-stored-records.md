@@ -3,7 +3,7 @@ status: Approved
 date: 2026-11-16
 id: ADR-0003
 supersedes: ADR-0001 (partially — the "never stored snapshots" clause, for standup reports only)
-superseded_by: none
+superseded_by: ADR-0004 (partially — a report that nothing depends on can be withdrawn)
 ---
 
 # ADR-0003 — Standup reports are stored records

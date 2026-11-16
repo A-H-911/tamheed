@@ -16,6 +16,7 @@ A rejected word stays legal inside a code span and inside a name listed in the t
 | rest a verdict on evidence | verify | — |
 | give the operator's word on a row | confirm | — |
 | take a row out of the record | retire | `delete`, `erase` |
+| take the newest standup report out of the record | withdraw | `delete`, `erase` |
 | take a file, a marker or a line away | remove | `delete`, `erase` |
 | make a process or a step begin | start | `launch`, `begin`, `initiate` |
 | make a process or a loop end | stop | `halt`, `terminate` |

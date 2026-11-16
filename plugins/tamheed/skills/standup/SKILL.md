@@ -81,10 +81,29 @@ date first.
 
 ## A correction
 
-A recorded report is immutable. To fix its words, call `standup_report(supersede="RPT-NNN")`.
+A recorded report is never edited. To redo its words, call `standup_report(supersede="RPT-NNN")`.
 The draft copies the window, the changes and the facts of that report. The result carries the
 old words for reference. Attach new words and record them on the operator's word, as in steps 6
 to 8. The old report moves to Superseded. A correction cannot change the facts.
+
+## Withdraw a report
+
+The newest daily report, or an override report, can be withdrawn on the operator's word.
+A correction cannot, and neither can a report that another row names. Discard any draft
+first. Call `standup_report(action="withdraw", report="RPT-NNN", confirm={"operator_confirm":
+true, "by": "human:<name>", "words": "<what they said>"})`. The row leaves the store, and
+its page is removed. A journal note names the report, who and when. The words are not stored.
+The id is never used again. Git history keeps the removed row, so this is no erasure. Prose
+that cites the id keeps it, and the advisory `prose-ids-resolve` then lists it. Export
+`review.html`, then commit on the operator's yes.
+
+## Fresh lists, and the page alone
+
+A correction and a regenerate keep the frozen facts. Only the newest daily report can take
+fresh lists: withdraw it, then draft again. An older window cannot be counted again, because
+the store keeps current state only. `standup_report(action="regenerate")` rebuilds the
+pages of recorded reports from their rows, for a lost page or a page of an older release.
+It changes no row.
 
 ## An open that fails on `standup_reports.jsonl`
 

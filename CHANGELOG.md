@@ -12,6 +12,14 @@ All notable changes to Tamheed are documented here. The format is based on
 
 ### Added
 
+- **Withdraw and regenerate a standup report (plan 246, ADR-0004; R133, R134, R136, R139,
+  R142).** `standup_report(action="withdraw", report=..., confirm=...)` removes the newest
+  daily report or an override report, on the operator's word, when nothing names it. A
+  correction is refused. A journal note names the report, who and when, never the words, and
+  the id is never used again. Git history keeps the row. `action="regenerate"` rebuilds the
+  pages of recorded reports from their rows. Neither changes the frozen facts. Migration
+  `012_standup_withdraw.sql` replaces one trigger: no table or column changes.
+
 - **`entity_export` runs `slate_read` (plan 243, the field's FB-017, R125).** A committed
   script reads the store only through `exports/`, so it could not compare a round's checked
   transcript with its source. The file holds the transcript with its `screened` and

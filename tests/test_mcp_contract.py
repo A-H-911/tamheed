@@ -241,7 +241,7 @@ class McpContractTest(unittest.TestCase):
         folder name, and the refusal names the legal set; the registry and the schema
         head say so."""
         srv.package_create("pr", "Prompts", "rnd")
-        self.assertEqual(srv.server_info()["schema_version"], 11)
+        self.assertEqual(srv.server_info()["schema_version"], 12)
         self.assertIn(("prompt", "prompts"), srv.ENTITY_TABLES.items())
         self.assertTrue(srv.entity_upsert([{"type": "phase", "id": "PH-1", "title": "P1",
                                             "lifecycle_status": "Approved"}])["ok"])
@@ -4568,8 +4568,8 @@ class V4EngineTest(unittest.TestCase):
         edge; the `deferred-work-carried` advisory lists Activated rows with no OPEN carrier
         (Review counts as open) - bind one, or close the row Done."""
         info = srv.server_info()                 # setUp created "demo" with PH-1 / SL-001
-        self.assertEqual(info["migrations_head"], "011_standup_reports.sql")   # plan 232 (v6.6)
-        self.assertEqual(info["schema_version"], 11)
+        self.assertEqual(info["migrations_head"], "012_standup_withdraw.sql")   # plan 232 (v6.6)
+        self.assertEqual(info["schema_version"], 12)
         rules = lambda: {r["rule"]: r for r in srv.readiness_check("package")["rules"]}
         out = srv.entity_upsert([
             {"type": "deferred-work", "id": "DW-001", "title": "later", "severity": "low",
@@ -7223,8 +7223,8 @@ class StandupFamilyTest(unittest.TestCase):
 
     def test_registry_class_and_schema_head(self):
         info = srv.server_info()
-        self.assertEqual(info["schema_version"], 11)
-        self.assertEqual(info["migrations_head"], "011_standup_reports.sql")
+        self.assertEqual(info["schema_version"], 12)
+        self.assertEqual(info["migrations_head"], "012_standup_withdraw.sql")
         self.assertEqual(srv.ENTITY_TABLES["standup-report"], "standup_reports")
         row = next(r for r in srv.BASELINE_ENTITY_TYPES if r[0] == "standup-report")
         self.assertEqual((row[2], row[3]), ("RPT-", "On-request"))   # never Always: G-SET
@@ -7261,12 +7261,12 @@ class StandupFamilyTest(unittest.TestCase):
             with self.assertRaisesRegex(store_err(), "immutable", msg=change):
                 conn.execute(f"UPDATE standup_reports SET {change} WHERE id = 'RPT-001'")
         conn.execute("UPDATE standup_reports SET last_referenced = 'x' WHERE id = 'RPT-001'")
-        with self.assertRaisesRegex(store_err(), "only a draft"):
-            conn.execute("DELETE FROM standup_reports WHERE id = 'RPT-001'")
         with self.assertRaisesRegex(store_err(), "only by a correction"):   # no successor
             conn.execute("UPDATE standup_reports SET lifecycle_status = 'Superseded'"
                          " WHERE id = 'RPT-001'")
         self._insert(id="RPT-002", supersedes="RPT-001")       # the correction's draft
+        with self.assertRaisesRegex(store_err(), "nothing depends on"):   # plan 246: named
+            conn.execute("DELETE FROM standup_reports WHERE id = 'RPT-001'")
         conn.execute("UPDATE standup_reports SET lifecycle_status = 'Superseded'"
                      " WHERE id = 'RPT-001'")
         self._record("RPT-002")                                 # takes the freed chain link
@@ -7430,6 +7430,147 @@ class StandupToolTest(unittest.TestCase):
         out = srv.standup_report(action="record", confirm=self.CONFIRM)
         self.assertTrue(out["ok"], out)
         return out
+
+    WITHDRAW = {"operator_confirm": True, "by": "human:op", "words": "take it back"}
+
+    def _withdraw_refused(self, **kwargs) -> str:
+        out = srv.standup_report(action="withdraw", **kwargs)
+        self.assertFalse(out["ok"], out)
+        return out["error"]
+
+    def test_withdraw_removes_the_newest_daily_report_and_its_id_stays_used(self):
+        """Plan 246 (R133, R134, R139): the newest daily report leaves the record on the
+        operator's word. Its page goes, its window reopens, and a journal note keeps the id,
+        who and when, never the words. The next report takes a new id: RPT-002 is never
+        used again."""
+        self.record_one()
+        self.assertEqual(self.record_one()["report"], "RPT-002")
+        conn = srv._CURRENT.conn
+        (pe_to,) = conn.execute("SELECT pe_to FROM standup_reports WHERE id = 'RPT-001'").fetchone()
+        out = srv.standup_report(action="withdraw", report="RPT-002", confirm=self.WITHDRAW)
+        self.assertTrue(out["ok"], out)
+        self.assertEqual((out["stage"], out["report"]), ("withdrawn", "RPT-002"))
+        self.assertFalse((self.reports / "RPT-002.html").exists())
+        self.assertTrue((self.reports / "RPT-001.html").exists())
+        self.assertEqual(srv.entity_query("standup-report")["total"], 1)
+        note = conn.execute("SELECT entry, custom_attributes FROM progress_entries"
+                            " WHERE entry LIKE 'RPT-002 withdrawn%'").fetchall()
+        self.assertEqual(len(note), 1)
+        self.assertEqual(json.loads(note[0][1]), {"report": "RPT-002", "withdrawn": True})
+        self.assertEqual(conn.execute("SELECT COUNT(*) FROM progress_entries WHERE"
+                                      " entry LIKE '%take it back%'").fetchone()[0], 0)
+        draft = srv.standup_report()
+        self.assertTrue(draft["ok"], draft)
+        self.assertEqual(draft["report"], "RPT-003")              # never RPT-002 again
+        self.assertEqual(draft["window"]["pe_from"], pe_to + 1)   # the window reopened
+
+    def test_withdraw_refuses_what_the_chain_needs(self):
+        """Plan 246 (R133): a report that another report depends on, a correction, a report
+        that a row names, or a call during a live draft is refused, and nothing changes. A
+        raw DELETE of a middle report is refused by the trigger as well."""
+        self.record_one()
+        self.record_one()
+        w = self.WITHDRAW
+        self.assertIn("not the newest daily report", self._withdraw_refused(report="RPT-001", confirm=w))
+        self.assertIn("names the report", self._withdraw_refused(confirm=w))
+        self.assertIn("is no standup report", self._withdraw_refused(report="RPT-009", confirm=w))
+        self.assertIn("OPERATOR", self._withdraw_refused(
+            report="RPT-002", confirm={"by": "human:op", "words": "x"}))
+        self.assertIn("confirm.words is empty",
+                      self._withdraw_refused(report="RPT-002", confirm=dict(w, words=" ")))
+        self.assertTrue(srv.standup_report()["ok"])               # a live draft
+        self.assertIn("a draft standup report exists",
+                      self._withdraw_refused(report="RPT-002", confirm=w))
+        self.assertTrue(srv.standup_report(action="discard")["ok"])
+        self.assertTrue(srv.entity_upsert([{"type": "trace-edge", "from_id": "WBS-001",
+                                            "to_id": "RPT-002", "relation": "relates_to"}])["ok"])
+        self.assertIn("WBS-001 -relates_to-> RPT-002",
+                      self._withdraw_refused(report="RPT-002", confirm=w))
+        self.assertTrue(srv.entity_upsert([{"type": "trace-edge", "from_id": "WBS-001",
+                                            "to_id": "RPT-002", "relation": "relates_to",
+                                            "retire": True}])["ok"])
+        self.record_one(supersede="RPT-002")                      # RPT-003 corrects RPT-002
+        self.assertIn("corrects RPT-002", self._withdraw_refused(report="RPT-003", confirm=w))
+        self.assertEqual(srv.entity_query("standup-report")["total"], 3)
+        with self.assertRaises(Exception) as raised:
+            srv._CURRENT.conn.execute("DELETE FROM standup_reports WHERE id = 'RPT-001'")
+        self.assertIn("nothing depends on", str(raised.exception))
+        srv._CURRENT.conn.rollback()
+
+    def test_withdraw_takes_an_override_and_then_the_whole_chain(self):
+        """Plan 246 (R133): an override report is never a base, so it can be withdrawn. Then
+        each newest daily report can go, down to none. The next draft is a first report
+        again, and it asks for the offset because no report is left."""
+        self.record_one()
+        self.record_one()
+        self.assertEqual(self.record_one(start="RPT-001")["report"], "RPT-003")   # an override
+        for rid in ("RPT-003", "RPT-002", "RPT-001"):
+            out = srv.standup_report(action="withdraw", report=rid, confirm=self.WITHDRAW)
+            self.assertTrue(out["ok"], (rid, out))
+        self.assertEqual(srv.entity_query("standup-report")["total"], 0)
+        self.assertIn("utc_offset", srv.standup_report()["error"])
+        first = srv.standup_report(utc_offset="+03:00")
+        self.assertEqual((first["report"], first["first"]), ("RPT-004", True))
+
+    def test_regenerate_rebuilds_the_pages_of_recorded_reports(self):
+        """Plan 246 (R136): a page is rebuilt from its stored row, the same bytes with the
+        same engine. No row and no data file changes. A draft is not regenerated: drafting
+        it again writes its page."""
+        self.record_one()
+        page = self.reports / "RPT-001.html"
+        before = page.read_bytes()
+        page.unlink()
+        data = {p.name: p.read_bytes() for p in (srv.PACKAGE_ROOT / "demo" / "data").glob("*.jsonl")}
+        out = srv.standup_report(action="regenerate")
+        self.assertTrue(out["ok"], out)
+        self.assertEqual((out["stage"], out["reports"]), ("regenerated", ["RPT-001"]))
+        self.assertEqual(page.read_bytes(), before)
+        self.assertEqual({p.name: p.read_bytes()
+                          for p in (srv.PACKAGE_ROOT / "demo" / "data").glob("*.jsonl")}, data)
+        self.assertTrue(srv.standup_report(action="regenerate", report="RPT-001")["ok"])
+        self.assertTrue(srv.standup_report()["ok"])               # draft RPT-002
+        out = srv.standup_report(action="regenerate", report="RPT-002")
+        self.assertFalse(out["ok"], out)
+        self.assertIn("draft", out["error"])
+
+    def test_an_override_on_the_newest_report_keeps_it_and_regenerate_reads_the_chain(self):
+        """Plan 246 (the two reviews): an override built on the newest daily report names it as
+        its base, so that report stays until the override goes. Regenerate rebuilds every
+        recorded page, a superseded one too."""
+        self.record_one()
+        self.record_one()
+        self.record_one(start="RPT-001")                         # override RPT-003 on RPT-001
+        self.assertTrue(srv.standup_report(action="withdraw", report="RPT-002",
+                                           confirm=self.WITHDRAW)["ok"])
+        # RPT-001 is now the newest daily report, and the override names it as its base
+        self.assertIn("RPT-003 (its base", self._withdraw_refused(report="RPT-001",
+                                                                  confirm=self.WITHDRAW))
+        self.record_one(supersede="RPT-001")                     # RPT-004 corrects RPT-001
+        out = srv.standup_report(action="regenerate")
+        self.assertTrue(out["ok"], out)
+        self.assertEqual(out["reports"], ["RPT-001", "RPT-003", "RPT-004"])
+
+    def test_a_report_id_never_names_a_path(self):
+        """Plan 246 (the security review): the table's GLOB admits an id such as `RPT-1/../x`,
+        so a hand-edited data/ file could plant one. No action writes or removes a page
+        through such an id: regenerate names the row and writes nothing outside reports/."""
+        self.record_one()
+        conn = srv._CURRENT.conn
+        cols = ("lifecycle_status, checkpoint, pe_to, av_to, ended_at, utc_offset, state_digest,"
+                " state_delta, facts, narrative, rule_colour, colour, recorded_by,"
+                " operator_words, recorded_at")
+        conn.execute(f"INSERT INTO standup_reports (id, kind, {cols}) SELECT"
+                     f" 'RPT-1/../../evil', 'override', {cols} FROM standup_reports"
+                     " WHERE id = 'RPT-001'")
+        out = srv.standup_report(action="regenerate")
+        self.assertFalse(out["ok"], out)
+        self.assertIn("is not a report id", out["error"])
+        self.assertFalse((self.reports.parent.parent / "evil.html").exists())
+        self.assertIn("names the report", self._withdraw_refused(report="RPT-1/../../evil",
+                                                                 confirm=self.WITHDRAW))
+        self.assertIn("one id", srv.standup_report(action="regenerate",
+                                                   report="RPT-1/../../evil")["error"])
+        conn.rollback()
 
     def test_the_first_report_asks_for_the_offset_and_fixes_the_window(self):
         out = srv.standup_report()

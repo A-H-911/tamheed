@@ -468,7 +468,7 @@ _PROSE_ID_CAP = 50
 # be "unfinished". One slip in a row nobody can edit would fail the gate forever. Both
 # scans (placeholders and markers) skip them, through _graded_text.
 _REPORT_COLUMNS = {"progress_entries": {"entry"}, "audit_verdicts": {"evidence"},
-                   # plan 232: a recorded standup report is immutable and engine-written
+                   # plan 232: a recorded standup report is never edited and is engine-written
                    "standup_reports": {"facts", "narrative", "state_delta", "state_digest",
                                        "operator_words"}}
 _STANDUP_PAYLOAD = frozenset({"state_delta", "facts"})   # plan 232: left out of a default read
@@ -6428,8 +6428,15 @@ def _standup_blockers(conn) -> list[str]:
             if r.get("severity") == "blocking" and r.get("status") == "fail"]
 
 
+_RPT_ID = re.compile(r"RPT-\d+")
+
+
 def _standup_page(row: dict, *, draft: bool) -> tuple[Path, int]:
     """Render the row's page and write it: reports/draft.html or reports/RPT-NNN.html."""
+    if not draft and not _RPT_ID.fullmatch(str(row["id"])):
+        # plan 246 (the security review): the table's GLOB admits `RPT-1/../x`, so a row
+        # from a hand-edited data/ file never names a path
+        raise ValueError(f"{row['id']!r} is not a report id such as RPT-001")
     facts = json.loads(row["facts"])
     view = facts.get("view", {})
     base = view.get("base_row")
@@ -6518,7 +6525,7 @@ def _standup_store_draft(row: dict) -> str:
         conn.execute(f"UPDATE standup_reports SET {sets} WHERE id = ?",
                      [*row.values(), live[0]])
         return live[0]
-    rid = _next_id("RPT-", "standup_reports")
+    rid = _next_report_id(conn)                 # plan 246: a withdrawn id stays used
     conn.execute(f"INSERT INTO standup_reports (id, {', '.join(row)}) VALUES"
                  f" (?, {', '.join('?' * len(row))})", [rid, *row.values()])
     return rid
@@ -6733,10 +6740,151 @@ def _standup_discard() -> dict:
     return {"ok": True, "stage": "discarded", "report": draft["id"]}
 
 
+# Plan 246 (R133, R134, R136, R139, R140; ADR-0004): withdraw and regenerate.
+_WITHDRAW_CONFIRM_KEYS = ("operator_confirm", "by", "words")
+
+
+def _standup_refs(conn, rid: str) -> list[str]:
+    """Every row that names the report: an edge, a column that references an entity, and
+    another report's base or correction. A withdrawal refuses while any is left."""
+    found = [f"{a} -{rel}-> {b}" for a, b, rel in conn.execute(
+        "SELECT from_id, to_id, relation FROM trace_edges WHERE from_id = ? OR to_id = ?",
+        (rid, rid))]
+    for (table,) in conn.execute("SELECT name FROM sqlite_master WHERE type = 'table'"
+                                 " AND name NOT IN ('trace_edges', 'entity_index')"):
+        cols = {c[1] for c in conn.execute(f"PRAGMA table_info({table})")}
+        key = "id" if "id" in cols else "rowid"
+        for fk in conn.execute(f"PRAGMA foreign_key_list({table})"):
+            if fk[2] == "entity_index":
+                found += [f"{r[0]}.{fk[3]}" for r in conn.execute(
+                    f"SELECT {key} FROM {table} WHERE {fk[3]} = ?", (rid,))]
+    found += [f"{r[0]} (its base or the report it corrects)" for r in conn.execute(
+        "SELECT id FROM standup_reports WHERE id <> ? AND (base_report = ? OR supersedes = ?)",
+        (rid, rid, rid))]
+    return found
+
+
+def _next_report_id(conn) -> str:
+    """The next RPT id. A withdrawn id is never used again (R134): the journal keeps a note
+    for each recorded report, so the highest id it names counts too."""
+    n = int(_next_id("RPT-", "standup_reports")[4:])
+    for (attrs,) in conn.execute("SELECT custom_attributes FROM progress_entries WHERE"
+                                 " actor = ? AND custom_attributes IS NOT NULL",
+                                 (standup.SELF_ACTOR,)):
+        m = re.fullmatch(r"RPT-(\d+)", str((_attrs(attrs) or {}).get("report") or ""))
+        if m:
+            n = max(n, int(m.group(1)) + 1)
+    return f"RPT-{n:03d}"
+
+
+def _standup_withdraw(report, confirm) -> dict:
+    """The newest daily report, or an override report, leaves the record on the operator's
+    word. A correction stays. The page goes, and a journal note names the report, who and
+    when, never the words. Git history keeps the removed row: this is no erasure."""
+    conn = _CURRENT.conn
+    if not isinstance(report, str) or not _RPT_ID.fullmatch(report):
+        return _err('action=withdraw names the report: report="RPT-NNN". Nothing was written')
+    row = _standup_row("id = ?", (report,))
+    if row is None:
+        return _err(f"{report} is no standup report. Nothing was written")
+    if row["lifecycle_status"] != "Approved":
+        return _err(f"{report} is {row['lifecycle_status']}. Only a recorded report is withdrawn,"
+                    " and a draft is discarded. Nothing was written")
+    if row["supersedes"]:
+        return _err(f"{report} corrects {row['supersedes']}. A correction is never withdrawn,"
+                    " because its place in the chain would stay empty. Correct it again"
+                    " instead. Nothing was written")
+    if _standup_row("lifecycle_status = 'Draft'") is not None:
+        return _err("a draft standup report exists, and its window starts at the newest report."
+                    " Record or discard the draft first. Nothing was written")
+    if row["kind"] == "default":
+        (newest,) = conn.execute("SELECT MAX(seq) FROM standup_reports WHERE kind = 'default'"
+                                 " AND lifecycle_status = 'Approved'").fetchone()
+        if row["seq"] != newest:
+            return _err(f"{report} is not the newest daily report. Only the newest daily report,"
+                        " or an override report, is withdrawn. Nothing was written")
+        if conn.execute("SELECT 1 FROM standup_reports WHERE seq = ? AND id <> ?",
+                        (row["seq"], report)).fetchone():
+            return _err(f"another report shares the place of {report} in the chain. Nothing"
+                        " was written")
+    if refs := _standup_refs(conn, report):
+        return _err(f"{report} is named by: {', '.join(refs[:10])}. Remove each reference first,"
+                    " on the operator's word. A journal row is never removed, so a report that"
+                    " one names stays. Nothing was written")
+    if err := _item_error(confirm, _WITHDRAW_CONFIRM_KEYS, ("by", "words")):
+        return _err(f"confirm: {err}. Nothing was written")
+    if not _operator_word(confirm):
+        return _err("withdrawing a standup report is the OPERATOR's word. Send"
+                    " confirm.operator_confirm as the JSON boolean true, their name under by and"
+                    " what they said under words. Nothing was written")
+    by = str(confirm["by"])
+    if not by.startswith("human:") or not by[6:].strip():
+        return _err(f"confirm.by names the operator as human:<name> (got {by!r})")
+    if not str(confirm["words"]).strip():
+        return _err("confirm.words is empty: quote what the operator said. Nothing was written")
+    now = _now()
+    try:
+        conn.execute("DELETE FROM standup_reports WHERE id = ?", (report,))
+        pe_id = _next_id("PE-", "progress_entries")
+        conn.execute(   # the words are not stored (SR49): the row that held them leaves
+            "INSERT INTO progress_entries (id, event_type, entry, actor, occurred_at,"
+            " custom_attributes) VALUES (?, 'note', ?, ?, ?, ?)",
+            (pe_id, f"{report} withdrawn by {by}", standup.SELF_ACTOR, now,
+             json.dumps({"report": report, "withdrawn": True})))
+    except Exception as exc:
+        conn.rollback()
+        return _err(f"{report} was not withdrawn: {exc}")
+    page = _standup_dir() / f"{report}.html"
+    if err := _commit():
+        if err.get("applied"):              # the row is gone: its page goes too
+            page.unlink(missing_ok=True)
+        return err
+    result = {"ok": True, "stage": "withdrawn", "report": report, "journal_id": pe_id,
+              "next": "Export review.html, then commit data/ and the removed page on the"
+                      " operator's yes. Git history keeps the removed row and its words."}
+    try:
+        page.unlink(missing_ok=True)
+    except OSError as exc:              # the record is the truth: name the stray page
+        result["page_left"] = f"{page} was not removed ({exc}). Remove it by hand"
+    return result
+
+
+def _standup_regenerate(report) -> dict:
+    """Rebuild the page of each recorded report from its stored row (R136). No row changes.
+    With the same engine the bytes are the same; a later release draws its own look."""
+    if report is not None and (not isinstance(report, str) or not _RPT_ID.fullmatch(report)):
+        return _err('report is one id, such as "RPT-001", or left out for every report')
+    if report is not None:
+        row = _standup_row("id = ?", (report,))
+        if row is None:
+            return _err(f"{report} is no standup report")
+        if row["lifecycle_status"] == "Draft":
+            return _err(f"{report} is a draft. Draft it again to write its page")
+        rows = [row]
+    else:
+        ids = [r[0] for r in _CURRENT.conn.execute(
+            f"SELECT id FROM standup_reports WHERE lifecycle_status <> 'Draft'"
+            f" ORDER BY {_by_id()}")]
+        rows = [_standup_row("id = ?", (i,)) for i in ids]
+    rebuilt, failed = [], []
+    for row in rows:
+        try:
+            _standup_page(row, draft=False)
+            rebuilt.append(row["id"])
+        except (ValueError, KeyError, TypeError, OSError) as exc:  # a row edited by hand
+            failed.append(f"{row['id']!r}: {exc}")
+    if failed:
+        return _err(f"these pages were not rebuilt: {'; '.join(failed[:10])}. Rebuilt:"
+                    f" {', '.join(rebuilt) or 'none'}. No row changed")
+    return {"ok": True, "stage": "regenerated", "reports": rebuilt,
+            "next": "Commit the rebuilt pages on the operator's yes."}
+
+
 def standup_report(action: str = "draft", narrative: dict | None = None,
                    start: str | None = None, utc_offset: str | None = None,
-                   supersede: str | None = None, confirm: dict | None = None) -> dict:
-    """The standup report (plan 235, ADR-0003). See _STANDUP_DESC for the contract."""
+                   supersede: str | None = None, confirm: dict | None = None,
+                   report: str | None = None) -> dict:
+    """The standup report (plan 235, ADR-0003; plan 246, ADR-0004). See _STANDUP_DESC."""
     if guard := _need_open():
         return guard
     if _CURRENT.conn.execute("SELECT 1 FROM entity_types WHERE type_id = 'standup-report'"
@@ -6745,11 +6893,22 @@ def standup_report(action: str = "draft", narrative: dict | None = None,
                     " The package was written before the release that added it. Run"
                     " package_migrate: its staged registry-sync teaches the package the"
                     " family. Nothing was written")
-    if action not in ("draft", "record", "discard"):
-        return _err(f"action is one of: draft, record, discard (got {action!r})")
+    if action not in ("draft", "record", "discard", "withdraw", "regenerate"):
+        return _err("action is one of: draft, record, discard, withdraw, regenerate"
+                    f" (got {action!r})")
     given = {k for k, v in (("narrative", narrative), ("start", start),
                             ("utc_offset", utc_offset), ("supersede", supersede),
-                            ("confirm", confirm)) if v is not None}
+                            ("confirm", confirm), ("report", report)) if v is not None}
+    if action == "withdraw":
+        if given - {"report", "confirm"}:
+            return _err("action=withdraw takes report and confirm only. Nothing was written")
+        return _standup_withdraw(report, confirm)
+    if action == "regenerate":
+        if given - {"report"}:
+            return _err("action=regenerate takes report only. Nothing was written")
+        return _standup_regenerate(report)
+    if "report" in given:
+        return _err("report belongs to action=withdraw or action=regenerate")
     if action == "discard":
         return _err("action=discard takes no other argument") if given else _standup_discard()
     if action == "record":
@@ -6783,7 +6942,11 @@ _STANDUP_DESC = (
     " operator_confirm (the JSON boolean true), by (human:<name>), words (what the"
     " operator said) and colour. It writes reports/RPT-NNN.html and a journal note. The"
     " words stay in the row and never reach a page. action='discard' removes the draft. A"
-    " recorded report is immutable.")
+    " recorded report is never edited. action='withdraw' with report=RPT-NNN and confirm"
+    " (operator_confirm, by, words) removes the newest daily report or an override report"
+    " when nothing names it. The journal keeps a note without the words, and the id is never"
+    " used again. action='regenerate' rebuilds the pages of recorded reports from their"
+    " rows: one with report=RPT-NNN, or all. Neither changes the frozen facts.")
 _DESCRIPTION_CAP = 2048
 # --------------------------------------------------------------------------- interview page
 

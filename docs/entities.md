@@ -1109,6 +1109,7 @@ stateDiagram-v2
     Draft --> [*] : a discard removes it
     Draft --> Approved : recorded on the operator's word
     Approved --> Superseded : a correction over the same window replaces it
+    Approved --> [*] : withdrawn on the operator's word, when nothing depends on it (v6.7)
 ```
 
 #### lesson (`LL-`) — Continuous

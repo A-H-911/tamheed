@@ -228,7 +228,7 @@ class UserGuideTest(unittest.TestCase):
         """Plan 188 (R22): the Writing discipline section renders references/vocabulary.md's
         three tables, every English cell the file's own text, every row with an Arabic twin."""
         v = self.facts["vocabulary"]
-        self.assertEqual(len(v["actions"]), 25)
+        self.assertEqual(len(v["actions"]), 26)
         self.assertEqual(len(v["terms"]), 24)   # plan 196: the two halves
         self.assertEqual(len(v["names"]), 7)
         section = self.html[self.html.index('<section class="sec" id="writing">'):]
