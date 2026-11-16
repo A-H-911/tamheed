@@ -8,7 +8,16 @@ All notable changes to Tamheed are documented here. The format is based on
 > original repository (<https://github.com/A-H-911/keystone>). Tamheed carries Keystone's full git
 > history; the Keystone repository stays frozen at 1.0.x for existing v1 packages.
 
-## [Unreleased]
+## [6.7.0] - 2026-11-16
+
+**MINOR — the second field's round (plans 239–247: FB-015, FB-017 to FB-021) and two standup
+actions (ADR-0004).** Rulings R121–R142 are in `plans/evidence/field-round-6.7.0-record.md`.
+
+**For a live package.** Update the plugin and start the client again. No migration is needed:
+migration `012_standup_withdraw.sql` replaces one trigger and changes no stored file. Run
+`handoff_emit(<repository root>, refresh_stock=true)` and `export_html()`. From 6.7.0 back to
+6.6.0 the plugin goes back alone. Before that, write a boolean `values` set as text, because
+6.6.0 refuses every write to such a register. 6.6.0 would also use a withdrawn report id again.
 
 ### Added
 
