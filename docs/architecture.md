@@ -103,7 +103,8 @@ characters. Three tools register a contract there (`entity_query`, `progress_upd
 the selftest compares what the SDK lists with the registry. A committed script that must quote the store
 byte-exact (a review slate, a docket) has the same rule and its own route (v4.7, findings_24).
 **`entity_export`** writes a read tool's whole result to a deterministic, digest-stamped JSON file under
-`<package>/exports/`, and the script quotes from that file. The digest names the state the rows came from,
+`<package>/exports/`, and the script quotes from that file. Since v6.7 the tool can be `slate_read`, whose file
+also reads the answers files and carries their times. The digest names the state the rows came from,
 so a slate's currency is one `package_verify` away. The same file is how a project talks BACK to the plugin
 (v4.11). What the tools lack, and what the project built instead, is an `FB-` row. The operator
 confirms it, the project exports it into its findings, and the maintainer collects it. It is never a

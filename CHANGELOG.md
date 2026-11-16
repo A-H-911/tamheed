@@ -12,6 +12,13 @@ All notable changes to Tamheed are documented here. The format is based on
 
 ### Added
 
+- **`entity_export` runs `slate_read` (plan 243, the field's FB-017, R125).** A committed
+  script reads the store only through `exports/`, so it could not compare a round's checked
+  transcript with its source. The file holds the transcript with its `screened` and
+  `provenance` keys. It carries the answers files' own `exported_at` times, and its digest
+  covers the store only. The agent still reads the transcript back to the operator.
+  An export now refuses a target inside `slates/`, as it refuses `data/` (R141).
+
 - **Work that is free to start (plan 241, the field's FB-020, R121, R127, R130).** The
   standup list of blocked work read only the `blocked_by` edge, so a met dependency still
   blocked its slice. A blocker now lifts the block when it is settled, by one rule per

@@ -439,6 +439,39 @@ class SlateTest(unittest.TestCase):
             {"question": "q1", "selected": "other", "other": "  ", "note": ""}])
         self.assertEqual(blank["unanswered"], ["q1", "q2"])       # an empty free answer is none
 
+    def test_entity_export_writes_the_checked_transcript(self):
+        """Plan 243 (the field's FB-017, R125): a committed script reads the store only through
+        exports/, and slate_read was not one of the tools that entity_export runs. Now it is.
+        The file holds the checked transcript, with the screened and provenance keys. It has
+        no count, so no `partial`. With no answers file the reader's error comes back, and no
+        file is written."""
+        exported = self._export()
+        target = srv.PACKAGE_ROOT / "demo" / "exports" / "round-1.read.json"
+        missing = srv.entity_export("round-1.read.json", tool="slate_read",
+                                    args={"name": "round-1"})
+        self.assertFalse(missing["ok"], missing)
+        self.assertFalse(target.exists())
+        self._answer(exported)
+        out = srv.entity_export("round-1.read.json", tool="slate_read", args={"name": "round-1"})
+        self.assertTrue(out["ok"], out)
+        self.assertNotIn("partial", out)
+        body = json.loads(target.read_text(encoding="utf-8"))
+        self.assertEqual(body["tamheed_export"]["tool"], "slate_read")
+        self.assertEqual(body["result"]["unanswered"], ["q2"])
+        self.assertEqual(body["result"]["provenance"], "unverified")
+        self.assertIn("screened", body["result"])
+        self.assertNotIn("skill", body["result"])
+        self.assertEqual(body["result"]["files"][0]["exported_at"], "2026-11-12T10:00:00.000Z")
+        # a name that leaves slates/ is refused by the reader, and no file is written
+        bad = srv.entity_export("bad.json", tool="slate_read", args={"name": "../x"})
+        self.assertFalse(bad["ok"], bad)
+        self.assertFalse((target.parent / "bad.json").exists())
+        # R141: an export never writes inside slates/, where it could take an answers slot
+        slot = srv.PACKAGE_ROOT / "demo" / "slates" / "round-2.answers.json"
+        refused = srv.entity_export(str(slot), tool="slate_read", args={"name": "round-1"})
+        self.assertIn("inside the slates/ directory", refused["error"])
+        self.assertFalse(slot.exists())
+
     def test_the_reader_refuses_a_file_that_does_not_fit_the_slate(self):
         """Plan 227: a head for another slate or another digest, an answer to a question that
         the slate does not ask, an option that the question does not have, a free answer

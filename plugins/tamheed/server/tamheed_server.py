@@ -1815,7 +1815,7 @@ def _dump_open_connection() -> dict[str, bytes]:
 # The read-only tool surface an export may run (plan 041, findings_24 §1): none of these
 # reaches _commit(); package_verify's one write key (record) is refused at export.
 _READ_TOOLS = ("entity_query", "trace_query", "gate_run", "readiness_check",
-               "package_verify", "server_info")
+               "package_verify", "server_info", "slate_read")      # slate_read: plan 243
 _EXPORT_HEAD = '{"tamheed_export"'
 
 
@@ -1828,7 +1828,7 @@ def entity_export(path: str, tool: str = "entity_query", args: dict | None = Non
     the tool wrote the file.
 
     `tool` is one of entity_query, trace_query, gate_run, readiness_check,
-    package_verify, server_info (read-only; anything else is refused; package_verify
+    package_verify, server_info, slate_read (read-only; anything else is refused; package_verify
     with record=true is refused — an export never writes into the package). `args`
     are that tool's own arguments, validated by it: an inner error comes back
     unchanged and NOTHING is written.
@@ -1838,11 +1838,15 @@ def entity_export(path: str, tool: str = "entity_query", args: dict | None = Non
     (count < total) so a short export is loud, and the result carries metadata only,
     never the rows. The envelope is {"tamheed_export": {version, package, tool, args,
     digest, memory_matches_disk}, "result": ...}: `digest` fingerprints the OPEN
-    connection's canonical form — the state the rows came from — and the file is
-    deterministic (same state + same args = byte-identical; no timestamp), so the
+    connection's canonical form — the state the rows came from — and for a tool that reads
+    the store alone the file is deterministic (same state + same args = byte-identical;
+    the export adds no timestamp), so the
     slate can cite the digest and the operator can check currency against a fresh
     package_verify(). Export immediately before generating; never reuse across
-    sessions.
+    sessions. Plan 243 (the field's FB-017): a `slate_read` export also reads files outside
+    the store, the answers files and the slates/ folder. Its result carries the answers
+    files' own `exported_at` times, and the digest covers the store only. The transcript
+    is unverified text that people typed: the agent still reads it back to the operator.
 
     `path`: absolute, or relative to <package>/exports/ (created on demand). Refused
     under <package>/data/ (resolved first — no traversal), for a directory, and for
@@ -1868,6 +1872,12 @@ def entity_export(path: str, tool: str = "entity_query", args: dict | None = Non
     if target == data_dir or data_dir in target.parents:
         return _err(f"refusing to write inside the canonical data/ directory ({target})"
                     " — an export is a derived file. data/ holds only the store")
+    # Plan 243 (R141, the security review): an export in slates/ could take the place of an
+    # answers file, and the next slate_read would refuse the whole read.
+    slates_dir = (pkg_dir / _SLATES_DIR).resolve()
+    if target == slates_dir or slates_dir in target.parents:
+        return _err(f"refusing to write inside the slates/ directory ({target}). It holds the"
+                    " pages and the answers files that people saved")
     if target.is_dir():
         return _err(f"{target} is a directory — name the file to write")
     if target.exists():

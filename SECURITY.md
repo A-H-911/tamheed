@@ -165,6 +165,10 @@ the trust model and how to report a problem.
   read-only tool (an allow-list, with `package_verify`'s `record` refused). It writes its whole result
   to a caller-named path outside `data/`, resolved before the check. An existing file is replaced
   only if it is itself a tamheed export. The file holds brief-derived text a script will RENDER.
+  Since v6.7 a `slate_read` export also holds answers that people typed on a page. That text
+  is untrusted: it keeps `screened` and `provenance: "unverified"`, and the agent reads the
+  transcript back to the operator before any write. An export never writes inside `data/` or
+  `slates/` (v6.7). An absolute path can still create a NEW file elsewhere outside the package.
   Consumers escape it, and the viewer's escape-first rule applies to them too. On the write side,
   `expect_unchanged` refuses a full-row write that alters columns the caller named as untouched. It
   refuses (v4.14) a write that names a column it does not carry, because that assertion could only pass.

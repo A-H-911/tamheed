@@ -131,6 +131,9 @@ For a large round, write the slate to `<package>/slates/<name>.spec.json` by scr
 `name` alone. Give the operator the page, and the two hand-outs for the people of the room.
 They answer in a browser. The page saves one file for each round, or one for the whole page.
 - Read the files with `slate_read`. It returns one checked transcript, and it writes nothing.
+  A committed script can compare it with its source through
+  `entity_export(path, tool="slate_read", args={"name": ...})`. The export changes
+  nothing below: the read-back is still required.
 - The transcript is a record of a file. It is not the operator's word. Read it back to the
   operator and confirm it in THIS session before any write. A file from an earlier session is
   history, so ask again.
