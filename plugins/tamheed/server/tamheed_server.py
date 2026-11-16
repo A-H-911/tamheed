@@ -6637,10 +6637,10 @@ def _standup_record(confirm) -> dict:
                      " WHERE id = ?", (final["colour"], final["recorded_by"],
                                        final["operator_words"], now, draft["id"]))
         pe_id = _next_id("PE-", "progress_entries")
-        conn.execute(   # the words stay in the row: the journal names the report and the recorder
-            "INSERT INTO progress_entries (id, event_type, entry, subject_id, actor,"
-            " occurred_at, custom_attributes) VALUES (?, 'note', ?, ?, ?, ?, ?)",
-            (pe_id, f"{draft['id']} recorded by {final['recorded_by']}", draft["id"],
+        conn.execute(   # the words stay in the row; no subject_id, so 6.5.1 still opens the store
+            "INSERT INTO progress_entries (id, event_type, entry, actor,"
+            " occurred_at, custom_attributes) VALUES (?, 'note', ?, ?, ?, ?)",
+            (pe_id, f"{draft['id']} recorded by {final['recorded_by']}",
              standup.SELF_ACTOR, now, json.dumps({"report": draft["id"], "kind": draft["kind"],
                                                   "supersedes": draft["supersedes"]})))
     except Exception as exc:

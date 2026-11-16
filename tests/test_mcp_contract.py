@@ -7373,7 +7373,8 @@ class StandupToolTest(unittest.TestCase):
         self.assertFalse((self.reports / "draft.html").exists())
         note = srv.entity_query("progress-entry", id=out["journal_id"])["rows"][0]
         self.assertEqual((note["event_type"], note["actor"], note["subject_id"]),
-                         ("note", "system:standup-report", "RPT-001"))
+                         ("note", "system:standup-report", None))   # 6.5.1 must still load it
+        self.assertEqual(json.loads(note["custom_attributes"])["report"], "RPT-001")
         self.assertNotIn("SECRET", note["entry"])
         self.assertEqual(srv.server_info()["resume"]["handoff_behind"], before)
         row = srv.entity_query("standup-report", columns=["lifecycle_status",

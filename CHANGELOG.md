@@ -19,7 +19,10 @@ decisions, and what we expect to do next, for the window since the last report.
 registry-sync teaches the package the `standup-report` family (a pure append, no backup). Then
 run `handoff_emit(<repository root>, refresh_stock=true)` and `export_html()`. The first
 `/tamheed:standup` asks for the operator's UTC offset. From 6.6.0 back to 6.5.1 the plugin goes
-back alone, after `standup_reports.jsonl`, `reports/` and the registry row are removed.
+back alone. Measured on both field packages: 6.5.1 opens a store that 6.6.0 wrote, with a
+recorded report in it, reads the same gates and moves no file. Its `package_verify` names
+`standup_reports.jsonl` as dirty, because it does not know that table. Remove the file (git
+keeps it) for a clean verify.
 
 ### Added
 - **The standup report** (`RPT-`, table `standup_reports`, migration `011_standup_reports.sql`).
@@ -32,6 +35,8 @@ back alone, after `standup_reports.jsonl`, `reports/` and the registry row are r
 - **The `standup_report` tool** (22 tools): draft the facts, attach the agent's words (refused
   for an id that names no row, a plain-English hard finding, or instruction-shaped text),
   record on the operator's word (`operator_confirm`, `by`, `words`, `colour`), discard. The
+  journal note names the report in its attributes, never as a subject, so 6.5.1 still opens
+  the store. The
   page `reports/RPT-NNN.html` lists the facts in plain words, with a glossary, and keeps the
   engine's part within 1,400 visible words. The operator's words stay in the row: the journal
   note and every page leave them out. The rule colour is red for an open critical or high

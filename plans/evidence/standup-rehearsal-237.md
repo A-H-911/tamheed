@@ -28,3 +28,23 @@ narrative attaches on any report (one refusal on RPT-001).
 **Lessons for the harness:** read the session id from the run folder, never through a path that
 the shell rewrites (`/c/...` against Windows Python). A failed lookup silently starts a new
 session.
+
+## The field briefs, measured and rehearsed (2026-11-16)
+
+**Measured** (`scripts-237/measure_briefs_660.py`, `wayback_660.py`) on a scratch export of ACMP's
+commit `208c7f2e` and on a copy of Jisr's export of 2026-11-12. The route held on both: the
+registry-sync, the stock guide, a first report recorded with `live_match` true, `package_verify`
+clean. **The way back found a fault before the release:** the record's journal note named the
+report as its `subject_id`, a foreign key that 6.5.1 cannot resolve, so 6.5.1 refused to load a
+store with a recorded report. The note now names the report in its attributes only. After that,
+6.5.1 opens both stores, reads the same gates and moves no file. Its `package_verify` names
+`standup_reports.jsonl` dirty, and removing that file gives a clean verify.
+
+**Rehearsed** by a headless agent on a scratch repository of each field, the bundle loaded:
+
+| | ACMP (`acmp-6.6.0.md`) | Jisr (`jisr-6.6.0.md` with `jisr-6.5.1.md`) |
+|---|---|---|
+| Sessions, cost | 2, 1.98 USD | 1, 1.78 USD |
+| Result | Every class held. It stopped once at a root `.mcp.json` and filed a row, as the brief said: the rehearsal's own artifact (the bundle loads from a local folder). The brief now says so, and the row was rejected on the scripted word | Every class held, every STOP held, no feedback row resolved without the word |
+| The report | RPT-001 green. The narrative check refused two ids that the agent had made up | RPT-001 amber (10 high risks, 1 overdue question), the three release rules listed |
+| Folded into the briefs | sizes as ranges (the commit moved), `reports/.gitignore`, the csv files of the written tables | the same |
