@@ -1,15 +1,21 @@
-/* Browser check of the interview page's script (plan 227c, R114).
+/* Browser check of the interview page's script (plan 227c, R114; plan 244, R126).
 
    The gate reads the script as text, and CI runs no browser. This file checks what the
    script DOES. It is not loaded by the page: the page's content policy admits one script.
    Run it from a browser's developer tools, or through the DevTools protocol, against a page
-   that `slate_export` wrote for a slate with two ready rounds, one round that is not ready,
-   participants, one question of the operator and one recommendation. The demo slate of
-   plans/evidence/scripts-227/demo_227c.py is such a slate.
+   that `slate_export` wrote.
 
-   The file is ONE async function. It answers {passed, failed, lines}. It starts no download.
-   IT CLEARS EVERY ANSWER THAT THE PAGE HOLDS, first and again at its end. Save the answers
-   to a file before you run it on a page that people have answered. */
+   THE PAGE'S SHAPE. The page needs at least one ready round with a question of the room. A
+   page without one is refused BEFORE anything changes, and its answers stay as they were.
+   Each other part of the page gates the checks that read it: a second ready round, a round
+   that is not ready, participants, a question of the operator, a recommendation. When a part
+   is missing, its checks print SKIP with the part they need. The demo slate of
+   plans/evidence/scripts-227/demo_227c.py has every part, so nothing skips on it.
+
+   The file is ONE async function. It answers {passed, skipped, failed, lines}. It starts no
+   download. ON A PAGE IT ACCEPTS, IT CLEARS EVERY ANSWER THAT THE PAGE HOLDS, first and again
+   at its end. Save the answers to a file before you run it on a page that people have
+   answered. */
 async () => {
   const lines = [];
   const check = (name, ok) => lines.push((ok ? 'pass ' : 'FAIL ') + name);
@@ -45,6 +51,32 @@ async () => {
       await new Promise((done) => setTimeout(done, 50));
     }
   };
+  /* the page's shape, read from its classes BEFORE anything changes (plan 244, FB-018): a
+     page with no ready round that asks the room a question is refused, untouched */
+  const sections = $$('section.round');
+  const ready = sections.filter((s) => !s.classList.contains('notready'));
+  const first = ready.filter((s) => $('fieldset.question[data-owner="room"]', s))[0];
+  if (!first) {
+    return { passed: 0, skipped: 0, failed: 1, lines: ['FAIL the page has no ready round with a'
+      + ' question of the room. The check changed nothing on it.'] };
+  }
+  const second = ready.filter((s) => s !== first)[0];
+  const later = ready[ready.indexOf(first) + 1];
+  /* looked up in the ready rounds only: a round that is not ready shows nothing */
+  const within = (selector) => ready.map((s) => $(selector, s)).filter(Boolean)[0] || null;
+  const operator = within('fieldset.question[data-owner="operator"]');
+  const recmark = within('.recmark');
+  const recreason = within('.recreason');
+  const needs = {
+    second: second ? '' : 'a second ready round',
+    later: later ? '' : 'a ready round after the first',
+    notReady: sections.length > ready.length ? '' : 'a round that is not ready',
+    operator: operator ? '' : 'a question of the operator',
+    rec: recmark ? '' : 'a recommendation',
+  };
+  const skip = (name, need) => lines.push('SKIP ' + name + ' (needs ' + need + ')');
+  const gated = (need, name, ok) => (need ? skip(name, need) : check(name, ok()));
+
   /* the check starts no download: the link's click is replaced while it runs */
   const link = document.getElementById('download');
   let downloads = 0;
@@ -54,12 +86,6 @@ async () => {
     set('one', false); set('presenter', false); set('recs', false); set('session', false);
     click('f-all');
     clearAll();
-    const sections = $$('section.round');
-    const ready = sections.filter((s) => !s.classList.contains('notready'));
-    /* the first ready round that asks the room a question, and one other ready round */
-    const first = ready.filter((s) => $('fieldset.question[data-owner="room"]', s))[0];
-    const second = ready.filter((s) => s !== first)[0];
-    if (!first || !second) { throw new Error('the page needs two ready rounds, one with a question of the room'); }
     const room = $('fieldset.question[data-owner="room"]', first);
     const open = (section) => {
       const id = section.getAttribute('data-round');
@@ -67,20 +93,20 @@ async () => {
       if (shown(jump)) { jump.click(); } else { $('#round-pick').value = id; fire($('#round-pick'), 'change'); }
     };
     open(first);
-    const operator = $('fieldset.question[data-owner="operator"]');
     const firstId = first.getAttribute('data-round');
 
     check('the page holds one script', $$('script').length === 1);
-    check('room view hides the operator question', !shown(operator));
+    gated(needs.operator, 'room view hides the operator question', () => !shown(operator));
     check('room view hides attendance and closure', $$('.oponly').every((el) => !shown(el)));
-    check('recommendations are hidden until they are shown', !shown($('.recmark')));
+    gated(needs.rec, 'recommendations are hidden until they are shown', () => !shown(recmark));
     set('presenter', true);
-    check('presenter view shows the operator question', shown(operator));
+    gated(needs.operator, 'presenter view shows the operator question', () => shown(operator));
     check('presenter view shows attendance and closure', shown($('.attendance')) && shown($('.closure')));
     check('presenter view shows the controls', shown($('.controls')));
-    check('the presenter switch does not show recommendations', !shown($('.recmark')));
+    gated(needs.rec, 'the presenter switch does not show recommendations', () => !shown(recmark));
     set('recs', true);
-    check('Show recommendations shows the badge and the reason', shown($('.recmark')) && shown($('.recreason')));
+    gated(needs.rec, 'Show recommendations shows the badge and the reason',
+      () => shown(recmark) && shown(recreason));
 
     const radio = $('input[type="radio"]', room);
     radio.click();
@@ -115,15 +141,19 @@ async () => {
     key(document.body, rtl ? 'ArrowRight' : 'ArrowLeft');
     check('the other arrow key turns it back', position() === before);
     check('one step is on the screen', $$('.step').filter(shown).length === 1);
-    for (let n = 0; n < 400 && $('section.round.current-round') === first; n += 1) { click('next'); }
+    if (later) {
+      for (let n = 0; n < 400 && $('section.round.current-round') === first; n += 1) { click('next'); }
+    }
     const after = $('section.round.current-round');
-    check('Next crosses to the next ready round', after !== first && ready.indexOf(after) === ready.indexOf(first) + 1);
-    check('the position line names the round', position().indexOf($('h2 bdi', after).textContent) === 0);
+    gated(needs.later, 'Next crosses to the next ready round',
+      () => after !== first && ready.indexOf(after) === ready.indexOf(first) + 1);
+    gated(needs.later, 'the position line names the round',
+      () => position().indexOf($('h2 bdi', after).textContent) === 0);
     click('view-all');
     open(first);
     check('a round can be opened from the list', $('section.round.current-round') === first);
     const notReady = $$('.jump').filter((b) => b.disabled).length + $$('#round-pick option').filter((o) => o.disabled).length;
-    check('a round that is not ready cannot be opened', sections.length === ready.length || notReady > 0);
+    gated(needs.notReady, 'a round that is not ready cannot be opened', () => notReady > 0);
 
     const row = $('.attrow', first);
     if (row) {
@@ -131,6 +161,8 @@ async () => {
       state.value = 'covered'; fire(state, 'change');
       check('a covered participant asks who covers', shown($('[data-field="covered_by"]', row)));
       $('[data-field="covered_by"]', row).value = 'Someone'; fire($('[data-field="covered_by"]', row), 'input');
+    } else {
+      skip('a covered participant asks who covers', 'participants in the first round');
     }
     $('[data-action="add-point"]', first).click();
     const point = $('.pointlist .point', first);
@@ -138,7 +170,8 @@ async () => {
     $('[data-field="text"]', point).value = 'A point'; fire($('[data-field="text"]', point), 'input');
 
     click('f-operator');
-    check('the owner filter hides the room questions', !shown(room) && shown(operator));
+    gated(needs.operator, 'the owner filter hides the room questions',
+      () => !shown(room) && shown(operator));
     check('a block heading hides with its questions', $$('.blockhead').filter(shown).every((head) => {
       for (let el = head.nextElementSibling; el && !el.classList.contains('blockhead'); el = el.nextElementSibling) {
         if (el.classList.contains('question') && shown(el)) { return true; }
@@ -148,23 +181,27 @@ async () => {
     click('f-all');
     const group = $('#group-pick');
     const people = (room.getAttribute('data-people') || '').split('|').filter(Boolean);
-    if (people.length && !group.hidden) {
-      const stranger = $$('option', group).map((o) => o.value).filter((v) => v && people.indexOf(v) < 0)[0];
-      if (stranger) {
-        group.value = stranger; fire(group, 'change');
-        check('the participant filter hides a question that does not name them', !shown(room));
-        group.value = ''; fire(group, 'change');
-      }
+    const stranger = people.length && !group.hidden
+      ? $$('option', group).map((o) => o.value).filter((v) => v && people.indexOf(v) < 0)[0] : '';
+    if (stranger) {
+      group.value = stranger; fire(group, 'change');
+      check('the participant filter hides a question that does not name them', !shown(room));
+      group.value = ''; fire(group, 'change');
+    } else {
+      skip('the participant filter hides a question that does not name them',
+        'participants, one of them not named by the question');
     }
     check('the filters reset', shown(room));
     set('session', true); set('presenter', false);
-    check('the session lock shows the room one round',
-      $$('.step', first).some(shown) && $$('.step', second).every((el) => !shown(el)));
-    open(second);
-    check('the room cannot open another round in a session', $('section.round.current-round') === first);
+    gated(needs.second, 'the session lock shows the room one round',
+      () => $$('.step', first).some(shown) && $$('.step', second).every((el) => !shown(el)));
+    if (second) { open(second); }
+    gated(needs.second, 'the room cannot open another round in a session',
+      () => $('section.round.current-round') === first);
     click('view-one');
     for (let n = 0; n < 400; n += 1) { click('next'); }
-    check('and Next stops at the end of the open round', $('section.round.current-round') === first);
+    gated(needs.second, 'and Next stops at the end of the open round',
+      () => $('section.round.current-round') === first);
     click('view-all');
     set('session', false); set('presenter', true);
 
@@ -196,9 +233,12 @@ async () => {
     check('and a banner counts such answers', !$('.stalebanner').hidden);
     await load('load', Object.assign({}, file, { slate: 'another-slate' }));
     check('a file of another slate is refused', status() === word('notfit'));
-    open(second);
-    await load('load-round', file);
-    check('a round refuses the file of another round', status() === word('notround'));
+    if (second) {
+      open(second);
+      await load('load-round', file);
+    }
+    gated(needs.second, 'a round refuses the file of another round',
+      () => status() === word('notround'));
 
     const clear = $('[data-action="clear-round"]', first);
     clear.click();
@@ -228,5 +268,6 @@ async () => {
     delete link.click;
   }
   const failed = lines.filter((line) => line.indexOf('FAIL') === 0).length;
-  return { passed: lines.length - failed, failed: failed, lines: lines };
+  const skipped = lines.filter((line) => line.indexOf('SKIP') === 0).length;
+  return { passed: lines.length - failed - skipped, skipped: skipped, failed: failed, lines: lines };
 }

@@ -42,6 +42,13 @@ All notable changes to Tamheed are documented here. The format is based on
 
 ### Fixed
 
+- **The browser check reads the page's shape first (plan 244, the field's FB-018, R126).** It
+  cleared every answer on the page and then refused a page of one round. It now refuses only a
+  page with no ready round that asks the room a question, and it changes nothing on it. A part
+  the page lacks, such as a second round, turns its checks into SKIP lines. The runner prints
+  `n passed, n skipped, n failed`. Measured in Chrome: the demo 48 passed, a one-round page 41
+  passed and 7 skipped, and a refused page kept its stored answer.
+
 - **The retire door of a register entry compares by type (plan 240).** A write that retires a
   stored entry as it is passes unjudged. The door compared with `==`, so a value `1` passed as a
   stored `true`, and the changed value was stored with no check. It now compares the JSON text.

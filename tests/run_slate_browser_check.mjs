@@ -4,8 +4,10 @@
 
    It starts a headless Chrome with a fresh, temporary profile, opens the page from its file,
    evaluates the check file as it stands through the DevTools protocol, prints each line, and
-   exits 1 when a check fails. It needs Node 22 or later (for the built-in WebSocket) and a
-   Chrome or Chromium. It loads no package. CI does not run it. */
+   exits 1 when a check fails. A check that a part of the page gates prints SKIP and fails
+   nothing (plan 244). The page needs at least one ready round with a question of the room:
+   a page without one is refused, untouched. It needs Node 22 or later (for the built-in
+   WebSocket) and a Chrome or Chromium. It loads no package. CI does not run it. */
 import { spawn } from 'node:child_process';
 import { existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -64,7 +66,7 @@ try {
   if (result.exceptionDetails) { throw new Error(JSON.stringify(result.exceptionDetails).slice(0, 400)); }
   const value = result.result.value;
   value.lines.forEach((line) => console.log(line));
-  console.log(`${value.passed} passed, ${value.failed} failed`);
+  console.log(`${value.passed} passed, ${value.skipped || 0} skipped, ${value.failed} failed`);
   code = value.failed === 0 ? 0 : 1;
   socket.close();
 } catch (error) {
