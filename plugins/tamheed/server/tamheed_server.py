@@ -6808,6 +6808,9 @@ def _standup_withdraw(report, confirm) -> dict:
             break
         if nxt["id"] in {r["id"] for r in lineage}:     # a hand-edited file can hold a loop
             return _err(f"the corrections of {report} form a loop. Nothing was written")
+        if not _RPT_ID.fullmatch(str(nxt["id"])):       # every page the withdrawal removes
+            return _err(f"{nxt['id']!r}, which {cur['id']} corrects, is not a report id such as"
+                        " RPT-001. Nothing was written")
         if (nxt["lifecycle_status"] != "Superseded" or nxt["kind"] != row["kind"]
                 or nxt["seq"] != row["seq"]):
             return _err(f"{nxt['id']}, which {cur['id']} corrects, is not a superseded report of"

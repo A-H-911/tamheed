@@ -7520,6 +7520,19 @@ class StandupToolTest(unittest.TestCase):
         self.assertIn("form a loop", self._withdraw_refused(report="RPT-008",
                                                             confirm=self.WITHDRAW))
         conn.rollback()
+        # the security review: a corrected report's id never names a path either
+        conn.execute("PRAGMA defer_foreign_keys = ON")
+        for rid, status, other in (("RPT-008", "Approved", "RPT-1/../../evil"),
+                                   ("RPT-1/../../evil", "Superseded", None)):
+            conn.execute(f"INSERT INTO standup_reports (id, kind, lifecycle_status, supersedes,"
+                         f" {cols}) SELECT ?, 'override', ?, ?, {cols} FROM standup_reports"
+                         " WHERE id = 'RPT-001'", (rid, status, other))
+        evil = self.reports.parent.parent / "evil.html"
+        evil.write_text("keep", encoding="utf-8")
+        self.assertIn("is not a report id", self._withdraw_refused(report="RPT-008",
+                                                                   confirm=self.WITHDRAW))
+        self.assertTrue(evil.exists())
+        conn.rollback()
 
     def test_withdraw_takes_a_correction_with_the_reports_it_corrects(self):
         """Plan 246b (R144, the field's own case): the newest report is a correction of the

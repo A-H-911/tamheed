@@ -1035,24 +1035,24 @@ TOOL_EFFECTS = {
         "reads": [("@tool_result", 1890)],
         "writes": [("@export_file", 1915)]},
     "slate_export": {
-        "needs": [("@need.open", 7055)],
-        "reads": [("slates/*.spec.json", 7064),
-                   ("@cited_rows", 7082)],
-        "writes": [("slates/*.slate.json", 7107),
-                    ("slates/*.html", 7108),
-                    ("slates/*.md", 7109)]},
+        "needs": [("@need.open", 7058)],
+        "reads": [("slates/*.spec.json", 7067),
+                   ("@cited_rows", 7085)],
+        "writes": [("slates/*.slate.json", 7110),
+                    ("slates/*.html", 7111),
+                    ("slates/*.md", 7112)]},
     "standup_report": {
-        "needs": [("@need.open", 6922), ("@need.word", 6649)],
-        "reads": [("standup_reports", 6408), ("entity_types", 6924),
+        "needs": [("@need.open", 6925), ("@need.word", 6649)],
+        "reads": [("standup_reports", 6408), ("entity_types", 6927),
                    ("@all_tables", 6478)],
         "writes": [("standup_reports", 6529), ("progress_entries", 6700),
                     ("reports/*.html", 6450), ("@canonical", 6709)]},
     "slate_read": {
-        "needs": [("@need.open", 7137)],
-        "reads": [("slates/*.answers.json", 7182),
-                   ("slates/*.slate.json", 7147),
-                   ("@cited_rows", 7195)],
-        "writes": [("@nothing", 7133)]},
+        "needs": [("@need.open", 7140)],
+        "reads": [("slates/*.answers.json", 7185),
+                   ("slates/*.slate.json", 7150),
+                   ("@cited_rows", 7198)],
+        "writes": [("@nothing", 7136)]},
 }
 
 
