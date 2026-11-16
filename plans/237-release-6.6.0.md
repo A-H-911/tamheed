@@ -1,6 +1,6 @@
 # Plan 237 -- acceptance, release 6.6.0, the two field briefs (SR27, SR28)
 
-> Status: IN PROGRESS 2026-11-16 (rehearsal and stamp done; briefs and tag wait for the operator). Record: [standup-2026-11-record.md](evidence/standup-2026-11-record.md).
+> Status: DONE 2026-11-16. Released as `b08c19c` on `main` (CI run 43850413052 green on eleven jobs), tag `v6.6.0`. Record: [standup-2026-11-record.md](evidence/standup-2026-11-record.md).
 
 - **Headless rehearsal** (`plans/evidence/scripts-237/`) on a scratch lab copy, the operator's
   answers scripted and said to be scripted: a first report recorded; a driver adds work (a
@@ -32,5 +32,12 @@
   `standup-report` family and also the two register families of 6.5.0, which its 6.5.0 refresh
   had not added. It verifies clean under 6.6.0 and reads ready.
 - **Check:** `check.py` on 3.13 and 3.10 and with deprecations as errors; the selftest 22/22.
-- **Open:** the ACMP and Jisr-dev briefs, each rehearsed on a scratch clone; CI on every job;
-  the tag on the operator's go.
+- **The way back** to 6.5.1, measured on both field copies, found that the record's journal note
+  named the report as a foreign-key subject, so 6.5.1 could not load the store. Fixed in
+  `b08c19c`: the note names the report in its attributes only.
+- **The briefs** `plans/briefs/acmp-6.6.0.md` and `jisr-6.6.0.md`, measured and rehearsed by a
+  headless agent: every class held. The record is
+  [standup-rehearsal-237.md](evidence/standup-rehearsal-237.md).
+- **Release:** CI on the branch (run 43849737555, after a run that stayed queued) and on `main`
+  (run 43850413052) green on eleven jobs; `main` fast-forwarded to `b08c19c`; tag `v6.6.0` on
+  the operator's go, given before the CI.

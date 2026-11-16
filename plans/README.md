@@ -198,7 +198,7 @@ IN PROGRESS / DONE.
 | 228 | [The guide, its diagrams, the docs sweep](228-guide-diagrams-docs.md) | 221-227 | DONE 2026-11-12 (`151239e`, CI run 43207066805 green on eleven jobs) |
 | 229 | [Acceptance, release 6.5.0, the two field prompts](229-release-6.5.0.md) | 221-228 | DONE 2026-11-15. The stamp `f70a728`. The interview page was rebuilt twice on the operator's review (227b, 227c: `8c80174`, `e3016cc`). The field assurance on copies of both field packages found a migration that removed tables when its swap failed, and an open that wrote a file again: `28a9d17`. Two rehearsals by an agent corrected the briefs: `25193d1`. Released as `8a9855d` on `main` (CI run 43660180063 green on eleven jobs), tag `v6.5.0`. |
 
-### Standup report -- plans 232-237 -> v6.6.0 (2026-11-16 ->; maintainer-executed)
+### Standup report -- plans 232-237 -> v6.6.0 (2026-11-16; maintainer-executed)
 
 The operator asked for a daily status report on demand: what we did, the challenges and
 decisions, what we expect to do next, read in 5 to 10 minutes. The record, with rulings SR1-SR51
@@ -212,7 +212,7 @@ store decision is ADR-0003.
 | 234 | [The standup page](234-standup-page.md) -- the page, the word budget, goldens | 233 | DONE 2026-11-16 on `feat/standup-report` (looked at in a browser; goldens; 32 tests) |
 | 235 | [The `standup_report` tool](235-standup-tool.md) -- draft, record, discard, the resume line, the docs (SR47 red first) | 234 | DONE 2026-11-16 on `feat/standup-report` (SR47 fixed at three sites; selftest 22/22; recorded on a scratch copy of the first field) |
 | 236 | [The `/tamheed:standup` skill](236-standup-skill.md) | 235 | DONE 2026-11-16 on `feat/standup-report` (dry run recorded a report on a lab copy; SR51) |
-| 237 | [Acceptance, release 6.6.0, the two field briefs](237-release-6.6.0.md) | 232-236 | IN PROGRESS: rehearsal green (5 reports, a real agent), 6.6.0 stamped; briefs and tag wait for the operator |
+| 237 | [Acceptance, release 6.6.0, the two field briefs](237-release-6.6.0.md) | 232-236 | DONE 2026-11-16. Released as `b08c19c` on `main` (CI run 43850413052 green on eleven jobs), tag `v6.6.0`. The way back to 6.5.1 found a blocker before the release (fixed). Both field briefs rehearsed by an agent |
 
 ### Field patch 2026-11 -- plans 230-231 -> v6.5.1 (2026-11-15 ->; maintainer-executed)
 
