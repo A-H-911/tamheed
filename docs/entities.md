@@ -1085,6 +1085,30 @@ stateDiagram-v2
     Approved --> Approved : register-entries-conform names it when the declaration no longer admits it
 ```
 
+#### standup-report (`RPT-`) — On-request
+
+The family arrived in v6.6, with migration `011_standup_reports.sql`. A standup report answers
+three questions for one window of work: what we did, the challenges and decisions, and what we
+expect to do next. The
+store keeps current state only, so a view cannot say what changed since the last report. In the
+lab fixture, 29 of 47 status moves had no journal row. The family is therefore a stored record
+(ADR-0003), and the `standup_report` tool is its only writer.
+
+Each row keeps the changes of its window: a status and a content fingerprint for each row that
+moved. The first report, and every 30th recorded daily report, is a checkpoint that keeps the
+full state. The state at a report is a replay from the latest checkpoint, and each row's digest
+lets the replay check every link. The window end is fixed when the draft is made. The facts the
+page prints are frozen then too, so the recorded page is the page the operator saw.
+
+```mermaid
+stateDiagram-v2
+    [*] --> Draft : standup_report fixes the window end and freezes the facts
+    Draft --> Draft : drafting again replaces it, with the same id
+    Draft --> [*] : a discard removes it
+    Draft --> Approved : recorded on the operator's word
+    Approved --> Superseded : a correction over the same window replaces it
+```
+
 #### lesson (`LL-`) — Continuous
 
 What BINDS is the status, never a pointer (v4.10). The always-loaded note and the

@@ -97,7 +97,7 @@ class ResumeHookTest(unittest.TestCase):
         out, code = run_hook(self.project, source="startup")
         self.assertEqual(code, 0)
         lines = out.splitlines()
-        self.assertTrue(lines[0].startswith("tamheed resume — package `pkg` (schema 10) — unlocked"), lines[0])
+        self.assertTrue(lines[0].startswith("tamheed resume — package `pkg` (schema 11) — unlocked"), lines[0])
         self.assertIn("No handoff recorded", out)
         self.assertIn("Skill: tamheed:package-writes", out)
         self.assertNotIn("compacted", out)
@@ -121,7 +121,7 @@ class ResumeHookTest(unittest.TestCase):
         out, code = run_hook(self.project, source="startup")
         self.assertEqual(code, 0)
         lines = out.splitlines()
-        self.assertTrue(lines[0].startswith("tamheed resume — package `pkg` (schema 10)"), lines[0])
+        self.assertTrue(lines[0].startswith("tamheed resume — package `pkg` (schema 11)"), lines[0])
         fact = f"requirements.jsonl lacks `{key}`"
         self.assertIn(fact, lines[1])
         for needle in ("BEHIND THIS ENGINE", "package_open refuses", "package_migrate"):
@@ -459,7 +459,7 @@ class ResumeHookTest(unittest.TestCase):
         out, code = run_hook(self.project, source="startup")
         self.assertEqual(code, 0)
         lines = out.splitlines()
-        self.assertTrue(lines[0].startswith("tamheed resume — package `pl` (schema 10) — unlocked"), lines[0])
+        self.assertTrue(lines[0].startswith("tamheed resume — package `pl` (schema 11) — unlocked"), lines[0])
         self.assertIn("Resume at: stage 7 (clarification).", out)
         self.assertIn("continue the planning half with /tamheed:tamheed", out)
         self.assertIn("Skill: tamheed:package-writes", out)

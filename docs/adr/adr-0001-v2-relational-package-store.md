@@ -3,8 +3,10 @@
 - **Status:** Approved (maintainer, 2026-07-17 — interactive gate, plan 007 step 2);
   **partially superseded by [ADR-0002](adr-0002-v4-entity-model-re-baseline.md)**
   (2026-08-14): the store doctrine survives; the prompts table, the milestone
-  lifecycle, and the frozen-v1-contract clauses are superseded. Content below is
-  frozen as approved.
+  lifecycle, and the frozen-v1-contract clauses are superseded. **Partly superseded by
+  [ADR-0003](adr-0003-standup-reports-are-stored-records.md)** (2026-11-16): standup reports
+  are stored records, so C1's "never stored snapshots" no longer covers that one family.
+  Content below is frozen as approved.
 - **Date:** 2026-07-17
 - **Deciders:** maintainer (Eng. Anas Hammo)
 - **Plan:** `plans/007-b2-data-model-adr-ddl.md` (B2); input contract `plans/deliverables-review.md`

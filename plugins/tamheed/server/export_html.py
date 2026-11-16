@@ -866,7 +866,10 @@ def _registers(conn, gates, ready, readiness=None):
             if not folds:
                 empty.append("Register entries")
             continue
-        cols = [c for c in _cols(conn, table) if c != "custom_attributes"]
+        # plan 232: a standup report's JSON payload is its page's, never this table's
+        hidden = ({"custom_attributes", "state_delta", "facts", "narrative", "operator_words"}
+                  if table == "standup_reports" else {"custom_attributes"})
+        cols = [c for c in _cols(conn, table) if c not in hidden]
         order = _by_id(cols[0]) if cols[0] == "id" else cols[0]
         rows = conn.execute(
             f"SELECT {', '.join(cols)} FROM {table} ORDER BY {order}").fetchall()

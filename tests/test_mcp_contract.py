@@ -241,7 +241,7 @@ class McpContractTest(unittest.TestCase):
         folder name, and the refusal names the legal set; the registry and the schema
         head say so."""
         srv.package_create("pr", "Prompts", "rnd")
-        self.assertEqual(srv.server_info()["schema_version"], 10)
+        self.assertEqual(srv.server_info()["schema_version"], 11)
         self.assertIn(("prompt", "prompts"), srv.ENTITY_TABLES.items())
         self.assertTrue(srv.entity_upsert([{"type": "phase", "id": "PH-1", "title": "P1",
                                             "lifecycle_status": "Approved"}])["ok"])
@@ -4443,8 +4443,8 @@ class V4EngineTest(unittest.TestCase):
         edge; the `deferred-work-carried` advisory lists Activated rows with no OPEN carrier
         (Review counts as open) - bind one, or close the row Done."""
         info = srv.server_info()                 # setUp created "demo" with PH-1 / SL-001
-        self.assertEqual(info["migrations_head"], "010_registers.sql")   # plan 226 (v6.5)
-        self.assertEqual(info["schema_version"], 10)
+        self.assertEqual(info["migrations_head"], "011_standup_reports.sql")   # plan 232 (v6.6)
+        self.assertEqual(info["schema_version"], 11)
         rules = lambda: {r["rule"]: r for r in srv.readiness_check("package")["rules"]}
         out = srv.entity_upsert([
             {"type": "deferred-work", "id": "DW-001", "title": "later", "severity": "low",
@@ -7063,6 +7063,180 @@ class WiredAtBirthTest(unittest.TestCase):
         self.assertEqual(elsewhere.read_text(encoding="utf-8"), "# Not the project's file\n")
         self.assertFalse((srv.PACKAGE_ROOT / "demo" / "CLAUDE.md").exists())
 
+
+class StandupFamilyTest(unittest.TestCase):
+    """Plan 232 (ADR-0003): the standup-report family, store half. The tool that writes these
+    rows arrives in plan 235, so these tests write through the connection."""
+
+    DRAFT = {"id": "RPT-001", "pe_to": 0, "av_to": 0, "ended_at": "2026-11-16T06:00:00Z",
+             "utc_offset": "+03:00", "state_digest": "d", "state_delta": "{}",
+             "facts": "{}", "rule_colour": "green"}
+    RECORD = {"narrative": '{"headline": "h"}', "colour": "green", "recorded_by": "human:op",
+              "operator_words": "record it", "recorded_at": "2026-11-16T06:05:00Z"}
+
+    def setUp(self):
+        self._tmp = tempfile.TemporaryDirectory()
+        srv.PACKAGE_ROOT = Path(self._tmp.name)
+        srv.package_create("demo", "Demo", "rnd")
+
+    def tearDown(self):
+        if srv._CURRENT is not None:
+            srv.package_close()
+        self._tmp.cleanup()
+
+    def _insert(self, **row):
+        row = dict(self.DRAFT, **row)
+        srv._CURRENT.conn.execute(
+            f"INSERT INTO standup_reports ({', '.join(row)}) VALUES"
+            f" ({', '.join('?' for _ in row)})", list(row.values()))
+
+    def _record(self, rid="RPT-001"):
+        sets = ", ".join(f"{k} = ?" for k in self.RECORD)
+        srv._CURRENT.conn.execute(
+            f"UPDATE standup_reports SET {sets}, lifecycle_status = 'Approved' WHERE id = ?",
+            [*self.RECORD.values(), rid])
+
+    def test_registry_class_and_schema_head(self):
+        info = srv.server_info()
+        self.assertEqual(info["schema_version"], 11)
+        self.assertEqual(info["migrations_head"], "011_standup_reports.sql")
+        self.assertEqual(srv.ENTITY_TABLES["standup-report"], "standup_reports")
+        row = next(r for r in srv.BASELINE_ENTITY_TYPES if r[0] == "standup-report")
+        self.assertEqual((row[2], row[3]), ("RPT-", "On-request"))   # never Always: G-SET
+        self.assertEqual(srv._CURRENT.conn.execute(
+            "SELECT COUNT(*) FROM g_set_failures WHERE type_id = 'standup-report'"
+        ).fetchone()[0], 0)
+
+    def test_immutability_trigger_names_every_column(self):
+        """A column a later migration adds must join the trigger, or it is silently mutable."""
+        conn = srv._CURRENT.conn
+        sql = conn.execute("SELECT sql FROM sqlite_master WHERE name ="
+                           " 'trg_standup_reports_immutable'").fetchone()[0]
+        for (col,) in conn.execute("SELECT name FROM pragma_table_info('standup_reports')"):
+            if col not in ("last_referenced", "lifecycle_status"):
+                self.assertIn(f"NEW.{col} IS NOT OLD.{col}", sql, col)
+
+    def test_a_recorded_report_is_immutable_and_a_draft_is_not(self):
+        conn = srv._CURRENT.conn
+        self._insert()
+        conn.execute("UPDATE standup_reports SET facts = '{\"x\": 1}' WHERE id = 'RPT-001'")
+        with self.assertRaisesRegex(store_err(), "never superseded"):
+            conn.execute("UPDATE standup_reports SET lifecycle_status = 'Superseded'"
+                         " WHERE id = 'RPT-001'")
+        with self.assertRaises(store_err()):        # the row-local CHECK: no word, no record
+            conn.execute("UPDATE standup_reports SET lifecycle_status = 'Approved'"
+                         " WHERE id = 'RPT-001'")
+        with self.assertRaises(store_err()):        # a blank narrative is no narrative
+            conn.execute("UPDATE standup_reports SET narrative = '  ', colour = 'green',"
+                         " recorded_by = 'human:op', operator_words = 'w', recorded_at = 't',"
+                         " lifecycle_status = 'Approved' WHERE id = 'RPT-001'")
+        self._record()
+        for change in ("narrative = '{}'", "facts = '{}'", "colour = 'red'",
+                       "operator_words = 'other'", "lifecycle_status = 'Draft'"):
+            with self.assertRaisesRegex(store_err(), "immutable", msg=change):
+                conn.execute(f"UPDATE standup_reports SET {change} WHERE id = 'RPT-001'")
+        conn.execute("UPDATE standup_reports SET last_referenced = 'x' WHERE id = 'RPT-001'")
+        with self.assertRaisesRegex(store_err(), "only a draft"):
+            conn.execute("DELETE FROM standup_reports WHERE id = 'RPT-001'")
+        with self.assertRaisesRegex(store_err(), "only by a correction"):   # no successor
+            conn.execute("UPDATE standup_reports SET lifecycle_status = 'Superseded'"
+                         " WHERE id = 'RPT-001'")
+        self._insert(id="RPT-002", supersedes="RPT-001")       # the correction's draft
+        conn.execute("UPDATE standup_reports SET lifecycle_status = 'Superseded'"
+                     " WHERE id = 'RPT-001'")
+        self._record("RPT-002")                                 # takes the freed chain link
+        self._insert(id="RPT-003")
+        conn.execute("DELETE FROM standup_reports WHERE id = 'RPT-003'")   # a draft discards
+
+    def test_one_draft_and_one_chain_link(self):
+        conn = srv._CURRENT.conn
+        self._insert()
+        with self.assertRaises(store_err()):
+            self._insert(id="RPT-002")
+        self._record()
+        self._insert(id="RPT-002")
+        with self.assertRaises(store_err()):        # a second recorded report at one pe_to
+            self._record("RPT-002")
+        conn.execute("UPDATE standup_reports SET kind = 'override' WHERE id = 'RPT-002'")
+        self._record("RPT-002")                     # an override sits outside the chain
+
+    def test_a_merged_store_with_two_drafts_is_refused_with_the_line(self):
+        cols = [r[1] for r in srv._CURRENT.conn.execute("PRAGMA table_info(standup_reports)")]
+        srv.package_close()
+        data = srv.PACKAGE_ROOT / "demo" / "data" / "standup_reports.jsonl"
+        full = {c: None for c in cols}             # a written file carries every column
+        lines = [json.dumps(dict(full, **dict(self.DRAFT, id=i), kind="default", checkpoint=0,
+                                 lifecycle_status="Draft"), separators=(",", ":"))
+                 for i in ("RPT-001", "RPT-002")]
+        data.write_text("\n".join(lines) + "\n", encoding="utf-8")
+        out = srv.package_open("demo")
+        self.assertFalse(out["ok"])
+        self.assertIn("standup_reports.jsonl:2", out["error"])
+        self.assertIn("/tamheed:standup", out["error"])
+        self.assertIn("standup_reports", out["error"])     # the hint rides with its file only
+        self.assertFalse((data.parent / srv.store.LOCK_NAME).exists())   # nothing held
+        data.write_text(lines[0] + "\n", encoding="utf-8")
+        self.assertTrue(srv.package_open("demo")["ok"])
+
+    def test_entity_upsert_refuses_the_family(self):
+        out = srv.entity_upsert([dict(self.DRAFT, type="standup-report")])
+        self.assertFalse(out["ok"])
+        self.assertIn("written by standup_report only", json.dumps(out))
+        self.assertEqual(srv._CURRENT.conn.execute(
+            "SELECT COUNT(*) FROM standup_reports").fetchone()[0], 0)
+
+    def test_a_default_read_leaves_out_the_payload(self):
+        self._insert(facts='{"big": "' + "x" * 5000 + '"}')
+        out = srv.entity_query("standup-report")
+        self.assertTrue(out["ok"], out)
+        self.assertEqual(out["omitted_columns"], ["facts", "state_delta"])
+        self.assertNotIn("facts", out["rows"][0])
+        self.assertNotIn("state_delta", out["rows"][0])
+        full = srv.entity_query("standup-report", columns=["id", "facts"])
+        self.assertIn("big", full["rows"][0]["facts"])
+        self.assertNotIn("facts", full["omitted_columns"])   # plan 068: a projection names the rest
+        self.assertIn("omitted_columns", srv.TOOLS["entity_query"][1])
+        hit = srv.entity_query("standup-report", search="xxxx", context=10)
+        self.assertEqual(hit["total"], 0)           # a default read never searches the payload
+        self.assertNotIn("occurrences", hit)
+
+    def test_report_text_is_never_graded_or_scanned_for_ids(self):
+        self._insert(facts='{"t": "TBD DEF-999"}', state_delta='{"x": "TODO"}')
+        gates = srv.gate_run()["gates"]
+        self.assertEqual(gates["G-COMPLETE"]["status"], "pass", gates["G-COMPLETE"])
+        rules = {r["rule"]: r for r in srv.readiness_check("package")["rules"]}
+        self.assertNotIn("RPT-001", json.dumps(rules["prose-ids-resolve"]))
+
+    def test_the_review_page_lists_reports_without_the_payload(self):
+        self._insert(facts='{"secret_fact": 1}', state_delta='{"secret_delta": 1}')
+        srv._CURRENT.conn.commit()
+        out = srv.export_html()
+        self.assertTrue(out["ok"], out)
+        page = (srv.PACKAGE_ROOT / "demo" / "review.html").read_text(encoding="utf-8")
+        self.assertIn("RPT-001", page)
+        for hidden in ("secret_fact", "secret_delta", "state_delta"):
+            self.assertNotIn(hidden, page)
+
+    def test_registry_sync_teaches_the_family_to_an_older_package(self):
+        srv.package_close()
+        et = srv.PACKAGE_ROOT / "demo" / "data" / "entity_types.jsonl"
+        rows = [json.loads(line) for line in et.read_text(encoding="utf-8").splitlines()]
+        et.write_text("".join(json.dumps(r, ensure_ascii=False, separators=(",", ":")) + "\n"
+                              for r in rows if r["type_id"] != "standup-report"),
+                      encoding="utf-8")
+        self.assertTrue(srv.package_open("demo")["ok"])     # a 6.5.1 store opens fine...
+        with self.assertRaises(store_err()):                 # ...but its registry lacks the family
+            self._insert()
+        srv.package_close()
+        preview = srv.package_migrate("demo")
+        self.assertEqual(preview["report"]["entity_types_added"], ["standup-report"])
+        self.assertTrue(srv.package_migrate("demo", confirm=True)["ok"])
+        srv.package_open("demo")
+        self._insert()
+
+
+def store_err():
+    return srv.store.sqlite3.IntegrityError
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)

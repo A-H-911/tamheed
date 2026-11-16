@@ -504,7 +504,12 @@ def load(data_dir: str | os.PathLike) -> sqlite3.Connection:
                     raise ValueError(
                         f"{path.name}:{lineno}: unknown keys {sorted(unknown)}"
                     )
-                conn.execute(sql, [row.get(col) for col in cols])
+                try:
+                    conn.execute(sql, [row.get(col) for col in cols])
+                except sqlite3.IntegrityError as exc:
+                    # plan 232: a merge can leave two rows that a unique index or a CHECK
+                    # refuses. The bare SQLite text names neither file nor line.
+                    raise sqlite3.IntegrityError(f"{path.name}:{lineno}: {exc}") from None
     conn.commit()
     conn.execute("PRAGMA foreign_keys = ON")
     violations = conn.execute("PRAGMA foreign_key_check").fetchall()

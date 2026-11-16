@@ -113,6 +113,7 @@ ENTITY_TABLES = {
     "feedback": "feedback",        # migration 005 (plan 087): upstream feedback + local tools, on the operator's word
     "register": "registers",       # migration 010 (plan 226): a project register, which declares its fields
     "register-entry": "register_entries",   # migration 010: one record, checked against that declaration
+    "standup-report": "standup_reports",    # migration 011 (plan 232): a standup report, a stored record (ADR-0003)
     "trace-edge": "trace_edges",   # composite PK; write surface for relations
     "omission": "omissions",       # G-SET recorded-omitted rows (entity_type + reason)
 }
@@ -282,6 +283,7 @@ BASELINE_ENTITY_TYPES = [
     ("prompt", "Prompt (PRT-)", "PRT-", "Always"),  # migration 008 (plan 192): rows, not files. Always since plan 198 (6.0.0): the kickoff is Stage 20's write, or an omission records the choice
     ("register", "Project register (REG-)", "REG-", "On-request"),          # migration 010 (plan 226)
     ("register-entry", "Register entry (ENT-)", "ENT-", "On-request"),
+    ("standup-report", "Standup report (RPT-)", "RPT-", "On-request"),      # migration 011 (plan 232)
 ]
 
 # Taught-vocabulary rosters (plan 032): the single source the check.py teaching lint
@@ -456,13 +458,17 @@ _MARKER_RE = re.compile(r"\[NEEDS-CLARIFICATION(?::\s*([A-Za-z]+-\d+))?[^\]]*\]"
 # Plan 087: feedback rows QUOTE broken ids by nature (`SEC-8`, `DEC-208`) - exempt like the
 # journal, though for a different reason: not append-only, but a register of what is broken.
 _PROSE_ID_EXEMPT_TABLES = frozenset({"progress_entries", "audit_verdicts", "feedback",
-                                     "prompts"})  # plan 193: prompt-ids-resolve owns the prompt rows
+                                     "prompts", "standup_reports"})  # plan 193: prompt-ids-resolve owns the prompt rows
 _PROSE_ID_CAP = 50
 # Plan 038 (findings_21/C42), plan 214 (the field's FB-001): the append-only report columns
 # are never graded by G-COMPLETE. A journal entry is a report of what happened. It cannot
 # be "unfinished". One slip in a row nobody can edit would fail the gate forever. Both
 # scans (placeholders and markers) skip them, through _graded_text.
-_REPORT_COLUMNS = {"progress_entries": {"entry"}, "audit_verdicts": {"evidence"}}
+_REPORT_COLUMNS = {"progress_entries": {"entry"}, "audit_verdicts": {"evidence"},
+                   # plan 232: a recorded standup report is immutable and engine-written
+                   "standup_reports": {"facts", "narrative", "state_delta", "state_digest",
+                                       "operator_words"}}
+_STANDUP_PAYLOAD = frozenset({"state_delta", "facts"})   # plan 232: left out of a default read
 # Plan 057: version strings compare numerically — "4.10.0" is newer than "4.9.0".
 _vkey = lambda v: tuple(int(p) for p in v.split("."))  # noqa: E731
 _SNIPPETS_PER_COLUMN = 5        # plan 092: a census caps its snippets, never its counts
@@ -1565,6 +1571,13 @@ def package_open(name: str) -> dict:
         s = store.PackageStore(pkg_dir).__enter__()
     except store.StoreLockedError as exc:
         return _err(str(exc))
+    except store.sqlite3.IntegrityError as exc:
+        # Plan 232: a row the schema refuses, often a git merge of two branches' rows.
+        hint = (" The /tamheed:standup skill names the fix for this file."
+                if "standup_reports" in str(exc) else "")
+        return _err(f"package '{name}' does not load: {exc}. Nothing was opened. Fix the"
+                    " named row from git (git log -p -- data/<file>), then open again."
+                    + hint)
     except ValueError as exc:
         # a key that this server does not know: a later release wrote the file
         if "unknown keys" not in str(exc):
@@ -2165,6 +2178,15 @@ def entity_upsert(entities: list[dict]) -> dict:
                             "error": f"unknown entity type {etype!r} — one of: "
                                      f"{', '.join(sorted(ENTITY_TABLES))}"
                                      " (the header row is written as type 'package')"})
+            failed = True
+            continue
+        if etype == "standup-report":
+            # Plan 232 (ADR-0003): the window, the replay digest and the operator's word
+            # are the standup tool's to fix. A hand-written row would break the chain.
+            results.append({"index": i, "ok": False, "id": item.get("id"),
+                            "error": "standup-report rows are written by standup_report"
+                                     " only: it fixes the window, checks the replay and"
+                                     " takes the operator's word"})
             failed = True
             continue
         # "force" is the transition-guard override (plan 027), never a column.
@@ -2912,7 +2934,11 @@ def entity_query(type: str, id: str | None = None, status: str | None = None,
                     " — writable via entity_upsert. Read edges with trace_query: one"
                     " entity, one family (`type`), or every edge")
     all_cols = _columns(table)
-    cols = columns or all_cols
+    # Plan 232 (SR46): a standup report's state and facts can be ~0.5 MB on a first report.
+    # They stay out of a default read, so a query never floods a caller's context.
+    omitted = (sorted(_STANDUP_PAYLOAD) if table == "standup_reports" and not columns
+               else [])
+    cols = columns or [c for c in all_cols if c not in omitted]
     if bad := set(cols) - set(all_cols):
         return _err(f"unknown columns: {sorted(bad)}")
     if id is not None and (after_id is not None or ids is not None):
@@ -2944,7 +2970,7 @@ def entity_query(type: str, id: str | None = None, status: str | None = None,
         where.append("register_id = ?"); params.append(str(register_id))
     if search is not None:
         text_cols = [r[1] for r in _CURRENT.conn.execute(f"PRAGMA table_info({table})")
-                     if str(r[2]).upper() == "TEXT"]
+                     if str(r[2]).upper() == "TEXT" and r[1] not in omitted]  # plan 232
         needle = "%" + re.sub(r"([\\%_])", r"\\\1", str(search)) + "%"
         where.append("(" + " OR ".join(f"{c} LIKE ? ESCAPE '\\'" for c in text_cols)
                      + ")")
@@ -2979,6 +3005,8 @@ def entity_query(type: str, id: str | None = None, status: str | None = None,
             f" LIMIT 1 OFFSET {limit - 1}", page_params).fetchone()[0]
     out = {"ok": True, "rows": rows, "count": len(rows), "total": total,
            "next_after": next_after}
+    if omitted:
+        out["omitted_columns"] = omitted
     # Plan 131 (v5.2, findings_33 Q1): the row arrives with its cue. Measured in the field: no
     # discipline skill loaded without a tool result naming it, and the always-loaded note
     # naming all eight cued none — reading-the-record was named by no result at all.
@@ -6564,7 +6592,8 @@ _ENTITY_QUERY_DESC = (
     " echoes the arguments. A document section carries a status only once it is retired,"
     " so `status` returns retired sections for that family. `register_id` returns the"
     " entries of one project register. A register entry keeps the values of its declared"
-    " fields in `custom_attributes`.")
+    " fields in `custom_attributes`. A standup report read leaves out `state_delta` and"
+    " `facts` unless `columns` names them, and `omitted_columns` says so.")
 # Plan 221: the two places a link lives, and the three scopes of the read.
 _TRACE_QUERY_DESC = (
     "Read trace links. With `entity_id`, the links of one entity. Without it, every link,"

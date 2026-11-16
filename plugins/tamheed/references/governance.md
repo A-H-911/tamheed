@@ -49,6 +49,7 @@ reused (retire, do not recycle). Every entity lives in its `data/<table>.jsonl` 
 | Feedback (upstream feedback / local tool) | `FB-NNN` | feedback |
 | Project register | `REG-NNN` | registers |
 | Register entry | `ENT-NNN` | register_entries |
+| Standup report | `RPT-NNN` | standup_reports |
 | Prompt (kickoff, phase, situational) | `PRT-NNN` | prompts |
 
 Retired prefixes: `PRM-` (v3, when prompts became files under `<package>/prompts/`). Ids of that
@@ -238,6 +239,23 @@ its columns are the declared fields.
 
 A package written before v6.5 does not know the two families. The write then names the route:
 `package_migrate`, whose staged registry-sync teaches the package both.
+
+## Standup reports — recorded on the operator's word (v6.6)
+
+A standup report (`RPT-`) answers three questions for one window of work. The window starts
+where the latest recorded daily report ended, or at the package's start for the first report.
+The `standup_report` tool writes the row, and `entity_upsert` refuses the family.
+
+- **Draft.** The tool fixes the window end and freezes the facts. At most one draft exists.
+  Drafting again replaces it, and a discard removes it.
+- **Approved.** The draft is recorded on the operator's word: `operator_confirm` true, who
+  confirmed, and what they said. The words are stored in the row only. The journal note names the report and who recorded it, never the words, and no page prints them.
+- **Superseded.** A correction is a new report over the same window. The old row moves to
+  Superseded. Approved and Superseded rows are immutable, by a trigger.
+
+A report the operator starts at an earlier date or report is an override. It is recorded, but
+it never starts the next window. A package written before v6.6 does not know the family. The
+write then names the route: `package_migrate`, whose staged registry-sync teaches it.
 
 ## Execution gate outcomes — four words (v6.5)
 

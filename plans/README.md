@@ -198,6 +198,22 @@ IN PROGRESS / DONE.
 | 228 | [The guide, its diagrams, the docs sweep](228-guide-diagrams-docs.md) | 221-227 | DONE 2026-11-12 (`151239e`, CI run 43207066805 green on eleven jobs) |
 | 229 | [Acceptance, release 6.5.0, the two field prompts](229-release-6.5.0.md) | 221-228 | DONE 2026-11-15. The stamp `f70a728`. The interview page was rebuilt twice on the operator's review (227b, 227c: `8c80174`, `e3016cc`). The field assurance on copies of both field packages found a migration that removed tables when its swap failed, and an open that wrote a file again: `28a9d17`. Two rehearsals by an agent corrected the briefs: `25193d1`. Released as `8a9855d` on `main` (CI run 43660180063 green on eleven jobs), tag `v6.5.0`. |
 
+### Standup report -- plans 232-237 -> v6.6.0 (2026-11-16 ->; maintainer-executed)
+
+The operator asked for a daily status report on demand: what we did, the challenges and
+decisions, what we expect to do next, read in 5 to 10 minutes. The record, with rulings SR1-SR49
+and the measurements, is [standup-2026-11-record.md](evidence/standup-2026-11-record.md). The
+store decision is ADR-0003.
+
+| # | Plan | Depends on | Status |
+|---|---|---|---|
+| 232 | [The standup-report family, store half](232-standup-store.md) -- migration 011, the registry, the refusals, the lean read (SR9, SR23, SR24, SR46) | 231 | DONE 2026-11-16 on `feat/standup-report` (gate green on 3.13, 3.10, and with deprecations as errors) |
+| 233 | [The standup engine](233-standup-engine.md) -- state, deltas, checkpoint replay, window, facts | 232 | PLANNED |
+| 234 | [The standup page](234-standup-page.md) -- the page, the word budget, goldens | 233 | PLANNED |
+| 235 | [The `standup_report` tool](235-standup-tool.md) -- draft, record, discard, the resume line, the docs (SR47 red first) | 234 | PLANNED |
+| 236 | [The `/tamheed:standup` skill](236-standup-skill.md) | 235 | PLANNED |
+| 237 | [Acceptance, release 6.6.0, the two field briefs](237-release-6.6.0.md) | 232-236 | PLANNED |
+
 ### Field patch 2026-11 -- plans 230-231 -> v6.5.1 (2026-11-15 ->; maintainer-executed)
 
 The first field upgraded to 6.5.0 and handed up one operator-confirmed row: the journal row

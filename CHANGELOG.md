@@ -8,6 +8,14 @@ All notable changes to Tamheed are documented here. The format is based on
 > original repository (<https://github.com/A-H-911/keystone>). Tamheed carries Keystone's full git
 > history; the Keystone repository stays frozen at 1.0.x for existing v1 packages.
 
+## [Unreleased]
+
+### Added
+- The standup report family (`RPT-`, table `standup_reports`, migration `011_standup_reports.sql`,
+  plan 232). A report keeps the changes of its window and the facts its page prints. It is a
+  stored record by design (ADR-0003). `entity_upsert` refuses the family, and a default
+  `entity_query` read leaves out its `state_delta` and `facts`.
+
 ## [6.5.1] - 2026-11-15
 
 **PATCH — one field row after the 6.5.0 upgrade (plans 230–231).** The first field handed up
