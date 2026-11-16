@@ -199,6 +199,15 @@ the trust model and how to report a problem.
   the package. A hard link cannot be told from a file, and it is not caught. A page is bounded
   before it is built: a row is printed once per citation, and the quoted text is counted first.
   The review page is unchanged: it still runs no script.
+- **A standup report page is an export of its row.** `standup_report` writes
+  `reports/RPT-NNN.html` and `reports/draft.html` with one escape point, the review page's
+  content policy, no script and no link. Row titles, journal text and the agent's words are
+  escaped. Journal and handoff text that reads as an instruction is withheld. The narrative
+  is refused when it cites an id that names no row, breaks a plain-English hard rule, or
+  reads as an instruction. Recording needs the operator's word as the JSON boolean `true`
+  with a `human:` name. A recorded row is immutable by a trigger, and `entity_upsert`
+  refuses the family. The operator's words stay in the row: the journal note and every page
+  leave them out. The words are still committed in `data/`.
 - **An answers file is a record of a page, never the operator's word.** `slate_read` reads
   `<package>/slates/<name>.answers.json` and one `<name>.<round id>.answers.json` for each ready
   round. It builds those names from the record, the caller names no path, and it opens no

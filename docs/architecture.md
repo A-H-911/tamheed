@@ -26,7 +26,8 @@ re-implements the methodology. This is enforceable (gate **G-CMD-THIN**). The co
    MCP SERVER     the capability's MECHANICAL HALF (successor of the v1 validator)
                   entity_upsert · entity_query · trace_query · gate_run · handoff_emit ·
                   progress_update · audit_record · work_bind · package_migrate · package_adopt ·
-                  export_html · slate_export · slate_read · package_verify · entity_export —
+                  export_html · slate_export · slate_read · standup_report ·
+                  package_verify · entity_export —
                   the ONLY write path into a
                   package (and the read path: a committed script quotes an exports/ file)
                         │  loads / writes back
@@ -115,6 +116,11 @@ decided topics and an owner for each question, so one page runs a workshop. The 
 file for each round. **`slate_read`** returns one checked transcript of those files, and it
 writes nothing. The transcript is a record of files. An approval is still spoken in the
 session. `references/slate.md` in the bundle holds the slate's grammar.
+
+**`standup_report`** (v6.6) writes a standup report for the window since the last one. The
+store keeps current state only, so each report row keeps the changes of its window. A
+replay from the latest checkpoint rebuilds the state at any report (ADR-0003). The page
+`reports/RPT-NNN.html` is the export of its row, recorded on the operator's word.
 
 A record type that no family holds takes a declared **register** (`REG-`) and its entries
 (`ENT-`), also since v6.5. The register declares its fields, and the write checks each entry.

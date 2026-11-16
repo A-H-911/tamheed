@@ -35,6 +35,9 @@ sys.path.insert(0, str(_SERVER_DIR.parent / "db"))
 
 import store  # plugins/tamheed/db/store.py  # noqa: E402
 import ste_lint  # plugins/tamheed/server/ste_lint.py (plan 182)  # noqa: E402
+import standup  # noqa: E402  plan 233: the standup engine (pure)
+import standup_facts  # noqa: E402
+import standup_page  # noqa: E402  plan 234: the standup page (pure)
 
 # Inlined from the retired v1 validator (D-017-4 parity kept): blank out fenced +
 # inline code so TODO/{{...}} inside examples is never flagged as an unfinished marker.
@@ -1356,6 +1359,13 @@ def _stored_package_version(pkg_dir: Path) -> str | None:
 _PE_NUM = "CAST(SUBSTR(id, 4) AS INTEGER)"   # PE-NNN → NNN (plan 057: never a string sort)
 
 
+def _pe_num_of(conn, pe_id) -> int:
+    """Plan 235 (SR47): a journal id's number read by SQL, as the order reads it. A caller can
+    write `PE-1x` (the GLOB admits it), and `int(id[3:])` raised on it."""
+    return int(conn.execute(f"SELECT {_PE_NUM} FROM progress_entries WHERE id = ?",
+                            (pe_id,)).fetchone()[0] or 0)
+
+
 # Plan 057: ids order by (prefix, number) — string order breaks at PH-10 and PE-1000 (this
 # repo's recorded bug class, plans 025/027). CAST takes the longest integer prefix of the
 # tail and 0 when there is none, then `id` breaks the tie deterministically — so only an
@@ -1435,6 +1445,15 @@ def _repeated_handoff_lines(conn) -> tuple[list[tuple[int, str, int]], int]:
     return found, len(rows)
 
 
+def _resume_standup(conn) -> dict | None:
+    """Plan 235 (SR26): the last recorded daily standup report, for one information line."""
+    row = conn.execute("SELECT id, ended_at, utc_offset FROM standup_reports WHERE kind ="
+                       " 'default' AND lifecycle_status = 'Approved' ORDER BY seq DESC LIMIT 1"
+                       ).fetchone()
+    return ({"id": row[0], "ended_at": row[1], "utc_offset": row[2],
+             "shown": standup.shown(row[1], row[2])} if row else None)
+
+
 def _resume_block(conn, name: str, data_dir: Path | None = None) -> dict:
     """Plan 122 (v5.1, findings_32 note 4): what an agent needs FOR FREE after a session
     start, a clear or a compaction — the latest `handoff` journal entry with its
@@ -1466,7 +1485,7 @@ def _resume_block(conn, name: str, data_dir: Path | None = None) -> dict:
                 handoff["corrections"].append({"id": cid, "corrects": corrects,
                                                "entry": str(centry or "")[:_RESUME_ENTRY_CAP]})
                 frontier.append(cid)
-    after = f" AND {_PE_NUM} > {int(str(ho[0])[3:])}" if ho else ""
+    after = f" AND {_PE_NUM} > {_pe_num_of(conn, ho[0])}" if ho else ""
     behind = [r[0] for r in conn.execute(
         "SELECT id FROM progress_entries WHERE event_type IN ('work-done', 'transition')"
         f"{after} ORDER BY {_PE_NUM}").fetchall()]
@@ -1525,7 +1544,8 @@ def _resume_block(conn, name: str, data_dir: Path | None = None) -> dict:
                " (tamheed:session-handoff) before the next compaction")
     return {"package": name, "handoff": handoff, "handoff_behind": len(behind),
             "open_feedback": open_fb, "slices_active": slices, "last_entries": last,
-            "lock": lock, "next": nxt, "skill": "tamheed:package-writes", "half": half}
+            "lock": lock, "next": nxt, "skill": "tamheed:package-writes", "half": half,
+            "standup": _resume_standup(conn)}
 
 
 def package_open(name: str) -> dict:
@@ -3849,7 +3869,7 @@ def _readiness_report(conn, scope: str, scope_id: str | None) -> dict:
         # work yet measured nothing (indeterminate, the prompt-ids-resolve posture).
         ho = conn.execute("SELECT id FROM progress_entries WHERE event_type = 'handoff'"
                           f" ORDER BY {_PE_NUM} DESC LIMIT 1").fetchone()
-        after = f" AND {_PE_NUM} > {int(str(ho[0])[3:])}" if ho else ""
+        after = f" AND {_PE_NUM} > {_pe_num_of(conn, ho[0])}" if ho else ""
         uncovered = [r[0] for r in conn.execute(
             "SELECT id FROM progress_entries WHERE event_type IN ('work-done', 'transition')"
             f"{after} ORDER BY {_PE_NUM}").fetchall()]
@@ -5776,8 +5796,8 @@ def package_migrate(name: str, confirm: bool = False) -> dict:
         if added:
             rep["entity_types_added"] = added
         pe_rows = tables.setdefault("progress_entries", [])
-        nxt = max((int(str(r.get("id"))[3:]) for r in pe_rows
-                   if str(r.get("id", "")).startswith("PE-")), default=0) + 1
+        nxt = max((int(re.match(r"PE-(\d*)", str(r.get("id"))).group(1) or 0)  # SR47: as CAST
+                   for r in pe_rows if str(r.get("id", "")).startswith("PE-")), default=0) + 1
         if v4_sync:
             parts = []
             if added:
@@ -6313,6 +6333,405 @@ def server_info(detail: bool = False) -> dict:
 # description at 2,048 characters, so a rule a caller must know goes here, short, with
 # the critical words first. The contract test pins it and the selftest compares it with
 # what the SDK lists.
+# --------------------------------------------------------------------------- standup report
+
+# Plan 235 (ADR-0003): the standup report. The modules compute (standup.py, standup_facts.py,
+# standup_page.py). These functions read and write the store and the files: standup_reports,
+# progress_entries and reports/*.html under the package.
+_STANDUP_NARRATIVE_KEYS = ("headline", "did", "challenges", "next", "plan", "colour",
+                           "colour_reason")
+_STANDUP_NARRATIVE_REQUIRED = ("headline", "did", "challenges", "next", "colour")
+_STANDUP_CONFIRM_KEYS = ("operator_confirm", "by", "words", "colour")
+_STANDUP_SHARES = {"headline": 25, "did": 150, "challenges": 150, "next": 100, "plan": 125,
+                   "colour_reason": 25}
+_STANDUP_SIZE = {"headline": 300}       # characters; every other field takes 3,000
+_STANDUP_ROW = ("id", "kind", "seq", "lifecycle_status", "base_report", "supersedes",
+                "checkpoint", "pe_to", "av_to", "ended_at", "utc_offset", "state_digest",
+                "state_delta", "facts", "narrative", "rule_colour", "colour", "recorded_by",
+                "operator_words", "recorded_at")
+
+
+def _standup_row(where: str, params=()) -> dict | None:
+    row = _CURRENT.conn.execute(f"SELECT {', '.join(_STANDUP_ROW)} FROM standup_reports"
+                                f" WHERE {where}", params).fetchone()
+    return dict(zip(_STANDUP_ROW, row)) if row else None
+
+
+def _standup_dir() -> Path:
+    return PACKAGE_ROOT / _CURRENT_NAME / "reports"
+
+
+def _standup_context(conn) -> tuple[str, str | None]:
+    """The package's title, and its start date when one is known (never a v1 value)."""
+    title, created, attrs = conn.execute(
+        "SELECT title, created_at, custom_attributes FROM packages LIMIT 1").fetchone()
+    birth = str(created or "")[:10]
+    known = re.fullmatch(r"\d{4}-\d\d-\d\d", birth) and "v1_manifest" not in str(attrs or "")
+    return str(title or _CURRENT_NAME), (birth if known else None)
+
+
+def _standup_blockers(conn) -> list[str]:
+    report = _readiness_report(conn, "package", None)
+    return [r["rule"] for r in report["rules"]
+            if r.get("severity") == "blocking" and r.get("status") == "fail"]
+
+
+def _standup_page(row: dict, *, draft: bool) -> tuple[Path, int]:
+    """Render the row's page and write it: reports/draft.html or reports/RPT-NNN.html."""
+    facts = json.loads(row["facts"])
+    view = facts.get("view", {})
+    base = view.get("base_row")
+    meta = standup_page.meta(row, package=view.get("package", ""), base=base,
+                             birth=view.get("birth"), window=view["window"],
+                             snapped=view.get("snapped"), broken=view.get("broken"),
+                             rule_reasons=view.get("rule_reasons", []),
+                             notes=view.get("notes", []))
+    narrative = json.loads(row["narrative"]) if row.get("narrative") else None
+    page, words = standup_page.fit(meta, facts, narrative, exempt=bool(view.get("first")))
+    out = _standup_dir() / ("draft.html" if draft else f"{row['id']}.html")
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_text(page, encoding="utf-8", newline="\n")
+    _managed_emit(out.parent / ".gitignore", "draft.html\n")
+    return out, words
+
+
+def _standup_offset(utc_offset) -> tuple[str | None, str | None]:
+    if utc_offset is not None:
+        if standup.parse_offset(utc_offset) is None:
+            return None, ("utc_offset is ±HH:MM from -12:00 to +14:00, with minutes 00, 15, 30"
+                          f" or 45 (got {utc_offset!r})")
+        return standup.normal_offset(str(utc_offset)), None
+    # a discard removes its row, so the newest row is the live draft or a recorded report
+    last = _CURRENT.conn.execute("SELECT utc_offset FROM standup_reports ORDER BY"
+                                 f" {_by_id()} DESC LIMIT 1").fetchone()
+    if last:
+        return last[0], None
+    return None, ("this is the package's first standup report, and no UTC offset is known."
+                  " Ask the operator for theirs, such as +03:00. Then send utc_offset")
+
+
+def _standup_facts(start, offset: str) -> dict:
+    """The facts call: the window, the delta and the facts, as a row to store."""
+    conn = _CURRENT.conn
+    base, kind, snapped, err = standup.select_base(conn, start)
+    if err:
+        return {"error": err}
+    out = standup.compute(conn, ENTITY_TABLES.values(), base, kind)
+    if "error" in out:
+        return out
+    title, birth = _standup_context(conn)
+    facts = standup_facts.build(conn, cls=out["cls"], live=out["live"], first=out["first"],
+                                window=out, today=standup.local(_now(), offset).date().isoformat(),
+                                blocker_rules=_standup_blockers(conn),
+                                screen=lambda text: bool(_INJECT_RE.search(text)))
+    colour, reasons = standup_facts.rule_colour(facts)
+    notes = ([f"Edit tracking pauses this once for: {', '.join(out['cls']['paused'])}."]
+             if out["cls"]["paused"] else [])
+    facts["view"] = {"package": title, "birth": birth, "base_row": base, "snapped": snapped,
+                     "broken": out["broken"], "first": out["first"], "rule_reasons": reasons,
+                     "notes": notes, "window": {k: out[k] for k in
+                                                ("pe_from", "pe_to", "av_from", "av_to")}}
+    return {"kind": kind, "seq": out["seq"], "base_report": (base or {}).get("id"),
+            "checkpoint": int(out["checkpoint"]), "pe_to": out["pe_to"], "av_to": out["av_to"],
+            "ended_at": _now(), "utc_offset": offset, "state_digest": out["digest"],
+            "state_delta": json.dumps(out["delta"], sort_keys=True, ensure_ascii=False),
+            "facts": json.dumps(facts, sort_keys=True, ensure_ascii=False),
+            "rule_colour": colour}
+
+
+def _standup_correction(target_id: str, offset_arg) -> dict:
+    """A correction copies its target's window, delta and facts. Only the words differ."""
+    target = _standup_row("id = ?", (target_id,))
+    if target is None or target["lifecycle_status"] != "Approved":
+        why = "not a row" if target is None else target["lifecycle_status"].lower()
+        return {"error": f"{target_id} cannot be corrected: it is {why}. Correct a recorded"
+                         " report"}
+    keep = ("kind", "seq", "base_report", "checkpoint", "pe_to", "av_to", "ended_at",
+            "utc_offset", "state_digest", "state_delta", "facts", "rule_colour")
+    row = {k: target[k] for k in keep}
+    if offset_arg is not None:
+        row["utc_offset"] = offset_arg
+    row["supersedes"] = target_id
+    return row
+
+
+def _standup_store_draft(row: dict) -> str:
+    """Insert the draft, or replace the live one in place and keep its id."""
+    conn = _CURRENT.conn
+    live = conn.execute("SELECT id FROM standup_reports WHERE lifecycle_status = 'Draft'"
+                        ).fetchone()
+    row = dict({"supersedes": None, "narrative": None}, **row)
+    if live:
+        sets = ", ".join(f"{k} = ?" for k in row)
+        conn.execute(f"UPDATE standup_reports SET {sets} WHERE id = ?",
+                     [*row.values(), live[0]])
+        return live[0]
+    rid = _next_id("RPT-", "standup_reports")
+    conn.execute(f"INSERT INTO standup_reports (id, {', '.join(row)}) VALUES"
+                 f" (?, {', '.join('?' * len(row))})", [rid, *row.values()])
+    return rid
+
+
+def _standup_trim(facts: dict) -> dict:
+    """The facts for the caller's context: at most 30 items per list (the row keeps all)."""
+    def cut(value):
+        if isinstance(value, dict) and "items" in value and "total" in value:
+            return {"items": value["items"][:standup.LIST_CAP], "total": value["total"]}
+        if isinstance(value, dict):
+            return {k: cut(v) for k, v in value.items()}
+        return value
+    return {k: cut(v) for k, v in facts.items() if k != "view"}
+
+
+def _standup_draft(start, utc_offset, supersede) -> dict:
+    offset, err = _standup_offset(utc_offset)
+    if err and not supersede:
+        return _err(err + ". Nothing was written")
+    if supersede:
+        if start is not None:
+            return _err("a correction keeps the window of the report it corrects, so start"
+                        " is refused with supersede. Nothing was written")
+        row = _standup_correction(str(supersede), offset if utc_offset is not None else None)
+    else:
+        row = _standup_facts(start, offset)
+    if "error" in row:
+        return _err(row["error"] + ". Nothing was written")
+    try:
+        rid = _standup_store_draft(row)
+        stored = _standup_row("id = ?", (rid,))
+        page, words = _standup_page(stored, draft=True)
+    except Exception as exc:
+        _CURRENT.conn.rollback()
+        return _err(f"the draft was not written: {exc}")
+    if err := _commit():
+        return err
+    facts = json.loads(stored["facts"])
+    old = (_standup_row("id = ?", (supersede,)) or {}).get("narrative") if supersede else None
+    return {"ok": True, "stage": "facts", "report": rid, "kind": stored["kind"],
+            "window": facts["view"]["window"], "first": facts["view"]["first"],
+            "rule_colour": stored["rule_colour"], "rule_reasons": facts["view"]["rule_reasons"],
+            "facts": _standup_trim(facts), "word_shares": _STANDUP_SHARES,
+            "page": str(page), "visible_words": words,
+            **({"corrects_narrative": json.loads(old)} if old else {}),
+            "next": "Write the narrative under tamheed:plain-english, then call"
+                    " standup_report(narrative=...). Show the operator the page."}
+
+
+def _standup_check_narrative(conn, narrative, rid: str) -> tuple[str | None, list]:
+    """(refusal, warnings) for the agent's words."""
+    if err := _item_error(narrative, _STANDUP_NARRATIVE_KEYS, _STANDUP_NARRATIVE_REQUIRED):
+        return f"narrative: {err}", []
+    for key, value in narrative.items():
+        if not isinstance(value, str) or (key not in ("plan", "colour_reason")
+                                          and not value.strip()):
+            return f"narrative.{key} is text and not empty", []
+        if len(value) > _STANDUP_SIZE.get(key, 3000):
+            return f"narrative.{key} is over {_STANDUP_SIZE.get(key, 3000)} characters", []
+        try:
+            value.encode("utf-8")
+        except UnicodeEncodeError:
+            return f"narrative.{key} holds a broken character (a lone surrogate)", []
+    if narrative["colour"] not in standup_page.COLOUR_WORDS:
+        return f"colour is one of: green, amber, red (got {narrative['colour']!r})", []
+    if narrative["colour"] != "green" and not str(narrative.get("colour_reason", "")).strip():
+        return ("a colour that is not green needs colour_reason: why, and the road to"
+                " green"), []
+    known = {r[0] for r in conn.execute("SELECT id FROM entity_index")} | {rid}
+    pattern = _prose_id_pattern(conn)
+    for key, value in narrative.items():
+        bad = sorted({m.group(0) for m in pattern.finditer(value)} - known)
+        if bad:
+            return f"the narrative cites ids that name no row: {key} -> {', '.join(bad)}", []
+        if _INJECT_RE.search(value):
+            return (f"narrative.{key} reads as an instruction to an agent (G-INJECT). A report"
+                    " holds what happened and what is planned"), []
+    vocab = _plain_vocabulary(conn)
+    for key, value in narrative.items():
+        hard = ste_lint.hard(ste_lint.lint_text(value, mode="strict", vocab=vocab))
+        if hard:
+            rules = sorted({f["rule"] for f in hard})
+            return (f"narrative.{key} breaks plain-English rules: {', '.join(rules)}"
+                    " (tamheed:plain-english)"), []
+    warnings = [f"narrative.{k} has {len(str(v).split())} words, over its share of"
+                f" {_STANDUP_SHARES[k]}" for k, v in narrative.items()
+                if k in _STANDUP_SHARES and len(str(v).split()) > _STANDUP_SHARES[k]]
+    return None, warnings
+
+
+def _standup_attach(narrative) -> dict:
+    conn = _CURRENT.conn
+    draft = _standup_row("lifecycle_status = 'Draft'")
+    if draft is None:
+        return _err("no draft standup report. Call standup_report() first: it takes the facts"
+                    " and fixes the window end. Nothing was written")
+    refusal, warnings = _standup_check_narrative(conn, narrative, draft["id"])
+    if refusal:
+        return _err(refusal + ". Nothing was written")
+    text = json.dumps(narrative, sort_keys=True, ensure_ascii=False)
+    conn.execute("UPDATE standup_reports SET narrative = ? WHERE id = ?", (text, draft["id"]))
+    try:
+        page, words = _standup_page(dict(draft, narrative=text), draft=True)
+    except Exception as exc:
+        conn.rollback()
+        return _err(f"the page was not written: {exc}")
+    if err := _commit():
+        return err
+    if words > 2000:
+        warnings.append(f"the page has {words} visible words, over the 2,000 budget")
+    return {"ok": True, "stage": "draft", "report": draft["id"], "page": str(page),
+            "visible_words": words, "warnings": warnings,
+            "next": "Show the operator the summary and the page. Record only on their words:"
+                    " standup_report(action='record', confirm=...)."}
+
+
+def _standup_confirm_error(confirm) -> str | None:
+    if err := _item_error(confirm, _STANDUP_CONFIRM_KEYS, ("by", "words", "colour")):
+        return f"confirm: {err}"
+    if not _operator_word(confirm):
+        return ("recording a standup report is the OPERATOR's word. Show them"
+                " reports/draft.html, then send confirm.operator_confirm as the JSON boolean"
+                " true, their name under by and what they said under words")
+    by = str(confirm["by"])
+    if not by.startswith("human:") or not by[6:].strip():
+        return f"confirm.by names the operator as human:<name> (got {by!r})"
+    words = str(confirm["words"])
+    if not words.strip():
+        return "confirm.words is empty: quote what the operator said"
+    if _INJECT_RE.search(words):
+        return "confirm.words reads as an instruction to an agent (G-INJECT)"
+    if confirm["colour"] not in standup_page.COLOUR_WORDS:
+        return f"confirm.colour is one of: green, amber, red (got {confirm['colour']!r})"
+    return None
+
+
+def _standup_record(confirm) -> dict:
+    conn = _CURRENT.conn
+    draft = _standup_row("lifecycle_status = 'Draft'")
+    if draft is None or not draft["narrative"]:
+        what = "no draft standup report" if draft is None else f"{draft['id']} has no narrative"
+        return _err(f"{what}. Draft, attach the narrative, show the operator, then record."
+                    " Nothing was written")
+    if err := _standup_confirm_error(confirm):
+        return _err(err + ". Nothing was written")
+    ok, why = standup.verify(conn, draft)
+    if not ok:
+        return _err(f"{why}. A report was recorded or corrected, or data/ changed through git,"
+                    " since the draft. Draft again. Nothing was written")
+    if draft["supersedes"]:
+        target = _standup_row("id = ?", (draft["supersedes"],))
+        if target is None or target["lifecycle_status"] != "Approved":
+            return _err(f"{draft['supersedes']} is no longer a recorded report. Draft the"
+                        " correction again. Nothing was written")
+    now = _now()
+    live, _cols = standup.state(conn, ENTITY_TABLES.values())
+    final = dict(draft, colour=confirm["colour"], recorded_by=str(confirm["by"]),
+                 operator_words=str(confirm["words"]), recorded_at=now,
+                 lifecycle_status="Approved")
+    try:
+        page, words = _standup_page(final, draft=False)
+        if draft["supersedes"]:
+            conn.execute("UPDATE standup_reports SET lifecycle_status = 'Superseded'"
+                         " WHERE id = ?", (draft["supersedes"],))
+        conn.execute("UPDATE standup_reports SET colour = ?, recorded_by = ?,"
+                     " operator_words = ?, recorded_at = ?, lifecycle_status = 'Approved'"
+                     " WHERE id = ?", (final["colour"], final["recorded_by"],
+                                       final["operator_words"], now, draft["id"]))
+        pe_id = _next_id("PE-", "progress_entries")
+        conn.execute(   # the words stay in the row: the journal names the report and the recorder
+            "INSERT INTO progress_entries (id, event_type, entry, subject_id, actor,"
+            " occurred_at, custom_attributes) VALUES (?, 'note', ?, ?, ?, ?, ?)",
+            (pe_id, f"{draft['id']} recorded by {final['recorded_by']}", draft["id"],
+             standup.SELF_ACTOR, now, json.dumps({"report": draft["id"], "kind": draft["kind"],
+                                                  "supersedes": draft["supersedes"]})))
+    except Exception as exc:
+        conn.rollback()
+        (_standup_dir() / f"{draft['id']}.html").unlink(missing_ok=True)
+        return _err(f"the report was not recorded: {exc}")
+    if err := _commit():
+        if not err.get("applied"):          # rolled back: no report, so no page
+            (_standup_dir() / f"{draft['id']}.html").unlink(missing_ok=True)
+            return err
+        (_standup_dir() / "draft.html").unlink(missing_ok=True)   # recorded: keep its page
+        return err
+    (_standup_dir() / "draft.html").unlink(missing_ok=True)
+    result = {"ok": True, "stage": "recorded", "report": draft["id"], "page": str(page),
+              "visible_words": words, "journal_id": pe_id,
+              "live_match": standup.digest(live) == draft["state_digest"],
+              "supersedes": draft["supersedes"],
+              "next": f"Export review.html, then commit reports/{draft['id']}.html, review.html"
+                      " and data/ on the operator's yes."}
+    if confirm["colour"] != draft["rule_colour"]:
+        result["colour_differs_from_rule"] = draft["rule_colour"]
+    return result
+
+
+def _standup_discard() -> dict:
+    conn = _CURRENT.conn
+    draft = _standup_row("lifecycle_status = 'Draft'")
+    if draft is None:
+        return _err("no draft standup report to discard")
+    try:
+        conn.execute("DELETE FROM standup_reports WHERE id = ?", (draft["id"],))
+    except Exception as exc:
+        conn.rollback()
+        return _err(f"{draft['id']} cannot be removed: {exc}")
+    if err := _commit():
+        return err
+    (_standup_dir() / "draft.html").unlink(missing_ok=True)
+    return {"ok": True, "stage": "discarded", "report": draft["id"]}
+
+
+def standup_report(action: str = "draft", narrative: dict | None = None,
+                   start: str | None = None, utc_offset: str | None = None,
+                   supersede: str | None = None, confirm: dict | None = None) -> dict:
+    """The standup report (plan 235, ADR-0003). See _STANDUP_DESC for the contract."""
+    if guard := _need_open():
+        return guard
+    if _CURRENT.conn.execute("SELECT 1 FROM entity_types WHERE type_id = 'standup-report'"
+                             ).fetchone() is None:
+        return _err("this package's registry does not know the family 'standup-report' yet."
+                    " The package was written before the release that added it. Run"
+                    " package_migrate: its staged registry-sync teaches the package the"
+                    " family. Nothing was written")
+    if action not in ("draft", "record", "discard"):
+        return _err(f"action is one of: draft, record, discard (got {action!r})")
+    given = {k for k, v in (("narrative", narrative), ("start", start),
+                            ("utc_offset", utc_offset), ("supersede", supersede),
+                            ("confirm", confirm)) if v is not None}
+    if action == "discard":
+        return _err("action=discard takes no other argument") if given else _standup_discard()
+    if action == "record":
+        if given - {"confirm"}:
+            return _err("action=record takes confirm only. Nothing was written")
+        return _standup_record(confirm)
+    if "confirm" in given:
+        return _err("confirm belongs to action=record. Nothing was written")
+    if narrative is not None:
+        if given - {"narrative"}:
+            return _err("narrative attaches to the current draft. Send start, utc_offset and"
+                        " supersede only on a draft call without a narrative")
+        return _standup_attach(narrative)
+    return _standup_draft(start, utc_offset, supersede)
+
+
+# Plan 235: the standup report's contract, the text a client reads.
+_STANDUP_DESC = (
+    "A standup report for one window of work: what we did, the challenges and decisions,"
+    " and what we expect to do next. The window starts where the latest recorded daily"
+    " report ended, or at the start of the package. action='draft' with no narrative fixes"
+    " the window end and returns the facts: the lists, the rule colour and the word"
+    " shares. It writes reports/draft.html. The first report needs utc_offset, such as"
+    " '+03:00'. Later reports reuse it. start is a date or a recorded report id, and an"
+    " earlier start makes an override report. supersede=RPT-NNN drafts a correction of a"
+    " recorded report over the same window. action='draft' with narrative attaches the"
+    " words: keys headline, did, challenges, next, plan, colour, colour_reason. The tool"
+    " refuses an id that names no row, a plain-English hard finding and text shaped as an"
+    " instruction. A colour that is not green needs a colour_reason. A narrative over its"
+    " share of words is a warning. action='record' needs confirm with the keys"
+    " operator_confirm (the JSON boolean true), by (human:<name>), words (what the"
+    " operator said) and colour. It writes reports/RPT-NNN.html and a journal note. The"
+    " words stay in the row and never reach a page. action='discard' removes the draft. A"
+    " recorded report is immutable.")
 _DESCRIPTION_CAP = 2048
 # --------------------------------------------------------------------------- interview page
 
@@ -6642,6 +7061,7 @@ TOOLS = {
     "export_html": (export_html, "Export the HTML review surface to <package>/review.html"),
     "slate_export": (slate_export, _SLATE_EXPORT_DESC),
     "slate_read": (slate_read, _SLATE_READ_DESC),
+    "standup_report": (standup_report, _STANDUP_DESC),
     "package_verify": (package_verify,
                        "Canonical round-trip of the on-disk store (byte-equality, foreign"
                        " files, digest). record=true journals the verified digest"),

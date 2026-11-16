@@ -176,6 +176,10 @@ def build_lines(project: Path, source: str = "") -> list[str]:
     if last:
         lines.append("Latest journal: " + ", ".join(
             f"{e['id']} ({e['event_type']})" for e in last))
+    standup = block.get("standup")    # plan 235 (SR26): information only, silent without one
+    if standup:
+        lines.append(f"Last standup report: {standup['id']} ({standup['shown']})."
+                     " /tamheed:standup writes the next one.")
     lines.append(f"Next: {block.get('next')}")
     lines.append(f"Skill: {block.get('skill')} — invoke it by name before your first write.")
     return lines[:MAX_LINES]

@@ -47,7 +47,7 @@ GROUPS = {
              "readiness_check", "package_verify", "slate_read"),
     "mutate": ("package_create", "package_open", "package_close", "entity_upsert",
                "progress_update", "audit_record", "work_bind", "entity_export", "handoff_emit"),
-    "staged": ("package_migrate", "package_adopt"),
+    "staged": ("package_migrate", "package_adopt", "standup_report"),
     "export": ("export_html", "slate_export"),
 }
 

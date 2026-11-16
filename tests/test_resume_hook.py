@@ -103,6 +103,27 @@ class ResumeHookTest(unittest.TestCase):
         self.assertNotIn("compacted", out)
         self.assertLessEqual(len(lines), hook.MAX_LINES)
 
+    def test_the_last_standup_report_is_one_line_and_silent_without_one(self):
+        """Plan 235 (SR26): information only. No report, no line."""
+        self._package()
+        out, _code = run_hook(self.project, source="startup")
+        self.assertNotIn("Last standup report", out)
+        self.assertTrue(srv.package_migrate("pkg", confirm=True)["ok"])   # the field's route
+        self.assertTrue(srv.package_open("pkg")["ok"])
+        self.assertTrue(srv.standup_report(utc_offset="+03:00")["ok"])
+        self.assertTrue(srv.standup_report(narrative={
+            "headline": "Work goes on.", "did": "We wrote code.", "challenges": "None today.",
+            "next": "More code.", "colour": "green"})["ok"])
+        self.assertTrue(srv.standup_report(action="record", confirm={
+            "operator_confirm": True, "by": "human:op", "words": "ok", "colour": "green"})["ok"])
+        srv.package_close()
+        out, code = run_hook(self.project, source="startup")
+        self.assertEqual(code, 0)
+        line = [x for x in out.splitlines() if x.startswith("Last standup report")]
+        self.assertEqual(len(line), 1, out)
+        self.assertIn("RPT-001", line[0])
+        self.assertIn("(UTC+03:00)", line[0])
+
     def test_a_package_that_is_behind_names_the_file_and_the_migration(self):
         """R118 (plan 230). The header's schema number is the engine's. For a package with a
         data file behind the engine, the hook said "unlocked", and `package_open` then refused

@@ -224,6 +224,17 @@ def daily_reports(conn) -> list[dict]:
         " AND lifecycle_status = 'Approved' ORDER BY seq")]
 
 
+def at_place(conn, report_id: str | None) -> dict | None:
+    """The recorded daily report at the place of `report_id` in the chain. A correction takes
+    the place of the report it corrects, so a base id stays valid after its correction."""
+    if not report_id:
+        return None
+    seq = conn.execute("SELECT seq FROM standup_reports WHERE id = ?", (report_id,)).fetchone()
+    if not seq or seq[0] is None:
+        return None
+    return next((r for r in daily_reports(conn) if r["seq"] == seq[0]), None)
+
+
 def snap(conn, day: str) -> tuple[dict | None, str | None]:
     """The last recorded daily report whose local end date is on or before `day`."""
     try:
@@ -298,7 +309,7 @@ def select_base(conn, start: str | None) -> tuple[dict | None, str, str | None, 
         return latest, "default", None, None
     start = str(start).strip()
     if re.fullmatch(r"RPT-\d+", start):
-        row = next((r for r in daily if r["id"] == start), None)
+        row = at_place(conn, start)
         if row is None:
             state_of = conn.execute("SELECT kind, lifecycle_status FROM standup_reports"
                                     " WHERE id = ?", (start,)).fetchone()
@@ -358,7 +369,7 @@ def verify(conn, row: dict) -> tuple[bool, str | None]:
         return False, f"the draft's delta does not read: {exc}"
     base_state, base_cols = {}, {}
     if row.get("base_report") and not whole:
-        base = next((r for r in daily_reports(conn) if r["id"] == row["base_report"]), None)
+        base = at_place(conn, row["base_report"])
         if base is None:
             return False, f"{row['base_report']} is no longer a recorded daily report"
         base_state, base_cols, broken = replay(chain(conn, upto=base["seq"]))

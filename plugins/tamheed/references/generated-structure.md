@@ -32,6 +32,10 @@ Markdown registers.
 │   ├── <name>.short.md            #   a hand-out: one line for each question of the room
 │   ├── <name>.answers.json        #   the answers of the whole page, saved by the operator
 │   └── <name>.<round>.answers.json #  the answers of one round. slate_read reads both kinds
+├── reports/                       # v6.6 (plans 232-236): standup reports
+│   ├── RPT-NNN.html               #   one page per recorded report (committed)
+│   ├── draft.html                 #   the draft's page (ignored by git)
+│   └── .gitignore                 #   draft.html
 ├── exports/                       # v4.7: entity_export files — a read tool's whole result, digest-
 │   └── <name>.json                #   stamped, deterministic; the sanctioned read for committed scripts
 │                                  #   (derived, regenerable; commit or ignore — never under data/)

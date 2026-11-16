@@ -369,6 +369,7 @@ see.
 | `entity_export(path, tool?, args?)` | A read tool's WHOLE result as a digest-stamped JSON file under `exports/`, the sanctioned read for committed scripts that quote the store |
 | `handoff_emit / export_html` | Target-repository wiring + the HTML review surface |
 | `slate_export / slate_read` | An interview page for the operator from a slate of questions, and a checked transcript of the answers file that the page saves (v6.5) |
+| `standup_report(action?, narrative?, start?, utc_offset?, supersede?, confirm?)` | A standup report for the window since the last one: what we did, the challenges and decisions, what we expect to do next. Drafted, then recorded on the operator's word as `reports/RPT-NNN.html` (v6.6) |
 
 Full signatures and semantics: [`plugins/tamheed/server/README.md`](plugins/tamheed/server/README.md).
 

@@ -956,97 +956,103 @@ def trace_path(f, ftype: str) -> dict:
 # identifier drawn as written (a table, a file, a journal event type).
 TOOL_EFFECTS = {
     "server_info": {
-        "needs": [("@need.none", 6277)],
-        "reads": [("plugin.json", 6251), ("packages", 6279), ("@resume", 6295)],
-        "writes": [("@nothing", 6258)]},
+        "needs": [("@need.none", 6297)],
+        "reads": [("plugin.json", 6271), ("packages", 6299), ("@resume", 6315)],
+        "writes": [("@nothing", 6278)]},
     "package_create": {
-        "needs": [("@need.closed", 1064), ("@need.lockfree", 1073)],
-        "reads": [("@nothing", 1061)],
-        "writes": [("entity_types", 1077), ("packages", 1082), ("README.md", 1096), ("@lock_taken", 1072), ("CLAUDE.md", 1098)]},
+        "needs": [("@need.closed", 1067), ("@need.lockfree", 1076)],
+        "reads": [("@nothing", 1064)],
+        "writes": [("entity_types", 1080), ("packages", 1085), ("README.md", 1099), ("@lock_taken", 1075), ("CLAUDE.md", 1101)]},
     "package_open": {
-        "needs": [("@need.closed", 1537), ("@need.v4", 1544), ("@need.lockfree", 1572)],
-        "reads": [("@canonical", 1571), ("@resume", 1594)],
-        "writes": [("@lock_taken", 1571), ("CLAUDE.md", 1591)]},
+        "needs": [("@need.closed", 1557), ("@need.v4", 1564), ("@need.lockfree", 1592)],
+        "reads": [("@canonical", 1591), ("@resume", 1614)],
+        "writes": [("@lock_taken", 1591), ("CLAUDE.md", 1611)]},
     "package_close": {
-        "needs": [("@need.open", 1617)],
-        "reads": [("@nothing", 1614)],
-        "writes": [("@canonical", 1622), ("@lock_released", 1638), ("data/*.unflushed", 1634)]},
+        "needs": [("@need.open", 1637)],
+        "reads": [("@nothing", 1634)],
+        "writes": [("@canonical", 1642), ("@lock_released", 1658), ("data/*.unflushed", 1654)]},
     "package_unlock": {
-        "needs": [("@need.name", 5928), ("@need.word", 5981)],
-        "reads": [("@lock_file", 5965)],
-        "writes": [("@lock_removed", 6019), ("progress_entries", 6036), ("forced-override", 6039)]},
+        "needs": [("@need.name", 5948), ("@need.word", 6001)],
+        "reads": [("@lock_file", 5985)],
+        "writes": [("@lock_removed", 6039), ("progress_entries", 6056), ("forced-override", 6059)]},
     "entity_upsert": {
-        "needs": [("@need.open", 2158)],
-        "reads": [("@readiness", 2317), ("@skill_names", 2437)],
-        "writes": [("@any_table", 2611), ("trace_edges", 2242), ("progress_entries", 2251), ("lessons", 2707),
-                   ("@canonical", 2874)]},
+        "needs": [("@need.open", 2178)],
+        "reads": [("@readiness", 2337), ("@skill_names", 2457)],
+        "writes": [("@any_table", 2631), ("trace_edges", 2262), ("progress_entries", 2271), ("lessons", 2727),
+                   ("@canonical", 2894)]},
     "entity_query": {
-        "needs": [("@need.open", 2919)],
-        "reads": [("@any_table", 2996)],
-        "writes": [("@nothing", 2883)]},
+        "needs": [("@need.open", 2939)],
+        "reads": [("@any_table", 3016)],
+        "writes": [("@nothing", 2903)]},
     "trace_query": {
-        "needs": [("@need.open", 3136)],
-        "reads": [("trace_edges", 3165), ("entity_index", 3166)],
-        "writes": [("@nothing", 3122)]},
+        "needs": [("@need.open", 3156)],
+        "reads": [("trace_edges", 3185), ("entity_index", 3186)],
+        "writes": [("@nothing", 3142)]},
     "gate_run": {
-        "needs": [("@need.open", 3238)],
-        "reads": [("@all_tables", 3257)],
-        "writes": [("@nothing", 3233)]},
+        "needs": [("@need.open", 3258)],
+        "reads": [("@all_tables", 3277)],
+        "writes": [("@nothing", 3253)]},
     "readiness_check": {
-        "needs": [("@need.open", 4050)],
-        "reads": [("@all_tables", 4065)],
-        "writes": [("@nothing", 4044)]},
+        "needs": [("@need.open", 4070)],
+        "reads": [("@all_tables", 4085)],
+        "writes": [("@nothing", 4064)]},
     "progress_update": {
-        "needs": [("@need.open", 4098)],
-        "reads": [("@nothing", 4076)],
-        "writes": [("progress_entries", 4116), ("@canonical", 4131)]},
+        "needs": [("@need.open", 4118)],
+        "reads": [("@nothing", 4096)],
+        "writes": [("progress_entries", 4136), ("@canonical", 4151)]},
     "audit_record": {
-        "needs": [("@need.open", 4172)],
-        "reads": [("@nothing", 4158)],
-        "writes": [("audit_verdicts", 4187), ("@canonical", 4201)]},
+        "needs": [("@need.open", 4192)],
+        "reads": [("@nothing", 4178)],
+        "writes": [("audit_verdicts", 4207), ("@canonical", 4221)]},
     "work_bind": {
-        "needs": [("@need.open", 4213)],
-        "reads": [("entity_index", 4223)],
-        "writes": [("@bound_rows", 4233), ("progress_entries", 4240), ("@canonical", 4248)]},
+        "needs": [("@need.open", 4233)],
+        "reads": [("entity_index", 4243)],
+        "writes": [("@bound_rows", 4253), ("progress_entries", 4260), ("@canonical", 4268)]},
     "handoff_emit": {
-        "needs": [("@need.open", 4868), ("@need.kickoff", 4885)],
-        "reads": [("prompts", 4885), ("lessons", 4770), ("skills", 4776), ("feedback", 5024)],
-        "writes": [("README.md", 4877), ("<target>/CLAUDE.md", 5297), ("<target>/.mcp.json", 4953),
-                   ("<package>/CLAUDE.md", 5256)]},
+        "needs": [("@need.open", 4888), ("@need.kickoff", 4905)],
+        "reads": [("prompts", 4905), ("lessons", 4790), ("skills", 4796), ("feedback", 5044)],
+        "writes": [("README.md", 4897), ("<target>/CLAUDE.md", 5317), ("<target>/.mcp.json", 4973),
+                   ("<package>/CLAUDE.md", 5276)]},
     "package_migrate": {
-        "needs": [("@need.name", 5548), ("@need.lockfree", 5588), ("@need.word", 5548)],
-        "reads": [("@canonical", 5633)],
-        "writes": [("data-v3-backup/", 5629), ("data/*.jsonl", 5852), ("progress_entries", 5778),
-                   ("README.md", 5915)]},
+        "needs": [("@need.name", 5568), ("@need.lockfree", 5608), ("@need.word", 5568)],
+        "reads": [("@canonical", 5653)],
+        "writes": [("data-v3-backup/", 5649), ("data/*.jsonl", 5872), ("progress_entries", 5798),
+                   ("README.md", 5935)]},
     "package_adopt": {
-        "needs": [("@need.source", 6062), ("@need.word", 6067)],
-        "reads": [("@source_repo", 6067)],
-        "writes": [("@new_package", 6078), ("README.md", 6071), ("CLAUDE.md", 6073)]},
+        "needs": [("@need.source", 6082), ("@need.word", 6087)],
+        "reads": [("@source_repo", 6087)],
+        "writes": [("@new_package", 6098), ("README.md", 6091), ("CLAUDE.md", 6093)]},
     "export_html": {
-        "needs": [("@need.open", 6122)],
-        "reads": [("@all_tables", 6125), ("@readiness", 6128)],
-        "writes": [("review.html", 6165), ("csv/*.csv", 6194)]},
+        "needs": [("@need.open", 6142)],
+        "reads": [("@all_tables", 6145), ("@readiness", 6148)],
+        "writes": [("review.html", 6185), ("csv/*.csv", 6214)]},
     "package_verify": {
-        "needs": [("@need.name", 1652)],
-        "reads": [("data/*.jsonl", 1705), ("review.html", 1716)],
-        "writes": [("progress_entries", 1767), ("integrity-verified", 1767)]},
+        "needs": [("@need.name", 1672)],
+        "reads": [("data/*.jsonl", 1725), ("review.html", 1736)],
+        "writes": [("progress_entries", 1787), ("integrity-verified", 1787)]},
     "entity_export": {
-        "needs": [("@need.open", 1831), ("@need.path", 1802)],
-        "reads": [("@tool_result", 1860)],
-        "writes": [("@export_file", 1885)]},
+        "needs": [("@need.open", 1851), ("@need.path", 1822)],
+        "reads": [("@tool_result", 1880)],
+        "writes": [("@export_file", 1905)]},
     "slate_export": {
-        "needs": [("@need.open", 6386)],
-        "reads": [("slates/*.spec.json", 6395),
-                   ("@cited_rows", 6413)],
-        "writes": [("slates/*.slate.json", 6438),
-                    ("slates/*.html", 6439),
-                    ("slates/*.md", 6440)]},
+        "needs": [("@need.open", 6805)],
+        "reads": [("slates/*.spec.json", 6814),
+                   ("@cited_rows", 6832)],
+        "writes": [("slates/*.slate.json", 6857),
+                    ("slates/*.html", 6858),
+                    ("slates/*.md", 6859)]},
+    "standup_report": {
+        "needs": [("@need.open", 6688), ("@need.word", 6590)],
+        "reads": [("standup_reports", 6356), ("entity_types", 6690),
+                   ("@all_tables", 6419)],
+        "writes": [("standup_reports", 6470), ("progress_entries", 6641),
+                    ("reports/*.html", 6391), ("@canonical", 6650)]},
     "slate_read": {
-        "needs": [("@need.open", 6468)],
-        "reads": [("slates/*.answers.json", 6513),
-                   ("slates/*.slate.json", 6478),
-                   ("@cited_rows", 6526)],
-        "writes": [("@nothing", 6464)]},
+        "needs": [("@need.open", 6887)],
+        "reads": [("slates/*.answers.json", 6932),
+                   ("slates/*.slate.json", 6897),
+                   ("@cited_rows", 6945)],
+        "writes": [("@nothing", 6883)]},
 }
 
 
@@ -1111,22 +1117,22 @@ def effects_figure(f, tool: str) -> dict:
 
 
 # Plan 207 (G8): how gate_run evaluates each mechanical gate, with the server line (Python) or the
-# view in schema.sql, in the order the server builds its report (the views share one loop, L3281).
+# view in schema.sql, in the order the server builds its report (the views share one loop, L3301).
 GATE_HOW = {
-    "G-IDS": ("python", 3268), "G-DEC-STATUS": ("python", 3273), "G-REQ-SRC": ("python", 3276),
+    "G-IDS": ("python", 3288), "G-DEC-STATUS": ("python", 3293), "G-REQ-SRC": ("python", 3296),
     "G-TRACE": ("view", "g_trace_failures"), "G-SET": ("view", "g_set_failures"),
     "G-PROGRESS": ("view", "g_progress_failures"),
-    "G-COMPLETE": ("python", 3319), "G-REL": ("python", 3353),
+    "G-COMPLETE": ("python", 3339), "G-REL": ("python", 3373),
 }
 PIPELINE = ["G-IDS", "G-DEC-STATUS", "G-REQ-SRC", "G-TRACE", "G-SET", "G-PROGRESS", "G-COMPLETE", "G-REL"]
 # what each mechanical gate reads: the views' bodies (schema.sql L851-871) and the server's loops
-# (G-IDS L3242-2656 over every table against entity_index; G-COMPLETE L3306 over every table
+# (G-IDS L3262-2656 over every table against entity_index; G-COMPLETE L3326 over every table
 # through _graded_text;
 # G-REL through _edge_rule_violations, trace_edges joined to entity_index twice)
 GATE_READS = {**GATE_TABLES, "G-SET": ("entity_types", "entity_index", "omissions"),
               "G-REL": ("trace_edges", "entity_index"),
               "G-IDS": ("@all_tables", "entity_index"), "G-COMPLETE": ("@all_tables",)}
-VACUOUS = {"G-TRACE": 3290, "G-PROGRESS": 3299}          # the warning the server attaches over zero rows
+VACUOUS = {"G-TRACE": 3310, "G-PROGRESS": 3319}          # the warning the server attaches over zero rows
 _SEVERITY_KEY = {"Critical": "@gate.sev.critical", "Warn": "@gate.sev.warn", "Critical at emission": "@gate.sev.emission"}
 
 

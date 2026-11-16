@@ -140,7 +140,7 @@ class UserGuideTest(unittest.TestCase):
             kind, where = diagrams.GATE_HOW[g]
             if kind == "view":
                 self.assertIn(f"CREATE VIEW {where}", schema, g)
-                lines.append(3281)
+                lines.append(3301)
             else:
                 self.assertIn(f'"{g}"', src[where - 1], (g, where))
                 lines.append(where)
@@ -164,9 +164,9 @@ class UserGuideTest(unittest.TestCase):
             self.assertTrue(set(t["tokens"]) <= tools | {"STOP"}, n)
         self.assertTrue(any(t["tokens"] for t in st.values()))
         src = extract.SERVER_SRC.split("\n")
-        self.assertIn("lesson-confirmed", src[2430])
-        self.assertIn("lesson-promoted", src[2431])
-        self.assertIn("'Superseded'", src[2706] + src[2707])      # the successor retires the old lessons
+        self.assertIn("lesson-confirmed", src[2450])
+        self.assertIn("lesson-promoted", src[2451])
+        self.assertIn("'Superseded'", src[2726] + src[2727])      # the successor retires the old lessons
         rules = {r["rule"] for sc in self.facts["rules"].values() for r in sc}
         self.assertTrue({"lessons-confirmed", "lessons-stranded", "lessons-superseded-binding"} <= rules)
         self.assertEqual(self.facts["lifecycles"]["domain"]["skills"], ["Approved", "Superseded", "Obsolete"])
@@ -212,7 +212,7 @@ class UserGuideTest(unittest.TestCase):
         check = next(c["check_in"] for c in rel["columns"] if c["name"] == "relation")
         self.assertEqual(sorted(check), sorted(set(srv.RELATION_RULES) | {"relates_to"}))
         self.assertEqual(len(f["events"]["all"]), 12)
-        self.assertEqual(len(f["tools"]), 21)
+        self.assertEqual(len(f["tools"]), 22)
         self.assertEqual({s["group"] for s in f["skills"]}, {"front", "scenario", "discipline"})
         self.assertEqual(len(f["skills"]), 27)
         self.assertEqual(len(f["stages"]["stages"]), 22)
