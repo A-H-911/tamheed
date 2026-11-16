@@ -8,6 +8,21 @@ All notable changes to Tamheed are documented here. The format is based on
 > original repository (<https://github.com/A-H-911/keystone>). Tamheed carries Keystone's full git
 > history; the Keystone repository stays frozen at 1.0.x for existing v1 packages.
 
+## [Unreleased]
+
+### Added
+
+- **A closed set of true and false (plan 240, the field's FB-019, R123).** A register field's
+  `values` holds all text values, or `true` and `false`. A value is in the set only when its
+  type matches too: `1` is not `true`, `0` is not `false`, and `"true"` is not `true`. A set of
+  both kinds is refused. A boolean set reads `true / false` on the review page and in a refusal.
+
+### Fixed
+
+- **The retire door of a register entry compares by type (plan 240).** A write that retires a
+  stored entry as it is passes unjudged. The door compared with `==`, so a value `1` passed as a
+  stored `true`, and the changed value was stored with no check. It now compares the JSON text.
+
 ## [6.6.0] - 2026-11-16
 
 **MINOR — the standup report (plans 232–237, ADR-0003).** The operator asked for a report on

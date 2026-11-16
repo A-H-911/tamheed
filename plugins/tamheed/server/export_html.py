@@ -803,7 +803,8 @@ def _declared(field: dict) -> str:
     """One declared field in words: `status (required, one of: a / b)`."""
     values = field.get("values")           # a file edited by hand can hold a set that is no list
     marks = (["required"] if field.get("required") else []) \
-        + (["one of: " + " / ".join(map(str, values))] if isinstance(values, list) and values
+        + (["one of: " + " / ".join(json.dumps(v) if isinstance(v, bool) else str(v)
+                                    for v in values)] if isinstance(values, list) and values
            else []) \
         + (["a reference"] if field.get("refs") else [])
     return str(field.get("name")) + (f" ({', '.join(marks)})" if marks else "")

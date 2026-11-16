@@ -640,6 +640,19 @@ class ExportHtmlTest(unittest.TestCase):
                          + out.count('<div class="graphwrap">'))
         self.assertEqual(out, self._export())                  # byte-identical again
 
+    def test_a_boolean_set_reads_true_and_false(self):
+        """Plan 240 (R123): a boolean set prints in JSON spelling, as each cell does. Before,
+        the line said `True / False` beside cells that said `true`."""
+        srv.package_create("reg", "Reg", "rnd")
+        self.assertTrue(srv.entity_upsert([
+            {"type": "register", "id": "REG-001", "title": "Flags",
+             "custom_attributes": {"fields": [{"name": "flag", "values": [True, False]}]}},
+            {"type": "register-entry", "id": "ENT-001", "register_id": "REG-001",
+             "title": "One", "custom_attributes": {"flag": True}}])["ok"])
+        out = self._export()
+        self.assertIn("Declared fields: flag (one of: true / false).</p>", out)
+        self.assertIn("<td>true</td>", out)
+
     def test_the_readiness_table_names_the_legs_a_requirement_misses(self):
         """Plan 228 (R84): `requirements-wired` names the missing legs per requirement. The
         page showed the ids alone, so the operator ran the tool to read the cause. The

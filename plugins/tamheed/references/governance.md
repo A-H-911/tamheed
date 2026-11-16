@@ -213,7 +213,7 @@ A register DECLARES its fields under `custom_attributes.fields`. Each field is a
 |---|---|
 | `name` | The key that an entry uses. Required, and unique in the register. |
 | `required` | `true` when every entry must carry the key with a value that is not null. An empty list, `false` and `0` are values. |
-| `values` | A list of text values. An entry's value must be one of them. |
+| `values` | A list of text values, or of `true` and `false`. An entry's value must be one of them, with the same type: `1` is not `true`, and `"true"` is not `true`. |
 | `refs` | `true` when the value is a reference: one id or a list of ids. Each id must name a row. |
 
 A field takes `values` or `refs`, never both. A field never takes the name of an entry

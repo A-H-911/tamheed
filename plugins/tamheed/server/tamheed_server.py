@@ -1987,18 +1987,39 @@ def _declaration_error(attrs: dict | None) -> str | None:
             if flag in field and not isinstance(field[flag], bool):
                 return f"the field {name!r}: `{flag}` is true or false"
         values = field.get("values")
-        if "values" in field and not (isinstance(values, list) and values
-                                      and all(isinstance(v, str) for v in values)):
-            return f"the field {name!r}: `values` is a non-empty list of text values"
+        if "values" in field and not (isinstance(values, list) and values and (
+                all(isinstance(v, str) for v in values)
+                or all(isinstance(v, bool) for v in values))):
+            return (f"the field {name!r}: `values` is a non-empty list of text values,"
+                    " or of true and false")
         if "values" in field and field.get("refs"):
             return f"the field {name!r} declares both `values` and `refs`. Choose one"
     return None
 
 
+def _in_set(value, allowed: list) -> bool:
+    """Membership by type (plan 240, R123): Python's == says that 1 is true and 0 is false."""
+    return any(type(value) is type(x) and value == x for x in allowed)
+
+
+def _set_words(allowed: list, sep: str) -> str:
+    """A closed set in words: text as it is, true and false in JSON spelling."""
+    return sep.join(json.dumps(x) if isinstance(x, bool) else str(x) for x in allowed)
+
+
+def _same_json(a, b) -> bool:
+    """Equal as JSON text (R123): dict == says that {"a": true} equals {"a": 1}."""
+    try:
+        return json.dumps(a, sort_keys=True) == json.dumps(b, sort_keys=True)
+    except (RecursionError, TypeError, ValueError):     # a file edited by hand: judge it
+        return False
+
+
 def _entry_problems(fields: list, values: dict, known_ids) -> list[str]:
     """Every way an entry's values break its register's declaration. `known_ids` answers
     `id in known_ids`. A field is REQUIRED when its key must be present and not null: an
-    empty list, false and 0 are values. A value set applies to a text value. A reference
+    empty list, false and 0 are values. A value set is all text or all true and false, and
+    a value is in it only when its type matches too. A reference
     is one id or a LIST of ids, and each must name a row (R93): a string of joined ids is
     never split, because it cannot be told from prose that names an id."""
     # The write refuses a malformed declaration, and a file edited by hand can still hold
@@ -2016,9 +2037,9 @@ def _entry_problems(fields: list, values: dict, known_ids) -> list[str]:
                 problems.append(f"`{name}` is required")
             continue
         allowed = field.get("values")
-        if isinstance(allowed, list) and allowed and value not in allowed:
-            problems.append(f"`{name}` {value!r} is not one of: "
-                            + ", ".join(map(str, allowed)))
+        if isinstance(allowed, list) and allowed and not _in_set(value, allowed):
+            shown = json.dumps(value) if isinstance(value, bool) else repr(value)
+            problems.append(f"`{name}` {shown} is not one of: " + _set_words(allowed, ", "))
         if field.get("refs"):
             items = value if isinstance(value, list) else [value]
             bad = [str(x) for x in items if not (isinstance(x, str) and x in known_ids)]
@@ -2080,7 +2101,7 @@ def _register_write_error(conn, etype: str, table: str, cols: dict) -> str | Non
               else stored.get("lifecycle_status"))
     if (status in _RETIRED_STATUSES and stored
             and register_id == stored.get("register_id")
-            and attrs == _attrs(stored.get("custom_attributes"))):
+            and _same_json(attrs, _attrs(stored.get("custom_attributes")))):
         # A write that RETIRES a stored entry AS IT IS is not judged: an entry that a
         # changed declaration no longer admits must still be retirable, and no value is
         # invented for it. The door is that narrow on purpose. A row born retired, a

@@ -1705,6 +1705,37 @@ class McpContractTest(unittest.TestCase):
         self.assertIn("FOREIGN KEY", self._refused({
             "type": "register-entry", "id": "ENT-002", "register_id": "REG-404", "title": "t"}))
 
+    def test_a_closed_set_of_true_and_false_is_compared_by_type(self):
+        """Plan 240 (FB-019, R123): a closed set held text only, so a field of true and
+        false values could not be closed. A set is now all text or all booleans. The check
+        is by type: 1 is not true, 0 is not false, and "true" is not true. Python's == said
+        that the first two were. A set of both kinds is refused. A boolean set reads
+        `true, false` in the refusal."""
+        make_complete_package("demo")
+        flag = {"fields": [{"name": "flag", "required": True, "values": [True, False]}]}
+        self.assertTrue(srv.entity_upsert([self._REGISTER | {"custom_attributes": flag}])["ok"])
+        for i, good in enumerate((True, False), start=1):
+            self.assertTrue(srv.entity_upsert([self._entry(f"ENT-00{i}", flag=good)])["ok"])
+        for bad, shown in ((1, "1"), (0, "0"), ("true", "'true'")):
+            self.assertIn(f"`flag` {shown} is not one of: true, false",
+                          self._refused(self._entry("ENT-009", flag=bad)))
+        self.assertIn("`values` is a non-empty list", self._refused(self._REGISTER | {
+            "custom_attributes": {"fields": [{"name": "m", "values": ["x", True]}]}}))
+        self.assertEqual(srv.entity_query("register-entry")["total"], 2)
+
+    def test_a_retiring_write_with_a_value_of_another_type_is_judged(self):
+        """Plan 240 (R123): a write that retires a stored entry AS IT IS passes unjudged.
+        That door compared with ==, so a `1` passed as the stored `true`, and the changed
+        value was stored with no check. The door now compares the JSON text."""
+        make_complete_package("demo")
+        srv.entity_upsert([self._REGISTER | {"custom_attributes": {"fields": [
+            {"name": "flag", "values": [True, False]}]}}])
+        self.assertTrue(srv.entity_upsert([self._entry("ENT-001", flag=True)])["ok"])
+        retire = {"lifecycle_status": "Superseded"}
+        self.assertIn("`flag` 1 is not one of: true, false",
+                      self._refused(self._entry("ENT-001", flag=1) | retire))
+        self.assertTrue(srv.entity_upsert([self._entry("ENT-001", flag=True) | retire])["ok"])
+
     def test_the_register_guard_reads_the_materialised_row(self):
         """Plan 226: the guard judges the row as it would be stored. A partial write that
         omits the values keeps them and passes. A partial write of the register that
