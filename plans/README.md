@@ -213,6 +213,7 @@ store decision is ADR-0003.
 | 235 | [The `standup_report` tool](235-standup-tool.md) -- draft, record, discard, the resume line, the docs (SR47 red first) | 234 | DONE 2026-11-16 on `feat/standup-report` (SR47 fixed at three sites; selftest 22/22; recorded on a scratch copy of the first field) |
 | 236 | [The `/tamheed:standup` skill](236-standup-skill.md) | 235 | DONE 2026-11-16 on `feat/standup-report` (dry run recorded a report on a lab copy; SR51) |
 | 237 | [Acceptance, release 6.6.0, the two field briefs](237-release-6.6.0.md) | 232-236 | DONE 2026-11-16. Released as `b08c19c` on `main` (CI run 43850413052 green on eleven jobs), tag `v6.6.0`. The way back to 6.5.1 found a blocker before the release (fixed). Both field briefs rehearsed by an agent |
+| 238 | [The 6.6.0 field briefs, to the 6.5.1 standard](238-field-briefs-6.6.0.md) -- measured on both fields' current commits, route A and B, rehearsed with a restart | 237 | DONE 2026-11-16 (docs-only, after the tag) |
 
 ### Field patch 2026-11 -- plans 230-231 -> v6.5.1 (2026-11-15 ->; maintainer-executed)
 
