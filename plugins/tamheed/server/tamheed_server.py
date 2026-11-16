@@ -3601,8 +3601,7 @@ def _readiness_report(conn, scope: str, scope_id: str | None) -> dict:
              "open medium/low defects — carrying them is legal, silence is not"
              " (plan 031: severity-thresholded blocking)")
         rule("risks-discharged", "blocking",
-             ids("SELECT id FROM risks WHERE risk_state IN ('open','materialized')"
-                 " AND discharged_by IS NULL"),
+             ids("SELECT id FROM risks WHERE " + standup_facts.RISK_UNDISCHARGED),
              "open/materialized risks with no discharging AC/test",
              na=na_note("risks", "discharged_by"))
         # Plan 107 (findings_30 Q5.1): Activated rows LEFT this list - the trigger fired and
@@ -3643,11 +3642,7 @@ def _readiness_report(conn, scope: str, scope_id: str | None) -> dict:
                   " This rule cannot discriminate (record resolutions to make it"
                   " meaningful)") % oq_total) if oq_total and not oq_any else None
         rule("open-questions-resolved", "advisory",
-             ids("SELECT id FROM open_questions"
-                 " WHERE (resolution IS NULL OR trim(resolution) = '')"
-                 " AND resolved_by IS NULL"
-                 " AND lifecycle_status NOT IN"
-                 " ('Deferred','Rejected','Superseded','Obsolete')"),
+             ids("SELECT id FROM open_questions WHERE " + standup_facts.OQ_UNRESOLVED),
              "open questions with neither a resolution nor a resolver (Deferred ="
              " deliberately carried, not counted) — resolve or defer deliberately",
              na=oq_na)
@@ -3869,6 +3864,23 @@ def _readiness_report(conn, scope: str, scope_id: str | None) -> dict:
                  " `problems` names the cause per entry. Correct the entry, or change"
                  " the declaration on the operator's word. A retired entry is not read")
             rules[-1]["problems"] = nonconforming
+        # Plan 241 (the field's FB-020, R127, R130): work that is free to start. An open row
+        # whose every `blocked_by` far end is settled, by the one definition the standup list
+        # reads (standup_facts.settled_ids). Emitted only when the package HAS such an edge,
+        # and the population is those edges, so the rule never reads an empty family.
+        (n_blocked,) = conn.execute(
+            "SELECT COUNT(*) FROM trace_edges WHERE relation = 'blocked_by'").fetchone()
+        if n_blocked:
+            free = standup_facts.lifted(conn)
+            listed = list(free)
+            measured.update({"list": listed, "table": "trace_edges", "rows": n_blocked})
+            rule("blocks-lifted", "advisory", listed,
+                 "rows whose every blocker is settled. The edge stays as history, and nothing"
+                 " is retired. Start the work. The row leaves this list when it closes. If it"
+                 " waits on something else, record that as a new `blocked_by` edge. A `WVR-`"
+                 " row carries a deliberate wait, on the operator's word. `lifted` names the"
+                 " settled blockers of each row")
+            rules[-1]["lifted"] = free
         # Plan 039 (the ACMP register: 57 Approved lessons, 48 pinned, 0 promoted —
         # 57 lines in the always-loaded note): pinning bypasses the cap by design,
         # so the cost of a pin is made visible instead. Entities = the rows that

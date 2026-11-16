@@ -185,13 +185,62 @@ def risks(conn, cls: dict, cap) -> dict:
             "risks_high": as_list(high, cap)}
 
 
+# Plan 241 (the field's FB-020, R121, R129, R135): when a row no longer blocks the row that
+# names it in a `blocked_by` edge. ONE definition: the standup list and the readiness advisory
+# `blocks-lifted` read it. The two predicates are the readiness rules' own SQL text, so
+# `open-questions-resolved` and `risks-discharged` and this rule cannot drift apart.
+OQ_UNRESOLVED = ("(resolution IS NULL OR trim(resolution) = '') AND resolved_by IS NULL"
+                 " AND lifecycle_status NOT IN ('Deferred','Rejected','Superseded','Obsolete')")
+RISK_UNDISCHARGED = "risk_state IN ('open','materialized') AND discharged_by IS NULL"
+_DONE = "lifecycle_status IN ('Implemented','Superseded','Obsolete','Rejected')"
+SETTLED_WHERE = {
+    "dependencies": _DONE, "assumptions": _DONE, "phases": _DONE, "slices": _DONE,
+    "wbs_items": _DONE, "execution_plans": _DONE, "requirements": _DONE,
+    "defects": "lifecycle_status IN ('Fixed','Won''t-fix','Duplicate')",
+    "deferred_work": "lifecycle_status IN ('Done','Won''t-do')",
+    "open_questions": f"NOT ({OQ_UNRESOLVED})",
+    "decisions": "lifecycle_status IN ('Approved','Rejected','Superseded','Implemented')",
+    "risks": f"NOT ({RISK_UNDISCHARGED})",
+    "execution_gates": "outcome = 'Go'",     # the gate's latest decision, never the journal
+}
+
+
+def settled_ids(conn) -> set[str]:
+    """The ids of every row that blocks nothing any more. A row that does not exist never
+    settles, and a family outside the table above never settles either."""
+    out: set[str] = set()
+    for table, where in SETTLED_WHERE.items():
+        out.update(r[0] for r in conn.execute(f"SELECT id FROM {table} WHERE {where}"))
+    return out
+
+
+def _blocked_by(conn) -> dict[str, list[str]]:
+    edges: dict[str, list[str]] = {}
+    for a, b in conn.execute("SELECT from_id, to_id FROM trace_edges"
+                             " WHERE relation = 'blocked_by'"):
+        edges.setdefault(a, []).append(b)
+    return edges
+
+
+def lifted(conn) -> dict[str, list[str]]:
+    """Open rows whose every `blocked_by` far end is settled: work that is free to start
+    (R130). The edges stay as history. A row is open while it is not settled itself."""
+    done = settled_ids(conn)
+    return {a: sorted(bs, key=_key) for a, bs in sorted(_blocked_by(conn).items(),
+                                                        key=lambda kv: _key(kv[0]))
+            if a not in done and all(b in done for b in bs)}
+
+
 def blocked(conn) -> list[dict]:
-    rows = conn.execute(
+    """Open slices and WBS items, each with a far end that is not settled (R121)."""
+    done = settled_ids(conn)
+    rows = [r for r in conn.execute(
         "SELECT e.from_id, e.to_id FROM trace_edges e WHERE e.relation = 'blocked_by'"
         " AND (e.from_id IN (SELECT id FROM wbs_items WHERE lifecycle_status NOT IN"
         " ('Implemented', 'Superseded', 'Obsolete', 'Rejected'))"
         " OR e.from_id IN (SELECT id FROM slices WHERE lifecycle_status NOT IN"
         " ('Implemented', 'Superseded', 'Obsolete', 'Rejected')))").fetchall()
+        if r[1] not in done]
     names = {**titles(conn, "wbs_items", [r[0] for r in rows]),
              **titles(conn, "slices", [r[0] for r in rows])}
     return [{"id": a, "title": names.get(a, ""), "note": f"blocked by {b}"} for a, b in rows]

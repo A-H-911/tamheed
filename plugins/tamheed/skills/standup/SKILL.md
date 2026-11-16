@@ -36,7 +36,8 @@ date first.
    operator named one. On the package's first report the tool asks for the operator's UTC
    offset: ask them (for example `+03:00`), then call `standup_report(utc_offset="+03:00")`.
    The result holds the facts, the rule colour with its reasons, and the word shares. It also
-   writes `reports/draft.html`.
+   writes `reports/draft.html`. The list of blocked work names a slice or a WBS item only
+   while its blocker is not settled. A met dependency at `Implemented` blocks nothing.
    - A refusal names its cause and writes nothing. Fix the cause, then call again.
    - A draft exists already: a new call replaces it, with the same id.
 4. **Write the narrative** under `tamheed:plain-english`: short sentences, plain words, real

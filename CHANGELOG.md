@@ -12,6 +12,13 @@ All notable changes to Tamheed are documented here. The format is based on
 
 ### Added
 
+- **Work that is free to start (plan 241, the field's FB-020, R121, R127, R130).** The
+  standup list of blocked work read only the `blocked_by` edge, so a met dependency still
+  blocked its slice. A blocker now lifts the block when it is settled, by one rule per
+  family. A met dependency takes `Implemented`. The new advisory `blocks-lifted` lists open
+  rows whose every blocker is settled. It exists only when a `blocked_by` edge exists. The
+  edge stays as history, and nothing is retired.
+
 - **A closed set of true and false (plan 240, the field's FB-019, R123).** A register field's
   `values` holds all text values, or `true` and `false`. A value is in the set only when its
   type matches too: `1` is not `true`, `0` is not `false`, and `"true"` is not `true`. A set of

@@ -987,6 +987,65 @@ class McpContractTest(unittest.TestCase):
                          ("waived", [], {}))
         self.assertIn("never author a waiver", adv["note"])   # the note invites no waiver
 
+    def test_the_two_shared_predicates_keep_their_rules_verdicts(self):
+        """Plan 241 (the review's finding 4): the open-question and risk predicates moved to
+        `standup_facts`, shared with the settled rule. Each rule still registers its list
+        through ids(), so its population and its empty-family reading hold. One of the two
+        is BLOCKING. This test was green before the move and stays green after it."""
+        srv.package_create("empty", "Empty", "rnd")
+        rules = {r["rule"]: r for r in srv.readiness_check("package")["rules"]}
+        for name, table in (("open-questions-resolved", "open_questions"),
+                            ("risks-discharged", "risks")):
+            self.assertEqual((rules[name]["status"], rules[name]["population"]),
+                             ("indeterminate", {"table": table, "rows": 0, "scoped": False}))
+        srv.package_close()
+        make_complete_package("full")
+        rules = {r["rule"]: r for r in srv.readiness_check("package")["rules"]}
+        for name, table, ids in (("open-questions-resolved", "open_questions", ["OQ-001"]),
+                                 ("risks-discharged", "risks", ["RISK-001"])):
+            self.assertEqual((rules[name]["status"], rules[name]["entities"],
+                              rules[name]["population"]),
+                             ("fail", ids, {"table": table, "rows": 1, "scoped": False}))
+        self.assertEqual(rules["risks-discharged"]["severity"], "blocking")
+
+    def test_blocks_lifted_lists_work_that_is_free_to_start(self):
+        """Plan 241 (R127, R130): an open row whose every `blocked_by` far end is settled is
+        free to start. The edge stays as history and nothing is retired. The rule is emitted
+        only when a `blocked_by` edge exists. It counts those edges, and it clears when the
+        row closes, or by a waiver on the operator's word."""
+        srv.package_create("lift", "Lift", "rnd")
+
+        def rule():
+            rules = {r["rule"]: r for r in srv.readiness_check("package")["rules"]}
+            return rules.get("blocks-lifted")
+
+        self.assertIsNone(rule())                                # no edge, no rule
+        dep = {"type": "dependency", "id": "DEP-001", "title": "An outside team"}
+        work = {"type": "wbs-item", "id": "WBS-1.1", "title": "w", "slice_id": "SL-001"}
+        self.assertTrue(srv.entity_upsert([
+            {"type": "phase", "id": "PH-1", "title": "P"},
+            {"type": "slice", "id": "SL-001", "title": "S", "phase_id": "PH-1"}, dep, work,
+            {"type": "trace-edge", "from_id": "WBS-1.1", "to_id": "DEP-001",
+             "relation": "blocked_by"}])["ok"])
+        r = rule()
+        self.assertEqual((r["severity"], r["status"], r["entities"]), ("advisory", "pass", []))
+        self.assertEqual(r["population"], {"table": "trace_edges", "rows": 1, "scoped": True})
+        self.assertTrue(srv.entity_upsert([dep | {"lifecycle_status": "Implemented"}])["ok"])
+        r = rule()
+        self.assertEqual((r["status"], r["entities"], r["lifted"]),
+                         ("fail", ["WBS-1.1"], {"WBS-1.1": ["DEP-001"]}))
+        self.assertIn("The edge stays as history", r["note"])
+        self.assertTrue(srv.entity_upsert([
+            {"type": "waiver", "id": "WVR-001", "rule": "blocks-lifted", "applies_to": "WBS-1.1",
+             "justification": "it waits for the next sprint", "approver": "human:operator",
+             "operator_confirm": True}])["ok"])
+        self.assertEqual((rule()["status"], rule()["entities"]), ("waived", []))
+        self.assertTrue(srv.entity_upsert([work | {"lifecycle_status": "Implemented"}])["ok"])
+        self.assertEqual(rule()["status"], "pass")               # the row closed
+        self.assertEqual(srv._CURRENT.conn.execute(               # the edge stays
+            "SELECT COUNT(*) FROM trace_edges WHERE from_id = 'WBS-1.1'"
+            " AND relation = 'blocked_by'").fetchone()[0], 1)
+
     def test_the_wired_rule_over_no_requirement_measures_nothing(self):
         """Plan 222 (review): the list comes from a helper now, and an empty family still
         reads indeterminate, as it did when ids() built the list."""

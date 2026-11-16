@@ -59,8 +59,8 @@ three tiers (engine / judgment / warn) synced against this file in both directio
   blocking rules: pre-approval decisions/ADRs, ACs not latest-Met, open critical/high defects
   (medium/low advise), undischarged risks, and open work including the claimed-done `Review` state.
   The waivers: operator-approved `WVR-` rows reported `waived`, never silent, and expiring. The
-  advisory liveness rules, twenty-four at package scope (measured on the lab fixture at v5.8). Four
-  of them exist only when the package has waivers, feedback or skill rows, or three handoffs. And
+  advisory liveness rules at package scope. Six of them exist only when the package has
+  waivers, feedback rows, a register, skill rows, three handoffs or a `blocked_by` edge. And
   the `human_required` checklist from declared `execution_gates` rows.
   The liveness rules run from overdue open questions through `lessons-confirmed`,
   `feedback-unanswered` and `deferred-work-carried` (an Activated deferred row no open wbs-item
@@ -101,7 +101,9 @@ three tiers (engine / judgment / warn) synced against this file in both directio
   feedback row until `resolved_in` is set. Like `waivers-open-ended` it exists only when the package
   has rows of that family. `register-entries-conform` (v6.5) lists the live register
   entries that the current declaration of their register does not admit. It exists only when
-  the package has a register. Since v4.12 `review.html` renders this report too, evaluated as of its
+  the package has a register. `blocks-lifted` (v6.7) lists open rows whose every
+  `blocked_by` blocker is settled: work that is free to start. It exists only when the
+  package has a `blocked_by` edge, and the edge stays as history. Since v4.12 `review.html` renders this report too, evaluated as of its
   export date.
 - Judgment gates: perform the check and record the verdict (a `progress-entry` note with the evidence).
 - Stage 19 runs everything. Stage 22 re-confirms criticals + `readiness_check("package")` for the

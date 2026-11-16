@@ -90,7 +90,8 @@ Draft → Proposed → Approved → Implemented
   is complete but verification has not confirmed it. It counts as OPEN in every readiness
   closed-set. Only the guarded transition to Implemented closes work.
 - **Implemented**: done-VERIFIED, realized in the execution repo and past the readiness
-  rules. Phase/slice transitions to Implemented are guarded. `force` requires the operator's
+  rules. For a dependency, an assumption or an execution plan, Implemented means met:
+  the row then blocks nothing. Phase/slice transitions to Implemented are guarded. `force` requires the operator's
   explicit words and leaves a forced-override audit event.
   A phase or slice cannot be created already Implemented, because the rules have nothing to
   measure for a new id. `force` (operator words, self-audited) is the only route.
@@ -323,6 +324,17 @@ backticks is a quotation. The `clarifications-open` advisory counts live markers
   correct edge written in the same batch. On a retire the triple is removed, the relation rule
   is not consulted, and the server journals a `correction` row naming it (v4.6). Retire a wrong
   edge only, never to make a gate pass.
+- A `blocked_by` edge is history. It is never retired when the block lifts, because a
+  retire records a wrong edge. The far row lifts the block when it is settled (v6.7). A
+  dependency, an assumption or work is settled at Implemented, Superseded, Obsolete or
+  Rejected. A defect is settled at Fixed, Won't-fix or Duplicate, and deferred work at Done
+  or Won't-do. A decision is settled once it is decided. A question is settled when
+  `open-questions-resolved` no longer lists it, so a Deferred question lifts its block. A
+  risk is settled when `risks-discharged` no longer lists it, whatever its status. A retired
+  risk that is still `open` keeps blocking. A gate lifts its block only when its `outcome`
+  column is Go. A journal entry alone lifts nothing, and a later Hold, Redirect or Kill
+  blocks again. The standup list of blocked work and the advisory `blocks-lifted` read this
+  one rule.
 - A full-row update that only means to flip a status names the columns it did NOT mean to
   change (`expect_unchanged: ["title", ...]` on the item). The store refuses the write if any
   of them differs from the stored row (v4.7, the field's LL-063: a paragraph lost mid-paste

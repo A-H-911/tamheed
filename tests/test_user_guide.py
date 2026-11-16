@@ -191,7 +191,7 @@ class UserGuideTest(unittest.TestCase):
         live = [r["rule"] for r in srv.readiness_check("package")["rules"]]
         self.assertEqual(live, [r["rule"] for r in static["package"] if not r["conditional"]])
         self.assertEqual(sorted(r["rule"] for r in static["package"] if r["conditional"]),
-                         ["feedback-unanswered", "handoff-repeated", "lessons-stranded",
+                         ["blocks-lifted", "feedback-unanswered", "handoff-repeated", "lessons-stranded",
                           "register-entries-conform", "waivers-open-ended"])
         up = srv.entity_upsert([
             {"type": "phase", "id": "PH-1", "title": "P", "lifecycle_status": "Approved"},

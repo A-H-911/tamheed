@@ -357,8 +357,9 @@ Liveness by nag, not by column count.
 `blocked_by` edge can point work at a dependency during planning and execution.
 
 **Create / update / retire.** Create when the plan waits on something external. Name the
-`owner` (RAID practice: an unowned dependency is a hope). Retire when delivered or
-designed around.
+`owner` (RAID practice: an unowned dependency is a hope). A met dependency takes
+`Implemented` (v6.7): it then blocks nothing, and its `blocked_by` edges stay as history.
+Retire it when it is designed around.
 
 **What you lose without it.** Blocked work has nothing typed to be blocked *by*. Delays
 surface as mystery slippage instead of "waiting on DEP-002 since its owner went quiet."

@@ -80,6 +80,61 @@ class EngineTest(unittest.TestCase):
 
     # ------------------------------------------------------------------ the state
 
+    def test_the_blocked_list_reads_the_far_end(self):
+        """Plan 241 (the field's FB-020, R121, R129): the list read only the edge, so a met
+        dependency still blocked its slice. A far end now blocks only while it is not
+        settled, by one rule per family. Each far-end family is here, open and settled.
+        A slice whose every blocker is settled is free to start (R130)."""
+        self.up({"type": "phase", "id": "PH-1", "title": "P"},
+                {"type": "slice", "id": "SL-001", "title": "Blocked", "phase_id": "PH-1"},
+                {"type": "slice", "id": "SL-002", "title": "Free", "phase_id": "PH-1"})
+        sev = {"severity": "low"}
+        gate = {"type": "execution-gate", "gate_kind": "approval", "definition": "d"}
+        pairs = [
+            ({"type": "dependency", "id": "DEP-001", "title": "d"},
+             {"type": "dependency", "id": "DEP-002", "title": "d",
+              "lifecycle_status": "Implemented"}),
+            ({"type": "assumption", "id": "ASM-001", "title": "a"},
+             {"type": "assumption", "id": "ASM-002", "title": "a", "lifecycle_status": "Rejected"}),
+            ({"type": "wbs-item", "id": "WBS-1.1", "title": "w", "slice_id": "SL-002"},
+             {"type": "wbs-item", "id": "WBS-1.2", "title": "w", "slice_id": "SL-002",
+              "lifecycle_status": "Implemented"}),
+            ({"type": "execution-plan", "id": "EP-001", "slice_id": "SL-002", "plan": "p"},
+             {"type": "execution-plan", "id": "EP-002", "slice_id": "SL-002", "plan": "p",
+              "lifecycle_status": "Superseded"}),
+            ({"type": "defect", "id": "DEF-001", "title": "x", **sev},
+             {"type": "defect", "id": "DEF-002", "title": "x", "lifecycle_status": "Fixed", **sev}),
+            ({"type": "deferred-work", "id": "DW-001", "title": "x", **sev},
+             {"type": "deferred-work", "id": "DW-002", "title": "x", "lifecycle_status": "Done",
+              **sev}),
+            ({"type": "open-question", "id": "OQ-001", "title": "q"},
+             {"type": "open-question", "id": "OQ-002", "title": "q", "resolution": "answered"}),
+            ({"type": "decision", "id": "DEC-001", "title": "d"},
+             {"type": "decision", "id": "DEC-002", "title": "d", "lifecycle_status": "Approved"}),
+            ({"type": "risk", "id": "RISK-001", "title": "r"},
+             {"type": "risk", "id": "RISK-002", "title": "r", "risk_state": "mitigated"}),
+            (dict(gate, id="GATE-001"), dict(gate, id="GATE-002", outcome="Go")),
+        ]
+        for open_row, done_row in pairs:
+            self.up(open_row, done_row)
+        edge = {"type": "trace-edge", "relation": "blocked_by"}
+        self.up(*[dict(edge, from_id="SL-001", to_id=row["id"]) for pair in pairs for row in pair])
+        self.up(*[dict(edge, from_id="SL-002", to_id=done["id"]) for _, done in pairs])
+        listed = F.blocked(self.conn)
+        self.assertEqual(sorted(it["note"] for it in listed if it["id"] == "SL-001"),
+                         sorted(f"blocked by {o['id']}" for o, _ in pairs))
+        self.assertNotIn("SL-002", [it["id"] for it in listed])
+        self.assertEqual(F.lifted(self.conn),
+                         {"SL-002": sorted((d["id"] for _, d in pairs), key=F._key)})
+        self.assertNotIn("NOPE-1", F.settled_ids(self.conn))     # a missing row never settles
+        # R135: the readiness predicates decide two edge cases, and the docs state both
+        self.up({"type": "open-question", "id": "OQ-003", "title": "q",
+                 "lifecycle_status": "Deferred"},
+                {"type": "risk", "id": "RISK-003", "title": "r", "lifecycle_status": "Obsolete"})
+        done = F.settled_ids(self.conn)
+        self.assertIn("OQ-003", done)              # a Deferred question lifts its block
+        self.assertNotIn("RISK-003", done)         # a retired risk still `open` keeps blocking
+
     def test_state_skips_the_journal_verdicts_reports_and_edges(self):
         self.journal("did a thing")
         live, cols = S.state(self.conn, self.tables())

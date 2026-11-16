@@ -196,7 +196,12 @@ is the only wrong answer.
     emitted only when the package has a register. `problems` names the cause per entry.
     Correct the values of the entry. Change a declaration only on the operator's word.
     A retired entry is never listed.
-24. Close the sweep: `progress_update([{"entry": "liveness sweep: <per-family tally:
+24. **Work that is free to start** (`blocks-lifted`, v6.7): open rows whose every
+    `blocked_by` blocker is settled. The rule is emitted only when the package has a
+    `blocked_by` edge. `lifted` names the settled blockers of each row. The edge stays as
+    history: never retire it. Start the work, or record what it now waits on as a new
+    edge. A deliberate wait is a `WVR-` row, on the operator's word.
+25. Close the sweep: `progress_update([{"entry": "liveness sweep: <per-family tally:
     resolved / carried / escalated / awaiting operator>", "event_type": "note",
     "actor": "agent:<session>"}])`, then `readiness_check("package")` again and report
     the advisory delta plus everything now awaiting operator words (promotions,
