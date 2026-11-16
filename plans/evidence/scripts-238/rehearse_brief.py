@@ -19,7 +19,8 @@ from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[3]
 ALLOW = ["mcp__plugin_tamheed_tamheed__*", "Read", "Glob", "Grep", "Edit", "Write", "Skill",
-         "ToolSearch", "Bash(git:*)", "PowerShell(git *)"]
+         "ToolSearch", "Bash(git:*)", "PowerShell(git *)", "Bash(gh:*)", "Bash(curl:*)",
+         "Bash(sha256sum:*)", "Bash(shasum:*)"]
 
 
 def setup(field: Path, pkg: str, brief: str, scratch: Path) -> None:
@@ -50,8 +51,10 @@ def run(scratch: Path, label: str, bundle: str, prompt_file: Path) -> None:
     out = scratch / "runs" / label
     out.mkdir(parents=True, exist_ok=True)
     prompt = prompt_file.read_text(encoding="utf-8")
+    # REH_WIDE=1: the fetch smoke, whose one command has a redirect that prefix rules do not match
+    allow = ALLOW + (["Bash"] if os.environ.get("REH_WIDE") else [])
     cmd = [shutil.which("claude") or "claude", "-p", prompt, "--setting-sources", "",
-           "--plugin-dir", str(plugin), "--permission-mode", "dontAsk", "--allowedTools", *ALLOW,
+           "--plugin-dir", str(plugin), "--permission-mode", "dontAsk", "--allowedTools", *allow,
            "--model", "opus", "--max-turns", "90", "--max-budget-usd", "8", "--output-format", "json"]
     env = dict(os.environ)
     env.pop("TAMHEED_HOOK_LOG", None)
