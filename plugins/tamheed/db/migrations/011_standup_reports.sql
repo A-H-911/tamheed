@@ -14,6 +14,9 @@
 -- `kind`: a default report starts where the latest recorded default report ended. An
 -- override report starts earlier (the operator named a date or a report). It is recorded,
 -- but it never starts the next window and the replay never reads it.
+-- `seq`: a daily report's place in the chain (1, 2, 3 ...). A correction keeps the place of
+-- the report it corrects. An override has none. Two reports can share a window end when
+-- nothing was journaled between them, so the chain is ordered by `seq`, never by `pe_to`.
 -- `pe_to` / `av_to`: the highest journal and verdict numbers when the draft was made. The
 -- window end is fixed at draft time, never at record time.
 -- `facts`: what the page prints, frozen at draft (ids and titles). `narrative`: the agent's
@@ -29,6 +32,7 @@ CREATE TABLE standup_reports (
     ('Draft','Approved','Superseded')),
   base_report       TEXT REFERENCES standup_reports(id),   -- whose end starts this window; NULL = birth
   supersedes        TEXT REFERENCES standup_reports(id),   -- set on the correction; the old row only changes status
+  seq               INTEGER CHECK (seq IS NULL OR seq >= 1),
   checkpoint        INTEGER NOT NULL DEFAULT 0 CHECK (checkpoint IN (0, 1)),
   pe_to             INTEGER NOT NULL CHECK (pe_to >= 0),
   av_to             INTEGER NOT NULL CHECK (av_to >= 0),
@@ -45,6 +49,7 @@ CREATE TABLE standup_reports (
   recorded_at       TEXT,
   custom_attributes TEXT,
   last_referenced   TEXT,
+  CHECK ((kind = 'default') = (seq IS NOT NULL)),
   CHECK (supersedes IS NULL OR supersedes <> id),
   CHECK (base_report IS NULL OR base_report <> id),
   CHECK (lifecycle_status = 'Draft' OR (trim(COALESCE(narrative, '')) <> '' AND colour IS NOT NULL
@@ -52,10 +57,10 @@ CREATE TABLE standup_reports (
          AND trim(COALESCE(operator_words, '')) <> ''))
 );
 
--- One live draft per package (SR24), and one recorded default report per chain link.
+-- One live draft per package (SR24), and one recorded daily report per place in the chain.
 CREATE UNIQUE INDEX idx_standup_reports_one_draft ON standup_reports(lifecycle_status)
   WHERE lifecycle_status = 'Draft';
-CREATE UNIQUE INDEX idx_standup_reports_chain ON standup_reports(pe_to)
+CREATE UNIQUE INDEX idx_standup_reports_chain ON standup_reports(seq)
   WHERE kind = 'default' AND lifecycle_status = 'Approved';
 
 CREATE TRIGGER trg_standup_reports_ai AFTER INSERT ON standup_reports
@@ -70,6 +75,7 @@ CREATE TRIGGER trg_standup_reports_immutable BEFORE UPDATE ON standup_reports
   WHEN OLD.lifecycle_status <> 'Draft'
    AND (NEW.id IS NOT OLD.id OR NEW.kind IS NOT OLD.kind
      OR NEW.base_report IS NOT OLD.base_report OR NEW.supersedes IS NOT OLD.supersedes
+     OR NEW.seq IS NOT OLD.seq
      OR NEW.checkpoint IS NOT OLD.checkpoint OR NEW.pe_to IS NOT OLD.pe_to
      OR NEW.av_to IS NOT OLD.av_to OR NEW.ended_at IS NOT OLD.ended_at
      OR NEW.utc_offset IS NOT OLD.utc_offset OR NEW.state_digest IS NOT OLD.state_digest

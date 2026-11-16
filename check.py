@@ -42,6 +42,7 @@ SUITES = [
     "tests/test_export_html.py",
     "tests/test_slate.py",
     "tests/test_slate_rounds.py",
+    "tests/test_standup.py",
     "tests/test_resume_hook.py",
     "tests/test_eval_runner.py",
     "tests/test_scratch_diff.py",

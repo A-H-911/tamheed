@@ -201,14 +201,14 @@ IN PROGRESS / DONE.
 ### Standup report -- plans 232-237 -> v6.6.0 (2026-11-16 ->; maintainer-executed)
 
 The operator asked for a daily status report on demand: what we did, the challenges and
-decisions, what we expect to do next, read in 5 to 10 minutes. The record, with rulings SR1-SR49
+decisions, what we expect to do next, read in 5 to 10 minutes. The record, with rulings SR1-SR50
 and the measurements, is [standup-2026-11-record.md](evidence/standup-2026-11-record.md). The
 store decision is ADR-0003.
 
 | # | Plan | Depends on | Status |
 |---|---|---|---|
 | 232 | [The standup-report family, store half](232-standup-store.md) -- migration 011, the registry, the refusals, the lean read (SR9, SR23, SR24, SR46) | 231 | DONE 2026-11-16 on `feat/standup-report` (gate green on 3.13, 3.10, and with deprecations as errors) |
-| 233 | [The standup engine](233-standup-engine.md) -- state, deltas, checkpoint replay, window, facts | 232 | PLANNED |
+| 233 | [The standup engine](233-standup-engine.md) -- state, deltas, checkpoint replay, window, facts | 232 | DONE 2026-11-16 on `feat/standup-report` (23 tests; the chain ordered by `seq`; measured on ACMP copies, SR50) |
 | 234 | [The standup page](234-standup-page.md) -- the page, the word budget, goldens | 233 | PLANNED |
 | 235 | [The `standup_report` tool](235-standup-tool.md) -- draft, record, discard, the resume line, the docs (SR47 red first) | 234 | PLANNED |
 | 236 | [The `/tamheed:standup` skill](236-standup-skill.md) | 235 | PLANNED |

@@ -7068,7 +7068,7 @@ class StandupFamilyTest(unittest.TestCase):
     """Plan 232 (ADR-0003): the standup-report family, store half. The tool that writes these
     rows arrives in plan 235, so these tests write through the connection."""
 
-    DRAFT = {"id": "RPT-001", "pe_to": 0, "av_to": 0, "ended_at": "2026-11-16T06:00:00Z",
+    DRAFT = {"id": "RPT-001", "seq": 1, "pe_to": 0, "av_to": 0, "ended_at": "2026-11-16T06:00:00Z",
              "utc_offset": "+03:00", "state_digest": "d", "state_delta": "{}",
              "facts": "{}", "rule_colour": "green"}
     RECORD = {"narrative": '{"headline": "h"}', "colour": "green", "recorded_by": "human:op",
@@ -7155,9 +7155,10 @@ class StandupFamilyTest(unittest.TestCase):
             self._insert(id="RPT-002")
         self._record()
         self._insert(id="RPT-002")
-        with self.assertRaises(store_err()):        # a second recorded report at one pe_to
+        with self.assertRaises(store_err()):        # a second recorded report at one place
             self._record("RPT-002")
-        conn.execute("UPDATE standup_reports SET kind = 'override' WHERE id = 'RPT-002'")
+        conn.execute("UPDATE standup_reports SET kind = 'override', seq = NULL"
+                     " WHERE id = 'RPT-002'")
         self._record("RPT-002")                     # an override sits outside the chain
 
     def test_a_merged_store_with_two_drafts_is_refused_with_the_line(self):
