@@ -216,6 +216,7 @@ the one approved plan.
 | 245 | [FB-015: the texts on a section that a register entry replaces](239-field-round-6.7.0.md) | 239 | DONE 2026-11-16 (`2e8b1be`) |
 | 246 | [Standup: `withdraw` and `regenerate`, migration 012, ADR-0004](239-field-round-6.7.0.md) | 239 | DONE 2026-11-17 (`b6d2725`; 246b R144 `6939d2b`; the security fix `162570d`) |
 | 247 | [Acceptance, release 6.7.0, the two field briefs](239-field-round-6.7.0.md) | 240-246 | DONE 2026-11-17. Stamp `c5a3691`; released as `162570d` on `main` (CI run 43969391119 green on eleven jobs), tag `v6.7.0`. Both fields replayed under 6.6.0 and 6.7.0; both briefs rehearsed with a restart |
+| 248 | [Rehearse the unattended loop on the lab](evidence/loop-rehearsal-2026-11-17.md) | 247 | RECORDED 2026-11-17 (docs only: 5 passes, 4.41 USD; both stops held; findings F1-F8 with the operator, nothing built) |
 
 ### Standup report -- plans 232-237 -> v6.6.0 (2026-11-16; maintainer-executed)
 
