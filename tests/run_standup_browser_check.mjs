@@ -39,7 +39,7 @@ const browser = spawn(chrome, ['--headless=new', `--remote-debugging-port=${port
 const sleep = (ms) => new Promise((done) => setTimeout(done, ms));
 
 async function target() {
-  for (let n = 0; n < 50; n += 1) {
+  for (let n = 0; n < 150; n += 1) {      // up to 30 s: a CI machine starts Chrome slowly
     try {
       const list = await (await fetch(`http://127.0.0.1:${port}/json`)).json();
       const found = list.find((item) => item.type === 'page' && item.url.startsWith('file:'));
@@ -79,7 +79,14 @@ try {
     const message = JSON.parse(event.data);
     if (waiting.has(message.id)) { waiting.get(message.id)(message.result || {}); waiting.delete(message.id); }
   };
-  await sleep(500);                       // the page's own script has run
+  // Wait until the page is whole and its own script has run: a fixed pause was too short on
+  // CI for a page of 100 KB (the phase list was still empty).
+  let ready = false;
+  for (let n = 0; n < 150 && !ready; n += 1) {
+    ready = await evaluate("document.readyState === 'complete' && document.documentElement.dataset.js === 'on'");
+    if (!ready) await sleep(200);
+  }
+  if (!ready) throw new Error('the page did not finish loading, or its script did not run');
   const value = await evaluate(`(${check})()`);
   const lines = value.lines;
 
