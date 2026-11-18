@@ -26,6 +26,7 @@ plugins/tamheed/                     # THE installable bundle — self-contained
 ├── db/                               # the store: schema.sql (v4 DDL), migrations/, store.py, CANONICAL.md
 ├── server/                           # Tamheed MCP server + migrate_v3to4 + adopt + export_html + viewer.css
 │                                     #   + slate*.py, slate.js, slate.css (the interview page, v6.5)
+│                                     #   + standup*.py, standup.js, standup.css (the standup page, v6.6-6.8)
 ├── prompts/                          # the stock operator guide (emitted to <package>/README.md) + stock-history.json
 └── assets/                           # logos
 docs/                                 # architecture, methodology, workflow, entities (the v4 study), install
@@ -34,7 +35,7 @@ lab/                                  # the permanent mock lab project (v4 accep
 generated-samples/  tests/            # demo package, test suites
 docs/guide/                           # the user-guide generator (extract.py, render.py, diagrams.py, content.py)
 index.html                            # GENERATED bilingual user guide — never hand-edit; rebuild with docs/guide/build.py
-.github/workflows/                    # CI (runs exactly `python check.py`) + scheduled eval-spec lint
+.github/workflows/                    # CI (job 1 runs exactly `python check.py`; a browser job checks the standup page) + scheduled eval-spec lint
 SECURITY.md                           # trust model, untrusted-content posture, reporting
 ```
 

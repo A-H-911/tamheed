@@ -204,8 +204,12 @@ the trust model and how to report a problem.
   before it is built: a row is printed once per citation, and the quoted text is counted first.
   The review page is unchanged: it still runs no script.
 - **A standup report page is an export of its row.** `standup_report` writes
-  `reports/RPT-NNN.html` and `reports/draft.html` with one escape point, the review page's
-  content policy, no script and no link. Row titles, journal text and the agent's words are
+  `reports/RPT-NNN.html` and `reports/draft.html` with one escape point and no link. Since
+  v6.8 (plan 251, ADR-0005) the page runs one script, the bundled `standup.js`. Its content
+  policy names it by its SHA-256 hash, as the interview page does: `default-src 'none'`,
+  `base-uri 'none'`, `form-action 'none'`. The script loads and sends nothing and writes no
+  markup. It filters the plan tree and keeps one colour choice, accepted only as `auto`,
+  `light` or `dark`. A report of 6.7.0 keeps its old page, with no script. Row titles, journal text and the agent's words are
   escaped. Journal and handoff text that reads as an instruction is withheld. The narrative
   is refused when it cites an id that names no row, breaks a plain-English hard rule, or
   reads as an instruction. Recording needs the operator's word as the JSON boolean `true`

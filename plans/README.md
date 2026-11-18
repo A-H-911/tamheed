@@ -226,9 +226,9 @@ revised (rulings U1-U20, defaults V1-V10). Every row links to the one approved p
 
 | # | Plan | Depends on | Status |
 |---|---|---|---|
-| 249 | [The round record and the rulings](249-field-round-6.8.0.md) | 248 | IN PROGRESS (rulings provisional until the mock's yes) |
-| 250 | [FB-023: given rulings leave the requests; FB-024: a trace-edge write names its keys](249-field-round-6.8.0.md) | 249 | BUILT, to commit alone |
-| 251 | [The standup report as a delivery report (mock first, then the build)](249-field-round-6.8.0.md) | 250 | PLANNED (v1 built and rejected; v2 after the mock) |
+| 249 | [The round record and the rulings](249-field-round-6.8.0.md) | 248 | DONE 2026-11-18 (`5f948d2`; the rulings confirmed by the mock's yes) |
+| 250 | [FB-023: given rulings leave the requests; FB-024: a trace-edge write names its keys](249-field-round-6.8.0.md) | 249 | DONE 2026-11-18 (`6e16cbc`, CI run 44302830311 green on eleven jobs) |
+| 251 | [The standup report as a delivery report (mock first, then the build)](249-field-round-6.8.0.md) | 250 | DONE 2026-11-18 (v1 rejected on reading; v2 from the mock the operator approved; ADR-0005; the browser check in CI job `standup-browser`) |
 | 252 | [The headless `/tamheed:standup` rehearsal](249-field-round-6.8.0.md) | 251 | PLANNED |
 | 253 | [Acceptance, release 6.8.0, the two field briefs](249-field-round-6.8.0.md) | 250-252 | PLANNED |
 

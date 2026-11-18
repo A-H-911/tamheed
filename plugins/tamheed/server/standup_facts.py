@@ -21,6 +21,11 @@ def _key(i) -> tuple:
     return (m.group(1), int(m.group(2)), str(i)) if m else ("~", 0, str(i))
 
 
+def natural(i) -> tuple:
+    """WBS-5.2 before WBS-5.10: every number of the id compares as a number (plan 251)."""
+    return tuple(int(x) if x.isdigit() else x for x in re.split(r"(\d+)", str(i or "")))
+
+
 def as_list(items: list[dict], cap: int | None) -> dict:
     ordered = sorted(items, key=lambda it: _key(it.get("id")))
     return {"items": ordered if cap is None else ordered[:cap], "total": len(ordered)}
@@ -264,6 +269,249 @@ def _json(text) -> dict:
     return value if isinstance(value, dict) else {}
 
 
+# ----------------------------------------------------------------------------- the plan tree
+
+# Plan 251 (R3-R9, D2-D6): the whole plan as one tree, frozen at the draft. The page opens the
+# branches with news. Tags from the window: "done" (moved to Implemented, or a Met verdict),
+# "claimed" (moved to Review; claimed never counts as done), "blocked" (a blocker not settled).
+OPEN = ("Draft", "Proposed", "Approved")
+_GONE = ("Superseded", "Obsolete", "Rejected")
+# Plan 251 v2 (U10, V1, V3): ONE state per row, in this order. Every count on the page reads it.
+STATES = ("done-window", "claimed-window", "done-earlier", "blocked", "in-progress", "next",
+          "not-started", "failed", "not-checked", "postponed")
+
+
+def row_state(item: dict, kind: str, ctx: dict) -> str:
+    """The state of one task or acceptance check. `ctx` holds the row's slice, the current
+    (`now`) and next slice, the ids worked on in the window (`touched`) and `first`."""
+    st = item.get("status")
+    if kind == "check":
+        if item.get("tag") == "done":
+            return "done-window"
+        if item.get("result") == "Met":
+            return "done-earlier"
+        if item.get("result") in ("Not-met", "Partial"):
+            return "failed"
+        return "not-checked"
+    if st == "Deferred":
+        return "postponed"
+    if item.get("tag") == "done":
+        return "done-window"
+    if item.get("tag") == "claimed":
+        return "claimed-window"
+    if st == "Implemented":
+        return "done-earlier"
+    if item.get("tag") == "blocked":
+        return "blocked"
+    here = ctx.get("slice")
+    if st == "Review" or item["id"] in ctx.get("touched", ()):
+        return "in-progress"
+    if here and here == ctx.get("now") and st in OPEN:
+        return "in-progress" if ctx.get("first") else "next"   # V3: a first report
+    if here and ctx.get("next") and here == ctx.get("next"):
+        return "next"
+    return "not-started"
+
+
+def touched(entries: list[dict], first: bool) -> list[str]:
+    """The rows worked on in the window: the subjects of its work-done entries. A first report
+    covers the whole history, so nothing counts as touched (V3)."""
+    if first:
+        return []
+    return sorted({str(e["subject_id"]) for e in entries
+                   if e["event_type"] == "work-done" and e.get("subject_id")}, key=_key)
+
+
+def overall(conn) -> dict:
+    """Section 7 "Overall" (U17) and section 4's requirement count: the counts per family and
+    every row of the decision, defect, risk and question registers, frozen in each report."""
+    def counts(sql):
+        return {str(s): n for s, n in conn.execute(sql)}
+
+    def rows(sql):
+        return [[str(i), _clean(t), str(s or "")] for i, t, s in conn.execute(sql)]
+    open_q = ("CASE WHEN resolution IS NULL AND resolved_by IS NULL THEN 'open' ELSE"
+              " 'answered' END")
+    return {
+        "requirements": counts("SELECT lifecycle_status, COUNT(*) FROM requirements GROUP BY 1"),
+        "families": {
+            "decisions": counts("SELECT lifecycle_status, COUNT(*) FROM decisions GROUP BY 1"),
+            "defects": counts("SELECT lifecycle_status, COUNT(*) FROM defects GROUP BY 1"),
+            "risks": counts("SELECT risk_state, COUNT(*) FROM risks GROUP BY 1"),
+            "open_questions": counts(f"SELECT {open_q}, COUNT(*) FROM open_questions GROUP BY 1")},
+        "lists": {
+            "decisions": rows("SELECT id, title, lifecycle_status FROM decisions"),
+            "defects": rows("SELECT id, title, lifecycle_status || ' · ' || COALESCE(severity, '')"
+                            " FROM defects"),
+            "risks": rows("SELECT id, title, risk_state FROM risks"),
+            "open_questions": rows(f"SELECT id, title, {open_q} FROM open_questions")}}
+
+
+def _clean(text) -> str:
+    return " ".join(str(text or "").split())[:S.TITLE_CAP]
+
+
+def window_tags(cls: dict, verdicts: list[dict]) -> dict[str, str]:
+    """{id: "done" | "claimed"} for what this window moved (D6). Checks come from the window's
+    verdicts, because verdicts are not in the state."""
+    tags: dict[str, str] = {}
+    for table in ("wbs_items", "slices", "phases"):
+        for i, _a, _b in moved_to(cls, table, ("Review",)):
+            tags[i] = "claimed"
+        for i, _a, _b in moved_to(cls, table, ("Implemented",)):
+            tags[i] = "done"
+    for v in verdicts:
+        if v["verdict"] == "Met":
+            tags[str(v["ac_id"])] = "done"
+    return tags
+
+
+def _counts(statuses: list[str]) -> dict:
+    return {"done": statuses.count("Implemented"), "claimed": statuses.count("Review"),
+            "open": sum(s in OPEN for s in statuses), "total": len(statuses)}
+
+
+def _node(row: dict, tags: dict, blocked_ids: set) -> dict:
+    out = {"id": row["id"], "title": _clean(row.get("title")), "status": row.get("status")}
+    tag = tags.get(row["id"]) or ("blocked" if row["id"] in blocked_ids and
+                                  row.get("status") in OPEN + ("Review",) else None)
+    if tag:
+        out["tag"] = tag
+    return out
+
+
+def _nest(tasks: list[dict], tags: dict, blocked_ids: set) -> list[dict]:
+    """Tasks under their parent task. A parent outside the list, or a loop of parents, leaves
+    the task at the top, so no task is lost."""
+    parent = {t["id"]: t.get("parent_id") for t in tasks}
+
+    def rooted(i: str) -> bool:
+        seen = {i}
+        up = parent.get(i)
+        while up in parent:
+            if up in seen:
+                return False
+            seen.add(up)
+            up = parent.get(up)
+        return True
+
+    nodes = {t["id"]: _node(t, tags, blocked_ids) for t in tasks}
+    top: list[dict] = []
+    for t in sorted(tasks, key=lambda t: natural(t["id"])):
+        p = t.get("parent_id")
+        if p in nodes and p != t["id"] and rooted(t["id"]):
+            nodes[p].setdefault("children", []).append(nodes[t["id"]])
+        else:
+            top.append(nodes[t["id"]])
+    return top
+
+
+def _lines(conn, open_slices: set, task_slice: dict, window: dict, marks: bool,
+           screen) -> dict[str, list]:
+    """Every work-done line tied to an open slice, newest first (R9, D6)."""
+    out: dict[str, list] = {s: [] for s in open_slices}
+    for pid, entry, subject, slice_id in conn.execute(
+            "SELECT id, entry, subject_id, slice_id FROM progress_entries WHERE"
+            " event_type = 'work-done' AND id GLOB ? ORDER BY CAST(SUBSTR(id, 4) AS INTEGER)"
+            " DESC", (S._PE_RE,)):
+        home = next((s for s in (slice_id, subject, task_slice.get(subject)) if s in out), None)
+        if home is None:
+            continue
+        text = S.first_sentence(entry)
+        line = {"id": pid, "title": f"withheld: read {pid}" if screen(text) else text}
+        if marks and window["pe_from"] <= int(pid[3:]) <= window["pe_to"]:
+            line["tag"] = "this report"
+        out[home].append(line)
+    return out
+
+
+def plan_tree(conn, cls: dict, verdicts: list[dict], window: dict, *, marks: bool,
+              screen) -> dict:
+    """The whole plan, frozen at the draft (D2). `marks` is False on a first report and after
+    a broken chain: no window tags then (D6)."""
+    tags = window_tags(cls, verdicts) if marks else {}
+    blocked_ids = {b["id"] for b in blocked(conn)}
+    phases = sorted(_rows(conn, "SELECT id, title, lifecycle_status AS status, sort_order"
+                                " FROM phases"), key=lambda r: (r["sort_order"] is None,
+                                                                 r["sort_order"] or 0,
+                                                                 _key(r["id"])))
+    slices = sorted([r for r in _rows(conn, "SELECT id, title, phase_id, lifecycle_status AS"
+                                            " status, sort_order FROM slices")
+                     if r["status"] not in _GONE],
+                    key=lambda r: (r["sort_order"] is None, r["sort_order"] or 0, _key(r["id"])))
+    tasks = [r for r in _rows(conn, "SELECT id, title, parent_id, phase_id, slice_id,"
+                                    " lifecycle_status AS status FROM wbs_items")
+             if r["status"] not in _GONE]
+    latest = dict(conn.execute("SELECT ac_id, verdict FROM v_latest_verdicts"))
+    checks = [dict(r, result=latest.get(r["id"])) for r in _rows(
+        conn, "SELECT id, title, slice_id, lifecycle_status AS status FROM acceptance_criteria")
+        if r["status"] not in _GONE]
+    stones = _rows(conn, "SELECT id, title, phase_id, due FROM milestones")
+    slice_phase = {s["id"]: s["phase_id"] for s in slices}
+    task_slice = {t["id"]: t["slice_id"] for t in tasks if t["slice_id"] in slice_phase}
+    open_slices = {s["id"] for s in slices if s["status"] in OPEN + ("Review",)}
+    lines = _lines(conn, open_slices, task_slice, window, marks, screen)
+
+    def check_node(c: dict) -> dict:
+        node = _node(c, tags, set())
+        if c["result"]:
+            node["result"] = c["result"]
+        return node
+
+    def slice_node(s: dict) -> dict:
+        own = [t for t in tasks if t["slice_id"] == s["id"]]
+        node = _node(s, tags, blocked_ids)
+        node.update(counts=_counts([t["status"] for t in own]),
+                    tasks=_nest(own, tags, blocked_ids),
+                    checks=[check_node(c) for c in sorted(checks, key=lambda c: _key(c["id"]))
+                            if c["slice_id"] == s["id"]])
+        if s["id"] in lines:
+            node["lines"] = lines[s["id"]]
+        return node
+
+    tree = []
+    for ph in phases:
+        mine = [t for t in tasks if (t["phase_id"] or slice_phase.get(t["slice_id"])) == ph["id"]]
+        loose = [t for t in mine if t["slice_id"] not in slice_phase]
+        node = _node(ph, tags, set())
+        node.update(counts=_counts([t["status"] for t in mine]),
+                    milestones=[{"id": m["id"], "title": _clean(m["title"]), "due": m["due"]}
+                                for m in sorted(stones, key=lambda m: _key(m["id"]))
+                                if m["phase_id"] == ph["id"]],
+                    slices=[slice_node(s) for s in slices if s["phase_id"] == ph["id"]],
+                    loose=_nest(loose, tags, blocked_ids))
+        tree.append(node)
+    placed = {ph["id"] for ph in phases}
+    outside = [t for t in tasks if (t["phase_id"] or slice_phase.get(t["slice_id"]))
+               not in placed]
+    order = [s["id"] for ph in tree for s in ph["slices"] if s["status"] in OPEN + ("Review",)]
+    return {"phases": tree, "marks": marks,
+            "outside": {"tasks": _nest(outside, tags, blocked_ids),
+                        "checks": [check_node(c) for c in sorted(checks, key=lambda c: _key(
+                            c["id"])) if c["slice_id"] not in slice_phase]},
+            "suggest": {"now": order[0] if order else None,
+                        "next": order[1] if len(order) > 1 else None}}
+
+
+def plan_summary(plan: dict) -> dict:
+    """What the draft result carries instead of the tree (D1): counts, the open slices, the
+    first 30 open tasks of the suggested slices, and the suggestion. The row keeps the tree."""
+    named = {plan["suggest"].get("now"), plan["suggest"].get("next")}
+    def flat(nodes):
+        for n in nodes:
+            yield n
+            yield from flat(n.get("children", []))
+    phases = [{"id": p["id"], "title": p["title"], "status": p["status"], "counts": p["counts"]}
+              for p in plan["phases"]]
+    open_slices = [{"id": s["id"], "title": s["title"], "status": s["status"],
+                    "counts": s["counts"], "lines": len(s.get("lines", [])),
+                    **({"open_tasks": [{"id": t["id"], "title": t["title"],
+                                        "status": t["status"]} for t in flat(s["tasks"])
+                                       if t["status"] in OPEN][:30]} if s["id"] in named else {})}
+                   for p in plan["phases"] for s in p["slices"] if "lines" in s]
+    return {"phases": phases, "open_slices": open_slices, "suggest": plan["suggest"]}
+
+
 # ----------------------------------------------------------------------------- next
 
 def active(conn) -> tuple[list[str], dict | None]:
@@ -374,7 +622,7 @@ def first_moves(live: dict) -> dict:
 def build(conn, *, cls: dict, live: dict, first: bool, window: dict, today: str,
           blocker_rules: list[str], screen) -> dict:
     """Every section's facts for one draft."""
-    cap = None if first else S.LIST_CAP
+    cap = None                         # plan 251 v2 (U8): every list keeps every item
     entries = S.window_entries(conn, window["pe_from"], window["pe_to"])
     verdicts = S.window_verdicts(conn, window["av_from"], window["av_to"])
     handoff = S.handoff_sections(conn)
@@ -385,6 +633,10 @@ def build(conn, *, cls: dict, live: dict, first: bool, window: dict, today: str,
                                          screen, cap),
                 "next": upcoming(conn, handoff, today, screen, cap)}
     sections["glance"] = glance(conn, sections)
+    sections["touched"] = touched(entries, first)
+    sections["overall"] = overall(conn)
+    sections["plan"] = plan_tree(conn, cls, verdicts, window, screen=screen,
+                                 marks=not first and not window.get("broken"))
     if first:
         sections["where_we_stand"] = where_we_stand(live)
         _as_status(sections)          # a catch-up lists states, not moves: nothing is "new"

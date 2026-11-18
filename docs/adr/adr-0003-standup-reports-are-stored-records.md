@@ -53,7 +53,10 @@ That is a record, not a derived view.
    delta gives the digest the draft saw. Rows that moved after the draft are reported, never
    refused: they belong to the next window.
 5. **Facts are frozen at the draft.** The row keeps what its page prints: ids and titles, at
-   most 30 items per list (the first report keeps every item). The page
+   most 30 items per list (the first report keeps every item). Since 6.8.0 (plan 251,
+   ADR-0005) no list is capped, and the facts also hold the whole plan tree, the rows worked on
+   in the window and the full registers: the field accepted the larger row so that any old page
+   regenerates whole. ADR-0005 also replaces this ADR's no-script page frame. The page
    `reports/RPT-NNN.html` is the export of its row, and it is committed.
 6. **Draft → Approved → Superseded.** Recording takes the operator's word (`operator_confirm`,
    who, and what they said). The words are stored in the row only: the journal note names the report and who recorded it, and no page prints them. Approved and

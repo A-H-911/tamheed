@@ -10,6 +10,41 @@ All notable changes to Tamheed are documented here. The format is based on
 
 ## [Unreleased]
 
+### Added
+- **The standup report is a delivery report (plan 251, ADR-0005).** Built from a mock the
+  operator read on field data. Sections: a summary with cards (done this window, done overall,
+  working on now, next, needs your decision, risks and defects); needs your decision; the plan
+  overview; what we did (in this window and overall); what we are working on now; what we expect
+  next; challenges and decisions (in this window and overall); one glossary; and the record
+  details, folded.
+- **The plan overview is one tree table** of phases, milestones, slices, task groups, tasks and
+  acceptance checks, with columns for the status, the progress and this window. The branches
+  with news open by themselves. Filters by state, kind and phase, a text search, and expand or
+  collapse all run in one script named by its hash. Without the script the page shows every row.
+- **One state per row** (`standup_facts.row_state`): done this window, claimed this window, done
+  earlier, blocked, in progress, next, not started, failed, not checked yet, postponed. Claimed
+  never counts as done. Every count on the page reads it.
+- **The agent states the current and the next slice.** New narrative keys `slice_now`,
+  `slice_next` and `slice`. The draft suggests the first open slice in plan order, and the
+  record's confirm carries the same two ids.
+- **A cited row shows its title**, at its first mention in a section (8 words at most), before
+  a small id. An id inside a row's own title shows that row's title on hover.
+- **One glossary** holds the state words, the terms and a plain definition of each kind of row on
+  the page (`standup_families.py`, all 40 families).
+- **Light and dark**, the system's choice by default, with an Auto, Light and Dark switch. The
+  script remembers the choice.
+- **A browser check** (`tests/run_standup_browser_check.mjs`) runs in a CI job of its own,
+  `standup-browser`: the filters, the search, the switch, the contrast in both themes, the phone
+  width and print.
+
+### Changed
+- **No list is capped and nothing shrinks.** A list shows 8 items, then a fold. The word budget
+  and the long-page warning are gone. The facts freeze the plan tree, the rows worked on in the
+  window, and the full registers of decisions, defects, risks and questions, so a report row on a
+  large package grows by about 120 KB or more. The draft result stays trimmed for the agent.
+- A report of 6.7.0 keeps its old page and runs no script. A 6.7.0 engine still draws a 6.8.0
+  row in its old look.
+
 ### Fixed
 - **Given rulings no longer read as requests (Jisr's FB-023, plan 250).** The skill
   `session-handoff` puts the rulings given in a session under "Do not carry". The standup

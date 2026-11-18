@@ -2,59 +2,262 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'sha256-Ug63HegODwZUpRtWjNIbneRqEYrZmVKX99pD+yKtvE0='; base-uri 'none'; form-action 'none'">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Standup report RPT-001 — Payments revamp</title>
 <style>
-/* The standup page (plan 234). Inlined into each page; no external resource. */
-:root { --fg: #1d1d1f; --muted: #5f6368; --bg: #ffffff; --card: #f6f7f9; --line: #dfe1e5;
-        --green: #1e7e34; --amber: #a15c00; --red: #b3261e; --accent: #4a3aa8; }
+/* The standup page v2 (plan 251, mock). Swiss, minimal, data-dense. System fonts only: the
+   content policy loads nothing. Light and dark from the OS, plus the Auto/Light/Dark switch. */
+:root { color-scheme: light dark;
+  --bg: #f8fafc; --card: #ffffff; --fg: #0f172a; --muted: #475569; --line: #e2e8f0;
+  --primary: #1e40af; --done: #15803d; --claimed: #b45309; --progress: #0e7490;
+  --next: #1e40af; --blocked: #b91c1c; --idle: #64748b; --bar-bg: #e2e8f0; --focus: #2563eb; }
 @media (prefers-color-scheme: dark) {
-  :root { --fg: #e8eaed; --muted: #a8adb4; --bg: #161719; --card: #202226; --line: #33363b;
-          --green: #6fcf8a; --amber: #f2b05e; --red: #f28b82; --accent: #b4a7ff; }
+  :root { --bg: #0b1220; --card: #111a2e; --fg: #e2e8f0; --muted: #a3b1c6; --line: #24314d;
+    --primary: #93c5fd; --done: #4ade80; --claimed: #fbbf24; --progress: #67e8f9;
+    --next: #93c5fd; --blocked: #fca5a5; --idle: #a3b1c6; --bar-bg: #24314d; --focus: #93c5fd; }
 }
+:root:has(#theme-light:checked) { color-scheme: light;
+  --bg: #f8fafc; --card: #ffffff; --fg: #0f172a; --muted: #475569; --line: #e2e8f0;
+  --primary: #1e40af; --done: #15803d; --claimed: #b45309; --progress: #0e7490;
+  --next: #1e40af; --blocked: #b91c1c; --idle: #64748b; --bar-bg: #e2e8f0; --focus: #2563eb; }
+:root:has(#theme-dark:checked) { color-scheme: dark;
+  --bg: #0b1220; --card: #111a2e; --fg: #e2e8f0; --muted: #a3b1c6; --line: #24314d;
+  --primary: #93c5fd; --done: #4ade80; --claimed: #fbbf24; --progress: #67e8f9;
+  --next: #93c5fd; --blocked: #fca5a5; --idle: #a3b1c6; --bar-bg: #24314d; --focus: #93c5fd; }
+
 * { box-sizing: border-box; }
 body { margin: 0; background: var(--bg); color: var(--fg);
-       font: 16px/1.55 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
-main { max-width: 46rem; margin: 0 auto; padding: 1.5rem 1rem 3rem; }
-h1 { font-size: 1.5rem; margin: 0 0 .25rem; }
-h1 .pkg { color: var(--muted); font-weight: 400; }
-h2 { font-size: 1.2rem; margin: 2rem 0 .5rem; padding-bottom: .25rem;
-     border-bottom: 1px solid var(--line); }
-h4 { font-size: .95rem; margin: 1rem 0 .25rem; }
-h4 .count { color: var(--muted); font-weight: 400; }
-p { margin: .4rem 0; }
-ul { margin: .25rem 0; padding-left: 1.2rem; }
-li { margin: .15rem 0; }
-.banner { background: var(--card); border-left: 4px solid var(--amber); padding: .4rem .7rem; }
-.recorded, .window, .note-line, .rule, .more, .none, .added, .pending { color: var(--muted); }
-.colour { padding: .5rem .7rem; border-radius: 6px; background: var(--card); }
-.colour.green { border-left: 6px solid var(--green); }
-.colour.amber { border-left: 6px solid var(--amber); }
-.colour.red { border-left: 6px solid var(--red); }
-.glance { font-weight: 600; }
-.headline { font-size: 1.1rem; margin: 1rem 0; }
-.needs { background: var(--card); border-radius: 8px; padding: .2rem 1rem .6rem;
-         margin-top: 1rem; }
-.needs h2 { border-bottom: 0; margin-top: .8rem; }
-.ref { color: var(--muted); font-size: .8rem; margin-left: .3rem; }
-.mv, .note { color: var(--accent); font-size: .85rem; margin-left: .3rem; }
-.plan { border-left: 3px dashed var(--accent); padding-left: .7rem; }
-.plan .label { color: var(--accent); font-size: .85rem; font-weight: 600; }
-details { margin: .2rem 0 .4rem; }
-summary { cursor: pointer; color: var(--accent); }
-table { border-collapse: collapse; width: 100%; font-size: .9rem; }
-td { border-top: 1px solid var(--line); padding: .2rem .4rem; vertical-align: top; }
-dt { font-weight: 600; margin-top: .4rem; }
-dd { margin: 0 0 0 1rem; color: var(--muted); }
-footer { margin-top: 2.5rem; font-size: .85rem; color: var(--muted); }
-@media print { .needs { background: none; border: 1px solid var(--line); }
-               details > summary { color: var(--fg); } }
+  font: 15px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", sans-serif; }
+main { max-width: 76rem; margin: 0 auto; padding: 1.5rem 1.25rem 3rem; }
+h1 { font-size: 1.45rem; margin: 0; }
+h2 { font-size: 1.15rem; margin: 0 0 .75rem; display: flex; gap: .6rem; align-items: baseline; }
+h2 .num { color: var(--muted); font-weight: 500; }
+h3 { font-size: .95rem; margin: 1rem 0 .4rem; }
+h3 .count { color: var(--muted); font-weight: 400; }
+p { margin: .35rem 0; }
+a { color: var(--primary); }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; border-radius: 3px; }
+section.card { background: var(--card); border: 1px solid var(--line); border-radius: 10px;
+  padding: 1.1rem 1.25rem; margin: 1rem 0; }
+.muted, .ref, .rec { color: var(--muted); }
+.ref { font-size: .78rem; margin-left: .35rem; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.rec { font-size: .75rem; margin-left: .35rem; }
+
+/* header */
+header .top { display: flex; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
+header .pkg { color: var(--muted); font-size: 1rem; margin-top: .15rem; }
+header .window { color: var(--muted); margin: .5rem 0 0; }
+.theme { font-size: .82rem; color: var(--muted); white-space: nowrap; }
+.theme label { margin-left: .5rem; cursor: pointer; }
+.banner { border-left: 4px solid var(--claimed); padding: .35rem .7rem; background: var(--card);
+  margin: .75rem 0 0; }
+.verdict { margin: .75rem 0 0; padding: .55rem .8rem; border-radius: 8px; background: var(--card);
+  border: 1px solid var(--line); border-left-width: 6px; }
+.verdict.green { border-left-color: var(--done); }
+.verdict.amber { border-left-color: var(--claimed); }
+.verdict.red { border-left-color: var(--blocked); }
+.verdict .rule { color: var(--muted); font-size: .88rem; }
+
+/* summary cards */
+.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr)); gap: .75rem; }
+.kpi { border: 1px solid var(--line); border-radius: 8px; padding: .7rem .8rem; background: var(--bg); }
+.kpi .label { font-size: .8rem; color: var(--muted); text-transform: uppercase; letter-spacing: .03em; }
+.kpi .value { font-size: 1.55rem; font-weight: 650; font-variant-numeric: tabular-nums; }
+.kpi .sub { font-size: .82rem; color: var(--muted); }
+.headline { font-size: 1.05rem; margin-top: .9rem; }
+
+/* states: a word plus a colour (WCAG 1.4.1) */
+.state { display: inline-block; font-size: .76rem; font-weight: 600; padding: .05rem .45rem;
+  border-radius: 999px; border: 1px solid currentColor; white-space: nowrap; }
+.s-done-window { color: var(--done); }
+.s-claimed-window { color: var(--claimed); }
+.s-done-earlier { color: var(--muted); border-style: dotted; }
+.s-blocked, .s-failed { color: var(--blocked); }
+.s-in-progress { color: var(--progress); }
+.s-next { color: var(--next); border-style: dashed; }
+.s-not-started, .s-not-checked, .s-postponed { color: var(--idle); border-color: transparent; }
+.s-now { color: var(--bg); background: var(--primary); border-color: var(--primary); }
+
+/* bars */
+.bar { display: inline-block; width: 6.5rem; height: .5rem; background: var(--bar-bg);
+  border-radius: 999px; overflow: hidden; vertical-align: middle; }
+.bar > span { display: block; height: 100%; background: var(--done); }
+.frac { font-size: .8rem; color: var(--muted); margin-left: .4rem; font-variant-numeric: tabular-nums; }
+
+/* the tree table */
+.toolbar { display: flex; flex-wrap: wrap; gap: .5rem 1rem; align-items: center; margin-bottom: .6rem; }
+.chips { display: flex; flex-wrap: wrap; gap: .35rem; }
+.chips button { font: inherit; font-size: .8rem; padding: .2rem .6rem; border-radius: 999px;
+  border: 1px solid var(--line); background: var(--bg); color: var(--fg); cursor: pointer; }
+.chips button[aria-pressed="true"] { background: var(--primary); color: var(--bg); border-color: var(--primary); }
+.chips .n { color: inherit; opacity: .75; margin-left: .2rem; }
+.toolbar input, .toolbar select { font: inherit; font-size: .85rem; padding: .25rem .5rem;
+  border: 1px solid var(--line); border-radius: 6px; background: var(--bg); color: var(--fg); }
+.toolbar button.act { font: inherit; font-size: .8rem; padding: .2rem .6rem; border-radius: 6px;
+  border: 1px solid var(--line); background: var(--card); color: var(--fg); cursor: pointer; }
+.tree-head, .cells { display: grid; grid-template-columns: minmax(0, 1fr) 9.5rem 10rem 9rem;
+  gap: .75rem; align-items: center; }
+.tree-head { font-size: .75rem; text-transform: uppercase; letter-spacing: .04em; color: var(--muted);
+  border-bottom: 1px solid var(--line); padding: .3rem .5rem; }
+.tree details > summary { list-style: none; cursor: pointer; }
+.tree details > summary::-webkit-details-marker { display: none; }
+.tree .row { border-bottom: 1px solid var(--line); }
+.tree .cells { padding: .35rem .5rem; }
+.tree .item { display: flex; align-items: baseline; gap: .1rem; min-width: 0; }
+.tree .item .t { overflow-wrap: anywhere; }
+.tree .tw { display: inline-block; width: 1rem; color: var(--muted); flex: none; }
+.tree details > summary .tw::before { content: "▸"; }
+.tree details[open] > summary .tw::before { content: "▾"; }
+.tree .lvl-0 > summary .t, .tree .lvl-0 > .cells .t { font-weight: 650; }
+.tree .lvl-1 .item { padding-left: 1.1rem; }
+.tree .lvl-2 .item { padding-left: 2.2rem; }
+.tree .lvl-3 .item { padding-left: 3.3rem; }
+.tree .lvl-4 .item { padding-left: 4.4rem; }
+.tree .kindmark { font-size: .7rem; color: var(--muted); border: 1px solid var(--line); border-radius: 4px;
+  padding: 0 .25rem; margin-right: .35rem; flex: none; }
+.tree .row:hover > summary, .tree .row:hover > .cells { background: color-mix(in srgb, var(--primary) 6%, transparent); }
+.empty { color: var(--muted); font-style: italic; }
+.toolbar label { max-width: 100%; }
+.toolbar select { max-width: 100%; }
+.scroll { overflow-x: auto; }
+.scroll table.prog { min-width: 34rem; }
+.tree.compact .cells { grid-template-columns: minmax(0, 1fr) 11rem; }
+.tree.compact .c-prog, .tree.compact .c-win { display: none; }
+.tree.compact .lvl-0 .t { font-weight: 650; }
+
+/* lists and two halves */
+.halves { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; }
+.halves > div > h3:first-child { margin-top: 0; }
+ul.list { margin: .2rem 0 .5rem; padding-left: 1.1rem; }
+ul.list li { margin: .15rem 0; }
+.note { font-size: .82rem; color: var(--muted); margin-left: .35rem; }
+details.more > summary, details.fold > summary { cursor: pointer; color: var(--primary); font-size: .88rem; }
+table.prog { width: 100%; border-collapse: collapse; font-size: .9rem; }
+table.prog th { text-align: left; font-size: .75rem; color: var(--muted); text-transform: uppercase;
+  border-bottom: 1px solid var(--line); padding: .3rem .4rem; }
+table.prog td { border-bottom: 1px solid var(--line); padding: .35rem .4rem; vertical-align: middle; }
+dl.gloss { display: grid; grid-template-columns: max-content 1fr; gap: .35rem 1rem; margin: 0; }
+dl.gloss dt { font-weight: 600; }
+dl.gloss dd { margin: 0; color: var(--muted); }
+abbr[title] { text-decoration: underline dotted; cursor: help; }
+footer { margin-top: 2rem; color: var(--muted); font-size: .85rem; }
+
+/* phone */
+@media (max-width: 720px) {
+  main { padding: 1rem .75rem 2rem; }
+  .tree-head { display: none; }
+  .tree .cells { grid-template-columns: 1fr auto; grid-template-areas: "item item" "status win" "prog prog"; gap: .25rem .5rem; }
+  .tree .cells > .item { grid-area: item; }
+  .tree .cells > .c-status { grid-area: status; }
+  .tree .cells > .c-prog { grid-area: prog; }
+  .tree .cells > .c-win { grid-area: win; justify-self: end; }
+  .halves { grid-template-columns: 1fr; }
+  .tree .lvl-2 .item { padding-left: 1.6rem; }
+  .tree .lvl-3 .item, .tree .lvl-4 .item { padding-left: 2.2rem; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+@media print {
+  .theme, #tree-controls { display: none !important; }
+  body { background: #fff; color: #000; }
+  section.card { break-inside: avoid-page; border-color: #999; }
+}
 </style>
 </head>
 <body>
 <main>
-<header><h1>Standup report RPT-001<span class="pkg"> · Payments revamp</span></h1><p class="banner">Draft: not recorded yet.</p><p class="window">From the start of the package (2026-11-15) to Mon 16 Nov 2026, 09:05 (UTC+03:00).</p><p class="colour amber"><strong>Proposed overall: At risk.</strong> One open high defect.</p><p class="rule">The default rule says: off track (1 open critical or high defect).</p></header><p class="glance">1 task done · 0 checks passed · 1 defect open · 1 item needs you</p><div class="headline"><p>The export works end to end. One defect blocks the release.</p></div><section id="needs" class="needs"><h2>Needs from you</h2><h4>Decisions waiting for approval <span class="count">1</span></h4><ul><li><span class="t">Use SQLite for the cache</span> <span class="ref">DEC-001</span></li></ul></section><section id="stand"><h2>Where we stand</h2><details><summary>Rows per family</summary><table><tr><td>decisions</td><td>waiting for approval 1</td></tr><tr><td>defects</td><td>open 1</td></tr><tr><td>tasks</td><td>done 1</td></tr></table></details></section><section id="did"><h2>1. What we did</h2><p>We finished the export (WBS-001).</p><h4>Tasks done <span class="count">1</span></h4><ul><li><span class="t">Export to CSV</span> <span class="ref">WBS-001</span> <span class="note">done</span></li></ul></section><section id="challenges"><h2>2. Challenges and decisions</h2><p>The login defect is open (DEF-001).</p><p class="pending">1 decision waits for approval: see Needs from you.</p><h4>Open defects <span class="count">1</span></h4><ul><li><span class="t">Login fails on Safari</span> <span class="ref">DEF-001</span> <span class="note">high</span></li></ul></section><section id="next"><h2>3. What we expect to do next</h2><p>We fix the defect first.</p><div class="plan"><p class="label">The agent's plan. A plan, not a record.</p><p>Fix DEF-001, then release.</p></div></section><section id="terms"><h2>Terms used</h2><dl><dt>task</dt><dd>One piece of planned work.</dd></dl></section><footer><details><summary>How this report was made</summary><p>Journal rows PE-1 to PE-0, check results AV-1 to AV-0.</p><p>Starts after the start of the package.</p><p>State digest 9e6e9a8d53fa3624.</p><p>The report sees new rows, status moves and content edits in the store. It never sees work that nobody recorded.</p></details></footer>
+<header><div class="top"><div><h1>Standup report RPT-001</h1><div class="pkg">Payments revamp</div></div><div class="theme" role="radiogroup" aria-label="Colours"><label><input type="radio" name="theme" id="theme-auto" checked> Auto</label><label><input type="radio" name="theme" id="theme-light"> Light</label><label><input type="radio" name="theme" id="theme-dark"> Dark</label></div></div><p class="window">This window: the start of the package (2026-11-15) → Mon 16 Nov 2026, 09:05 (UTC+03:00)</p><p class="banner">Draft: not recorded yet.</p><div class="verdict amber"><strong>Proposed overall: At risk.</strong> One open high defect.<div class="rule">By the default rule it would be off track: 1 open critical or high defect.</div></div></header><section class="card" id="summary"><h2><span class="num">1</span>Summary</h2><div class="cards"><div class="kpi"><div class="label">Done this window</div><div class="value">0</div><div class="sub">0 tasks · 0 checks · 0 claimed</div></div><div class="kpi"><div class="label">Done overall</div><div class="value">0%</div><div class="sub">0 of 0 tasks in the plan · 1 outside it</div></div><div class="kpi"><div class="label">Working on now</div><div class="value">—</div><div class="sub">no open slice</div></div><div class="kpi"><div class="label">Next</div><div class="value">—</div><div class="sub">0 tasks expected to start</div></div><div class="kpi"><div class="label">Needs your decision</div><div class="value">1</div><div class="sub">approvals and answers</div></div><div class="kpi"><div class="label">Risks and defects</div><div class="value">0 · 1</div><div class="sub">open high risks · critical or high defects</div></div></div><div class="headline"><p>The export works end to end. One defect blocks the release.</p></div></section><section class="card" id="needs"><h2><span class="num">2</span>Needs your decision</h2><h4>Decisions waiting for your approval <span class="count">1</span></h4><ul><li><span class="t">Use SQLite for the cache</span> <span class="ref">DEC-001</span></li></ul></section><section class="card" id="plan"><h2><span class="num">3</span>Plan overview</h2><p class="muted">Every phase, slice, task, acceptance check and milestone. The branches with work in this window, and the current and next slices, are open.</p><div id="tree-controls" hidden><div class="toolbar"><div class="chips" role="group" aria-label="State"><button type="button" data-filter="state" data-value="all" aria-pressed="true">All states</button><button type="button" data-filter="state" data-value="done-earlier" aria-pressed="false">done earlier<span class="n">1</span></button></div></div><div class="toolbar"><div class="chips" role="group" aria-label="Kind"><button type="button" data-filter="kind" data-value="all" aria-pressed="true">All kinds</button><button type="button" data-filter="kind" data-value="task" aria-pressed="false">Tasks</button><button type="button" data-filter="kind" data-value="check" aria-pressed="false">Checks</button><button type="button" data-filter="kind" data-value="milestone" aria-pressed="false">Milestones</button></div><label>Phase <select id="tree-phase"><option value="all">All phases</option><option value="outside">Outside the plan</option></select></label><label>Search <input id="tree-search" type="search" placeholder="words or an id"></label><button type="button" class="act" id="tree-open">Expand all</button><button type="button" class="act" id="tree-close">Collapse all</button></div><p id="tree-status" class="muted" role="status" aria-atomic="true"></p></div><div class="tree" id="tree"><div class="tree-head"><span>Item</span><span>Status</span><span>Progress</span><span>This window</span></div><details class="row lvl-0" data-row data-kind="group" data-phase="outside"><summary><div class="cells"><span class="item"><span class="tw"></span><span class="t">Outside the plan</span></span><span class="c-status"><span class="muted">1 item with no phase</span></span><span class="c-prog"></span><span class="c-win"></span></div></summary><div class="row lvl-1" data-row data-item data-kind="task" data-state="done-earlier" data-phase="outside" data-text="export to csv wbs-001"><div class="cells"><span class="item"><span class="tw"></span><span class="t">Export to CSV</span><span class="ref">WBS-001</span></span><span class="c-status"><span class="state s-done-earlier">done earlier</span></span><span class="c-prog"></span><span class="c-win"></span></div></div></details></div></section><section class="card" id="did"><h2><span class="num">4</span>What we did</h2><h3>In this window</h3><p>We finished the export (WBS-001).</p><p class="empty">Nothing.</p><h3>Overall</h3><div class="scroll"><table class="prog"><thead><tr><th>Phase</th><th>State</th><th>Tasks done</th><th>Acceptance checks</th></tr></thead><tbody></tbody></table></div><p>Requirements done: 0 of 0.</p></section><section class="card" id="now"><h2><span class="num">5</span>What we are working on now</h2><p class="empty">No slice is open.</p></section><section class="card" id="next"><h2><span class="num">6</span>What we expect next</h2><p>We fix the defect first.</p><p class="muted">The agent's plan, not a record:</p><p>Fix DEF-001, then release.</p><p class="empty">Nothing.</p></section><section class="card" id="challenges"><h2><span class="num">7</span>Challenges and decisions</h2><h3>In this window</h3><p>The login defect is open (DEF-001).</p><h3>Overall</h3><h4>Open defects <span class="count">1</span></h4><ul><li><span class="t">Login fails on Safari</span> <span class="ref">DEF-001</span> <span class="note">high</span></li></ul><ul class="list"><li>1 decisions: 1 waiting for approval</li><li>1 defects: 1 open</li></ul><details class="fold"><summary>All 1 decisions</summary><ul class="list"><li>Use SQLite for the cache<span class="ref">DEC-001</span><span class="note">waiting for approval</span></li></ul></details><details class="fold"><summary>All 1 defects</summary><ul class="list"><li>Login fails on Safari<span class="ref">DEF-001</span><span class="note">Open · high</span></li></ul></details></section><section class="card" id="glossary"><h2><span class="num">8</span>Glossary</h2><dl class="gloss"><dt>done earlier</dt><dd>Finished before this window started.</dd><dt>done this window</dt><dd>Finished inside this window: a task moved to done, or a check passed.</dd><dt>next</dt><dd>Expected to start next: the open tasks of the current slice with no work yet, and the next slice.</dd><dt>task (WBS-)</dt><dd>One piece of planned work. A task can hold smaller tasks. When the agent says a task is finished, it shows as claimed done. It counts as done only after someone marks it done.</dd><dt>this window</dt><dd>The stretch of time this report covers. Its dates are in the header.</dd></dl></section><section class="card" id="record"><details class="fold"><summary>Record details: the journal, commits, edits and the last session's notes</summary><section id="stand"><h2>Where we stand</h2><details><summary>Rows per family</summary><table><tr><td>decisions</td><td>waiting for approval 1</td></tr><tr><td>defects</td><td>open 1</td></tr><tr><td>tasks</td><td>done 1</td></tr></table></details></section><h3>How this report was made</h3><p>Journal rows PE-1 to PE-0, check results AV-1 to AV-0. Starts after the start of the package. State digest 9e6e9a8d53fa3624. The report sees new rows, status moves and content edits in the store. It never sees work that nobody recorded.</p></details></section>
 </main>
+<script>/* The standup page's one script (plan 251 v2, U1). Named by its SHA-256 in the page's content
+   policy. It loads nothing, sends nothing and writes no markup: it reads data attributes and sets
+   `hidden`, `open`, `aria-pressed`, a status text and one stored colour choice. */
+(() => {
+  'use strict';
+  const doc = document;
+  doc.documentElement.dataset.js = 'on';
+
+  // The colour choice: auto, light or dark. A stored value outside the three is ignored.
+  const KEY = 'tamheed-standup-colours';
+  const CHOICES = ['auto', 'light', 'dark'];
+  try {
+    const stored = window.localStorage.getItem(KEY);
+    if (CHOICES.includes(stored)) {
+      const radio = doc.getElementById('theme-' + stored);
+      if (radio) radio.checked = true;
+    }
+  } catch (e) { /* storage refused: the page keeps Auto */ }
+  doc.querySelectorAll('input[name="theme"]').forEach((radio) => {
+    radio.addEventListener('change', () => {
+      const value = radio.id.replace('theme-', '');
+      if (!CHOICES.includes(value)) return;
+      try { window.localStorage.setItem(KEY, value); } catch (e) { /* not stored */ }
+    });
+  });
+
+  // The plan tree: filters, search, expand and collapse.
+  const tree = doc.getElementById('tree');
+  const controls = doc.getElementById('tree-controls');
+  if (!tree || !controls) return;
+  controls.hidden = false;
+  const items = Array.from(tree.querySelectorAll('[data-item]'));
+  const folds = Array.from(tree.querySelectorAll('details'));
+  const opened = new Map(folds.map((d) => [d, d.open]));
+  const status = doc.getElementById('tree-status');
+  const search = doc.getElementById('tree-search');
+  const phaseSelect = doc.getElementById('tree-phase');
+  const chosen = { state: 'all', kind: 'all' };
+
+  function matches(el) {
+    const query = search.value.trim().toLowerCase();
+    return (chosen.state === 'all' || el.dataset.state === chosen.state)
+      && (chosen.kind === 'all' || el.dataset.kind === chosen.kind)
+      && (phaseSelect.value === 'all' || el.dataset.phase === phaseSelect.value)
+      && (!query || (el.dataset.text || '').includes(query));
+  }
+
+  function apply() {
+    const filtering = chosen.state !== 'all' || chosen.kind !== 'all'
+      || phaseSelect.value !== 'all' || search.value.trim() !== '';
+    tree.querySelectorAll('[data-row]').forEach((row) => { row.hidden = filtering; });
+    if (!filtering) {
+      opened.forEach((wasOpen, d) => { d.open = wasOpen; });
+      status.textContent = 'Showing all ' + items.length + ' items.';
+      return;
+    }
+    let shown = 0;
+    items.forEach((el) => {
+      if (!matches(el)) return;
+      shown += 1;
+      let node = el;
+      while (node && node !== tree) {
+        if (node.dataset && node.dataset.row !== undefined) node.hidden = false;
+        if (node.tagName === 'DETAILS' && node !== el) node.open = true;
+        node = node.parentElement;
+      }
+    });
+    status.textContent = 'Showing ' + shown + ' of ' + items.length + ' items.';
+  }
+
+  controls.querySelectorAll('button[data-filter]').forEach((button) => {
+    button.addEventListener('click', () => {
+      const group = button.dataset.filter;
+      chosen[group] = button.dataset.value;
+      controls.querySelectorAll('button[data-filter="' + group + '"]').forEach((b) => {
+        b.setAttribute('aria-pressed', String(b === button));
+      });
+      apply();
+    });
+  });
+  search.addEventListener('input', apply);
+  phaseSelect.addEventListener('change', apply);
+  doc.getElementById('tree-open').addEventListener('click', () => {
+    folds.forEach((d) => { d.open = true; });
+  });
+  doc.getElementById('tree-close').addEventListener('click', () => {
+    folds.forEach((d) => { d.open = false; });
+  });
+  apply();
+})();
+</script>
 </body>
 </html>

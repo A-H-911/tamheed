@@ -5,6 +5,8 @@ name: CI
 # locally, so "passes locally != passes CI" cannot happen. check.py owns the gate
 # list (suites, structure lint, canonical form, eval-runner sample);
 # anything deterministic goes there, never here. All checks are stdlib (D-U3).
+# One job sits outside check.py on purpose: `standup-browser` (plan 251, ADR-0005) opens a
+# standup page in the runner's Chrome, because only a browser can run the page's one script.
 # Python floor is 3.10 per ASM-D (the MCP SDK's requires-python; 3.9 dropped —
 # see CHANGELOG).
 
@@ -43,6 +45,27 @@ jobs:
       - name: The one command
         shell: bash
         run: python check.py
+
+  standup-browser:
+    # Plan 251 v2 (U4): the standup page runs one script, named by its hash. This job builds a
+    # page from a temporary package and checks what the script and the styles DO: the filters,
+    # the search, the colour switch, contrast, the phone width and print. Needs Node and a
+    # browser, so it is not part of check.py. A missing Chrome fails the job (exit 2).
+    name: Standup page in Chrome
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Build a page and check it in Chrome
+        shell: bash
+        run: |
+          python tests/standup_browser_page.py "$RUNNER_TEMP/standup.html"
+          node tests/run_standup_browser_check.mjs "$RUNNER_TEMP/standup.html" "$(command -v google-chrome)"
 
   server-smoke:
     # The uv/PEP 723 launch path is the documented install story — smoke it for real:

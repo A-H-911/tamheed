@@ -347,26 +347,22 @@ class EngineTest(unittest.TestCase):
         self.assertEqual(S.handoff_sections(self.conn)["awaiting the operator"],
                          ["LL-168 (Proposed). The first report."])
 
-    def test_facts_lists_cap_and_keep_totals_and_the_first_report_is_whole(self):
+
+    def test_facts_lists_keep_every_item(self):
+        """Plan 251 v2 (U8): no list is capped, a first report or a daily one."""
         self.up(*[{"type": "defect", "id": f"DEF-{k:03d}", "title": f"bug {k}",
                    "severity": "low"} for k in range(1, 41)])
         _b, _k, out = self.draft()
-        first = F.build(self.conn, cls=out["cls"], live=out["live"], first=True, window=out,
-                        today="2026-11-16", blocker_rules=[], screen=NEVER)
-        self.assertEqual(len(first["challenges"]["defects_open"]["items"]), 40)
-        self.assertIn("where_we_stand", first)
         self.record()
-        self.up({"type": "defect", "id": "DEF-041", "title": "new bug", "severity": "high"})
+        self.up({"type": "defect", "id": "DEF-041", "title": "bug 41", "severity": "low"})
         _b, _k, out = self.draft()
-        daily = F.build(self.conn, cls=out["cls"], live=out["live"], first=False, window=out,
+        facts = F.build(self.conn, cls=out["cls"], live=out["live"], first=False, window=out,
                         today="2026-11-16", blocker_rules=[], screen=NEVER)
-        open_list = daily["challenges"]["defects_open"]
-        self.assertEqual((len(open_list["items"]), open_list["total"]), (30, 41))
-        self.assertEqual(open_list["items"][0]["id"], "DEF-041")   # severity first
-        self.assertEqual([it["id"] for it in daily["challenges"]["defects_new"]["items"]],
-                         ["DEF-041"])
-        self.assertNotIn("where_we_stand", daily)
-        self.assertEqual(F.rule_colour(daily)[0], "red")
+        opened = facts["challenges"]["defects_open"]
+        self.assertEqual((len(opened["items"]), opened["total"]), (41, 41))
+        self.assertIn("overall", facts)
+        self.assertEqual(facts["overall"]["families"]["defects"], {"Open": 41})
+        self.assertEqual(len(facts["overall"]["lists"]["defects"]), 41)
 
     def test_rule_colour(self):
         def sections(defects=(), rules=0, risks=0, overdue=0):
@@ -547,14 +543,22 @@ class PageTest(unittest.TestCase):
         live, cols = S.state(self.conn, srv.ENTITY_TABLES.values())
         return S.digest(live), json.dumps(S.full(live, cols))
 
-    def test_the_frame_has_no_script_and_no_outward_link(self):
+
+    def test_the_page_runs_one_script_named_by_its_hash_and_links_nowhere(self):
+        """Plan 251 v2 (U1, ADR-0005): one script, its SHA-256 in the content policy, no other
+        script, no inline handler, no outward link."""
+        import base64
+        import hashlib
         self.seed()
         page, _w = self.page(self.NARRATIVE)
-        self.assertIn('content="default-src \'none\'; style-src \'unsafe-inline\'"', page)
-        self.assertNotIn("<script", page.lower())
-        for href in re.findall(r'href="([^"]*)"', page):
-            self.assertTrue(href.startswith("#"), href)
-        self.assertNotIn("src=", page)
+        source = (REPO_ROOT / "plugins/tamheed/server/standup.js").read_text(encoding="utf-8")
+        digest = base64.b64encode(hashlib.sha256(source.encode("utf-8")).digest()).decode()
+        self.assertIn(f"script-src 'sha256-{digest}'; base-uri 'none'; form-action 'none'",
+                      page)
+        self.assertEqual(page.count("<script"), 1)
+        self.assertIn(f"<script>{source}</script>", page)
+        self.assertIsNone(re.search(r"\son[a-z]+=", page))
+        self.assertIsNone(re.search(r"(?:href|src)=\"(?!#)", page))
 
     def test_hostile_text_renders_as_text(self):
         self.up({"type": "decision", "id": "DEC-001",
@@ -572,32 +576,16 @@ class PageTest(unittest.TestCase):
         self.assertIn("&lt;img src=x onerror=alert(1)&gt;&quot;quoted&quot;", page)
         self.assertIn("&lt;script&gt;alert(2)&lt;/script&gt; &amp; more", page)
 
-    def test_the_engine_part_stays_in_its_budget_on_a_large_package(self):
-        self.up(*[{"type": "wbs-item", "id": f"WBS-{k:03d}", "title": f"Task number {k} of"
-                   " the large migration plan", "lifecycle_status": "Draft"}
-                  for k in range(1, 501)],
-                *[{"type": "defect", "id": f"DEF-{k:03d}", "title": f"Defect {k} in the"
-                   " billing screen", "severity": "medium"} for k in range(1, 201)])
-        self.conn.execute(
-            "INSERT INTO standup_reports (id, kind, seq, lifecycle_status, checkpoint, pe_to,"
-            " av_to, ended_at, utc_offset, state_digest, state_delta, facts, narrative,"
-            " rule_colour, colour, recorded_by, operator_words, recorded_at) VALUES"
-            " ('RPT-001', 'default', 1, 'Approved', 1, 0, 0, '2026-11-16T06:05:00Z', '+03:00',"
-            " ?, ?, '{}', '{}', 'green', 'green', 'human:op', 'w', '2026-11-16T06:10:00Z')",
-            self._first_state())
-        self.up(*[{"type": "wbs-item", "id": f"WBS-{k:03d}", "title": f"Task number {k} of"
-                   " the large migration plan", "lifecycle_status": "Implemented"}
-                  for k in range(1, 501)],
-                *[{"type": "defect", "id": f"DEF-{k:03d}", "title": f"Defect {k} renamed",
+
+    def test_nothing_shrinks_and_long_lists_fold_after_eight(self):
+        """Plan 251 v2 (U8): no word budget, no shrinking. A list shows 8 items, then a fold."""
+        self.up(*[{"type": "defect", "id": f"DEF-{k:03d}", "title": f"Defect {k} renamed",
                    "severity": "medium"} for k in range(1, 151)])
-        page, words = self.page(self.NARRATIVE, row_extra={"id": "RPT-002"})
-        self.assertLessEqual(words - P.narrative_words(self.NARRATIVE), P.ENGINE_BUDGET)
+        page, words = self.page(self.NARRATIVE)
         self.assertEqual(words, P.visible_words(page))
-        self.assertIn("more in the record", page)                 # the 30-item freeze
-        long = dict(self.NARRATIVE, did="word " * 900)
-        page2, words2 = self.page(long, row_extra={"id": "RPT-002"})
-        self.assertGreaterEqual(words2 - words, 890)               # the narrative never shrinks
-        self.assertLessEqual(words2 - P.narrative_words(long), P.ENGINE_BUDGET)
+        self.assertNotIn("more in the record", page)
+        self.assertIn("142 more</summary>", page)
+        self.assertFalse(hasattr(P, "ENGINE_BUDGET"))
 
     def test_the_first_report_is_exempt_and_complete(self):
         self.up(*[{"type": "wbs-item", "id": f"WBS-{k:03d}", "title": f"Done task {k}",
@@ -608,14 +596,20 @@ class PageTest(unittest.TestCase):
         self.assertNotIn("more in the record", page)
         self.assertIn("Where we stand", page)
 
-    def test_the_glossary_names_only_the_terms_on_the_page(self):
+
+    def test_one_glossary_names_only_the_terms_and_kinds_on_the_page(self):
+        """Plan 251 v2 (request item 9): ONE glossary, the state words, the terms and the kinds
+        of row the page shows."""
         self.up({"type": "wbs-item", "id": "WBS-001", "title": "Export",
                  "lifecycle_status": "Implemented"})
         page, _w = self.page(None)
-        terms = re.findall(r"<dt>([^<]+)</dt>", page)
-        self.assertIn("task", terms)
-        self.assertNotIn("waiver", terms)
-        self.assertNotIn("scope change", terms)
+        self.assertEqual(page.count('id="glossary"'), 1)
+        self.assertNotIn('id="terms"', page)
+        self.assertNotIn('id="families"', page)
+        terms = re.findall(r"<dt>([^<]+)</dt>", page.split('id="glossary"')[1])
+        self.assertIn("task (WBS-)", terms)
+        self.assertIn("done earlier", terms)
+        self.assertNotIn("waiver (WVR-)", terms)
 
     def test_times_show_in_the_rows_offset_and_the_words_never_show(self):
         self.seed()
@@ -628,14 +622,16 @@ class PageTest(unittest.TestCase):
         self.assertNotIn("SECRET WORDS", page)
         self.assertNotIn("Draft: not recorded yet", page)
 
-    def test_the_rule_colour_shows_when_the_confirmed_colour_differs(self):
-        self.seed()                                   # a high defect: the rule says red
-        page, _w = self.page(self.NARRATIVE, row_extra={"colour": "amber"})
-        self.assertIn("Proposed overall: At risk.", page)
-        self.assertIn("The default rule says: off track", page)
-        same, _w = self.page(dict(self.NARRATIVE, colour="red"),
-                             row_extra={"colour": "red"})
-        self.assertNotIn("The default rule says", same)
+
+    def test_one_colour_statement_and_the_rule_beside_it(self):
+        """Plan 251 v2 (U11): one statement; the default rule's colour only when it differs."""
+        self.up({"type": "defect", "id": "DEF-001", "title": "x", "severity": "critical"})
+        words = dict(self.NARRATIVE, colour="amber", colour_reason="Fix under way.")
+        page, _w = self.page(words)
+        self.assertIn("<strong>Proposed overall: At risk.</strong> Fix under way.", page)
+        self.assertIn("By the default rule it would be off track", page)
+        page, _w = self.page(dict(words, colour="red"))
+        self.assertNotIn("By the default rule", page)
 
     def test_the_visible_counter_skips_closed_folds_but_reads_their_summary(self):
         page = ("<html><head><title>t t t</title><style>a b</style></head><body>"
@@ -643,6 +639,407 @@ class PageTest(unittest.TestCase):
                 "<details><summary>nested</summary></details></details>"
                 "<details open><summary>four</summary><p>five</p></details></body></html>")
         self.assertEqual(P.visible_text(page).split(), ["one", "two", "three", "four", "five"])
+
+
+SRC = {"source_kind": "clarification", "source_span": "test"}
+
+
+class TreeTest(unittest.TestCase):
+    """Plan 251 (R1-R12, D1-D10): the plan tree, the current slice in the agent's words, the
+    cited titles and the families, through the tool as the field calls it."""
+
+    WORDS = {"headline": "The export moves. Nothing blocks it.",
+             "did": "We started the export of SL-002 and wrote the rows.",
+             "challenges": "No defect is open.", "next": "We finish the export (SL-002).",
+             "colour": "green", "slice_now": "SL-002", "slice_next": "SL-003",
+             "slice": "The export slice writes tasks to a CSV file. The rows are written."}
+
+    def setUp(self):
+        self._tmp = tempfile.TemporaryDirectory()
+        srv.PACKAGE_ROOT = Path(self._tmp.name)
+        srv.package_create("demo", "Demo", "rnd")
+        self.conn = srv._CURRENT.conn
+        task = lambda i, title, **kw: dict({"type": "wbs-item", "id": i, "title": title,
+                                            "lifecycle_status": "Approved"}, **SRC, **kw)
+        self.up({"type": "phase", "id": "PH-1", "title": "Groundwork", "sort_order": 1,
+                 "lifecycle_status": "Approved", **SRC},
+                {"type": "phase", "id": "PH-2", "title": "First release", "sort_order": 2,
+                 "lifecycle_status": "Approved", **SRC},
+                {"type": "phase", "id": "PH-3", "title": "Later", "sort_order": 3,
+                 "lifecycle_status": "Approved", **SRC},
+                {"type": "milestone", "id": "MS-1", "title": "Demo day", "phase_id": "PH-2",
+                 "due": "2026-12-01"})
+        self.up(*[{"type": "slice", "id": i, "title": t, "phase_id": ph, "sort_order": k,
+                   "lifecycle_status": "Approved"} for i, t, ph, k in (
+                      ("SL-001", "Setup", "PH-1", 1), ("SL-002", "Export", "PH-2", 1),
+                      ("SL-003", "Import", "PH-2", 2), ("SL-004", "Reports", "PH-3", 1))])
+        self.up({"type": "requirement", "id": "FR-001", "kind": "functional",
+                 "title": "Export to CSV", "statement": "The user exports tasks.", **SRC},
+                {"type": "acceptance-criterion", "id": "AC-001", "title": "The CSV opens",
+                 "statement": "Given tasks, when exported, then the file opens.",
+                 "requirement_id": "FR-001", "slice_id": "SL-002", "lifecycle_status":
+                 "Approved"},
+                task("WBS-1", "Export group", slice_id="SL-002", phase_id="PH-2"),
+                task("WBS-1.1", "Write rows", parent_id="WBS-1", slice_id="SL-002",
+                     phase_id="PH-2"),
+                task("WBS-1.2", "Quote cells", parent_id="WBS-1", slice_id="SL-002",
+                     phase_id="PH-2"),
+                task("WBS-2", "Set up the repository", slice_id="SL-001", phase_id="PH-1"),
+                task("WBS-3", "A chore with no slice", phase_id="PH-2"),
+                task("WBS-4", "An old task outside the plan"))
+        for table, i in (("wbs_items", "WBS-2"), ("slices", "SL-001"), ("phases", "PH-1")):
+            self.conn.execute(f"UPDATE {table} SET lifecycle_status = 'Implemented'"
+                              " WHERE id = ?", (i,))
+
+    def tearDown(self):
+        if srv._CURRENT is not None:
+            srv.package_close()
+        self._tmp.cleanup()
+
+    def up(self, *rows):
+        out = srv.entity_upsert(list(rows))
+        self.assertTrue(out["ok"], [it for it in out["items"] if not it.get("ok")])
+
+    def confirm(self, **kw):
+        return dict({"operator_confirm": True, "by": "human:op", "words": "record it",
+                     "colour": "green", "slice_now": "SL-002", "slice_next": "SL-003"}, **kw)
+
+    def first(self):
+        self.assertTrue(srv.standup_report(utc_offset="+03:00")["ok"])
+        self.assertTrue(srv.standup_report(narrative=self.WORDS)["ok"])
+        out = srv.standup_report(action="record", confirm=self.confirm())
+        self.assertTrue(out["ok"], out)
+
+    def facts(self) -> dict:
+        return json.loads(self.conn.execute("SELECT facts FROM standup_reports WHERE"
+                                            " lifecycle_status = 'Draft'").fetchone()[0])
+
+    def page(self) -> str:
+        return (srv.PACKAGE_ROOT / "demo" / "reports" / "draft.html").read_text(encoding="utf-8")
+
+    def test_the_draft_suggests_the_slices_and_keeps_the_tree_out_of_the_result(self):
+        out = srv.standup_report(utc_offset="+03:00")
+        self.assertTrue(out["ok"], out)
+        self.assertEqual(out["plan_summary"]["suggest"], {"now": "SL-002", "next": "SL-003"})
+        self.assertNotIn("plan", out["facts"])
+        self.assertNotIn("names", out["facts"])
+        self.assertLess(len(json.dumps(out)), 40_000)
+        tree = self.facts()["plan"]
+        self.assertEqual([p["id"] for p in tree["phases"]], ["PH-1", "PH-2", "PH-3"])
+        ph2 = tree["phases"][1]
+        self.assertEqual([s["id"] for s in ph2["slices"]], ["SL-002", "SL-003"])
+        self.assertEqual([m["id"] for m in ph2["milestones"]], ["MS-1"])
+        self.assertEqual([t["id"] for t in ph2["loose"]], ["WBS-3"])
+        group = ph2["slices"][0]["tasks"][0]
+        self.assertEqual([c["id"] for c in group["children"]], ["WBS-1.1", "WBS-1.2"])
+        self.assertEqual([t["id"] for t in tree["outside"]["tasks"]], ["WBS-4"])
+        self.assertFalse(tree["marks"])                     # a first report tags nothing
+
+
+    def test_the_agent_states_the_slices_and_the_tool_checks_them(self):
+        srv.standup_report(utc_offset="+03:00")
+        words = {k: v for k, v in self.WORDS.items() if not k.startswith("slice")}
+        for bad, needle in ((words, "slice_now names the current slice"),
+                            (dict(self.WORDS, slice_now="SL-001"), "slice_now names"),
+                            (dict(self.WORDS, slice_next="SL-002"), "slice_next names"),
+                            (dict(self.WORDS, slice=""), "slice is empty"),
+                            (dict(self.WORDS, _names={}), "narrative:")):
+            out = srv.standup_report(narrative=bad)
+            self.assertFalse(out["ok"], bad)
+            self.assertIn(needle, out["error"])
+        before = self.facts()
+        self.assertTrue(srv.standup_report(narrative=self.WORDS)["ok"])
+        self.assertEqual(self.facts(), before)              # the facts never change
+        said = json.loads(self.conn.execute("SELECT narrative FROM standup_reports").fetchone()[0])
+        self.assertEqual(said["_names"]["SL-002"], "Export")
+        page = self.page()
+        self.assertIn('<span class="state s-now">now</span>', page)
+        did = page.split('id="did"')[1].split("</section>")[0]
+        self.assertEqual(did.count("“Export”"), 1)          # the first mention only
+        self.assertIn("What we are working on now", page)
+        self.assertIn("The export slice writes tasks", page)
+
+    def test_the_confirm_carries_the_slices_the_words_state(self):
+        srv.standup_report(utc_offset="+03:00")
+        srv.standup_report(narrative=self.WORDS)
+        for bad in (self.confirm(slice_now=None), self.confirm(slice_next="SL-004")):
+            bad = {k: v for k, v in bad.items() if v is not None}
+            out = srv.standup_report(action="record", confirm=bad)
+            self.assertFalse(out["ok"], bad)
+            self.assertIn("Confirm the slices the page shows", out["error"])
+        self.assertTrue(srv.standup_report(action="record", confirm=self.confirm())["ok"])
+
+
+    def test_a_second_report_states_this_windows_work_and_opens_only_its_branches(self):
+        self.first()
+        self.up({"type": "wbs-item", "id": "WBS-1.1", "substitute": {"lifecycle_status":
+                                                                        ["Approved", "Review"]}},
+                {"type": "wbs-item", "id": "WBS-1.2", "substitute": {"lifecycle_status":
+                                                                        ["Approved", "Review"]}})
+        self.conn.execute("UPDATE wbs_items SET lifecycle_status = 'Implemented'"
+                          " WHERE id = 'WBS-1.2'")
+        out = srv.audit_record([{"ac_id": "AC-001", "verdict": "Met", "verified_by": "human",
+                                 "verification_method": "manual",
+                                 "evidence": "opened the file"}])
+        self.assertTrue(out["ok"], out)
+        srv.progress_update([{"entry": "Wrote the rows of the export.", "event_type":
+                              "work-done", "subject_id": "WBS-1.1", "actor": "agent:t"}])
+        self.assertTrue(srv.standup_report()["ok"])
+        self.assertTrue(srv.standup_report(narrative=self.WORDS)["ok"])
+        facts = self.facts()
+        self.assertEqual(facts["touched"], ["WBS-1.1"])
+        page = self.page()
+        tree = page.split('id="tree"')[1].split("</section>")[0]
+        state = {i: s for s, i in re.findall(r'data-state="([a-z-]+)" data-phase="[^"]*"'
+                                             r' data-text="[^"]* ([a-z]+-[0-9.]+)"', tree)}
+        self.assertEqual(state["wbs-1.1"], "claimed-window")
+        self.assertEqual(state["wbs-1.2"], "done-window")
+        self.assertEqual(state["ac-001"], "done-window")
+        self.assertIn('data-phase="PH-2" open><summary>', tree)          # news opens it
+        self.assertIn('data-phase="PH-1"><summary>', tree)               # no news: closed
+        self.assertNotIn("Tasks claimed done", page)
+        self.assertIn("Work done in this slice: 1 journal entry, 1 in this window", page)
+
+    def test_every_row_carries_its_state_kind_and_phase_for_the_filters(self):
+        """Plan 251 v2 (U2): the filters read data attributes; each item row has all three."""
+        srv.standup_report(utc_offset="+03:00")
+        page = self.page()
+        tree = page.split('id="tree"')[1].split("</section>")[0]
+        rows = re.findall(r'<(?:div|details) class="row[^"]*" data-row data-item ([^>]*)>', tree)
+        self.assertTrue(rows)
+        for attrs in rows:
+            self.assertRegex(attrs, r'data-kind="(task|check|milestone)"')
+            self.assertRegex(attrs, r'data-state="[a-z-]+"')
+            self.assertIn("data-phase=", attrs)
+        self.assertIn('id="tree-controls" hidden', page)          # the script shows them
+
+    def test_a_report_without_a_tree_refuses_the_slice_keys(self):
+        self.assertIsNone(srv._standup_slice_error({}, {"colour": "green"}))
+        self.assertIn("no open slice", srv._standup_slice_error({}, {"slice_now": "SL-002"}))
+
+    def test_a_row_of_6_7_0_prints_the_five_lists_and_6_7_0_draws_a_new_row(self):
+        srv.standup_report(utc_offset="+03:00")
+        srv.standup_report(narrative=self.WORDS)
+        row = dict(zip(srv._STANDUP_ROW, self.conn.execute(
+            f"SELECT {', '.join(srv._STANDUP_ROW)} FROM standup_reports").fetchone()))
+        old = dict(row, facts=json.dumps({k: v for k, v in json.loads(row["facts"]).items()
+                                          if k not in ("plan", "names")}))
+        page, _w = srv._standup_page(old, draft=True)
+        text = Path(page).read_text(encoding="utf-8")
+        self.assertIn("Tasks done", text)
+        self.assertNotIn('id="plan"', text)
+        # The page code of v6.7.0, frozen byte for byte (blob afc4702, `git show
+        # v6.7.0:plugins/tamheed/server/standup_page.py`): CI checks out no tags, so the test
+        # reads a copy and never skips.
+        source = (REPO_ROOT / "tests" / "standup_legacy" / "standup_page_670.py").read_text(
+            encoding="utf-8")
+        import types
+        legacy = types.ModuleType("standup_page_670")
+        legacy.__dict__["__file__"] = str(REPO_ROOT / "plugins" / "tamheed" / "server"
+                                          / "standup_page.py")
+        exec(compile(source, "standup_page_670", "exec"), legacy.__dict__)
+        facts, said = json.loads(row["facts"]), json.loads(row["narrative"])
+        meta = legacy.meta(row, package="Demo", base=None, birth=None,
+                           window=facts["view"]["window"])
+        html, _w = legacy.fit(meta, facts, said, exempt=True)   # the way back draws it
+        self.assertIn("Tasks done", html)
+
+
+    def test_every_family_has_plain_words_and_the_page_defines_only_its_own(self):
+        import standup_families as FAM
+        registry = {srv.ENTITY_TABLES[t]: prefix for t, _l, prefix, _c in
+                    srv.BASELINE_ENTITY_TYPES}
+        self.assertEqual({k: v[0] for k, v in FAM.FAMILIES.items()}, registry)
+        srv.standup_report(utc_offset="+03:00")
+        srv.standup_report(narrative=self.WORDS)
+        terms = re.findall(r"<dt>([^<]+)</dt>", self.page().split('id="glossary"')[1])
+        self.assertIn("slice (SL-)", terms)
+        self.assertIn("acceptance check (AC-)", terms)
+        self.assertNotIn("waiver (WVR-)", terms)
+
+    def test_titles_are_cut_at_eight_words_and_escaped(self):
+        cite = P.Cite({"SL-9": "one two three four five six seven eight nine",
+                       "DEF-1": "<b>bold</b>"})
+        self.assertEqual(P.short("one two three four five six seven eight nine"),
+                         "one two three four five six seven eight …")
+        html = cite.html("See [SL-9], SL-9 again and DEF-1; SL-10 names nothing.")
+        self.assertIn("“one two three four five six seven eight …” <span class=\"ref\">SL-9"
+                      "</span>, <span class=\"ref\">SL-9</span> again", html)
+        self.assertIn("&lt;b&gt;bold&lt;/b&gt;", html)
+        self.assertIn("SL-10 names nothing", html)
+
+
+    def test_the_blocked_and_next_states_and_a_check_without_a_result(self):
+        self.up({"type": "open-question", "id": "OQ-001", "title": "Which date format?",
+                 "question": "Which date format does the export use?", **SRC},
+                {"type": "trace-edge", "from_id": "WBS-1.2", "relation": "blocked_by",
+                 "to_id": "OQ-001"})
+        srv.standup_report(utc_offset="+03:00")
+        srv.standup_report(narrative=self.WORDS)
+        tree = self.page().split('id="tree"')[1].split("</section>")[0]
+        self.assertRegex(tree, r'data-state="blocked"[^>]*wbs-1.2"')
+        self.assertRegex(tree, r'data-state="not-checked"[^>]*ac-001"')
+        self.assertIn("no result yet", tree)
+
+    def test_a_report_after_a_broken_chain_tags_nothing(self):
+        out = S.compute(self.conn, srv.ENTITY_TABLES.values(), None, "default")
+        facts = F.build(self.conn, cls=out["cls"], live=out["live"], first=False,
+                        window=dict(out, broken="RPT-001"), today="2026-11-16",
+                        blocker_rules=[], screen=NEVER)
+        self.assertFalse(facts["plan"]["marks"])
+
+    def test_a_correction_keeps_the_tree_and_takes_the_slice_keys(self):
+        self.first()
+        out = srv.standup_report(supersede="RPT-001")
+        self.assertTrue(out["ok"], out)
+        self.assertNotIn("_names", out["corrects_narrative"])      # the agent can reuse it
+        self.assertTrue(srv.standup_report(narrative=out["corrects_narrative"])["ok"])
+        self.assertIn("plan", self.facts())
+        self.assertTrue(srv.standup_report(action="record", confirm=self.confirm())["ok"])
+
+    def test_journal_lines_cite_their_rows_but_the_slice_fold_does_not(self):
+        srv.progress_update([{"entry": "Wrote the rows for SL-002 and FR-001.", "event_type":
+                              "work-done", "subject_id": "WBS-1.1", "actor": "agent:t"}])
+        srv.standup_report(utc_offset="+03:00")
+        srv.standup_report(narrative=self.WORDS)
+        page = self.page()
+        journal = page.split("From the journal")[1].split("</ul>")[0]
+        self.assertIn('“Export to CSV” <span class="ref">FR-001</span>', journal)
+        fold = page.split("Work done in this slice")[1].split("</details>")[0]
+        self.assertIn("Wrote the rows for SL-002 and FR-001.", fold)       # small ids only
+        self.assertNotIn("“", fold)
+
+
+    def test_tasks_follow_the_natural_id_order(self):
+        self.up(*[{"type": "wbs-item", "id": f"WBS-1.{k}", "title": f"step {k}",
+                   "parent_id": "WBS-1", "slice_id": "SL-002", "phase_id": "PH-2",
+                   "lifecycle_status": "Approved", **SRC} for k in (10, 3)])
+        srv.standup_report(utc_offset="+03:00")
+        kids = [c["id"] for c in self.facts()["plan"]["phases"][1]["slices"][0]["tasks"][0]
+                ["children"]]
+        self.assertEqual(kids, ["WBS-1.1", "WBS-1.2", "WBS-1.3", "WBS-1.10"])
+
+
+    def test_the_kinds_come_from_the_rows_never_from_the_page_text(self):
+        self.up({"type": "decision", "id": "DEC-001", "title": "Hash files with SHA-256 at"
+                 " UTC-05:00", "lifecycle_status": "Proposed", **SRC})
+        srv.standup_report(utc_offset="-05:00")
+        srv.standup_report(narrative=self.WORDS)
+        terms = " ".join(re.findall(r"<dt>([^<]+)</dt>", self.page().split('id="glossary"')[1]))
+        self.assertNotIn("SHA-", terms)
+        self.assertNotIn("UTC-", terms)
+
+    def test_the_draft_result_stays_small_on_a_large_package(self):
+        self.up(*[{"type": "wbs-item", "id": f"WBS-7.{k}", "title": f"A long task title"
+                   f" number {k} of the large import plan", "slice_id": "SL-003",
+                   "phase_id": "PH-2", "lifecycle_status": "Proposed", **SRC}
+                  for k in range(1, 401)])
+        out = srv.standup_report(utc_offset="+03:00")
+        self.assertTrue(out["ok"], out)
+        self.assertLess(len(json.dumps(out)), 40_000)
+        self.assertGreater(len(self.conn.execute("SELECT facts FROM standup_reports")
+                               .fetchone()[0]), 40_000)               # the row keeps all
+
+
+    def test_the_page_follows_the_os_and_the_switch_works_without_the_script(self):
+        """The OS colours by default; the switch is CSS (it works with the script off); the
+        script only remembers the choice, and a stored value outside the three is ignored."""
+        srv.standup_report(utc_offset="+03:00")
+        page = self.page()
+        self.assertIn('<input type="radio" name="theme" id="theme-auto" checked>', page)
+        css = P.CSS_PATH.read_text(encoding="utf-8")
+        self.assertIn("@media (prefers-color-scheme: dark)", css)
+        self.assertLess(css.index("@media (prefers-color-scheme: dark)"),
+                        css.index(":root:has(#theme-dark:checked)"))
+        self.assertIn(".theme, #tree-controls { display: none !important; }", css)
+        js = (REPO_ROOT / "plugins/tamheed/server/standup.js").read_text(encoding="utf-8")
+        self.assertIn("const CHOICES = ['auto', 'light', 'dark'];", js)
+        self.assertIn("if (CHOICES.includes(stored))", js)
+        self.assertNotIn("innerHTML", js)
+        self.assertNotIn("fetch(", js)
+
+    def test_an_id_inside_a_rows_own_title_shows_its_name_on_hover(self):
+        self.up({"type": "decision", "id": "DEC-001", "title": "Ship SL-003 after AC-001",
+                 "lifecycle_status": "Proposed", **SRC})
+        srv.standup_report(utc_offset="+03:00")
+        page = self.page()
+        self.assertIn('Ship <abbr title="Import">SL-003</abbr> after <abbr title="The CSV'
+                      ' opens">AC-001</abbr>', page)
+
+
+    def test_no_budget_no_page_warning_and_the_description_fits(self):
+        self.assertFalse(hasattr(P, "ENGINE_BUDGET"))
+        self.assertFalse(hasattr(srv, "_STANDUP_PAGE_WARN"))
+        self.assertLessEqual(len(srv._STANDUP_DESC), srv._DESCRIPTION_CAP)
+    def test_one_state_per_row_in_the_approved_order(self):
+        """Plan 251 v2 (U10, V1, V3): the state table."""
+        ctx = {"slice": "SL-1", "now": "SL-1", "next": "SL-2", "touched": {"T-9"},
+               "first": False}
+        rs = lambda item, kind="task", **kw: F.row_state(item, kind, dict(ctx, **kw))  # noqa
+        self.assertEqual(rs({"id": "T-1", "status": "Implemented", "tag": "done"}),
+                         "done-window")
+        self.assertEqual(rs({"id": "T-1", "status": "Review", "tag": "claimed"}),
+                         "claimed-window")
+        self.assertEqual(rs({"id": "T-1", "status": "Implemented"}), "done-earlier")
+        self.assertEqual(rs({"id": "T-1", "status": "Approved", "tag": "blocked"}), "blocked")
+        self.assertEqual(rs({"id": "T-1", "status": "Review"}), "in-progress")
+        self.assertEqual(rs({"id": "T-9", "status": "Approved"}, slice="SL-7"), "in-progress")
+        self.assertEqual(rs({"id": "T-1", "status": "Proposed"}), "next")
+        self.assertEqual(rs({"id": "T-1", "status": "Proposed"}, first=True), "in-progress")
+        self.assertEqual(rs({"id": "T-1", "status": "Proposed"}, slice="SL-2"), "next")
+        self.assertEqual(rs({"id": "T-1", "status": "Proposed"}, slice="SL-5"), "not-started")
+        self.assertEqual(rs({"id": "T-1", "status": "Deferred"}), "postponed")
+        self.assertEqual(rs({"id": "A-1", "tag": "done", "result": "Met"}, "check"),
+                         "done-window")
+        self.assertEqual(rs({"id": "A-1", "result": "Met"}, "check"), "done-earlier")
+        self.assertEqual(rs({"id": "A-1", "result": "Partial"}, "check"), "failed")
+        self.assertEqual(rs({"id": "A-1", "result": "Pending"}, "check"), "not-checked")
+        # D-T1: with no next slice, a task with no slice is never "next"
+        self.assertEqual(rs({"id": "T-1", "status": "Proposed"}, slice=None, next=None),
+                         "not-started")
+
+    def test_every_view_agrees_on_the_counts(self):
+        """The cards, the chips and the rows read one state function."""
+        self.first()
+        self.up({"type": "wbs-item", "id": "WBS-1.2", "substitute": {"lifecycle_status":
+                                                                        ["Approved", "Review"]}})
+        srv.standup_report()
+        srv.standup_report(narrative=self.WORDS)
+        page = self.page()
+        tree = page.split('id="tree"')[1].split("</section>")[0]
+        rows = re.findall(r'data-item data-kind="(task|check)" data-state="([a-z-]+)"', tree)
+        chips = dict(re.findall(r'data-value="([a-z-]+)" aria-pressed="false">[^<]*'
+                                r'<span class="n">(\d+)</span>', page))
+        for state, n in chips.items():
+            self.assertEqual(sum(1 for _k, s in rows if s == state), int(n), state)
+        card = re.search(r'Done this window</div><div class="value">(\d+)<', page).group(1)
+        self.assertEqual(int(card), sum(1 for _k, s in rows if s == "done-window"))
+
+    def test_the_sections_come_in_order_and_record_details_are_folded(self):
+        srv.standup_report(utc_offset="+03:00")
+        srv.standup_report(narrative=self.WORDS)
+        page = self.page()
+        order = re.findall(r'<section class="card" id="([a-z]+)"', page)
+        self.assertEqual(order, ["summary", "needs", "plan", "did", "now", "next", "challenges",
+                                 "glossary", "record"])
+        self.assertIn('id="record"><details class="fold">', page)
+
+    def test_a_first_report_shows_the_overall_picture_only(self):
+        srv.standup_report(utc_offset="+03:00")
+        srv.standup_report(narrative=self.WORDS)
+        page = self.page()
+        self.assertIn("This is the first report", page)
+        self.assertNotIn("Done this window</div>", page)
+        self.assertNotIn("<h3>In this window</h3>", page)
+        self.assertNotIn('data-value="done-window"', page)
+        self.assertEqual(self.facts()["touched"], [])
+
+    def test_the_draft_result_leaves_the_tree_and_the_registers_in_the_row(self):
+        out = srv.standup_report(utc_offset="+03:00")
+        for key in ("plan", "names", "kinds", "touched", "overall"):
+            self.assertNotIn(key, out["facts"])
+        self.assertIn("overall", self.facts())
+
 
 if __name__ == "__main__":
     unittest.main(argv=[a for a in sys.argv if a != "--regen"], verbosity=2)

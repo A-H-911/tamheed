@@ -38,6 +38,9 @@ date first.
    The result holds the facts, the rule colour with its reasons, and the word shares. It also
    writes `reports/draft.html`. The list of blocked work names a slice or a WBS item only
    while its blocker is not settled. A met dependency at `Implemented` blocks nothing.
+   `plan_summary` sums up the plan tree that the page shows. It names each open slice with
+   its counts and its open tasks. `plan_summary.suggest` names the first open slice in plan
+   order and the one after it.
    - A refusal names its cause and writes nothing. Fix the cause, then call again.
    - A draft exists already: a new call replaces it, with the same id.
 4. **Write the narrative** under `tamheed:plain-english`: short sentences, plain words, real
@@ -46,10 +49,19 @@ date first.
    - `did`, `challenges`, `next`: one summary for each question, about 150, 150 and 100 words.
    - `plan`: what you expect to do next, about 125 words. The page labels it as a plan, not
      a record.
+   - `slice_now` and `slice_next`: the current slice and the next one, while an open slice
+     exists. Read the record, and take the suggestion unless the work shows another slice.
+     Then say why in `slice`. With one open slice, `slice_next` stays empty.
+   - `slice`: what the current slice is for, what is done in it since it started, and what
+     remains, about 100 words.
    - `colour` and `colour_reason`: see step 5.
 
    Say what changed and why it matters to the reader. Do not repeat the lists: the page
-   prints them. Write for a manager who does not know the engine's words.
+   prints them. Write for a manager who does not know the engine's words. Keep each key short,
+   clear and to the point. The keys fill the page's sections: `headline` the summary, `did`
+   "What we did", `slice` "What we are working on now", `next` and `plan` "What we expect
+   next", and `challenges` "Challenges and decisions". Cite a row by its
+   id: the page prints its title beside the id at the first mention.
 5. **Propose the colour** by the default rule, which the facts call computes:
    - red: an open critical or high defect.
    - amber: an open high risk, or an open question past its date.
@@ -67,11 +79,13 @@ date first.
    Open it in the browser: `start "" "<path>"` on Windows, `open "<path>"` on macOS,
    `xdg-open "<path>"` on Linux. Without a display (a headless run), give the path only.
 8. **Ask the operator** (`tamheed:operator-interview`): record, revise, or discard. Ask which
-   colour they confirm.
+   colour they confirm, and which slices are the current and the next one.
    - Revise: change the words and attach them again (step 6).
    - Discard: `standup_report(action="discard")`.
    - Record: `standup_report(action="record", confirm={"operator_confirm": true, "by":
-     "human:<name>", "words": "<what they said>", "colour": "<their colour>"})`. Quote their
+     "human:<name>", "words": "<what they said>", "colour": "<their colour>", "slice_now":
+     "<the current slice>", "slice_next": "<the next slice>"})`. The two slices are the ones
+     your words state. When the operator names others, revise the words first. Quote their
      words. Never record without them, and never in unattended mode. The words stay in the row.
      The journal note and the pages leave them out, but `data/` is committed.
 9. **After the record:** call `export_html()`, because the new row makes the review page stale.

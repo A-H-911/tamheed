@@ -38,6 +38,7 @@ import ste_lint  # plugins/tamheed/server/ste_lint.py (plan 182)  # noqa: E402
 import standup  # noqa: E402  plan 233: the standup engine (pure)
 import standup_facts  # noqa: E402
 import standup_page  # noqa: E402  plan 234: the standup page (pure)
+import standup_families  # noqa: E402  plan 251: plain words for each family
 
 # Inlined from the retired v1 validator (D-017-4 parity kept): blank out fenced +
 # inline code so TODO/{{...}} inside examples is never flagged as an unfinished marker.
@@ -6391,11 +6392,12 @@ def server_info(detail: bool = False) -> dict:
 # standup_page.py). These functions read and write the store and the files: standup_reports,
 # progress_entries and reports/*.html under the package.
 _STANDUP_NARRATIVE_KEYS = ("headline", "did", "challenges", "next", "plan", "colour",
-                           "colour_reason")
+                           "colour_reason", "slice_now", "slice_next", "slice")
 _STANDUP_NARRATIVE_REQUIRED = ("headline", "did", "challenges", "next", "colour")
-_STANDUP_CONFIRM_KEYS = ("operator_confirm", "by", "words", "colour")
+_STANDUP_MAY_BE_EMPTY = ("plan", "colour_reason", "slice_now", "slice_next", "slice")
+_STANDUP_CONFIRM_KEYS = ("operator_confirm", "by", "words", "colour", "slice_now", "slice_next")
 _STANDUP_SHARES = {"headline": 25, "did": 150, "challenges": 150, "next": 100, "plan": 125,
-                   "colour_reason": 25}
+                   "slice": 100, "colour_reason": 25}
 _STANDUP_SIZE = {"headline": 300}       # characters; every other field takes 3,000
 _STANDUP_ROW = ("id", "kind", "seq", "lifecycle_status", "base_report", "supersedes",
                 "checkpoint", "pe_to", "av_to", "ended_at", "utc_offset", "state_digest",
@@ -6484,6 +6486,10 @@ def _standup_facts(start, offset: str) -> dict:
                                 blocker_rules=_standup_blockers(conn),
                                 screen=lambda text: bool(_INJECT_RE.search(text)))
     colour, reasons = standup_facts.rule_colour(facts)
+    facts["names"] = _standup_names(conn, _standup_cited_texts(facts))
+    facts["kinds"] = {str(p).rstrip("-"): str(label) for p, label in conn.execute(
+        "SELECT id_prefix, label FROM entity_types WHERE id_prefix IS NOT NULL")
+        if str(p).rstrip("-") not in standup_families.by_prefix()}
     notes = ([f"Edit tracking pauses this once for: {', '.join(out['cls']['paused'])}."]
              if out["cls"]["paused"] else [])
     facts["view"] = {"package": title, "birth": birth, "base_row": base, "snapped": snapped,
@@ -6531,15 +6537,79 @@ def _standup_store_draft(row: dict) -> str:
     return rid
 
 
+def _standup_cited_texts(facts: dict) -> list[str]:
+    """Every text on the page that can cite a row: handoff and journal lines, notes, and the
+    rows' own titles (their ids show a name on hover). The work-done fold is left out (R9)."""
+    texts = []
+
+    def walk(value):
+        if isinstance(value, dict):
+            texts.extend(str(value.get(k) or "") for k in ("title", "note"))
+            for key, v in value.items():
+                if key not in ("lines", "view"):
+                    walk(v)
+        elif isinstance(value, list):
+            for v in value:
+                walk(v)
+    walk(facts)
+    return texts
+
+
+def _standup_names(conn, texts) -> dict:
+    """{id: name} for each row the texts cite (plan 251, D9). The name is the row's title or
+    heading, else the family's plain word. Frozen in the row, so a page never reads the store."""
+    pattern = _prose_id_pattern(conn)
+    ids = sorted({m.group(0) for text in texts for m in pattern.finditer(str(text or ""))})
+    out = {}
+    for rid in ids:
+        found = conn.execute("SELECT entity_type FROM entity_index WHERE id = ?",
+                             (rid,)).fetchone()
+        table = ENTITY_TABLES.get(found[0]) if found else None
+        if table is None:
+            continue
+        name = standup_facts.titles(conn, table, [rid]).get(rid, "")
+        out[rid] = (name if name and name != rid else
+                    standup_families.FAMILIES.get(table, ("", table.replace("_", " ")))[1])
+    return out
+
+
+def _standup_slice_error(facts: dict, narrative: dict) -> str | None:
+    """Plan 251 (D3): the agent states the current and next slice of the frozen tree."""
+    plan = facts.get("plan") or {}
+    open_ids = [s["id"] for ph in plan.get("phases", []) for s in ph["slices"]
+                if s["status"] in standup_facts.OPEN + ("Review",)]
+    now, nxt, text = (str(narrative.get(k) or "").strip() for k in ("slice_now", "slice_next",
+                                                                      "slice"))
+    if not open_ids:
+        if now or nxt or text:
+            return ("this report's facts hold no open slice, so slice_now, slice_next and slice"
+                    " stay empty")
+        return None
+    if now not in open_ids:
+        return (f"slice_now names the current slice, one of the open slices: "
+                f"{', '.join(open_ids[:10])} (got {now!r}). The facts suggest"
+                f" {plan['suggest']['now']}")
+    if not text:
+        return "slice is empty: say in plain words what this slice is for and what is done"
+    if len(open_ids) == 1:
+        return f"slice_next stays empty: {now} is the only open slice" if nxt else None
+    if nxt == now or nxt not in open_ids:
+        return (f"slice_next names the next slice, an open slice other than {now}"
+                f" (got {nxt!r}). The facts suggest {plan['suggest']['next']}")
+    return None
+
+
 def _standup_trim(facts: dict) -> dict:
-    """The facts for the caller's context: at most 30 items per list (the row keeps all)."""
+    """The facts for the caller's context: at most 30 items per list (the row keeps all).
+    The plan tree and the names stay in the row: the result carries a summary (D1)."""
     def cut(value):
         if isinstance(value, dict) and "items" in value and "total" in value:
             return {"items": value["items"][:standup.LIST_CAP], "total": value["total"]}
         if isinstance(value, dict):
             return {k: cut(v) for k, v in value.items()}
         return value
-    return {k: cut(v) for k, v in facts.items() if k != "view"}
+    return {k: cut(v) for k, v in facts.items()
+            if k not in ("view", "plan", "names", "kinds", "touched", "overall")}
 
 
 def _standup_draft(start, utc_offset, supersede) -> dict:
@@ -6570,18 +6640,22 @@ def _standup_draft(start, utc_offset, supersede) -> dict:
             "window": facts["view"]["window"], "first": facts["view"]["first"],
             "rule_colour": stored["rule_colour"], "rule_reasons": facts["view"]["rule_reasons"],
             "facts": _standup_trim(facts), "word_shares": _STANDUP_SHARES,
+            **({"plan_summary": standup_facts.plan_summary(facts["plan"])}
+               if facts.get("plan") else {}),
             "page": str(page), "visible_words": words,
-            **({"corrects_narrative": json.loads(old)} if old else {}),
+            **({"corrects_narrative": {k: v for k, v in json.loads(old).items()
+                                       if k != "_names"}} if old else {}),
             "next": "Write the narrative under tamheed:plain-english, then call"
                     " standup_report(narrative=...). Show the operator the page."}
 
 
-def _standup_check_narrative(conn, narrative, rid: str) -> tuple[str | None, list]:
+def _standup_check_narrative(conn, narrative, rid: str,
+                             facts: dict | None = None) -> tuple[str | None, list]:
     """(refusal, warnings) for the agent's words."""
     if err := _item_error(narrative, _STANDUP_NARRATIVE_KEYS, _STANDUP_NARRATIVE_REQUIRED):
         return f"narrative: {err}", []
     for key, value in narrative.items():
-        if not isinstance(value, str) or (key not in ("plan", "colour_reason")
+        if not isinstance(value, str) or (key not in _STANDUP_MAY_BE_EMPTY
                                           and not value.strip()):
             return f"narrative.{key} is text and not empty", []
         if len(value) > _STANDUP_SIZE.get(key, 3000):
@@ -6595,6 +6669,8 @@ def _standup_check_narrative(conn, narrative, rid: str) -> tuple[str | None, lis
     if narrative["colour"] != "green" and not str(narrative.get("colour_reason", "")).strip():
         return ("a colour that is not green needs colour_reason: why, and the road to"
                 " green"), []
+    if err := _standup_slice_error(facts or {}, narrative):
+        return err, []
     known = {r[0] for r in conn.execute("SELECT id FROM entity_index")} | {rid}
     pattern = _prose_id_pattern(conn)
     for key, value in narrative.items():
@@ -6623,10 +6699,12 @@ def _standup_attach(narrative) -> dict:
     if draft is None:
         return _err("no draft standup report. Call standup_report() first: it takes the facts"
                     " and fixes the window end. Nothing was written")
-    refusal, warnings = _standup_check_narrative(conn, narrative, draft["id"])
+    refusal, warnings = _standup_check_narrative(conn, narrative, draft["id"],
+                                                 json.loads(draft["facts"]))
     if refusal:
         return _err(refusal + ". Nothing was written")
-    text = json.dumps(narrative, sort_keys=True, ensure_ascii=False)
+    names = _standup_names(conn, [narrative.get(k) for k in _STANDUP_NARRATIVE_KEYS])
+    text = json.dumps(dict(narrative, _names=names), sort_keys=True, ensure_ascii=False)
     conn.execute("UPDATE standup_reports SET narrative = ? WHERE id = ?", (text, draft["id"]))
     try:
         page, words = _standup_page(dict(draft, narrative=text), draft=True)
@@ -6635,8 +6713,6 @@ def _standup_attach(narrative) -> dict:
         return _err(f"the page was not written: {exc}")
     if err := _commit():
         return err
-    if words > 2000:
-        warnings.append(f"the page has {words} visible words, over the 2,000 budget")
     return {"ok": True, "stage": "draft", "report": draft["id"], "page": str(page),
             "visible_words": words, "warnings": warnings,
             "next": "Show the operator the summary and the page. Record only on their words:"
@@ -6672,6 +6748,12 @@ def _standup_record(confirm) -> dict:
                     " Nothing was written")
     if err := _standup_confirm_error(confirm):
         return _err(err + ". Nothing was written")
+    said = json.loads(draft["narrative"])
+    for key in ("slice_now", "slice_next"):
+        if str(confirm.get(key) or "") != str(said.get(key) or ""):
+            return _err(f"confirm.{key} is {confirm.get(key)!r}, and the words say"
+                        f" {said.get(key)!r}. Confirm the slices the page shows, or revise the"
+                        " words first. Nothing was written")
     ok, why = standup.verify(conn, draft)
     if not ok:
         return _err(f"{why}. A report was recorded or corrected, or data/ changed through git,"
@@ -6972,12 +7054,14 @@ _STANDUP_DESC = (
     " '+03:00'. Later reports reuse it. start is a date or a recorded report id, and an"
     " earlier start makes an override report. supersede=RPT-NNN drafts a correction of a"
     " recorded report over the same window. action='draft' with narrative attaches the"
-    " words: keys headline, did, challenges, next, plan, colour, colour_reason. The tool"
+    " words: keys headline, did, challenges, next, plan, colour, colour_reason, and"
+    " slice_now, slice_next and slice while an open slice exists. The tool"
     " refuses an id that names no row, a plain-English hard finding and text shaped as an"
     " instruction. A colour that is not green needs a colour_reason. A narrative over its"
     " share of words is a warning. action='record' needs confirm with the keys"
     " operator_confirm (the JSON boolean true), by (human:<name>), words (what the"
-    " operator said) and colour. It writes reports/RPT-NNN.html and a journal note. The"
+    " operator said), colour, slice_now and slice_next. It writes reports/RPT-NNN.html"
+    " and a journal note. The"
     " words stay in the row and never reach a page. action='discard' removes the draft. A"
     " recorded report is never edited. action='withdraw' with report=RPT-NNN and confirm"
     " (operator_confirm, by, words) removes the newest daily report or an override report"
