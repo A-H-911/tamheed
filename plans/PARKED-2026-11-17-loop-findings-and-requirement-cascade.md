@@ -1,5 +1,11 @@
 # PARKED: the loop findings, the requirement cascade and the contradictions
 
+> **Dated note, 2026-11-18 (the 6.8.0 round, plans 249-253).** That round takes 6.8.0, the plan numbers
+> 249-253 and ADR-0005. This plan therefore moves to **6.9.0**, takes new plan numbers at its return, and its
+> ADR becomes **ADR-0006**. The round changes `standup_facts.py`, `standup_page.py`, the standup tool, the
+> skills `standup`, `session-handoff` and `package-writes` (section 1), and adds `standup.js`: the Return
+> checklist's `git diff 7d5a028..HEAD` will show them.
+
 > **THIS EXIT FROM PLAN MODE APPROVES THE PARKING STEPS ONLY — NOTHING FROM THE PLAN BELOW.**
 > The parking steps (operator's choices, 2026-11-17):
 > 1. Copy this file, verbatim, to

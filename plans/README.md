@@ -218,6 +218,20 @@ the one approved plan.
 | 247 | [Acceptance, release 6.7.0, the two field briefs](239-field-round-6.7.0.md) | 240-246 | DONE 2026-11-17. Stamp `c5a3691`; released as `162570d` on `main` (CI run 43969391119 green on eleven jobs), tag `v6.7.0`. Both fields replayed under 6.6.0 and 6.7.0; both briefs rehearsed with a restart |
 | 248 | [Rehearse the unattended loop on the lab](evidence/loop-rehearsal-2026-11-17.md) | 247 | RECORDED 2026-11-17 (docs only: 5 passes, 4.41 USD; both stops held; findings F1-F8 with the operator, nothing built) |
 
+### Field round 6.8.0 -- plans 249-253 -> v6.8.0 (2026-11-18 ->; maintainer-executed)
+
+Jisr handed up two open rows on 6.7.0 (FB-023, FB-024), and the operator asked for the standup report to read
+as a delivery report for readers new to Tamheed. The first page design was rejected on reading; the plan was
+revised (rulings U1-U20, defaults V1-V10). Every row links to the one approved plan.
+
+| # | Plan | Depends on | Status |
+|---|---|---|---|
+| 249 | [The round record and the rulings](249-field-round-6.8.0.md) | 248 | IN PROGRESS (rulings provisional until the mock's yes) |
+| 250 | [FB-023: given rulings leave the requests; FB-024: a trace-edge write names its keys](249-field-round-6.8.0.md) | 249 | BUILT, to commit alone |
+| 251 | [The standup report as a delivery report (mock first, then the build)](249-field-round-6.8.0.md) | 250 | PLANNED (v1 built and rejected; v2 after the mock) |
+| 252 | [The headless `/tamheed:standup` rehearsal](249-field-round-6.8.0.md) | 251 | PLANNED |
+| 253 | [Acceptance, release 6.8.0, the two field briefs](249-field-round-6.8.0.md) | 250-252 | PLANNED |
+
 ### Standup report -- plans 232-237 -> v6.6.0 (2026-11-16; maintainer-executed)
 
 The operator asked for a daily status report on demand: what we did, the challenges and
