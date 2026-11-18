@@ -8,7 +8,17 @@ All notable changes to Tamheed are documented here. The format is based on
 > original repository (<https://github.com/A-H-911/keystone>). Tamheed carries Keystone's full git
 > history; the Keystone repository stays frozen at 1.0.x for existing v1 packages.
 
-## [Unreleased]
+## [6.8.0] - 2026-11-18
+
+**MINOR — Jisr's FB-023 and FB-024, and the standup report as a delivery report (plans
+249–253, ADR-0005).** The rulings U1–U20 and the defaults V1–V10 are in
+`plans/249-field-round-6.8.0.md`.
+
+**For a live package.** Update the plugin and start the client again. No migration is needed:
+no table or column changed. Run `handoff_emit(<repository root>, refresh_stock=true)` (the stock
+guide changed) and `export_html()`. A new standup report row is larger: it freezes the plan tree
+and the full registers (about 100 KB to 800 KB a row on a large package). From 6.8.0 back to
+6.7.0 the plugin goes back alone: 6.7.0 draws a 6.8.0 report in its old look.
 
 ### Added
 - **The standup report is a delivery report (plan 251, ADR-0005).** Built from a mock the

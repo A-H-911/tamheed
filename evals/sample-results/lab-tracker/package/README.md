@@ -1,4 +1,4 @@
-# How to use this package — the `package` operator guide (tamheed v6.7.0)
+# How to use this package — the `package` operator guide (tamheed v6.8.0)
 
 This guide sits at the root of the `package` Tamheed package. Since v5.0.0 the stock
 scenarios are not files. They are the tamheed plugin's **slash skills**, `/tamheed:<name>`,
@@ -216,8 +216,8 @@ Transcription fidelity does not degrade with length. Before recording a premise 
 list the instruments. The SOURCE that generates an output is one, and an output-versus-output
 frame hides it. A scope change that touches a RULING carries an `amends` edge (DEC-: merged by
 full-row upsert, ADR-: by supersession). `Merged` is set LAST, after every delta row is applied
-and re-read. Trace edges are keyed (from, to, relation), so a new relation never replaces an old
-one. A WRONG edge is retired (`retire: true` on the trace-edge item, and the server journals it)
+and re-read. A trace-edge item takes the keys `from_id`, `to_id` and `relation`, and `trace_query`
+reads them back as `from` and `to`. A new relation never replaces an old one. A WRONG edge is retired (`retire: true` on the trace-edge item, and the server journals it)
 and the correct edge written in the same batch. Retire a wrong edge only, never to make a gate
 pass. A remedy a tool's note or a release note names is always an operation the server exposes.
 If you cannot find it, report that as a finding rather than improvising.
