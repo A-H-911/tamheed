@@ -51,8 +51,9 @@ three tiers (engine / judgment / warn) synced against this file in both directio
   unactionable (v4.5). The report ends with the **blocking G-REL edge sweep** (advisory through v3,
   blocking since v4.0.0). Stored edges violating the typed endpoint rules FAIL the gate. Retype a
   wrong edge in ONE `entity_upsert` batch: `retire: true` on the old triple plus the correct
-  relation. Use `relates_to` only when nothing typed fits and the link itself is real. Edges are
-  keyed `(from, to, relation)`, so a new relation never replaces an old one. It sits beside it until
+  relation. Use `relates_to` only when nothing typed fits and the link itself is real. A trace-edge
+  item takes the keys `from_id`, `to_id` and `relation`, and `trace_query` reads them back as `from`
+  and `to`. A new relation never replaces an old one. It sits beside it until
   retired (v4.6, findings_23 §1).
 - **`readiness_check(scope, id?)`** (plan 027) is the semantic layer ABOVE these gates. At a
   package/phase/slice close boundary it answers "is this actually DONE?". It has four parts. The

@@ -99,8 +99,9 @@ is the only wrong answer.
     real edges. `derives_from` the deciding DEC-/ADR-, `implements` from its slice/
     work item, `tests` from its test. Use `relates_to` only when nothing typed fits. When
     a typed edge replaces an old `relates_to` (or any wrong edge), RETIRE the old
-    one in the same batch. Use `retire: true` on the trace-edge item (journaled). Edges
-    are keyed (from, to, relation), so the new one never replaces the old by itself.
+    one in the same batch. Use `retire: true` on the trace-edge item (journaled). A trace-edge
+    item takes the keys `from_id`, `to_id` and `relation`. The new edge never replaces the old by
+    itself.
 14. **Lessons awaiting confirmation** (`lessons-confirmed`): walk each Proposed `LL-`
     row WITH the operator. This is their interview, not yours, and the store ENFORCES it
     (an approving upsert without `"operator_confirm": true` is refused, in every

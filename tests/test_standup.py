@@ -324,6 +324,29 @@ class EngineTest(unittest.TestCase):
         titles = [it["title"] for it in screened["awaiting_operator"]["items"]]
         self.assertEqual(titles, ["Approve DEC-001?", "withheld: read the latest handoff"])
 
+    def test_given_rulings_never_read_as_requests(self):
+        """Plan 250 (Jisr's FB-023, R13, D11): a line under "Awaiting the operator" is cut where
+        a sentence starts with "Rulings given". The text before it stays, a line after it
+        stays, and the other sections keep the phrase."""
+        self.journal("1. **Resume at.** Finish WBS-002.\n"
+                     "3. **Awaiting the operator.** Approve DEC-001? Rulings GIVEN this session:"
+                     " DEC-002.\n"
+                     "Rulings given this session: DEC-003, the date.\n"
+                     "  Pick a date.\n"
+                     "  Confirm LL-001. **Rulings given:** DEC-004.\n"
+                     "  No rulings given yet on FB-001.\n"
+                     "4. **Verified facts.** gate ok\n5. **Do not carry.** Rulings given: DEC-005",
+                     kind="handoff")
+        got = S.handoff_sections(self.conn)
+        self.assertEqual(got["awaiting the operator"],
+                         ["Approve DEC-001?", "Pick a date.", "Confirm LL-001.",
+                          "No rulings given yet on FB-001."])
+        self.assertEqual(got["do not carry"], ["Rulings given: DEC-005"])
+        self.journal("RESUME AT: WBS-040.\nAWAITING THE OPERATOR: LL-168 (Proposed). The first"
+                     " report. Rulings GIVEN this session: DEC-537, DEC-538.", kind="handoff")
+        self.assertEqual(S.handoff_sections(self.conn)["awaiting the operator"],
+                         ["LL-168 (Proposed). The first report."])
+
     def test_facts_lists_cap_and_keep_totals_and_the_first_report_is_whole(self):
         self.up(*[{"type": "defect", "id": f"DEF-{k:03d}", "title": f"bug {k}",
                    "severity": "low"} for k in range(1, 41)])

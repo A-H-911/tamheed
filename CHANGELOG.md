@@ -8,6 +8,19 @@ All notable changes to Tamheed are documented here. The format is based on
 > original repository (<https://github.com/A-H-911/keystone>). Tamheed carries Keystone's full git
 > history; the Keystone repository stays frozen at 1.0.x for existing v1 packages.
 
+## [Unreleased]
+
+### Fixed
+- **Given rulings no longer read as requests (Jisr's FB-023, plan 250).** The skill
+  `session-handoff` puts the rulings given in a session under "Do not carry". The standup
+  page's handoff parser cuts a line under "Awaiting the operator" where a sentence starts
+  with "Rulings given", so handoffs written before the fix read right too.
+- **A trace-edge write names its keys (Jisr's FB-024, plan 250).** Eight bundle texts taught
+  `(from, to, relation)`. They now name `from_id`, `to_id` and `relation`, and say that
+  `trace_query` reads them back as `from` and `to`. The refusal "unknown columns" names the
+  columns the item takes, for every family. This reverses the 5.7.0 choice, on a new field
+  refusal of 2026-11-18. The stock operator guide changed, with its history body.
+
 ## [6.7.0] - 2026-11-16
 
 **MINOR — the second field's round (plans 239–247: FB-015, FB-017 to FB-021) and two standup

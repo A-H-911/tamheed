@@ -5224,6 +5224,22 @@ class V4EngineTest(unittest.TestCase):
                                   "entry": "x", "expect_unchanged": ["entry"]}])
         self.assertIn("never updated", out["items"][0]["error"])
 
+    def test_an_unknown_column_refusal_names_the_columns_the_item_takes(self):
+        """Plan 250 (Jisr's FB-024, R14, D12): a trace-edge item sent with the read keys
+        `from`/`to` is refused with the keys it takes. Every family names its columns."""
+        out = srv.entity_upsert([{"type": "trace-edge", "from": "FR-001", "to": "DEC-001",
+                                  "relation": "derives_from"}])
+        self.assertFalse(out["ok"], out)
+        err = out["items"][0]["error"]
+        self.assertIn("unknown columns for trace-edge: ['from', 'to']", err)
+        self.assertIn("Each trace-edge item takes: from_id, to_id, relation", err)
+        out = srv.entity_upsert([{"type": "defect", "id": "DEF-900", "title": "t",
+                                  "severity": "low", "colour": "red"}])
+        err = out["items"][0]["error"]
+        self.assertIn("unknown columns for defect: ['colour']. Each defect item takes:", err)
+        self.assertIn("severity", err)
+        self.assertNotIn("last_referenced", err)
+
     def test_trace_edge_retire_removes_the_triple_and_journals_it(self):
         """findings_23 §1 (plan 040): the composite PK means a new relation sits
         BESIDE the old one; `retire: true` on a trace-edge item deletes exactly that

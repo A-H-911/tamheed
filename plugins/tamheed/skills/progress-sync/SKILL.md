@@ -51,8 +51,9 @@ Sync the `<package>` Tamheed package with the work just completed:
 7. Any requirement created during this work receives its trace edges (`derives_from` /
    `implements` / `tests`) in the SAME sync. `work_bind` stamps commits, it does
    NOT wire traceability. Edge endpoints must respect the endpoint rules. G-REL
-   now FAILS `gate_run` on violating edges, and `relates_to` is the escape hatch. Edges
-   are keyed (from, to, relation). A wrong one is RETIRED (`retire: true` on the
+   now FAILS `gate_run` on violating edges, and `relates_to` is the escape hatch. A trace-edge
+   item takes the keys `from_id`, `to_id` and `relation` (`trace_query` reads them back as `from`
+   and `to`). A wrong one is RETIRED (`retire: true` on the
    trace-edge item, journaled) and the correct one written in the same batch.
    Never leave the old edge beside its replacement.
 8. `gate_run()`: report the verdict delta (including `requirements_unwired`),

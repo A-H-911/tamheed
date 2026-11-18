@@ -40,7 +40,8 @@ id resolves, and the damage stays until someone reads it.
   The cheapest correct status flip is `substitute` on `lifecycle_status`: zero transport, every guard.
   A move that must carry a column of its own is NOT that flip. A lesson's approval lands with its
   `confirmed_by`, and a substitute item carries no other column, so the approval is a full row.
-- **Trace edges are keyed** `(from, to, relation)`. A wrong edge is retired (`retire: true`, journaled)
+- **A trace-edge item takes the keys** `from_id`, `to_id` and `relation`. `trace_query` reads them
+  back as `from` and `to`, so rename them before you send an edge again. A wrong edge is retired (`retire: true`, journaled)
   and the correct one written in the same batch. A new relation never replaces an old one by itself.
 - **Immutable-after-approval rows** (ADRs, approved acceptance criteria, approved lessons) are
   superseded, never edited. The trigger refuses the edit. The successor row is the change.

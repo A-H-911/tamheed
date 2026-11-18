@@ -260,7 +260,8 @@ Obsolete. `verdict`: Met/Partial/Not-met/Pending for audits, Validated/Invalidat
 for experiments/POCs, Pass/Fail/Pending for tests. `disposition`: superseded / accepted-with-deviation /
 void, always with the deciding decision ref. A *proposed* decision is never rendered as *approved*.
 Traceability is the `trace_edges` table queried live (`trace_query`), and the matrix is a derived
-view. Edges are keyed (from, to, relation). A wrong edge is retired (`retire: true` on the trace-edge
+view. A trace-edge item takes the keys `from_id`, `to_id` and `relation`, and `trace_query` reads
+them back as `from` and `to`. A wrong edge is retired (`retire: true` on the trace-edge
 item, removed and journaled by the server). The correct one is written in the same batch. A new
 relation never replaces an old one by itself (v4.6).
 

@@ -512,7 +512,8 @@ the largest of the round. The rulings (R51–R55):
   absent one. Rejected: a typed item schema, which would put the keys where the SDK refuses
   them. The contract suite runs without the SDK, so nothing in the gate would test that
   refusal. Not built: the valid set in the "unknown columns" message, whose last refusal in
-  the field was on 2026-09-21.
+  the field was on 2026-09-21. Built in 6.8.0 (plan 250): Jisr was refused again on
+  2026-11-18 (FB-024), so the message now names the columns the item takes.
 - **D-DESCRIPTION-IS-REGISTERED, what a client reads is the registered text.** The server
   passes the second element of each `TOOLS` entry to the SDK as the tool's description. A
   docstring is the maintainers' text. Since v4.4 the changelog had credited docstrings with

@@ -61,7 +61,8 @@ Draft → Proposed → Approved → Implemented
   to the `DEC-`/`ADR-` ruling it carves an exception out of. A `DEC-` merges by full-row upsert,
   an `ADR-` by supersession. `carries` links a wbs-item to the activated `DW-` row it carries.
   `learned_from` says what taught a lesson. `relates_to` is the documented untyped escape hatch.
-  Edges are keyed (from, to, relation). A wrong edge is retired (`retire: true` on the trace-edge
+  A trace-edge item takes the keys `from_id`, `to_id` and `relation`, and `trace_query` reads them
+  back as `from` and `to`. A wrong edge is retired (`retire: true` on the trace-edge
   item, journaled by the server) and the correct one written in the same batch. A new relation
   never replaces an old one by itself. A full-row update that only flips a status names the
   columns it did not mean to change (`expect_unchanged`), and the store refuses drift.

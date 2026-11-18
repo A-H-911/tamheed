@@ -2314,9 +2314,9 @@ def entity_upsert(entities: list[dict]) -> dict:
             failed = True
             continue
         unknown = set(cols) - set(_columns(table))
-        if unknown:
-            results.append({"index": i, "ok": False,
-                            "error": f"unknown columns for {etype}: {sorted(unknown)}"})
+        if unknown:   # plan 250 (Jisr's FB-024): the refusal names the columns the item takes
+            results.append({"index": i, "ok": False, "error": f"unknown columns for {etype}: {sorted(unknown)}. Each {etype} item takes: "
+                            + ", ".join(c for c in _columns(table) if c != "last_referenced")})
             failed = True
             continue
         try:                     # plan 226 (review): for every family, never stored too deep

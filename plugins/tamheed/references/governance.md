@@ -323,8 +323,8 @@ backticks is a quotation. The `clarifications-open` advisory counts live markers
   the wbs-item that carries an ACTIVATED deferred-work row, written in the activating batch.
   The `deferred-work-carried` advisory lists Activated rows no open item carries. `relates_to`
   is the documented untyped escape hatch. Endpoint types are enforced at write time and by the
-  **blocking G-REL gate**. Edges are keyed (from, to, relation), so a new relation never
-  replaces an old one. A wrong edge is RETIRED (`retire: true` on the trace-edge item) and the
+  **blocking G-REL gate**. A trace-edge item takes the keys `from_id`, `to_id` and `relation`,
+  and `trace_query` reads them back as `from` and `to`. A new relation never replaces an old one. A wrong edge is RETIRED (`retire: true` on the trace-edge item) and the
   correct edge written in the same batch. On a retire the triple is removed, the relation rule
   is not consulted, and the server journals a `correction` row naming it (v4.6). Retire a wrong
   edge only, never to make a gate pass.

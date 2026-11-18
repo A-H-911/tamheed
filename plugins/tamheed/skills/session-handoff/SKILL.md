@@ -44,13 +44,14 @@ truncation marker and has to query for the rest. Write the sections in this orde
    only. The
    rows are the record.
 3. **Awaiting the operator.** Every question put and not yet answered, verbatim with its options
-   (`tamheed:operator-interview`). The next session must re-put it, not reconstruct it. State
-   explicitly which rulings were GIVEN this session, by decision id, so nobody re-asks them.
+   (`tamheed:operator-interview`). The next session must re-put it, not reconstruct it. Only
+   open questions go here: the standup page lists this section as requests to the operator.
 4. **Verified facts.** Each fact with the query or command that measured it (`gate_run` verdict,
    the `readiness_check` blocking list, `git status --porcelain -uall` empty, a CI run id). A fact
    without its instrument is a memory of a fact. Leave it out or mark it unverified.
 5. **Do not carry.** What is history and must not be re-done: closed rows, questions already ruled,
-   the branch already merged. A handoff that dispatches someone to redo finished work is worse than
+   the branch already merged. State here which rulings were GIVEN this session, by decision id,
+   so nobody re-asks them. A handoff that dispatches someone to redo finished work is worse than
    no handoff.
 
 ## The rules

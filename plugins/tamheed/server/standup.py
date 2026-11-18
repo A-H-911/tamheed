@@ -29,6 +29,9 @@ _MONTHS = ("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct",
 _HANDOFF_HEAD = re.compile(
     r"^\s*(?:\d+\.\s*)?(?:#+\s*)?\*{0,2}(Resume at|In flight|Awaiting the operator|"
     r"Verified facts|Do not carry)\b[.:]?\*{0,2}[.:]?\s*", re.IGNORECASE)
+# Plan 250 (Jisr's FB-023, R13): rulings given in a session are no request. Under "Awaiting the
+# operator", a line is cut where a sentence starts with "Rulings given", any case.
+_GIVEN = re.compile(r"(?:^|(?<=[.?!:])\s+)\**rulings?\s+given\b", re.IGNORECASE)
 
 
 # ----------------------------------------------------------------------------- the state
@@ -282,11 +285,18 @@ def handoff_sections(conn) -> dict[str, list[str]]:
         head = _HANDOFF_HEAD.match(line)
         if head:
             current = head.group(1).lower()
-            rest = line[head.end():].strip()
-            out[current] = [rest] if rest else []
-        elif current and line.strip():
-            out[current].append(line.strip())
+            out[current] = []
+            line = line[head.end():]
+        if current and (text := _kept(current, line.strip())):
+            out[current].append(text)
     return out
+
+
+def _kept(section: str, text: str) -> str:
+    """The part of a handoff line that a section keeps (FB-023: given rulings leave the
+    requests)."""
+    cut = _GIVEN.search(text) if section == "awaiting the operator" else None
+    return text[:cut.start()].strip() if cut else text
 
 
 def first_sentence(text: str, words: int = 25) -> str:
