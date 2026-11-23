@@ -1,0 +1,22 @@
+{
+ "reader": "F1",
+ "models": [
+  "claude-opus-5-5"
+ ],
+ "calls": 35,
+ "messages": 7,
+ "tokens": {
+  "in": 16,
+  "write": 508188,
+  "hit": 991617,
+  "out": 34723
+ },
+ "usd": 3.43,
+ "bundles_whole": 0,
+ "bundles": 0,
+ "gaps": [],
+ "facts_kept": 0,
+ "by_kind": {},
+ "rejected": 0,
+ "rejected_sample": []
+}

@@ -1,0 +1,36 @@
+{
+ "reader": "S1",
+ "models": [
+  "claude-opus-5-5"
+ ],
+ "calls": 24,
+ "messages": 5,
+ "tokens": {
+  "in": 12,
+  "write": 253732,
+  "hit": 739209,
+  "out": 70149
+ },
+ "usd": 2.82,
+ "bundles_whole": 12,
+ "bundles": 12,
+ "gaps": [],
+ "facts_kept": 263,
+ "by_kind": {
+  "purpose": 25,
+  "write": 63,
+  "network": 11,
+  "process": 20,
+  "env": 20,
+  "hook": 16,
+  "safety": 23,
+  "limit": 13,
+  "windows": 19,
+  "cli": 9,
+  "output": 9,
+  "steering": 18,
+  "surprise": 17
+ },
+ "rejected": 0,
+ "rejected_sample": []
+}

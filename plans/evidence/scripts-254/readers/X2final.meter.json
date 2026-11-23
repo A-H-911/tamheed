@@ -1,0 +1,22 @@
+{
+ "reader": "X2final",
+ "models": [
+  "claude-opus-5-5"
+ ],
+ "calls": 49,
+ "messages": 15,
+ "tokens": {
+  "in": 32,
+  "write": 142212,
+  "hit": 1812902,
+  "out": 31523
+ },
+ "usd": 1.7,
+ "bundles_whole": 0,
+ "bundles": 0,
+ "gaps": [],
+ "facts_kept": 0,
+ "by_kind": {},
+ "rejected": 0,
+ "rejected_sample": []
+}

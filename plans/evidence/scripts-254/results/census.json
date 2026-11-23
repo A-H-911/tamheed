@@ -1,0 +1,47 @@
+{
+ "bytes": 3406731,
+ "nodes": 3701,
+ "edges": 7144,
+ "node_types": {
+  "code": 2095,
+  "rationale": 817,
+  "document": 751,
+  "concept": 38
+ },
+ "relations": {
+  "calls": 2203,
+  "contains": 1805,
+  "references": 902,
+  "rationale_for": 817,
+  "method": 781,
+  "imports": 256,
+  "triggers": 167,
+  "indirect_call": 107,
+  "imports_from": 75,
+  "indexes": 15,
+  "inherits": 10,
+  "uses": 6
+ },
+ "confidence": {
+  "EXTRACTED": 6237,
+  "INFERRED": 907
+ },
+ "files_with_nodes": 161,
+ "md_files_with_nodes": 89,
+ "report_bytes": 38171,
+ "html_bytes": 3629569,
+ "python_defs_by_ast": 1584,
+ "python_defs_found_as_nodes": 1578,
+ "python_defs_share": 0.9962,
+ "call_edges": 2310,
+ "calls_by_ast": 19203,
+ "call_edge_sample": {
+  "checked": 100,
+  "name_on_cited_line": 100,
+  "other": {},
+  "by_confidence": {
+   "EXTRACTED": 88,
+   "INFERRED": 12
+  }
+ }
+}

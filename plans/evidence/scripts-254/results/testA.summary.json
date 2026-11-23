@@ -1,0 +1,1017 @@
+{
+ "primary": {
+  "label": "primary",
+  "commits": 271,
+  "clusters": 238,
+  "seeds": 1719,
+  "mean_recall": {
+   "graphify": 0.0723,
+   "search": 0.1624,
+   "search_defined": 0.0418,
+   "pyright": 0.0315,
+   "cochange": 0.4722,
+   "random": 0.0294,
+   "most_changed": 0.3018
+  },
+  "ci": {
+   "graphify": [
+    0.0586,
+    0.0872
+   ],
+   "search": [
+    0.1411,
+    0.1835
+   ],
+   "search_defined": [
+    0.0309,
+    0.0539
+   ],
+   "pyright": [
+    0.0211,
+    0.0435
+   ],
+   "cochange": [
+    0.4361,
+    0.5126
+   ],
+   "random": [
+    0.0178,
+    0.0449
+   ],
+   "most_changed": [
+    0.2701,
+    0.3371
+   ]
+  },
+  "graphify_minus": {
+   "search": {
+    "diff": -0.0901,
+    "ci": [
+     -0.11,
+     -0.0693
+    ]
+   },
+   "pyright": {
+    "diff": 0.0408,
+    "ci": [
+     0.0282,
+     0.0535
+    ]
+   },
+   "cochange": {
+    "diff": -0.3999,
+    "ci": [
+     -0.4393,
+     -0.3624
+    ]
+   },
+   "random": {
+    "diff": 0.043,
+    "ci": [
+     0.0241,
+     0.0622
+    ]
+   },
+   "most_changed": {
+    "diff": -0.2294,
+    "ci": [
+     -0.2662,
+     -0.1951
+    ]
+   }
+  },
+  "verdict": "no: below search, cochange, most_changed"
+ },
+ "stratum md": {
+  "label": "stratum md",
+  "commits": 191,
+  "clusters": 175,
+  "seeds": 899,
+  "mean_recall": {
+   "graphify": 0.044,
+   "search": 0.2012,
+   "search_defined": 0.0,
+   "pyright": 0.0,
+   "cochange": 0.4569,
+   "random": 0.0274,
+   "most_changed": 0.3085
+  },
+  "ci": {
+   "graphify": [
+    0.0355,
+    0.0533
+   ],
+   "search": [
+    0.1671,
+    0.2368
+   ],
+   "search_defined": [
+    0.0,
+    0.0
+   ],
+   "pyright": [
+    0.0,
+    0.0
+   ],
+   "cochange": [
+    0.409,
+    0.5049
+   ],
+   "random": [
+    0.0146,
+    0.0444
+   ],
+   "most_changed": [
+    0.2715,
+    0.3452
+   ]
+  },
+  "graphify_minus": {
+   "search": {
+    "diff": -0.1572,
+    "ci": [
+     -0.1951,
+     -0.1214
+    ]
+   },
+   "pyright": {
+    "diff": 0.044,
+    "ci": [
+     0.0355,
+     0.0533
+    ]
+   },
+   "cochange": {
+    "diff": -0.4129,
+    "ci": [
+     -0.4594,
+     -0.3668
+    ]
+   },
+   "random": {
+    "diff": 0.0166,
+    "ci": [
+     -0.0042,
+     0.0345
+    ]
+   },
+   "most_changed": {
+    "diff": -0.2644,
+    "ci": [
+     -0.2995,
+     -0.2283
+    ]
+   }
+  },
+  "verdict": "no: below search, cochange, most_changed"
+ },
+ "stratum other": {
+  "label": "stratum other",
+  "commits": 111,
+  "clusters": 104,
+  "seeds": 194,
+  "mean_recall": {
+   "graphify": 0.0,
+   "search": 0.0282,
+   "search_defined": 0.0,
+   "pyright": 0.0,
+   "cochange": 0.5053,
+   "random": 0.0399,
+   "most_changed": 0.3652
+  },
+  "ci": {
+   "graphify": [
+    0.0,
+    0.0
+   ],
+   "search": [
+    0.0096,
+    0.0528
+   ],
+   "search_defined": [
+    0.0,
+    0.0
+   ],
+   "pyright": [
+    0.0,
+    0.0
+   ],
+   "cochange": [
+    0.4332,
+    0.5801
+   ],
+   "random": [
+    0.0122,
+    0.0803
+   ],
+   "most_changed": [
+    0.3097,
+    0.4228
+   ]
+  },
+  "graphify_minus": {
+   "search": {
+    "diff": -0.0282,
+    "ci": [
+     -0.0528,
+     -0.0096
+    ]
+   },
+   "pyright": {
+    "diff": 0.0,
+    "ci": [
+     0.0,
+     0.0
+    ]
+   },
+   "cochange": {
+    "diff": -0.5053,
+    "ci": [
+     -0.5801,
+     -0.4332
+    ]
+   },
+   "random": {
+    "diff": -0.0399,
+    "ci": [
+     -0.0803,
+     -0.0122
+    ]
+   },
+   "most_changed": {
+    "diff": -0.3652,
+    "ci": [
+     -0.4228,
+     -0.3097
+    ]
+   }
+  },
+  "verdict": "no: below search, pyright, cochange, random, most_changed"
+ },
+ "stratum py-defined": {
+  "label": "stratum py-defined",
+  "commits": 166,
+  "clusters": 151,
+  "seeds": 273,
+  "mean_recall": {
+   "graphify": 0.1667,
+   "search": 0.2165,
+   "search_defined": 0.2005,
+   "pyright": 0.1328,
+   "cochange": 0.4224,
+   "random": 0.0305,
+   "most_changed": 0.3622
+  },
+  "ci": {
+   "graphify": [
+    0.1225,
+    0.2148
+   ],
+   "search": [
+    0.1742,
+    0.2618
+   ],
+   "search_defined": [
+    0.1607,
+    0.2443
+   ],
+   "pyright": [
+    0.097,
+    0.172
+   ],
+   "cochange": [
+    0.368,
+    0.4821
+   ],
+   "random": [
+    0.0168,
+    0.0472
+   ],
+   "most_changed": [
+    0.312,
+    0.4191
+   ]
+  },
+  "graphify_minus": {
+   "search": {
+    "diff": -0.0498,
+    "ci": [
+     -0.0908,
+     -0.013
+    ]
+   },
+   "pyright": {
+    "diff": 0.0339,
+    "ci": [
+     -0.0056,
+     0.0706
+    ]
+   },
+   "cochange": {
+    "diff": -0.2558,
+    "ci": [
+     -0.3188,
+     -0.1976
+    ]
+   },
+   "random": {
+    "diff": 0.1362,
+    "ci": [
+     0.0934,
+     0.1835
+    ]
+   },
+   "most_changed": {
+    "diff": -0.1955,
+    "ci": [
+     -0.2642,
+     -0.1275
+    ]
+   }
+  },
+  "verdict": "no: below search, cochange, most_changed"
+ },
+ "stratum py-none": {
+  "label": "stratum py-none",
+  "commits": 64,
+  "clusters": 58,
+  "seeds": 98,
+  "mean_recall": {
+   "graphify": 0.149,
+   "search": 0.0354,
+   "search_defined": 0.0,
+   "pyright": 0.0,
+   "cochange": 0.3307,
+   "random": 0.0247,
+   "most_changed": 0.2178
+  },
+  "ci": {
+   "graphify": [
+    0.0911,
+    0.2146
+   ],
+   "search": [
+    0.0099,
+    0.0742
+   ],
+   "search_defined": [
+    0.0,
+    0.0
+   ],
+   "pyright": [
+    0.0,
+    0.0
+   ],
+   "cochange": [
+    0.257,
+    0.4082
+   ],
+   "random": [
+    0.0097,
+    0.0437
+   ],
+   "most_changed": [
+    0.1578,
+    0.2773
+   ]
+  },
+  "graphify_minus": {
+   "search": {
+    "diff": 0.1136,
+    "ci": [
+     0.0423,
+     0.1856
+    ]
+   },
+   "pyright": {
+    "diff": 0.149,
+    "ci": [
+     0.0911,
+     0.2146
+    ]
+   },
+   "cochange": {
+    "diff": -0.1817,
+    "ci": [
+     -0.2399,
+     -0.1179
+    ]
+   },
+   "random": {
+    "diff": 0.1242,
+    "ci": [
+     0.0605,
+     0.1936
+    ]
+   },
+   "most_changed": {
+    "diff": -0.0689,
+    "ci": [
+     -0.1457,
+     0.009
+    ]
+   }
+  },
+  "verdict": "no: below cochange, most_changed"
+ },
+ "stratum tests": {
+  "label": "stratum tests",
+  "commits": 181,
+  "clusters": 159,
+  "seeds": 254,
+  "mean_recall": {
+   "graphify": 0.0006,
+   "search": 0.1669,
+   "search_defined": 0.0113,
+   "pyright": 0.0,
+   "cochange": 0.3955,
+   "random": 0.0307,
+   "most_changed": 0.2236
+  },
+  "ci": {
+   "graphify": [
+    0.0,
+    0.0017
+   ],
+   "search": [
+    0.1372,
+    0.1966
+   ],
+   "search_defined": [
+    0.0039,
+    0.0214
+   ],
+   "pyright": [
+    0.0,
+    0.0
+   ],
+   "cochange": [
+    0.3455,
+    0.444
+   ],
+   "random": [
+    0.0159,
+    0.0476
+   ],
+   "most_changed": [
+    0.1923,
+    0.2547
+   ]
+  },
+  "graphify_minus": {
+   "search": {
+    "diff": -0.1663,
+    "ci": [
+     -0.196,
+     -0.1362
+    ]
+   },
+   "pyright": {
+    "diff": 0.0006,
+    "ci": [
+     0.0,
+     0.0017
+    ]
+   },
+   "cochange": {
+    "diff": -0.3949,
+    "ci": [
+     -0.4436,
+     -0.3445
+    ]
+   },
+   "random": {
+    "diff": -0.0302,
+    "ci": [
+     -0.0474,
+     -0.0153
+    ]
+   },
+   "most_changed": {
+    "diff": -0.223,
+    "ci": [
+     -0.2543,
+     -0.1916
+    ]
+   }
+  },
+  "verdict": "no: below search, cochange, random, most_changed"
+ },
+ "truth 1-3": {
+  "label": "truth size 1-3",
+  "commits": 130,
+  "clusters": 114,
+  "seeds": 337,
+  "mean_recall": {
+   "graphify": 0.1186,
+   "search": 0.2061,
+   "search_defined": 0.1007,
+   "pyright": 0.0835,
+   "cochange": 0.5495,
+   "random": 0.0372,
+   "most_changed": 0.2904
+  },
+  "ci": {
+   "graphify": [
+    0.0821,
+    0.157
+   ],
+   "search": [
+    0.1618,
+    0.2515
+   ],
+   "search_defined": [
+    0.0674,
+    0.1371
+   ],
+   "pyright": [
+    0.0526,
+    0.1157
+   ],
+   "cochange": [
+    0.4844,
+    0.616
+   ],
+   "random": [
+    0.0128,
+    0.0687
+   ],
+   "most_changed": [
+    0.2356,
+    0.3486
+   ]
+  },
+  "graphify_minus": {
+   "search": {
+    "diff": -0.0875,
+    "ci": [
+     -0.1287,
+     -0.0474
+    ]
+   },
+   "pyright": {
+    "diff": 0.0351,
+    "ci": [
+     0.0074,
+     0.0639
+    ]
+   },
+   "cochange": {
+    "diff": -0.431,
+    "ci": [
+     -0.4992,
+     -0.3618
+    ]
+   },
+   "random": {
+    "diff": 0.0814,
+    "ci": [
+     0.0317,
+     0.127
+    ]
+   },
+   "most_changed": {
+    "diff": -0.1718,
+    "ci": [
+     -0.2346,
+     -0.1117
+    ]
+   }
+  },
+  "verdict": "no: below search, cochange, most_changed"
+ },
+ "truth 4-10": {
+  "label": "truth size 4-10",
+  "commits": 135,
+  "clusters": 129,
+  "seeds": 771,
+  "mean_recall": {
+   "graphify": 0.0539,
+   "search": 0.1351,
+   "search_defined": 0.0258,
+   "pyright": 0.0177,
+   "cochange": 0.4535,
+   "random": 0.0188,
+   "most_changed": 0.3312
+  },
+  "ci": {
+   "graphify": [
+    0.0442,
+    0.0643
+   ],
+   "search": [
+    0.1102,
+    0.1623
+   ],
+   "search_defined": [
+    0.0162,
+    0.0364
+   ],
+   "pyright": [
+    0.0104,
+    0.0261
+   ],
+   "cochange": [
+    0.402,
+    0.5036
+   ],
+   "random": [
+    0.0102,
+    0.0285
+   ],
+   "most_changed": [
+    0.2883,
+    0.377
+   ]
+  },
+  "graphify_minus": {
+   "search": {
+    "diff": -0.0812,
+    "ci": [
+     -0.1067,
+     -0.0577
+    ]
+   },
+   "pyright": {
+    "diff": 0.0361,
+    "ci": [
+     0.0262,
+     0.0468
+    ]
+   },
+   "cochange": {
+    "diff": -0.3997,
+    "ci": [
+     -0.4491,
+     -0.3502
+    ]
+   },
+   "random": {
+    "diff": 0.0351,
+    "ci": [
+     0.0213,
+     0.0485
+    ]
+   },
+   "most_changed": {
+    "diff": -0.2773,
+    "ci": [
+     -0.3226,
+     -0.2337
+    ]
+   }
+  },
+  "verdict": "no: below search, cochange, most_changed"
+ },
+ "truth 11-1000000": {
+  "label": "truth size 11-1000000",
+  "commits": 52,
+  "clusters": 50,
+  "seeds": 609,
+  "mean_recall": {
+   "graphify": 0.0412,
+   "search": 0.1387,
+   "search_defined": 0.0217,
+   "pyright": 0.0092,
+   "cochange": 0.2786,
+   "random": 0.0322,
+   "most_changed": 0.2494
+  },
+  "ci": {
+   "graphify": [
+    0.0296,
+    0.0538
+   ],
+   "search": [
+    0.116,
+    0.1618
+   ],
+   "search_defined": [
+    0.0175,
+    0.0262
+   ],
+   "pyright": [
+    0.0064,
+    0.0124
+   ],
+   "cochange": [
+    0.2452,
+    0.3123
+   ],
+   "random": [
+    0.0169,
+    0.0525
+   ],
+   "most_changed": [
+    0.2078,
+    0.2903
+   ]
+  },
+  "graphify_minus": {
+   "search": {
+    "diff": -0.0975,
+    "ci": [
+     -0.1175,
+     -0.0785
+    ]
+   },
+   "pyright": {
+    "diff": 0.0319,
+    "ci": [
+     0.0189,
+     0.0467
+    ]
+   },
+   "cochange": {
+    "diff": -0.2374,
+    "ci": [
+     -0.2669,
+     -0.2087
+    ]
+   },
+   "random": {
+    "diff": 0.009,
+    "ci": [
+     -0.0115,
+     0.0274
+    ]
+   },
+   "most_changed": {
+    "diff": -0.2082,
+    "ci": [
+     -0.2513,
+     -0.1667
+    ]
+   }
+  },
+  "verdict": "no: below search, cochange, most_changed"
+ },
+ "S1 commits with 2-4 files": {
+  "label": "S1",
+  "commits": 123,
+  "clusters": 108,
+  "seeds": 350,
+  "mean_recall": {
+   "graphify": 0.0914,
+   "search": 0.1863,
+   "search_defined": 0.0666,
+   "pyright": 0.0578,
+   "cochange": 0.5376,
+   "random": 0.0276,
+   "most_changed": 0.2692
+  },
+  "ci": {
+   "graphify": [
+    0.0641,
+    0.1208
+   ],
+   "search": [
+    0.1478,
+    0.224
+   ],
+   "search_defined": [
+    0.0431,
+    0.0901
+   ],
+   "pyright": [
+    0.0354,
+    0.0811
+   ],
+   "cochange": [
+    0.4746,
+    0.5993
+   ],
+   "random": [
+    0.0127,
+    0.0449
+   ],
+   "most_changed": [
+    0.2184,
+    0.3212
+   ]
+  },
+  "graphify_minus": {
+   "search": {
+    "diff": -0.0949,
+    "ci": [
+     -0.1319,
+     -0.0552
+    ]
+   },
+   "pyright": {
+    "diff": 0.0336,
+    "ci": [
+     0.0062,
+     0.0597
+    ]
+   },
+   "cochange": {
+    "diff": -0.4462,
+    "ci": [
+     -0.5111,
+     -0.3837
+    ]
+   },
+   "random": {
+    "diff": 0.0638,
+    "ci": [
+     0.0309,
+     0.099
+    ]
+   },
+   "most_changed": {
+    "diff": -0.1778,
+    "ci": [
+     -0.2366,
+     -0.1226
+    ]
+   }
+  },
+  "verdict": "no: below search, cochange, most_changed"
+ },
+ "S2 without gate-enforced files": {
+  "label": "S2",
+  "commits": 270,
+  "clusters": 237,
+  "seeds": 1717,
+  "mean_recall": {
+   "graphify": 0.06,
+   "search": 0.1542,
+   "search_defined": 0.0421,
+   "pyright": 0.0334,
+   "cochange": 0.4486,
+   "random": 0.0297,
+   "most_changed": 0.2375
+  },
+  "ci": {
+   "graphify": [
+    0.0465,
+    0.0745
+   ],
+   "search": [
+    0.1322,
+    0.1786
+   ],
+   "search_defined": [
+    0.0306,
+    0.0546
+   ],
+   "pyright": [
+    0.0214,
+    0.0456
+   ],
+   "cochange": [
+    0.412,
+    0.4897
+   ],
+   "random": [
+    0.0164,
+    0.0497
+   ],
+   "most_changed": [
+    0.2066,
+    0.2703
+   ]
+  },
+  "graphify_minus": {
+   "search": {
+    "diff": -0.0942,
+    "ci": [
+     -0.1155,
+     -0.0731
+    ]
+   },
+   "pyright": {
+    "diff": 0.0266,
+    "ci": [
+     0.0139,
+     0.0393
+    ]
+   },
+   "cochange": {
+    "diff": -0.3886,
+    "ci": [
+     -0.4301,
+     -0.3511
+    ]
+   },
+   "random": {
+    "diff": 0.0303,
+    "ci": [
+     0.0085,
+     0.0506
+    ]
+   },
+   "most_changed": {
+    "diff": -0.1775,
+    "ci": [
+     -0.2127,
+     -0.1452
+    ]
+   }
+  },
+  "verdict": "no: below search, cochange, most_changed"
+ },
+ "full truth": {
+  "label": "full truth",
+  "commits": 273,
+  "clusters": 240,
+  "seeds": 1729,
+  "mean_recall": {
+   "graphify": 0.0662,
+   "search": 0.1467,
+   "search_defined": 0.037,
+   "pyright": 0.028,
+   "cochange": 0.4157,
+   "random": 0.0228,
+   "most_changed": 0.2587
+  },
+  "ci": {
+   "graphify": [
+    0.0532,
+    0.0802
+   ],
+   "search": [
+    0.1268,
+    0.1665
+   ],
+   "search_defined": [
+    0.0259,
+    0.0488
+   ],
+   "pyright": [
+    0.018,
+    0.0395
+   ],
+   "cochange": [
+    0.3818,
+    0.4528
+   ],
+   "random": [
+    0.0149,
+    0.0324
+   ],
+   "most_changed": [
+    0.2301,
+    0.2892
+   ]
+  },
+  "graphify_minus": {
+   "search": {
+    "diff": -0.0805,
+    "ci": [
+     -0.0987,
+     -0.0626
+    ]
+   },
+   "pyright": {
+    "diff": 0.0382,
+    "ci": [
+     0.0262,
+     0.0502
+    ]
+   },
+   "cochange": {
+    "diff": -0.3495,
+    "ci": [
+     -0.3861,
+     -0.3147
+    ]
+   },
+   "random": {
+    "diff": 0.0434,
+    "ci": [
+     0.0283,
+     0.0596
+    ]
+   },
+   "most_changed": {
+    "diff": -0.1925,
+    "ci": [
+     -0.2244,
+     -0.1618
+    ]
+   }
+  },
+  "verdict": "no: below search, cochange, most_changed"
+ },
+ "health": {
+  "rows": 1729,
+  "commits": 273,
+  "map_ok": 1729,
+  "graphify_exits": {
+   "0": 2436,
+   "4": 447
+  },
+  "pyright_timeouts": 0,
+  "empty_hints": {
+   "graphify": 903,
+   "search": 715,
+   "search_defined": 1479,
+   "pyright": 1530,
+   "cochange": 145,
+   "random": 0,
+   "most_changed": 2
+  }
+ }
+}

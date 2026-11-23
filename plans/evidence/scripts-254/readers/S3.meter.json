@@ -1,0 +1,38 @@
+{
+ "reader": "S3",
+ "models": [
+  "claude-opus-5-5"
+ ],
+ "calls": 43,
+ "messages": 8,
+ "tokens": {
+  "in": 18,
+  "write": 361666,
+  "hit": 1725617,
+  "out": 45454
+ },
+ "usd": 3.06,
+ "bundles_whole": 18,
+ "bundles": 18,
+ "gaps": [],
+ "facts_kept": 207,
+ "by_kind": {
+  "purpose": 9,
+  "env": 12,
+  "write": 30,
+  "output": 7,
+  "incremental": 26,
+  "model": 8,
+  "safety": 14,
+  "surprise": 15,
+  "windows": 14,
+  "detect": 33,
+  "process": 8,
+  "limit": 10,
+  "network": 10,
+  "query": 6,
+  "steering": 5
+ },
+ "rejected": 0,
+ "rejected_sample": []
+}

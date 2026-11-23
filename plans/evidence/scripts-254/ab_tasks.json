@@ -1,0 +1,32 @@
+{
+ "note": "Plan 254 A/B tasks (freeze F6, version 3, written before any A/B session). Facts that match in the copy's CLAUDE.md are 'neutral': neither credited nor counted false. M tasks are written from the origin change and place A only, never the fix.",
+ "tasks": [
+  {"id": "O1", "build_at": "451ff94",
+   "question": "In this repository, which functions call `_wire_project`? Which module-level flag stops a process that only imports the server module from writing the project's root CLAUDE.md pointer, and in which function is that flag set to true?",
+   "json": "{\"callers\": [\"<function>\", ...], \"flag\": \"<name>\", \"flag_set_in\": \"<function>\"}",
+   "truth": {"callers": ["package_create", "package_adopt"], "flag": "_WIRE_ROOT", "flag_set_in": "main"},
+   "neutral": ["package_open"]},
+  {"id": "O2", "build_at": "451ff94",
+   "question": "In this repository, which functions call `_scan_markers`?",
+   "json": "{\"callers\": [\"<function>\", ...]}",
+   "truth": {"callers": ["_readiness_report"]},
+   "neutral": ["gate_run"]},
+  {"id": "O3", "build_at": "451ff94",
+   "question": "In this repository, which functions call `_edge_rule_violations`, and which module-level constant holds the rules it applies?",
+   "json": "{\"callers\": [\"<function>\", ...], \"rules_constant\": \"<name>\"}",
+   "truth": {"callers": ["package_adopt"], "rules_constant": "RELATION_RULES"},
+   "neutral": ["gate_run"]},
+  {"id": "M03", "build_at": "a4a0e0691d^",
+   "question": "An earlier change, 'feat(plugin): plan 123 - the SessionStart hook prints the resume block for free', added text that plugins/tamheed/server/resume_hook.py prints into an agent's session, and the handoff text it prints passes the injection screen `_INJECT_RE`. Which other places in this repository need the same treatment or a matching change? List each as a file path, with the function or Markdown section when the file is long.",
+   "json": "{\"places\": [\"<file>[::<function or section>]\", ...]}",
+   "truth": {"places": [["plugins/tamheed/server/resume_hook.py", "main"], ["SECURITY.md", null]]}, "neutral": []},
+  {"id": "M25", "build_at": "5a6e9350f4^",
+   "question": "An earlier change, 'fix: v4.2.1 - risk-liveness hollow-pass guard + customization-lag visibility (plan 034)', made `_emit_prompt_library` in plugins/tamheed/server/tamheed_server.py sort the stock_last_changed releases with a numeric version key instead of a text sort. Which other places in this repository need the same treatment or a matching change? List each as a file path, with the function or Markdown section when the file is long.",
+   "json": "{\"places\": [\"<file>[::<function or section>]\", ...]}",
+   "truth": {"places": [["plugins/tamheed/server/tamheed_server.py", "_emit_prompt_library"], ["plugins/tamheed/server/export_html.py", null]]}, "neutral": []},
+  {"id": "M48", "build_at": "669fef772a^",
+   "question": "In plugins/keystone/scripts/validate_package.py, `gate_ids` finds its id column with the two-step `if id_col is None` idiom, so that a column at index 0 is not thrown away. Which other places in this repository need the same treatment or a matching change? List each as a file path, with the function or Markdown section when the file is long.",
+   "json": "{\"places\": [\"<file>[::<function or section>]\", ...]}",
+   "truth": {"places": [["plugins/keystone/scripts/validate_package.py", "gate_dec_status"], ["plugins/keystone/scripts/validate_package.py", "gate_req_src"], ["plugins/keystone/scripts/validate_package.py", "gate_trace"]]}, "neutral": []}
+ ]
+}

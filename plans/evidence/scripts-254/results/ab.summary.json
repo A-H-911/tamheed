@@ -1,0 +1,1116 @@
+{
+ "rows": [
+  {
+   "task": "M03",
+   "arm": "A",
+   "n": 1,
+   "right": 1,
+   "of": 2,
+   "false": 13,
+   "read_chars": 15334,
+   "cost": 0.3535566,
+   "turns": 7,
+   "ms": 36990,
+   "subtype": "success",
+   "calls": {
+    "Grep": 5,
+    "Read": 1
+   },
+   "plugins": [
+    {
+     "name": "cc-plugin-agents-md",
+     "path": "builtin",
+     "source": "cc-plugin-agents-md@builtin"
+    },
+    {
+     "name": "cc-plugin-telemetry",
+     "path": "builtin",
+     "source": "cc-plugin-telemetry@builtin"
+    },
+    {
+     "name": "cc-plugin-privacy",
+     "path": "builtin",
+     "source": "cc-plugin-privacy@builtin"
+    },
+    {
+     "name": "cc-plugin-plugin-authoring",
+     "path": "builtin",
+     "source": "cc-plugin-plugin-authoring@builtin"
+    }
+   ],
+   "mcp": [],
+   "skills": [],
+   "model": "claude-opus-5-5"
+  },
+  {
+   "task": "M03",
+   "arm": "A",
+   "n": 2,
+   "right": 0,
+   "of": 2,
+   "false": 9,
+   "read_chars": 59983,
+   "cost": 0.4419614,
+   "turns": 13,
+   "ms": 73264,
+   "subtype": "success",
+   "calls": {
+    "Grep": 7,
+    "Glob": 1,
+    "Read": 3,
+    "Bash:graphify": 1
+   },
+   "plugins": [
+    {
+     "name": "cc-plugin-agents-md",
+     "path": "builtin",
+     "source": "cc-plugin-agents-md@builtin"
+    },
+    {
+     "name": "cc-plugin-telemetry",
+     "path": "builtin",
+     "source": "cc-plugin-telemetry@builtin"
+    },
+    {
+     "name": "cc-plugin-privacy",
+     "path": "builtin",
+     "source": "cc-plugin-privacy@builtin"
+    },
+    {
+     "name": "cc-plugin-plugin-authoring",
+     "path": "builtin",
+     "source": "cc-plugin-plugin-authoring@builtin"
+    }
+   ],
+   "mcp": [],
+   "skills": [],
+   "model": "claude-opus-5-5"
+  },
+  {
+   "task": "M03",
+   "arm": "B",
+   "n": 1,
+   "right": 1,
+   "of": 2,
+   "false": 7,
+   "read_chars": 34513,
+   "cost": 0.46301859999999995,
+   "turns": 9,
+   "ms": 49177,
+   "subtype": "success",
+   "calls": {
+    "Grep": 4,
+    "Read": 3,
+    "Bash:graphify": 1
+   },
+   "plugins": [
+    {
+     "name": "cc-plugin-agents-md",
+     "path": "builtin",
+     "source": "cc-plugin-agents-md@builtin"
+    },
+    {
+     "name": "cc-plugin-telemetry",
+     "path": "builtin",
+     "source": "cc-plugin-telemetry@builtin"
+    },
+    {
+     "name": "cc-plugin-privacy",
+     "path": "builtin",
+     "source": "cc-plugin-privacy@builtin"
+    },
+    {
+     "name": "cc-plugin-plugin-authoring",
+     "path": "builtin",
+     "source": "cc-plugin-plugin-authoring@builtin"
+    }
+   ],
+   "mcp": [],
+   "skills": [],
+   "model": "claude-opus-5-5"
+  },
+  {
+   "task": "M03",
+   "arm": "B",
+   "n": 2,
+   "right": 1,
+   "of": 2,
+   "false": 5,
+   "read_chars": 40021,
+   "cost": 0.3576512,
+   "turns": 13,
+   "ms": 63911,
+   "subtype": "success",
+   "calls": {
+    "Grep": 5,
+    "Read": 5,
+    "Glob": 1,
+    "Bash:graphify": 1
+   },
+   "plugins": [
+    {
+     "name": "cc-plugin-agents-md",
+     "path": "builtin",
+     "source": "cc-plugin-agents-md@builtin"
+    },
+    {
+     "name": "cc-plugin-telemetry",
+     "path": "builtin",
+     "source": "cc-plugin-telemetry@builtin"
+    },
+    {
+     "name": "cc-plugin-privacy",
+     "path": "builtin",
+     "source": "cc-plugin-privacy@builtin"
+    },
+    {
+     "name": "cc-plugin-plugin-authoring",
+     "path": "builtin",
+     "source": "cc-plugin-plugin-authoring@builtin"
+    }
+   ],
+   "mcp": [],
+   "skills": [],
+   "model": "claude-opus-5-5"
+  },
+  {
+   "task": "M25",
+   "arm": "A",
+   "n": 1,
+   "right": 1,
+   "of": 2,
+   "false": 2,
+   "read_chars": 26059,
+   "cost": 0.3878790000000001,
+   "turns": 9,
+   "ms": 34168,
+   "subtype": "success",
+   "calls": {
+    "Grep": 4,
+    "Read": 4
+   },
+   "plugins": [
+    {
+     "name": "cc-plugin-agents-md",
+     "path": "builtin",
+     "source": "cc-plugin-agents-md@builtin"
+    },
+    {
+     "name": "cc-plugin-telemetry",
+     "path": "builtin",
+     "source": "cc-plugin-telemetry@builtin"
+    },
+    {
+     "name": "cc-plugin-privacy",
+     "path": "builtin",
+     "source": "cc-plugin-privacy@builtin"
+    },
+    {
+     "name": "cc-plugin-plugin-authoring",
+     "path": "builtin",
+     "source": "cc-plugin-plugin-authoring@builtin"
+    }
+   ],
+   "mcp": [],
+   "skills": [],
+   "model": "claude-opus-5-5"
+  },
+  {
+   "task": "M25",
+   "arm": "A",
+   "n": 2,
+   "right": 1,
+   "of": 2,
+   "false": 2,
+   "read_chars": 21764,
+   "cost": 0.1779886,
+   "turns": 7,
+   "ms": 32030,
+   "subtype": "success",
+   "calls": {
+    "Grep": 3,
+    "Read": 3
+   },
+   "plugins": [
+    {
+     "name": "cc-plugin-agents-md",
+     "path": "builtin",
+     "source": "cc-plugin-agents-md@builtin"
+    },
+    {
+     "name": "cc-plugin-telemetry",
+     "path": "builtin",
+     "source": "cc-plugin-telemetry@builtin"
+    },
+    {
+     "name": "cc-plugin-privacy",
+     "path": "builtin",
+     "source": "cc-plugin-privacy@builtin"
+    },
+    {
+     "name": "cc-plugin-plugin-authoring",
+     "path": "builtin",
+     "source": "cc-plugin-plugin-authoring@builtin"
+    }
+   ],
+   "mcp": [],
+   "skills": [],
+   "model": "claude-opus-5-5"
+  },
+  {
+   "task": "M25",
+   "arm": "B",
+   "n": 1,
+   "right": 1,
+   "of": 2,
+   "false": 2,
+   "read_chars": 20734,
+   "cost": 0.3586846,
+   "turns": 7,
+   "ms": 31774,
+   "subtype": "success",
+   "calls": {
+    "Grep": 3,
+    "Read": 3
+   },
+   "plugins": [
+    {
+     "name": "cc-plugin-agents-md",
+     "path": "builtin",
+     "source": "cc-plugin-agents-md@builtin"
+    },
+    {
+     "name": "cc-plugin-telemetry",
+     "path": "builtin",
+     "source": "cc-plugin-telemetry@builtin"
+    },
+    {
+     "name": "cc-plugin-privacy",
+     "path": "builtin",
+     "source": "cc-plugin-privacy@builtin"
+    },
+    {
+     "name": "cc-plugin-plugin-authoring",
+     "path": "builtin",
+     "source": "cc-plugin-plugin-authoring@builtin"
+    }
+   ],
+   "mcp": [],
+   "skills": [],
+   "model": "claude-opus-5-5"
+  },
+  {
+   "task": "M25",
+   "arm": "B",
+   "n": 2,
+   "right": 1,
+   "of": 2,
+   "false": 2,
+   "read_chars": 28674,
+   "cost": 0.24499200000000004,
+   "turns": 9,
+   "ms": 41442,
+   "subtype": "success",
+   "calls": {
+    "Grep": 3,
+    "Read": 5
+   },
+   "plugins": [
+    {
+     "name": "cc-plugin-agents-md",
+     "path": "builtin",
+     "source": "cc-plugin-agents-md@builtin"
+    },
+    {
+     "name": "cc-plugin-telemetry",
+     "path": "builtin",
+     "source": "cc-plugin-telemetry@builtin"
+    },
+    {
+     "name": "cc-plugin-privacy",
+     "path": "builtin",
+     "source": "cc-plugin-privacy@builtin"
+    },
+    {
+     "name": "cc-plugin-plugin-authoring",
+     "path": "builtin",
+     "source": "cc-plugin-plugin-authoring@builtin"
+    }
+   ],
+   "mcp": [],
+   "skills": [],
+   "model": "claude-opus-5-5"
+  },
+  {
+   "task": "M48",
+   "arm": "A",
+   "n": 1,
+   "right": 3,
+   "of": 3,
+   "false": 0,
+   "read_chars": 7748,
+   "cost": 0.28968839999999996,
+   "turns": 6,
+   "ms": 26088,
+   "subtype": "success",
+   "calls": {
+    "Grep": 4,
+    "Read": 1
+   },
+   "plugins": [
+    {
+     "name": "cc-plugin-agents-md",
+     "path": "builtin",
+     "source": "cc-plugin-agents-md@builtin"
+    },
+    {
+     "name": "cc-plugin-telemetry",
+     "path": "builtin",
+     "source": "cc-plugin-telemetry@builtin"
+    },
+    {
+     "name": "cc-plugin-privacy",
+     "path": "builtin",
+     "source": "cc-plugin-privacy@builtin"
+    },
+    {
+     "name": "cc-plugin-plugin-authoring",
+     "path": "builtin",
+     "source": "cc-plugin-plugin-authoring@builtin"
+    }
+   ],
+   "mcp": [],
+   "skills": [],
+   "model": "claude-opus-5-5"
+  },
+  {
+   "task": "M48",
+   "arm": "A",
+   "n": 2,
+   "right": 3,
+   "of": 3,
+   "false": 0,
+   "read_chars": 11628,
+   "cost": 0.131474,
+   "turns": 7,
+   "ms": 26788,
+   "subtype": "success",
+   "calls": {
+    "Grep": 3,
+    "Read": 3
+   },
+   "plugins": [
+    {
+     "name": "cc-plugin-agents-md",
+     "path": "builtin",
+     "source": "cc-plugin-agents-md@builtin"
+    },
+    {
+     "name": "cc-plugin-telemetry",
+     "path": "builtin",
+     "source": "cc-plugin-telemetry@builtin"
+    },
+    {
+     "name": "cc-plugin-privacy",
+     "path": "builtin",
+     "source": "cc-plugin-privacy@builtin"
+    },
+    {
+     "name": "cc-plugin-plugin-authoring",
+     "path": "builtin",
+     "source": "cc-plugin-plugin-authoring@builtin"
+    }
+   ],
+   "mcp": [],
+   "skills": [],
+   "model": "claude-opus-5-5"
+  },
+  {
+   "task": "M48",
+   "arm": "B",
+   "n": 1,
+   "right": 3,
+   "of": 3,
+   "false": 0,
+   "read_chars": 17500,
+   "cost": 0.34240139999999997,
+   "turns": 7,
+   "ms": 30751,
+   "subtype": "success",
+   "calls": {
+    "Grep": 5,
+    "Read": 1
+   },
+   "plugins": [
+    {
+     "name": "cc-plugin-agents-md",
+     "path": "builtin",
+     "source": "cc-plugin-agents-md@builtin"
+    },
+    {
+     "name": "cc-plugin-telemetry",
+     "path": "builtin",
+     "source": "cc-plugin-telemetry@builtin"
+    },
+    {
+     "name": "cc-plugin-privacy",
+     "path": "builtin",
+     "source": "cc-plugin-privacy@builtin"
+    },
+    {
+     "name": "cc-plugin-plugin-authoring",
+     "path": "builtin",
+     "source": "cc-plugin-plugin-authoring@builtin"
+    }
+   ],
+   "mcp": [],
+   "skills": [],
+   "model": "claude-opus-5-5"
+  },
+  {
+   "task": "M48",
+   "arm": "B",
+   "n": 2,
+   "right": 3,
+   "of": 3,
+   "false": 1,
+   "read_chars": 23036,
+   "cost": 0.22662359999999998,
+   "turns": 8,
+   "ms": 44794,
+   "subtype": "success",
+   "calls": {
+    "Grep": 4,
+    "Read": 2,
+    "Glob": 1
+   },
+   "plugins": [
+    {
+     "name": "cc-plugin-agents-md",
+     "path": "builtin",
+     "source": "cc-plugin-agents-md@builtin"
+    },
+    {
+     "name": "cc-plugin-telemetry",
+     "path": "builtin",
+     "source": "cc-plugin-telemetry@builtin"
+    },
+    {
+     "name": "cc-plugin-privacy",
+     "path": "builtin",
+     "source": "cc-plugin-privacy@builtin"
+    },
+    {
+     "name": "cc-plugin-plugin-authoring",
+     "path": "builtin",
+     "source": "cc-plugin-plugin-authoring@builtin"
+    }
+   ],
+   "mcp": [],
+   "skills": [],
+   "model": "claude-opus-5-5"
+  },
+  {
+   "task": "O1",
+   "arm": "A",
+   "n": 1,
+   "right": 4,
+   "of": 4,
+   "false": 0,
+   "read_chars": 17141,
+   "cost": 0.2802346,
+   "turns": 3,
+   "ms": 12111,
+   "subtype": "success",
+   "calls": {
+    "Grep": 2
+   },
+   "plugins": [
+    {
+     "name": "cc-plugin-agents-md",
+     "path": "builtin",
+     "source": "cc-plugin-agents-md@builtin"
+    },
+    {
+     "name": "cc-plugin-telemetry",
+     "path": "builtin",
+     "source": "cc-plugin-telemetry@builtin"
+    },
+    {
+     "name": "cc-plugin-privacy",
+     "path": "builtin",
+     "source": "cc-plugin-privacy@builtin"
+    },
+    {
+     "name": "cc-plugin-plugin-authoring",
+     "path": "builtin",
+     "source": "cc-plugin-plugin-authoring@builtin"
+    }
+   ],
+   "mcp": [],
+   "skills": [],
+   "model": "claude-opus-5-5"
+  },
+  {
+   "task": "O1",
+   "arm": "A",
+   "n": 2,
+   "right": 4,
+   "of": 4,
+   "false": 0,
+   "read_chars": 12439,
+   "cost": 0.10697980000000001,
+   "turns": 4,
+   "ms": 18354,
+   "subtype": "success",
+   "calls": {
+    "Grep": 2,
+    "Bash": 1
+   },
+   "plugins": [
+    {
+     "name": "cc-plugin-agents-md",
+     "path": "builtin",
+     "source": "cc-plugin-agents-md@builtin"
+    },
+    {
+     "name": "cc-plugin-telemetry",
+     "path": "builtin",
+     "source": "cc-plugin-telemetry@builtin"
+    },
+    {
+     "name": "cc-plugin-privacy",
+     "path": "builtin",
+     "source": "cc-plugin-privacy@builtin"
+    },
+    {
+     "name": "cc-plugin-plugin-authoring",
+     "path": "builtin",
+     "source": "cc-plugin-plugin-authoring@builtin"
+    }
+   ],
+   "mcp": [],
+   "skills": [],
+   "model": "claude-opus-5-5"
+  },
+  {
+   "task": "O1",
+   "arm": "B",
+   "n": 1,
+   "right": 4,
+   "of": 4,
+   "false": 0,
+   "read_chars": 11961,
+   "cost": 0.2584018,
+   "turns": 3,
+   "ms": 10864,
+   "subtype": "success",
+   "calls": {
+    "Grep": 2
+   },
+   "plugins": [
+    {
+     "name": "cc-plugin-agents-md",
+     "path": "builtin",
+     "source": "cc-plugin-agents-md@builtin"
+    },
+    {
+     "name": "cc-plugin-telemetry",
+     "path": "builtin",
+     "source": "cc-plugin-telemetry@builtin"
+    },
+    {
+     "name": "cc-plugin-privacy",
+     "path": "builtin",
+     "source": "cc-plugin-privacy@builtin"
+    },
+    {
+     "name": "cc-plugin-plugin-authoring",
+     "path": "builtin",
+     "source": "cc-plugin-plugin-authoring@builtin"
+    }
+   ],
+   "mcp": [],
+   "skills": [],
+   "model": "claude-opus-5-5"
+  },
+  {
+   "task": "O1",
+   "arm": "B",
+   "n": 2,
+   "right": 4,
+   "of": 4,
+   "false": 0,
+   "read_chars": 14252,
+   "cost": 0.1143062,
+   "turns": 4,
+   "ms": 15704,
+   "subtype": "success",
+   "calls": {
+    "Grep": 2,
+    "Bash": 1
+   },
+   "plugins": [
+    {
+     "name": "cc-plugin-agents-md",
+     "path": "builtin",
+     "source": "cc-plugin-agents-md@builtin"
+    },
+    {
+     "name": "cc-plugin-telemetry",
+     "path": "builtin",
+     "source": "cc-plugin-telemetry@builtin"
+    },
+    {
+     "name": "cc-plugin-privacy",
+     "path": "builtin",
+     "source": "cc-plugin-privacy@builtin"
+    },
+    {
+     "name": "cc-plugin-plugin-authoring",
+     "path": "builtin",
+     "source": "cc-plugin-plugin-authoring@builtin"
+    }
+   ],
+   "mcp": [],
+   "skills": [],
+   "model": "claude-opus-5-5"
+  },
+  {
+   "task": "O2",
+   "arm": "A",
+   "n": 1,
+   "right": 1,
+   "of": 1,
+   "false": 0,
+   "read_chars": 13026,
+   "cost": 0.29940220000000006,
+   "turns": 6,
+   "ms": 17318,
+   "subtype": "success",
+   "calls": {
+    "Grep": 2,
+    "Bash": 1,
+    "Read": 2
+   },
+   "plugins": [
+    {
+     "name": "cc-plugin-agents-md",
+     "path": "builtin",
+     "source": "cc-plugin-agents-md@builtin"
+    },
+    {
+     "name": "cc-plugin-telemetry",
+     "path": "builtin",
+     "source": "cc-plugin-telemetry@builtin"
+    },
+    {
+     "name": "cc-plugin-privacy",
+     "path": "builtin",
+     "source": "cc-plugin-privacy@builtin"
+    },
+    {
+     "name": "cc-plugin-plugin-authoring",
+     "path": "builtin",
+     "source": "cc-plugin-plugin-authoring@builtin"
+    }
+   ],
+   "mcp": [],
+   "skills": [],
+   "model": "claude-opus-5-5"
+  },
+  {
+   "task": "O2",
+   "arm": "A",
+   "n": 2,
+   "right": 1,
+   "of": 1,
+   "false": 0,
+   "read_chars": 12503,
+   "cost": 0.1339842,
+   "turns": 6,
+   "ms": 26955,
+   "subtype": "success",
+   "calls": {
+    "Grep": 2,
+    "Bash": 1,
+    "Read": 2
+   },
+   "plugins": [
+    {
+     "name": "cc-plugin-agents-md",
+     "path": "builtin",
+     "source": "cc-plugin-agents-md@builtin"
+    },
+    {
+     "name": "cc-plugin-telemetry",
+     "path": "builtin",
+     "source": "cc-plugin-telemetry@builtin"
+    },
+    {
+     "name": "cc-plugin-privacy",
+     "path": "builtin",
+     "source": "cc-plugin-privacy@builtin"
+    },
+    {
+     "name": "cc-plugin-plugin-authoring",
+     "path": "builtin",
+     "source": "cc-plugin-plugin-authoring@builtin"
+    }
+   ],
+   "mcp": [],
+   "skills": [],
+   "model": "claude-opus-5-5"
+  },
+  {
+   "task": "O2",
+   "arm": "B",
+   "n": 1,
+   "right": 1,
+   "of": 1,
+   "false": 0,
+   "read_chars": 11472,
+   "cost": 0.2962652,
+   "turns": 5,
+   "ms": 15903,
+   "subtype": "success",
+   "calls": {
+    "Grep": 2,
+    "Bash": 1,
+    "Read": 1
+   },
+   "plugins": [
+    {
+     "name": "cc-plugin-agents-md",
+     "path": "builtin",
+     "source": "cc-plugin-agents-md@builtin"
+    },
+    {
+     "name": "cc-plugin-telemetry",
+     "path": "builtin",
+     "source": "cc-plugin-telemetry@builtin"
+    },
+    {
+     "name": "cc-plugin-privacy",
+     "path": "builtin",
+     "source": "cc-plugin-privacy@builtin"
+    },
+    {
+     "name": "cc-plugin-plugin-authoring",
+     "path": "builtin",
+     "source": "cc-plugin-plugin-authoring@builtin"
+    }
+   ],
+   "mcp": [],
+   "skills": [],
+   "model": "claude-opus-5-5"
+  },
+  {
+   "task": "O2",
+   "arm": "B",
+   "n": 2,
+   "right": 1,
+   "of": 1,
+   "false": 0,
+   "read_chars": 12402,
+   "cost": 0.1433568,
+   "turns": 6,
+   "ms": 24295,
+   "subtype": "success",
+   "calls": {
+    "Grep": 2,
+    "Bash": 1,
+    "Read": 2
+   },
+   "plugins": [
+    {
+     "name": "cc-plugin-agents-md",
+     "path": "builtin",
+     "source": "cc-plugin-agents-md@builtin"
+    },
+    {
+     "name": "cc-plugin-telemetry",
+     "path": "builtin",
+     "source": "cc-plugin-telemetry@builtin"
+    },
+    {
+     "name": "cc-plugin-privacy",
+     "path": "builtin",
+     "source": "cc-plugin-privacy@builtin"
+    },
+    {
+     "name": "cc-plugin-plugin-authoring",
+     "path": "builtin",
+     "source": "cc-plugin-plugin-authoring@builtin"
+    }
+   ],
+   "mcp": [],
+   "skills": [],
+   "model": "claude-opus-5-5"
+  },
+  {
+   "task": "O3",
+   "arm": "A",
+   "n": 1,
+   "right": 2,
+   "of": 2,
+   "false": 0,
+   "read_chars": 15977,
+   "cost": 0.2825796,
+   "turns": 4,
+   "ms": 19453,
+   "subtype": "success",
+   "calls": {
+    "Grep": 2,
+    "Bash": 1
+   },
+   "plugins": [
+    {
+     "name": "cc-plugin-agents-md",
+     "path": "builtin",
+     "source": "cc-plugin-agents-md@builtin"
+    },
+    {
+     "name": "cc-plugin-telemetry",
+     "path": "builtin",
+     "source": "cc-plugin-telemetry@builtin"
+    },
+    {
+     "name": "cc-plugin-privacy",
+     "path": "builtin",
+     "source": "cc-plugin-privacy@builtin"
+    },
+    {
+     "name": "cc-plugin-plugin-authoring",
+     "path": "builtin",
+     "source": "cc-plugin-plugin-authoring@builtin"
+    }
+   ],
+   "mcp": [],
+   "skills": [],
+   "model": "claude-opus-5-5"
+  },
+  {
+   "task": "O3",
+   "arm": "A",
+   "n": 2,
+   "right": 2,
+   "of": 2,
+   "false": 0,
+   "read_chars": 6605,
+   "cost": 0.10425159999999999,
+   "turns": 5,
+   "ms": 20035,
+   "subtype": "success",
+   "calls": {
+    "Grep": 2,
+    "Read": 1,
+    "Bash:graphify": 1
+   },
+   "plugins": [
+    {
+     "name": "cc-plugin-agents-md",
+     "path": "builtin",
+     "source": "cc-plugin-agents-md@builtin"
+    },
+    {
+     "name": "cc-plugin-telemetry",
+     "path": "builtin",
+     "source": "cc-plugin-telemetry@builtin"
+    },
+    {
+     "name": "cc-plugin-privacy",
+     "path": "builtin",
+     "source": "cc-plugin-privacy@builtin"
+    },
+    {
+     "name": "cc-plugin-plugin-authoring",
+     "path": "builtin",
+     "source": "cc-plugin-plugin-authoring@builtin"
+    }
+   ],
+   "mcp": [],
+   "skills": [],
+   "model": "claude-opus-5-5"
+  },
+  {
+   "task": "O3",
+   "arm": "B",
+   "n": 1,
+   "right": 2,
+   "of": 2,
+   "false": 0,
+   "read_chars": 16825,
+   "cost": 0.2943578,
+   "turns": 4,
+   "ms": 21232,
+   "subtype": "success",
+   "calls": {
+    "Grep": 2,
+    "Bash:graphify": 1
+   },
+   "plugins": [
+    {
+     "name": "cc-plugin-agents-md",
+     "path": "builtin",
+     "source": "cc-plugin-agents-md@builtin"
+    },
+    {
+     "name": "cc-plugin-telemetry",
+     "path": "builtin",
+     "source": "cc-plugin-telemetry@builtin"
+    },
+    {
+     "name": "cc-plugin-privacy",
+     "path": "builtin",
+     "source": "cc-plugin-privacy@builtin"
+    },
+    {
+     "name": "cc-plugin-plugin-authoring",
+     "path": "builtin",
+     "source": "cc-plugin-plugin-authoring@builtin"
+    }
+   ],
+   "mcp": [],
+   "skills": [],
+   "model": "claude-opus-5-5"
+  },
+  {
+   "task": "O3",
+   "arm": "B",
+   "n": 2,
+   "right": 2,
+   "of": 2,
+   "false": 0,
+   "read_chars": 11984,
+   "cost": 0.112801,
+   "turns": 4,
+   "ms": 16882,
+   "subtype": "success",
+   "calls": {
+    "Grep": 2,
+    "Read": 1
+   },
+   "plugins": [
+    {
+     "name": "cc-plugin-agents-md",
+     "path": "builtin",
+     "source": "cc-plugin-agents-md@builtin"
+    },
+    {
+     "name": "cc-plugin-telemetry",
+     "path": "builtin",
+     "source": "cc-plugin-telemetry@builtin"
+    },
+    {
+     "name": "cc-plugin-privacy",
+     "path": "builtin",
+     "source": "cc-plugin-privacy@builtin"
+    },
+    {
+     "name": "cc-plugin-plugin-authoring",
+     "path": "builtin",
+     "source": "cc-plugin-plugin-authoring@builtin"
+    }
+   ],
+   "mcp": [],
+   "skills": [],
+   "model": "claude-opus-5-5"
+  }
+ ],
+ "by_arm": {
+  "A": {
+   "sessions": 12,
+   "right": 23,
+   "of": 28,
+   "false": 26,
+   "read_chars": 220207,
+   "cost": 2.99,
+   "turns": 77
+  },
+  "B": {
+   "sessions": 12,
+   "right": 24,
+   "of": 28,
+   "false": 17,
+   "read_chars": 243374,
+   "cost": 3.21,
+   "turns": 79
+  }
+ },
+ "read_spread_by_task": {
+  "M03": {
+   "A": [
+    15334,
+    59983
+   ],
+   "B": [
+    34513,
+    40021
+   ]
+  },
+  "M25": {
+   "A": [
+    21764,
+    26059
+   ],
+   "B": [
+    20734,
+    28674
+   ]
+  },
+  "M48": {
+   "A": [
+    7748,
+    11628
+   ],
+   "B": [
+    17500,
+    23036
+   ]
+  },
+  "O1": {
+   "A": [
+    12439,
+    17141
+   ],
+   "B": [
+    11961,
+    14252
+   ]
+  },
+  "O2": {
+   "A": [
+    12503,
+    13026
+   ],
+   "B": [
+    11472,
+    12402
+   ]
+  },
+  "O3": {
+   "A": [
+    6605,
+    15977
+   ],
+   "B": [
+    11984,
+    16825
+   ]
+  }
+ },
+ "g14": {
+  "less_text_read": -0.105,
+  "right_A": 23,
+  "right_B": 24,
+  "tasks_where_spreads_overlap": [
+   "M03",
+   "M25",
+   "M48",
+   "O1",
+   "O3"
+  ],
+  "pass": false
+ }
+}

@@ -1,0 +1,1286 @@
+path,sha,bytes,read_as,lane,reader,bundles
+.dockerignore,44aa49437fdf6a58549384b15369e5a1ce7f7b08,247,,L,L1,L1/001
+.gitattributes,faa0f4b2617dc60d6bd597019b20897e70df09af,353,,L,L1,L1/001
+.github/CODEOWNERS,e36a234877e58a52705bbd61d1304aab9b7dd493,813,,L,L1,L1/001
+.github/DISCUSSION_TEMPLATE/q-a.yml,028eaf8bc12eba19af97f5f041a907b4d5742f3d,1224,,L,L1,L1/001
+.github/FUNDING.yml,e4aab9a60d0d933869deb568b53390782744b4ef,19,,L,L1,L1/001
+.github/ISSUE_TEMPLATE/bug_report.yml,f73c97311ab1f23b1ee448a03101bc9aa9e906a5,2297,,L,L1,L1/001
+.github/ISSUE_TEMPLATE/config.yml,41ab338b04496dde3de06895ccc6c5a42014ed81,712,,L,L1,L1/001
+.github/ISSUE_TEMPLATE/feature_request.yml,9f59a4d85e91153bbceb3b809924da6581ffea6a,1925,,L,L1,L1/001
+.github/PULL_REQUEST_TEMPLATE.md,df8239430214f64dd534b705ef24d15b84a1a6fa,1476,,L,L1,L1/001
+.github/TEAM_MEMBERS,2bb62c7dde6762935bb7d50f4062a634d7e6f15b,11,,L,L1,L1/001
+.github/workflows/ci.yml,8cb500a6b9f4db94ef1738f024fa0c4c8f2ab668,4492,,L,L1,L1/001
+.github/workflows/pr-management.yml,033297f9c1d7686e42e43e72d29d2fa214f3af1d,5288,,L,L1,L1/001
+.github/workflows/publish.yml,9e868c96e5cdc4f15a5851cf67fd37e43bf51230,1850,,L,L1,L1/001
+.github/workflows/release-graph.yml,246ec40d946514a45b47e100852ce0de78bbc76b,2213,,L,L1,L1/001
+.github/workflows/welcome.yml,986fd035699200845b98b9def09bfda45087b6e0,2431,,L,L1,L1/001
+.gitignore,a9d52e3b396c08f9cbdb617097571e0c08411ffe,1041,,L,L1,L1/001
+.pre-commit-config.yaml,5e762eb4d5d63b566c8568102a3c2b2d6ccb93a7,850,,L,L1,L1/001
+AGENTS.md,38857bdc2d175525367110a814289f9b9bb90f7d,563,,D,D4,D4/001
+ARCHITECTURE.md,892dedfc5bdbc874c8a7a2cdf637015b2b938520,30500,,D,D4,D4/001
+BENCHMARKS.md,cdab7867a2da15e058e46a5d395a2ae9b9031437,8887,,D,D4,D4/001
+CHANGELOG.md,bf1dd3f6adc051bf16ecbe63e1a97cde700f0515,653943,,B,B01,B01/001 B01/002 B01/003 B01/004 B01/005 B01/006 B01/007 B01/008 B01/009 B01/010 B01/011 B01/012 B01/013 B01/014 B01/015
+CODE_OF_CONDUCT.md,3160c56d1b8e7356714e128fa94e6b566cc8e729,4803,,L,L1,L1/001
+CONTRIBUTING.md,87d1a2010b3c8a7ae5c7cd9b936e14be0ab3e1db,10242,,L,L1,L1/001 L1/002
+Dockerfile,a313833c5ccd1d2e9377c3424fb6b3038e1da096,881,,L,L1,L1/002
+GEMINI.md,851aee796cecb4b8f5d30ccc629d9de217a36a5b,1587,,D,D4,D4/002
+LICENSE,d645695673349e3947e8e5ae42332d0ac3164cd7,11358,,L,L1,L1/002
+LICENSE-MIT,b1d9746fb5c6c39fd502e2ebe432a12ad9a097f3,1068,,L,L1,L1/002
+NOTICE,791bf88bb1e50572902dbbe9228153ea29846adf,335,,L,L1,L1/002
+README.md,5c56718a7883c79b81f1bc4e1638a54090a6fd68,43102,,D,D4,D4/002 D4/003
+RELEASING.md,f12099678376be0342a9b7009baf961cee9f3129,1839,,L,L1,L1/002
+SECURITY.md,8b9be79ef7156c1bdcdaf3fbe6c4c2603334fc73,4686,,S1,S1,S1/001
+SUPPORT.md,7ef09c68079c2a6904ec8f5ac254c99da448b48c,1587,,L,L1,L1/002
+docs/community/graphguild-banner.jpg,423ebf2359f8f2af25ad702c13dbf805d2ee33e4,511488,,image,L4,
+docs/demo-path.svg,4bf10a6e85fdab4fd7f66e35e1d563148b87fc79,20623,,L,L1,L1/002 L1/003
+docs/discord-banner.png,f26361c6ca7b128b0b8db0b0f66c4b0ca288009d,6604807,,image,L4,
+docs/docker-mcp-sqlite.md,6cdf52b06d7b15c45a1f579ec851c9cfa75f2e4e,5229,,L,L1,L1/003
+docs/graph-hero.png,f4968f6d120345f290a580e950fb35b72c7a10f2,648908,,image,L4,
+docs/graphify-logo.png,9e37f1d576faa8fbfd862c972d8fa1a765459c5f,952970,,image,L4,
+docs/how-it-works.md,8ff1b392d533c43770b87b8ac3321391991f1207,5903,,D,D4,D4/003
+docs/logo-icon.svg,531a71d0c0e3a31d792610678bf200dccefa52cd,2001,,L,L1,L1/003
+docs/logo-text.svg,ae632a3eec31f0ca80ca0fe36d34e94f156ccefa,2373,,L,L1,L1/003
+docs/logo.png,95ad01b3b4414d06c4537671397f4e2d4d9150f2,146843,,image,L4,
+docs/node-summaries-rfc.md,af191f3f87c3e7bc7cf6c95c49c23bfb43eff701,6629,,D,D4,D4/003
+docs/superpowers/plans/2026-05-04-incremental-updates-dedup.md,488591b8dcc68e84979303870921064005fd8389,40697,,L,L1,L1/003 L1/004
+docs/superpowers/specs/2026-05-04-incremental-updates-dedup-design.md,217e24d65f2eb93265ba69ce8b57eebf97d9aca9,5746,,L,L1,L1/004
+docs/translations/README.ar-SA.md,eef3316dc49ab235f43417a627fba2ffc1bec37a,45816,,L,L1,L1/004 L1/005
+docs/translations/README.cs-CZ.md,0515149d00738b82c4e5e37449de68f52348eee8,39659,,L,L1,L1/005 L1/006
+docs/translations/README.da-DK.md,89808b3e70734daedb772193aa827580ba324552,38442,,L,L1,L1/006 L1/007
+docs/translations/README.de-DE.md,9b97ab7e36c69fbcaeacc058f097ef4d99a141ba,40459,,L,L1,L1/007 L1/008
+docs/translations/README.el-GR.md,e3604023526fc501db2ed7190dc0de751be4cf9c,54446,,L,L1,L1/008 L1/009 L1/010
+docs/translations/README.es-ES.md,afe3b605880649a3bbbd4090e4b98742fcc13dc9,40216,,L,L1,L1/010 L1/011
+docs/translations/README.fa-IR.md,88a70d34fd1f5721ff1f8d3b1b1b9a760289691f,50663,,L,L1,L1/011 L1/012
+docs/translations/README.fi-FI.md,67d80284e71e587874ae32e58486aa973e99c788,39384,,L,L1,L1/012 L1/013
+docs/translations/README.fil-PH.md,f64249b71b8b41caaf6a917f235972fb37835394,41136,,L,L1,L1/013 L1/014
+docs/translations/README.fr-FR.md,58f16cd276667530ef2446862c8ead0e02e59444,41066,,L,L1 L2,L1/014 L2/001
+docs/translations/README.he-IL.md,ca7e8e3d50c36e123c462a606bbe6b8ef1b2a7f1,44106,,L,L2,L2/001 L2/002
+docs/translations/README.hi-IN.md,d15dd530d708f6595ca3bc844fdefb7c45a448e9,62118,,L,L2,L2/002 L2/003
+docs/translations/README.hu-HU.md,be300e859ab48099d8473955f4d1d5299ec7891f,41908,,L,L2,L2/004 L2/005
+docs/translations/README.id-ID.md,30b85760e9558592899678f9780b31339df3c739,38766,,L,L2,L2/005
+docs/translations/README.it-IT.md,e2ffe9b9c6892cb488f9a243a1fd2e4b5ed047e5,39725,,L,L2,L2/006
+docs/translations/README.ja-JP.md,944027c52f469f00c13de87e2927929994a80db6,45741,,L,L2,L2/007 L2/008
+docs/translations/README.ko-KR.md,9f10f3deef1c9b4b82a65c4ec7b514b98e569953,41731,,L,L2,L2/008
+docs/translations/README.nl-NL.md,1847f37b51e44978b0ee2ac5e155a7335839cda6,39067,,L,L2,L2/009
+docs/translations/README.no-NO.md,ff5c57b5a790e77838f89a440d6440360b915ff8,38346,,L,L2,L2/010
+docs/translations/README.pl-PL.md,0ca72b1d064725a79c090a352eb0d490df3c15c8,39893,,L,L2,L2/011
+docs/translations/README.pt-BR.md,87b163a551472fd86c5a851c6d8d65b715a440a3,39752,,L,L2,L2/012
+docs/translations/README.ro-RO.md,c4bcc73db5744983c9ea4626bd437f627fb94b75,40352,,L,L2,L2/013
+docs/translations/README.ru-RU.md,bfc3b3eda514d3672ae1fa3979112760fe87a997,54695,,L,L2 L3,L2/014 L3/001
+docs/translations/README.sv-SE.md,60c5607f25ea6e47a49bd481aee37fd7766adb55,38548,,L,L3,L3/001 L3/002
+docs/translations/README.th-TH.md,fab4f0849c085f1a0b36d283e1b11bc9144fdfc3,61186,,L,L3,L3/002 L3/003
+docs/translations/README.tr-TR.md,ac82ffa6678629a27da0f73a0e0438fa104776d6,40390,,L,L3,L3/003 L3/004
+docs/translations/README.uk-UA.md,fbd90c542c56b39e57cdf84c23cc8698af314955,52828,,L,L3,L3/004 L3/005 L3/006
+docs/translations/README.uz-UZ.md,4f5ed315f39a04998c3a61ca87e4271b60204ef2,40183,,L,L3,L3/006 L3/007
+docs/translations/README.vi-VN.md,584a7aa87b51a7b891390fa32fcbbd9809949106,43239,,L,L3,L3/007 L3/008
+docs/translations/README.zh-CN.md,4d4fa988bc8285a660236b5bd2735529530d99b0,37278,,L,L3,L3/008 L3/009
+docs/translations/README.zh-TW.md,c6e255752be857b39a8d009875a882bc0815b54c,37085,,L,L3,L3/009
+gemini-extension.json,5eb499e78e3130852bca175fb14e69d20f601e7a,425,,L,L3,L3/010
+graphify/__init__.py,41d4b1f3d11536e72d2f732a60211580985dd269,1424,,S1,S1,S1/001
+graphify/__main__.py,b3ccf30208524f51e78323f9c03e543781f7575e,50467,,S1,S1,S1/001 S1/002
+graphify/_minhash.py,aabeb654f3303eb8e1c12cefae1292829eb914af,4143,,D,D4,D4/003
+graphify/affected.py,de6754315ab2ad463a5a883dfc7993c833e5c3e5,22467,,D,D4,D4/003 D4/004
+graphify/always_on/agents-md.md,4067c0844346e79d3f20208e0165d8f77fea1511,1651,,S1,S1,S1/002
+tools/skillgen/expected/graphify__always_on__agents-md.md,4067c0844346e79d3f20208e0165d8f77fea1511,1651,graphify/always_on/agents-md.md,S1,S1,S1/002
+tools/skillgen/fragments/always-on/agents-md.md,4067c0844346e79d3f20208e0165d8f77fea1511,1651,graphify/always_on/agents-md.md,S1,S1,S1/002
+graphify/always_on/antigravity-rules.md,9a00441b03ace3fcc672311e444c73f27c866ba1,1085,,S1,S1,S1/002
+tools/skillgen/expected/graphify__always_on__antigravity-rules.md,9a00441b03ace3fcc672311e444c73f27c866ba1,1085,graphify/always_on/antigravity-rules.md,S1,S1,S1/002
+tools/skillgen/fragments/always-on/antigravity-rules.md,9a00441b03ace3fcc672311e444c73f27c866ba1,1085,graphify/always_on/antigravity-rules.md,S1,S1,S1/002
+graphify/always_on/claude-md.md,baea98c2b6c854ce1a8594f048cb9e7053656ef6,1294,,S1,S1,S1/002
+graphify/always_on/gemini-md.md,baea98c2b6c854ce1a8594f048cb9e7053656ef6,1294,graphify/always_on/claude-md.md,S1,S1,S1/002
+tools/skillgen/expected/graphify__always_on__claude-md.md,baea98c2b6c854ce1a8594f048cb9e7053656ef6,1294,graphify/always_on/claude-md.md,S1,S1,S1/002
+tools/skillgen/expected/graphify__always_on__gemini-md.md,baea98c2b6c854ce1a8594f048cb9e7053656ef6,1294,graphify/always_on/claude-md.md,S1,S1,S1/002
+tools/skillgen/fragments/always-on/claude-md.md,baea98c2b6c854ce1a8594f048cb9e7053656ef6,1294,graphify/always_on/claude-md.md,S1,S1,S1/002
+tools/skillgen/fragments/always-on/gemini-md.md,baea98c2b6c854ce1a8594f048cb9e7053656ef6,1294,graphify/always_on/claude-md.md,S1,S1,S1/002
+graphify/always_on/kiro-steering.md,cb6f4543db5d64680150a981f8d1e297a886ef6b,504,,S1,S1,S1/002
+tools/skillgen/expected/graphify__always_on__kiro-steering.md,cb6f4543db5d64680150a981f8d1e297a886ef6b,504,graphify/always_on/kiro-steering.md,S1,S1,S1/002
+tools/skillgen/fragments/always-on/kiro-steering.md,cb6f4543db5d64680150a981f8d1e297a886ef6b,504,graphify/always_on/kiro-steering.md,S1,S1,S1/002
+graphify/always_on/vscode-instructions.md,9cb983c9501c9b9e88424768e172ded779675322,1014,,S1,S1,S1/002
+tools/skillgen/expected/graphify__always_on__vscode-instructions.md,9cb983c9501c9b9e88424768e172ded779675322,1014,graphify/always_on/vscode-instructions.md,S1,S1,S1/002
+tools/skillgen/fragments/always-on/vscode-instructions.md,9cb983c9501c9b9e88424768e172ded779675322,1014,graphify/always_on/vscode-instructions.md,S1,S1,S1/002
+graphify/analyze.py,5f1e75faa137561c95601e3f62150612aee1490f,38704,,D,D4,D4/004 D4/005
+graphify/benchmark.py,7a117f6fe9a0a01b63633c4eab344a2097daf965,4574,,S1,S1,S1/002
+graphify/build.py,1ab710bf41bbedca324a368f75e2a51f6a2935ce,175216,,D,D4,D4/005 D4/006 D4/007 D4/008 D4/009
+graphify/cache.py,27de053009a0accd86432142147c5bf3f8da6787,134362,,S3,S3,S3/001 S3/002 S3/003 S3/004
+graphify/callflow_html.py,3c8a34b41fa292ca4218d231ebc2ad087fde916b,83274,,D,D4,D4/009 D4/010 D4/011
+graphify/cargo_introspect.py,8078c64c112b58f7f1030db502f5d6c4fa4fd893,7785,,S1,S1,S1/002
+graphify/cli.py,49b93699e955cd128c766175ad9cd6d13788465a,311885,,S2,S2,S2/001 S2/002 S2/003 S2/004 S2/005 S2/006 S2/007 S2/008
+graphify/cluster.py,6c7d73bf8088f57d72d95abe4c8ff273de0fe451,28608,,D,D4,D4/011 D4/012
+graphify/command-kilo.md,26b7e7e6907447a7afdcfb1e79eb425f1fcdb045,407,,D,D4,D4/012
+graphify/cpp_resolution.py,746ead732ff02acc0e8f8349913893a9d85a5d80,14023,,B,B01,B01/015 B01/016
+graphify/cross_repo_calls.py,147339182c4a349296ebb24e2e0b6a76ad7dfbe1,17018,,D,D4,D4/012
+graphify/cross_repo_types.py,3cd9ea01245ff358ae2176b7ef432e7a2799a859,3395,,D,D4,D4/012
+graphify/csharp_dispatch.py,54e628a6a11a919ccc3a6607c6dad93dff0e8be7,1814,,B,B01,B01/016
+graphify/dedup.py,6488d18d253d0ee78a004def1f31d95ea7b8de45,88602,,D,D4,D4/012 D4/013 D4/014
+graphify/detect.py,9790dfcd8cbb681f9fa5fa7fc2a423aabf9b61ed,150779,,S3,S3,S3/004 S3/005 S3/006 S3/007 S3/008
+graphify/dfm_resolution.py,a26626bf160e675a837ec17c4e44d07397f45d2d,8277,,B,B01,B01/016
+graphify/diagnostics.py,4326a2a0f3249857deeef0885f45e5bd55ec5617,16210,,D,D4,D4/015
+graphify/export.py,c797174e42c57b668c9392a6f12208fce61d5e99,68638,,D,D4,D4/015 D4/016 D4/017
+graphify/exporters/__init__.py,41e1aeff9730b739c4b7ca206979efd88fda2504,25,,D,D4,D4/017
+graphify/exporters/base.py,9c9419646c2078aa912b9c5252f4a17d78729275,606,,D,D4,D4/017
+graphify/exporters/graphdb.py,c02e18d5e4838a1548e16728b04eec1f0f523517,8387,,D,D4,D4/017
+graphify/exporters/html.py,f97db22db69f98c45a613f20ba315f7f7b7304a9,36444,,D,D4,D4/017 D4/018
+graphify/extract.py,da64cbf54045f471f946219f46a3d0a8ad3135e5,671710,,D,D4 D5,D4/018 D5/001 D5/002 D5/003 D5/004 D5/005 D5/006 D5/007 D5/008 D5/009 D5/010 D5/011 D5/012 D5/013 D5/014 D5/015 D5/016
+graphify/extractors/MIGRATION.md,75e1525e2e057cbe3fcfefc513622e621f5e48d5,5123,,D,D5,D5/017
+graphify/extractors/__init__.py,e2c8afc62761315baa2e7520dc2b0fa3ecd99d23,3083,,D,D5,D5/017
+graphify/extractors/apex.py,eefbec5ba18c87a83ea86f0fe78803ced8671bfc,8511,,B,B01,B01/016
+graphify/extractors/base.py,8f78437840278f0db1ab4a1c7690b0ff863c0abd,11832,,D,D5,D5/017
+graphify/extractors/bash.py,b1c225bb6ac50480e3d42ea024e34d5447446181,37634,,D,D5 D6,D5/017 D6/001
+graphify/extractors/blade.py,3a5929638621e3e599066b42276b84f66b884315,4258,,B,B01,B01/016
+graphify/extractors/cobol.py,bc2d91638f66cf0b2da2c3a84b12a2f56fd66bee,11720,,B,B01,B01/016 B01/017
+graphify/extractors/commonlisp.py,032c158e8c7eefec9a0a3e23280505c0cf0e2399,24406,,B,B01,B01/017
+graphify/extractors/csharp.py,6d4213386db44164842c84b902186cbd76d0af39,31505,,B,B01,B01/017 B01/018
+graphify/extractors/dart.py,4a6682afc811e3f2050ed625033a5ce6e18f9695,33915,,B,B01,B01/018 B01/019
+graphify/extractors/dm.py,f2e8a67f92937ff94ddb32c953d4c5439d96f354,19781,,B,B01,B01/019
+graphify/extractors/elixir.py,f4fd6a9c1a3f9550fd8824937a46dea824a7bc78,27237,,B,B01 B02,B01/019 B02/001
+graphify/extractors/engine.py,cfbdbc441c610d06dd37080dbb714ac7d83bb345,714396,,D,D6,D6/001 D6/002 D6/003 D6/004 D6/005 D6/006 D6/007 D6/008 D6/009 D6/010 D6/011 D6/012 D6/013 D6/014 D6/015 D6/016 D6/017 D6/018
+graphify/extractors/erlang.py,84c543b14fed31255405d0ac677fb7ab3d49d9c4,14309,,B,B02,B02/001
+graphify/extractors/fortran.py,9d843b42b885772aedbdb715392be3ff3c4b2daa,21613,,B,B02,B02/001 B02/002
+graphify/extractors/go.py,76131e1edcbec06882888b3abafa2c9a0087815f,53692,,B,B02,B02/002 B02/003
+graphify/extractors/json_config.py,6ecd7f474309200ebb01029eaea26803a8689014,20066,,D,D7,D7/001
+graphify/extractors/julia.py,5c2a37649d306bdd06831bc59fc5bf5e60d8b55e,23919,,B,B02,B02/003 B02/004
+graphify/extractors/markdown.py,eaac0b42327a4a3113104b46b63af4254ec6671c,35813,,D,D7,D7/001 D7/002
+graphify/extractors/models.py,02e1d38b630d5491fbc83aee4e020d65b7ae0a30,4634,,D,D7,D7/002
+graphify/extractors/objc.py,d4e852fae04062775a924e7b1a46534738d8945f,42483,,B,B02,B02/004 B02/005
+graphify/extractors/ocaml.py,a592aef046ca9ec3abeb19b02ccadc612203fca1,17416,,B,B02,B02/005
+graphify/extractors/pascal.py,03ba4300c59e992c175ef88d54cde0606e11f674,44716,,B,B02,B02/005 B02/006
+graphify/extractors/pascal_forms.py,4b95d46679af0847ced1b969fe27bea7a3b40b3a,6903,,B,B02,B02/007
+graphify/extractors/powershell.py,7f3b6fd0d720a7f5422fd78098430ef805394862,30927,,D,D7,D7/002 D7/003
+graphify/extractors/r.py,d29ba4991189b5f61b6dfff0f4dd4bca1ef7120b,21169,,B,B02,B02/007
+graphify/extractors/razor.py,48d9705803c84a8b37176a349869fadbd2874383,8662,,B,B02,B02/007
+graphify/extractors/resolution.py,0b539ce7784e8233f9dc76973b1cbc5119e1a4e4,235551,,D,D7,D7/003 D7/004 D7/005 D7/006 D7/007 D7/008 D7/009
+graphify/extractors/robot.py,be05bba50753ec2002c16da11b87aced2006cd6e,12981,,B,B02,B02/008
+graphify/extractors/rust.py,99dc81ef2a3711e86a1ec395b2f60f63e8d68102,60829,,B,B02,B02/008 B02/009
+graphify/extractors/sln.py,4d6872782438653bb892c6d48b01d719724f2322,3926,,B,B02,B02/009
+graphify/extractors/solidity.py,af7d624ad2eb202998b5bf77d05adacafc37fc00,72901,,B,B02,B02/010 B02/011
+graphify/extractors/sql.py,5dee34028ae104de75ff2402a0f74a5b2857fdab,71232,,D,D7,D7/009 D7/010
+graphify/extractors/terraform.py,377db41ddddd86587b48d7770bfbf12215e6b532,23087,,B,B02,B02/011 B02/012
+graphify/extractors/vbnet.py,5425603632ca61827ca3b2e759f6a4d860f0cea7,21033,,B,B02,B02/012
+graphify/extractors/verilog.py,51fd7377a62f8adf59cef9e2642c63e06d6917ae,17981,,B,B02,B02/013
+graphify/extractors/yaml_config.py,4bc25b41c80a89b9ecf3df4eb5514f4d7071eb96,13609,,D,D7,D7/011
+graphify/extractors/zig.py,bb8b357c6291c7b9c5c0e2204c485e4bf06e1976,11921,,B,B02,B02/013
+graphify/file_slice.py,fbde9b9d2aaa37e096dc59c69d418cc0985a0531,15211,,S2,S2,S2/008 S2/009
+graphify/global_graph.py,7c1a4ae6e89e274460f4bfe20b0aa87093682d28,8699,,S1,S1,S1/002 S1/003
+graphify/go_dispatch.py,9a2f1fd90bfeeeef341282f28ca37affa198002b,6041,,B,B02,B02/013
+graphify/google_workspace.py,d0d049094b8a82506a85b67972a76e21805218d0,9939,,S3,S3,S3/008
+graphify/hooks.py,45bce1a473f072f8825c25cd0e0fba7557e78dce,57206,,S1,S1,S1/003 S1/004
+graphify/ids.py,1db90ef8b53885697945ade293f13666dbdec538,12616,,S1,S1,S1/004
+graphify/ingest.py,48dbe619649950980bd75046a2e541f2e0cffb72,14995,,S3,S3,S3/008
+graphify/install.py,6f15245f35d50cea2e29f0347a32828594974202,140288,,S1,S1,S1/004 S1/005 S1/006 S1/007 S1/008
+graphify/interface_dispatch.py,c90f85994a6d36ec0f8bec7df5f910d9bc8d4f59,11737,,D,D7,D7/011
+graphify/kotlin_dispatch.py,e2773b239d494614d1c2cddb78344df4c4f7420c,999,,B,B02,B02/013
+graphify/llm.py,d532215a42dca5c979f18c6461541b75b159755a,192132,,S2,S2,S2/009 S2/010 S2/011 S2/012 S2/013
+graphify/manifest.py,cc74b84440dd013df21f15180f962244158a2ef6,214,,S1,S1,S1/008
+graphify/manifest_ingest.py,cc44be0b4b32e53191b2538658e331d00b0279c1,13776,,S1,S1,S1/008
+graphify/markdown_resolution.py,e78e13d5ce232dbf8cc17c93d4fef067c66d8f03,23514,,D,D7,D7/011 D7/012
+graphify/mcp_ingest.py,152e4093f0fb033349e0f0cdcc6af688ade90db1,13184,,S3,S3,S3/008 S3/009
+graphify/multigraph_compat.py,7ac62e275f40fd6421c96b787f85067a2ec297ab,8262,,D,D7,D7/012
+graphify/pascal_class_resolution.py,517726c909ff1397260fcd143be7cb1830f495ea,6477,,B,B02,B02/014
+graphify/pascal_resolution.py,acf5c77e114c52210d25813dd98bb2cb9f1bc987,6385,,B,B02,B02/014
+graphify/pascal_singleton_resolution.py,2fd0e79891c797f2ed90c9d39c243429c1dea705,13547,,B,B02,B02/014
+graphify/paths.py,61300b8b8575a4a1378e55e0a5eabb25d4009ad1,31543,,S1,S1,S1/008 S1/009
+graphify/pg_introspect.py,09a702db7623cb7106713aadcf069d3d8b5518bd,8036,,S3,S3,S3/009
+graphify/pi/index.ts,8df7746a8a735675a901149528745cc7bbbe3ad4,9564,,S1,S1,S1/009
+graphify/pi/package.json,e045de589804afda7ff16f137f6ae9a11f067f4c,233,,S1,S1,S1/009
+graphify/prs.py,096b9fb77456e389878106021018d70adb91a10c,31974,,S1,S1,S1/009 S1/010
+graphify/querylog.py,b89f419dd672e07fc079465097c3e22429774671,2841,,S1,S1,S1/010
+graphify/rcfile.py,cc35ee64018b5261c89ea9c5c75322cc795ddc10,10495,,S1,S1,S1/010
+graphify/reflect.py,49f544c6ea0b373a0188fbef3df9560c88e0389f,37733,,S1,S1,S1/011
+graphify/report.py,648abe0c88c3e421040e265b87d812b3e0063e6a,21529,,D,D7,D7/012
+graphify/resolver_registry.py,ded758c00c7d7da1917a4720fb7e78d39c64f42a,3396,,D,D7,D7/013
+graphify/ruby_resolution.py,b6bd56ae0d9fd9f9b8e26463781a0ed37b8f89c9,23150,,B,B02,B02/014 B02/015
+graphify/scip_ingest.py,bf3d1857c4601bb9381222214c3864b190b7abc3,13947,,S3,S3,S3/009
+graphify/sections.py,5fc0fa8a137f76842713f7e4a38f7ad8ca3bde86,7708,,D,D7,D7/013
+graphify/security.py,5e66e15e82d1f1f67c83aefb658407ceff99e79e,20075,,S1,S1,S1/012
+graphify/semantic_cleanup.py,09cac2d847e9776e1a789176bbb17aab94780960,14892,,S2,S2,S2/013 S2/014
+graphify/serve.py,838b896ff47095b0e35119bcde490217fe587fc2,184351,,S3,S3,S3/009 S3/010 S3/011 S3/012 S3/013 S3/014
+graphify/skill-agents.md,ec0c01c46ca1e2870452b527cc490ac74f5f4118,50644,,D,D7,D7/013 D7/014
+graphify/skill-amp.md,ec0c01c46ca1e2870452b527cc490ac74f5f4118,50644,graphify/skill-agents.md,D,D7,D7/013 D7/014
+tools/skillgen/expected/graphify__skill-agents.md,ec0c01c46ca1e2870452b527cc490ac74f5f4118,50644,graphify/skill-agents.md,D,D7,D7/013 D7/014
+tools/skillgen/expected/graphify__skill-amp.md,ec0c01c46ca1e2870452b527cc490ac74f5f4118,50644,graphify/skill-agents.md,D,D7,D7/013 D7/014
+graphify/skill-aider.md,b58122c984d1f724844a84235947403a144049b8,62137,,D,D7,D7/014 D7/015 D7/016
+tools/skillgen/expected/graphify__skill-aider.md,b58122c984d1f724844a84235947403a144049b8,62137,graphify/skill-aider.md,D,D7,D7/014 D7/015 D7/016
+tools/skillgen/fragments/core/aider.md,b58122c984d1f724844a84235947403a144049b8,62137,graphify/skill-aider.md,D,D7,D7/014 D7/015 D7/016
+graphify/skill-claw.md,a06fddb7287b95e6f0eb673dfe347a7aecc3c2f4,50920,,D,D7,D7/016 D7/017
+graphify/skill-copilot.md,a06fddb7287b95e6f0eb673dfe347a7aecc3c2f4,50920,graphify/skill-claw.md,D,D7,D7/016 D7/017
+graphify/skill-kiro.md,a06fddb7287b95e6f0eb673dfe347a7aecc3c2f4,50920,graphify/skill-claw.md,D,D7,D7/016 D7/017
+graphify/skill.md,a06fddb7287b95e6f0eb673dfe347a7aecc3c2f4,50920,graphify/skill-claw.md,D,D7,D7/016 D7/017
+tools/skillgen/expected/graphify__skill-claw.md,a06fddb7287b95e6f0eb673dfe347a7aecc3c2f4,50920,graphify/skill-claw.md,D,D7,D7/016 D7/017
+tools/skillgen/expected/graphify__skill-copilot.md,a06fddb7287b95e6f0eb673dfe347a7aecc3c2f4,50920,graphify/skill-claw.md,D,D7,D7/016 D7/017
+tools/skillgen/expected/graphify__skill-kiro.md,a06fddb7287b95e6f0eb673dfe347a7aecc3c2f4,50920,graphify/skill-claw.md,D,D7,D7/016 D7/017
+tools/skillgen/expected/graphify__skill.md,a06fddb7287b95e6f0eb673dfe347a7aecc3c2f4,50920,graphify/skill-claw.md,D,D7,D7/016 D7/017
+graphify/skill-codex.md,400fbdef7b5e8e6c12cd9c328b8de836e09e7312,51680,,D,D7,D7/017 D7/018
+tools/skillgen/expected/graphify__skill-codex.md,400fbdef7b5e8e6c12cd9c328b8de836e09e7312,51680,graphify/skill-codex.md,D,D7,D7/017 D7/018
+graphify/skill-devin.md,1fb4f67e0e3f7339ed55e1089c313a2f064fd3be,69195,,D,D7 D8,D7/018 D8/001 D8/002
+tools/skillgen/expected/graphify__skill-devin.md,1fb4f67e0e3f7339ed55e1089c313a2f064fd3be,69195,graphify/skill-devin.md,D,D7 D8,D7/018 D8/001 D8/002
+tools/skillgen/fragments/core/devin.md,1fb4f67e0e3f7339ed55e1089c313a2f064fd3be,69195,graphify/skill-devin.md,D,D7 D8,D7/018 D8/001 D8/002
+graphify/skill-droid.md,5fbae920e3a7ef194ee6f96e258ece2e65f15b6d,50644,,D,D8,D8/002 D8/003
+tools/skillgen/expected/graphify__skill-droid.md,5fbae920e3a7ef194ee6f96e258ece2e65f15b6d,50644,graphify/skill-droid.md,D,D8,D8/002 D8/003
+graphify/skill-kilo.md,8e49f19d16cf3cd681542b3a73318be0648e34cf,51219,,D,D8,D8/003 D8/004
+tools/skillgen/expected/graphify__skill-kilo.md,8e49f19d16cf3cd681542b3a73318be0648e34cf,51219,graphify/skill-kilo.md,D,D8,D8/003 D8/004
+graphify/skill-opencode.md,a9f4ae56d4b5bb1dda1382ccf69cf7aa2af99249,50367,,D,D8,D8/004 D8/005
+tools/skillgen/expected/graphify__skill-opencode.md,a9f4ae56d4b5bb1dda1382ccf69cf7aa2af99249,50367,graphify/skill-opencode.md,D,D8,D8/004 D8/005
+graphify/skill-pi.md,f6afc5b354224f53a47707cb316f405e8642d876,50632,,D,D8,D8/006 D8/007
+tools/skillgen/expected/graphify__skill-pi.md,f6afc5b354224f53a47707cb316f405e8642d876,50632,graphify/skill-pi.md,D,D8,D8/006 D8/007
+graphify/skill-trae.md,2752f1d91bd18c49724d1676ac9d3d67f7f116fb,50742,,D,D8,D8/007 D8/008
+tools/skillgen/expected/graphify__skill-trae.md,2752f1d91bd18c49724d1676ac9d3d67f7f116fb,50742,graphify/skill-trae.md,D,D8,D8/007 D8/008
+graphify/skill-vscode.md,f4ab87963a9de687a87d5f543ff6b60b840e6b23,50579,,D,D8,D8/008 D8/009
+tools/skillgen/expected/graphify__skill-vscode.md,f4ab87963a9de687a87d5f543ff6b60b840e6b23,50579,graphify/skill-vscode.md,D,D8,D8/008 D8/009
+graphify/skill-windows.md,6a50b3c87cf87fbdaaeed467e64e5073d115f220,53298,,D,D8,D8/009 D8/010
+tools/skillgen/expected/graphify__skill-windows.md,6a50b3c87cf87fbdaaeed467e64e5073d115f220,53298,graphify/skill-windows.md,D,D8,D8/009 D8/010
+graphify/skills/agents/references/add-watch.md,349f8b409a30a2b53eacacdd390608b96a4d88a3,2704,,D,D8,D8/011
+graphify/skills/amp/references/add-watch.md,349f8b409a30a2b53eacacdd390608b96a4d88a3,2704,graphify/skills/agents/references/add-watch.md,D,D8,D8/011
+graphify/skills/claude/references/add-watch.md,349f8b409a30a2b53eacacdd390608b96a4d88a3,2704,graphify/skills/agents/references/add-watch.md,D,D8,D8/011
+graphify/skills/claw/references/add-watch.md,349f8b409a30a2b53eacacdd390608b96a4d88a3,2704,graphify/skills/agents/references/add-watch.md,D,D8,D8/011
+graphify/skills/codex/references/add-watch.md,349f8b409a30a2b53eacacdd390608b96a4d88a3,2704,graphify/skills/agents/references/add-watch.md,D,D8,D8/011
+graphify/skills/copilot/references/add-watch.md,349f8b409a30a2b53eacacdd390608b96a4d88a3,2704,graphify/skills/agents/references/add-watch.md,D,D8,D8/011
+graphify/skills/droid/references/add-watch.md,349f8b409a30a2b53eacacdd390608b96a4d88a3,2704,graphify/skills/agents/references/add-watch.md,D,D8,D8/011
+graphify/skills/kilo/references/add-watch.md,349f8b409a30a2b53eacacdd390608b96a4d88a3,2704,graphify/skills/agents/references/add-watch.md,D,D8,D8/011
+graphify/skills/kiro/references/add-watch.md,349f8b409a30a2b53eacacdd390608b96a4d88a3,2704,graphify/skills/agents/references/add-watch.md,D,D8,D8/011
+graphify/skills/opencode/references/add-watch.md,349f8b409a30a2b53eacacdd390608b96a4d88a3,2704,graphify/skills/agents/references/add-watch.md,D,D8,D8/011
+graphify/skills/pi/references/add-watch.md,349f8b409a30a2b53eacacdd390608b96a4d88a3,2704,graphify/skills/agents/references/add-watch.md,D,D8,D8/011
+graphify/skills/trae/references/add-watch.md,349f8b409a30a2b53eacacdd390608b96a4d88a3,2704,graphify/skills/agents/references/add-watch.md,D,D8,D8/011
+graphify/skills/vscode/references/add-watch.md,349f8b409a30a2b53eacacdd390608b96a4d88a3,2704,graphify/skills/agents/references/add-watch.md,D,D8,D8/011
+graphify/skills/windows/references/add-watch.md,349f8b409a30a2b53eacacdd390608b96a4d88a3,2704,graphify/skills/agents/references/add-watch.md,D,D8,D8/011
+tools/skillgen/expected/graphify__skills__agents__references__add-watch.md,349f8b409a30a2b53eacacdd390608b96a4d88a3,2704,graphify/skills/agents/references/add-watch.md,D,D8,D8/011
+tools/skillgen/expected/graphify__skills__amp__references__add-watch.md,349f8b409a30a2b53eacacdd390608b96a4d88a3,2704,graphify/skills/agents/references/add-watch.md,D,D8,D8/011
+tools/skillgen/expected/graphify__skills__claude__references__add-watch.md,349f8b409a30a2b53eacacdd390608b96a4d88a3,2704,graphify/skills/agents/references/add-watch.md,D,D8,D8/011
+tools/skillgen/expected/graphify__skills__claw__references__add-watch.md,349f8b409a30a2b53eacacdd390608b96a4d88a3,2704,graphify/skills/agents/references/add-watch.md,D,D8,D8/011
+tools/skillgen/expected/graphify__skills__codex__references__add-watch.md,349f8b409a30a2b53eacacdd390608b96a4d88a3,2704,graphify/skills/agents/references/add-watch.md,D,D8,D8/011
+tools/skillgen/expected/graphify__skills__copilot__references__add-watch.md,349f8b409a30a2b53eacacdd390608b96a4d88a3,2704,graphify/skills/agents/references/add-watch.md,D,D8,D8/011
+tools/skillgen/expected/graphify__skills__droid__references__add-watch.md,349f8b409a30a2b53eacacdd390608b96a4d88a3,2704,graphify/skills/agents/references/add-watch.md,D,D8,D8/011
+tools/skillgen/expected/graphify__skills__kilo__references__add-watch.md,349f8b409a30a2b53eacacdd390608b96a4d88a3,2704,graphify/skills/agents/references/add-watch.md,D,D8,D8/011
+tools/skillgen/expected/graphify__skills__kiro__references__add-watch.md,349f8b409a30a2b53eacacdd390608b96a4d88a3,2704,graphify/skills/agents/references/add-watch.md,D,D8,D8/011
+tools/skillgen/expected/graphify__skills__opencode__references__add-watch.md,349f8b409a30a2b53eacacdd390608b96a4d88a3,2704,graphify/skills/agents/references/add-watch.md,D,D8,D8/011
+tools/skillgen/expected/graphify__skills__pi__references__add-watch.md,349f8b409a30a2b53eacacdd390608b96a4d88a3,2704,graphify/skills/agents/references/add-watch.md,D,D8,D8/011
+tools/skillgen/expected/graphify__skills__trae__references__add-watch.md,349f8b409a30a2b53eacacdd390608b96a4d88a3,2704,graphify/skills/agents/references/add-watch.md,D,D8,D8/011
+tools/skillgen/expected/graphify__skills__vscode__references__add-watch.md,349f8b409a30a2b53eacacdd390608b96a4d88a3,2704,graphify/skills/agents/references/add-watch.md,D,D8,D8/011
+tools/skillgen/expected/graphify__skills__windows__references__add-watch.md,349f8b409a30a2b53eacacdd390608b96a4d88a3,2704,graphify/skills/agents/references/add-watch.md,D,D8,D8/011
+tools/skillgen/fragments/references/shared/add-watch.md,349f8b409a30a2b53eacacdd390608b96a4d88a3,2704,graphify/skills/agents/references/add-watch.md,D,D8,D8/011
+graphify/skills/agents/references/exports.md,2c67cbffcb272b6e494226f1d0454d4fbca08dd1,4789,,D,D8,D8/011
+graphify/skills/amp/references/exports.md,2c67cbffcb272b6e494226f1d0454d4fbca08dd1,4789,graphify/skills/agents/references/exports.md,D,D8,D8/011
+graphify/skills/claude/references/exports.md,2c67cbffcb272b6e494226f1d0454d4fbca08dd1,4789,graphify/skills/agents/references/exports.md,D,D8,D8/011
+graphify/skills/claw/references/exports.md,2c67cbffcb272b6e494226f1d0454d4fbca08dd1,4789,graphify/skills/agents/references/exports.md,D,D8,D8/011
+graphify/skills/codex/references/exports.md,2c67cbffcb272b6e494226f1d0454d4fbca08dd1,4789,graphify/skills/agents/references/exports.md,D,D8,D8/011
+graphify/skills/copilot/references/exports.md,2c67cbffcb272b6e494226f1d0454d4fbca08dd1,4789,graphify/skills/agents/references/exports.md,D,D8,D8/011
+graphify/skills/droid/references/exports.md,2c67cbffcb272b6e494226f1d0454d4fbca08dd1,4789,graphify/skills/agents/references/exports.md,D,D8,D8/011
+graphify/skills/kilo/references/exports.md,2c67cbffcb272b6e494226f1d0454d4fbca08dd1,4789,graphify/skills/agents/references/exports.md,D,D8,D8/011
+graphify/skills/kiro/references/exports.md,2c67cbffcb272b6e494226f1d0454d4fbca08dd1,4789,graphify/skills/agents/references/exports.md,D,D8,D8/011
+graphify/skills/opencode/references/exports.md,2c67cbffcb272b6e494226f1d0454d4fbca08dd1,4789,graphify/skills/agents/references/exports.md,D,D8,D8/011
+graphify/skills/pi/references/exports.md,2c67cbffcb272b6e494226f1d0454d4fbca08dd1,4789,graphify/skills/agents/references/exports.md,D,D8,D8/011
+graphify/skills/trae/references/exports.md,2c67cbffcb272b6e494226f1d0454d4fbca08dd1,4789,graphify/skills/agents/references/exports.md,D,D8,D8/011
+graphify/skills/vscode/references/exports.md,2c67cbffcb272b6e494226f1d0454d4fbca08dd1,4789,graphify/skills/agents/references/exports.md,D,D8,D8/011
+graphify/skills/windows/references/exports.md,2c67cbffcb272b6e494226f1d0454d4fbca08dd1,4789,graphify/skills/agents/references/exports.md,D,D8,D8/011
+tools/skillgen/expected/graphify__skills__agents__references__exports.md,2c67cbffcb272b6e494226f1d0454d4fbca08dd1,4789,graphify/skills/agents/references/exports.md,D,D8,D8/011
+tools/skillgen/expected/graphify__skills__amp__references__exports.md,2c67cbffcb272b6e494226f1d0454d4fbca08dd1,4789,graphify/skills/agents/references/exports.md,D,D8,D8/011
+tools/skillgen/expected/graphify__skills__claude__references__exports.md,2c67cbffcb272b6e494226f1d0454d4fbca08dd1,4789,graphify/skills/agents/references/exports.md,D,D8,D8/011
+tools/skillgen/expected/graphify__skills__claw__references__exports.md,2c67cbffcb272b6e494226f1d0454d4fbca08dd1,4789,graphify/skills/agents/references/exports.md,D,D8,D8/011
+tools/skillgen/expected/graphify__skills__codex__references__exports.md,2c67cbffcb272b6e494226f1d0454d4fbca08dd1,4789,graphify/skills/agents/references/exports.md,D,D8,D8/011
+tools/skillgen/expected/graphify__skills__copilot__references__exports.md,2c67cbffcb272b6e494226f1d0454d4fbca08dd1,4789,graphify/skills/agents/references/exports.md,D,D8,D8/011
+tools/skillgen/expected/graphify__skills__droid__references__exports.md,2c67cbffcb272b6e494226f1d0454d4fbca08dd1,4789,graphify/skills/agents/references/exports.md,D,D8,D8/011
+tools/skillgen/expected/graphify__skills__kilo__references__exports.md,2c67cbffcb272b6e494226f1d0454d4fbca08dd1,4789,graphify/skills/agents/references/exports.md,D,D8,D8/011
+tools/skillgen/expected/graphify__skills__kiro__references__exports.md,2c67cbffcb272b6e494226f1d0454d4fbca08dd1,4789,graphify/skills/agents/references/exports.md,D,D8,D8/011
+tools/skillgen/expected/graphify__skills__opencode__references__exports.md,2c67cbffcb272b6e494226f1d0454d4fbca08dd1,4789,graphify/skills/agents/references/exports.md,D,D8,D8/011
+tools/skillgen/expected/graphify__skills__pi__references__exports.md,2c67cbffcb272b6e494226f1d0454d4fbca08dd1,4789,graphify/skills/agents/references/exports.md,D,D8,D8/011
+tools/skillgen/expected/graphify__skills__trae__references__exports.md,2c67cbffcb272b6e494226f1d0454d4fbca08dd1,4789,graphify/skills/agents/references/exports.md,D,D8,D8/011
+tools/skillgen/expected/graphify__skills__vscode__references__exports.md,2c67cbffcb272b6e494226f1d0454d4fbca08dd1,4789,graphify/skills/agents/references/exports.md,D,D8,D8/011
+tools/skillgen/expected/graphify__skills__windows__references__exports.md,2c67cbffcb272b6e494226f1d0454d4fbca08dd1,4789,graphify/skills/agents/references/exports.md,D,D8,D8/011
+tools/skillgen/fragments/references/shared/exports.md,2c67cbffcb272b6e494226f1d0454d4fbca08dd1,4789,graphify/skills/agents/references/exports.md,D,D8,D8/011
+graphify/skills/agents/references/extraction-spec.md,c3a217f02f5862dfebda7b226029e9e344ed8fe0,9705,,D,D8,D8/011
+graphify/skills/amp/references/extraction-spec.md,c3a217f02f5862dfebda7b226029e9e344ed8fe0,9705,graphify/skills/agents/references/extraction-spec.md,D,D8,D8/011
+graphify/skills/claude/references/extraction-spec.md,c3a217f02f5862dfebda7b226029e9e344ed8fe0,9705,graphify/skills/agents/references/extraction-spec.md,D,D8,D8/011
+graphify/skills/copilot/references/extraction-spec.md,c3a217f02f5862dfebda7b226029e9e344ed8fe0,9705,graphify/skills/agents/references/extraction-spec.md,D,D8,D8/011
+graphify/skills/droid/references/extraction-spec.md,c3a217f02f5862dfebda7b226029e9e344ed8fe0,9705,graphify/skills/agents/references/extraction-spec.md,D,D8,D8/011
+graphify/skills/kilo/references/extraction-spec.md,c3a217f02f5862dfebda7b226029e9e344ed8fe0,9705,graphify/skills/agents/references/extraction-spec.md,D,D8,D8/011
+graphify/skills/opencode/references/extraction-spec.md,c3a217f02f5862dfebda7b226029e9e344ed8fe0,9705,graphify/skills/agents/references/extraction-spec.md,D,D8,D8/011
+graphify/skills/trae/references/extraction-spec.md,c3a217f02f5862dfebda7b226029e9e344ed8fe0,9705,graphify/skills/agents/references/extraction-spec.md,D,D8,D8/011
+graphify/skills/vscode/references/extraction-spec.md,c3a217f02f5862dfebda7b226029e9e344ed8fe0,9705,graphify/skills/agents/references/extraction-spec.md,D,D8,D8/011
+graphify/skills/windows/references/extraction-spec.md,c3a217f02f5862dfebda7b226029e9e344ed8fe0,9705,graphify/skills/agents/references/extraction-spec.md,D,D8,D8/011
+tools/skillgen/expected/graphify__skills__agents__references__extraction-spec.md,c3a217f02f5862dfebda7b226029e9e344ed8fe0,9705,graphify/skills/agents/references/extraction-spec.md,D,D8,D8/011
+tools/skillgen/expected/graphify__skills__amp__references__extraction-spec.md,c3a217f02f5862dfebda7b226029e9e344ed8fe0,9705,graphify/skills/agents/references/extraction-spec.md,D,D8,D8/011
+tools/skillgen/expected/graphify__skills__claude__references__extraction-spec.md,c3a217f02f5862dfebda7b226029e9e344ed8fe0,9705,graphify/skills/agents/references/extraction-spec.md,D,D8,D8/011
+tools/skillgen/expected/graphify__skills__copilot__references__extraction-spec.md,c3a217f02f5862dfebda7b226029e9e344ed8fe0,9705,graphify/skills/agents/references/extraction-spec.md,D,D8,D8/011
+tools/skillgen/expected/graphify__skills__droid__references__extraction-spec.md,c3a217f02f5862dfebda7b226029e9e344ed8fe0,9705,graphify/skills/agents/references/extraction-spec.md,D,D8,D8/011
+tools/skillgen/expected/graphify__skills__kilo__references__extraction-spec.md,c3a217f02f5862dfebda7b226029e9e344ed8fe0,9705,graphify/skills/agents/references/extraction-spec.md,D,D8,D8/011
+tools/skillgen/expected/graphify__skills__opencode__references__extraction-spec.md,c3a217f02f5862dfebda7b226029e9e344ed8fe0,9705,graphify/skills/agents/references/extraction-spec.md,D,D8,D8/011
+tools/skillgen/expected/graphify__skills__trae__references__extraction-spec.md,c3a217f02f5862dfebda7b226029e9e344ed8fe0,9705,graphify/skills/agents/references/extraction-spec.md,D,D8,D8/011
+tools/skillgen/expected/graphify__skills__vscode__references__extraction-spec.md,c3a217f02f5862dfebda7b226029e9e344ed8fe0,9705,graphify/skills/agents/references/extraction-spec.md,D,D8,D8/011
+tools/skillgen/expected/graphify__skills__windows__references__extraction-spec.md,c3a217f02f5862dfebda7b226029e9e344ed8fe0,9705,graphify/skills/agents/references/extraction-spec.md,D,D8,D8/011
+tools/skillgen/fragments/references/shared/extraction-spec.md,c3a217f02f5862dfebda7b226029e9e344ed8fe0,9705,graphify/skills/agents/references/extraction-spec.md,D,D8,D8/011
+graphify/skills/agents/references/github-and-merge.md,a41ea06e17c1676483356a2a06504a1bfb0870e4,2177,,D,D8,D8/011
+graphify/skills/amp/references/github-and-merge.md,a41ea06e17c1676483356a2a06504a1bfb0870e4,2177,graphify/skills/agents/references/github-and-merge.md,D,D8,D8/011
+graphify/skills/claude/references/github-and-merge.md,a41ea06e17c1676483356a2a06504a1bfb0870e4,2177,graphify/skills/agents/references/github-and-merge.md,D,D8,D8/011
+graphify/skills/claw/references/github-and-merge.md,a41ea06e17c1676483356a2a06504a1bfb0870e4,2177,graphify/skills/agents/references/github-and-merge.md,D,D8,D8/011
+graphify/skills/codex/references/github-and-merge.md,a41ea06e17c1676483356a2a06504a1bfb0870e4,2177,graphify/skills/agents/references/github-and-merge.md,D,D8,D8/011
+graphify/skills/copilot/references/github-and-merge.md,a41ea06e17c1676483356a2a06504a1bfb0870e4,2177,graphify/skills/agents/references/github-and-merge.md,D,D8,D8/011
+graphify/skills/droid/references/github-and-merge.md,a41ea06e17c1676483356a2a06504a1bfb0870e4,2177,graphify/skills/agents/references/github-and-merge.md,D,D8,D8/011
+graphify/skills/kilo/references/github-and-merge.md,a41ea06e17c1676483356a2a06504a1bfb0870e4,2177,graphify/skills/agents/references/github-and-merge.md,D,D8,D8/011
+graphify/skills/kiro/references/github-and-merge.md,a41ea06e17c1676483356a2a06504a1bfb0870e4,2177,graphify/skills/agents/references/github-and-merge.md,D,D8,D8/011
+graphify/skills/opencode/references/github-and-merge.md,a41ea06e17c1676483356a2a06504a1bfb0870e4,2177,graphify/skills/agents/references/github-and-merge.md,D,D8,D8/011
+graphify/skills/pi/references/github-and-merge.md,a41ea06e17c1676483356a2a06504a1bfb0870e4,2177,graphify/skills/agents/references/github-and-merge.md,D,D8,D8/011
+graphify/skills/trae/references/github-and-merge.md,a41ea06e17c1676483356a2a06504a1bfb0870e4,2177,graphify/skills/agents/references/github-and-merge.md,D,D8,D8/011
+graphify/skills/vscode/references/github-and-merge.md,a41ea06e17c1676483356a2a06504a1bfb0870e4,2177,graphify/skills/agents/references/github-and-merge.md,D,D8,D8/011
+graphify/skills/windows/references/github-and-merge.md,a41ea06e17c1676483356a2a06504a1bfb0870e4,2177,graphify/skills/agents/references/github-and-merge.md,D,D8,D8/011
+tools/skillgen/expected/graphify__skills__agents__references__github-and-merge.md,a41ea06e17c1676483356a2a06504a1bfb0870e4,2177,graphify/skills/agents/references/github-and-merge.md,D,D8,D8/011
+tools/skillgen/expected/graphify__skills__amp__references__github-and-merge.md,a41ea06e17c1676483356a2a06504a1bfb0870e4,2177,graphify/skills/agents/references/github-and-merge.md,D,D8,D8/011
+tools/skillgen/expected/graphify__skills__claude__references__github-and-merge.md,a41ea06e17c1676483356a2a06504a1bfb0870e4,2177,graphify/skills/agents/references/github-and-merge.md,D,D8,D8/011
+tools/skillgen/expected/graphify__skills__claw__references__github-and-merge.md,a41ea06e17c1676483356a2a06504a1bfb0870e4,2177,graphify/skills/agents/references/github-and-merge.md,D,D8,D8/011
+tools/skillgen/expected/graphify__skills__codex__references__github-and-merge.md,a41ea06e17c1676483356a2a06504a1bfb0870e4,2177,graphify/skills/agents/references/github-and-merge.md,D,D8,D8/011
+tools/skillgen/expected/graphify__skills__copilot__references__github-and-merge.md,a41ea06e17c1676483356a2a06504a1bfb0870e4,2177,graphify/skills/agents/references/github-and-merge.md,D,D8,D8/011
+tools/skillgen/expected/graphify__skills__droid__references__github-and-merge.md,a41ea06e17c1676483356a2a06504a1bfb0870e4,2177,graphify/skills/agents/references/github-and-merge.md,D,D8,D8/011
+tools/skillgen/expected/graphify__skills__kilo__references__github-and-merge.md,a41ea06e17c1676483356a2a06504a1bfb0870e4,2177,graphify/skills/agents/references/github-and-merge.md,D,D8,D8/011
+tools/skillgen/expected/graphify__skills__kiro__references__github-and-merge.md,a41ea06e17c1676483356a2a06504a1bfb0870e4,2177,graphify/skills/agents/references/github-and-merge.md,D,D8,D8/011
+tools/skillgen/expected/graphify__skills__opencode__references__github-and-merge.md,a41ea06e17c1676483356a2a06504a1bfb0870e4,2177,graphify/skills/agents/references/github-and-merge.md,D,D8,D8/011
+tools/skillgen/expected/graphify__skills__pi__references__github-and-merge.md,a41ea06e17c1676483356a2a06504a1bfb0870e4,2177,graphify/skills/agents/references/github-and-merge.md,D,D8,D8/011
+tools/skillgen/expected/graphify__skills__trae__references__github-and-merge.md,a41ea06e17c1676483356a2a06504a1bfb0870e4,2177,graphify/skills/agents/references/github-and-merge.md,D,D8,D8/011
+tools/skillgen/expected/graphify__skills__vscode__references__github-and-merge.md,a41ea06e17c1676483356a2a06504a1bfb0870e4,2177,graphify/skills/agents/references/github-and-merge.md,D,D8,D8/011
+tools/skillgen/expected/graphify__skills__windows__references__github-and-merge.md,a41ea06e17c1676483356a2a06504a1bfb0870e4,2177,graphify/skills/agents/references/github-and-merge.md,D,D8,D8/011
+tools/skillgen/fragments/references/shared/github-and-merge.md,a41ea06e17c1676483356a2a06504a1bfb0870e4,2177,graphify/skills/agents/references/github-and-merge.md,D,D8,D8/011
+graphify/skills/agents/references/hooks.md,3fb74d1545394154c30ee052f24da8dd07dd9e9f,1270,,D,D8,D8/011
+tools/skillgen/expected/graphify__skills__agents__references__hooks.md,3fb74d1545394154c30ee052f24da8dd07dd9e9f,1270,graphify/skills/agents/references/hooks.md,D,D8,D8/011
+graphify/skills/agents/references/query.md,42521d28a63d6761f1614d9b9811c27e7a559f60,14775,,D,D8,D8/011
+graphify/skills/amp/references/query.md,42521d28a63d6761f1614d9b9811c27e7a559f60,14775,graphify/skills/agents/references/query.md,D,D8,D8/011
+graphify/skills/claude/references/query.md,42521d28a63d6761f1614d9b9811c27e7a559f60,14775,graphify/skills/agents/references/query.md,D,D8,D8/011
+graphify/skills/claw/references/query.md,42521d28a63d6761f1614d9b9811c27e7a559f60,14775,graphify/skills/agents/references/query.md,D,D8,D8/011
+graphify/skills/codex/references/query.md,42521d28a63d6761f1614d9b9811c27e7a559f60,14775,graphify/skills/agents/references/query.md,D,D8,D8/011
+graphify/skills/copilot/references/query.md,42521d28a63d6761f1614d9b9811c27e7a559f60,14775,graphify/skills/agents/references/query.md,D,D8,D8/011
+graphify/skills/droid/references/query.md,42521d28a63d6761f1614d9b9811c27e7a559f60,14775,graphify/skills/agents/references/query.md,D,D8,D8/011
+graphify/skills/kilo/references/query.md,42521d28a63d6761f1614d9b9811c27e7a559f60,14775,graphify/skills/agents/references/query.md,D,D8,D8/011
+graphify/skills/kiro/references/query.md,42521d28a63d6761f1614d9b9811c27e7a559f60,14775,graphify/skills/agents/references/query.md,D,D8,D8/011
+graphify/skills/opencode/references/query.md,42521d28a63d6761f1614d9b9811c27e7a559f60,14775,graphify/skills/agents/references/query.md,D,D8,D8/011
+graphify/skills/pi/references/query.md,42521d28a63d6761f1614d9b9811c27e7a559f60,14775,graphify/skills/agents/references/query.md,D,D8,D8/011
+graphify/skills/trae/references/query.md,42521d28a63d6761f1614d9b9811c27e7a559f60,14775,graphify/skills/agents/references/query.md,D,D8,D8/011
+graphify/skills/vscode/references/query.md,42521d28a63d6761f1614d9b9811c27e7a559f60,14775,graphify/skills/agents/references/query.md,D,D8,D8/011
+graphify/skills/windows/references/query.md,42521d28a63d6761f1614d9b9811c27e7a559f60,14775,graphify/skills/agents/references/query.md,D,D8,D8/011
+tools/skillgen/expected/graphify__skills__agents__references__query.md,42521d28a63d6761f1614d9b9811c27e7a559f60,14775,graphify/skills/agents/references/query.md,D,D8,D8/011
+tools/skillgen/expected/graphify__skills__amp__references__query.md,42521d28a63d6761f1614d9b9811c27e7a559f60,14775,graphify/skills/agents/references/query.md,D,D8,D8/011
+tools/skillgen/expected/graphify__skills__claude__references__query.md,42521d28a63d6761f1614d9b9811c27e7a559f60,14775,graphify/skills/agents/references/query.md,D,D8,D8/011
+tools/skillgen/expected/graphify__skills__claw__references__query.md,42521d28a63d6761f1614d9b9811c27e7a559f60,14775,graphify/skills/agents/references/query.md,D,D8,D8/011
+tools/skillgen/expected/graphify__skills__codex__references__query.md,42521d28a63d6761f1614d9b9811c27e7a559f60,14775,graphify/skills/agents/references/query.md,D,D8,D8/011
+tools/skillgen/expected/graphify__skills__copilot__references__query.md,42521d28a63d6761f1614d9b9811c27e7a559f60,14775,graphify/skills/agents/references/query.md,D,D8,D8/011
+tools/skillgen/expected/graphify__skills__droid__references__query.md,42521d28a63d6761f1614d9b9811c27e7a559f60,14775,graphify/skills/agents/references/query.md,D,D8,D8/011
+tools/skillgen/expected/graphify__skills__kilo__references__query.md,42521d28a63d6761f1614d9b9811c27e7a559f60,14775,graphify/skills/agents/references/query.md,D,D8,D8/011
+tools/skillgen/expected/graphify__skills__kiro__references__query.md,42521d28a63d6761f1614d9b9811c27e7a559f60,14775,graphify/skills/agents/references/query.md,D,D8,D8/011
+tools/skillgen/expected/graphify__skills__opencode__references__query.md,42521d28a63d6761f1614d9b9811c27e7a559f60,14775,graphify/skills/agents/references/query.md,D,D8,D8/011
+tools/skillgen/expected/graphify__skills__pi__references__query.md,42521d28a63d6761f1614d9b9811c27e7a559f60,14775,graphify/skills/agents/references/query.md,D,D8,D8/011
+tools/skillgen/expected/graphify__skills__trae__references__query.md,42521d28a63d6761f1614d9b9811c27e7a559f60,14775,graphify/skills/agents/references/query.md,D,D8,D8/011
+tools/skillgen/expected/graphify__skills__vscode__references__query.md,42521d28a63d6761f1614d9b9811c27e7a559f60,14775,graphify/skills/agents/references/query.md,D,D8,D8/011
+tools/skillgen/expected/graphify__skills__windows__references__query.md,42521d28a63d6761f1614d9b9811c27e7a559f60,14775,graphify/skills/agents/references/query.md,D,D8,D8/011
+tools/skillgen/fragments/references/query/default.md,42521d28a63d6761f1614d9b9811c27e7a559f60,14775,graphify/skills/agents/references/query.md,D,D8,D8/011
+graphify/skills/agents/references/transcribe.md,b967f8379998b890945706b3c95fef23b2ec402f,3173,,D,D8,D8/011
+graphify/skills/amp/references/transcribe.md,b967f8379998b890945706b3c95fef23b2ec402f,3173,graphify/skills/agents/references/transcribe.md,D,D8,D8/011
+graphify/skills/claude/references/transcribe.md,b967f8379998b890945706b3c95fef23b2ec402f,3173,graphify/skills/agents/references/transcribe.md,D,D8,D8/011
+graphify/skills/claw/references/transcribe.md,b967f8379998b890945706b3c95fef23b2ec402f,3173,graphify/skills/agents/references/transcribe.md,D,D8,D8/011
+graphify/skills/codex/references/transcribe.md,b967f8379998b890945706b3c95fef23b2ec402f,3173,graphify/skills/agents/references/transcribe.md,D,D8,D8/011
+graphify/skills/copilot/references/transcribe.md,b967f8379998b890945706b3c95fef23b2ec402f,3173,graphify/skills/agents/references/transcribe.md,D,D8,D8/011
+graphify/skills/droid/references/transcribe.md,b967f8379998b890945706b3c95fef23b2ec402f,3173,graphify/skills/agents/references/transcribe.md,D,D8,D8/011
+graphify/skills/kilo/references/transcribe.md,b967f8379998b890945706b3c95fef23b2ec402f,3173,graphify/skills/agents/references/transcribe.md,D,D8,D8/011
+graphify/skills/kiro/references/transcribe.md,b967f8379998b890945706b3c95fef23b2ec402f,3173,graphify/skills/agents/references/transcribe.md,D,D8,D8/011
+graphify/skills/opencode/references/transcribe.md,b967f8379998b890945706b3c95fef23b2ec402f,3173,graphify/skills/agents/references/transcribe.md,D,D8,D8/011
+graphify/skills/pi/references/transcribe.md,b967f8379998b890945706b3c95fef23b2ec402f,3173,graphify/skills/agents/references/transcribe.md,D,D8,D8/011
+graphify/skills/trae/references/transcribe.md,b967f8379998b890945706b3c95fef23b2ec402f,3173,graphify/skills/agents/references/transcribe.md,D,D8,D8/011
+graphify/skills/vscode/references/transcribe.md,b967f8379998b890945706b3c95fef23b2ec402f,3173,graphify/skills/agents/references/transcribe.md,D,D8,D8/011
+graphify/skills/windows/references/transcribe.md,b967f8379998b890945706b3c95fef23b2ec402f,3173,graphify/skills/agents/references/transcribe.md,D,D8,D8/011
+tools/skillgen/expected/graphify__skills__agents__references__transcribe.md,b967f8379998b890945706b3c95fef23b2ec402f,3173,graphify/skills/agents/references/transcribe.md,D,D8,D8/011
+tools/skillgen/expected/graphify__skills__amp__references__transcribe.md,b967f8379998b890945706b3c95fef23b2ec402f,3173,graphify/skills/agents/references/transcribe.md,D,D8,D8/011
+tools/skillgen/expected/graphify__skills__claude__references__transcribe.md,b967f8379998b890945706b3c95fef23b2ec402f,3173,graphify/skills/agents/references/transcribe.md,D,D8,D8/011
+tools/skillgen/expected/graphify__skills__claw__references__transcribe.md,b967f8379998b890945706b3c95fef23b2ec402f,3173,graphify/skills/agents/references/transcribe.md,D,D8,D8/011
+tools/skillgen/expected/graphify__skills__codex__references__transcribe.md,b967f8379998b890945706b3c95fef23b2ec402f,3173,graphify/skills/agents/references/transcribe.md,D,D8,D8/011
+tools/skillgen/expected/graphify__skills__copilot__references__transcribe.md,b967f8379998b890945706b3c95fef23b2ec402f,3173,graphify/skills/agents/references/transcribe.md,D,D8,D8/011
+tools/skillgen/expected/graphify__skills__droid__references__transcribe.md,b967f8379998b890945706b3c95fef23b2ec402f,3173,graphify/skills/agents/references/transcribe.md,D,D8,D8/011
+tools/skillgen/expected/graphify__skills__kilo__references__transcribe.md,b967f8379998b890945706b3c95fef23b2ec402f,3173,graphify/skills/agents/references/transcribe.md,D,D8,D8/011
+tools/skillgen/expected/graphify__skills__kiro__references__transcribe.md,b967f8379998b890945706b3c95fef23b2ec402f,3173,graphify/skills/agents/references/transcribe.md,D,D8,D8/011
+tools/skillgen/expected/graphify__skills__opencode__references__transcribe.md,b967f8379998b890945706b3c95fef23b2ec402f,3173,graphify/skills/agents/references/transcribe.md,D,D8,D8/011
+tools/skillgen/expected/graphify__skills__pi__references__transcribe.md,b967f8379998b890945706b3c95fef23b2ec402f,3173,graphify/skills/agents/references/transcribe.md,D,D8,D8/011
+tools/skillgen/expected/graphify__skills__trae__references__transcribe.md,b967f8379998b890945706b3c95fef23b2ec402f,3173,graphify/skills/agents/references/transcribe.md,D,D8,D8/011
+tools/skillgen/expected/graphify__skills__vscode__references__transcribe.md,b967f8379998b890945706b3c95fef23b2ec402f,3173,graphify/skills/agents/references/transcribe.md,D,D8,D8/011
+tools/skillgen/expected/graphify__skills__windows__references__transcribe.md,b967f8379998b890945706b3c95fef23b2ec402f,3173,graphify/skills/agents/references/transcribe.md,D,D8,D8/011
+tools/skillgen/fragments/references/shared/transcribe.md,b967f8379998b890945706b3c95fef23b2ec402f,3173,graphify/skills/agents/references/transcribe.md,D,D8,D8/011
+graphify/skills/agents/references/update.md,3e7782f2c72d535311e3df5b56ecfba355c3724d,12335,,D,D8,D8/012
+graphify/skills/amp/references/update.md,3e7782f2c72d535311e3df5b56ecfba355c3724d,12335,graphify/skills/agents/references/update.md,D,D8,D8/012
+graphify/skills/claude/references/update.md,3e7782f2c72d535311e3df5b56ecfba355c3724d,12335,graphify/skills/agents/references/update.md,D,D8,D8/012
+graphify/skills/claw/references/update.md,3e7782f2c72d535311e3df5b56ecfba355c3724d,12335,graphify/skills/agents/references/update.md,D,D8,D8/012
+graphify/skills/codex/references/update.md,3e7782f2c72d535311e3df5b56ecfba355c3724d,12335,graphify/skills/agents/references/update.md,D,D8,D8/012
+graphify/skills/copilot/references/update.md,3e7782f2c72d535311e3df5b56ecfba355c3724d,12335,graphify/skills/agents/references/update.md,D,D8,D8/012
+graphify/skills/droid/references/update.md,3e7782f2c72d535311e3df5b56ecfba355c3724d,12335,graphify/skills/agents/references/update.md,D,D8,D8/012
+graphify/skills/kilo/references/update.md,3e7782f2c72d535311e3df5b56ecfba355c3724d,12335,graphify/skills/agents/references/update.md,D,D8,D8/012
+graphify/skills/kiro/references/update.md,3e7782f2c72d535311e3df5b56ecfba355c3724d,12335,graphify/skills/agents/references/update.md,D,D8,D8/012
+graphify/skills/opencode/references/update.md,3e7782f2c72d535311e3df5b56ecfba355c3724d,12335,graphify/skills/agents/references/update.md,D,D8,D8/012
+graphify/skills/pi/references/update.md,3e7782f2c72d535311e3df5b56ecfba355c3724d,12335,graphify/skills/agents/references/update.md,D,D8,D8/012
+graphify/skills/trae/references/update.md,3e7782f2c72d535311e3df5b56ecfba355c3724d,12335,graphify/skills/agents/references/update.md,D,D8,D8/012
+graphify/skills/vscode/references/update.md,3e7782f2c72d535311e3df5b56ecfba355c3724d,12335,graphify/skills/agents/references/update.md,D,D8,D8/012
+graphify/skills/windows/references/update.md,3e7782f2c72d535311e3df5b56ecfba355c3724d,12335,graphify/skills/agents/references/update.md,D,D8,D8/012
+tools/skillgen/expected/graphify__skills__agents__references__update.md,3e7782f2c72d535311e3df5b56ecfba355c3724d,12335,graphify/skills/agents/references/update.md,D,D8,D8/012
+tools/skillgen/expected/graphify__skills__amp__references__update.md,3e7782f2c72d535311e3df5b56ecfba355c3724d,12335,graphify/skills/agents/references/update.md,D,D8,D8/012
+tools/skillgen/expected/graphify__skills__claude__references__update.md,3e7782f2c72d535311e3df5b56ecfba355c3724d,12335,graphify/skills/agents/references/update.md,D,D8,D8/012
+tools/skillgen/expected/graphify__skills__claw__references__update.md,3e7782f2c72d535311e3df5b56ecfba355c3724d,12335,graphify/skills/agents/references/update.md,D,D8,D8/012
+tools/skillgen/expected/graphify__skills__codex__references__update.md,3e7782f2c72d535311e3df5b56ecfba355c3724d,12335,graphify/skills/agents/references/update.md,D,D8,D8/012
+tools/skillgen/expected/graphify__skills__copilot__references__update.md,3e7782f2c72d535311e3df5b56ecfba355c3724d,12335,graphify/skills/agents/references/update.md,D,D8,D8/012
+tools/skillgen/expected/graphify__skills__droid__references__update.md,3e7782f2c72d535311e3df5b56ecfba355c3724d,12335,graphify/skills/agents/references/update.md,D,D8,D8/012
+tools/skillgen/expected/graphify__skills__kilo__references__update.md,3e7782f2c72d535311e3df5b56ecfba355c3724d,12335,graphify/skills/agents/references/update.md,D,D8,D8/012
+tools/skillgen/expected/graphify__skills__kiro__references__update.md,3e7782f2c72d535311e3df5b56ecfba355c3724d,12335,graphify/skills/agents/references/update.md,D,D8,D8/012
+tools/skillgen/expected/graphify__skills__opencode__references__update.md,3e7782f2c72d535311e3df5b56ecfba355c3724d,12335,graphify/skills/agents/references/update.md,D,D8,D8/012
+tools/skillgen/expected/graphify__skills__pi__references__update.md,3e7782f2c72d535311e3df5b56ecfba355c3724d,12335,graphify/skills/agents/references/update.md,D,D8,D8/012
+tools/skillgen/expected/graphify__skills__trae__references__update.md,3e7782f2c72d535311e3df5b56ecfba355c3724d,12335,graphify/skills/agents/references/update.md,D,D8,D8/012
+tools/skillgen/expected/graphify__skills__vscode__references__update.md,3e7782f2c72d535311e3df5b56ecfba355c3724d,12335,graphify/skills/agents/references/update.md,D,D8,D8/012
+tools/skillgen/expected/graphify__skills__windows__references__update.md,3e7782f2c72d535311e3df5b56ecfba355c3724d,12335,graphify/skills/agents/references/update.md,D,D8,D8/012
+tools/skillgen/fragments/references/shared/update.md,3e7782f2c72d535311e3df5b56ecfba355c3724d,12335,graphify/skills/agents/references/update.md,D,D8,D8/012
+graphify/skills/amp/references/hooks.md,af1ac7e720938bde6502567b298ccb28076ef9a4,1250,,D,D8,D8/012
+tools/skillgen/expected/graphify__skills__amp__references__hooks.md,af1ac7e720938bde6502567b298ccb28076ef9a4,1250,graphify/skills/amp/references/hooks.md,D,D8,D8/012
+graphify/skills/claude/references/hooks.md,fec29d3510841962f5ed41005a274358c0359d7d,2109,,D,D8,D8/012
+graphify/skills/claw/references/hooks.md,fec29d3510841962f5ed41005a274358c0359d7d,2109,graphify/skills/claude/references/hooks.md,D,D8,D8/012
+graphify/skills/codex/references/hooks.md,fec29d3510841962f5ed41005a274358c0359d7d,2109,graphify/skills/claude/references/hooks.md,D,D8,D8/012
+graphify/skills/copilot/references/hooks.md,fec29d3510841962f5ed41005a274358c0359d7d,2109,graphify/skills/claude/references/hooks.md,D,D8,D8/012
+graphify/skills/droid/references/hooks.md,fec29d3510841962f5ed41005a274358c0359d7d,2109,graphify/skills/claude/references/hooks.md,D,D8,D8/012
+graphify/skills/kilo/references/hooks.md,fec29d3510841962f5ed41005a274358c0359d7d,2109,graphify/skills/claude/references/hooks.md,D,D8,D8/012
+graphify/skills/kiro/references/hooks.md,fec29d3510841962f5ed41005a274358c0359d7d,2109,graphify/skills/claude/references/hooks.md,D,D8,D8/012
+graphify/skills/opencode/references/hooks.md,fec29d3510841962f5ed41005a274358c0359d7d,2109,graphify/skills/claude/references/hooks.md,D,D8,D8/012
+graphify/skills/pi/references/hooks.md,fec29d3510841962f5ed41005a274358c0359d7d,2109,graphify/skills/claude/references/hooks.md,D,D8,D8/012
+graphify/skills/vscode/references/hooks.md,fec29d3510841962f5ed41005a274358c0359d7d,2109,graphify/skills/claude/references/hooks.md,D,D8,D8/012
+graphify/skills/windows/references/hooks.md,fec29d3510841962f5ed41005a274358c0359d7d,2109,graphify/skills/claude/references/hooks.md,D,D8,D8/012
+tools/skillgen/expected/graphify__skills__claude__references__hooks.md,fec29d3510841962f5ed41005a274358c0359d7d,2109,graphify/skills/claude/references/hooks.md,D,D8,D8/012
+tools/skillgen/expected/graphify__skills__claw__references__hooks.md,fec29d3510841962f5ed41005a274358c0359d7d,2109,graphify/skills/claude/references/hooks.md,D,D8,D8/012
+tools/skillgen/expected/graphify__skills__codex__references__hooks.md,fec29d3510841962f5ed41005a274358c0359d7d,2109,graphify/skills/claude/references/hooks.md,D,D8,D8/012
+tools/skillgen/expected/graphify__skills__copilot__references__hooks.md,fec29d3510841962f5ed41005a274358c0359d7d,2109,graphify/skills/claude/references/hooks.md,D,D8,D8/012
+tools/skillgen/expected/graphify__skills__droid__references__hooks.md,fec29d3510841962f5ed41005a274358c0359d7d,2109,graphify/skills/claude/references/hooks.md,D,D8,D8/012
+tools/skillgen/expected/graphify__skills__kilo__references__hooks.md,fec29d3510841962f5ed41005a274358c0359d7d,2109,graphify/skills/claude/references/hooks.md,D,D8,D8/012
+tools/skillgen/expected/graphify__skills__kiro__references__hooks.md,fec29d3510841962f5ed41005a274358c0359d7d,2109,graphify/skills/claude/references/hooks.md,D,D8,D8/012
+tools/skillgen/expected/graphify__skills__opencode__references__hooks.md,fec29d3510841962f5ed41005a274358c0359d7d,2109,graphify/skills/claude/references/hooks.md,D,D8,D8/012
+tools/skillgen/expected/graphify__skills__pi__references__hooks.md,fec29d3510841962f5ed41005a274358c0359d7d,2109,graphify/skills/claude/references/hooks.md,D,D8,D8/012
+tools/skillgen/expected/graphify__skills__vscode__references__hooks.md,fec29d3510841962f5ed41005a274358c0359d7d,2109,graphify/skills/claude/references/hooks.md,D,D8,D8/012
+tools/skillgen/expected/graphify__skills__windows__references__hooks.md,fec29d3510841962f5ed41005a274358c0359d7d,2109,graphify/skills/claude/references/hooks.md,D,D8,D8/012
+tools/skillgen/fragments/references/shared/hooks.md,fec29d3510841962f5ed41005a274358c0359d7d,2109,graphify/skills/claude/references/hooks.md,D,D8,D8/012
+graphify/skills/claw/references/extraction-spec.md,2534f97ee2efb9bc73c0188288c6720ae9324463,5606,,D,D8,D8/012
+graphify/skills/kiro/references/extraction-spec.md,2534f97ee2efb9bc73c0188288c6720ae9324463,5606,graphify/skills/claw/references/extraction-spec.md,D,D8,D8/012
+graphify/skills/pi/references/extraction-spec.md,2534f97ee2efb9bc73c0188288c6720ae9324463,5606,graphify/skills/claw/references/extraction-spec.md,D,D8,D8/012
+tools/skillgen/expected/graphify__skills__claw__references__extraction-spec.md,2534f97ee2efb9bc73c0188288c6720ae9324463,5606,graphify/skills/claw/references/extraction-spec.md,D,D8,D8/012
+tools/skillgen/expected/graphify__skills__kiro__references__extraction-spec.md,2534f97ee2efb9bc73c0188288c6720ae9324463,5606,graphify/skills/claw/references/extraction-spec.md,D,D8,D8/012
+tools/skillgen/expected/graphify__skills__pi__references__extraction-spec.md,2534f97ee2efb9bc73c0188288c6720ae9324463,5606,graphify/skills/claw/references/extraction-spec.md,D,D8,D8/012
+tools/skillgen/fragments/references/shared/extraction-spec-compact-disk.md,2534f97ee2efb9bc73c0188288c6720ae9324463,5606,graphify/skills/claw/references/extraction-spec.md,D,D8,D8/012
+graphify/skills/codex/references/extraction-spec.md,2a2803b3665761b15de66e87fd641f6130a6c129,5423,,D,D8,D8/012
+tools/skillgen/expected/graphify__skills__codex__references__extraction-spec.md,2a2803b3665761b15de66e87fd641f6130a6c129,5423,graphify/skills/codex/references/extraction-spec.md,D,D8,D8/012
+tools/skillgen/fragments/references/shared/extraction-spec-compact.md,2a2803b3665761b15de66e87fd641f6130a6c129,5423,graphify/skills/codex/references/extraction-spec.md,D,D8,D8/012
+graphify/skills/trae/references/hooks.md,7c04d5b0b873456b002390d9015c2e74591986b3,1594,,D,D8,D8/012
+tools/skillgen/expected/graphify__skills__trae__references__hooks.md,7c04d5b0b873456b002390d9015c2e74591986b3,1594,graphify/skills/trae/references/hooks.md,D,D8,D8/012
+graphify/swift_dispatch.py,74ff6b640ac7204f85b6e4cb9c810b42796c9853,2364,,B,B02,B02/015
+graphify/symbol_resolution.py,168bba5779346b4d4658cba2767e0d6672166573,28393,,D,D8,D8/012 D8/013
+graphify/transcribe.py,8e45bcaa2f520a6f6da66f59d4e892652b1f6586,6372,,S2,S2,S2/014
+graphify/tree_html.py,6aa557b16c39c8ca16652994d054fa449c8864fb,28860,,D,D8,D8/013 D8/014
+graphify/validate.py,c4280970197fcbad540a490c29f6432c5a9e4f5a,4234,,D,D8,D8/014
+graphify/watch.py,d844f4d0925ced0503c000bc8c31d1226d9b18c6,185898,,S3,S3,S3/014 S3/015 S3/016 S3/017 S3/018
+graphify/wiki.py,10e953675c8a6a6d06b2ce90c28c09ffd8ecc797,22915,,D,D8,D8/014
+pyproject.toml,87f29ddc3cbe44bbad65cf7764e86356edbfd2b8,10207,,S1,S1,S1/012
+scripts/gen_demo_path.py,acb0dae7872c69876216b7cb0b32bc414a38944e,10789,,L,L3,L3/010
+tests/__init__.py,e69de29bb2d1d6434b8b29ae775ad8c2e48c5391,0,,B,B02,B02/015
+tools/__init__.py,e69de29bb2d1d6434b8b29ae775ad8c2e48c5391,0,tests/__init__.py,B,B02,B02/015
+tools/skillgen/__init__.py,e69de29bb2d1d6434b8b29ae775ad8c2e48c5391,0,tests/__init__.py,B,B02,B02/015
+tests/bench_extract.py,b618d3d7882586fb21ba50cdff3a65367b5f8e21,4952,,B,B02,B02/015
+tests/bench_query_scoring.py,68e6ce4be69fe24100f6e38c13ee9af1c51227d7,11422,,B,B02,B02/015
+tests/conftest.py,b3c4f70530ac749435dbad67f4241157e41a93bb,4969,,B,B02,B02/015
+tests/csharp_extension_harness.py,628f9b3a250a44aa67ddc39cc6331befda3cb433,40345,,B,B02,B02/015 B02/016
+tests/fixtures/4978/expected_nodes.json,06a3cd234f466d8a202e4d44928cf1fc5827264e,916,,B,B02,B02/016
+tests/fixtures/barrel_reexport.ts,8367f69e0ef4df4302f235c6f10e3b847bf0592e,348,,B,B02,B02/017
+tests/fixtures/bindings.xaml,2e60d6bd43ddd916c41b864ad79dab687de34f9a,674,,B,B02,B02/017
+tests/fixtures/cjs_require.js,92650b1dec31b1a9db1494c40f4f99125cdbc942,299,,B,B02,B02/017
+tests/fixtures/cookieHelpers.ts,64e31ce2060fe92da23b263128584ded24282b6d,133,,B,B02,B02/017
+tests/fixtures/cpp_logger/a/Logger.cpp,ee35493ee3fd2aee18ffa1802b710dc63a14b030,43,,B,B02,B02/017
+tests/fixtures/cpp_logger/b/Logger.cpp,ee35493ee3fd2aee18ffa1802b710dc63a14b030,43,tests/fixtures/cpp_logger/a/Logger.cpp,B,B02,B02/017
+tests/fixtures/cpp_logger/a/Logger.h,d858d8007c2d6fb153e6d83ebf16179820c67692,42,,B,B02,B02/017
+tests/fixtures/cpp_logger/b/Logger.h,d858d8007c2d6fb153e6d83ebf16179820c67692,42,tests/fixtures/cpp_logger/a/Logger.h,B,B02,B02/017
+tests/fixtures/cpp_paired/Foo.cpp,0fc283e0501c2d14d54f7d475ddaec26b184634e,53,,B,B02,B02/017
+tests/fixtures/cpp_paired/Foo.h,60998e935f78e90c8a9dc3c6c7ef27a04da4491d,91,,B,B02,B02/017
+tests/fixtures/cpp_paired/Main.cpp,265c19368294d4c2672a372c049ba5d4075c0098,71,,B,B02,B02/017
+tests/fixtures/cpp_samedir/Alpha.h,c9875916af352f0999aee76f290e0b054a3e9291,37,,B,B02,B02/017
+tests/fixtures/cpp_samedir/Beta.h,7ba422cd9b79a7a2607cb542ea2570fe3e26daac,37,,B,B02,B02/017
+tests/fixtures/cpp_samedir/plain.h,ef9517466098b2192859bef677ca114f076005f1,96,,B,B02,B02/017
+tests/fixtures/crate_a/Cargo.toml,0e16f881c0fe8b6f795ebc1d35e9665153a71d58,62,,B,B02,B02/017
+tests/fixtures/crate_a/src/lib.rs,6c2a794636efa0b6184d2140367d8f5bdfbcfd7a,89,,B,B02,B02/017
+tests/fixtures/crate_b/Cargo.toml,e39d248d0aacdc06ec1aa2770a13bd991cfe57a5,62,,B,B02,B02/017
+tests/fixtures/crate_b/src/lib.rs,7001a723a7fc021fbad6d44806a2827a604083ec,534,,B,B02,B02/017
+tests/fixtures/delphi_form/Sample.dfm,360f091295e22b8ec759dbe9f33999472bc5e4e5,144,,B,B02,B02/017
+tests/fixtures/delphi_form/Sample.pas,ed1ebefbd3653661953012d49f1d8075f1a93fb7,280,,B,B02,B02/017
+tests/fixtures/deploy_guide.md,445c1875e4feeed2fafec9f47433fb381f25f8c2,521,,B,B02,B02/017
+tests/fixtures/dynamic_import.ts,8e98c1d508111e75eb41f0b12803f97ab0af67b3,1057,,B,B02,B02/017
+tests/fixtures/extraction.json,40afee0b079237e21862fc70fc7cc165663fcf46,1235,,B,B02,B02/017
+tests/fixtures/graphify-out/cache/4722d67ec49f51710650249b1f865b6a748d91fb6805f3d385a99143eb950fe7.json,1ab032a7c1a200850078deca38756867da1fb4d3,2515,,B,B02,B02/017
+tests/fixtures/graphify-out/cache/6a640d202b5f9a6d68f7b5eb2c05e708d85ba9ee43ad0ff271badfc966a1c06c.json,2a915474d6c71b877e6485347a7610f3e8ebf465,2815,,B,B02,B02/017
+tests/fixtures/graphify-out/cache/a3c5220ed581781e1dc2f4e9a82eeee366881554ec9fce57823e124f7aecd348.json,bf15ccd9d0caef2a4301e80dba3b156bed510647,4512,,B,B02,B02/017
+tests/fixtures/graphify-out/cache/f5916299213779311e7162e90a1613bca095b5372f5d269c5941b5237af2d020.json,e5e0bbb358598803b87a07298b7ceaea1edf2e20,2667,,B,B02,B02/017
+tests/fixtures/graphify-out/cache/f82cddb8aad2615e0381e57b80857edfd3345213967c815de87e09be80f9f12a.json,3068ada3e161f5dfcadc9ed4bb15b51d8aab895c,1329,,B,B02,B02/017
+tests/fixtures/new_languages/sample.cob,357cfdce7273ce1ebac7741e85b326264d69f0d7,202,,B,B02,B02/017
+tests/fixtures/new_languages/sample.erl,3d0a7bb86682fa7433f797ae984f69280577ae75,71,,B,B02,B02/017
+tests/fixtures/new_languages/sample.r,adf78dcd7ae075c58419037993eefcc4fbd910e3,57,,B,B02,B02/017
+tests/fixtures/new_languages/sample.sol,b1d14e5e9d9ddc778df0a86bf1ec25da61900c75,133,,B,B02,B02/017
+tests/fixtures/new_languages/sample.vb,ee67dcd74a998688806ac01a8c3a063a498a73c7,179,,B,B02,B02/017
+tests/fixtures/objc_mixed/Bridging-Header.h,a46f910ed4d52d67fc1814ef90ed01c30c83da02,19,,B,B02,B02/017
+tests/fixtures/objc_mixed/Widget.h,6544b015bc70f1c2b016d3a2e1372a8d22f10d6a,56,,B,B02,B02/017
+tests/fixtures/objc_mixed/Widget.m,fe4fff3bed80b40e3b3ec9e23fe646ad1d6b4ba2,107,,B,B02,B02/017
+tests/fixtures/objc_mixed/WidgetExtras.swift,39501b819d6371000453b3bc72a2e43eb76dcfe1,83,,B,B02,B02/017
+tests/fixtures/pascal_base_class/FillAkord.pas,7c68e5139f70e5dfdc3287ab4d5f24df6ed3019b,181,,B,B02,B02/017
+tests/fixtures/pascal_base_class/XFormP.pas,469433291b27942e9c76e06b4a1ef47fcfab8404,144,,B,B02,B02/017
+tests/fixtures/pascal_cross_file/BaseGadget.pas,66116e6ab753f85690f570844d6726fcb644c23e,188,,B,B02,B02/017
+tests/fixtures/pascal_cross_file/DerivedGadget.pas,863870ced2762e1431966401b87f66894ce70459,205,,B,B02,B02/017
+tests/fixtures/pascal_cross_file/OtherGadget.pas,d13dd06930440a5cdefd85cce0eeb7ecc034fbbf,196,,B,B02,B02/017
+tests/fixtures/pascal_parse_recovery/Guarded.pas,8b4fed933220493e4c687e892257773ac80fe163,374,,B,B02,B02/017
+tests/fixtures/pascal_parse_recovery/SqlBuilder.pas,7b7967a0ebe2824fce7c34c9ae054ca67eb79211,534,,B,B02,B02/017
+tests/fixtures/pascal_singleton/Caller.pas,ddde280fc6b9565336b8a8dc9cdf1b29d5fb64bc,429,,B,B02,B02/017
+tests/fixtures/pascal_singleton/Data.pas,7f2696e4f2175acbbc2d3830e12b41796d0d14b2,561,,B,B02,B02/017
+tests/fixtures/pascal_singleton/Stranger.pas,8db5750005d50429fd55e9f5a1aba5426d0cd15d,163,,B,B02,B02/017
+tests/fixtures/robot_keywords.resource,11b092533aa1d43a05ca9126710337ba6e7a23f2,344,,B,B02,B02/017
+tests/fixtures/sample.c,256dadaeee7d73aead3cea8f827c4faabe691179,787,,B,B02,B02/017
+tests/fixtures/sample.cls,156ddc7e20e4ba4203696c4146b79f77ec40cc4f,1637,,B,B02,B02/017
+tests/fixtures/sample.cpp,aa68e6ec7b1a302d67adf3808fff8390c0efdbac,1181,,B,B02,B02/017
+tests/fixtures/sample.cs,729651c61ea10dd427fe07f1f157f379e8843384,1112,,B,B02,B02/017
+tests/fixtures/sample.csproj,75b3ecc6b3e688139c3b89cc168f4a853281bb58,704,,B,B02,B02/017
+tests/fixtures/sample.cu,29515c0742a0ca27bd31438396b8268279dd6fa8,568,,B,B02,B02/018
+tests/fixtures/sample.dfm,50540a53ff9c1c357beebfb92c82343fe27dea60,548,,B,B02,B02/018
+tests/fixtures/sample.dm,1efd2b5d897839e7977ad06897066523fa273399,562,,B,B02,B02/018
+tests/fixtures/sample.dmf,096d9b19caf603196719160cc80e1bbd910b96be,898,,B,B02,B02/018
+tests/fixtures/sample.dmi,9e4c792ee70aa5949265ce199829781f3b0b55b6,227,,B,B02,B02/018
+tests/fixtures/sample.dmm,b2b94f7656da852ab0b6247fd09996be90b26ff8,309,,B,B02,B02/018
+tests/fixtures/sample.ex,fb85745f461488b70c61cd48aa6ce57e04fc9039,499,,B,B02,B02/018
+tests/fixtures/sample.f90,e409850281d0acc869adba1f08b2ee4c94a0036b,1361,,B,B02,B02/018
+tests/fixtures/sample.go,728aa35c4ac3881d20899d700c438413cfbeec21,745,,B,B02,B02/018
+tests/fixtures/sample.groovy,2e8bddc49912402a4f2797e112e5ca3fbdf6faa6,656,,B,B02,B02/018
+tests/fixtures/sample.java,792fdf945b75e89f107f9a94e01faec2c836bb6f,992,,B,B02,B02/018
+tests/fixtures/sample.jl,0c1b66a1491a3fc0d36b3b70b890680dba53b308,501,,B,B02,B02/018
+tests/fixtures/sample.json,765816ccc85277b2785ec63bfeead78ac82317fa,265,,B,B02,B02/018
+tests/fixtures/sample.kt,07f6269b9ec960aca03fab73ce4334b5884d19d0,1018,,B,B02,B02/018
+tests/fixtures/sample.lfm,613a4f9052a3d1af526a0c65f5797230e408610b,555,,B,B02,B02/018
+tests/fixtures/sample.lisp,4dc2dc417df872b8250f95a7b0aaf04ff527cb9e,1953,,B,B02,B02/018
+tests/fixtures/sample.lpk,52dd08293252a205e2c9d458dd4f8bd669876b35,609,,B,B02,B02/018
+tests/fixtures/sample.luau,7bce440af807e3b7fcb2cfd9027aec34fa032acc,664,,B,B02,B02/018
+tests/fixtures/sample.m,4fd0f9374cc13de8974c10691d39dff7e382a7f5,711,,B,B02,B02/018
+tests/fixtures/sample.mcp.json,ba690f137023dc1c9987e6d0a32c90be9d85129a,622,,B,B02,B02/018
+tests/fixtures/sample.md,76cb4b47ad246fda6573cb498306e57532cd75ed,204,,B,B02,B02/018
+tests/fixtures/sample.metal,6ab3322edc665c414559d4db5944bee2ff6920d8,392,,B,B02,B02/018
+tests/fixtures/sample.pas,a365d7845c1f617085b47fbe5dab9d150254d1cc,1046,,B,B02,B02/018
+tests/fixtures/sample.php,5ff337af47ce73c6956ff9f6db30a2b8e93db14e,1329,,B,B02,B02/018
+tests/fixtures/sample.ps1,43c27fd7dcb4845e9baac4f72c4dcfafd9584dab,831,,B,B02,B02/018
+tests/fixtures/sample.psd1,21a90be3bbb8487c1d239f75e7b50b5f4b5838fb,474,,B,B02,B02/018
+tests/fixtures/sample.py,9dd9f2a3ed67acec20594e834c021e03fc5d98be,132,,B,B02,B02/018
+tests/fixtures/sample.razor,a2d79bb350187dd06d9465d76a2848fd3820241d,800,,B,B02,B02/018
+tests/fixtures/sample.rb,cd2e4b028def171f9e37aebfda8e11aef19372cf,441,,B,B02,B02/018
+tests/fixtures/sample.robot,c4be7fc21879d7015db925eb978da75861bef84c,831,,B,B02,B02/018
+tests/fixtures/sample.rs,877c0d4f21b96dea4a7637afb0213e3a0db2cc81,1205,,B,B02,B02/018
+tests/fixtures/sample.scala,8a35888d8eab7e41d619077f7a6e07b0e1b7bffd,660,,B,B02,B02/018
+tests/fixtures/sample.sh,165efd4b1fecd3270c24ef5eeb7879cadf64f473,301,,B,B02,B02/018
+tests/fixtures/sample.sln,8bbc1adf20c67dac1f1305192ca9deb81ffc8db3,907,,B,B02,B02/018
+tests/fixtures/sample.slnx,7f57a5ab74629be36ca8ab3f0c48430807b7df73,231,,B,B02,B02/018
+tests/fixtures/sample.sql,4a59656e5c8e8d44066c1f6d2160336e33c220b7,417,,B,B02,B02/018
+tests/fixtures/sample.sv,59419a0b4c6db659f872136287094d61afa72c29,777,,B,B02,B02/018
+tests/fixtures/sample.swift,64d5a42eb552af870690bc82a42e6bd610e1d510,1387,,B,B02,B02/018
+tests/fixtures/sample.trigger,d24a0f140de3601cf1da334243019f89a8df597c,300,,B,B02,B02/018
+tests/fixtures/sample.ts,7d20d2aa1688c6bbb79f35f6b9a3a0960aebca8b,517,,B,B02,B02/018
+tests/fixtures/sample.tsx,8a35362ed091539e4581a66ca6c3e16db4f3e023,361,,B,B03,B03/001
+tests/fixtures/sample.xaml,21c7c9e8a134db741d1211a9299d02c40237e048,469,,B,B03,B03/001
+tests/fixtures/sample.xaml.cs,d32a2206e7844a55b369577e60ab1e8b9a640fcd,375,,B,B03,B03/001
+tests/fixtures/sample.zig,1a05c4afd7c2bc9c21dbb823930fb75000bfe58e,612,,B,B03,B03/001
+tests/fixtures/sample_alter_fk.sql,60d884a655b45d0c0308bdacaecbcded792e4795,259,,B,B03,B03/001
+tests/fixtures/sample_calls.py,e4550e29680c6eda5ff986dd8ce8fbeb3ba9dcdf,517,,B,B03,B03/001
+tests/fixtures/sample_cte.sql,af1609fadc3671f3307a7bc26134de8390418c16,199,,B,B03,B03/001
+tests/fixtures/sample_doctest.cpp,4f8f7cc4b74f76af30ee4fd7ba85d6a0612b666f,313,,B,B03,B03/001
+tests/fixtures/sample_import.ps1,944233ae40b849fb98254d80bcd78e779ce76f7e,168,,B,B03,B03/001
+tests/fixtures/sample_inherited.dfm,584da662b5a0f7f517fac0efda41835103fc124a,241,,B,B03,B03/001
+tests/fixtures/sample_inherited.lfm,584da662b5a0f7f517fac0efda41835103fc124a,241,tests/fixtures/sample_inherited.dfm,B,B03,B03/001
+tests/fixtures/sample_php_config.php,48800c01b4692225e1b62346593632541810fd87,381,,B,B03,B03/001
+tests/fixtures/sample_php_container.php,dcc1f1ee8c3b4e367843b9098ebbea69a5d02364,330,,B,B03,B03/001
+tests/fixtures/sample_php_listen.php,fdb95ca0172c97abb3d9ee6576da5af6a1381bf3,399,,B,B03,B03/001
+tests/fixtures/sample_php_static_prop.php,999b79ca0b3b4005c0324be556680020d925b139,353,,B,B03,B03/001
+tests/fixtures/sample_plpgsql.sql,de2ef1617dfe23ed9fbd50f5d16c6cbe28dbe464,538,,B,B03,B03/001
+tests/fixtures/sample_plpgsql_quoted.sql,a15d4f9c56e6573918e8d64353b2b77b88c63fd7,1592,,B,B03,B03/001
+tests/fixtures/sample_preprocessed.F90,3066c76c5609b799b7d08fa32ecdf65aa48f1404,256,,B,B03,B03/001
+tests/fixtures/sample_record_methods.pas,84e171f27c200c6d2228cb482adbab6f8bd00940,334,,B,B03,B03/001
+tests/fixtures/sample_schema_qualified.sql,c8cf0f0cc759e91d2ee326a9a4f54fd2af9b8c7f,325,,B,B03,B03/001
+tests/fixtures/sample_scoped_calls.pas,66ebc53f42160ebbe8cd3b9f2e260e82d51a4f91,744,,B,B03,B03/001
+tests/fixtures/sample_spock.groovy,f3c4751e817cf2d1d7f60bc07c77d0ac2818fc4e,771,,B,B03,B03/001
+tests/fixtures/sample_transaction.sql,291ff6e9e7e45f2e73533ee78db3ad738d93991a,195,,B,B03,B03/001
+tests/fixtures/sample_tsconfig.json,7f5e97e78e0097832f0fe085e00f3c8fdd9217b4,194,,B,B03,B03/001
+tests/fixtures/storageHelpers.ts,e16ce0b84a8d73b54cd489642f1b183bec9ea4a2,145,,B,B03,B03/001
+tests/fixtures/swift_cross_file/Foo+Ext.swift,74fabeb39484c0d48cc83ca62328e43f670741f4,36,,B,B03,B03/001
+tests/fixtures/swift_cross_file/Foo.swift,b71ab60cda1e075971cd9ec52e0e5f890ea4c121,32,,B,B03,B03/001
+tests/fixtures/typescript_advanced.ts,076d10b520ca5903c231a32abe5b5b86251cc192,1978,,B,B03,B03/001
+tests/fixtures/urlHelpers.ts,f78b10db2fb8e984b80cd02365d3a9572493e5ca,164,,B,B03,B03/001
+tests/fixtures/xaml_viewmodel/App.csproj,e97c68e1c010fce1493e50f53a50cc179ce3d5cf,136,,B,B03,B03/001
+tests/fixtures/xaml_viewmodel/ViewModels/DesignViewModel.cs,8dacb2b894c7f9d0d5509442ed23a6ee03dee316,75,,B,B03,B03/001
+tests/fixtures/xaml_viewmodel/ViewModels/MainViewModel.cs,cdc489c5ee40b40b1ad90d711cb283969eccacd0,73,,B,B03,B03/001
+tests/fixtures/xaml_viewmodel/ViewModels/PrismOrderViewModel.cs,2d2a0d8939c52700b6d105c7bb181e61124e153a,65,,B,B03,B03/001
+tests/fixtures/xaml_viewmodel/ViewModels/SettingsViewModel.cs,2b9950ddce295694a769e741973e8cff7a8d6cc8,77,,B,B03,B03/001
+tests/fixtures/xaml_viewmodel/ViewModels/ToolkitViewModel.cs,6fb9d4fd76c352d4ab2937d9c316bbf58603f7b1,561,,B,B03,B03/001
+tests/fixtures/xaml_viewmodel/Views/DesignView.xaml,91a43b5ca7477b2ee42298c5a256f078439769a1,415,,B,B03,B03/001
+tests/fixtures/xaml_viewmodel/Views/ExplicitMainWindow.xaml,607d77a007a746b6c34361940f0c4acf00cff759,324,,B,B03,B03/001
+tests/fixtures/xaml_viewmodel/Views/PrismOrderView.xaml,8eb98d4e7963686e04996043f40eb0a801671a40,221,,B,B03,B03/001
+tests/fixtures/xaml_viewmodel/Views/SettingsView.xaml,b07071f0de6c10920177c4a5dffdd8eae0f08a7f,217,,B,B03,B03/001
+tests/fixtures/xaml_viewmodel/Views/ToolkitView.xaml,7587d395fa2422e27f4d0855097e920a5b4c0c43,829,,B,B03,B03/001
+tests/pi.test.ts,33e0f74d3ab70c51dddda03a6f50ca75c771efb3,18379,,B,B03,B03/001 B03/002
+tests/test_4874_jvm_resolution.py,1f827f79a1e595e108fe33063b6f9cb9fc954708,8297,,B,B03,B03/002
+tests/test_4909_reference_binding_scale.py,9a24e2488ed7a444788c4e7d57e84da81887ca76,2878,,B,B03,B03/002
+tests/test_4978_reconcile_cost.py,e365f281771ebdee28a5e95aba81ce793ebe6ab2,18246,,B,B03,B03/002
+tests/test_4992_ts_import_types.py,19a49dd142bffa12464b5e98ddc9f668bce548d4,2836,,B,B03,B03/002
+tests/test_5072_splittable_under_cap_retry.py,9a96a5279198ec4b81b834c9c73bf61e7943d07e,3458,,B,B03,B03/002
+tests/test_affected_cli.py,b9fb7d6f9fc28ba02aa4d0cc9accccc06d063772,17257,,B,B03,B03/003
+tests/test_affected_defines.py,72dd3a3c2aceed829a866bb11b97a6f742af546b,7413,,B,B03,B03/003
+tests/test_affected_member_seed.py,4202ed7ebe001c942be533262279eceebf4e5cff,3211,,B,B03,B03/003
+tests/test_affected_overrides.py,b86c28d3fc265b7072d7d5c12245299aad919918,10904,,B,B03,B03/003
+tests/test_affected_path_file_node.py,4b026a78672fac9e4f3179de319e65b3360d3079,7519,,B,B03,B03/004
+tests/test_affected_seed_reference_forms.py,3b70fa3154f77e740bea28f2288a747009e5dc28,5748,,B,B03,B03/004
+tests/test_agents_platform.py,398623cfcb44f42324b7fdab84e9e2de086411a2,8915,,B,B03,B03/004
+tests/test_alias_folding.py,6ba2b2a39f11e9834f2f9b0f718a8983b4a569fa,8527,,B,B03,B03/004
+tests/test_analyze.py,0ed7557419d30188606415418dbe4953eae21b7b,40742,,B,B03,B03/004 B03/005
+tests/test_anthropic_custom_endpoint.py,8841d7fad39138af81efcbc7dd13e94ec4bfa3c8,1260,,B,B03,B03/005
+tests/test_antigravity_install.py,728574f98482ce203610e7abc8f7d4067dae5248,3081,,B,B03,B03/005
+tests/test_apm_fallback_version.py,c39a39dc9296a3a9e9563324e5b600e16e39a277,1697,,B,B03,B03/006
+tests/test_architecture_doc.py,48923adbd22c5d420bf6b5c80699d19275805fb2,3629,,B,B03,B03/006
+tests/test_astro_extraction.py,1772f054559927d9cc27e560ffdb1fa0153361e9,7388,,B,B03,B03/006
+tests/test_astro_import_ids.py,1b682f25d7e8700490708388b9f27bda6fdc1298,7622,,B,B03,B03/006
+tests/test_atomic_canvas_export.py,ea20a4a84e2cc4371b2510c3066ebf022b135e88,2397,,B,B03,B03/006
+tests/test_atomic_version_stamp.py,24101116fa264c1b0f006fc8d21432c1363c7ff3,4193,,B,B03,B03/006
+tests/test_atomic_writes.py,6cd10de66d23554c7527e2224208471ef945a070,14948,,B,B03,B03/006 B03/007
+tests/test_backend_env_isolation.py,607d35db1b1c144e5f1244da2c09f41fc3fe6d20,2183,,B,B03,B03/007
+tests/test_backend_extras.py,12300001a28978f9a15eadd20d41ff6399338753,5702,,B,B03,B03/007
+tests/test_backend_opt_in.py,e31b35c663d710748fa29a230623da495d5a073b,3034,,B,B03,B03/007
+tests/test_benchmark.py,27ea336eee35df78ebfe5501fd7d1f3c7f1a7574,7783,,B,B03,B03/007
+tests/test_benchmark_raw_graph.py,51da5fe0214f523acb8783bbee77e9e6a508a2cc,3371,,B,B03,B03/007
+tests/test_benchmark_real_query.py,9be6c6422e82e37ed4f01c36e77fa12254986b36,3275,,B,B03,B03/007
+tests/test_binary_media_words.py,ff6f16da80015a64d7b91d8a4af90e377d287b61,3706,,B,B03,B03/007
+tests/test_blade_extractor.py,e9db4109770c92eb8859ea3a860f58847c9790c8,2837,,B,B03,B03/007
+tests/test_build.py,3b224141f9047ee5d1ebc0c0f7c2471411758015,112835,,B,B03,B03/008 B03/009 B03/010
+tests/test_build_located_semantic_identity.py,b63035e44faa762b5d51ab49d2fdf123f7c4a115,3759,,B,B03,B03/010
+tests/test_build_merge_dedup_scope.py,341ec1e6fe8e40470d0496912b393d80d89d9416,12203,,B,B03,B03/010 B03/011
+tests/test_build_merge_ghost_fold_4955.py,04542985b06ad3be54ce8404b38e83b01fcc60de,6273,,B,B03,B03/011
+tests/test_build_merge_hyperedges_and_prune.py,3c3ff92d0ae562d610f4e7c904a2a283c1576808,23100,,B,B03,B03/011
+tests/test_build_merge_shrink_guard.py,e99fe57e69e6edebaea5fce2a157221eb677a92a,10005,,B,B03,B03/012
+tests/test_builtin_global_type_refs.py,25ecb151d2a66efd9856562ee66892b0c0f5cd81,4420,,B,B03,B03/012
+tests/test_c_include_resolution.py,e205fd7976afc0dea395d9317290d70da7b87467,22218,,B,B03,B03/012
+tests/test_cache.py,da16ef029a2313fc79acd09fa2b1bef53ef7dd5e,89342,,B,B03,B03/013 B03/014 B03/015
+tests/test_cache_long_paths.py,b80378480bbe28971c61f4b9cf5c099ed049d200,1608,,B,B03,B03/015
+tests/test_cache_stale_import_target.py,fb417619a87a341c124cce75fd91287f0ea241e3,4569,,B,B03,B03/015
+tests/test_cache_windows_case_4925.py,e461f0b3a99d2f591032b9dc76ae6fd6bd0f12db,5011,,B,B03,B03/015
+tests/test_callflow_html.py,e42d1b4298bb5fd4c4779320b13a2d89338fa83e,13935,,B,B03,B03/015
+tests/test_cargo_introspect.py,34b064b43602f5a126e5b203a35bd3d701099cdc,19858,,B,B03,B03/015 B03/016
+tests/test_cargo_missing_manifest.py,af900b6afb266ed7cdb96c20ed7714b8f1b8daad,2717,,B,B03,B03/016
+tests/test_carried_hyperedge_remap.py,8596522d5e109892e54b57c9d598e32c0cbe95be,5642,,B,B03,B03/016
+tests/test_case_only_decl_ids_4904.py,5a7e3dc62138c01886a24139758f697f29c04593,2639,,B,B03,B03/016
+tests/test_case_sensitive_resolution.py,5838b02bc3be844b61b7c63924e2103b9556320a,3391,,B,B03,B03/016
+tests/test_charmap_encoding.py,f255dbbb66d1b1284612f5645dcc15300eea1dd6,13999,,B,B03,B03/016 B03/017
+tests/test_chunking.py,ed4618e1b5687ffde0a46757e5c63f943b12dbbd,42993,,B,B03,B03/017 B03/018
+tests/test_cjs_module_extension.py,f94f962ffddbd58ca3ec930cd9fdad0a886d504d,3165,,B,B03,B03/018
+tests/test_claude_cli_backend.py,c81cf1b804d1d82b9d625fc5cf1fdddda149da25,23811,,B,B03,B03/018
+tests/test_claude_md.py,7e18970a27b1e6bf994e4bdd2e260452bd67f307,18694,,B,B03,B03/019
+tests/test_cli_broken_pipe.py,3c7da17ce57cb4df41747daf3517af9e4fcf608d,1998,,B,B03,B03/019
+tests/test_cli_export.py,cfe2601890c5add8a72ad7a2cbf8ed090c3d65d7,54439,,B,B03 B04,B03/019 B04/001
+tests/test_cli_help.py,b3fc901889088e7451b361034d4f74f184fef5c1,3017,,B,B04,B04/001
+tests/test_cloud_cta.py,6bcfbab5118856c808b991afc21dbaac05d2d99b,4122,,B,B04,B04/002
+tests/test_cluster.py,65c6f4041196bcfe50cf6308e41fe74264cd44e0,10536,,B,B04,B04/002
+tests/test_cluster_ambiguous_scale.py,8936f6e3f162fdb6c0c7451c2494a84533bc01ab,6413,,B,B04,B04/002
+tests/test_cluster_exclude_hubs.py,918e62d403bec0af28358969c589a4c1585d40c0,2930,,B,B04,B04/002
+tests/test_cobol_extractor.py,ddfd22a485b0796303a739e08b27e2a0e23d4887,8222,,B,B04,B04/002
+tests/test_code_only_scope_4923.py,9a28c8faa81c06559bdf5034bece65a2d48a8715,8459,,B,B04,B04/002 B04/003
+tests/test_code_only_update_all_hosts.py,e91170019fe1fb0728b6604dad08518454786d63,13973,,B,B04,B04/003
+tests/test_codebuddy.py,62a7e6c02348e94b964dab599e73f0f304ed0fca,13792,,B,B04,B04/003
+tests/test_community_hub_labels.py,281a853d98e65f925f5e643c3bc5ab4099b71c37,3262,,B,B04,B04/003
+tests/test_community_labels_skill.py,5184190e94270fb20ee554a8368d754fc0414924,5698,,B,B04,B04/003
+tests/test_compact_graph_json.py,6673ef56cb441291b6355343e446ac9d3168ed61,7119,,B,B04,B04/004
+tests/test_confidence.py,dfec94cae17498ea766bb4ed68e932ffd546482a,8381,,B,B04,B04/004
+tests/test_confidence_score_output.py,2873857310b9ae54e345177ddd9d0ce669175e58,4830,,B,B04,B04/004
+tests/test_corrupt_graph_json.py,7f2258c38769c034edd4748febaf2b17384be245,1801,,B,B04,B04/004
+tests/test_cpp_alias_member_resolution.py,c58112a75b135c44347a4bb727356e0ae6fc76dc,14482,,B,B04,B04/004
+tests/test_cpp_anonymous_namespace_receivers.py,5ae6e767c17a5075d17c9a5718562b70843f7032,4050,,B,B04,B04/005
+tests/test_cpp_conditional_initializers.py,44cf2e0e228fae17591a51b88863d7730b9d479e,15847,,B,B04,B04/005
+tests/test_cpp_forward_declarations.py,997a141391b4f62d8d31adf310e8170412c8ad86,17365,,B,B04,B04/005
+tests/test_cpp_forward_receiver_completion.py,62565fe6aa6c8cabed9faedcc839a7ff509cb752,7282,,B,B04,B04/006
+tests/test_cpp_incremental_type_resolution.py,ca532fb3dce2e579c0e03aa4fa7806088d2cdca3,2654,,B,B04,B04/006
+tests/test_cpp_inherited_member_resolution.py,0c756c36af13a6e1099ec66094b1053c082b7cd4,12033,,B,B04,B04/006
+tests/test_cpp_local_callable_shadowing.py,ea6f4f485840a51a6cac9503e87f359e7021fbc1,2035,,B,B04,B04/006
+tests/test_cpp_member_call_by_receiver_type.py,99cdece5250ddecd13869aed0bf94df3d69e3ea1,3168,,B,B04,B04/006
+tests/test_cpp_member_declaration_identity.py,aad5dd1194c63d7de0dc2524dbc851c2f8859bf5,12749,,B,B04,B04/006 B04/007
+tests/test_cpp_method_declarations.py,818bb0fe95314eb7c94ecae9b67102550649a932,3351,,B,B04,B04/007
+tests/test_cpp_nested_and_cli.py,adde50b23c286783dbf073f23c82ebfdee3f37a3,17382,,B,B04,B04/007
+tests/test_cpp_objc_cross_file_calls.py,7839e3c53c153790018a53495269f5d673465f00,15469,,B,B04,B04/007
+tests/test_cpp_preprocess.py,addbcb31809a2a49f09c555c2ffd0865d211fc08,4686,,B,B04,B04/008
+tests/test_cpp_receiver_chains.py,b0f23eb029dd0ddbab5c1b967d13de7e0be84224,8100,,B,B04,B04/008
+tests/test_cpp_receiver_parameters.py,44b30b4f23ad1966accb0897ccc5cd25a8a5fbea,5404,,B,B04,B04/008
+tests/test_cpp_split_header_owner.py,4ecac5812ade5c4d4c2095d930070c5fca7e339f,4714,,B,B04,B04/008
+tests/test_cpp_std_stubs.py,68227be864c6cf5aafc36e4da618b639d55fae00,5271,,B,B04,B04/008
+tests/test_cpp_template_members.py,4d5c9d183131e66b2709cde3d3b6eb8b98a8770f,15950,,B,B04,B04/008 B04/009
+tests/test_cpp_template_type_params.py,fc10064222247d58f8ce9ac56afe730397c2d3bf,2074,,B,B04,B04/009
+tests/test_cpp_type_alias.py,42d23c793a05cca67a760b53939fe88aa0c8696d,7846,,B,B04,B04/009
+tests/test_cpp_underscore_ids.py,ee735da3a0a866f08323cba7d4fee88e898a1c3f,4757,,B,B04,B04/009
+tests/test_cross_extension_reexport_self_cycle.py,7b66699ac2f402311aff8b938be4a71309f1b696,13343,,B,B04,B04/009
+tests/test_cross_language_call_resolution.py,62fe4c60fabb94abbd99971cfaf1d22903b82bc8,4805,,B,B04,B04/009
+tests/test_cross_repo_external_call_guards.py,d21add69217b86ab976f5e638233487d9fbe9dcc,4397,,B,B04,B04/010
+tests/test_cross_repo_member_calls.py,bff84239c488e29045ad4d63cdbc38b4b566adc6,33646,,B,B04,B04/010
+tests/test_cross_repo_shared_types.py,ace05c897957a6841603cf1261f087431a9dd7db,5402,,B,B04,B04/011
+tests/test_csharp_call_site_generic_args.py,2f4c5dcdf05c0dec1699c6297097c5ab30091aa5,9541,,B,B04,B04/011
+tests/test_csharp_delegate_declarations.py,21a7353c475cd51ca0e3314f576934d07f093ee9,2571,,B,B04,B04/011
+tests/test_csharp_directive_encoding.py,911454166a0a2918030713e50fc0d624bed0edd2,3676,,B,B04,B04/011
+tests/test_csharp_enum_members.py,fafa655486cc0ac70388e253aba0f09f78c0b835,8687,,B,B04,B04/011
+tests/test_csharp_explicit_interface.py,31a0ad5c235c2a81931c77e77e56af86f401f733,11768,,B,B04,B04/011 B04/012
+tests/test_csharp_extension_calls.py,9262dbd3d67a200b83f0da16d701a241ee399823,12713,,B,B04,B04/012
+tests/test_csharp_extension_keyword_types.py,08c0a5c0ee47f0461279a1beb29a412dfcd94601,4391,,B,B04,B04/012
+tests/test_csharp_extension_metadata.py,20b959a7f11139e7b3fc6ae86e062b7271fc4311,7530,,B,B04,B04/012
+tests/test_csharp_extension_resolution.py,7436955a9c997d28e798b0a44cbbc4a29540b25a,6167,,B,B04,B04/012
+tests/test_csharp_field_generic_args.py,6cac3bba5b1946c9b5b8433d29cdc40e67236d7d,4386,,B,B04,B04/012
+tests/test_csharp_foreach_loop_variable.py,27406e9cedbcb8bdbf3aed5cc15ed4813fadd6d1,4790,,B,B04,B04/013
+tests/test_csharp_generic_callsites.py,7bfe3bc338e6686424945e4ab0972ebc2abdb19c,3211,,B,B04,B04/013
+tests/test_csharp_interface_dispatch.py,906e7a0d778c611675a42bc5d0abbe7affca4e0d,14013,,B,B04,B04/013
+tests/test_csharp_member_calls.py,30aaa1cdf90c8b2e37b8e9baa95a41499a5bc7fb,43513,,B,B04,B04/013 B04/014
+tests/test_csharp_member_chain_calls.py,e5a7000b43309113231be290014f41469dd5460b,10490,,B,B04,B04/014
+tests/test_csharp_member_nodes.py,6167db444aa109b0a48a034b984dfcd69afff034,13088,,B,B04,B04/015
+tests/test_csharp_method_owner_labels.py,540fbad2ea932ffa976f0c3d8f4a669820cd1cdd,12022,,B,B04,B04/015
+tests/test_csharp_object_creation.py,7cb0c145822daf796847e4d0c0ed4c0778202c8a,21439,,B,B04,B04/015 B04/016
+tests/test_csharp_overloads.py,21ebf9df383e4e5fae5eb6f0194dd6b0be305c0f,9911,,B,B04,B04/016
+tests/test_csharp_partial_classes.py,bb4c7bdc7b4ee0dba6d701286334ac07c9196a44,30886,,B,B04,B04/016 B04/017
+tests/test_csharp_receiver_type_names.py,c492f8c1b0339670c606b5edf71a435ba269cbd0,6084,,B,B04,B04/017
+tests/test_csharp_static_property_receiver.py,b98b5a8aeab80fe338b89b5b581ed9ba1e52ea10,6615,,B,B04,B04/017
+tests/test_csharp_tuple_type_refs.py,fdf65475d1c5074c810ebb50150d108f92bab219,3012,,B,B04,B04/017
+tests/test_csharp_type_resolution.py,79a65b79872e75848ab7e77ebc54f36d0904e380,59944,,B,B04,B04/017 B04/018 B04/019
+tests/test_csharp_underscore_collisions.py,eff275bb0401018ef20ee150bb21918b6760a0b7,10974,,B,B04,B04/019
+tests/test_csharp_var_call_return_type.py,3b7da5e8d0f812ce06bc5f5e9f9e5cb4832c8ac7,5082,,B,B04,B04/019
+tests/test_csharp_verbatim_interpolation.py,5f006178534cd108df9e7d23ff5027f656a47463,7966,,B,B04,B04/019
+tests/test_dart.py,a3b6227f2e6a9857b1c0936699ead7988677a833,33601,,B,B04 B05,B04/019 B05/001
+tests/test_dart_typedef.py,efd4951136b64aec2817021a12d9039595b23ed2,4040,,B,B05,B05/001
+tests/test_dart_underscore_ids.py,bdb45be9dc9eb9ae3036bae1612f7ca6300d8d8b,3086,,B,B05,B05/001
+tests/test_dedup.py,7dd6f252767065a4af6fecea301751faeee0540d,116614,,B,B05,B05/001 B05/002 B05/003 B05/004
+tests/test_dedup_prefix_derived_words.py,f18833bddb8c3963ae09303e33f688f041700ad4,3798,,B,B05,B05/004
+tests/test_dedup_remaps_hyperedges.py,446eb5ef7d7906cbe4de95e1457d6ceb479aa07e,5878,,B,B05,B05/004
+tests/test_dedup_shrink_refuses_force_write.py,c20dbd2b67f46914062444d4ccf3ce9c11291f69,7085,,B,B05,B05/005
+tests/test_dedup_survivor_richness.py,bfeff69d3f811a3ea9a45a8dfc1a815ce0d0742c,8855,,B,B05,B05/005
+tests/test_definition_file_portability.py,a1648fe1996d1ec34905140b3c71f611def8c707,3753,,B,B05,B05/005
+tests/test_delphi_form_resolution.py,cad7f4d508abd2f2a712eca8fd406e36d47849f1,3862,,B,B05,B05/005
+tests/test_detect.py,2bfd2573de561b1464bd16888f9fe22b0749112a,202074,,B,B05,B05/005 B05/006 B05/007 B05/008 B05/009 B05/010
+tests/test_detect_jinja.py,55ae4b874275314b31407c4ffeb2fcf2c15e05cb,200,,B,B05,B05/010
+tests/test_devin.py,a3bca5d05b13e62ce7812e0a4dc31aa9289447d3,12612,,B,B05,B05/010 B05/011
+tests/test_doc_twin_structure.py,91e2a89f11e53edc89b55a35b07d898c7a7414b2,2572,,B,B05,B05/011
+tests/test_docx_to_markdown.py,6ecf7c737a1168dd961c15bf4a7d0ff79145135a,4449,,B,B05,B05/011
+tests/test_dotnet.py,49f845d06606991d4db3f09e7a47954467610da9,31536,,B,B05,B05/011 B05/012
+tests/test_duplicate_annotation_edges.py,70569562e090b047915d038127a8652be0e56e11,3816,,B,B05,B05/012
+tests/test_edge_also_seen.py,439b7ed7a8ec0c2a86beffa7f30ae7d35c25218c,7335,,B,B05,B05/012
+tests/test_edge_tier_tie_break.py,4a8d84e28c0fdd1c75d1146e5d4dca6e06f16980,4474,,B,B05,B05/012
+tests/test_ejs_extractor.py,4c496f1438bb8d7477bfad76a461a3bc6c988015,8435,,B,B05,B05/012
+tests/test_elixir_defdelegate.py,f194f1898562211cf208354f83749dc22e55f78b,2228,,B,B05,B05/012
+tests/test_elixir_import_resolution.py,d69921dbdda6cc67243c5e13838231bf4f6b7843,9020,,B,B05,B05/012
+tests/test_elixir_keyword_def_calls.py,d1647bf7bad59f2791038c1f705164f22d2c8f35,2294,,B,B05,B05/013
+tests/test_elixir_qualified_calls.py,efa5088c295dc607e8faa6767eb94734eb721449,9053,,B,B05,B05/013
+tests/test_elixir_underscore_ids.py,6562fcd87cb81e845552d2b46da0e5a6adee03ac,3714,,B,B05,B05/013
+tests/test_elixir_unqualified_call_scope.py,d0ff601eef72e6f9eb2d7398b494d660c481effd,8302,,B,B05,B05/013
+tests/test_erlang_extractor.py,e43e916b8f5d2dd610fdce9f719d1ad38fb73047,6940,,B,B05,B05/013
+tests/test_evidence_binding.py,d930b54de3b4e708901a8c22e111a4ed35fdad43,10657,,B,B05,B05/013 B05/014
+tests/test_explain_cli.py,99134be32bcd5c4ad9ee2377140dd5b97208d65b,18588,,B,B05,B05/014
+tests/test_explain_same_file_tie.py,1f26fd72e10fa0d9f21907c669a0c55b59a06c35,4885,,B,B05,B05/014
+tests/test_export.py,2c09e57fc42c8620a20a6cad47d74a843b371bd3,82393,,B,B05,B05/014 B05/015 B05/016
+tests/test_export_control_characters.py,860d75241e18d9095582285b173caa2c3d27ec93,8471,,B,B05,B05/016
+tests/test_export_direction.py,d3ee0231015198c586afa48551b3030a0a197794,10253,,B,B05,B05/017
+tests/test_export_idempotent_writes.py,8cc7e072e49178dd0c8024c3a88598afddb2952a,4291,,B,B05,B05/017
+tests/test_export_path_length.py,e9b7c2ed54198163b338bcc33af165863303fc17,9806,,B,B05,B05/017
+tests/test_ext_tagged_id_clash.py,dcd67576eafdfac9e9d918c6c4cdd10c197b2627,10629,,B,B05,B05/017
+tests/test_external_stub_endpoints.py,4e92d1555b6ac6d73296907c1dc3cf746ec540ff,10454,,B,B05,B05/017 B05/018
+tests/test_extract.py,34710af4814d25af2f8ea33b494d94ce5f6ab64a,292759,,B,B05 B06,B05/018 B06/001 B06/002 B06/003 B06/004 B06/005 B06/006 B06/007
+tests/test_extract_cache_location.py,89acc9c0c7f48cbec552def6685a923f13e80687,5739,,B,B06,B06/007
+tests/test_extract_cli.py,497456aea2fab0cea83d95d87f06c2584b07e047,74056,,B,B06,B06/007 B06/008 B06/009
+tests/test_extract_code_only_cli.py,38926e7fb0ac40881ddf69cb70980d3104f849f8,18691,,B,B06,B06/009
+tests/test_extract_cost_ledger.py,62bd023eb0ded82ba7ab847fee92c3bc1b26c33d,4398,,B,B06,B06/010
+tests/test_extract_memory_release.py,3b921a5fc24ae916b680a765eb31e48572cf4091,3192,,B,B06,B06/010
+tests/test_extract_path_memo.py,f14c5e23ba24ee569a18064bcbeab049cd43d704,3081,,B,B06,B06/010
+tests/test_extract_php_closures.py,c5f388dce30ab5013f2f8144794d505f8608c903,8905,,B,B06,B06/010
+tests/test_extraction_spec_ids.py,46fabc3ba5c27f6830e296fab31321918169cbba,4122,,B,B06,B06/010
+tests/test_extractor_scan_root_context.py,cb509fa160820168d5268e54f4b956c3094511b8,3000,,B,B06,B06/010
+tests/test_extractors_registry.py,db647201ffa63c15160a896d1462bd77d58cd7a1,1994,,B,B06,B06/010
+tests/test_failed_ast_replacement.py,3b66cff12f15f0ea0a88605b37d492d55646b9bc,11741,,B,B06,B06/010 B06/011
+tests/test_falkordb_integration.py,b31653459cf7c9a9020a6124e6630c5630fd1600,3713,,B,B06,B06/011
+tests/test_file_id_collision_4854.py,77b3cdf7070ac69eaaebcde6014e0cf3901af656,16653,,B,B06,B06/011
+tests/test_file_label_disambiguation.py,ccefbb5a42c8400b9c0819429337cfc52cf81b93,5857,,B,B06,B06/011
+tests/test_file_node_id_spec.py,43e4a2ac14154f804e2f77f08758977b29206342,6207,,B,B06,B06/011
+tests/test_file_slice.py,2967f5b9d2fa0b580ca2c29e76116f887affe16d,10717,,B,B06,B06/011 B06/012
+tests/test_file_truncation_warning.py,09ea87baa43c1d51f75868943386cac750e1761c,1664,,B,B06,B06/012
+tests/test_forwarding_review_findings.py,4688ad22fe4c1033cec81d724a4c4d877f34e2de,4212,,B,B06,B06/012
+tests/test_frontmatter_and_ssrf_hardening.py,af915bfd1682b104322adfbd883ee15cb4973150,1758,,B,B06,B06/012
+tests/test_gemini_hook.py,aa84117ddf8910ee4e5cdcf8d64e54983f12c90d,2336,,B,B06,B06/012
+tests/test_git_head_stdin.py,c5fcdb511f385447f2e41ab69845dcec71b86c8d,794,,B,B06,B06/012
+tests/test_global_add_tag_inference.py,580ccd97b13d8412ffc95d71b8f3d15b9ac0e47a,3914,,B,B06,B06/012
+tests/test_global_graph.py,ad5da774d2ebc2444d23705033688674d8ad4b93,16547,,B,B06,B06/012
+tests/test_global_manifest_shape.py,5119c0ae3ff6fe0f422c13590d774e82db7647c5,2722,,B,B06,B06/013
+tests/test_go_builtin_call_targets.py,17e91957d4875708cee218c1f36c93853ca14b2a,8492,,B,B06,B06/013
+tests/test_go_generic_receiver_methods.py,7178ca90e756d51723814c49ce4e2758d9eff9f9,3875,,B,B06,B06/013
+tests/test_go_generic_type_params.py,bb8099f3e426a9b1ccbc66d8776ca866870f7541,2768,,B,B06,B06/013
+tests/test_go_import_repoint.py,2119978261cd00ea55ffba1adb0717421b83585a,4298,,B,B06,B06/013
+tests/test_go_interface_dispatch.py,381b11545acc98fa5d2e2f666007a01a81212ba0,8611,,B,B06,B06/013
+tests/test_go_interface_methods.py,98e031f78ef7ed92514ec6c51ece2010d8a330f7,8876,,B,B06,B06/013 B06/014
+tests/test_go_method_value_indirect_calls.py,1832600ea4f26e6b49cdd1fb6c3f54fbd34fd289,6647,,B,B06,B06/014
+tests/test_go_package_type_fold.py,6d3875f045de2ae2d08111aa1da56e55b927043b,6192,,B,B06,B06/014
+tests/test_go_package_var_calls.py,d000d2292d87cb56a8866daa3e5cf7b68795c1f4,2668,,B,B06,B06/014
+tests/test_go_package_var_type_refs.py,e77e43fd1b08e6ee3be655bfe734680f97eed188,5356,,B,B06,B06/014
+tests/test_go_qualified_resolution.py,3bb766ba8685d56362920321370663c48e694be8,18226,,B,B06,B06/014 B06/015
+tests/test_go_receiver_member_calls.py,8e447815b4f21e8822ca4c0a95b41fbd5b6884c6,19426,,B,B06,B06/015
+tests/test_go_same_file_receiver_calls.py,d529f0d97e61f3c3649bc116f711489266694063,10337,,B,B06,B06/015
+tests/test_go_same_name_receiver_across_packages.py,d85ec2a5942c73fd73bf693d16ee42f1244336f7,4408,,B,B06,B06/015
+tests/test_go_sibling_receiver_with_outside_reference.py,855906099db7558f92d8db5caded5dbdb74e43ba,3288,,B,B06,B06/015
+tests/test_go_type_alias.py,eb027629497e19f031a7ad551a1a98529f2aee2f,6803,,B,B06,B06/016
+tests/test_god_nodes_cli.py,28bacc9b1ab9f30ac90d11b0a938d55a597f35c7,2999,,B,B06,B06/016
+tests/test_god_nodes_exclude_hubs.py,b87c8c7d7fa6fd6a47768d5045bbcb206225a74b,4433,,B,B06,B06/016
+tests/test_google_workspace.py,9d8cbfa4b9f052fbf2be64a384d50a0a4590fbf4,4138,,B,B06,B06/016
+tests/test_grammar_cache_key.py,4b2b2e8d2e5527b0b9bab3bcf788c36695449674,3090,,B,B06,B06/016
+tests/test_graph_context_cache_reload.py,6b7aa97bace166a01e80ce7a9ffbb90979b836dd,5220,,B,B06,B06/016
+tests/test_graph_invariance.py,25b0cf11333517c983bae4aaa7af83cae3b5e121,6071,,B,B06,B06/016
+tests/test_graphdb_push_indexes.py,15fe0605aea0db0927468f8b052a4f94ee909806,7162,,B,B06,B06/016 B06/017
+tests/test_header_import_collision.py,312f41661bed30962204db2b4342b9bee74b4c4f,1710,,B,B06,B06/017
+tests/test_hollow_chunks_arm_shrink_guard.py,5a1fe5257ce3b91ccb09eb542e7368dc15a332c9,6428,,B,B06,B06/017
+tests/test_home_sandbox.py,2ddb3ffbce0cf452a800516a2d0b0216f1f6eccf,2734,,B,B06,B06/017
+tests/test_hook_bash_read.py,7b6374e009d2f58b7d46dbd780861effa35d4f7b,9884,,B,B06,B06/017
+tests/test_hook_chain_survives_skip.py,6d80c8b083f51895f00e6067273f7963c2810aa9,4170,,B,B06,B06/017
+tests/test_hook_compact.py,0bbaa391bcd92aaabfb258f8355213574fd9514c,11406,,B,B06,B06/017
+tests/test_hook_content_freshness.py,df11a696c027eacf71c470279e3a873df037fce3,7610,,B,B06,B06/018
+tests/test_hook_corpus_changes.py,630838193a6349cf41dcc31487972442cde343be,1585,,B,B06,B06/018
+tests/test_hook_guard.py,af14897ed3c9a4b09d0b50d5475764f5000de354,28419,,B,B06,B06/018
+tests/test_hook_guard_token_match.py,8d90364178851c6b326fd643a1e17b07151d2d01,4044,,B,B06,B06/019
+tests/test_hook_nudge_wording.py,1cdac0dde5c7325222d7c21e784492a2cc731898,1803,,B,B06,B06/019
+tests/test_hook_out_of_project_paths.py,8c72e00b2ac26d6e0217a8e4cd64cbd7cd4151b4,6689,,B,B06,B06/019
+tests/test_hook_strict.py,b282d2bc1618e76597b11369afc296e3b7b0844c,9433,,B,B06,B06/019
+tests/test_hook_strict_grep.py,1eb651709e29baf6868fcb9d5a7db59d1efdcc91,7137,,B,B06,B06/019
+tests/test_hooks.py,5702af542d7807d12b487718570d911c312ba7a2,98080,,B,B06 B07,B06/019 B07/001 B07/002 B07/003
+tests/test_hooks_rewrite.py,4da7d94988c95cfcc1630bd94dcf928dbb2727fe,10505,,B,B07,B07/003
+tests/test_html_script_breakout.py,5bee271ebdc54e8dbebca0e15fc47692e9bc78d5,2808,,B,B07,B07/003
+tests/test_html_theme.py,c51f294767e7b556f8baf1eb7d7378bf2b322aab,2901,,B,B07,B07/003
+tests/test_hyperedge_member_shapes.py,533a63448bf8862e525cf30684e252e00166356f,4958,,B,B07,B07/003
+tests/test_hyperedge_roundtrip.py,6f0e9a8ef38237ebf99e5458cde922f7c7583fb8,3577,,B,B07,B07/003
+tests/test_hypergraph.py,a5208095a704434f288870258c385e607581ce73,14356,,B,B07,B07/003 B07/004
+tests/test_id_normalization_contract.py,230b695e804273d2480b68a70b5ab9f1c9d9561b,12101,,B,B07,B07/004
+tests/test_ignore_file_encoding.py,cb22eaa1d8e36b4745815457bcb4d9542a653b7e,5983,,B,B07,B07/004
+tests/test_image_vision.py,225729c0fd8d694eeafd22ed23f8bfceca911415,23402,,B,B07,B07/004 B07/005
+tests/test_import_cycles_shortest_first.py,54182e469b6bf4c8628eecb673558880c9b16be2,2632,,B,B07,B07/005
+tests/test_import_extension_resolution.py,b3b9a6021dfee2524d8dcffc7ae43f00a7dc69b7,26587,,B,B07,B07/005 B07/006
+tests/test_import_self_loops.py,3716baa3be5d7a4061060377b780b2a8b30a0ada,3069,,B,B07,B07/006
+tests/test_imported_export_forwarding.py,54ad4c535c4029eb3052e2918f52f5c9bfabb624,8318,,B,B07,B07/006
+tests/test_incomplete_build_guard.py,af9bbb2ccbc9cc9b7a10d891dc5c49e839d75cbb,9642,,B,B07,B07/006
+tests/test_incremental.py,5ed413dee5ae8354cd07b7dfd02a31beb2069d61,20197,,B,B07,B07/006 B07/007
+tests/test_incremental_mtime_collision.py,3f4f8b647f29e6c3d93fe0cd12d93345a9665db5,7267,,B,B07,B07/007
+tests/test_incremental_unscanned_placeholders.py,60465f4be3632df7eace4afde11ef58ece91c063,5129,,B,B07,B07/007
+tests/test_indirect_call_arrow_single_param_shadow.py,966ba2e6120079992eecfbfd657605889c6d467b,3816,,B,B07,B07/007
+tests/test_indirect_call_block_scoped_shadow.py,70209394c347c2f4580c57fba21ddfe46f0eed92,6391,,B,B07,B07/007
+tests/test_indirect_call_catch_binding_shadow.py,7c6bf9cb5f6cca30813c1003e8aa2fad0d8dfa56,4775,,B,B07,B07/007
+tests/test_indirect_call_external_import_shadow.py,e519b1db51cef48321d7e978b4d3ec44a4d6d202,7754,,B,B07,B07/007
+tests/test_indirect_call_file_scope_callback_shadow.py,c0ec048a1435328a9908b7038bd2d180e267c1b4,7964,,B,B07,B07/008
+tests/test_indirect_call_for_of_binding_shadow.py,58aee4b4f36c42c77d4cf1f152fd50d97e99731d,3770,,B,B07,B07/008
+tests/test_indirect_call_function_expression_shadow.py,10db4976a3d6bea0aae1ffa721b6599c3916af19,9799,,B,B07,B07/008
+tests/test_indirect_call_nested_closure_shadow.py,02cd2528c02c2035c600d057a02b8d8d9dc1c9eb,7200,,B,B07,B07/008
+tests/test_indirect_dispatch.py,1fd54d89dbfd307e6aa04ae49e242de1364b23fc,22002,,B,B07,B07/008 B07/009
+tests/test_indirect_dispatch_assign_return.py,886fd9cb04e3cbca7bed6ad750fe6141a784b31e,3687,,B,B07,B07/009
+tests/test_indirect_dispatch_getattr.py,60deacf120cd805c8b447265646e81d8527e9132,4910,,B,B07,B07/009
+tests/test_indirect_dispatch_module_attr.py,7cfa21b448e9eb157fc09d42e96c4cc48c48e239,6942,,B,B07,B07/009
+tests/test_inferred_confidence_rubric.py,3dc1834301ecdc917eacbd3f9681bd54d3c27273,6759,,B,B07,B07/009
+tests/test_ingest.py,6b7d1fb034e1edb5e6faf73ce685f0edaf97c4af,4051,,B,B07,B07/009
+tests/test_ingest_capture_race.py,0dfe0baf57da7e936ae7321e85f18c88709c7080,1382,,B,B07,B07/010
+tests/test_ingest_url_type.py,0f286a8a6433c892d13692f3d99a7aaa9b90ba21,10516,,B,B07,B07/010
+tests/test_inherited_field_receivers.py,a8df33a68eeeaab0bb869afeb75441cf5dc774f8,9887,,B,B07,B07/010
+tests/test_injection_sentinel_coverage.py,7cc569c00a5c82d99e0ca356be949c2919b0f118,2644,,B,B07,B07/010
+tests/test_install.py,6c342975abfb721543d3ce89c7e08dfc74081409,80386,,B,B07,B07/010 B07/011 B07/012
+tests/test_install_hook_identity.py,cf50d24e33211913419ae9a355da589e39c9fdc9,7310,,B,B07,B07/012
+tests/test_install_line_endings.py,f07172ab4be2d48c850366fc81133102e4a1ea5b,7058,,B,B07,B07/012 B07/013
+tests/test_install_references.py,af0883cf51830ba22aad777be68eb45773a2e949,27179,,B,B07,B07/013
+tests/test_install_roundtrip.py,42ced648fa6dd68bd294d4247133aa816d4e1422,13485,,B,B07,B07/013 B07/014
+tests/test_install_strings.py,7e65b768e9fd150c0f817924cfbdd7b9bfd9a671,6305,,B,B07,B07/014
+tests/test_install_upgrade.py,e85add452fb751063852b4c94f5754254dbc67f0,11515,,B,B07,B07/014
+tests/test_install_version_stamp.py,84879176abac34bafc6fb958c3e59679c31df8c7,3481,,B,B07,B07/014
+tests/test_install_version_warning.py,3dbbae707dfc9954afefe24f9db231a6a6595714,3854,,B,B07,B07/014
+tests/test_issue_3405_python_resolution.py,17b7b8f682411c797d48eec071d1c883d53256d6,8330,,B,B07,B07/014
+tests/test_issue_3472_source_file_collision.py,1e71c53448ff47cc0b4382305f2e50052dfa3c0b,7506,,B,B07,B07/015
+tests/test_java_anonymous_class.py,8db6c0b9f2a61e57a194bf0c72c1845c783812cb,3720,,B,B07,B07/015
+tests/test_java_enum_members.py,813eff5c36afb9211d44e641dcbf0c1abb185bed,3940,,B,B07,B07/015
+tests/test_java_lombok_getter.py,a0ff2a10e95a36aa9a90388adfffca8e61398fea,3307,,B,B07,B07/015
+tests/test_java_member_calls.py,7e104340a39684619246bcc2d38b435fc9097da8,34046,,B,B07,B07/015 B07/016
+tests/test_java_nested_type_identity.py,703c624cfcf28994fbcb93f4781e3e28f3e58967,15912,,B,B07,B07/016
+tests/test_java_overloads.py,03b68c569d59530c2bf0299f5ff3053cd380cc7b,10189,,B,B07,B07/016 B07/017
+tests/test_java_type_resolution.py,fcc72cbc2b81ae666cfc5fed0d6ee9776482e350,18801,,B,B07,B07/017
+tests/test_java_underscore_ids.py,da165cab29c7379791ed36cc1d641180b26659cb,4312,,B,B07,B07/017
+tests/test_js_callback_calls.py,3ca482eafb64acd757c8457e164cfdbd4cda66ce,8182,,B,B07,B07/017
+tests/test_js_cjs_barrel_require_call.py,7c7b6b139d3f474e6c26f629f88a364d2ec39149,1736,,B,B07,B07/017
+tests/test_js_destructured_export.py,ede9c8ebbdcaa409cff6fa1a6ce60727410951ee,4878,,B,B07,B07/017
+tests/test_js_dynamic_import_affected.py,3768d82ebb6f3492afa5b1270269aa2354e7907a,6303,,B,B07,B07/018
+tests/test_js_dynamic_imports.py,c74be8223a0627d6c78faeff84a021552d625d1d,17448,,B,B07,B07/018
+tests/test_js_exported_fn_call_resolution.py,511e5583396a9316864a044379ec11426fe36626,3285,,B,B07,B07/018
+tests/test_js_exported_scalar_bindings.py,7b6ca96819d04b5411d7a066c2d07e9507dca852,2485,,B,B07,B07/018
+tests/test_js_extends_require_4688.py,49dfd348d4b9446cc98d6ce3902cbed1762bb674,8498,,B,B07,B07/018
+tests/test_js_import_resolution.py,6732dc145e76c290c7c1890c4452e7997106820b,93113,,B,B08,B08/001 B08/002 B08/003
+tests/test_js_member_call_bare_name_fallback.py,1022f93db6be2b8469ff3ba4549640e864d04c10,4193,,B,B08,B08/003
+tests/test_js_member_collisions.py,b4acc9d03a2808edc43bdecaba7cdebfb9b5661a,7893,,B,B08,B08/003
+tests/test_js_module_level_anonymous_calls.py,58c7c9f1cb67f2bfd58408034130a1ce53db783a,5411,,B,B08,B08/003
+tests/test_js_namespace_import_call_edges.py,0bc7fb980f0ec5a988d5dbe68613d36a580c02cd,7390,,B,B08,B08/003 B08/004
+tests/test_js_nested_function_scope.py,7a2d97a9608a29754d16f9f1d15afa43d08c334c,3661,,B,B08,B08/004
+tests/test_js_require_binding_shadow.py,516fbf091fb8c7a12b8a0e7559acf3c415f197d1,1617,,B,B08,B08/004
+tests/test_js_require_external_package_call.py,86fee806f81c6f67f5aded4d45a32260e0fecbbb,2747,,B,B08,B08/004
+tests/test_js_this_member_expressions.py,7a094fbacc78f94fddbe3453815c5a3dd7892c9e,4014,,B,B08,B08/004
+tests/test_js_walk_order.py,6c04015c9ec1bf34f6752e23a9f8de91ab1cecdf,1843,,B,B08,B08/004
+tests/test_jsconfig_baseurl.py,e5a171541dbcc8581216c09918a633ee66b913ae,11885,,B,B08,B08/004
+tests/test_json_schema_config.py,0575f6ca76055fe0a8bae5eec10b9e6a61bb645b,8585,,B,B08,B08/004
+tests/test_jsx_component_usage_calls.py,9d8083c28daaf87d12ea5f539e3ee88b82b29674,5143,,B,B08,B08/004 B08/005
+tests/test_kilo_config_merge.py,208dc39b6673f7908e06163b80e9d33404385062,3707,,B,B08,B08/005
+tests/test_kotlin_generic_type_params.py,04185c95c847fa8ad23d4d00cfc92dac9f999c5e,1790,,B,B08,B08/005
+tests/test_kotlin_grammar.py,4d7866ec97ebbba835d546c9ae7cbbde40c260e9,28160,,B,B08,B08/005
+tests/test_kotlin_interface_dispatch.py,d9ea27289b01a647ca23acc951388ad70bbc6cd4,4135,,B,B08,B08/006
+tests/test_kotlin_java_call_edges_4935.py,06b88e0bd1f923722f04941f12c2805e85095122,11798,,B,B08,B08/006
+tests/test_kotlin_object_literal.py,de9ecb089d750fcc789780f0eb9b96e7caa04ae8,5296,,B,B08,B08/006
+tests/test_kotlin_typealias_declarations.py,c1e516615c8c9d92920699634b2880ddb25466c7,2045,,B,B08,B08/006
+tests/test_kotlin_underscore_ids.py,eb516655c8f7ef7a25b6beff398bc6dd728143c2,3374,,B,B08,B08/006
+tests/test_label_retry.py,d4d83f96a583e31cbc131dbdf3262cf75a74f4e2,6797,,B,B08,B08/006
+tests/test_labeling.py,532dc1648daf7412bde96d0a486cf3e85111521a,41446,,B,B08,B08/006 B08/007
+tests/test_language_override_imports.py,5e3bcaf49aa4392f55cbfb829b3862daff394cab,8237,,B,B08,B08/008
+tests/test_language_override_lifecycle.py,2d7833958cc83ae74c17bc46b38e9930e9dfd76b,11304,,B,B08,B08/008
+tests/test_language_overrides.py,083e19d4f69228eb0b65a0adef170092d7007a59,28652,,B,B08,B08/008 B08/009
+tests/test_language_resolvers.py,787c1d505de68c1afb38d2daad372ff7bab07bab,2835,,B,B08,B08/009
+tests/test_languages.py,cbfaf6435d7b3816536abd8419d3a8dfec406119,267905,,B,B08,B08/009 B08/010 B08/011 B08/012 B08/013 B08/014 B08/015 B08/016
+tests/test_learning_overlay_input.py,687564871ef3703cf94323361d25af1a92f1631e,1225,,B,B08,B08/016
+tests/test_linked_worktree_reconcile.py,d7544e566fee383408b9883f59528b92a645f3c4,3325,,B,B08,B08/016
+tests/test_llm_ambiguous_fragments.py,c212aca00b722c12e7bff9fc456fae39e9dfbea2,5581,,B,B08,B08/016
+tests/test_llm_backends.py,038c62d254f7e9cc2a3352650c3baf4c8a0f6a49,82103,,B,B08,B08/016 B08/017 B08/018
+tests/test_llm_null_token_counts.py,841a5f4000d0e10b5620804a396257c8fa13bf3f,4060,,B,B08,B08/018
+tests/test_llm_parser.py,974e8d1ac76026fcac7d5139293fdba75dea1937,6108,,B,B08,B08/018
+tests/test_llm_parser_reasoning.py,d63bab991e735142a4899645893908e667aaf31f,6995,,B,B08,B08/018
+tests/test_load_graph_release_rows.py,a6a2e24f89759483193c3411777260cddbcd7cdc,2142,,B,B08,B08/018
+tests/test_long_path_hashing.py,8e4b3bd1ab1c4cf5d9be3e001d308a687eab4ce7,1784,,B,B09,B09/001
+tests/test_lookup_exit_codes.py,d66d1a218706a90a499a5a3552c8499b62a93d13,6607,,B,B09,B09/001
+tests/test_loose_sibling_import_resolution.py,2f5ed8c20211d1fa9916435342e3e308c8b6520a,12807,,B,B09,B09/001
+tests/test_lost_saved_semantic_nodes.py,f5caa881abef7326199f16919ba1c497df92ddae,14016,,B,B09,B09/001
+tests/test_lua_import.py,80857c8db8b971930a7fd95fef1ffaf34dcef3d1,5934,,B,B09,B09/001 B09/002
+tests/test_lua_method_calls.py,18d28c135cb624204fff8c688f6cf1f4852dd341,3846,,B,B09,B09/002
+tests/test_lua_underscore_ids.py,a84fb96651c3470409ef0bb043a21ab24a190d95,4044,,B,B09,B09/002
+tests/test_manifest_ingest.py,9d33d35002df668431364fe95c5b3c1cd1a56aac,15517,,B,B09,B09/002
+tests/test_manifest_tomli_required.py,982dc678244c9c30b3f772c962b9b892a1612409,2054,,B,B09,B09/002
+tests/test_markdown_code_spans.py,dfd5816546a12bf2894f03711ec9d7f8eee6dd9a,43055,,B,B09,B09/002 B09/003
+tests/test_markdown_sections.py,2a421d35fa8f9a70ad194dee6bdfa9c54e7857b2,10077,,B,B09,B09/003 B09/004
+tests/test_mcp_graph_view_cache.py,b4c2c72e4866ed94ef6022ca10f26c700f0c7a4d,4625,,B,B09,B09/004
+tests/test_mcp_ingest.py,8e46b170d142b1b6c42ad63e4501d7bd9dbbf464,12059,,B,B09,B09/004
+tests/test_merge_chunks_validation.py,dfab41b9618b4e05f72fd8941040ac7cfe03913a,6481,,B,B09,B09/004
+tests/test_merge_graphs_cli.py,5dc619d5f16a2116cb47275589bd2c8678f7dff5,20512,,B,B09,B09/004 B09/005
+tests/test_merge_sweeps_reextract_orphans.py,0a99e52aec804dccebcb06e27bfdb4d017e8ee69,5826,,B,B09,B09/005
+tests/test_minhash.py,4c1f6cd5dcf48262ef6af59a8f547de817237057,3521,,B,B09,B09/005
+tests/test_module_level_underscore_decl_ids.py,60e699e0fbc3e774a735bde8ebc8f2b692fdab68,4184,,B,B09,B09/005
+tests/test_msbuild_dir_evidence.py,d0360e03e712e229397e431e86069affec9ef249,4677,,B,B09,B09/005
+tests/test_multigraph_compat.py,36902e69119748eff74186717a7b79133a923b01,1750,,B,B09,B09/005
+tests/test_multigraph_diagnostics.py,3fdd383e46fff9dec38d58117b285719e07cf28e,18737,,B,B09,B09/005 B09/006
+tests/test_multilang.py,9eed8516542c8d425d20581af7cf9ee6052ff3a9,91054,,B,B09,B09/006 B09/007 B09/008
+tests/test_nested_type_owners.py,1f95af0b5f179c882ed7de0a58b2c8f60be4a023,3479,,B,B09,B09/008
+tests/test_no_cluster_run_only_keys.py,b70716f7d6dec1103ee70fae3382d5d9abae4873,2486,,B,B09,B09/008
+tests/test_no_cluster_undeclared_endpoints.py,759b2f2e8a0778f3f292b626329ae7fcc1b2a211,12054,,B,B09,B09/008
+tests/test_no_dedup_flag.py,4003bb029013eaaa4e5ee2a3cbf234262dff967a,6434,,B,B09,B09/009
+tests/test_node_id_canonical.py,74e2b144d2e1e8cbe6d2094ed67eea08e095400a,8811,,B,B09,B09/009
+tests/test_non_regular_files.py,ee31fe071b05ab4cd3ff9a9080f77af6ee5a6549,3171,,B,B09,B09/009
+tests/test_non_string_node_ids.py,f6f1d6c46b0744a649e30408b0b3516bafc700b9,4833,,B,B09,B09/009
+tests/test_objc_callable_markers.py,eff87efbc823212a760eeda9d3dbc0592cad8e52,4099,,B,B09,B09/009
+tests/test_objc_category_interfaces.py,c8eaa2e4c14f2c9124237cef016470136ac531b6,6666,,B,B09,B09/009
+tests/test_objc_category_portable_ids.py,d5368637e144930e6596bcb890d4646e3b6bc0a3,3897,,B,B09,B09/009
+tests/test_objc_enum_declarations.py,a82eb4b3c5a6c278901dcd740bfe3aba9b528115,10468,,B,B09,B09/010
+tests/test_objc_field_table_remap.py,ba89205ab1370f6905a9940bdd0c15481185d940,5486,,B,B09,B09/010
+tests/test_objc_member_calls.py,836a3d62f569f992ba7256a6fe8c1cbea567d010,4170,,B,B09,B09/010
+tests/test_objc_property_ivar_receivers.py,e31632a38d8a37d07562553d7fae951105eae3eb,9816,,B,B09,B09/010
+tests/test_obsidian_dangling_member.py,2e0844fdc5a9d0c04b6c79bb07752b24296bc66f,2997,,B,B09,B09/010
+tests/test_obsidian_filename_cap.py,2d7f1c85d29f0cee91e6ad36c644f691fb3ad337,2827,,B,B09,B09/010
+tests/test_obsidian_unicode_tags.py,09a1f58d120a870465808892855b6317bf83a692,3204,,B,B09,B09/010 B09/011
+tests/test_obsidian_vault_migration.py,c52750234eb54052d4e97b634c72e16dfb30079e,7337,,B,B09,B09/011
+tests/test_ocaml.py,0477b2d3c0767dd8cba58ffafbba59a631217083,9468,,B,B09,B09/011
+tests/test_office_incremental.py,19d8ec50d41dad1701301273cdb49b46d8a7155d,2289,,B,B09,B09/011
+tests/test_office_limits.py,d4f70c91e938660eb1daed93f812f30012055fc6,3874,,B,B09,B09/011
+tests/test_ollama.py,c90d610f3456c98c5c5cce7bae8a8bf3b524413a,4781,,B,B09,B09/011
+tests/test_ollama_ctx_sizing.py,958add5a47b1ba0c7a5d156d95e54df186c38451,3295,,B,B09,B09/011
+tests/test_ollama_live.py,9aa7b636d1054343e7455fb901bb3acdc1a6dcc9,2256,,B,B09,B09/011
+tests/test_ollama_native_chat.py,e20ae234a4786d0a54d79b3c2c72682b94508e55,7190,,B,B09,B09/011 B09/012
+tests/test_ollama_retry_cap.py,2f17c136fa8927b0e64e29c940a5b7ddb89494ee,2775,,B,B09,B09/012
+tests/test_openai_custom_endpoint.py,90b3695d436745fae0cce0f8fc01dbd010aff072,1730,,B,B09,B09/012
+tests/test_opencode_plugin_refresh.py,cfc1b3511b8c95f2971e9511872b78900d347e87,16799,,B,B09,B09/012
+tests/test_out_dir_evidence.py,e7c72b2fcd6b68196f1bd39ea5f59549a3eb94e3,4832,,B,B09,B09/012
+tests/test_oversized_document_slicing.py,64695638734c7b20f41f5f298cc23388b7757c35,5051,,B,B09,B09/012
+tests/test_owned_type_sources.py,193ac892a8c871d425d9e9fae2c7cc1daecfff24,2588,,B,B09,B09/012
+tests/test_package_json_subpath_imports.py,f26c596810393da07ffe9debbda4b3bf8b2b2e96,5966,,B,B09,B09/013
+tests/test_parked_call_site_file.py,9eb7477f5ba067b372c0b9d67f3e177699284f48,1953,,B,B09,B09/013
+tests/test_partial_cache.py,046094581447e286bcbe3ea6836bab8d617c390a,9679,,B,B09,B09/013
+tests/test_partial_extraction_warning.py,aceedd548e6129967a18c90db71e22de847d4510,8151,,B,B09,B09/013
+tests/test_pascal.py,08c384e063d91aa13047691a021f600c96b95d21,18144,,B,B09,B09/013 B09/014
+tests/test_pascal_base_class_resolution.py,a7471ee7cad155508048f59307a05379e48cdd50,5315,,B,B09,B09/014
+tests/test_pascal_call_scoping.py,3d47669a4264ba60a3d1f6406e8fa74e42e8661c,3985,,B,B09,B09/014
+tests/test_pascal_parse_recovery.py,0b304692cc888ff7a365111dbc86f2740c18aad6,5202,,B,B09,B09/014
+tests/test_pascal_record_methods.py,fbef8b391d9e76982cff1718b2cd867521e607ed,3258,,B,B09,B09/014
+tests/test_pascal_resolution.py,f4840105040f58383f551716874ca6312bd53bf8,4195,,B,B09,B09/014
+tests/test_pascal_singleton_resolution.py,7380a622e4d77654fb586561b86b8a8dc5ae52bf,10685,,B,B09,B09/014
+tests/test_path_cli.py,2608bf1b99552a2e4fac420d9881748b037eb530,32176,,B,B09,B09/015
+tests/test_path_confidence.py,5883e6601fa3a9e5481c4cc0d4e8ce7f1a6ec27f,10930,,B,B09,B09/015 B09/016
+tests/test_path_type_member.py,d8d8fc4bc1d5bb858b7410a5039865d17f06b89d,13146,,B,B09,B09/016
+tests/test_paths.py,12359006fbf8a444fc6b5bee952987dd100498f8,4798,,B,B09,B09/016
+tests/test_pdf_extra_warning.py,6eba9c8e46ca30ed154b6066e56ca965a3dc1a80,3883,,B,B09,B09/016
+tests/test_pdf_slicing.py,a6f92a6b89497b4f0778558ac259f78ec2e92e77,9580,,B,B09,B09/016
+tests/test_pdf_token_estimate.py,0ad3abca8bbeab7b6ec40a1b11c022de7bbfa662,6565,,B,B09,B09/016 B09/017
+tests/test_pg_introspect.py,39eb68126c9c2566ae2001e094616e1d713739ca,16262,,B,B09,B09/017
+tests/test_phantom_cross_package_call.py,07fc89d4e88e9e3604b0201d897ecf4429039ecf,4130,,B,B09,B09/017
+tests/test_phantom_external_import.py,f55145f7104aa636db356a86b0c9ebbc9eb80257,7418,,B,B09,B09/017
+tests/test_php_class_const_initializer_refs.py,4a2564510aca4df5951d7a1fb8c95ccc3908a7bd,3634,,B,B09,B09/017
+tests/test_php_language_construct_calls.py,7a0aa9d8514b1ebe56b5db33eb027e8ec6f99f41,13010,,B,B09,B09/017 B09/018
+tests/test_php_member_call_gaps.py,9fc17f40e25b343b96e8b18a97e3fc120dc50e49,12371,,B,B09,B09/018
+tests/test_php_member_collisions.py,8e434682f5543e6c3dd0aae38287671d9853bc8b,5472,,B,B09,B09/018
+tests/test_php_object_creation.py,be8cd8465d67798919afe01502986708b381d4eb,4487,,B,B09,B09/018
+tests/test_php_receiver_member_calls.py,2a779d1ea592ea78ec6fe109d723df6d689a8c57,8180,,B,B09,B09/018
+tests/test_php_static_call_resolution.py,9d3274e0211ef01cf0375d046d8bdbcbacf0f19d,8106,,B,B09,B09/019
+tests/test_php_type_resolution.py,53939b2f311c08d663470addb6e390db357e5a51,9908,,B,B09,B09/019
+tests/test_php_unparsed_casts.py,a6721ca6e63ba1d8e3a23d645fdccef8a221fab5,4037,,B,B09,B09/019
+tests/test_pi_guard_install.py,520b496c53a68351b2b5d3d912018af86c638bc0,2269,,B,B09,B09/019
+tests/test_pi_install.py,ac3ad148e538f151dfd7f8604a7f00d8fa211fe9,2317,,B,B09,B09/019
+tests/test_pin_hash_seed.py,cd3ec4b27305f83fde6947f4dfce10608afd4c5d,7571,,B,B09,B09/019
+tests/test_pipeline.py,ce6055d8b8777c9126710c3d43084c3b04711d6e,5465,,B,B09 B10,B09/019 B10/001
+tests/test_plain_import_member_calls.py,6acc40a2d4c2340a2c6dbde8da8279045e4d6ae7,5982,,B,B10,B10/001
+tests/test_pnpm_workspace_globs.py,6e08ce08d01d8fe3881444fbf477e3111328f378,2900,,B,B10,B10/001
+tests/test_pr10_csharp_overrides.py,beb333531bc1a03c2fd727e9cd45752bb1b03de0,2872,,B,B10,B10/001
+tests/test_pr10_resolution_overrides.py,0acf231de1f3ab04aa988477511f2c9b815d3a5a,4459,,B,B10,B10/001
+tests/test_pr10_watch_overrides.py,1ade230ee3872ef511f873afed42d8bd94e9a25b,1105,,B,B10,B10/001
+tests/test_prompt_id_rule_matches_ids.py,a5e61b843300766bd72cdcce1b487e225e64261f,3415,,B,B10,B10/001
+tests/test_provider_registry.py,1678dda401384cce050e2ecf2fb26adebfb350f6,9423,,B,B10,B10/001
+tests/test_prs.py,45b0f5b3bc63077cdfaa3698f7d18bafc3d54ac0,34345,,B,B10,B10/001 B10/002
+tests/test_prune_source_aliases.py,7936e15a13bac8c67eafda9aca4b298aeb33066b,3517,,B,B10,B10/002
+tests/test_prune_sweeps_orphans.py,925f0ffe3d42df7986c5dc1a4a64317af069f3f6,8713,,B,B10,B10/002
+tests/test_python_aliased_call_in_method.py,f61a6c8b5297457f8f1679f1c41f722b9673cefd,2762,,B,B10,B10/003
+tests/test_python_bare_call_not_enclosing_method.py,e21cfafd06342d598872593662f98bd3f46191e1,3675,,B,B10,B10/003
+tests/test_python_builtin_call_shadowing_4989.py,7c2b7c2105f7ce84efb52cf3b72b39d7b5c65350,5762,,B,B10,B10/003
+tests/test_python_decorators.py,39156a3ec7ee9f8e65a44b9c15201c04b88937e9,9873,,B,B10,B10/003
+tests/test_python_external_import_calls.py,654f9b551020a7818f0d2b362f5380260eabd1fc,5728,,B,B10,B10/003
+tests/test_python_forward_ref_file_id.py,5f72e21a4aafb213a707f57062f4b7290d67185f,3055,,B,B10,B10/003
+tests/test_python_import_never_resolves_to_itself.py,b72f1ea4d614d3d187d169f090829d9b67f8fba1,4507,,B,B10,B10/003
+tests/test_python_import_resolution.py,51b03196b5b3d6ed53a20f44925d0573f9038d1c,24599,,B,B10,B10/004
+tests/test_python_imported_call_caller_collision.py,9aeedb2cde622a9a054f918169814f8da9f406b0,3993,,B,B10,B10/004
+tests/test_python_inherited_method_calls.py,2a76eaa58c9daef8c91dd6dd14670ee892ad9d9c,10416,,B,B10,B10/004
+tests/test_python_injected_factory_calls.py,8f5ad53560689d38d3c392479a3800caa8ce8c91,8481,,B,B10,B10/005
+tests/test_python_member_call_language_gate.py,960002c3916f635b011076d02a505feb372677b0,6793,,B,B10,B10/005
+tests/test_python_member_collisions.py,b0f3b1c864f32628a7605c6bda13ea6790ec0f82,3907,,B,B10,B10/005
+tests/test_python_module_call_exact_name.py,1d09f3d6b53c3155636dbfd30b78495097a6a0c0,3940,,B,B10,B10/005
+tests/test_python_module_instance_calls.py,3960c376b01f6e3c9cc094a335c1ceeb426bac7f,3594,,B,B10,B10/005
+tests/test_python_nested_class_identity.py,e7c6b46daa0ce2fcdd7d4c88d576fb30658fb594,3737,,B,B10,B10/005
+tests/test_python_parse_release.py,85e3cfc4424d821be548db278077b8bc7f1e512d,6825,,B,B10,B10/005
+tests/test_python_property_reads.py,14458c093e5e2a0fe8b0519d39b5c233a178c99d,6940,,B,B10,B10/006
+tests/test_python_pytest_fixture_receivers.py,6955302a4ea10817feeac9871a605a53650fbab7,9701,,B,B10,B10/006
+tests/test_python_reexport_type_binding.py,b5b239a55f81b750f3ffc8fb773b40c8318d1fe6,3474,,B,B10,B10/006
+tests/test_python_self_type_ref.py,1e509e64be08f84206b12d2bf4e96fe3a8805359,2736,,B,B10,B10/006
+tests/test_python_subscript_type_refs.py,ed275a0f724aa67845d566f4c7d26aa6643c0e96,2347,,B,B10,B10/006
+tests/test_python_type_alias.py,b9e9f1ac44bdee7c6391d8b12d7cd3e82e4cd08d,6099,,B,B10,B10/006
+tests/test_python_typed_receiver_calls.py,24d5e0e2fc3257e786f8a736cefbfd7d5f7ee35d,8442,,B,B10,B10/006 B10/007
+tests/test_python_underscore_resolution.py,2e4b65f17f57cbb223474a191ff9053ec7e65864,15482,,B,B10,B10/007
+tests/test_qualified_annotation_stub_bind.py,43f23277c957443cf8d35e3761f597330f803933,2997,,B,B10,B10/007
+tests/test_qualified_type_competition.py,c6c7e856ae7d97c4e161523e3ec4b94ba84845ac,15210,,B,B10,B10/007
+tests/test_query_cli.py,6f455e096cfe652b5df5fe581c22fc0682de2f06,20814,,B,B10,B10/007 B10/008
+tests/test_query_deterministic_order.py,ce80f215e025b3ea584b802edc944a648569dbf1,2574,,B,B10,B10/008
+tests/test_query_fallback_edges.py,771e178449bfee805d7b62cc75bcbac971d8f931,6821,,B,B10,B10/008
+tests/test_query_induced_edges.py,bd02b6a8dc4bf38c7a6ac8191e74c26bc0a10370,8029,,B,B10,B10/008
+tests/test_query_mcp_direction.py,fcad8acff80b4172ec82b15d261cacff08f43400,5045,,B,B10,B10/008
+tests/test_query_names_its_graph.py,32ee8be04ebe5a9267f90345daf53f7441f70ccc,5292,,B,B10,B10/009
+tests/test_query_seed_order.py,ce28f846ee6ca56e1c3e4db190ae86916a144977,3776,,B,B10,B10/009
+tests/test_query_seeds.py,f09fc220d30783e70cecac01e075b9fe8a20272c,7643,,B,B10,B10/009
+tests/test_query_source_first.py,79a8c3f5968752bf5e78cef6a0993ffddf30c2e1,8069,,B,B10,B10/009
+tests/test_querylog.py,b843550c7562907743e44fc4f736a9f1439ec94d,7967,,B,B10,B10/009
+tests/test_r_extractor.py,09c487a25cba1315b091778034b957f996aa720e,12350,,B,B10,B10/009 B10/010
+tests/test_rationale.py,3848e7505d9c3e645fe99f14f8137a6446c53ba9,27849,,B,B10,B10/010
+tests/test_read_hook.py,f1d05e1dec2f5afc68e5f1d9e9e28cc3e4c68609,6126,,B,B10,B10/010 B10/011
+tests/test_read_path_imports.py,99f6dcd400e269b90ae1cfeff1d9ae971127b2e8,4792,,B,B10,B10/011
+tests/test_reflect.py,6abc5f7e7b28f7875698f3152b63fe103a56160f,46506,,B,B10,B10/011 B10/012
+tests/test_relation_collapse_precedence.py,ad1cbbc2aad809bae5ce5beb340feac09eef2013,13778,,B,B10,B10/012
+tests/test_replace_or_append_section.py,f098a0070618872427aefed9bd022ea3a8203852,2425,,B,B10,B10/012
+tests/test_report.py,799e55d3b8222f5acc842e582f86c4a3c0dc1fed,15347,,B,B10,B10/012 B10/013
+tests/test_report_gap_thresholds.py,5be2c59514009677a50886b7f4275b6579ab3d85,13058,,B,B10,B10/013
+tests/test_resolution_collision_index.py,0a0b6c43f9de39a738fe4c8878adbe725fc68505,5853,,B,B10,B10/013
+tests/test_resolution_one_parse_per_file.py,74b1410a65ede61e6e322d09f2bffc7a1766a49f,1949,,B,B10,B10/013
+tests/test_resolve_memoization.py,6fcea26220975a547d6e8e09e68dc2a1d0aee478,3265,,B,B10,B10/013
+tests/test_ruby_bare_self_send_calls.py,94a2b91c96cd49a6a6791312cd0d42e29258957b,4989,,B,B10,B10/013
+tests/test_ruby_resolution.py,794cb6f15d3ad40bf72d0459b98ab10bf78f622f,56517,,B,B10,B10/013 B10/014 B10/015
+tests/test_ruby_underscore_ids.py,c66eebaee1006ea85b302e360f0f6f2cf208ea68,3912,,B,B10,B10/015
+tests/test_rust_anonymous_const.py,c6cdfb20be6e33d518934aedd2178910b8df7749,963,,B,B10,B10/015
+tests/test_rust_builtin_type_hubs.py,480f4fe5afeb67a46000175db9716f3360c55d46,4831,,B,B10,B10/015
+tests/test_rust_case_collisions.py,5bfd7145e7246c9747abadad9e82e481abe60677,6749,,B,B10,B10/015
+tests/test_rust_crate_use_scope.py,1223792cd3299b17697dbacfcd85539cae6279b7,12816,,B,B10,B10/015 B10/016
+tests/test_rust_impl_method_collisions.py,36c3c74fbb2bd736093ac6201c3a09689accb401,5868,,B,B10,B10/016
+tests/test_rust_in_file_call_binding.py,422a55ce6aed9d37355aa6dec0575bc4599f5139,5251,,B,B10,B10/016
+tests/test_rust_macro_argument_calls.py,3bbbe6ae9fcc5620e8e36dffcecb094190b29524,4139,,B,B10,B10/016
+tests/test_rust_macro_rules.py,2bfaa30ab2d4d019503c7928bd675309dc2f9ae3,3055,,B,B10,B10/016
+tests/test_rust_prelude_trait_edges.py,85dc2c1edb8c898acbf8eb2c2254a301e791788a,3575,,B,B10,B10/016
+tests/test_rust_scoped_call_resolution.py,93b19ce7c86980308946e56b21f2dd3021c16230,9610,,B,B10,B10/016
+tests/test_rust_self_member_calls.py,d251cae796f6826b736c6474d925857fc7e40ba6,20134,,B,B10,B10/016 B10/017
+tests/test_rust_type_alias_union.py,56de579870d8e2871a94b5dcca8cfd0112e177c6,4636,,B,B10,B10/017
+tests/test_rust_use_trees.py,ad1415957f80b34146f08e31c91d4a51d5458198,21489,,B,B10,B10/017 B10/018
+tests/test_scala_abstract_methods.py,eeffc7f759a02cfe6763c08fb1eb2c5b4580cb41,3144,,B,B10,B10/018
+tests/test_scala_context_bounds.py,1783bcc40d9dbbc7ff25902e2a7aecfe61a143fd,9758,,B,B10,B10/018
+tests/test_scala_extension_methods.py,9d1155f5b8132e6b687ef97c256c90f2f355b5fd,5355,,B,B10,B10/018
+tests/test_scala_generic_type_params.py,97e8dcdda1acc8793c293993ff360b35244865ce,2047,,B,B10,B10/018
+tests/test_scala_given_instances.py,7496aaf161626799f059fd7ddb7c8cc59c0adb07,3296,,B,B10,B10/018
+tests/test_scala_self_type.py,b9b40bcf4edeb72872a3be18646cd3affacb6a05,4347,,B,B10,B10/018
+tests/test_scala_top_level_binding.py,a77aad150a21650f5ad1d8c6e945c3f27e44eb69,5624,,B,B10,B10/018
+tests/test_scala_type_definition.py,2ca20e73bbfd62f865b9762c60ab966003357a8e,5126,,B,B11,B11/001
+tests/test_scala_underscore_ids.py,0afaa2ab5d83210b21bc05163ce05bde2dfcea12,3770,,B,B11,B11/001
+tests/test_scan_root_contextvar.py,6440ffd4d66f6e257fddee6caf0acca65c7c2120,2879,,B,B11,B11/001
+tests/test_scip_ingest.py,7129de28300ec0c8fc04fed8d229b8234d191327,57438,,B,B11,B11/001 B11/002
+tests/test_search_hook.py,8a05018a4f5715be380e9ca714ee623da76f3b88,7783,,B,B11,B11/002
+tests/test_search_hook_scope.py,4f4152639e915440af477caae6e337c335e34904,4303,,B,B11,B11/003
+tests/test_security.py,d44980c9efa5b239fc1483764720ff1751eac725,22495,,B,B11,B11/003
+tests/test_semantic_cache_basename_recovery.py,7ee0c1b8fa4b4b4febba6cf3873b1773828d0135,3834,,B,B11,B11/003
+tests/test_semantic_cache_out_root.py,2bde8d3c9e3ca9a2b969f330c843249c8aeffe4b,7747,,B,B11,B11/003
+tests/test_semantic_cleanup.py,de13bd2452ebaeca9de2f3650bba2678f591f771,15509,,B,B11,B11/004
+tests/test_semantic_fragment_sanitize.py,5ab2f920471cba63ef116d0e6830a2d8c3f69bca,2878,,B,B11,B11/004
+tests/test_semantic_id_remap_root.py,3a5fee62669c1aed602d808c20211c7aa7b48007,3881,,B,B11,B11/004
+tests/test_semantic_origin_stamp.py,02c348c96a01e7f5e9d7914c21520cc129eafe94,14640,,B,B11,B11/004
+tests/test_semantic_similarity.py,55d9cce34d60b72655aea5666c638e35adc4c6d8,7461,,B,B11,B11/005
+tests/test_serve.py,b99d5234c13870b4b3130e3689d8a6aca748acbd,104115,,B,B11,B11/005 B11/006 B11/007
+tests/test_serve_http.py,a758edfa74bccfdb3a7ac22f2890996025e2aab1,25212,,B,B11,B11/007 B11/008
+tests/test_settings_merge.py,ab4cd562b46b492b610d932700da7288ae69e6bf,7967,,B,B11,B11/008
+tests/test_shrink_guard_dedup_merge_4940.py,12e1df74b233cfbc1b1915bf745dcb594ab4b0c2,9862,,B,B11,B11/008
+tests/test_shrink_guard_replaced_sources.py,e1bdf139931c508f9dec0e7ffcec4a1751c28c32,5147,,B,B11,B11/008 B11/009
+tests/test_skill_auto_refresh.py,3410959bdeb981043d1457daff67fc2542d698db,19994,,B,B11,B11/009
+tests/test_skill_code_only_incremental_update.py,477dcf63b6d41766bf6cb05d7e72089686f4bc12,8881,,B,B11,B11/009
+tests/test_skill_codex_semantic_merge.py,814a291c9ebfba84cdad0c22d1758630987dd4d4,5292,,B,B11,B11/009
+tests/test_skill_no_backtick_substitution.py,e9b61e97c4c9d636c919a3bd6d2e7695eae9da0b,9211,,B,B11,B11/009 B11/010
+tests/test_skill_part_a_explicit_root.py,5dfae1df6027147331bda5598b18f04643c85821,3624,,B,B11,B11/010
+tests/test_skill_persisted_scan_options.py,f0f7186bafc71f71d85aa83c8f061926f0a9c7eb,4183,,B,B11,B11/010
+tests/test_skill_semantic_all_cached.py,486f652444e5cfbf2e7122d6d4b5c90bcc664e92,4269,,B,B11,B11/010
+tests/test_skill_version_warning.py,1cca987dd44d833ffae4bf1b512a504e9f3bada0,2432,,B,B11,B11/010
+tests/test_skill_when_to_build.py,cf62c0ea3f5403bd7f6413ddc9acdbe8a360e772,847,,B,B11,B11/010
+tests/test_skillgen.py,30b3032fd46fc017b1955b013b737b58b8e0cd19,76163,,B,B11,B11/010 B11/011 B11/012
+tests/test_skillgen_input_path_injection.py,e8f90ff6a78dab7d656b2ef9f1adc3e018de2354,11161,,B,B11,B11/012
+tests/test_slice_checkpoint_completeness.py,49cbe2218a11b6e0c1f7fc73f4212e6c7e214c5f,11461,,B,B11,B11/012 B11/013
+tests/test_solidity_extractor.py,c8338c3cc56aec5e9d9302f5b7bc58bbe80ba01f,41053,,B,B11,B11/013 B11/014
+tests/test_solidity_inherited_calls.py,106d4c603e701ae228cf62dec08813cb81bc0098,8411,,B,B11,B11/014
+tests/test_source_file_encoding.py,8201b3dc927c301fa74d10afd9b77dea707cf3c9,11087,,B,B11,B11/014
+tests/test_source_key_memoization.py,48458a29a8ff55e12e9c3fbed2fb665f49b905ab,3843,,B,B11,B11/014
+tests/test_sourceless_call_targets.py,a5926203d656c8c7706c4b6d308170f15e98b092,8395,,B,B11,B11/014
+tests/test_sql_comma_joins_and_dblink.py,e8bd8abdd9a956c23a3249ad4f18ae7b74e2b733,4634,,B,B11,B11/014 B11/015
+tests/test_sql_cross_file_tables.py,9f1394e830d43b16b2dc7ae9e4b883cf2dd3b64e,3244,,B,B11,B11/015
+tests/test_sql_go_batches.py,6151e936484cde2da5d7e16a8a2c51358961e147,2882,,B,B11,B11/015
+tests/test_sql_non_ascii_table_names.py,2542bc68fb91765102aa5b1a1c5fac238a00fef7,1087,,B,B11,B11/015
+tests/test_sql_oracle_editionable.py,effc3194ef8960380bd0609252a35cafca4dac65,2430,,B,B11,B11/015
+tests/test_sql_oracle_packages.py,86231dd6a9263393dc283b89e17407dd8593a454,9355,,B,B11,B11/015
+tests/test_sql_plpgsql_body_reads.py,c3da77ffb150176ef412591796987b96bb20767d,3193,,B,B11,B11/015
+tests/test_sql_tsql_procedures.py,7e9cd206cdbf981b89dac99dade952b92fb57ba9,15271,,B,B11,B11/015 B11/016
+tests/test_src_layout_import_resolution.py,fa38c27c54d00cd43dae1b721dcd3f3c6ab5384c,19392,,B,B11,B11/016
+tests/test_stale_prune.py,b4997b1ce32d7e772b76deed07ead426c5010578,4738,,B,B11,B11/016
+tests/test_stat_index_husk.py,194a418ce8a36e7d62ae3c8ab1bcbe8f2b517054,2204,,B,B11,B11/016
+tests/test_stat_index_multi_root.py,6576479dd0d3a218f98b8a31ce302fe09a1e9c33,4532,,B,B11,B11/016
+tests/test_stat_index_portability.py,d56ea7fb038f98b11de7b5df99e71b547d8582ac,11347,,B,B11,B11/016 B11/017
+tests/test_suggest_questions_ambiguous.py,5cdf77039eb03e8c513fef22b805ed0629d21616,3068,,B,B11,B11/017
+tests/test_svelte_extraction.py,68d8b4b34a79b3d940f585b0189f1b2db7e098b1,6967,,B,B11,B11/017
+tests/test_swift_builtin_noise.py,bea4ae000caeab340541b9b5e83a8630dbc2abd4,5202,,B,B11,B11/017
+tests/test_swift_computed_properties.py,dd78d748227e8930625e7d7c58995fd4671d3b0f,3291,,B,B11,B11/017
+tests/test_swift_cross_file_calls.py,fb7cacc0012f44859e0107ee3182a8a8ed3f8811,22457,,B,B11,B11/017 B11/018
+tests/test_swift_generic_type_params.py,204e24580f51faa688cc7627b63a2b89d2864b96,1976,,B,B11,B11/018
+tests/test_swift_import_resolution.py,ce5ce44d94117286531635f702e0935ea25a8a40,6021,,B,B11,B11/018
+tests/test_swift_macro_declarations.py,1548938a5c97bea96ce4b436944266151c7485be,3042,,B,B11,B11/018
+tests/test_swift_protocol_dispatch.py,5ea5986c6a71e30fa739fdcb8888d4c223010a42,11339,,B,B11,B11/018
+tests/test_swift_protocol_requirements.py,ec41c285235f57b0be6eb5c48763003ac3d2e0ea,3525,,B,B11,B11/018
+tests/test_swift_self_type_ref.py,ab232379e2bdbb1c0656c1dc9b22813ae2792e1b,2306,,B,B11,B11/018
+tests/test_swift_underscore_ids.py,f273e17586f81e07dea45fe23a8123db86bc4b43,4171,,B,B11,B11/018
+tests/test_symbol_resolution.py,d8737d23672a53e3878f722fad32557ab46a473f,41456,,B,B11 B12,B11/019 B12/001
+tests/test_symlinked_root_source_file.py,df00f6f4505c53d851231017a624790055c757f0,3373,,B,B12,B12/001
+tests/test_terraform.py,5d7424a91dfd0f9c362419486308fdcba4246046,20903,,B,B12,B12/001
+tests/test_terraform_modules.py,745b4f53c91162b038b30863e79e129be1f1c60b,19785,,B,B12,B12/001 B12/002
+tests/test_trailing_newline_not_a_syntax_error.py,3140bcda7b6f2075b18d999f79940c940668811f,1964,,B,B12,B12/002
+tests/test_transcribe.py,4c1f3d16db5f654cb11d5638b97bd864feb50740,6146,,B,B12,B12/002
+tests/test_tree_html.py,d165e0c378c33868787ad6270af7665eba611394,14538,,B,B12,B12/002
+tests/test_truncation_full_answer.py,4b90b00f5dd5f401b5919905121f2a41758cb290,3708,,B,B12,B12/002
+tests/test_ts_abstract_methods.py,9e51833f215e5a4a0e1799c405d1c05e83529793,3451,,B,B12,B12/002
+tests/test_ts_decorator_chains.py,c59734bc2a01a14522ccd94deefeed1f30c72929,3768,,B,B12,B12/003
+tests/test_ts_decorators.py,95e3378930f02e7ef248a63ee7cb214273382dc3,6450,,B,B12,B12/003
+tests/test_ts_export_type_star.py,8216efbab3fcba78973a295dabb9d5f8ecaa4bbe,3120,,B,B12,B12/003
+tests/test_ts_generators.py,42fad04ecdd0e41f8c62a270622f2c68c1a573c0,2861,,B,B12,B12/003
+tests/test_ts_import_require.py,43f186116a6ed331dceef186d74df16b472fcfc8,4842,,B,B12,B12/003
+tests/test_ts_import_type_arguments.py,c7d7a667a5b23f6827222af352a1daa972d1d211,12502,,B,B12,B12/003
+tests/test_ts_inheritance.py,ac709e97a5b5d899f0e771af698192506f224b44,5718,,B,B12,B12/003 B12/004
+tests/test_ts_namespace.py,e56f5517a611f661510f9bf7b5bc82177c8642ae,2775,,B,B12,B12/004
+tests/test_ts_new_expression_calls.py,56cb6f6d7fbc8b9f54ef7a0e44466e778144376a,3084,,B,B12,B12/004
+tests/test_ts_parse_warning.py,ca3a5a078c68b9f3ae7d9d5b5a2a9425dd42ceb8,4855,,B,B12,B12/004
+tests/test_ts_receiver_member_calls.py,2e8f0ee0e7a4b7df272ca67f310269ca1878dffb,28775,,B,B12,B12/004 B12/005
+tests/test_ts_typed_template_and_annotation.py,02ee84c11e7f2fd9c9c57c1e0d65672fed36ee42,5238,,B,B12,B12/005
+tests/test_tsconfig_declaration_targets.py,b8fba2bfe5219c066bf67d8e9ff19dbe12dc251e,4297,,B,B12,B12/005
+tests/test_type_only_import_cycles.py,ae12181507fe03b398ac3b2f8abd0c8fb97a821d,15171,,B,B12,B12/005
+tests/test_typescript_enum_members.py,1d286326be497cf6ebebce20326d6ff8b7d13b92,6510,,B,B12,B12/005
+tests/test_typescript_module_extensions.py,33c8493d24d90cb354eff42a1764d51cb0587042,3818,,B,B12,B12/005
+tests/test_unc_probe_guard.py,294629ea8c12e5a299315718666796321012e350,7073,,B,B12,B12/006
+tests/test_undirected_two_file_import_cycle.py,bf240f1687a36f629bbe34d421deed88556acd68,6857,,B,B12,B12/006
+tests/test_uninstall_global_registration.py,ff6865ce526724b80d93cd9bafaffb7d19bffd87,11534,,B,B12,B12/006
+tests/test_uninstall_purge_safety.py,9d0ed992141abcbe2fe38d1b0cd43c38aee61e0f,8642,,B,B12,B12/006
+tests/test_uninstall_scope.py,6e10c35688d1c30760dcbf4b0a9ede6a1d04e38d,5972,,B,B12,B12/006 B12/007
+tests/test_uninstall_symlink.py,b12727d738069cca48dd999a685e223e2eb9fed6,2327,,B,B12,B12/007
+tests/test_unmapped_at_alias_resolution.py,a27e533c7ad81b4636d5e006d57caaffbd0e91d1,10963,,B,B12,B12/007
+tests/test_unverified_semantic_shrink.py,5dbc779ef27762835d46e33f1b960784ea745bf4,18365,,B,B12,B12/007
+tests/test_update_incremental.py,6dc21dc7f6c66d4bbbd9b212ce0ab580fdcecd6d,15142,,B,B12,B12/007 B12/008
+tests/test_update_js_resolution_inputs.py,1f8a865876386930e0061237f39480fb862fa8f7,2848,,B,B12,B12/008
+tests/test_update_lock_contention.py,caf4870cbf352ae55e2ff61fdba314c5030f724b,8211,,B,B12,B12/008
+tests/test_update_manifest_preservation.py,75ae031876ad40f06ef1790ea5b553bf75ea1a20,2787,,B,B12,B12/008
+tests/test_update_missing_graph.py,2cc6562a08f9374e225ac5d0435a3f1d69e1755b,1042,,B,B12,B12/008
+tests/test_update_no_change_gate.py,30d667400ac26bdc441c7437831190d87420640c,14287,,B,B12,B12/008 B12/009
+tests/test_update_partial_manifest.py,cd23a8424ad28bbe83a2a0bf15bc01b9a6911ab4,11477,,B,B12,B12/009
+tests/test_validate.py,aa6854b90871bae7d66a03de9125c3162976b45f,7891,,B,B12,B12/009
+tests/test_variadic_param_refs.py,5aa45868608c7bf17ed70e73fe98739f0f6ea7c6,3367,,B,B12,B12/009
+tests/test_vbnet_extractor.py,8f8094a9efdec7c1b70301584643c0ef7bfb4c1b,18797,,B,B12,B12/009 B12/010
+tests/test_vue_extraction.py,f3074f99e6512d45bb7f13ffe9115b74b8e26b79,8090,,B,B12,B12/010
+tests/test_walk_python_tree_iterative.py,426b379ba4e6fec5780023465551a96c97b2f5cf,2208,,B,B12,B12/010
+tests/test_watch.py,f2c4c2d96e7928140fff36c98a876e73f8d79a4f,249319,,B,B12,B12/010 B12/011 B12/012 B12/013 B12/014 B12/015 B12/016
+tests/test_watch_identity_cache.py,6484050da06f7c39009791f5c06300f3ea455f50,4827,,B,B12,B12/016
+tests/test_watch_inotify_overflow.py,1af1f1254691c52685f596a8733409a8f91a54aa,6124,,B,B12,B12/016
+tests/test_watch_manifest_location.py,43fb894f9b93ba8107aa0ae2645720c1916d17bd,9783,,B,B12,B12/017
+tests/test_watch_pruned.py,a53bfe8f6d685652d059234edf6e864981416e23,3453,,B,B12,B12/017
+tests/test_wheel_packaging.py,aa7bbc4b79def56b57a4808b9b82539628581d36,4768,,B,B12,B12/017
+tests/test_wiki.py,2cdd1568e25cc668aaf7524d679f937b140dcab2,31567,,B,B12,B12/017 B12/018
+tests/test_wiki_case_only_relabel.py,37a792869d7e80aad883cbc02e98693a7e5f48e1,4313,,B,B12,B12/018
+tests/test_wiki_link_filename_parity.py,11ed2ed5b34bb72101daa1c0cd79aa597f2e5a67,6871,,B,B12,B12/018
+tests/test_wiki_truncation_indicator.py,e0f9d0528abbd3d297392623abc08f6d3de0192f,1711,,B,B12,B12/018
+tests/test_word_count_cache.py,257229694afaf9b575d85b7f3bda0ac53dca6f10,4931,,B,B12,B12/018
+tests/test_workers_by_work_size.py,45a37ecc946d4d88d2815351ace76d0238d2e207,4034,,B,B12,B12/018
+tests/test_yaml_extraction.py,b28d4d9c8d94654d353e0800d6a5ac5f15ff513c,11316,,B,B12,B12/018 B12/019
+tests/test_zero_node_no_cache.py,5e62547ba08c5a92e1e6a62f6d6d41c2892ff0f0,2188,,B,B12,B12/019
+tools/skillgen/__main__.py,c4c741afc815d6c30107415228f6e814155f21ba,181,,D,D8,D8/014
+tools/skillgen/fragments/core/core.md,82a96873f854b2cc2df9d01f058f52ba640c082d,45360,,D,D8,D8/014 D8/015
+tools/skillgen/fragments/dispatch/.gitkeep,0276e5b8c085a819d7b1627a3a908661ab967b05,77,,D,D8,D8/016
+tools/skillgen/fragments/extra/.gitkeep,0276e5b8c085a819d7b1627a3a908661ab967b05,77,tools/skillgen/fragments/dispatch/.gitkeep,D,D8,D8/016
+tools/skillgen/fragments/dispatch/agent-tool-disk-powershell.md,54f2f54e3d5e877bf426e01a923102bade0388bf,1755,,D,D8,D8/016
+tools/skillgen/fragments/dispatch/agent-tool-disk.md,9e07ca5db3ff928cedd7bae82e0025631ffc5f90,1722,,D,D8,D8/016
+tools/skillgen/fragments/dispatch/codex-agenttask.md,082e78b4c1d3761bc496d7672abd1e7ef6b839ba,2482,,D,D8,D8/016
+tools/skillgen/fragments/dispatch/manual-paste.md,b4120cc3014cb4b2e1958f4e0d3658ef21077fd2,1381,,D,D8,D8/016
+tools/skillgen/fragments/dispatch/opencode-mention.md,f87f5fb51b3cc5179f02a66d67d00bf7ae984c08,1169,,D,D8,D8/016
+tools/skillgen/fragments/dispatch/pi-subagents.md,9d5c4ca20194d20927a4d6459eb5e09d363fda29,1448,,D,D8,D8/016
+tools/skillgen/fragments/dispatch/task-tool-disk-trae.md,5ee3a4a62fe4d03a3075164ae7dd316e852de82a,1544,,D,D8,D8/016
+tools/skillgen/fragments/dispatch/task-tool-disk.md,d3c9caae6ebc71da4eef300670a3210851222533,1446,,D,D8,D8/016
+tools/skillgen/fragments/extra/kilo-rules.md,c42881efe0309457c961af765f4fcf9048b3c2fc,298,,D,D8,D8/016
+tools/skillgen/fragments/extra/powershell-troubleshooting.md,9810370362cdecd0a5a1406b2298f698a952ad09,768,,D,D8,D8/016
+tools/skillgen/fragments/query-stub/default.md,696796ec5c87d6b6d9d464385e6dc6ccf6c1a1b5,751,,D,D8,D8/016
+tools/skillgen/fragments/references/host/hooks-agents-md.md,26b9a8f7496694a2fc63e2fbe7ccccfb7f5b7c12,1313,,D,D8,D8/016
+tools/skillgen/fragments/shell/interpreter-guard-posix.md,f7e344881c3f5a3664f0c7789996713ce1aebc79,454,,D,D8,D8/016
+tools/skillgen/fragments/shell/interpreter-guard-powershell.md,dbd80f6a98878a8b2ec1e4a053d546498f3fde6f,735,,D,D8,D8/016
+tools/skillgen/fragments/shell/posix.md,b9cdfe5f0a4cb17902c8ddff9bd0b7e2095e115d,2317,,D,D8,D8/016
+tools/skillgen/fragments/shell/powershell.md,7837595eac8e2bbeed12710b0798d4d0f070221a,3272,,D,D8,D8/016
+tools/skillgen/gen.py,4d9337935ca79ab7a13a535b42e9b6d025987dd9,80554,,D,D8,D8/016 D8/017 D8/018
+tools/skillgen/platforms.toml,434792206883a9471d23d79d7b679c080d303eb8,12276,,D,D8,D8/018
+uv.lock,369a73432fea2c04f77e84d8a011dfde58748dda,913285,,dump,script,
+worked/example/README.md,5849ed8fbd4260eefcdb7db3b7cb3d37557ffb40,2160,,L,L3,L3/010
+worked/example/raw/api.py,6720e17534611e4f46b4e661e0b09434db1c8f93,2417,,L,L3,L3/010
+worked/example/raw/architecture.md,f657315b09cf280f15d479ea27d9bc10740f80ce,2855,,L,L3,L3/010
+worked/example/raw/notes.md,1de5ef64240a1171a5a7ed168d6166cab50fa365,3073,,L,L3,L3/010
+worked/example/raw/parser.py,55f80737397b19bfad04c1ec6a5d65272e113757,2292,,L,L3,L3/010
+worked/example/raw/processor.py,d75bb9a7e117bbc6677e6c319fc8f4c18e9f4e9a,2195,,L,L3,L3/010
+worked/example/raw/storage.py,46e8623dc6f48179681f01cb43226cc64886c1a0,2527,,L,L3,L3/010
+worked/example/raw/validator.py,0d9550083f7e09c31b6b2abb770c2ac2acfe6278,1892,,L,L3,L3/010
+worked/httpx/GRAPH_REPORT.md,675eb787e5278c508e231f97d0cb98192351d0aa,3549,,L,L3,L3/010
+worked/httpx/README.md,db854e56814737af15c4c82a6c15a7f08589c3f3,1846,,L,L3,L3/010
+worked/httpx/graph.json,17431adc6c0e7faedfd5084dd8478de0741bec62,139663,,dump,script,
+worked/httpx/raw/auth.py,290cadd3e1d305c95c14550ffd4cf907cf58d50a,3976,,L,L3,L3/011
+worked/httpx/raw/client.py,d506dd613389a0a48e71aef02eaaba0511bd81fb,5394,,L,L3,L3/011
+worked/httpx/raw/exceptions.py,ff5392fee2fcd29f8dffc5aaacb504bec6b2d8d9,2058,,L,L3,L3/011
+worked/httpx/raw/models.py,80582b6fae593ca27d5afa742322d640d6db3879,3282,,L,L3,L3/011
+worked/httpx/raw/transport.py,5bd9b916616c648e7b820bb1c0b6d0a287a5edef,3987,,L,L3,L3/011
+worked/httpx/raw/utils.py,84ca4a3b8f458994be5ece85f1168bf08e55cfed,2589,,L,L3,L3/011
+worked/httpx/review.md,66f8f96e50206488f4285f92fb0b69038e8ff2cd,22173,,L,L3,L3/011 L3/012
+worked/karpathy-repos/GRAPH_REPORT.md,90018e7c50413be059a424b6873223f5469539c5,17416,,L,L3,L3/012
+worked/karpathy-repos/README.md,58eefdc94581e3263d692f5f6db2e92139c8e6ce,2234,,L,L3,L3/012
+worked/karpathy-repos/graph.json,597fddd04711801d6c05a2b3cc06543c801ff802,120398,,dump,script,
+worked/karpathy-repos/review.md,44dbed04819ef3d99e6c476c96d52bb7a39e38eb,7582,,L,L3,L3/012
+worked/mixed-corpus/GRAPH_REPORT.md,b18665b4e23c559d5ac59a3bbbefc68aeda917ac,3411,,L,L3,L3/012
+worked/mixed-corpus/README.md,ef9592eac3407de65fb3f48263aed78ca1eab4e6,1682,,L,L3,L3/012
+worked/mixed-corpus/graph.json,fb972331d9c5b0dc04667ce45c88953d1fe1635b,17813,,dump,script,
+worked/mixed-corpus/raw/analyze.py,cf534496023192680a9d4d194ebd7975c2891f9d,20053,,L,L3,L3/013
+worked/mixed-corpus/raw/attention_notes.md,6a60166f879a5399899004f887060888c6aa2584,3303,,L,L3,L3/013
+worked/mixed-corpus/raw/build.py,655820c041fd89d251acbdd8585df80f64934813,1831,,L,L3,L3/013
+worked/mixed-corpus/raw/cluster.py,b5c97b7c80c53cfd92a8ebdeb30a3e429844d6e5,4164,,L,L3,L3/013
+worked/mixed-corpus/review.md,13370b9abded5c7a001314e87eec39fe235f4fa1,8073,,L,L3,L3/013
+worked/rsl-siege-manager/GRAPH_REPORT.md,ff96251d2cef1bab583f35921ef2903fbc498d68,36180,,L,L3,L3/014
+worked/rsl-siege-manager/README.md,76c26a240ae9d513ee081ea62917fb1fb56812ed,3361,,L,L3,L3/014
+worked/rsl-siege-manager/graph.html,44f209f730965938c0f862a03301f573afe69591,1846390,,dump,script,
+worked/rsl-siege-manager/graph.json,7b8674bd63baee2cc8f9b9cc1d13d50dc1b4a775,1991261,,dump,script,
+worked/rsl-siege-manager/manifest.json,11d3b3d9401ebbdf53726fcde90bde09831069a9,59083,,dump,script,
+worked/rsl-siege-manager/review.md,f0072b41011a7dff6b48710b6815b145829da664,11961,,L,L3,L3/015

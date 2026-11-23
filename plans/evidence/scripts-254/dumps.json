@@ -1,0 +1,220 @@
+{
+ "uv.lock": {
+  "bytes": 913285,
+  "packages": 202,
+  "registries": [
+   "https://pypi.org/simple"
+  ],
+  "sdist_only": [
+   "jieba",
+   "nuitka"
+  ],
+  "sources": {
+   "editable": 1,
+   "registry": 201
+  },
+  "without_hash": []
+ },
+ "worked/httpx/graph.json": {
+  "absolute_paths": 0,
+  "bytes": 139663,
+  "confidence": {
+   "EXTRACTED": 174,
+   "INFERRED": 156
+  },
+  "edge_keys": [
+   "_src",
+   "_tgt",
+   "confidence",
+   "relation",
+   "source",
+   "source_file",
+   "source_location",
+   "target",
+   "weight"
+  ],
+  "edges": 330,
+  "node_keys": [
+   "community",
+   "file_type",
+   "id",
+   "label",
+   "source_file",
+   "source_location"
+  ],
+  "nodes": 144,
+  "relations": {
+   "calls": 46,
+   "contains": 53,
+   "imports_from": 10,
+   "inherits": 30,
+   "method": 81,
+   "uses": 110
+  },
+  "top": {
+   "directed": false,
+   "graph": 0,
+   "links": 330,
+   "multigraph": false,
+   "nodes": 144
+  }
+ },
+ "worked/karpathy-repos/graph.json": {
+  "absolute_paths": 143,
+  "bytes": 120398,
+  "confidence": {
+   "EXTRACTED": 203,
+   "INFERRED": 43
+  },
+  "edge_keys": [
+   "_src",
+   "_tgt",
+   "confidence",
+   "relation",
+   "source",
+   "source_file",
+   "source_location",
+   "target",
+   "weight"
+  ],
+  "edges": 246,
+  "node_keys": [
+   "community",
+   "file_type",
+   "id",
+   "label",
+   "source_file",
+   "source_location"
+  ],
+  "nodes": 177,
+  "relations": {
+   "calls": 43,
+   "contains": 45,
+   "imports": 49,
+   "imports_from": 34,
+   "inherits": 5,
+   "method": 70
+  },
+  "top": {
+   "directed": false,
+   "graph": 0,
+   "links": 246,
+   "multigraph": false,
+   "nodes": 177
+  }
+ },
+ "worked/mixed-corpus/graph.json": {
+  "absolute_paths": 0,
+  "bytes": 17813,
+  "confidence": {
+   "EXTRACTED": 19,
+   "INFERRED": 19
+  },
+  "edge_keys": [
+   "_src",
+   "_tgt",
+   "confidence",
+   "relation",
+   "source",
+   "source_file",
+   "source_location",
+   "target",
+   "weight"
+  ],
+  "edges": 38,
+  "node_keys": [
+   "community",
+   "file_type",
+   "id",
+   "label",
+   "source_file",
+   "source_location"
+  ],
+  "nodes": 22,
+  "relations": {
+   "calls": 19,
+   "contains": 19
+  },
+  "top": {
+   "directed": false,
+   "graph": 0,
+   "links": 38,
+   "multigraph": false,
+   "nodes": 22
+  }
+ },
+ "worked/rsl-siege-manager/graph.html": {
+  "bytes": 1846390,
+  "external": [
+   "https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"
+  ],
+  "fetch_calls": 0,
+  "scripts": 3
+ },
+ "worked/rsl-siege-manager/graph.json": {
+  "absolute_paths": 0,
+  "bytes": 1991261,
+  "confidence": {
+   "EXTRACTED": 3483,
+   "INFERRED": 393
+  },
+  "edge_keys": [
+   "confidence",
+   "confidence_score",
+   "context",
+   "relation",
+   "source",
+   "source_file",
+   "source_location",
+   "target",
+   "weight"
+  ],
+  "edges": 3876,
+  "node_keys": [
+   "community",
+   "file_type",
+   "id",
+   "label",
+   "norm_label",
+   "source_file",
+   "source_location"
+  ],
+  "nodes": 1886,
+  "relations": {
+   "calls": 1142,
+   "contains": 1266,
+   "imports": 312,
+   "imports_from": 196,
+   "inherits": 64,
+   "method": 56,
+   "rationale_for": 600,
+   "uses": 240
+  },
+  "top": {
+   "built_at_commit": "6085fd660692d0eade02696128e186f03f2c8f5e",
+   "directed": false,
+   "graph": 0,
+   "hyperedges": 0,
+   "links": 3876,
+   "multigraph": false,
+   "nodes": 1886
+  }
+ },
+ "worked/rsl-siege-manager/manifest.json": {
+  "bytes": 59083,
+  "top": {
+   "I:\\games\\raid\\siege-web\\.worktrees\\experiment-graphify-dry-run-doc\\backend\\alembic\\env.py": 2,
+   "I:\\games\\raid\\siege-web\\.worktrees\\experiment-graphify-dry-run-doc\\backend\\alembic\\versions\\0001_initial_schema.py": 2,
+   "I:\\games\\raid\\siege-web\\.worktrees\\experiment-graphify-dry-run-doc\\backend\\alembic\\versions\\0002_add_preview_columns.py": 2,
+   "I:\\games\\raid\\siege-web\\.worktrees\\experiment-graphify-dry-run-doc\\backend\\alembic\\versions\\0003_make_siege_date_nullable.py": 2,
+   "I:\\games\\raid\\siege-web\\.worktrees\\experiment-graphify-dry-run-doc\\backend\\alembic\\versions\\0004_add_post_priority_config.py": 2,
+   "I:\\games\\raid\\siege-web\\.worktrees\\experiment-graphify-dry-run-doc\\backend\\alembic\\versions\\0005_add_description_to_post_priority_config.py": 2,
+   "I:\\games\\raid\\siege-web\\.worktrees\\experiment-graphify-dry-run-doc\\backend\\alembic\\versions\\0006_power_level_and_drop_sort_value.py": 2,
+   "I:\\games\\raid\\siege-web\\.worktrees\\experiment-graphify-dry-run-doc\\backend\\alembic\\versions\\0007_fix_group_number_max.py": 2,
+   "I:\\games\\raid\\siege-web\\.worktrees\\experiment-graphify-dry-run-doc\\backend\\alembic\\versions\\0008_add_matched_condition_id_to_position.py": 2,
+   "I:\\games\\raid\\siege-web\\.worktrees\\experiment-graphify-dry-run-doc\\backend\\alembic\\versions\\0009_add_discord_id_to_member.py": 2,
+   "I:\\games\\raid\\siege-web\\.worktrees\\experiment-graphify-dry-run-doc\\backend\\alembic\\versions\\0010_add_last_seen_changelog_at_to_member.py": 2,
+   "I:\\games\\raid\\siege-web\\.worktrees\\experiment-graphify-dry-run-doc\\backend\\alembic\\versions\\0011_add_post_suggest_preview.py": 2
+  }
+ }
+}

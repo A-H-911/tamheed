@@ -1,0 +1,290 @@
+[
+ {
+  "fix": "01",
+  "commit": "162570deeb",
+  "origin_F1": "6939d2b",
+  "origin_F2": "6939d2b",
+  "origin_agree": true,
+  "kind_F1": "code-code",
+  "kind_F2": "code-code",
+  "place_A": "plugins/tamheed/server/tamheed_server.py _standup_withdraw (the id check on the report it was given)",
+  "places_B_F1": [
+   "plugins/tamheed/server/tamheed_server.py _standup_withdraw (the loop over the reports in the correction chain)"
+  ],
+  "places_B_F2": [
+   "plugins/tamheed/server/tamheed_server.py _standup_withdraw (loop over the corrected reports in the lineage)"
+  ]
+ },
+ {
+  "fix": "03",
+  "commit": "a4a0e0691d",
+  "origin_F1": "88cb788",
+  "origin_F2": "88cb788",
+  "origin_agree": true,
+  "kind_F1": "code-code",
+  "kind_F2": "code-code",
+  "place_A": "plugins/tamheed/server/resume_hook.py (the injection screen a handoff passes)",
+  "places_B_F1": [
+   "plugins/tamheed/server/resume_hook.py main (the failure line)",
+   "SECURITY.md"
+  ],
+  "places_B_F2": [
+   "plugins/tamheed/server/resume_hook.py main (failure line)",
+   "SECURITY.md"
+  ]
+ },
+ {
+  "fix": "07",
+  "commit": "70e63d921b",
+  "origin_F1": "none",
+  "origin_F2": "none",
+  "origin_agree": true,
+  "kind_F1": "text-text",
+  "kind_F2": "text-text",
+  "place_A": "the agent-control template and the CLAUDE.md note (plan 132)",
+  "places_B_F1": [
+   "plugins/tamheed/references/handoff.md (recording obligations paragraph)"
+  ],
+  "places_B_F2": [
+   "plugins/tamheed/references/handoff.md (The recording obligations)"
+  ]
+ },
+ {
+  "fix": "08",
+  "commit": "3e10ba1715",
+  "origin_F1": "none",
+  "origin_F2": "none",
+  "origin_agree": true,
+  "kind_F1": "code-text",
+  "kind_F2": "code-text",
+  "place_A": "the prompt library: scenario prompts became skills in 5.0.0",
+  "places_B_F1": [
+   "plugins/tamheed/server/tamheed_server.py _CONVERTED_HINTS"
+  ],
+  "places_B_F2": [
+   "plugins/tamheed/server/tamheed_server.py _CONVERTED_HINTS"
+  ]
+ },
+ {
+  "fix": "09",
+  "commit": "d7ca9f88b6",
+  "origin_F1": "none",
+  "origin_F2": "none",
+  "origin_agree": true,
+  "kind_F1": "code-text",
+  "kind_F2": "code-text",
+  "place_A": "handoff_emit behaviour (pure target wiring since v3)",
+  "places_B_F1": [
+   "plugins/tamheed/server/tamheed_server.py TOOLS handoff_emit description",
+   "plans/README.md (rows for plans 170-174)"
+  ],
+  "places_B_F2": [
+   "plugins/tamheed/server/tamheed_server.py TOOLS[\"handoff_emit\"] registered description",
+   "plans/README.md (rows for plans 170-174)"
+  ]
+ },
+ {
+  "fix": "12",
+  "commit": "b72296e8b7",
+  "origin_F1": "none",
+  "origin_F2": "none",
+  "origin_agree": true,
+  "kind_F1": "code-code",
+  "kind_F2": "code-code",
+  "place_A": "handoff_emit pointer-import branch (the note lives in the package's CLAUDE.md); the v5.1 stale scan scope (agent-control, prompt, skill files)",
+  "places_B_F1": [
+   "plugins/tamheed/server/tamheed_server.py handoff_emit (stale-warning block placement)",
+   "plugins/tamheed/server/tamheed_server.py _STALE_BLOCK text",
+   "plugins/tamheed/references/handoff.md"
+  ],
+  "places_B_F2": [
+   "plugins/tamheed/server/tamheed_server.py handoff_emit (stale-warning block append)",
+   "plugins/tamheed/server/tamheed_server.py _STALE_BLOCK text"
+  ]
+ },
+ {
+  "fix": "16",
+  "commit": "3f1e17ffec",
+  "origin_F1": "none",
+  "origin_F2": "none",
+  "origin_agree": true,
+  "kind_F1": "code-code",
+  "kind_F2": "code-code",
+  "place_A": "every other engine-written journal insert (signs system:<component>, plan 086)",
+  "places_B_F1": [
+   "plugins/tamheed/server/tamheed_server.py work_bind (journal row insert)",
+   "plugins/tamheed/server/README.md",
+   "SECURITY.md"
+  ],
+  "places_B_F2": [
+   "plugins/tamheed/server/tamheed_server.py work_bind (journal INSERT)",
+   "plugins/tamheed/server/README.md",
+   "SECURITY.md"
+  ]
+ },
+ {
+  "fix": "21",
+  "commit": "97827e3a80",
+  "origin_F1": "ea2a2cf",
+  "origin_F2": "ea2a2cf",
+  "origin_agree": true,
+  "kind_F1": "code-code",
+  "kind_F2": "code-code",
+  "place_A": "plugins/tamheed/server/tamheed_server.py _readiness_report prose-ids-resolve (the dangling list's \"showing N of M\" clause)",
+  "places_B_F1": [
+   "plugins/tamheed/server/tamheed_server.py _readiness_report prose-ids-resolve (in_code_spans and not_well_formed cut notes)"
+  ],
+  "places_B_F2": [
+   "plugins/tamheed/server/tamheed_server.py _readiness_report prose-ids-resolve (in_code_spans and not_well_formed lists)"
+  ]
+ },
+ {
+  "fix": "24",
+  "commit": "e34d4dd196",
+  "origin_F1": "5a6e935",
+  "origin_F2": "5a6e935",
+  "origin_agree": true,
+  "kind_F1": "code-code",
+  "kind_F2": "code-code",
+  "place_A": "plugins/tamheed/server/export_html.py SQL ORDER BY via _by_id",
+  "places_B_F1": [
+   "plugins/tamheed/server/export_html.py _grouped_nodes",
+   "plugins/tamheed/server/export_html.py _graph (isolated sort)",
+   "plugins/tamheed/server/export_html.py _flow"
+  ],
+  "places_B_F2": [
+   "plugins/tamheed/server/export_html.py _grouped_nodes",
+   "plugins/tamheed/server/export_html.py _graph (isolated sort)",
+   "plugins/tamheed/server/export_html.py _flow (lane sort)"
+  ]
+ },
+ {
+  "fix": "25",
+  "commit": "5a6e9350f4",
+  "origin_F1": "23f315b",
+  "origin_F2": "23f315b",
+  "origin_agree": true,
+  "kind_F1": "code-code",
+  "kind_F2": "code-code",
+  "place_A": "plugins/tamheed/server/tamheed_server.py _emit_prompt_library (numeric releases key for stock_last_changed)",
+  "places_B_F1": [
+   "plugins/tamheed/server/tamheed_server.py _emit_prompt_library (matches sort)",
+   "plugins/tamheed/server/export_html.py section ORDER BY clauses"
+  ],
+  "places_B_F2": [
+   "plugins/tamheed/server/tamheed_server.py _emit_prompt_library (`matches` history sort, lexical)",
+   "plugins/tamheed/server/export_html.py ORDER BY id sites"
+  ]
+ },
+ {
+  "fix": "26",
+  "commit": "5a90707493",
+  "origin_F1": "4fe52fe",
+  "origin_F2": "4fe52fe",
+  "origin_agree": true,
+  "kind_F1": "code-code",
+  "kind_F2": "code-code",
+  "place_A": "plugins/tamheed/server/tamheed_server.py _note_lessons_section (the _INJECT_RE screen on lesson statements)",
+  "places_B_F1": [
+   "plugins/tamheed/server/tamheed_server.py _note_lessons_section (skill_line)"
+  ],
+  "places_B_F2": [
+   "plugins/tamheed/server/tamheed_server.py _note_lessons_section (skill_line)"
+  ]
+ },
+ {
+  "fix": "29",
+  "commit": "920c326304",
+  "origin_F1": "none",
+  "origin_F2": "eb9f252",
+  "origin_agree": false,
+  "kind_F1": "code-code",
+  "kind_F2": "code-code",
+  "place_A": "plugins/tamheed/server/tamheed_server.py package_create (name validation)",
+  "places_B_F1": [
+   "plugins/tamheed/server/tamheed_server.py package_open",
+   "plugins/tamheed/server/tamheed_server.py package_verify",
+   "plugins/tamheed/server/tamheed_server.py package_migrate",
+   "SECURITY.md"
+  ],
+  "places_B_F2": [
+   "plugins/tamheed/server/tamheed_server.py package_open",
+   "plugins/tamheed/server/tamheed_server.py package_verify",
+   "plugins/tamheed/server/tamheed_server.py package_migrate",
+   "SECURITY.md"
+  ]
+ },
+ {
+  "fix": "32",
+  "commit": "33e38eab59",
+  "origin_F1": "none",
+  "origin_F2": "none",
+  "origin_agree": true,
+  "kind_F1": "code-code",
+  "kind_F2": "code-code",
+  "place_A": "the G-COMPLETE placeholder scan (Superseded/Obsolete filter, plan 038)",
+  "places_B_F1": [
+   "plugins/tamheed/server/tamheed_server.py _scan_markers"
+  ],
+  "places_B_F2": [
+   "plugins/tamheed/server/tamheed_server.py _scan_markers"
+  ]
+ },
+ {
+  "fix": "39",
+  "commit": "91c93f50cf",
+  "origin_F1": "479314b",
+  "origin_F2": "479314b",
+  "origin_agree": true,
+  "kind_F1": "code-code",
+  "kind_F2": "code-code",
+  "place_A": "plugins/tamheed/server/migrate.py parse_v1 deferred-work prose carry (noted in plan.unmapped)",
+  "places_B_F1": [
+   "plugins/tamheed/server/migrate.py parse_v1 deferred-work In progress alias",
+   "plugins/tamheed/references/migration-v1.md quirk 20"
+  ],
+  "places_B_F2": [
+   "plugins/tamheed/server/migrate.py parse_v1 deferred-work `In progress` alias (silent exact map)"
+  ]
+ },
+ {
+  "fix": "46",
+  "commit": "dca5bef2f3",
+  "origin_F1": "none",
+  "origin_F2": "none",
+  "origin_agree": true,
+  "kind_F1": "code-text",
+  "kind_F2": "code-text",
+  "place_A": "the validator and templates/schemas moved into the plugin bundle; the G-SET and G-PROGRESS gates added",
+  "places_B_F1": [
+   "tests/README.md",
+   "plugins/keystone/references/artifact-catalog.md (legend)",
+   "plugins/keystone/scripts/validate_package.py docstring usage"
+  ],
+  "places_B_F2": [
+   "tests/README.md (run commands)",
+   "plugins/keystone/scripts/validate_package.py docstring usage",
+   "plugins/keystone/references/artifact-catalog.md legend"
+  ]
+ },
+ {
+  "fix": "48",
+  "commit": "669fef772a",
+  "origin_F1": "e9b5bac",
+  "origin_F2": "e9b5bac",
+  "origin_agree": true,
+  "kind_F1": "code-code",
+  "kind_F2": "code-code",
+  "place_A": "plugins/keystone/scripts/validate_package.py gate_ids (the if x is None idiom)",
+  "places_B_F1": [
+   "plugins/keystone/scripts/validate_package.py gate_dec_status",
+   "plugins/keystone/scripts/validate_package.py gate_req_src",
+   "plugins/keystone/scripts/validate_package.py gate_trace"
+  ],
+  "places_B_F2": [
+   "plugins/keystone/scripts/validate_package.py gate_dec_status",
+   "plugins/keystone/scripts/validate_package.py gate_req_src",
+   "plugins/keystone/scripts/validate_package.py gate_trace"
+  ]
+ }
+]

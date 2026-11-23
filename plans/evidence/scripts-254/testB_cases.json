@@ -1,0 +1,162 @@
+[
+ {
+  "fix": "01",
+  "commit": "162570deeb",
+  "build_at": "6939d2b795",
+  "seed": "plugins/tamheed/server/tamheed_server.py::_standup_withdraw",
+  "truth": [],
+  "status": "same place as A"
+ },
+ {
+  "fix": "03",
+  "commit": "a4a0e0691d",
+  "build_at": "2c23dbf726",
+  "seed": "plugins/tamheed/server/resume_hook.py",
+  "truth": [
+   "SECURITY.md"
+  ],
+  "status": "testable"
+ },
+ {
+  "fix": "07",
+  "commit": "70e63d921b",
+  "build_at": "3e10ba1715",
+  "seed": null,
+  "truth": [
+   "plugins/tamheed/references/handoff.md"
+  ],
+  "status": "no seed place"
+ },
+ {
+  "fix": "08",
+  "commit": "3e10ba1715",
+  "build_at": "d7ca9f88b6",
+  "seed": null,
+  "truth": [
+   "plugins/tamheed/server/tamheed_server.py"
+  ],
+  "status": "no seed place"
+ },
+ {
+  "fix": "09",
+  "commit": "d7ca9f88b6",
+  "build_at": "dfb34ddf96",
+  "seed": null,
+  "truth": [
+   "plugins/tamheed/server/tamheed_server.py::handoff_emit"
+  ],
+  "status": "no seed place"
+ },
+ {
+  "fix": "12",
+  "commit": "b72296e8b7",
+  "build_at": "8a75914314",
+  "seed": null,
+  "truth": [
+   "plugins/tamheed/server/tamheed_server.py",
+   "plugins/tamheed/server/tamheed_server.py::handoff_emit"
+  ],
+  "status": "no seed place"
+ },
+ {
+  "fix": "16",
+  "commit": "3f1e17ffec",
+  "build_at": "6b9848011d",
+  "seed": null,
+  "truth": [
+   "SECURITY.md",
+   "plugins/tamheed/server/README.md",
+   "plugins/tamheed/server/tamheed_server.py::work_bind"
+  ],
+  "status": "no seed place"
+ },
+ {
+  "fix": "21",
+  "commit": "97827e3a80",
+  "build_at": "831c27aaca",
+  "seed": "plugins/tamheed/server/tamheed_server.py::_readiness_report",
+  "truth": [],
+  "status": "same place as A"
+ },
+ {
+  "fix": "24",
+  "commit": "e34d4dd196",
+  "build_at": "5a6e9350f4",
+  "seed": "plugins/tamheed/server/export_html.py",
+  "truth": [],
+  "status": "same place as A"
+ },
+ {
+  "fix": "25",
+  "commit": "5a6e9350f4",
+  "build_at": "673d1fa2e9",
+  "seed": "plugins/tamheed/server/tamheed_server.py::_emit_prompt_library",
+  "truth": [
+   "plugins/tamheed/server/export_html.py"
+  ],
+  "status": "testable"
+ },
+ {
+  "fix": "26",
+  "commit": "5a90707493",
+  "build_at": "673d1fa2e9",
+  "seed": "plugins/tamheed/server/tamheed_server.py::_note_lessons_section",
+  "truth": [],
+  "status": "same place as A"
+ },
+ {
+  "fix": "29",
+  "commit": "920c326304",
+  "build_at": "7e3a92b75a",
+  "seed": "plugins/tamheed/server/tamheed_server.py::package_create",
+  "truth": [
+   "SECURITY.md",
+   "plugins/tamheed/server/tamheed_server.py::package_migrate",
+   "plugins/tamheed/server/tamheed_server.py::package_open",
+   "plugins/tamheed/server/tamheed_server.py::package_verify"
+  ],
+  "status": "testable"
+ },
+ {
+  "fix": "32",
+  "commit": "33e38eab59",
+  "build_at": "7e3a92b75a",
+  "seed": null,
+  "truth": [
+   "plugins/tamheed/server/tamheed_server.py::_scan_markers"
+  ],
+  "status": "no seed place"
+ },
+ {
+  "fix": "39",
+  "commit": "91c93f50cf",
+  "build_at": "5a86dea7f3",
+  "seed": "plugins/tamheed/server/migrate.py::parse_v1",
+  "truth": [],
+  "status": "same place as A"
+ },
+ {
+  "fix": "46",
+  "commit": "dca5bef2f3",
+  "build_at": "59ecbe6535",
+  "seed": null,
+  "truth": [
+   "plugins/keystone/references/artifact-catalog.md",
+   "plugins/keystone/scripts/validate_package.py",
+   "tests/README.md"
+  ],
+  "status": "no seed place"
+ },
+ {
+  "fix": "48",
+  "commit": "669fef772a",
+  "build_at": "dfb8487ded",
+  "seed": "plugins/keystone/scripts/validate_package.py::gate_ids",
+  "truth": [
+   "plugins/keystone/scripts/validate_package.py::gate_dec_status",
+   "plugins/keystone/scripts/validate_package.py::gate_req_src",
+   "plugins/keystone/scripts/validate_package.py::gate_trace"
+  ],
+  "status": "testable"
+ }
+]

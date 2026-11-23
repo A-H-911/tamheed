@@ -1,0 +1,1610 @@
+{
+ "rows": [
+  {
+   "task": "M03",
+   "arm": "A",
+   "n": 1,
+   "right": 1,
+   "of": 2,
+   "false": 11,
+   "read_chars": 47089,
+   "cost": 0.5057964,
+   "turns": 9,
+   "ms": 44862,
+   "subtype": "success",
+   "calls": {
+    "Grep": 6,
+    "Read": 2
+   },
+   "plugins": [
+    {
+     "name": "cc-plugin-agents-md",
+     "path": "builtin",
+     "source": "cc-plugin-agents-md@builtin"
+    },
+    {
+     "name": "cc-plugin-telemetry",
+     "path": "builtin",
+     "source": "cc-plugin-telemetry@builtin"
+    },
+    {
+     "name": "cc-plugin-privacy",
+     "path": "builtin",
+     "source": "cc-plugin-privacy@builtin"
+    },
+    {
+     "name": "cc-plugin-plugin-authoring",
+     "path": "builtin",
+     "source": "cc-plugin-plugin-authoring@builtin"
+    }
+   ],
+   "mcp": [],
+   "skills": [
+    "deep-research",
+    "design",
+    "design-sync",
+    "dataviz",
+    "update-config",
+    "verify",
+    "debug",
+    "code-review",
+    "simplify",
+    "batch",
+    "fewer-permission-prompts",
+    "doctor",
+    "loop",
+    "schedule",
+    "claude-api",
+    "workflow-authoring",
+    "run",
+    "run-skill-generator",
+    "plugin-authoring"
+   ],
+   "model": "claude-opus-5-5"
+  },
+  {
+   "task": "M03",
+   "arm": "A",
+   "n": 2,
+   "right": 0,
+   "of": 2,
+   "false": 5,
+   "read_chars": 43290,
+   "cost": 0.358147,
+   "turns": 13,
+   "ms": 58580,
+   "subtype": "success",
+   "calls": {
+    "Grep": 5,
+    "Read": 6,
+    "Bash": 1
+   },
+   "plugins": [
+    {
+     "name": "cc-plugin-agents-md",
+     "path": "builtin",
+     "source": "cc-plugin-agents-md@builtin"
+    },
+    {
+     "name": "cc-plugin-telemetry",
+     "path": "builtin",
+     "source": "cc-plugin-telemetry@builtin"
+    },
+    {
+     "name": "cc-plugin-privacy",
+     "path": "builtin",
+     "source": "cc-plugin-privacy@builtin"
+    },
+    {
+     "name": "cc-plugin-plugin-authoring",
+     "path": "builtin",
+     "source": "cc-plugin-plugin-authoring@builtin"
+    }
+   ],
+   "mcp": [],
+   "skills": [
+    "deep-research",
+    "design",
+    "design-sync",
+    "dataviz",
+    "update-config",
+    "verify",
+    "debug",
+    "code-review",
+    "simplify",
+    "batch",
+    "fewer-permission-prompts",
+    "doctor",
+    "loop",
+    "schedule",
+    "claude-api",
+    "workflow-authoring",
+    "run",
+    "run-skill-generator",
+    "plugin-authoring"
+   ],
+   "model": "claude-opus-5-5"
+  },
+  {
+   "task": "M03",
+   "arm": "B",
+   "n": 1,
+   "right": 1,
+   "of": 2,
+   "false": 4,
+   "read_chars": 22618,
+   "cost": 0.45949179999999995,
+   "turns": 11,
+   "ms": 60360,
+   "subtype": "success",
+   "calls": {
+    "Grep": 5,
+    "Read": 4,
+    "Bash": 1
+   },
+   "plugins": [
+    {
+     "name": "cc-plugin-agents-md",
+     "path": "builtin",
+     "source": "cc-plugin-agents-md@builtin"
+    },
+    {
+     "name": "cc-plugin-telemetry",
+     "path": "builtin",
+     "source": "cc-plugin-telemetry@builtin"
+    },
+    {
+     "name": "cc-plugin-privacy",
+     "path": "builtin",
+     "source": "cc-plugin-privacy@builtin"
+    },
+    {
+     "name": "cc-plugin-plugin-authoring",
+     "path": "builtin",
+     "source": "cc-plugin-plugin-authoring@builtin"
+    }
+   ],
+   "mcp": [],
+   "skills": [
+    "graphify",
+    "deep-research",
+    "design",
+    "design-sync",
+    "dataviz",
+    "update-config",
+    "verify",
+    "debug",
+    "code-review",
+    "simplify",
+    "batch",
+    "fewer-permission-prompts",
+    "doctor",
+    "loop",
+    "schedule",
+    "claude-api",
+    "workflow-authoring",
+    "run",
+    "run-skill-generator",
+    "plugin-authoring"
+   ],
+   "model": "claude-opus-5-5"
+  },
+  {
+   "task": "M03",
+   "arm": "B",
+   "n": 2,
+   "right": 1,
+   "of": 2,
+   "false": 9,
+   "read_chars": 48466,
+   "cost": 0.37369820000000004,
+   "turns": 11,
+   "ms": 57033,
+   "subtype": "success",
+   "calls": {
+    "Grep": 6,
+    "Glob": 1,
+    "Read": 2,
+    "Bash": 1
+   },
+   "plugins": [
+    {
+     "name": "cc-plugin-agents-md",
+     "path": "builtin",
+     "source": "cc-plugin-agents-md@builtin"
+    },
+    {
+     "name": "cc-plugin-telemetry",
+     "path": "builtin",
+     "source": "cc-plugin-telemetry@builtin"
+    },
+    {
+     "name": "cc-plugin-privacy",
+     "path": "builtin",
+     "source": "cc-plugin-privacy@builtin"
+    },
+    {
+     "name": "cc-plugin-plugin-authoring",
+     "path": "builtin",
+     "source": "cc-plugin-plugin-authoring@builtin"
+    }
+   ],
+   "mcp": [],
+   "skills": [
+    "graphify",
+    "deep-research",
+    "design",
+    "design-sync",
+    "dataviz",
+    "update-config",
+    "verify",
+    "debug",
+    "code-review",
+    "simplify",
+    "batch",
+    "fewer-permission-prompts",
+    "doctor",
+    "loop",
+    "schedule",
+    "claude-api",
+    "workflow-authoring",
+    "run",
+    "run-skill-generator",
+    "plugin-authoring"
+   ],
+   "model": "claude-opus-5-5"
+  },
+  {
+   "task": "M25",
+   "arm": "A",
+   "n": 1,
+   "right": 1,
+   "of": 2,
+   "false": 2,
+   "read_chars": 20822,
+   "cost": 0.3716562,
+   "turns": 8,
+   "ms": 36114,
+   "subtype": "success",
+   "calls": {
+    "Grep": 4,
+    "Read": 3
+   },
+   "plugins": [
+    {
+     "name": "cc-plugin-agents-md",
+     "path": "builtin",
+     "source": "cc-plugin-agents-md@builtin"
+    },
+    {
+     "name": "cc-plugin-telemetry",
+     "path": "builtin",
+     "source": "cc-plugin-telemetry@builtin"
+    },
+    {
+     "name": "cc-plugin-privacy",
+     "path": "builtin",
+     "source": "cc-plugin-privacy@builtin"
+    },
+    {
+     "name": "cc-plugin-plugin-authoring",
+     "path": "builtin",
+     "source": "cc-plugin-plugin-authoring@builtin"
+    }
+   ],
+   "mcp": [],
+   "skills": [
+    "deep-research",
+    "design",
+    "design-sync",
+    "dataviz",
+    "update-config",
+    "verify",
+    "debug",
+    "code-review",
+    "simplify",
+    "batch",
+    "fewer-permission-prompts",
+    "doctor",
+    "loop",
+    "schedule",
+    "claude-api",
+    "workflow-authoring",
+    "run",
+    "run-skill-generator",
+    "plugin-authoring"
+   ],
+   "model": "claude-opus-5-5"
+  },
+  {
+   "task": "M25",
+   "arm": "A",
+   "n": 2,
+   "right": 1,
+   "of": 2,
+   "false": 2,
+   "read_chars": 18200,
+   "cost": 0.18225760000000002,
+   "turns": 8,
+   "ms": 40679,
+   "subtype": "success",
+   "calls": {
+    "Grep": 3,
+    "Read": 4
+   },
+   "plugins": [
+    {
+     "name": "cc-plugin-agents-md",
+     "path": "builtin",
+     "source": "cc-plugin-agents-md@builtin"
+    },
+    {
+     "name": "cc-plugin-telemetry",
+     "path": "builtin",
+     "source": "cc-plugin-telemetry@builtin"
+    },
+    {
+     "name": "cc-plugin-privacy",
+     "path": "builtin",
+     "source": "cc-plugin-privacy@builtin"
+    },
+    {
+     "name": "cc-plugin-plugin-authoring",
+     "path": "builtin",
+     "source": "cc-plugin-plugin-authoring@builtin"
+    }
+   ],
+   "mcp": [],
+   "skills": [
+    "deep-research",
+    "design",
+    "design-sync",
+    "dataviz",
+    "update-config",
+    "verify",
+    "debug",
+    "code-review",
+    "simplify",
+    "batch",
+    "fewer-permission-prompts",
+    "doctor",
+    "loop",
+    "schedule",
+    "claude-api",
+    "workflow-authoring",
+    "run",
+    "run-skill-generator",
+    "plugin-authoring"
+   ],
+   "model": "claude-opus-5-5"
+  },
+  {
+   "task": "M25",
+   "arm": "B",
+   "n": 1,
+   "right": 1,
+   "of": 2,
+   "false": 2,
+   "read_chars": 23667,
+   "cost": 0.4288176,
+   "turns": 10,
+   "ms": 55871,
+   "subtype": "success",
+   "calls": {
+    "Grep": 4,
+    "Read": 5
+   },
+   "plugins": [
+    {
+     "name": "cc-plugin-agents-md",
+     "path": "builtin",
+     "source": "cc-plugin-agents-md@builtin"
+    },
+    {
+     "name": "cc-plugin-telemetry",
+     "path": "builtin",
+     "source": "cc-plugin-telemetry@builtin"
+    },
+    {
+     "name": "cc-plugin-privacy",
+     "path": "builtin",
+     "source": "cc-plugin-privacy@builtin"
+    },
+    {
+     "name": "cc-plugin-plugin-authoring",
+     "path": "builtin",
+     "source": "cc-plugin-plugin-authoring@builtin"
+    }
+   ],
+   "mcp": [],
+   "skills": [
+    "graphify",
+    "deep-research",
+    "design",
+    "design-sync",
+    "dataviz",
+    "update-config",
+    "verify",
+    "debug",
+    "code-review",
+    "simplify",
+    "batch",
+    "fewer-permission-prompts",
+    "doctor",
+    "loop",
+    "schedule",
+    "claude-api",
+    "workflow-authoring",
+    "run",
+    "run-skill-generator",
+    "plugin-authoring"
+   ],
+   "model": "claude-opus-5-5"
+  },
+  {
+   "task": "M25",
+   "arm": "B",
+   "n": 2,
+   "right": 1,
+   "of": 2,
+   "false": 2,
+   "read_chars": 25375,
+   "cost": 0.21342480000000003,
+   "turns": 9,
+   "ms": 32450,
+   "subtype": "success",
+   "calls": {
+    "Grep": 3,
+    "Read": 5
+   },
+   "plugins": [
+    {
+     "name": "cc-plugin-agents-md",
+     "path": "builtin",
+     "source": "cc-plugin-agents-md@builtin"
+    },
+    {
+     "name": "cc-plugin-telemetry",
+     "path": "builtin",
+     "source": "cc-plugin-telemetry@builtin"
+    },
+    {
+     "name": "cc-plugin-privacy",
+     "path": "builtin",
+     "source": "cc-plugin-privacy@builtin"
+    },
+    {
+     "name": "cc-plugin-plugin-authoring",
+     "path": "builtin",
+     "source": "cc-plugin-plugin-authoring@builtin"
+    }
+   ],
+   "mcp": [],
+   "skills": [
+    "graphify",
+    "deep-research",
+    "design",
+    "design-sync",
+    "dataviz",
+    "update-config",
+    "verify",
+    "debug",
+    "code-review",
+    "simplify",
+    "batch",
+    "fewer-permission-prompts",
+    "doctor",
+    "loop",
+    "schedule",
+    "claude-api",
+    "workflow-authoring",
+    "run",
+    "run-skill-generator",
+    "plugin-authoring"
+   ],
+   "model": "claude-opus-5-5"
+  },
+  {
+   "task": "M48",
+   "arm": "A",
+   "n": 1,
+   "right": 3,
+   "of": 3,
+   "false": 0,
+   "read_chars": 9374,
+   "cost": 0.31710520000000003,
+   "turns": 7,
+   "ms": 35282,
+   "subtype": "success",
+   "calls": {
+    "Grep": 3,
+    "Bash": 1,
+    "Read": 2
+   },
+   "plugins": [
+    {
+     "name": "cc-plugin-agents-md",
+     "path": "builtin",
+     "source": "cc-plugin-agents-md@builtin"
+    },
+    {
+     "name": "cc-plugin-telemetry",
+     "path": "builtin",
+     "source": "cc-plugin-telemetry@builtin"
+    },
+    {
+     "name": "cc-plugin-privacy",
+     "path": "builtin",
+     "source": "cc-plugin-privacy@builtin"
+    },
+    {
+     "name": "cc-plugin-plugin-authoring",
+     "path": "builtin",
+     "source": "cc-plugin-plugin-authoring@builtin"
+    }
+   ],
+   "mcp": [],
+   "skills": [
+    "deep-research",
+    "design",
+    "design-sync",
+    "dataviz",
+    "update-config",
+    "verify",
+    "debug",
+    "code-review",
+    "simplify",
+    "batch",
+    "fewer-permission-prompts",
+    "doctor",
+    "loop",
+    "schedule",
+    "claude-api",
+    "workflow-authoring",
+    "run",
+    "run-skill-generator",
+    "plugin-authoring"
+   ],
+   "model": "claude-opus-5-5"
+  },
+  {
+   "task": "M48",
+   "arm": "A",
+   "n": 2,
+   "right": 3,
+   "of": 3,
+   "false": 0,
+   "read_chars": 19597,
+   "cost": 0.15538020000000002,
+   "turns": 6,
+   "ms": 31665,
+   "subtype": "success",
+   "calls": {
+    "Grep": 4,
+    "Read": 1
+   },
+   "plugins": [
+    {
+     "name": "cc-plugin-agents-md",
+     "path": "builtin",
+     "source": "cc-plugin-agents-md@builtin"
+    },
+    {
+     "name": "cc-plugin-telemetry",
+     "path": "builtin",
+     "source": "cc-plugin-telemetry@builtin"
+    },
+    {
+     "name": "cc-plugin-privacy",
+     "path": "builtin",
+     "source": "cc-plugin-privacy@builtin"
+    },
+    {
+     "name": "cc-plugin-plugin-authoring",
+     "path": "builtin",
+     "source": "cc-plugin-plugin-authoring@builtin"
+    }
+   ],
+   "mcp": [],
+   "skills": [
+    "deep-research",
+    "design",
+    "design-sync",
+    "dataviz",
+    "update-config",
+    "verify",
+    "debug",
+    "code-review",
+    "simplify",
+    "batch",
+    "fewer-permission-prompts",
+    "doctor",
+    "loop",
+    "schedule",
+    "claude-api",
+    "workflow-authoring",
+    "run",
+    "run-skill-generator",
+    "plugin-authoring"
+   ],
+   "model": "claude-opus-5-5"
+  },
+  {
+   "task": "M48",
+   "arm": "B",
+   "n": 1,
+   "right": 3,
+   "of": 3,
+   "false": 0,
+   "read_chars": 15002,
+   "cost": 0.3590648,
+   "turns": 8,
+   "ms": 42026,
+   "subtype": "success",
+   "calls": {
+    "Grep": 6,
+    "Glob": 1
+   },
+   "plugins": [
+    {
+     "name": "cc-plugin-agents-md",
+     "path": "builtin",
+     "source": "cc-plugin-agents-md@builtin"
+    },
+    {
+     "name": "cc-plugin-telemetry",
+     "path": "builtin",
+     "source": "cc-plugin-telemetry@builtin"
+    },
+    {
+     "name": "cc-plugin-privacy",
+     "path": "builtin",
+     "source": "cc-plugin-privacy@builtin"
+    },
+    {
+     "name": "cc-plugin-plugin-authoring",
+     "path": "builtin",
+     "source": "cc-plugin-plugin-authoring@builtin"
+    }
+   ],
+   "mcp": [],
+   "skills": [
+    "graphify",
+    "deep-research",
+    "design",
+    "design-sync",
+    "dataviz",
+    "update-config",
+    "verify",
+    "debug",
+    "code-review",
+    "simplify",
+    "batch",
+    "fewer-permission-prompts",
+    "doctor",
+    "loop",
+    "schedule",
+    "claude-api",
+    "workflow-authoring",
+    "run",
+    "run-skill-generator",
+    "plugin-authoring"
+   ],
+   "model": "claude-opus-5-5"
+  },
+  {
+   "task": "M48",
+   "arm": "B",
+   "n": 2,
+   "right": 3,
+   "of": 3,
+   "false": 0,
+   "read_chars": 24488,
+   "cost": 0.19791640000000002,
+   "turns": 6,
+   "ms": 32189,
+   "subtype": "success",
+   "calls": {
+    "Grep": 4,
+    "Read": 1
+   },
+   "plugins": [
+    {
+     "name": "cc-plugin-agents-md",
+     "path": "builtin",
+     "source": "cc-plugin-agents-md@builtin"
+    },
+    {
+     "name": "cc-plugin-telemetry",
+     "path": "builtin",
+     "source": "cc-plugin-telemetry@builtin"
+    },
+    {
+     "name": "cc-plugin-privacy",
+     "path": "builtin",
+     "source": "cc-plugin-privacy@builtin"
+    },
+    {
+     "name": "cc-plugin-plugin-authoring",
+     "path": "builtin",
+     "source": "cc-plugin-plugin-authoring@builtin"
+    }
+   ],
+   "mcp": [],
+   "skills": [
+    "graphify",
+    "deep-research",
+    "design",
+    "design-sync",
+    "dataviz",
+    "update-config",
+    "verify",
+    "debug",
+    "code-review",
+    "simplify",
+    "batch",
+    "fewer-permission-prompts",
+    "doctor",
+    "loop",
+    "schedule",
+    "claude-api",
+    "workflow-authoring",
+    "run",
+    "run-skill-generator",
+    "plugin-authoring"
+   ],
+   "model": "claude-opus-5-5"
+  },
+  {
+   "task": "O1",
+   "arm": "A",
+   "n": 1,
+   "right": 4,
+   "of": 4,
+   "false": 0,
+   "read_chars": 13626,
+   "cost": 0.307182,
+   "turns": 5,
+   "ms": 28630,
+   "subtype": "success",
+   "calls": {
+    "Grep": 3,
+    "Bash": 1
+   },
+   "plugins": [
+    {
+     "name": "cc-plugin-agents-md",
+     "path": "builtin",
+     "source": "cc-plugin-agents-md@builtin"
+    },
+    {
+     "name": "cc-plugin-telemetry",
+     "path": "builtin",
+     "source": "cc-plugin-telemetry@builtin"
+    },
+    {
+     "name": "cc-plugin-privacy",
+     "path": "builtin",
+     "source": "cc-plugin-privacy@builtin"
+    },
+    {
+     "name": "cc-plugin-plugin-authoring",
+     "path": "builtin",
+     "source": "cc-plugin-plugin-authoring@builtin"
+    }
+   ],
+   "mcp": [],
+   "skills": [
+    "deep-research",
+    "design",
+    "design-sync",
+    "dataviz",
+    "update-config",
+    "verify",
+    "debug",
+    "code-review",
+    "simplify",
+    "batch",
+    "fewer-permission-prompts",
+    "doctor",
+    "loop",
+    "schedule",
+    "claude-api",
+    "workflow-authoring",
+    "run",
+    "run-skill-generator",
+    "plugin-authoring"
+   ],
+   "model": "claude-opus-5-5"
+  },
+  {
+   "task": "O1",
+   "arm": "A",
+   "n": 2,
+   "right": 4,
+   "of": 4,
+   "false": 0,
+   "read_chars": 18674,
+   "cost": 0.1327966,
+   "turns": 4,
+   "ms": 19602,
+   "subtype": "success",
+   "calls": {
+    "Grep": 2,
+    "Bash": 1
+   },
+   "plugins": [
+    {
+     "name": "cc-plugin-agents-md",
+     "path": "builtin",
+     "source": "cc-plugin-agents-md@builtin"
+    },
+    {
+     "name": "cc-plugin-telemetry",
+     "path": "builtin",
+     "source": "cc-plugin-telemetry@builtin"
+    },
+    {
+     "name": "cc-plugin-privacy",
+     "path": "builtin",
+     "source": "cc-plugin-privacy@builtin"
+    },
+    {
+     "name": "cc-plugin-plugin-authoring",
+     "path": "builtin",
+     "source": "cc-plugin-plugin-authoring@builtin"
+    }
+   ],
+   "mcp": [],
+   "skills": [
+    "deep-research",
+    "design",
+    "design-sync",
+    "dataviz",
+    "update-config",
+    "verify",
+    "debug",
+    "code-review",
+    "simplify",
+    "batch",
+    "fewer-permission-prompts",
+    "doctor",
+    "loop",
+    "schedule",
+    "claude-api",
+    "workflow-authoring",
+    "run",
+    "run-skill-generator",
+    "plugin-authoring"
+   ],
+   "model": "claude-opus-5-5"
+  },
+  {
+   "task": "O1",
+   "arm": "B",
+   "n": 1,
+   "right": 4,
+   "of": 4,
+   "false": 0,
+   "read_chars": 12469,
+   "cost": 0.3358308,
+   "turns": 6,
+   "ms": 34658,
+   "subtype": "success",
+   "calls": {
+    "Grep": 2,
+    "Bash": 1,
+    "Read": 2
+   },
+   "plugins": [
+    {
+     "name": "cc-plugin-agents-md",
+     "path": "builtin",
+     "source": "cc-plugin-agents-md@builtin"
+    },
+    {
+     "name": "cc-plugin-telemetry",
+     "path": "builtin",
+     "source": "cc-plugin-telemetry@builtin"
+    },
+    {
+     "name": "cc-plugin-privacy",
+     "path": "builtin",
+     "source": "cc-plugin-privacy@builtin"
+    },
+    {
+     "name": "cc-plugin-plugin-authoring",
+     "path": "builtin",
+     "source": "cc-plugin-plugin-authoring@builtin"
+    }
+   ],
+   "mcp": [],
+   "skills": [
+    "graphify",
+    "deep-research",
+    "design",
+    "design-sync",
+    "dataviz",
+    "update-config",
+    "verify",
+    "debug",
+    "code-review",
+    "simplify",
+    "batch",
+    "fewer-permission-prompts",
+    "doctor",
+    "loop",
+    "schedule",
+    "claude-api",
+    "workflow-authoring",
+    "run",
+    "run-skill-generator",
+    "plugin-authoring"
+   ],
+   "model": "claude-opus-5-5"
+  },
+  {
+   "task": "O1",
+   "arm": "B",
+   "n": 2,
+   "right": 4,
+   "of": 4,
+   "false": 0,
+   "read_chars": 11509,
+   "cost": 0.11823140000000001,
+   "turns": 5,
+   "ms": 27832,
+   "subtype": "success",
+   "calls": {
+    "Grep": 3,
+    "Bash": 1
+   },
+   "plugins": [
+    {
+     "name": "cc-plugin-agents-md",
+     "path": "builtin",
+     "source": "cc-plugin-agents-md@builtin"
+    },
+    {
+     "name": "cc-plugin-telemetry",
+     "path": "builtin",
+     "source": "cc-plugin-telemetry@builtin"
+    },
+    {
+     "name": "cc-plugin-privacy",
+     "path": "builtin",
+     "source": "cc-plugin-privacy@builtin"
+    },
+    {
+     "name": "cc-plugin-plugin-authoring",
+     "path": "builtin",
+     "source": "cc-plugin-plugin-authoring@builtin"
+    }
+   ],
+   "mcp": [],
+   "skills": [
+    "graphify",
+    "deep-research",
+    "design",
+    "design-sync",
+    "dataviz",
+    "update-config",
+    "verify",
+    "debug",
+    "code-review",
+    "simplify",
+    "batch",
+    "fewer-permission-prompts",
+    "doctor",
+    "loop",
+    "schedule",
+    "claude-api",
+    "workflow-authoring",
+    "run",
+    "run-skill-generator",
+    "plugin-authoring"
+   ],
+   "model": "claude-opus-5-5"
+  },
+  {
+   "task": "O2",
+   "arm": "A",
+   "n": 1,
+   "right": 1,
+   "of": 1,
+   "false": 0,
+   "read_chars": 11077,
+   "cost": 0.2941876,
+   "turns": 5,
+   "ms": 26380,
+   "subtype": "success",
+   "calls": {
+    "Grep": 2,
+    "Bash": 1,
+    "Read": 1
+   },
+   "plugins": [
+    {
+     "name": "cc-plugin-agents-md",
+     "path": "builtin",
+     "source": "cc-plugin-agents-md@builtin"
+    },
+    {
+     "name": "cc-plugin-telemetry",
+     "path": "builtin",
+     "source": "cc-plugin-telemetry@builtin"
+    },
+    {
+     "name": "cc-plugin-privacy",
+     "path": "builtin",
+     "source": "cc-plugin-privacy@builtin"
+    },
+    {
+     "name": "cc-plugin-plugin-authoring",
+     "path": "builtin",
+     "source": "cc-plugin-plugin-authoring@builtin"
+    }
+   ],
+   "mcp": [],
+   "skills": [
+    "deep-research",
+    "design",
+    "design-sync",
+    "dataviz",
+    "update-config",
+    "verify",
+    "debug",
+    "code-review",
+    "simplify",
+    "batch",
+    "fewer-permission-prompts",
+    "doctor",
+    "loop",
+    "schedule",
+    "claude-api",
+    "workflow-authoring",
+    "run",
+    "run-skill-generator",
+    "plugin-authoring"
+   ],
+   "model": "claude-opus-5-5"
+  },
+  {
+   "task": "O2",
+   "arm": "A",
+   "n": 2,
+   "right": 1,
+   "of": 1,
+   "false": 0,
+   "read_chars": 12947,
+   "cost": 0.1303098,
+   "turns": 6,
+   "ms": 29339,
+   "subtype": "success",
+   "calls": {
+    "Grep": 2,
+    "Bash": 1,
+    "Read": 2
+   },
+   "plugins": [
+    {
+     "name": "cc-plugin-agents-md",
+     "path": "builtin",
+     "source": "cc-plugin-agents-md@builtin"
+    },
+    {
+     "name": "cc-plugin-telemetry",
+     "path": "builtin",
+     "source": "cc-plugin-telemetry@builtin"
+    },
+    {
+     "name": "cc-plugin-privacy",
+     "path": "builtin",
+     "source": "cc-plugin-privacy@builtin"
+    },
+    {
+     "name": "cc-plugin-plugin-authoring",
+     "path": "builtin",
+     "source": "cc-plugin-plugin-authoring@builtin"
+    }
+   ],
+   "mcp": [],
+   "skills": [
+    "deep-research",
+    "design",
+    "design-sync",
+    "dataviz",
+    "update-config",
+    "verify",
+    "debug",
+    "code-review",
+    "simplify",
+    "batch",
+    "fewer-permission-prompts",
+    "doctor",
+    "loop",
+    "schedule",
+    "claude-api",
+    "workflow-authoring",
+    "run",
+    "run-skill-generator",
+    "plugin-authoring"
+   ],
+   "model": "claude-opus-5-5"
+  },
+  {
+   "task": "O2",
+   "arm": "B",
+   "n": 1,
+   "right": 1,
+   "of": 1,
+   "false": 0,
+   "read_chars": 15197,
+   "cost": 0.35278060000000006,
+   "turns": 7,
+   "ms": 49909,
+   "subtype": "success",
+   "calls": {
+    "Grep": 3,
+    "Bash": 1,
+    "Read": 2
+   },
+   "plugins": [
+    {
+     "name": "cc-plugin-agents-md",
+     "path": "builtin",
+     "source": "cc-plugin-agents-md@builtin"
+    },
+    {
+     "name": "cc-plugin-telemetry",
+     "path": "builtin",
+     "source": "cc-plugin-telemetry@builtin"
+    },
+    {
+     "name": "cc-plugin-privacy",
+     "path": "builtin",
+     "source": "cc-plugin-privacy@builtin"
+    },
+    {
+     "name": "cc-plugin-plugin-authoring",
+     "path": "builtin",
+     "source": "cc-plugin-plugin-authoring@builtin"
+    }
+   ],
+   "mcp": [],
+   "skills": [
+    "graphify",
+    "deep-research",
+    "design",
+    "design-sync",
+    "dataviz",
+    "update-config",
+    "verify",
+    "debug",
+    "code-review",
+    "simplify",
+    "batch",
+    "fewer-permission-prompts",
+    "doctor",
+    "loop",
+    "schedule",
+    "claude-api",
+    "workflow-authoring",
+    "run",
+    "run-skill-generator",
+    "plugin-authoring"
+   ],
+   "model": "claude-opus-5-5"
+  },
+  {
+   "task": "O2",
+   "arm": "B",
+   "n": 2,
+   "right": 1,
+   "of": 1,
+   "false": 0,
+   "read_chars": 13261,
+   "cost": 0.1435986,
+   "turns": 6,
+   "ms": 22521,
+   "subtype": "success",
+   "calls": {
+    "Grep": 2,
+    "Bash": 1,
+    "Read": 2
+   },
+   "plugins": [
+    {
+     "name": "cc-plugin-agents-md",
+     "path": "builtin",
+     "source": "cc-plugin-agents-md@builtin"
+    },
+    {
+     "name": "cc-plugin-telemetry",
+     "path": "builtin",
+     "source": "cc-plugin-telemetry@builtin"
+    },
+    {
+     "name": "cc-plugin-privacy",
+     "path": "builtin",
+     "source": "cc-plugin-privacy@builtin"
+    },
+    {
+     "name": "cc-plugin-plugin-authoring",
+     "path": "builtin",
+     "source": "cc-plugin-plugin-authoring@builtin"
+    }
+   ],
+   "mcp": [],
+   "skills": [
+    "graphify",
+    "deep-research",
+    "design",
+    "design-sync",
+    "dataviz",
+    "update-config",
+    "verify",
+    "debug",
+    "code-review",
+    "simplify",
+    "batch",
+    "fewer-permission-prompts",
+    "doctor",
+    "loop",
+    "schedule",
+    "claude-api",
+    "workflow-authoring",
+    "run",
+    "run-skill-generator",
+    "plugin-authoring"
+   ],
+   "model": "claude-opus-5-5"
+  },
+  {
+   "task": "O3",
+   "arm": "A",
+   "n": 1,
+   "right": 2,
+   "of": 2,
+   "false": 0,
+   "read_chars": 10664,
+   "cost": 0.2824856,
+   "turns": 4,
+   "ms": 22176,
+   "subtype": "success",
+   "calls": {
+    "Grep": 2,
+    "PowerShell": 1
+   },
+   "plugins": [
+    {
+     "name": "cc-plugin-agents-md",
+     "path": "builtin",
+     "source": "cc-plugin-agents-md@builtin"
+    },
+    {
+     "name": "cc-plugin-telemetry",
+     "path": "builtin",
+     "source": "cc-plugin-telemetry@builtin"
+    },
+    {
+     "name": "cc-plugin-privacy",
+     "path": "builtin",
+     "source": "cc-plugin-privacy@builtin"
+    },
+    {
+     "name": "cc-plugin-plugin-authoring",
+     "path": "builtin",
+     "source": "cc-plugin-plugin-authoring@builtin"
+    }
+   ],
+   "mcp": [],
+   "skills": [
+    "deep-research",
+    "design",
+    "design-sync",
+    "dataviz",
+    "update-config",
+    "verify",
+    "debug",
+    "code-review",
+    "simplify",
+    "batch",
+    "fewer-permission-prompts",
+    "doctor",
+    "loop",
+    "schedule",
+    "claude-api",
+    "workflow-authoring",
+    "run",
+    "run-skill-generator",
+    "plugin-authoring"
+   ],
+   "model": "claude-opus-5-5"
+  },
+  {
+   "task": "O3",
+   "arm": "A",
+   "n": 2,
+   "right": 2,
+   "of": 2,
+   "false": 0,
+   "read_chars": 15977,
+   "cost": 0.1163598,
+   "turns": 4,
+   "ms": 17489,
+   "subtype": "success",
+   "calls": {
+    "Grep": 2,
+    "Bash": 1
+   },
+   "plugins": [
+    {
+     "name": "cc-plugin-agents-md",
+     "path": "builtin",
+     "source": "cc-plugin-agents-md@builtin"
+    },
+    {
+     "name": "cc-plugin-telemetry",
+     "path": "builtin",
+     "source": "cc-plugin-telemetry@builtin"
+    },
+    {
+     "name": "cc-plugin-privacy",
+     "path": "builtin",
+     "source": "cc-plugin-privacy@builtin"
+    },
+    {
+     "name": "cc-plugin-plugin-authoring",
+     "path": "builtin",
+     "source": "cc-plugin-plugin-authoring@builtin"
+    }
+   ],
+   "mcp": [],
+   "skills": [
+    "deep-research",
+    "design",
+    "design-sync",
+    "dataviz",
+    "update-config",
+    "verify",
+    "debug",
+    "code-review",
+    "simplify",
+    "batch",
+    "fewer-permission-prompts",
+    "doctor",
+    "loop",
+    "schedule",
+    "claude-api",
+    "workflow-authoring",
+    "run",
+    "run-skill-generator",
+    "plugin-authoring"
+   ],
+   "model": "claude-opus-5-5"
+  },
+  {
+   "task": "O3",
+   "arm": "B",
+   "n": 1,
+   "right": 2,
+   "of": 2,
+   "false": 0,
+   "read_chars": 16825,
+   "cost": 0.3106756,
+   "turns": 4,
+   "ms": 20805,
+   "subtype": "success",
+   "calls": {
+    "Grep": 2,
+    "Bash": 1
+   },
+   "plugins": [
+    {
+     "name": "cc-plugin-agents-md",
+     "path": "builtin",
+     "source": "cc-plugin-agents-md@builtin"
+    },
+    {
+     "name": "cc-plugin-telemetry",
+     "path": "builtin",
+     "source": "cc-plugin-telemetry@builtin"
+    },
+    {
+     "name": "cc-plugin-privacy",
+     "path": "builtin",
+     "source": "cc-plugin-privacy@builtin"
+    },
+    {
+     "name": "cc-plugin-plugin-authoring",
+     "path": "builtin",
+     "source": "cc-plugin-plugin-authoring@builtin"
+    }
+   ],
+   "mcp": [],
+   "skills": [
+    "graphify",
+    "deep-research",
+    "design",
+    "design-sync",
+    "dataviz",
+    "update-config",
+    "verify",
+    "debug",
+    "code-review",
+    "simplify",
+    "batch",
+    "fewer-permission-prompts",
+    "doctor",
+    "loop",
+    "schedule",
+    "claude-api",
+    "workflow-authoring",
+    "run",
+    "run-skill-generator",
+    "plugin-authoring"
+   ],
+   "model": "claude-opus-5-5"
+  },
+  {
+   "task": "O3",
+   "arm": "B",
+   "n": 2,
+   "right": 2,
+   "of": 2,
+   "false": 0,
+   "read_chars": 17357,
+   "cost": 0.154225,
+   "turns": 5,
+   "ms": 24658,
+   "subtype": "success",
+   "calls": {
+    "Grep": 2,
+    "Bash": 1,
+    "Read": 1
+   },
+   "plugins": [
+    {
+     "name": "cc-plugin-agents-md",
+     "path": "builtin",
+     "source": "cc-plugin-agents-md@builtin"
+    },
+    {
+     "name": "cc-plugin-telemetry",
+     "path": "builtin",
+     "source": "cc-plugin-telemetry@builtin"
+    },
+    {
+     "name": "cc-plugin-privacy",
+     "path": "builtin",
+     "source": "cc-plugin-privacy@builtin"
+    },
+    {
+     "name": "cc-plugin-plugin-authoring",
+     "path": "builtin",
+     "source": "cc-plugin-plugin-authoring@builtin"
+    }
+   ],
+   "mcp": [],
+   "skills": [
+    "graphify",
+    "deep-research",
+    "design",
+    "design-sync",
+    "dataviz",
+    "update-config",
+    "verify",
+    "debug",
+    "code-review",
+    "simplify",
+    "batch",
+    "fewer-permission-prompts",
+    "doctor",
+    "loop",
+    "schedule",
+    "claude-api",
+    "workflow-authoring",
+    "run",
+    "run-skill-generator",
+    "plugin-authoring"
+   ],
+   "model": "claude-opus-5-5"
+  }
+ ],
+ "by_arm": {
+  "A": {
+   "sessions": 12,
+   "right": 23,
+   "of": 28,
+   "false": 20,
+   "read_chars": 241337,
+   "cost": 3.15,
+   "turns": 79
+  },
+  "B": {
+   "sessions": 12,
+   "right": 24,
+   "of": 28,
+   "false": 17,
+   "read_chars": 246234,
+   "cost": 3.45,
+   "turns": 88
+  }
+ },
+ "read_spread_by_task": {
+  "M03": {
+   "A": [
+    43290,
+    47089
+   ],
+   "B": [
+    22618,
+    48466
+   ]
+  },
+  "M25": {
+   "A": [
+    18200,
+    20822
+   ],
+   "B": [
+    23667,
+    25375
+   ]
+  },
+  "M48": {
+   "A": [
+    9374,
+    19597
+   ],
+   "B": [
+    15002,
+    24488
+   ]
+  },
+  "O1": {
+   "A": [
+    13626,
+    18674
+   ],
+   "B": [
+    11509,
+    12469
+   ]
+  },
+  "O2": {
+   "A": [
+    11077,
+    12947
+   ],
+   "B": [
+    13261,
+    15197
+   ]
+  },
+  "O3": {
+   "A": [
+    10664,
+    15977
+   ],
+   "B": [
+    16825,
+    17357
+   ]
+  }
+ },
+ "g14": {
+  "less_text_read": -0.02,
+  "right_A": 23,
+  "right_B": 24,
+  "tasks_where_spreads_overlap": [
+   "M03",
+   "M25",
+   "M48",
+   "O2",
+   "O3"
+  ],
+  "pass": false
+ }
+}

@@ -1,0 +1,45 @@
+669fef77 seeds 2 build 5.56 s exit 0 map True nodes 1222 listed 1.0 | total 48.2 s
+539ca7bc seeds 3 build 5.32 s exit 0 map True nodes 1226 listed 1.0 | total 47.9 s
+dca5bef2 seeds 7 build 5.54 s exit 0 map True nodes 1235 listed 1.0 | total 46.7 s
+fe1c55db seeds 6 build 5.59 s exit 0 map True nodes 1236 listed 1.0 | total 46.8 s
+eb9f252c seeds 4 build 24.88 s exit 0 map True nodes 1511 listed 1.0 | total 65.6 s
+6f09eb71 seeds 7 build 5.56 s exit 0 map True nodes 1320 listed 1.0 | total 25.0 s
+a097d414 seeds 9 build 5.61 s exit 0 map True nodes 1378 listed 1.0 | total 27.7 s
+03b37190 seeds 6 build 5.79 s exit 0 map True nodes 1410 listed 1.0 | total 26.6 s
+e72bd979 seeds 9 build 5.64 s exit 0 map True nodes 1443 listed 1.0 | total 24.8 s
+5be73b4e seeds 8 build 7.09 s exit 0 map True nodes 1487 listed 1.0 | total 42.1 s
+4e19a867 seeds 7 build 6.82 s exit 0 map True nodes 1494 listed 1.0 | total 25.9 s
+b5948281 seeds 5 build 5.05 s exit 0 map True nodes 1502 listed 1.0 | total 22.3 s
+e5749880 seeds 7 build 5.47 s exit 0 map True nodes 1497 listed 1.0 | total 26.8 s
+365fd1ee seeds 4 build 5.01 s exit 0 map True nodes 1516 listed 1.0 | total 25.3 s
+1b6cc04e seeds 4 build 5.34 s exit 0 map True nodes 1527 listed 1.0 | total 22.8 s
+ef47c247 seeds 20 build 5.35 s exit 0 map True nodes 1534 listed 1.0 | total 32.1 s
+7fb588f7 seeds 5 build 5.67 s exit 0 map True nodes 1611 listed 1.0 | total 23.1 s
+905ca579 seeds 2 build 5.55 s exit 0 map True nodes 1612 listed 1.0 | total 21.9 s
+9bf24292 seeds 4 build 6.32 s exit 0 map True nodes 1612 listed 1.0 | total 29.0 s
+140dd2a7 seeds 3 build 5.71 s exit 0 map True nodes 1622 listed 1.0 | total 24.3 s
+1d1dae34 seeds 11 build 5.99 s exit 0 map True nodes 1628 listed 1.0 | total 31.2 s
+5b384005 seeds 6 build 6.26 s exit 0 map True nodes 1648 listed 1.0 | total 25.3 s
+Traceback (most recent call last):
+  File "C:\Users\<user>\Repos\tamheed\plans\evidence\scripts-254\replay_254.py", line 280, in <module>
+    test_a(st, sys.argv[3], "--no-pyright" not in sys.argv)
+    ~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\<user>\Repos\tamheed\plans\evidence\scripts-254\replay_254.py", line 187, in test_a
+    hits, ex = affected(study, rec, q, repo, rev, tag)
+               ~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\<user>\Repos\tamheed\plans\evidence\scripts-254\replay_254.py", line 82, in affected
+    r = run(study, f"aff-{tag}", 180, [str(study / "venv" / "Scripts" / "graphify.exe"), "affected", query, "--graph",
+                                         str(rec["out"] / "graph.json")], rec["out"], rec["home"])
+  File "C:\Users\<user>\Repos\tamheed\plans\evidence\scripts-254\replay_254.py", line 42, in run
+    rec = json.loads((study / "out" / f"{step}.json").read_text(encoding="utf-8"))
+                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^
+  File "C:\Users\<user>\.pyenv\pyenv-win\versions\3.13.7\Lib\pathlib\_local.py", line 546, in read_text
+    return PathBase.read_text(self, encoding, errors, newline)
+           ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\<user>\.pyenv\pyenv-win\versions\3.13.7\Lib\pathlib\_abc.py", line 632, in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors, newline=newline) as f:
+         ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\<user>\.pyenv\pyenv-win\versions\3.13.7\Lib\pathlib\_local.py", line 537, in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+           ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: 'C:\\Users\\<user>\\AppData\\Local\\Temp\\claude\\a240a949731b0ab9\\6eaac745-7a6c-4fdb-a942-ce771895ea6f\\scratchpad\\graphify-study\\out\\aff-abd2403f.json'
