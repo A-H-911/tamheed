@@ -15,3 +15,5 @@ docs/guide/figures/*.svg text eol=lf
 # plan 234: the standup page and its goldens are compared byte for byte
 tests/standup_golden/*.html text eol=lf
 **/reports/*.html text eol=lf
+# plan 254: the study's files are named by sha256 in its hash tables, so they keep the bytes they were hashed with
+plans/evidence/scripts-254/** text eol=lf
