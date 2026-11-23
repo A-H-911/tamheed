@@ -25,3 +25,10 @@ replaced in `readers/X2.report.txt` and `results/testA.v21-discarded.log` (with 
 `handback_254.py` and `watch_254.py` now derive their folders instead of naming them. These edits change those
 files' hashes against `freeze_254.sha256` (v2.2); no rule, input or result changed. `readers/S1.meter.json` was
 re-written by the check that the meter still finds its transcripts (same numbers).
+
+**Fresh-clone check (2026-11-23, after `.gitattributes` gained `plans/evidence/scripts-254/** text eol=lf`):** before
+the rule, a fresh Windows clone (`core.autocrlf=true`) failed all 22 entries on line endings alone. With the rule,
+the only failures are the files explained above (`meter_254.py`, `watch_254.py`, `readers/X2.report.txt` against
+v2.2; `ab_254.py`, `watch_254.py` against v3) and three JSON files that Python wrote with Windows line endings
+before they were hashed: `testB_cases.json`, `rated_missed_places.json`, `results/posthoc.json`. Converted back to
+CRLF, each matches its recorded hash exactly, so their content is unchanged. To verify them, hash the CRLF form.
