@@ -142,3 +142,12 @@ and self-audited.
 
 When changing the engine, run `python check.py`. Suites, lints, the canonical round-trip, and
 the eval fixtures are the merge bar.
+
+## Before a commit: the places a change leaves behind
+
+- Search for the old form of each line you changed. Change every copy that must match it.
+- Dated records keep their old text: `plans/`, `CHANGELOG.md`, `docs/adr/`, `docs/history/` and the
+  stock history.
+- Read the functions that share the changed function's name prefix, such as `package_*` or `gate_*`.
+- When behaviour changes, search the text that states it: tool descriptions, constants, references
+  and `SECURITY.md`.

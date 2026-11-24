@@ -232,6 +232,7 @@ revised (rulings U1-U20, defaults V1-V10). Every row links to the one approved p
 | 252 | [The headless `/tamheed:standup` rehearsal](evidence/standup-rehearsal-2026-11-18.md) | 251 | DONE 2026-11-18 (1 session, 0.78 USD: the agent stated the slices, did not record, the page held every section; the plugin did not load) |
 | 253 | [Acceptance, release 6.8.0, the two field briefs](evidence/briefs-6.8.0-2026-11-18.md) | 250-252 | DONE 2026-11-18. Stamp `2b83e8d` (main CI run 44317616907 green on twelve jobs), tag `v6.8.0`. Both fields measured under 6.7.0 and 6.8.0; both briefs rehearsed with a restart (4.37 USD, one void pass) |
 | 254 | [The Graphify study: read, measure, propose (no release)](254-graphify-study.md) | 253 | DONE 2026-11-23: not adopted (missed places no; session start no, twice); 0.9.7 removed; evidence [graphify-study-2026-11](evidence/graphify-study-2026-11.md) |
+| 255 | [A missed-places rule, and a free tally (no release)](255-missed-places-rule.md) | 254 | ACTIVE 2026-11-24: a 4-line rule in `CLAUDE.md`; the sibling and co-change script dropped (it fires on about 40% of commits); tally due 8 weeks after T0; evidence [missed-places-2026-11](evidence/missed-places-2026-11.md) |
 
 ### Standup report -- plans 232-237 -> v6.6.0 (2026-11-16; maintainer-executed)
 
