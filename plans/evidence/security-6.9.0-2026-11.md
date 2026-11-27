@@ -39,3 +39,15 @@ No finding.
 | Words | Section 2 says the hash is of the text as stored, that an object sent for `custom_attributes` is stored as JSON that the server writes, and what `expect_unchanged` proves. That matches the engine |
 
 No finding.
+
+## Beat 260: `merge_attributes`
+
+| Check | Finding |
+|---|---|
+| SQL | `_materialize_merge` interpolates `table` (from `ENTITY_TABLES`) and the names from `_columns(table)`. The id is bound |
+| Echoed data | The result's `merged` lists the caller's own keys. No refusal returns stored text |
+| Guards | A merge materializes the whole stored row and sends it down the ordinary path, as `substitute` does, so every guard and trigger judges it. A merge that changes nothing returns before the guards and writes nothing, so there is nothing to guard. It answers only whether the stored object already equals the merge, which the caller can read anyway. `create`, a substitute, a retire, the header and the journal each refuse a merge by name |
+| Cost | The patch is bounded by `_JSON_MAX_DEPTH` (its recursion is caught) and by the size of the call. One indexed SELECT for each item |
+| Words | Section 1 says a substitute inside a value works and a result that breaks the JSON is refused. That matches `_materialize_substitute` |
+
+No finding.

@@ -1012,6 +1012,99 @@ def _materialize_substitute(conn, etype: str, table: str, item: dict,
     return full, None, counts
 
 
+_MERGE_KEYS = frozenset({"type", "id", "merge_attributes", "operator_confirm", "expect_unchanged",
+                         "sha256", "create"})
+
+
+def _merge_patch(target: dict, patch: dict) -> dict:
+    """RFC 7386 section 2, for an object patch on an object target: a null removes a member, an
+    object merges into the member it names (an empty object when that member is no object), and
+    any other value replaces the member. Arrays are replaced whole."""
+    out = dict(target)
+    for name, value in patch.items():
+        if value is None:
+            out.pop(name, None)
+        elif isinstance(value, dict):
+            out[name] = _merge_patch(out[name] if isinstance(out.get(name), dict) else {}, value)
+        else:
+            out[name] = value
+    return out
+
+
+def _keys_are_text(value) -> bool:
+    if isinstance(value, dict):
+        return all(isinstance(k, str) and _keys_are_text(v) for k, v in value.items())
+    if isinstance(value, list):
+        return all(_keys_are_text(v) for v in value)
+    return True
+
+
+def _materialize_merge(conn, etype: str, table: str, item: dict,
+                       cols: dict) -> tuple[dict, str | None, dict | None]:
+    """Plan 260 (Jisr's FB-025 a, R155, R164, R169): `{"type", "id", "merge_attributes": {...}}`
+    sets or removes keys of one row's `custom_attributes`, and the row never passes through the
+    caller. The stored row is materialized, RFC 7386 is applied to its `custom_attributes`, and
+    the result goes down the ordinary full-row path, so every guard judges it. Two departures
+    from the RFC: a patch that is not an object is refused (the RFC would replace the column),
+    and a stored value that is not an object is refused (the RFC would discard it). A stored
+    NULL is an empty object. A merge that changes nothing is marked `noop`: the caller writes
+    nothing. Returns (cols, error, info)."""
+    if etype in ("progress-entry", "audit-verdict"):
+        return cols, ("journal rows are corrected by compensating rows, never merged"
+                      " (append-only)"), None
+    if table in _NON_ID_TABLES:
+        return cols, f"merge_attributes needs an id-keyed row, not {etype}", None
+    extra = sorted(str(k) for k in set(item) - _MERGE_KEYS)
+    if extra:
+        return cols, (f"a merge item carries only type, id, merge_attributes, operator_confirm,"
+                      f" expect_unchanged and sha256, not {extra}. Send a full row, or a merge"
+                      " alone"), None
+    if item.get("create", False) is not False:
+        return cols, "a merge changes a stored row. It never creates one: drop `create`", None
+    names = _columns(table)
+    if "custom_attributes" not in names:
+        return cols, f"{etype} has no custom_attributes column", None
+    patch = item.get("merge_attributes")
+    if not isinstance(patch, dict):
+        return cols, ("merge_attributes is a JSON object: the keys to set, and null for a key to"
+                      " remove. A value that is not an object is refused, because RFC 7386 would"
+                      " then replace the whole column"), None
+    if not _keys_are_text(patch):
+        return cols, "merge_attributes: a key is text", None
+    try:
+        too_deep = _json_too_deep(patch)
+    except RecursionError:
+        too_deep = True
+    if too_deep:
+        return cols, f"merge_attributes nests deeper than {_JSON_MAX_DEPTH} levels", None
+    guard = item.get("expect_unchanged")      # checked here: a merge that changes nothing returns early
+    if guard is not None:
+        if not isinstance(guard, list) or not guard or not all(isinstance(c, str) for c in guard):
+            return cols, "expect_unchanged must be a non-empty list of column names", None
+        if bad := sorted(set(guard) - set(names)):
+            return cols, (f"expect_unchanged names unknown columns for {etype}: {bad}. "
+                          + _columns_told(etype, "item", names)), None
+    rid = item.get("id")
+    if not rid:
+        return cols, "merge_attributes needs the item's id", None
+    row = conn.execute(f"SELECT {', '.join(names)} FROM {table} WHERE id = ?", (rid,)).fetchone()
+    if row is None:
+        return cols, f"{rid}: no stored row to merge into. A merge is an UPDATE", None
+    full = dict(zip(names, row))
+    stored = _attrs(full["custom_attributes"])
+    if stored is None:
+        return cols, (f"{rid}: the stored custom_attributes is not a JSON object. Send a full row"
+                      " to replace it (RFC 7386 would discard it)"), None
+    info = {"set": [k for k, v in patch.items() if v is not None],
+            "removed": [k for k, v in patch.items() if v is None and k in stored],
+            "absent": [k for k, v in patch.items() if v is None and k not in stored]}
+    merged = _merge_patch(stored, patch)
+    if _same_json(merged, stored):
+        return full, None, info | {"noop": True}
+    full["custom_attributes"] = merged
+    return full, None, info
+
+
 def _changed_columns(names: list, cols: dict, before: dict, key: str) -> list[dict]:
     """Plan 080: what an UPDATE actually changed, with the before/after length of text.
     Upserts replace whole rows, so a re-sent long field that silently lost a paragraph
@@ -2277,6 +2370,11 @@ def entity_upsert(entities: list[dict]) -> dict:
     with its delimiters), and sends the result down THIS path, so every guard and
     trigger judges it; the item reports `substituted` counts beside `changed_columns`.
     Beside a `substitute`, `expect_unchanged` guards the WHOLE materialized row.
+    To set or remove keys of `custom_attributes` (plan 260), send {'type': ..., 'id': ...,
+    'merge_attributes': {'<key>': <value>, '<other>': null}}: RFC 7386 on the stored object, then
+    this same path. A patch or a stored value that is no object is refused, a null removes a
+    key, and a merge that changes nothing writes nothing (`write: "unchanged"`). `merged` names
+    the top-level keys of the patch: set, removed, and absent (removed but never there).
     A full-row update that only means to flip a status names the columns it did NOT
     mean to change: {'type': ..., 'id': ..., ..., 'expect_unchanged': ['title', ...]}
     (plan 041, the field's LL-063 — a paragraph lost mid-paste with ok: true). The
@@ -2306,6 +2404,12 @@ def entity_upsert(entities: list[dict]) -> dict:
             # Plan 094 (the field's FB-001): the header row, special-cased - NEVER a
             # family (no register, no CSV, no registry row, no index). Read stays
             # server_info().package.
+            if "merge_attributes" in item:                  # R155: the header's are frozen
+                results.append({"index": i, "ok": False,
+                                "error": "the header's custom_attributes is frozen:"
+                                         " merge_attributes is refused"})
+                failed = True
+                continue
             if item.get("sha256", False) is not False:      # R148: the header is not a row
                 results.append({"index": i, "ok": False,
                                 "error": "sha256 hashes the columns of a row. The header takes no"
@@ -2346,7 +2450,8 @@ def entity_upsert(entities: list[dict]) -> dict:
         expect_unchanged = item.get("expect_unchanged")
         cols = {k: v for k, v in item.items()
                 if k not in ("type", "force", "operator_confirm", "retire",
-                             "expect_unchanged", "substitute", "create", "sha256")}
+                             "expect_unchanged", "substitute", "create", "sha256",
+                             "merge_attributes")}
         # Plan 226 (review): the key is text, and an id-keyed row has one. A row with no
         # `id` was stored with a NULL key (SQLite allows NULL in a text primary key), and
         # every later readiness_check and export_html then raised. A list sent as a key
@@ -2361,6 +2466,11 @@ def entity_upsert(entities: list[dict]) -> dict:
                                         else "") + ". Nothing is assigned for you"})
             failed = True
             continue
+        if "sha256" in item and not isinstance(item["sha256"], bool):   # R148, strict (D4)
+            results.append({"index": i, "ok": False, "id": cols.get("id"),
+                            "error": "sha256 is true or false"})
+            failed = True
+            continue
         substituted = None
         if "substitute" in item:
             # Plan 095 (the field's FB-004): one token in one column, without the
@@ -2372,6 +2482,23 @@ def entity_upsert(entities: list[dict]) -> dict:
             if err:
                 results.append({"index": i, "ok": False, "id": item.get("id"), "error": err})
                 failed = True
+                continue
+        merged = None
+        if "merge_attributes" in item:
+            # Plan 260 (R155): the substitute's pattern. The stored row is materialized and the
+            # merged custom_attributes goes down the ordinary path. A merge that changes nothing
+            # writes nothing (R164).
+            cols, err, merged = _materialize_merge(conn, etype, table, item, cols)
+            if err:
+                results.append({"index": i, "ok": False, "id": item.get("id"), "error": err})
+                failed = True
+                continue
+            if merged.pop("noop", False):
+                res = {"index": i, "ok": True, "id": cols.get("id"), "write": "unchanged",
+                       "changed_columns": [], "merged": merged}
+                if item.get("sha256") is True:
+                    res.update(_written_hashes(conn, table, cols, ["custom_attributes"]))
+                results.append(res)
                 continue
         if retire:
             # Plan 040 (findings_23 §1): the only agent-initiated removal of store
@@ -2420,11 +2547,6 @@ def entity_upsert(entities: list[dict]) -> dict:
         if unknown:   # plan 250 (Jisr's FB-024): the refusal names the columns the item takes
             results.append({"index": i, "ok": False, "error": f"unknown columns for {etype}: {sorted(unknown)}. "
                             + _columns_told(etype, "item", (c for c in _columns(table) if c != "last_referenced"))})
-            failed = True
-            continue
-        if "sha256" in item and not isinstance(item["sha256"], bool):   # R148, strict (D4)
-            results.append({"index": i, "ok": False, "id": cols.get("id"),
-                            "error": "sha256 is true or false"})
             failed = True
             continue
         if "create" in item and (err := _create_error(conn, etype, table, item, cols)):
@@ -2817,9 +2939,12 @@ def entity_upsert(entities: list[dict]) -> dict:
                        "write": "inserted" if before_row is None else "updated"}   # R146
                 if substituted:
                     res["substituted"] = substituted
+                if merged is not None:
+                    res["merged"] = merged
                 if item.get("sha256") is True:              # R148 (plan 259)
-                    res.update(_written_hashes(conn, table, cols,
-                                               list(substituted) if substituted else names))
+                    res.update(_written_hashes(
+                        conn, table, cols, list(substituted) if substituted
+                        else ["custom_attributes"] if merged is not None else names))
                 if before_row is not None:
                     res["changed_columns"] = _changed_columns(names, cols, before_row, key)
                 if etype == "lesson" and (
@@ -7509,7 +7634,9 @@ TOOLS = {
                       " A write of an existing id updates that row. Send `create: true` on a row"
                       " meant as new: the item is then refused when its id exists. Each ok item"
                       " says `write`: inserted, updated, unchanged or retired. Send `sha256: true` for the"
-                      " hash of each TEXT column that the item wrote"),
+                      " hash of each TEXT column that the item wrote. Send"
+                      " `{type, id, merge_attributes: {key: value, other: null}}` to set or remove"
+                      " keys of custom_attributes (RFC 7386) without sending the row"),
     "entity_query": (entity_query, _ENTITY_QUERY_DESC),
     "trace_query": (trace_query, _TRACE_QUERY_DESC),
     "gate_run": (gate_run, "Run the mechanical quality gates and return the gate report"),

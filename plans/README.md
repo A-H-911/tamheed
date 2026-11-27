@@ -245,7 +245,7 @@ R145-R170, defaults D1-D15). Every row links to the one approved plan.
 | 256 | [The round record and the rulings R145-R170](256-field-round-6.9.0.md) | 255 | DONE 2026-11-27 (`aed27d1`, CI run 45917952527 green on twelve jobs) |
 | 257 | [The slate: Jisr's FB-043, FB-032, FB-034, FB-033 (caps, line breaks, wrapping, `show_recommendations`, the `slate-browser` job)](256-field-round-6.9.0.md) | 256 | DONE 2026-11-27 (`b944bb4`; three dispatched CI runs 45921066463, 45921075683, 45921083897 green, the new job `slate-browser` in each; evidence [slate-6.9.0-2026-11](evidence/slate-6.9.0-2026-11.md)) |
 | 258 | [ACMP's FB-035 (the refusals name the columns) and FB-034 (`create`, the `write` marker)](256-field-round-6.9.0.md) | 257 | DONE 2026-11-27 (`735eb99`, CI run 45924364353 green; the security pass in [security-6.9.0-2026-11](evidence/security-6.9.0-2026-11.md)) |
-| 259 | [ACMP's FB-037 (`sha256` on a write; package-writes section 2)](256-field-round-6.9.0.md) | 258 | PLANNED |
+| 259 | [ACMP's FB-037 (`sha256` on a write; package-writes section 2)](256-field-round-6.9.0.md) | 258 | DONE 2026-11-27 (`2b0ca53`, CI run 45926932297 green) |
 | 260 | [Jisr's FB-025 (a): `merge_attributes` (RFC 7386, two named departures)](256-field-round-6.9.0.md) | 259 | PLANNED |
 | 261 | [Jisr's FB-025 (b): a declared set on a family's registry row; ADR-0007](256-field-round-6.9.0.md) | 260 | PLANNED |
 | 262 | [Jisr's FB-029 (the discharge candidates) and FB-044 (a started slice); the lab run](256-field-round-6.9.0.md) | 261 | PLANNED |

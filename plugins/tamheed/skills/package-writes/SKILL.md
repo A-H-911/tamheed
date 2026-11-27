@@ -2,7 +2,7 @@
 name: package-writes
 user-invocable: false
 description: >-
-  Use before any write to a Tamheed package (entity_upsert - full-row, substitute or retire items -
+  Use before any write to a Tamheed package (entity_upsert - full-row, substitute, merge or retire items -
   progress_update, audit_record, work_bind, package_verify with record, standup_report). Use before
   export_html or handoff_emit, which write package files. Use before any git operation that touches package data
   (commit, branch, checkout, reset, stash, merge, push). Use before writing a commit sha, a digest,
@@ -34,8 +34,15 @@ id resolves, and the damage stays until someone reads it.
 - **`substitute` for one token, or a status flip on a long row.** `{type, id, substitute: {col: [old,
   new]}}` re-materialises the row server-side. The long columns never pass through your output. Named
   refusals guard it: a zero-occurrence needle, digit glue, a re-run (`new` contains `old` and `new` is
-  already present), JSON inside `custom_attributes`. Bound a needle with its backticks. It cannot
+  already present). A result that breaks the JSON of `custom_attributes` is refused too. A substitute inside
+  a value of `custom_attributes` works. Bound a needle with its backticks. It cannot
   fill a NULL.
+- **`merge_attributes` sets or removes keys of `custom_attributes`.** Send `{type, id,
+  merge_attributes: {key: value, gone: null}}`. The server merges it into the stored object by
+  RFC 7386, and a null removes a key. The rest of the row never passes through your output, and
+  every guard judges the result. A merge that changes nothing writes nothing. The result's
+  `merged` names the top-level keys of your patch: set, removed, and absent. It is not a diff.
+  `write` says whether anything changed.
 - **A row meant as NEW carries `create: true`.** A write of an existing id updates that row. It
   returns `ok`, so a new row sent under a used id replaces that row in silence. With
   `create: true` the item is refused, and the refusal names the row that holds the id. The flag

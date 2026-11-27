@@ -36,6 +36,13 @@ The 6.9.0 field round (plans 256-263). The rulings R145-R170 are in
   writer compares it with its source file and reads nothing from the store. It works on an
   insert, which `expect_unchanged` cannot. The skill `package-writes` section 2 names the route
   and the limits of each check.
+- **`merge_attributes` on an `entity_upsert` item (plan 260, Jisr's FB-025).** It sets or
+  removes keys of one row's `custom_attributes` by RFC 7386, and the rest of the row never
+  passes through the caller. Every guard judges the result. A patch or a stored value that is
+  not an object is refused. A merge that changes nothing writes nothing.
+- **`package-writes` section 1 no longer calls JSON inside `custom_attributes` a refusal of
+  `substitute` (plan 260).** A substitute inside a value works. The refusal is of a result that
+  breaks the JSON.
 
 ### Changed (the refusals)
 - **Every refusal of an unknown column names the columns that the call takes (plan 258, ACMP's

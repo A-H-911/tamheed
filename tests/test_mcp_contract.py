@@ -8099,5 +8099,152 @@ class HashOnWriteTest(unittest.TestCase):
         self.assertEqual(srv.entity_query("defect", id="DEF-010")["rows"], [])
 
 
+# RFC 7386 (JSON Merge Patch), Appendix A "Example Test Cases", read from
+# https://www.rfc-editor.org/rfc/rfc7386.txt on 2026-11-27. (original, patch, result)
+RFC7386_APPENDIX_A = [
+    ({"a": "b"}, {"a": "c"}, {"a": "c"}),
+    ({"a": "b"}, {"b": "c"}, {"a": "b", "b": "c"}),
+    ({"a": "b"}, {"a": None}, {}),
+    ({"a": "b", "b": "c"}, {"a": None}, {"b": "c"}),
+    ({"a": ["b"]}, {"a": "c"}, {"a": "c"}),
+    ({"a": "c"}, {"a": ["b"]}, {"a": ["b"]}),
+    ({"a": {"b": "c"}}, {"a": {"b": "d", "c": None}}, {"a": {"b": "d"}}),
+    ({"a": [{"b": "c"}]}, {"a": [1]}, {"a": [1]}),
+    (["a", "b"], ["c", "d"], ["c", "d"]),
+    ({"a": "b"}, ["c"], ["c"]),
+    ({"a": "foo"}, None, None),
+    ({"a": "foo"}, "bar", "bar"),
+    ({"e": None}, {"a": 1}, {"e": None, "a": 1}),
+    ([1, 2], {"a": "b", "c": None}, {"a": "b"}),
+    ({}, {"a": {"bb": {"ccc": None}}}, {"a": {"bb": {}}}),
+]
+
+
+class MergeAttributesTest(unittest.TestCase):
+    """Plan 260 (Jisr's FB-025 a, R155, R164, R169): `merge_attributes` sets or removes keys of
+    one row's `custom_attributes` without sending the row. It is RFC 7386 for an object patch on
+    an object, with two departures: a patch that is not an object is refused, and a stored value
+    that is not an object is refused (a stored NULL is an empty object)."""
+
+    def setUp(self):
+        self._tmp = tempfile.TemporaryDirectory()
+        srv.PACKAGE_ROOT = Path(self._tmp.name)
+        self.assertTrue(srv.package_create("demo", "Demo", "rnd")["ok"])
+        self.assertTrue(srv.entity_upsert([
+            {"type": "defect", "id": "DEF-001", "title": "a long title kept as it is",
+             "severity": "low", "custom_attributes": {"layer": "product", "keep": "k"}},
+            {"type": "decision", "id": "DEC-001", "title": "d", "lifecycle_status": "Proposed"},
+            {"type": "requirement", "id": "FR-001", "kind": "functional", "title": "r",
+             "statement": "s", "lifecycle_status": "Draft", "source_kind": "brief",
+             "source_span": "p1"}])["ok"])
+
+    def tearDown(self):
+        if srv._CURRENT is not None:
+            srv.package_close()
+        self._tmp.cleanup()
+
+    def _attrs(self, rid: str = "DEF-001"):
+        raw = srv._CURRENT.conn.execute("SELECT custom_attributes FROM defects WHERE id = ?",
+                                        (rid,)).fetchone()[0]
+        return None if raw is None else json.loads(raw)
+
+    def _merge(self, patch, rid: str = "DEF-001", **extra) -> dict:
+        out = srv.entity_upsert([{"type": "defect", "id": rid, "merge_attributes": patch} | extra])
+        return out["items"][0]
+
+    def test_the_object_cases_of_rfc_7386_appendix_a(self):
+        cases = [c for c in RFC7386_APPENDIX_A
+                 if isinstance(c[0], dict) and isinstance(c[1], dict)]
+        self.assertEqual(len(cases), 10)
+        for n, (original, patch, result) in enumerate(cases):
+            self.assertTrue(srv.entity_upsert([{"type": "defect", "id": "DEF-001",
+                                                "title": "t", "severity": "low",
+                                                "custom_attributes": original}])["ok"])
+            got = self._merge(patch)
+            self.assertTrue(got["ok"], (n, got))
+            self.assertEqual(self._attrs(), result, n)
+
+    def test_the_two_departures_from_rfc_7386_are_refused(self):
+        departures = [c for c in RFC7386_APPENDIX_A
+                      if not (isinstance(c[0], dict) and isinstance(c[1], dict))]
+        self.assertEqual(len(departures), 5)
+        for original, patch, _ in departures:
+            if isinstance(patch, dict):                # a stored value that is not an object
+                srv.entity_upsert([{"type": "defect", "id": "DEF-001", "title": "t",
+                                    "severity": "low", "custom_attributes": original}])
+                self.assertIn("stored custom_attributes is not a JSON object",
+                              self._merge(patch)["error"])
+            else:                                      # a patch that is not an object
+                self.assertIn("merge_attributes is a JSON object", self._merge(patch)["error"])
+
+    def test_one_key_set_one_removed_and_the_rest_left_as_they_were(self):
+        before = srv.entity_query("defect", id="DEF-001")["rows"][0]
+        got = self._merge({"layer": "twk-setup", "keep": None, "gone": None})
+        self.assertTrue(got["ok"], got)
+        self.assertEqual(got["write"], "updated")
+        self.assertEqual(got["merged"], {"set": ["layer"], "removed": ["keep"], "absent": ["gone"]})
+        self.assertEqual(self._attrs(), {"layer": "twk-setup"})
+        after = srv.entity_query("defect", id="DEF-001")["rows"][0]
+        for column in ("title", "severity", "lifecycle_status"):
+            self.assertEqual(after[column], before[column], column)
+        srv.entity_upsert([{"type": "defect", "id": "DEF-002", "title": "t", "severity": "low"}])
+        self.assertTrue(self._merge({"layer": "product"}, rid="DEF-002")["ok"])   # NULL is {}
+        self.assertEqual(self._attrs("DEF-002"), {"layer": "product"})
+
+    def test_a_merge_that_changes_nothing_writes_nothing(self):
+        data = srv.PACKAGE_ROOT / "demo" / "data" / "defects.jsonl"
+        before = data.read_bytes()
+        got = self._merge({"layer": "product", "absent": None}, sha256=True)
+        self.assertTrue(got["ok"], got)
+        self.assertEqual((got["write"], got["changed_columns"]), ("unchanged", []))
+        self.assertEqual(got["merged"], {"set": ["layer"], "removed": [], "absent": ["absent"]})
+        self.assertIn("custom_attributes", got["sha256"])
+        self.assertEqual(data.read_bytes(), before)
+        # the code review of plan 260: a no-op still checks the shape of expect_unchanged
+        for guard, needle in (("x", "a non-empty list"), (["colour"], "unknown columns for defect")):
+            bad = self._merge({"layer": "product"}, expect_unchanged=guard)
+            self.assertFalse(bad["ok"], bad)
+            self.assertIn(needle, bad["error"])
+
+    def test_what_a_merge_item_refuses(self):
+        cases = [
+            ({"type": "progress-entry", "id": "PE-001", "merge_attributes": {"a": 1}}, "journal"),
+            ({"type": "trace-edge", "from_id": "FR-001", "to_id": "DEC-001",
+              "relation": "derives_from", "merge_attributes": {"a": 1}}, "id-keyed row"),
+            ({"type": "omission", "entity_type": "hypothesis", "merge_attributes": {"a": 1}},
+             "id-keyed row"),
+            ({"type": "package", "merge_attributes": {"a": 1}}, "frozen"),
+            ({"type": "defect", "id": "DEF-404", "merge_attributes": {"a": 1}}, "no stored row"),
+            ({"type": "defect", "id": "DEF-001", "title": "t", "merge_attributes": {"a": 1}},
+             "a merge item carries only"),
+            ({"type": "defect", "id": "DEF-001", "substitute": {"title": ["long", "short"]},
+              "merge_attributes": {"a": 1}}, "a substitute item carries only"),
+            ({"type": "defect", "id": "DEF-001", "merge_attributes": {"a": 1}, "create": True},
+             "It never creates one"),
+            ({"type": "trace-edge", "from_id": "FR-001", "to_id": "DEC-001",
+              "relation": "derives_from", "retire": True, "merge_attributes": {"a": 1}},
+             "needs an id-keyed row, not trace-edge"),    # the merge step refuses it first
+            ({"type": "defect", "id": "DEF-001", "merge_attributes": {1: "x"}}, "a key is text"),
+        ]
+        for item, needle in cases:
+            out = srv.entity_upsert([item])["items"][0]
+            self.assertFalse(out["ok"], (item, out))
+            self.assertIn(needle, out["error"], item)
+
+    def test_a_register_entry_merge_is_judged_against_its_register(self):
+        self.assertTrue(srv.entity_upsert([
+            {"type": "register", "id": "REG-001", "title": "Sources", "purpose": "p",
+             "custom_attributes": {"fields": [{"name": "status", "values": ["open", "done"]}]}},
+            {"type": "register-entry", "id": "ENT-001", "register_id": "REG-001",
+             "title": "An entry", "custom_attributes": {"status": "open"}}])["ok"])
+        out = srv.entity_upsert([{"type": "register-entry", "id": "ENT-001",
+                                  "merge_attributes": {"status": "lost"}}])["items"][0]
+        self.assertFalse(out["ok"], out)
+        self.assertIn("`status` 'lost' is not one of: open, done", out["error"])
+        ok = srv.entity_upsert([{"type": "register-entry", "id": "ENT-001",
+                                 "merge_attributes": {"status": "done"}}])["items"][0]
+        self.assertTrue(ok["ok"], ok)
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)

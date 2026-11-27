@@ -209,7 +209,7 @@ def tools() -> list[dict]:
 def upsert_meta_keys() -> list[str]:
     m = re.search(r'if k not in \(("type", "force"[^)]*)\)', SERVER_SRC, re.S)
     keys = re.findall(r'"([a-z0-9_]+)"', m.group(1))
-    assert keys == ["type", "force", "operator_confirm", "retire", "expect_unchanged", "substitute", "create", "sha256"], keys
+    assert keys == ["type", "force", "operator_confirm", "retire", "expect_unchanged", "substitute", "create", "sha256", "merge_attributes"], keys
     return keys
 
 
