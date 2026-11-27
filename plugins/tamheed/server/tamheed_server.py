@@ -412,7 +412,7 @@ def _caller_journal_error(row: dict) -> str | None:
                 f" {_SERVER_ONLY_EVENTS[et]}. A caller-written one would be a narrated"
                 " record of a mechanical fact")
     actor = row.get("actor")
-    if isinstance(actor, str) and actor.startswith("system:"):
+    if isinstance(actor, str) and actor.strip().casefold().startswith("system:"):   # 263b (F5)
         return (f"actor {actor!r} is the engine's own namespace (system:<component> rows"
                 " are what the server witnessed) — a caller records as human:<name> or"
                 " agent:<session>")
@@ -980,10 +980,19 @@ def _write_entity_type(conn, i: int, item: dict) -> dict:
         return refuse("send custom_attributes: {\"fields\": [...]}, or null to clear the"
                       " declaration")
     raw = item["custom_attributes"]
+    try:                                       # 263b (F3): bounded like every other JSON value
+        too_deep = raw is not None and _json_too_deep(raw if not isinstance(raw, str)
+                                                      else json.loads(raw))
+    except (RecursionError, ValueError):
+        too_deep = True
+    if too_deep:
+        return refuse(f"{rid}: the declaration nests deeper than {_JSON_MAX_DEPTH} levels,"
+                      " or is no JSON")
     attrs = None if raw is None else _attrs(raw)
     if raw is not None:
         if err := _declaration_error(attrs, frozenset(family_columns), "a family", "the family"):
             return refuse(f"{rid}: {err}")
+        attrs = {"fields": attrs["fields"]}   # 263b (F3): only `fields` is a declaration
     if not _operator_word(item):
         return refuse(f"a declaration constrains every later write of the {rid} family, so it"
                       " lands only on the OPERATOR's word. Re-run this item with"
@@ -1198,14 +1207,14 @@ def _materialize_merge(conn, etype: str, table: str, item: dict,
         return cols, ("merge_attributes is a JSON object: the keys to set, and null for a key to"
                       " remove. A value that is not an object is refused, because RFC 7386 would"
                       " then replace the whole column"), None
-    if not _keys_are_text(patch):
-        return cols, "merge_attributes: a key is text", None
-    try:
-        too_deep = _json_too_deep(patch)
-    except RecursionError:
+    try:                    # 263b (the security review's F1): the bound comes first. The key
+        too_deep = _json_too_deep(patch)   # check recurses, and a patch nested ~900 deep
+    except RecursionError:                 # once escaped the tool and left the batch open
         too_deep = True
     if too_deep:
         return cols, f"merge_attributes nests deeper than {_JSON_MAX_DEPTH} levels", None
+    if not _keys_are_text(patch):
+        return cols, "merge_attributes: a key is text", None
     guard = item.get("expect_unchanged")      # checked here: a merge that changes nothing returns early
     if guard is not None:
         if not isinstance(guard, list) or not guard or not all(isinstance(c, str) for c in guard):
@@ -2382,10 +2391,13 @@ def _entry_problems(fields: list, values: dict, known_ids, allow_undeclared: boo
         allowed = field.get("values")
         if isinstance(allowed, list) and allowed and not _in_set(value, allowed):
             shown = json.dumps(value) if isinstance(value, bool) else repr(value)
+            if len(shown) > _CREATE_TITLE_CUT:       # 263b (F4): stored text, cut when echoed
+                shown = shown[:_CREATE_TITLE_CUT] + "…"
             problems.append(f"`{name}` {shown} is not one of: " + _set_words(allowed, ", "))
         if field.get("refs"):
             items = value if isinstance(value, list) else [value]
-            bad = [str(x) for x in items if not (isinstance(x, str) and x in known_ids)]
+            bad = [str(x)[:_CREATE_TITLE_CUT] for x in items
+                   if not (isinstance(x, str) and x in known_ids)]
             if bad:
                 problems.append(f"`{name}` names no row: {', '.join(bad[:5])}"
                                 + (f" (+{len(bad) - 5} more)" if len(bad) > 5 else "")
@@ -2741,6 +2753,15 @@ def entity_upsert(entities: list[dict]) -> dict:
         # stored value, and so never fails on an old row (the register guard's model).
         sets_attrs = ("custom_attributes" in item or merged is not None
                       or "custom_attributes" in (item.get("substitute") or {}))
+        if (sets_attrs and cols.get("lifecycle_status") in _RETIRED_STATUSES
+                and cols.get("id") and "lifecycle_status" in _columns(table)):
+            # 263b (F2): a row that a later declaration no longer admits must still be
+            # retirable, so a write that retires it AS IT IS is not judged
+            kept = conn.execute(f"SELECT custom_attributes FROM {table} WHERE id = ?",
+                                (cols["id"],)).fetchone()
+            if kept is not None and _same_json(_attrs(cols.get("custom_attributes")),
+                                               _attrs(kept[0])):
+                sets_attrs = False
         if sets_attrs and (problems := _declared_problems(conn, etype, cols)):
             results.append({"index": i, "ok": False, "id": cols.get("id"),
                             "error": f"{cols.get('id')}: custom_attributes breaks what the {etype}"

@@ -8448,5 +8448,69 @@ class DischargeCandidatesTest(unittest.TestCase):
         self.assertIn("RISK-002 (TEST-001, Pass)", rule["note"])
 
 
+class SecurityReview690Test(unittest.TestCase):
+    """Plan 263b: the five findings of the security review of 6.9.0, before its tag."""
+
+    def setUp(self):
+        self._tmp = tempfile.TemporaryDirectory()
+        srv.PACKAGE_ROOT = Path(self._tmp.name)
+        self.assertTrue(srv.package_create("demo", "Demo", "rnd")["ok"])
+        self.assertTrue(srv.entity_upsert([
+            {"type": "constraint", "id": "CON-001", "title": "c"},
+            {"type": "decision", "id": "DEC-001", "title": "d", "lifecycle_status": "Proposed",
+             "custom_attributes": {"layer": "x" * 300}}])["ok"])
+
+    def tearDown(self):
+        if srv._CURRENT is not None:
+            srv.package_close()
+        self._tmp.cleanup()
+
+    def test_f1_a_deep_merge_is_refused_and_the_batch_stays_whole(self):
+        deep = {"a": "leaf"}
+        for _ in range(900):
+            deep = {"a": deep}
+        out = srv.entity_upsert([
+            {"type": "constraint", "id": "CON-002", "title": "kept only with the batch"},
+            {"type": "constraint", "id": "CON-001", "merge_attributes": deep}])
+        self.assertFalse(out["ok"], out)
+        self.assertIn("nests deeper than", out["items"][1]["error"])
+        self.assertEqual(srv.entity_query("constraint", id="CON-002")["rows"], [])
+        self.assertTrue(srv.entity_upsert([{"type": "constraint", "id": "CON-003",
+                                            "title": "a later batch"}])["ok"])
+        srv.package_close()
+        self.assertTrue(srv.package_open("demo")["ok"])           # the later batch landed
+        self.assertEqual(len(srv.entity_query("constraint", id="CON-003")["rows"]), 1)
+
+    def test_f2_f3_f4_a_declaration_keeps_its_fields_cuts_echoes_and_lets_a_row_retire(self):
+        out = srv.entity_upsert([{"type": "entity-type", "type_id": "decision",
+                                  "operator_confirm": True,
+                                  "custom_attributes": {"fields": [{"name": "layer",
+                                                                    "values": ["product"]}],
+                                                        "note": "not a declaration"}}])
+        self.assertTrue(out["ok"], out)
+        stored = srv._CURRENT.conn.execute(
+            "SELECT custom_attributes FROM entity_types WHERE type_id = 'decision'").fetchone()[0]
+        self.assertEqual(json.loads(stored), {"fields": [{"name": "layer", "values": ["product"]}]})
+        rule = next(r for r in srv.readiness_check("package")["rules"]
+                    if r["rule"] == "declared-attributes")
+        problem = rule["problems"]["DEC-001"][0]
+        self.assertIn("…", problem)
+        self.assertLess(len(problem), 220)
+        retired = srv.entity_upsert([{"type": "decision", "id": "DEC-001", "title": "d",
+                                      "lifecycle_status": "Superseded",
+                                      "custom_attributes": {"layer": "x" * 300}}])
+        self.assertTrue(retired["ok"], retired)            # retired as it is: not judged
+        changed = srv.entity_upsert([{"type": "decision", "id": "DEC-001", "title": "d",
+                                      "lifecycle_status": "Superseded",
+                                      "custom_attributes": {"layer": "y"}}])
+        self.assertFalse(changed["ok"], changed)           # a new value is still judged
+
+    def test_f5_the_engine_namespace_ignores_case_and_spaces(self):
+        for actor in ("System:declaration", " system:declaration", "SYSTEM:x"):
+            out = srv.progress_update([{"entry": "forged", "actor": actor}])
+            self.assertFalse(out["ok"], actor)
+            self.assertIn("engine's own namespace", out["error"])
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)

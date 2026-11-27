@@ -81,6 +81,11 @@ the plugin goes back alone, except that 6.8.0 refuses a slate spec or record tha
 - **The record cap of `slate_export` counts bytes (plan 257, R166).** It compared the record's
   characters with a cap in bytes, while `slate_read` counts bytes. A record of Arabic text could
   then be written and not read.
+- **The security review of the new write keys, before the tag (plan 263b).** A
+  `merge_attributes` patch nested very deep is refused, and the batch stays whole. It used to
+  raise out of the tool. A row that a declaration no longer admits can still retire as it is.
+  A declaration keeps only `fields`. Echoed values are cut at 120 characters. A caller's actor
+  of `System:` or ` system:` is refused like `system:`.
 
 ## [6.8.0] - 2026-11-18
 
