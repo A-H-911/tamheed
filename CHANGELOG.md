@@ -29,7 +29,13 @@ The 6.9.0 field round (plans 256-263). The rulings R145-R170 are in
   whose ids are plain numbers. The flag is opt-in: a write without it still updates a row that
   has the same id. The tool's description, the note's table of obligations and the skills teach
   it. The note grows by one row of 192 characters.
-- **Each ok item of `entity_upsert` says `write`: `inserted` or `updated` (plan 258).**
+- **Each ok item of `entity_upsert` says `write`: `inserted`, `updated`, `unchanged` or `retired`
+  (plan 258).**
+- **`sha256: true` on an `entity_upsert` item (plan 259, ACMP's FB-037).** The result carries the
+  sha256 of each TEXT column that the item wrote, read back from the store after the write. A
+  writer compares it with its source file and reads nothing from the store. It works on an
+  insert, which `expect_unchanged` cannot. The skill `package-writes` section 2 names the route
+  and the limits of each check.
 
 ### Changed (the refusals)
 - **Every refusal of an unknown column names the columns that the call takes (plan 258, ACMP's

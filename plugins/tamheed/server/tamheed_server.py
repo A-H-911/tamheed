@@ -900,7 +900,7 @@ def _write_package_header(conn, i: int, item: dict) -> dict:
 
 
 _SUBSTITUTE_KEYS = frozenset({"type", "id", "substitute", "operator_confirm", "expect_unchanged",
-                              "create"})   # create: false is the plain write (R146)
+                              "create", "sha256"})   # create: false is the plain write (R146)
 
 
 def _glued_match(text: str, old: str) -> str | None:
@@ -1087,6 +1087,32 @@ def _create_error(conn, etype: str, table: str, item: dict, cols: dict) -> str |
         err += (f". The next free id of the family is"
                 f" {_next_id(prefix, table, max(3, len(str(value)) - len(prefix)))}")
     return err
+
+
+def _written_hashes(conn, table: str, cols: dict, sent) -> dict:
+    """Plan 259 (ACMP's FB-037, R148): `sha256: true` on an item. The TEXT columns that the item
+    wrote are read back from the store after the write, and each value's sha256 is taken over
+    its UTF-8 bytes as stored. A writer compares it with its source file's hash and reads
+    nothing from the store. A key column is not hashed. A null reads null."""
+    import hashlib
+    text = {r[1] for r in conn.execute(f"PRAGMA table_info({table})") if str(r[2]).upper() == "TEXT"}
+    if table == "trace_edges":
+        keys = ("from_id", "to_id", "relation")
+    else:
+        keys = (_NON_ID_TABLES.get(table, "id"),)
+    names = [c for c in sent if c in text and c not in keys]
+    out: dict = {"sha256": {}}
+    if names:
+        row = conn.execute(f"SELECT {', '.join(names)} FROM {table} WHERE "
+                           + " AND ".join(f"{k} = ?" for k in keys),
+                           [cols.get(k) for k in keys]).fetchone()
+        out["sha256"] = {c: None if v is None else hashlib.sha256(str(v).encode("utf-8")).hexdigest()
+                         for c, v in zip(names, row)}
+    if "custom_attributes" in names:
+        out["sha256_note"] = ("custom_attributes is hashed as stored. An object that you send is"
+                              " stored as JSON that the server writes, so hash that text, or send"
+                              " the column as a JSON string")
+    return out
 
 
 def _same_value(incoming, stored) -> bool:
@@ -2280,6 +2306,12 @@ def entity_upsert(entities: list[dict]) -> dict:
             # Plan 094 (the field's FB-001): the header row, special-cased - NEVER a
             # family (no register, no CSV, no registry row, no index). Read stays
             # server_info().package.
+            if item.get("sha256", False) is not False:      # R148: the header is not a row
+                results.append({"index": i, "ok": False,
+                                "error": "sha256 hashes the columns of a row. The header takes no"
+                                         " `sha256`: read it with server_info().package"})
+                failed = True
+                continue
             if item.get("create", False) is not False:      # R146: every package has one
                 results.append({"index": i, "ok": False,
                                 "error": "the header row exists in every package. A create item"
@@ -2314,7 +2346,7 @@ def entity_upsert(entities: list[dict]) -> dict:
         expect_unchanged = item.get("expect_unchanged")
         cols = {k: v for k, v in item.items()
                 if k not in ("type", "force", "operator_confirm", "retire",
-                             "expect_unchanged", "substitute", "create")}
+                             "expect_unchanged", "substitute", "create", "sha256")}
         # Plan 226 (review): the key is text, and an id-keyed row has one. A row with no
         # `id` was stored with a NULL key (SQLite allows NULL in a text primary key), and
         # every later readiness_check and export_html then raised. A list sent as a key
@@ -2352,6 +2384,8 @@ def entity_upsert(entities: list[dict]) -> dict:
                 err = f"retire applies to trace-edge items only (got {etype!r})"
             elif item.get("create", False) is not False:   # R146: the filter strips the key
                 err = "a retire item never creates: drop `create`, or send two items"
+            elif item.get("sha256", False) is not False:   # R148
+                err = "a retire removes an edge, and there is no text to hash: drop `sha256`"
             elif set(cols) != {"from_id", "to_id", "relation"}:
                 err = ("a retire item carries exactly from_id, to_id, relation —"
                        f" got {sorted(cols)}")
@@ -2386,6 +2420,11 @@ def entity_upsert(entities: list[dict]) -> dict:
         if unknown:   # plan 250 (Jisr's FB-024): the refusal names the columns the item takes
             results.append({"index": i, "ok": False, "error": f"unknown columns for {etype}: {sorted(unknown)}. "
                             + _columns_told(etype, "item", (c for c in _columns(table) if c != "last_referenced"))})
+            failed = True
+            continue
+        if "sha256" in item and not isinstance(item["sha256"], bool):   # R148, strict (D4)
+            results.append({"index": i, "ok": False, "id": cols.get("id"),
+                            "error": "sha256 is true or false"})
             failed = True
             continue
         if "create" in item and (err := _create_error(conn, etype, table, item, cols)):
@@ -2765,6 +2804,7 @@ def entity_upsert(entities: list[dict]) -> dict:
                     [cols.get(c) for c in pk]).fetchone()
                 if exists:
                     results.append({"index": i, "ok": True, "unchanged": True, "write": "unchanged",
+                                    **({"sha256": {}} if item.get("sha256") is True else {}),
                                     "id": cols.get("id")})
                 else:
                     results.append({"index": i, "ok": False, "id": cols.get("id"),
@@ -2777,6 +2817,9 @@ def entity_upsert(entities: list[dict]) -> dict:
                        "write": "inserted" if before_row is None else "updated"}   # R146
                 if substituted:
                     res["substituted"] = substituted
+                if item.get("sha256") is True:              # R148 (plan 259)
+                    res.update(_written_hashes(conn, table, cols,
+                                               list(substituted) if substituted else names))
                 if before_row is not None:
                     res["changed_columns"] = _changed_columns(names, cols, before_row, key)
                 if etype == "lesson" and (
@@ -7465,7 +7508,8 @@ TOOLS = {
     "entity_upsert": (entity_upsert, "Batch upsert entities in one transaction, with per-item verdicts."
                       " A write of an existing id updates that row. Send `create: true` on a row"
                       " meant as new: the item is then refused when its id exists. Each ok item"
-                      " says `write`: inserted, updated, unchanged or retired"),
+                      " says `write`: inserted, updated, unchanged or retired. Send `sha256: true` for the"
+                      " hash of each TEXT column that the item wrote"),
     "entity_query": (entity_query, _ENTITY_QUERY_DESC),
     "trace_query": (trace_query, _TRACE_QUERY_DESC),
     "gate_run": (gate_run, "Run the mechanical quality gates and return the gate report"),

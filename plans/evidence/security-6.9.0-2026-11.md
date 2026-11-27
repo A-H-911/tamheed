@@ -27,3 +27,15 @@ The checklist, for each beat:
 | Words | The note row and the description say the flag is opt-in, and that a write without it updates a row with the same id. That matches the engine |
 
 No finding.
+
+## Beat 259: `sha256: true`
+
+| Check | Finding |
+|---|---|
+| SQL | `_written_hashes` interpolates `table` (from `ENTITY_TABLES`), the key columns (fixed tuples) and column names. The names are the item's own columns, which the unknown-column check has already matched to the table, or a substitute's columns, which `_materialize_substitute` has matched. They are filtered again by `PRAGMA table_info`. Every value is bound |
+| Echoed data | The hashes are of text that the caller has just sent. Nothing new leaves the store |
+| Guards | The key writes nothing. It is read after the item's write, inside the batch. A batch that fails later is rolled back whole and returns `ok: false`, `applied: 0` and "batch rolled back". Its items keep their per-item keys, as `changed_columns` always has, so a hash there describes a write that was undone. The batch fields say so |
+| Cost | One indexed SELECT for each item that asks |
+| Words | Section 2 says the hash is of the text as stored, that an object sent for `custom_attributes` is stored as JSON that the server writes, and what `expect_unchanged` proves. That matches the engine |
+
+No finding.

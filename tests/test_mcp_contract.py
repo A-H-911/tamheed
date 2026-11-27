@@ -8,6 +8,7 @@ export_html -> the missing-SDK error path (simulated ImportError) -> --selftest.
 """
 import contextlib
 import io
+import hashlib
 import json
 import os
 import re
@@ -8000,6 +8001,102 @@ class CreateAndColumnsTest(unittest.TestCase):
             note = (Path(target) / "CLAUDE.md").read_text(encoding="utf-8")
         table = note.split("### Recording obligations")[1].split("###")[0]
         self.assertIn("`create: true`", table)
+
+
+class HashOnWriteTest(unittest.TestCase):
+    """Plan 259 (ACMP's FB-037, R148): `sha256: true` on an item returns the sha256 of each TEXT
+    column that the item wrote, read back from the store after the write. A writer compares it
+    with its source file and reads nothing from the store. It works on an insert, which
+    `expect_unchanged` cannot."""
+
+    def setUp(self):
+        self._tmp = tempfile.TemporaryDirectory()
+        srv.PACKAGE_ROOT = Path(self._tmp.name)
+        self.assertTrue(srv.package_create("demo", "Demo", "rnd")["ok"])
+        self.assertTrue(srv.entity_upsert([
+            {"type": "decision", "id": "DEC-001", "title": "d", "lifecycle_status": "Proposed"},
+            {"type": "requirement", "id": "FR-001", "kind": "functional", "title": "r",
+             "statement": "s", "lifecycle_status": "Draft", "source_kind": "brief",
+             "source_span": "p1"},
+            {"type": "trace-edge", "from_id": "FR-001", "to_id": "DEC-001",
+             "relation": "derives_from"}])["ok"])
+
+    def tearDown(self):
+        if srv._CURRENT is not None:
+            srv.package_close()
+        self._tmp.cleanup()
+
+    @staticmethod
+    def _sha(text: str) -> str:
+        return hashlib.sha256(text.encode("utf-8")).hexdigest()
+
+    def _stored(self, column: str, table: str, rid: str) -> str:
+        return srv._CURRENT.conn.execute(f"SELECT {column} FROM {table} WHERE id = ?",
+                                         (rid,)).fetchone()[0]
+
+    def test_an_insert_and_an_update_return_the_hash_of_what_was_stored(self):
+        title = "Line one\r\nLine two, with a CR kept: مخزن"
+        new = srv.entity_upsert([{"type": "defect", "id": "DEF-001", "title": title,
+                                  "severity": "low", "sha256": True}])["items"][0]
+        self.assertTrue(new["ok"], new)
+        self.assertEqual(new["write"], "inserted")
+        self.assertEqual(new["sha256"]["title"], self._sha(title))
+        self.assertEqual(new["sha256"]["title"], self._sha(self._stored("title", "defects", "DEF-001")))
+        self.assertEqual(new["sha256"]["severity"], self._sha("low"))
+        self.assertNotIn("id", new["sha256"])                 # the key is not a text you wrote
+        self.assertNotEqual(new["sha256"]["title"], self._sha(title[:-1] + "x"))  # one character
+        again = srv.entity_upsert([{"type": "defect", "id": "DEF-001", "title": title + ".",
+                                    "severity": "low", "sha256": True}])["items"][0]
+        self.assertEqual((again["write"], again["sha256"]["title"]),
+                         ("updated", self._sha(title + ".")))
+        plain = srv.entity_upsert([{"type": "defect", "id": "DEF-001", "title": "t",
+                                    "severity": "low"}])["items"][0]
+        self.assertNotIn("sha256", plain)                    # opt-in: no key, no hashes
+
+    def test_a_substitute_hashes_its_columns_and_a_json_column_is_hashed_as_stored(self):
+        srv.entity_upsert([{"type": "defect", "id": "DEF-002", "title": "the first title",
+                            "severity": "low", "custom_attributes": {"layer": "product"}}])
+        sub = srv.entity_upsert([{"type": "defect", "id": "DEF-002", "sha256": True,
+                                  "substitute": {"title": ["first", "second"]}}])["items"][0]
+        self.assertTrue(sub["ok"], sub)
+        self.assertEqual(list(sub["sha256"]), ["title"])
+        self.assertEqual(sub["sha256"]["title"], self._sha("the second title"))
+        full = srv.entity_upsert([{"type": "defect", "id": "DEF-002", "title": "the second title",
+                                   "severity": "low", "custom_attributes": {"layer": "twk"},
+                                   "sha256": True}])["items"][0]
+        stored = self._stored("custom_attributes", "defects", "DEF-002")
+        self.assertEqual(full["sha256"]["custom_attributes"], self._sha(stored))
+        self.assertIn("custom_attributes", full["sha256_note"])
+
+    def test_sha256_takes_a_boolean_and_is_refused_on_a_retire(self):
+        bad = srv.entity_upsert([{"type": "defect", "id": "DEF-003", "title": "t",
+                                  "severity": "low", "sha256": "yes"}])["items"][0]
+        self.assertIn("sha256 is true or false", bad["error"])
+        retire = srv.entity_upsert([{"type": "trace-edge", "from_id": "FR-001",
+                                     "to_id": "DEC-001", "relation": "derives_from",
+                                     "retire": True, "sha256": True}])["items"][0]
+        self.assertIn("a retire removes an edge", retire["error"])
+        self.assertEqual(len(srv.trace_query("FR-001")["edges"]), 1)
+        journal = srv.entity_upsert([{"type": "progress-entry", "id": "PE-900",
+                                      "entry": "a note", "event_type": "note",
+                                      "sha256": True}])["items"][0]
+        self.assertEqual(journal["sha256"]["entry"], self._sha("a note"))
+
+    def test_a_resent_edge_the_header_and_a_rolled_back_batch(self):
+        """The code review of plan 259: a re-sent edge answers an empty `sha256`, the header is
+        refused by name, and a batch that rolls back keeps nothing. Its items still show their
+        hashes, and the batch says `applied: 0`."""
+        edge = srv.entity_upsert([{"type": "trace-edge", "from_id": "FR-001", "to_id": "DEC-001",
+                                   "relation": "derives_from", "sha256": True}])["items"][0]
+        self.assertEqual((edge["write"], edge["sha256"]), ("unchanged", {}))
+        header = srv.entity_upsert([{"type": "package", "title": "Demo", "sha256": True}])
+        self.assertIn("The header takes no `sha256`", header["items"][0]["error"])
+        out = srv.entity_upsert([
+            {"type": "defect", "id": "DEF-010", "title": "kept?", "severity": "low", "sha256": True},
+            {"type": "defect", "id": "DEF-011", "title": "t", "severity": "wrong"}])
+        self.assertEqual((out["ok"], out["applied"]), (False, 0))
+        self.assertIn("title", out["items"][0]["sha256"])
+        self.assertEqual(srv.entity_query("defect", id="DEF-010")["rows"], [])
 
 
 if __name__ == "__main__":

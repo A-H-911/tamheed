@@ -60,8 +60,16 @@ id resolves, and the damage stays until someone reads it.
   treat the composition as untrusted and make the verify step mandatory.
 - Re-send a field only from a read taken FOR that send. Text that has passed through a display (a
   terminal print, a summary, a table, an excerpt) is unsafe whatever its origin.
-- Hash the field before the write and compare after. Calibrate the check with a one-character
-  corruption first. Assert the comparison. Never eyeball it. Length does not predict which field drifts.
+- Hash the field and compare it with what landed. Send `sha256: true` on the item. The result's
+  `sha256` holds each TEXT column that the item wrote, hashed over its UTF-8 bytes as the store
+  holds them. Compare each hash with your source's sha256, so you read nothing from the store.
+  Read `sha256` only when the whole batch is ok. A rolled-back batch keeps nothing.
+  Calibrate the check with a one-character corruption first. Assert the comparison. Never eyeball
+  it. Length does not predict which field drifts.
+- Know the limits of each check. The hash is of the text as stored. An object sent for
+  `custom_attributes` is stored as JSON that the server writes. Hash that text, or send the column
+  as a JSON string. `expect_unchanged` on the next write of the row proves that two sends agree,
+  on an update only. Neither check proves that the source itself was right.
 - End any fix over more than one row with an independent re-read that re-derives each expected
   value from its own source. Save a pre-image first so the verifier has something to compare.
 - *Why:* the hand is the transport, and care does not catch a transcription error. Only a verifier does.
