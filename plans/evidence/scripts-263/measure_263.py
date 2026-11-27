@@ -23,6 +23,14 @@ sys.path[:0] = [str(bundle / "server"), str(bundle / "db")]
 os.environ.pop("TAMHEED_HOOK_LOG", None)
 import tamheed_server as srv  # noqa: E402
 
+def _inside(ws: Path, rel: str) -> Path | None:
+    """The target of a member, or None when its name leaves the workspace (a tar slip)."""
+    if not rel or Path(rel).is_absolute() or ".." in Path(rel).parts or "\\" in rel:
+        return None
+    target = (ws / rel).resolve()
+    return target if target.is_relative_to(ws.resolve()) else None
+
+
 ws = scratch / "ws"
 if ws.exists():
     shutil.rmtree(ws)
@@ -36,7 +44,9 @@ if tree.name.endswith(".tar.gz"):
             rel = m.name[len(top) + 1:]
             if not rel or not (rel.startswith(pkg + "/") or rel in KEEP) or not m.isfile():
                 continue
-            target = ws / rel
+            target = _inside(ws, rel)
+            if target is None:
+                raise SystemExit(f"a tarball member leaves the workspace: {m.name!r}")
             target.parent.mkdir(parents=True, exist_ok=True)
             target.write_bytes(tar.extractfile(m).read())
 else:

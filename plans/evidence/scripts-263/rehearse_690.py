@@ -31,6 +31,14 @@ APPEND = ("Harness note (plan 263 rehearsal): this run allows git commands and `
           " working directory is already the repository root.")
 
 
+def _inside(ws: Path, rel: str) -> Path | None:
+    """The target of a member, or None when its name leaves the workspace (a tar slip)."""
+    if not rel or Path(rel).is_absolute() or ".." in Path(rel).parts or "\\" in rel:
+        return None
+    target = (ws / rel).resolve()
+    return target if target.is_relative_to(ws.resolve()) else None
+
+
 def setup(tree: Path, pkg: str, brief: str, scratch: Path, branch: str) -> None:
     ws = scratch / "ws"
     assert not ws.exists(), "a fresh scratch folder each run"
@@ -40,9 +48,13 @@ def setup(tree: Path, pkg: str, brief: str, scratch: Path, branch: str) -> None:
             top = tar.getmembers()[0].name.split("/")[0]
             for m in tar.getmembers():
                 rel = m.name[len(top) + 1:]
-                if rel and m.isfile() and (rel.startswith(pkg + "/") or rel in KEEP):
-                    (ws / rel).parent.mkdir(parents=True, exist_ok=True)
-                    (ws / rel).write_bytes(tar.extractfile(m).read())
+                if not (m.isfile() and (rel.startswith(pkg + "/") or rel in KEEP)):
+                    continue
+                target = _inside(ws, rel)
+                if target is None:
+                    raise SystemExit(f"a tarball member leaves the workspace: {m.name!r}")
+                target.parent.mkdir(parents=True, exist_ok=True)
+                target.write_bytes(tar.extractfile(m).read())
     else:
         listed = subprocess.run(["git", "-C", str(tree), "ls-files", *KEEP], capture_output=True,
                                 text=True).stdout.split()
