@@ -899,7 +899,8 @@ def _write_package_header(conn, i: int, item: dict) -> dict:
     return res
 
 
-_SUBSTITUTE_KEYS = frozenset({"type", "id", "substitute", "operator_confirm", "expect_unchanged"})
+_SUBSTITUTE_KEYS = frozenset({"type", "id", "substitute", "operator_confirm", "expect_unchanged",
+                              "create"})   # create: false is the plain write (R146)
 
 
 def _glued_match(text: str, old: str) -> str | None:
@@ -938,6 +939,8 @@ def _materialize_substitute(conn, etype: str, table: str, item: dict,
         return cols, (f"a substitute item carries only type, id, substitute, operator_confirm"
                       f" and expect_unchanged, not {extra}. Half a row plus a substitute is"
                       " ambiguous. Send a full row, or a substitute alone"), None
+    if item.get("create", False) is not False:          # R146 (plan 258)
+        return cols, ("a substitute changes a stored row. It never creates one: drop `create`"), None
     if etype in ("progress-entry", "audit-verdict"):
         return cols, ("journal rows are corrected by compensating rows, never substituted"
                       " (append-only)"), None
@@ -958,10 +961,11 @@ def _materialize_substitute(conn, etype: str, table: str, item: dict,
     for col, (old, new) in spec.items():
         if col == "id":
             return cols, "substitute never rewrites id — it is the row's identity", None
+        told = _columns_told(etype, "substitute", [n for n in names if n in text_cols and n != "id"])
         if col not in names:
-            return cols, f"substitute names an unknown column for {etype}: {col!r}", None
+            return cols, f"substitute names an unknown column for {etype}: {col!r}. {told}", None
         if col not in text_cols:
-            return cols, f"substitute works on TEXT columns only. {col!r} is not one", None
+            return cols, f"substitute works on TEXT columns only. {col!r} is not one. {told}", None
         if old == "":
             return cols, f"substitute: `old` for {col!r} is empty — nothing to find", None
         if old == new:
@@ -1027,6 +1031,62 @@ def _changed_columns(names: list, cols: dict, before: dict, key: str) -> list[di
             item.update({"old_len": len(old or ""), "new_len": len(new or "")})
         changed.append(item)
     return changed
+
+
+def _columns_told(etype: str, noun: str, names) -> str:
+    """Plan 258 (ACMP's FB-035, R147, which supersedes R52): every refusal of an unknown column
+    names the columns that the call takes, as the write refusal has since plan 250. Each site
+    passes its own list: a query reads every column, a substitute only the TEXT ones."""
+    return f"Each {etype} {noun} takes: " + ", ".join(names)
+
+
+_CREATE_TITLE_CUT = 120   # R146: an echoed title is cut, so a refusal stays one line
+
+
+def _create_error(conn, etype: str, table: str, item: dict, cols: dict) -> str | None:
+    """Plan 258 (ACMP's FB-034, R146): `create: true` marks a row meant as NEW. The write is
+    refused when its key exists, and the refusal names that row. A plain write updates an
+    existing row, as before: the flag is opt-in. False is the plain write."""
+    create = item.get("create")
+    if not isinstance(create, bool):
+        return "create is true or false"
+    if not create:
+        return None
+    if item.get("expect_unchanged") is not None:
+        return ("create and expect_unchanged do not go together: a new row has no stored row"
+                " to compare")
+    if etype in ("progress-entry", "audit-verdict"):
+        return None                 # the journal is insert-only already: an existing id fails
+    if etype == "trace-edge":
+        triple = (cols.get("from_id"), cols.get("to_id"), cols.get("relation"))
+        if conn.execute("SELECT 1 FROM trace_edges WHERE from_id = ? AND to_id = ?"
+                        " AND relation = ?", triple).fetchone():
+            return (f"create: the edge {triple[0]} -{triple[2]}-> {triple[1]} exists. A create"
+                    " item never updates a row")
+        return None
+    key = _NON_ID_TABLES.get(table, "id")
+    value = cols.get(key)
+    if value is None:
+        return f"create needs the item's {key}"
+    has_title = "title" in _columns(table)
+    row = conn.execute(f"SELECT {'title' if has_title else key} FROM {table} WHERE {key} = ?",
+                       (value,)).fetchone()
+    if row is None:
+        return None
+    named = ""
+    if has_title and row[0]:
+        title = str(row[0])
+        named = f" ({title[:_CREATE_TITLE_CUT]}{'…' if len(title) > _CREATE_TITLE_CUT else ''})"
+    err = f"{value} exists{named}. A create item never updates a row"
+    prefix = next((r[2] for r in BASELINE_ENTITY_TYPES if r[0] == etype), None)
+    # the next free id only where the family's ids are a prefix and a plain number. A dotted
+    # id (WBS-1.2) has no single next one, and _next_id would read only its first number
+    if (key == "id" and prefix and re.fullmatch(re.escape(prefix) + r"\d+", str(value))
+            and not conn.execute(f"SELECT 1 FROM {table} WHERE id GLOB ?",
+                                 (prefix + "*[^0-9]*",)).fetchone()):
+        err += (f". The next free id of the family is"
+                f" {_next_id(prefix, table, max(3, len(str(value)) - len(prefix)))}")
+    return err
 
 
 def _same_value(incoming, stored) -> bool:
@@ -2220,7 +2280,13 @@ def entity_upsert(entities: list[dict]) -> dict:
             # Plan 094 (the field's FB-001): the header row, special-cased - NEVER a
             # family (no register, no CSV, no registry row, no index). Read stays
             # server_info().package.
-            res = _write_package_header(conn, i, item)
+            if item.get("create", False) is not False:      # R146: every package has one
+                results.append({"index": i, "ok": False,
+                                "error": "the header row exists in every package. A create item"
+                                         " never updates it: drop `create`"})
+                failed = True
+                continue
+            res = _write_package_header(conn, i, {k: v for k, v in item.items() if k != "create"})
             results.append(res)
             failed = failed or not res["ok"]
             continue
@@ -2248,7 +2314,7 @@ def entity_upsert(entities: list[dict]) -> dict:
         expect_unchanged = item.get("expect_unchanged")
         cols = {k: v for k, v in item.items()
                 if k not in ("type", "force", "operator_confirm", "retire",
-                             "expect_unchanged", "substitute")}
+                             "expect_unchanged", "substitute", "create")}
         # Plan 226 (review): the key is text, and an id-keyed row has one. A row with no
         # `id` was stored with a NULL key (SQLite allows NULL in a text primary key), and
         # every later readiness_check and export_html then raised. A list sent as a key
@@ -2284,6 +2350,8 @@ def entity_upsert(entities: list[dict]) -> dict:
             err = None
             if etype != "trace-edge":
                 err = f"retire applies to trace-edge items only (got {etype!r})"
+            elif item.get("create", False) is not False:   # R146: the filter strips the key
+                err = "a retire item never creates: drop `create`, or send two items"
             elif set(cols) != {"from_id", "to_id", "relation"}:
                 err = ("a retire item carries exactly from_id, to_id, relation —"
                        f" got {sorted(cols)}")
@@ -2309,15 +2377,20 @@ def entity_upsert(entities: list[dict]) -> dict:
                          triple[0], "system:edge-retire", _now()))
                     conn.execute(f"RELEASE item{i}")
                     results.append({"index": i, "ok": True, "id": None,
-                                    "retired": True, "retire_audit": pe_id})
+                                    "retired": True, "retire_audit": pe_id, "write": "retired"})
                     continue
             results.append({"index": i, "ok": False, "id": None, "error": err})
             failed = True
             continue
         unknown = set(cols) - set(_columns(table))
         if unknown:   # plan 250 (Jisr's FB-024): the refusal names the columns the item takes
-            results.append({"index": i, "ok": False, "error": f"unknown columns for {etype}: {sorted(unknown)}. Each {etype} item takes: "
-                            + ", ".join(c for c in _columns(table) if c != "last_referenced")})
+            results.append({"index": i, "ok": False, "error": f"unknown columns for {etype}: {sorted(unknown)}. "
+                            + _columns_told(etype, "item", (c for c in _columns(table) if c != "last_referenced"))})
+            failed = True
+            continue
+        if "create" in item and (err := _create_error(conn, etype, table, item, cols)):
+            # R146: before every other guard, so the refusal names the row that exists
+            results.append({"index": i, "ok": False, "id": cols.get("id"), "error": err})
             failed = True
             continue
         try:                     # plan 226 (review): for every family, never stored too deep
@@ -2603,7 +2676,8 @@ def entity_upsert(entities: list[dict]) -> dict:
             elif not cols.get("id"):
                 err = "expect_unchanged needs the item's id"
             elif bad := sorted(set(expect_unchanged) - set(_columns(table))):
-                err = f"expect_unchanged names unknown columns for {etype}: {bad}"
+                err = (f"expect_unchanged names unknown columns for {etype}: {bad}. "
+                       + _columns_told(etype, "item", _columns(table)))
             else:
                 stored = conn.execute(
                     f"SELECT {', '.join(expect_unchanged)} FROM {table} WHERE id = ?",
@@ -2690,7 +2764,7 @@ def entity_upsert(entities: list[dict]) -> dict:
                     + " AND ".join(f"{c} = ?" for c in pk),
                     [cols.get(c) for c in pk]).fetchone()
                 if exists:
-                    results.append({"index": i, "ok": True, "unchanged": True,
+                    results.append({"index": i, "ok": True, "unchanged": True, "write": "unchanged",
                                     "id": cols.get("id")})
                 else:
                     results.append({"index": i, "ok": False, "id": cols.get("id"),
@@ -2699,7 +2773,8 @@ def entity_upsert(entities: list[dict]) -> dict:
                                              + _enum_hint(conn, table, cols)})
                     failed = True
             else:
-                res = {"index": i, "ok": True, "id": cols.get("id")}
+                res = {"index": i, "ok": True, "id": cols.get("id"),
+                       "write": "inserted" if before_row is None else "updated"}   # R146
                 if substituted:
                     res["substituted"] = substituted
                 if before_row is not None:
@@ -2992,7 +3067,8 @@ def entity_query(type: str, id: str | None = None, status: str | None = None,
                else [])
     cols = columns or [c for c in all_cols if c not in omitted]
     if bad := set(cols) - set(all_cols):
-        return _err(f"unknown columns: {sorted(bad)}")
+        return _err(f"unknown columns for {type}: {sorted(bad)}. "
+                    + _columns_told(type, "query", all_cols))
     if id is not None and (after_id is not None or ids is not None):
         return _err("`id` selects one row — it combines with neither `after_id` nor `ids`")
     if ids is not None and (not isinstance(ids, list) or not ids
@@ -5232,6 +5308,9 @@ def handoff_emit(target_dir: str, subdir: str = "handoff", force: bool = False,
         "\n### Recording obligations (mandatory: unrecorded work is drift)\n\n"
         "| During execution, when… | Record BEFORE moving on |\n"
         "|---|---|\n"
+        "| you write a row meant as NEW (any family) | send `create: true` on its item. A write"
+        " without it updates a row that has the same id, in silence. The result says `write`:"
+        " inserted or updated |\n"
         "| you find a defect | `entity_upsert` a `defect` row (`DEF-`, honest severity:"
         " open critical/high BLOCK readiness). Then fix it |\n"
         "| you find needed work that is out of scope | `entity_upsert` a `deferred-work`"
@@ -7383,7 +7462,10 @@ TOOLS = {
                        " a lock whose holder was observed dead, and journals it. It refuses"
                        " while staging files of a stopped migration remain"),
     "package_close": (package_close, "Write back canonical text and release the lock"),
-    "entity_upsert": (entity_upsert, "Batch upsert entities in one transaction, with per-item verdicts"),
+    "entity_upsert": (entity_upsert, "Batch upsert entities in one transaction, with per-item verdicts."
+                      " A write of an existing id updates that row. Send `create: true` on a row"
+                      " meant as new: the item is then refused when its id exists. Each ok item"
+                      " says `write`: inserted, updated, unchanged or retired"),
     "entity_query": (entity_query, _ENTITY_QUERY_DESC),
     "trace_query": (trace_query, _TRACE_QUERY_DESC),
     "gate_run": (gate_run, "Run the mechanical quality gates and return the gate report"),

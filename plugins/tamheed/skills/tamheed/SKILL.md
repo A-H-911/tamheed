@@ -139,7 +139,8 @@ Do not skip a gate to look finished. If an exit criterion fails, stay in the sta
 ## How to run each phase (MCP tools per stage)
 
 Every write goes through the `tamheed` MCP tools, never by editing package files directly.
-Batch related writes into one `entity_upsert` call (one transaction, per-item verdicts). Reads
+Batch related writes into one `entity_upsert` call (one transaction, per-item verdicts). A row
+meant as new carries `create: true`, so the write never updates a row that has the same id. Reads
 go through the tools too. A committed script that must QUOTE the store byte-exact (a review
 slate, a docket) reads an `entity_export` file the tool wrote under `<package>/exports/`. It
 never reads `data/*.jsonl` or a pasted display (v4.7). A full-row update that only means to

@@ -7828,5 +7828,179 @@ class StandupToolTest(unittest.TestCase):
 def store_err():
     return srv.store.sqlite3.IntegrityError
 
+
+class CreateAndColumnsTest(unittest.TestCase):
+    """Plan 258: ACMP's FB-035 (R147, which supersedes R52: every refusal of an unknown column
+    names the columns that the call takes) and ACMP's FB-034 (R146: `create: true` refuses a
+    write whose key exists, and every ok result says whether it inserted or updated)."""
+
+    def setUp(self):
+        self._tmp = tempfile.TemporaryDirectory()
+        srv.PACKAGE_ROOT = Path(self._tmp.name)
+        self.assertTrue(srv.package_create("demo", "Demo", "rnd")["ok"])
+        out = srv.entity_upsert([
+            {"type": "phase", "id": "PH-1", "title": "one"},
+            {"type": "slice", "id": "SL-001", "title": "s", "phase_id": "PH-1"},
+            {"type": "wbs-item", "id": "WBS-1.2", "title": "a dotted task", "slice_id": "SL-001"},
+            {"type": "defect", "id": "DEF-001", "title": "the first defect", "severity": "low"},
+            {"type": "decision", "id": "DEC-001", "title": "d", "lifecycle_status": "Proposed"},
+            {"type": "requirement", "id": "FR-001", "kind": "functional", "title": "r",
+             "statement": "s", "lifecycle_status": "Draft", "source_kind": "brief",
+             "source_span": "p1"},
+            {"type": "trace-edge", "from_id": "FR-001", "to_id": "DEC-001",
+             "relation": "derives_from"},
+            {"type": "omission", "entity_type": "hypothesis", "reason": "no research here"}])
+        self.assertTrue(out["ok"], out)
+
+    def tearDown(self):
+        if srv._CURRENT is not None:
+            srv.package_close()
+        self._tmp.cleanup()
+
+    def _item(self, *items) -> dict:
+        out = srv.entity_upsert(list(items))
+        return out["items"][0] if "items" in out else out
+
+    # ------------------------------------------------------------- FB-035
+
+    def test_every_unknown_column_refusal_names_the_columns_the_call_takes(self):
+        """The field sent `status` for `lifecycle_status` to entity_query and was told only
+        that `status` was unknown. Each of the four refusals now names what the call takes."""
+        out = srv.entity_query("decision", columns=["id", "status"])
+        self.assertFalse(out["ok"], out)
+        self.assertIn("unknown columns for decision: ['status']", out["error"])
+        self.assertIn("Each decision query takes:", out["error"])
+        self.assertIn("lifecycle_status", out["error"])
+        self.assertIn("last_referenced", out["error"])       # a query may read it
+        exported = srv.entity_export("x.json", args={"type": "decision", "columns": ["status"]})
+        self.assertFalse(exported["ok"], exported)
+        self.assertIn("Each decision query takes:", json.dumps(exported))
+        err = self._item({"type": "defect", "id": "DEF-001", "title": "the first defect",
+                          "severity": "low", "expect_unchanged": ["colour"]})["error"]
+        self.assertIn("expect_unchanged names unknown columns for defect: ['colour']", err)
+        self.assertIn("Each defect item takes:", err)
+        self.assertIn("severity", err)
+        err = self._item({"type": "defect", "id": "DEF-001",
+                          "substitute": {"colour": ["a", "b"]}})["error"]
+        self.assertIn("substitute names an unknown column for defect: 'colour'", err)
+        self.assertIn("Each defect substitute takes:", err)
+        self.assertIn("title", err)
+        self.assertNotIn(" id,", err)                     # a substitute never rewrites id
+        # the write path keeps the words that plan 250 gave it
+        err = self._item({"type": "defect", "id": "DEF-002", "title": "t", "severity": "low",
+                          "colour": "red"})["error"]
+        self.assertIn("unknown columns for defect: ['colour']. Each defect item takes:", err)
+        self.assertNotIn("last_referenced", err)
+
+    # ------------------------------------------------------------- FB-034
+
+    def test_create_refuses_an_existing_row_and_leaves_it_as_it_was(self):
+        """A new scope change sent under an id that existed replaced a Merged row and
+        returned ok. A create item never updates: it names the row, and the next free id of a
+        family whose ids are plain numbers."""
+        new = self._item({"type": "defect", "id": "DEF-002", "title": "new", "severity": "low",
+                          "create": True})
+        self.assertTrue(new["ok"], new)
+        self.assertEqual(new["write"], "inserted")
+        err = self._item({"type": "defect", "id": "DEF-001", "title": "a mistake",
+                          "severity": "high", "create": True})
+        self.assertFalse(err["ok"], err)
+        self.assertIn("DEF-001 exists (the first defect)", err["error"])
+        self.assertIn("A create item never updates a row", err["error"])
+        self.assertIn("The next free id of the family is DEF-003", err["error"])
+        row = srv.entity_query("defect", id="DEF-001")["rows"][0]
+        self.assertEqual((row["title"], row["severity"]), ("the first defect", "low"))
+        updated = self._item({"type": "defect", "id": "DEF-001", "title": "the first defect",
+                              "severity": "medium"})
+        self.assertEqual(updated["write"], "updated")
+        plain = self._item({"type": "defect", "id": "DEF-001", "title": "the first defect",
+                            "severity": "medium", "create": False})
+        self.assertTrue(plain["ok"], plain)                     # false is the plain upsert
+        self.assertEqual(plain["write"], "updated")
+
+    def test_create_names_no_next_id_for_a_dotted_family_and_cuts_a_long_title(self):
+        err = self._item({"type": "wbs-item", "id": "WBS-1.2", "title": "x",
+                          "slice_id": "SL-001", "create": True})["error"]
+        self.assertIn("WBS-1.2 exists (a dotted task)", err)
+        self.assertNotIn("next free id", err)
+        long = "x" * 300
+        srv.entity_upsert([{"type": "defect", "id": "DEF-009", "title": long, "severity": "low"}])
+        err = self._item({"type": "defect", "id": "DEF-009", "title": "t", "severity": "low",
+                          "create": True})["error"]
+        self.assertIn("x" * 120 + "…", err)
+        self.assertNotIn("x" * 121, err)
+
+    def test_create_on_an_edge_an_omission_the_journal_and_the_header(self):
+        err = self._item({"type": "trace-edge", "from_id": "FR-001", "to_id": "DEC-001",
+                          "relation": "derives_from", "create": True})["error"]
+        self.assertIn("the edge FR-001 -derives_from-> DEC-001 exists", err)
+        edge = self._item({"type": "trace-edge", "from_id": "FR-001", "to_id": "DEC-001",
+                           "relation": "relates_to", "create": True})
+        self.assertTrue(edge["ok"], edge)
+        err = self._item({"type": "omission", "entity_type": "hypothesis", "reason": "again",
+                          "create": True})["error"]
+        self.assertIn("hypothesis exists", err)
+        err = self._item({"type": "omission", "reason": "no family", "create": True})["error"]
+        self.assertIn("create needs the item's entity_type", err)
+        journal = self._item({"type": "progress-entry", "id": "PE-900", "entry": "a note",
+                              "event_type": "note", "create": True})
+        self.assertTrue(journal["ok"], journal)                # the journal is insert-only
+        self.assertEqual(journal["write"], "inserted")
+        header = self._item({"type": "package", "title": "Demo", "create": True})
+        self.assertFalse(header["ok"], header)
+
+    def test_create_is_refused_beside_the_keys_that_need_a_stored_row(self):
+        for item, needle in (
+                ({"type": "defect", "id": "DEF-001", "substitute": {"title": ["first", "1st"]},
+                  "create": True}, "It never creates one: drop `create`"),
+                ({"type": "defect", "id": "DEF-001", "title": "the first defect",
+                  "severity": "low", "expect_unchanged": ["title"], "create": True},
+                 "create and expect_unchanged do not go together"),
+                ({"type": "trace-edge", "from_id": "FR-001", "to_id": "DEC-001",
+                  "relation": "derives_from", "retire": True, "create": True},
+                 "a retire item never creates"),
+                ({"type": "defect", "id": "DEF-005", "title": "t", "severity": "low",
+                  "create": "yes"}, "create is true or false")):
+            out = self._item(item)
+            self.assertFalse(out["ok"], (item, out))
+            self.assertIn(needle, out["error"], item)
+        self.assertEqual(len(srv.trace_query("FR-001")["edges"]), 1)   # the retire did not run
+        header = self._item({"type": "package", "title": "Demo", "create": True})
+        self.assertIn("the header row exists in every package", header["error"])
+
+    def test_create_false_is_the_plain_write_and_every_ok_item_says_write(self):
+        """R146 (the code review of plan 258): `create: false` is the write as it was, beside a
+        substitute, a retire and on the header. Every ok item carries `write`."""
+        sub = self._item({"type": "defect", "id": "DEF-001", "create": False,
+                          "substitute": {"title": ["first", "1st"]}})
+        self.assertTrue(sub["ok"], sub)
+        self.assertEqual(sub["write"], "updated")
+        header = self._item({"type": "package", "title": "Demo", "create": False})
+        self.assertTrue(header["ok"], header)
+        again = self._item({"type": "trace-edge", "from_id": "FR-001", "to_id": "DEC-001",
+                            "relation": "derives_from"})
+        self.assertEqual((again["ok"], again["write"]), (True, "unchanged"))
+        gone = self._item({"type": "trace-edge", "from_id": "FR-001", "to_id": "DEC-001",
+                           "relation": "derives_from", "retire": True, "create": False})
+        self.assertEqual((gone["ok"], gone["write"]), (True, "retired"))
+
+    def test_the_tool_list_and_the_note_teach_create(self):
+        """The flag is opt-in, so it is taught where an agent reads it: the description in
+        its tool list, and the always-loaded note's table of obligations."""
+        self.assertIn("create: true", srv.TOOLS["entity_upsert"][1])
+        srv.package_close()
+        make_complete_package("emit")                  # handoff_emit needs a whole package
+        self.assertTrue(srv.entity_upsert([
+            {"type": "prompt", "id": "PRT-001", "kind": "kickoff", "title": "Kickoff",
+             "body": "Start with SL-001.", "lifecycle_status": "Approved"},
+            {"type": "package", "entry_point": "PRT-001"}])["ok"])
+        with tempfile.TemporaryDirectory() as target:
+            emitted = srv.handoff_emit(target)
+            self.assertTrue(emitted["ok"], emitted)
+            note = (Path(target) / "CLAUDE.md").read_text(encoding="utf-8")
+        table = note.split("### Recording obligations")[1].split("###")[0]
+        self.assertIn("`create: true`", table)
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)

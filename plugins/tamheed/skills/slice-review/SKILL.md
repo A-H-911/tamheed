@@ -43,7 +43,7 @@ Review the just-completed slice of the `<package>` Tamheed package:
    `lesson` row (`LL-`), born Proposed, kind improve|sustain. Add a `learned_from` edge
    to the slice or defect. The statement opens with its rule. The operator
    confirms. Only Approved binds. Anything discovered-but-deferred: a `deferred-work`
-   row (severity + activation trigger), via `entity_upsert`, full rows.
+   row (severity + activation trigger), via `entity_upsert`, full rows, each with `create: true`.
 6. Scope deviations found during review: typed `scope-change` row (Proposed, with
    delta edges to the rows it touches) before anything else moves. After operator
    approval, apply the row changes and set the `SC-` Merged.

@@ -90,7 +90,7 @@ every other suite green and fast. The other was an integration container crash w
 register keyed on signature settled two attributions in seconds that would otherwise have been argued.
 
 **7. Recording a red.**
-- A recurrence of a CLOSED defect is a NEW row, filed on its own evidence. It is never an append to
+- A recurrence of a CLOSED defect is a NEW row (`create: true`), filed on its own evidence. It is never an append to
   the closed row, and never a citation of its closure as precedent.
 - A red that matches an OPEN intermittent row has its occurrence appended there. The row's
   occurrence list is the count, not a prose ordinal. It is never re-run into silence.

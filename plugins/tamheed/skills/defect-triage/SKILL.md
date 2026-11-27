@@ -24,8 +24,8 @@ BEFORE the fix, so the record survives even if the session dies mid-fix:
 2. Reproduce the symptom as a minimal failing test. No fix yet.
 3. Register it: `entity_upsert([{"type": "defect", "id": "DEF-<next>", "title":
    "<symptom>", "severity": "critical|high|medium|low", "lifecycle_status": "Open",
-   "found_in": "<PH-x or SL-x>"}])`, a full row. Check the next free id with
-   `entity_query("defect")`. Severity is honest impact: critical/high BLOCK
+   "found_in": "<PH-x or SL-x>", "create": true}])`, a full row. Check the next free id with
+   `entity_query("defect")`. `create: true` refuses the write if that id already exists. Severity is honest impact: critical/high BLOCK
    readiness, medium/low only surface as the defects-minor advisory. Never pick a
    severity to pass a gate.
 4. Identify what it touches: the failing `FR-`/`INV-`/`AC-` via `trace_query`. If an

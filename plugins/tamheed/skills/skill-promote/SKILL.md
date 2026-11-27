@@ -64,8 +64,8 @@ Work through this with the operator, in the `<package>` package:
    promoted LL- ids. THEN `export_html()`: the Lessons section shows the Promoted
    subsection, and the page carries the closing note (the export follows the last
    write). Then `package_close()`. Later revisions of the skill are
-   the operator's hand-edits of the FILE. A re-distillation is a NEW `SKL-` row
-   superseding the old (`superseded_by`), never an edit of this record.
+   the operator's hand-edits of the FILE. A re-distillation is a NEW `SKL-` row, sent with
+   `create: true`, superseding the old (`superseded_by`), never an edit of this record.
 
 ## After the ceremony: three cases the record must survive (v5.1)
 

@@ -36,7 +36,15 @@ id resolves, and the damage stays until someone reads it.
   refusals guard it: a zero-occurrence needle, digit glue, a re-run (`new` contains `old` and `new` is
   already present), JSON inside `custom_attributes`. Bound a needle with its backticks. It cannot
   fill a NULL.
-- **Read `changed_columns` after every write.** A length you did not intend is a lost paragraph.
+- **A row meant as NEW carries `create: true`.** A write of an existing id updates that row. It
+  returns `ok`, so a new row sent under a used id replaces that row in silence. With
+  `create: true` the item is refused, and the refusal names the row that holds the id. The flag
+  is opt-in. It is refused beside `substitute`, `retire` and `expect_unchanged`.
+  *Field evidence:* a new scope change sent under the id of a Merged one replaced its description
+  and its status. The write returned `ok`.
+- **Read `write` and `changed_columns` after every write.** `write` says `inserted`, `updated`,
+  `unchanged` or `retired`.
+  An `updated` you did not intend is a used id. A length you did not intend is a lost paragraph.
   The cheapest correct status flip is `substitute` on `lifecycle_status`: zero transport, every guard.
   A move that must carry a column of its own is NOT that flip. A lesson's approval lands with its
   `confirmed_by`, and a substitute item carries no other column, so the approval is a full row.

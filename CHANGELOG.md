@@ -24,6 +24,17 @@ The 6.9.0 field round (plans 256-263). The rulings R145-R170 are in
 - **The CI job `slate-browser` (plan 257).** It builds two interview pages and checks them in
   Chrome: the script, the recommendations at open, the line breaks of an intro, and the layout
   at 390 px.
+- **`create: true` on an `entity_upsert` item (plan 258, ACMP's FB-034).** A row meant as new
+  is refused when its id exists. The refusal names the row, and the next free id of a family
+  whose ids are plain numbers. The flag is opt-in: a write without it still updates a row that
+  has the same id. The tool's description, the note's table of obligations and the skills teach
+  it. The note grows by one row of 192 characters.
+- **Each ok item of `entity_upsert` says `write`: `inserted` or `updated` (plan 258).**
+
+### Changed (the refusals)
+- **Every refusal of an unknown column names the columns that the call takes (plan 258, ACMP's
+  FB-035, R147).** That is `entity_query` (and `entity_export` through it), `expect_unchanged`
+  and `substitute`. The write path has named them since 6.8.0. R147 supersedes R52.
 
 ### Changed
 - **A slate text holds more (plan 257, Jisr's FB-043).** The cap of an intro, of a question's
