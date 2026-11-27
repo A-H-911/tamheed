@@ -248,8 +248,8 @@ R145-R170, defaults D1-D15). Every row links to the one approved plan.
 | 259 | [ACMP's FB-037 (`sha256` on a write; package-writes section 2)](256-field-round-6.9.0.md) | 258 | DONE 2026-11-27 (`2b0ca53`, CI run 45926932297 green) |
 | 260 | [Jisr's FB-025 (a): `merge_attributes` (RFC 7386, two named departures)](256-field-round-6.9.0.md) | 259 | DONE 2026-11-27 (`5730600`, CI run 45929992143 green) |
 | 261 | [Jisr's FB-025 (b): a declared set on a family's registry row; ADR-0007](256-field-round-6.9.0.md) | 260 | DONE 2026-11-27 (`733559f`, CI run 45933108534 green) |
-| 262 | [Jisr's FB-029 (the discharge candidates) and FB-044 (a started slice); the lab run](256-field-round-6.9.0.md) | 261 | PLANNED |
-| 263 | [Acceptance, release 6.9.0, the two field briefs](256-field-round-6.9.0.md) | 257-262 | PLANNED |
+| 262 | [Jisr's FB-029 (the discharge candidates) and FB-044 (a started slice); the lab run](256-field-round-6.9.0.md) | 261 | DONE 2026-11-27 (`043072c`, CI run 45936193134 green; lab evidence [lab-6.9.0-2026-11](evidence/lab-6.9.0-2026-11.md)) |
+| 263 | [Acceptance, release 6.9.0, the two field briefs](256-field-round-6.9.0.md) | 257-262 | DONE 2026-11-27. Stamp `bfa58cb`; the security review's five fixes as 263b `9ab7bcb` (main CI run 45941379530 green on thirteen jobs), tag `v6.9.0`. Both fields replayed under 6.8.0 and 6.9.0; the way back measured; both briefs rehearsed on three paths (agent runs of the round: 8.86 USD of 10); evidence [release-6.9.0-2026-11](evidence/release-6.9.0-2026-11.md) |
 
 ### Standup report -- plans 232-237 -> v6.6.0 (2026-11-16; maintainer-executed)
 
