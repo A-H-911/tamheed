@@ -157,7 +157,9 @@ def render(record: dict, digest: str) -> str:
         '<meta name="viewport" content="width=device-width, initial-scale=1">\n'
         f"<title>{esc(slate['title'])}</title>\n<style>\n{css}</style>\n</head>\n"
         f'<body data-slate="{esc(slate["name"])}" data-digest="{esc(digest)}"'
-        f' data-opens="{slate["opens"]}"{strings}>\n'
+        f' data-opens="{slate["opens"]}"'
+        + (' data-recs="shown"' if slate.get("show_recommendations") else "")   # R152
+        + f'{strings}>\n'
         f'<a class="skip" href="#rounds">{esc(words["skip"])}</a>\n')
     top = ('<div class="top">\n' + _bar_html(page) + _controls_html(page)
            + f'<p class="banner roombanner">{esc(words["room_banner"])}</p>\n'

@@ -1,0 +1,190 @@
+{
+ "derived": {
+  "named": {},
+  "names": {},
+  "terms": {}
+ },
+ "format": "tamheed-slate",
+ "rows": {
+  "CON-001": {
+   "columns": [
+    [
+     "title",
+     "One region"
+    ],
+    [
+     "lifecycle_status",
+     "Draft"
+    ]
+   ],
+   "digest": "e0690dde6f8a4b63093771c742681c004fca70719bd30ffa97f82adffd5ef926",
+   "type": "constraint"
+  },
+  "FR-001": {
+   "columns": [
+    [
+     "kind",
+     "functional"
+    ],
+    [
+     "title",
+     "Store"
+    ],
+    [
+     "statement",
+     "The system keeps the audit trail."
+    ],
+    [
+     "mvp",
+     0
+    ],
+    [
+     "lifecycle_status",
+     "Approved"
+    ],
+    [
+     "source_kind",
+     "brief"
+    ],
+    [
+     "source_span",
+     "p1"
+    ],
+    [
+     "introduced_in",
+     1
+    ]
+   ],
+   "digest": "d9866e5265811e55ba93923b63e4e57dd2f4eb42500693cec5a8e54b4546643b",
+   "type": "requirement"
+  }
+ },
+ "slate": {
+  "closure_fields": [
+   {
+    "id": "conclusions",
+    "label": ""
+   },
+   {
+    "id": "open_questions",
+    "label": ""
+   },
+   {
+    "id": "approvals",
+    "label": ""
+   },
+   {
+    "id": "commitments",
+    "label": ""
+   }
+  ],
+  "intro": "Two decisions.",
+  "language": "en",
+  "name": "round-1",
+  "opens": "reading",
+  "participants": [],
+  "point_kinds": [
+   {
+    "id": "pain",
+    "label": ""
+   },
+   {
+    "id": "concern",
+    "label": ""
+   },
+   {
+    "id": "expectation",
+    "label": ""
+   },
+   {
+    "id": "requirement",
+    "label": ""
+   }
+  ],
+  "rounds": [
+   {
+    "cites": [
+     "CON-001"
+    ],
+    "decided": [],
+    "id": "r1",
+    "intro": "What was decided before.",
+    "questions": [
+     {
+      "allow_other": true,
+      "allow_unsure": true,
+      "approval": false,
+      "basis": null,
+      "block": "",
+      "cites": [
+       "FR-001"
+      ],
+      "consulted": [],
+      "decided": [],
+      "depends_on": [],
+      "detail": "It holds the audit trail.",
+      "gap": "",
+      "id": "q1",
+      "known": [],
+      "lead": null,
+      "options": [
+       {
+        "detail": "",
+        "id": "A",
+        "label": "Keep it"
+       },
+       {
+        "detail": "It costs a week.",
+        "id": "B",
+        "label": "Move it"
+       }
+      ],
+      "owner": "room",
+      "question": "Which store?",
+      "reason": "It is measured.",
+      "recommended": "A",
+      "settles": null
+     },
+     {
+      "allow_other": false,
+      "allow_unsure": true,
+      "approval": false,
+      "basis": null,
+      "block": "",
+      "cites": [],
+      "consulted": [],
+      "decided": [],
+      "depends_on": [],
+      "detail": "",
+      "gap": "",
+      "id": "q2",
+      "known": [],
+      "lead": null,
+      "options": [
+       {
+        "detail": "",
+        "id": "yes",
+        "label": "Yes"
+       },
+       {
+        "detail": "",
+        "id": "no",
+        "label": "No"
+       }
+      ],
+      "owner": "room",
+      "question": "Ship now?",
+      "reason": "",
+      "recommended": null,
+      "settles": null
+     }
+    ],
+    "ready": true,
+    "title": "Access"
+   }
+  ],
+  "terms": null,
+  "title": "Round 1"
+ },
+ "version": 2
+}

@@ -82,6 +82,19 @@ async () => {
   let downloads = 0;
   link.click = () => { downloads += 1; };
 
+  /* plan 257 (R152): read BEFORE the first change below turns the recommendations off. A page
+     whose slate sets `show_recommendations` opens with them shown, with no click. A page
+     without the key opens with them hidden. */
+  const keyed = document.body.getAttribute('data-recs') === 'shown';
+  gated(needs.rec, keyed ? 'the recommendations show at open, with no click'
+                         : 'the recommendations are hidden at open',
+        () => shown(recreason) === keyed && root.classList.contains('recs') === keyed);
+  /* plan 257 (R151): an intro of two lines renders on two lines */
+  const intros = $$('.pagehead .intro, .roundhead .lead')
+    .filter((el) => el.textContent.indexOf('\n') >= 0);
+  gated(intros.length ? '' : 'an intro of two lines or more', 'an intro keeps its line breaks',
+        () => intros.every((el) => el.innerText.indexOf('\n') >= 0));
+
   try {
     set('one', false); set('presenter', false); set('recs', false); set('session', false);
     click('f-all');

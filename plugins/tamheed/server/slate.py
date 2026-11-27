@@ -34,7 +34,7 @@ OWNERS = ("room", "operator")
 BASES = ("evidence", "ruling", "practice")
 DEFAULT_KINDS = ("pain", "concern", "expectation", "requirement")
 DEFAULT_CLOSURE = ("conclusions", "open_questions", "approvals", "commitments")
-CAPS = {"title": 200, "intro": 8000, "question": 2000, "detail": 8000, "label": 500,
+CAPS = {"title": 200, "intro": 32000, "question": 2000, "detail": 32000, "label": 500,
         "reason": 2000, "name": 200, "answer": 4000, "gap": 2000, "block": 200}
 MAX_ROUNDS, MAX_QUESTIONS, MAX_OPTIONS, MAX_CITES = 50, 500, 12, 30
 MAX_PARTICIPANTS, MAX_LABELLED, MAX_DECIDED, MAX_TERMS = 60, 12, 200, 200
@@ -46,7 +46,7 @@ MAX_POINTS = 200                      # the points of one round
 ANSWERS_FORMAT, RECORD_FORMAT, VERSION = "tamheed-slate-answers", "tamheed-slate", 2
 
 _SLATE_KEYS = {"name", "title", "intro", "language", "opens", "participants", "point_kinds",
-               "closure_fields", "terms", "rounds"}
+               "closure_fields", "terms", "rounds", "show_recommendations"}
 _ROUND_KEYS = {"id", "title", "intro", "cites", "ready", "questions", "blocks", "decided"}
 _BLOCK_KEYS = {"title", "questions"}
 _DECIDED_KEYS = {"id", "title", "answer", "cites"}
@@ -329,6 +329,10 @@ def check_slate(slate) -> tuple[dict | None, str | None]:
             raise Refused("the slate's `terms` is a list of glossary row ids, of"
                           f" {MAX_TERMS} at most. Leave it out to match every glossary row")
         out["terms"] = None if terms is None else list(dict.fromkeys(terms))
+        # R152, R153 (plan 257): written only when set, so a record that 6.8.0 wrote, which
+        # has no such key, still equals its own check and stays readable
+        if _flag("the slate", slate, "show_recommendations", False):
+            out["show_recommendations"] = True
         rounds = slate.get("rounds")
         if not isinstance(rounds, list) or not rounds:
             raise Refused("the slate needs one or more `rounds`")

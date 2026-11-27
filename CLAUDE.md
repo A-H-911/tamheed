@@ -35,7 +35,7 @@ lab/                                  # the permanent mock lab project (v4 accep
 generated-samples/  tests/            # demo package, test suites
 docs/guide/                           # the user-guide generator (extract.py, render.py, diagrams.py, content.py)
 index.html                            # GENERATED bilingual user guide — never hand-edit; rebuild with docs/guide/build.py
-.github/workflows/                    # CI (job 1 runs exactly `python check.py`; a browser job checks the standup page) + scheduled eval-spec lint
+.github/workflows/                    # CI (job 1 runs exactly `python check.py`; browser jobs check the standup and slate pages) + scheduled eval-spec lint
 SECURITY.md                           # trust model, untrusted-content posture, reporting
 ```
 

@@ -1,0 +1,1082 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src &#x27;none&#x27;; style-src &#x27;unsafe-inline&#x27;; script-src &#x27;sha256-Aw4lIObMdI5k7Q36GLeUhoIKn0pZ7qNeureEJ8Ld6iE=&#x27;; base-uri &#x27;none&#x27;; form-action &#x27;none&#x27;">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Round 1</title>
+<style>
+/* Tamheed interview page (plans 227, 227b, 227c). One file, no outside font and no image.
+   Tokens first: dark is the base, light follows the system or the page's own control.
+   What a view hides, it hides here, from classes on the root: presenter, recs, session, one. */
+:root {
+  color-scheme: dark;
+  --bg: #17171a; --panel: #212126; --panel-2: #2a2a31; --line: #3c3c46;
+  --ink: #f4f4f6; --ink-2: #b9b9c4; --accent: #6aa6ff; --accent-ink: #0b1220;
+  --chosen: #1d3557; --good: #4cc38a; --warn: #f0b354; --op: #c9a2ff;
+  --measure: 54rem; --bar-h: 3.4rem;
+}
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    color-scheme: light;
+    --bg: #fbfbfc; --panel: #ffffff; --panel-2: #f1f2f5; --line: #cfd2da;
+    --ink: #17181c; --ink-2: #4b4f5c; --accent: #1f5fd0; --accent-ink: #ffffff;
+    --chosen: #dce8ff; --good: #177a4d; --warn: #9a5b00; --op: #6b3fb5;
+  }
+}
+:root[data-theme="light"] {
+  color-scheme: light;
+  --bg: #fbfbfc; --panel: #ffffff; --panel-2: #f1f2f5; --line: #cfd2da;
+  --ink: #17181c; --ink-2: #4b4f5c; --accent: #1f5fd0; --accent-ink: #ffffff;
+  --chosen: #dce8ff; --good: #177a4d; --warn: #9a5b00; --op: #6b3fb5;
+}
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html { scroll-padding-top: calc(var(--bar-h) + 3.4rem); }
+html.presenter { scroll-padding-top: calc(var(--bar-h) + 6.2rem); }
+body { margin: 0; background: var(--bg); color: var(--ink);
+  font: 16px/1.6 system-ui, "Segoe UI", "Noto Sans Arabic", sans-serif; padding-bottom: 5rem; }
+h1 { font-size: 1.9rem; line-height: 1.25; margin: 2rem 0 .6rem; }
+.intro { color: var(--ink-2); font-size: 1.05rem; margin: 0 0 1rem; }
+code, .rid, .qid, .oid, .kind, .qname, dt { font-family: ui-monospace, Consolas, monospace; }
+.skip { position: absolute; inset-inline-start: -999rem; top: 0; z-index: 9; padding: .5rem 1rem;
+  background: var(--accent); color: var(--accent-ink); }
+.skip:focus { inset-inline-start: 0; }
+
+/* The bar: one row, a solid ground and an edge, so nothing shows through it. */
+.top { position: sticky; top: 0; z-index: 5; }
+.bar { display: flex; align-items: center; gap: .5rem;
+  min-height: var(--bar-h); padding: .45rem 1.25rem; background: var(--panel);
+  border-bottom: 1px solid var(--line); box-shadow: 0 2px 10px #00000030; }
+.progress { margin-inline-end: auto; font-weight: 600; white-space: nowrap; }
+button, summary, select { font: inherit; }
+button, select { color: var(--ink); background: var(--panel-2); border: 1px solid var(--line);
+  border-radius: .5rem; min-height: 2.5rem; padding: .3rem .9rem; }
+button { cursor: pointer; white-space: nowrap; }
+select { max-width: 100%; padding-inline: .6rem; }
+button:hover:not(:disabled) { border-color: var(--accent); }
+button:disabled { opacity: .5; cursor: default; }
+button[aria-pressed="true"] { background: var(--chosen); border-color: var(--accent); }
+button.primary { background: var(--accent); border-color: var(--accent);
+  color: var(--accent-ink); font-weight: 600; }
+:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.short { display: none; }
+#round-pick { flex: 0 1 18rem; min-width: 8rem; }
+.more { position: relative; }
+.more > summary { list-style: none; cursor: pointer; border: 1px solid var(--line);
+  border-radius: .5rem; min-height: 2.5rem; padding: .3rem .9rem; display: flex;
+  align-items: center; background: var(--panel-2); }
+.more > summary::-webkit-details-marker { display: none; }
+.menu { position: absolute; inset-inline-end: 0; top: calc(100% + .4rem); display: grid;
+  gap: .4rem; padding: .6rem; background: var(--panel); border: 1px solid var(--line);
+  border-radius: .6rem; box-shadow: 0 8px 24px #00000050; min-width: 13rem; }
+
+/* The presenter's controls: one row under the bar, only in the presenter view. */
+.controls { display: none; flex-wrap: wrap; align-items: center; gap: .5rem;
+  padding: .5rem 1.25rem; background: var(--panel-2); border-bottom: 1px solid var(--line); }
+html.presenter .controls { display: flex; }
+.ctitle { color: var(--op); font-weight: 700; font-size: .85rem; margin-inline-end: .5rem;
+  text-transform: uppercase; letter-spacing: .05em; }
+.controls button, .controls select { background: var(--panel); }
+.seg { display: inline-flex; }
+.seg button { border-radius: 0; margin-inline-start: -1px; }
+.seg button:first-child { border-start-start-radius: .5rem; border-end-start-radius: .5rem;
+  margin-inline-start: 0; }
+.seg button:last-child { border-start-end-radius: .5rem; border-end-end-radius: .5rem; }
+
+/* The banners stay under the bar, so a mode is seen wherever the page is scrolled. */
+.banner { margin: 0; padding: .3rem 1.25rem;
+  background: var(--panel-2); color: var(--ink-2); border-bottom: 1px solid var(--line);
+  font-size: .88rem; text-align: center; }
+html.presenter .roombanner { display: none; }
+.stalebanner, .storebanner { background: var(--warn); color: var(--bg); font-weight: 700; }
+#status { min-height: 1.6rem; margin: .6rem auto 0; max-width: var(--measure);
+  padding-inline: 1.25rem; font-weight: 600; color: var(--good); }
+
+/* The shell: the list of rounds beside the reading column on a wide screen. */
+.shell { display: block; }
+.column { max-width: var(--measure); margin-inline: auto; padding-inline: 1.25rem; }
+.roundnav { display: none; }
+@media (min-width: 78rem) {
+  .shell { display: grid; grid-template-columns: 17rem minmax(0, 1fr); gap: 1.5rem;
+    max-width: 76rem; margin-inline: auto; padding-inline: 1.25rem; }
+  .column { margin: 0; padding: 0; width: 100%; }
+  html.presenter .roundnav { top: calc(var(--bar-h) + 5.4rem); }
+  .roundnav { display: block; position: sticky; top: calc(var(--bar-h) + 3.2rem);
+    align-self: start; max-height: calc(100vh - var(--bar-h) - 4.5rem); overflow: auto;
+    margin-top: 2rem; padding: .9rem; background: var(--panel); border: 1px solid var(--line);
+    border-radius: .8rem; }
+  #round-pick { display: none; }
+}
+.navtitle { margin: 0; color: var(--ink-2); font-size: .8rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .06em; }
+.navready { margin: 0 0 .6rem; color: var(--ink-2); font-size: .82rem; }
+.jump { display: grid; gap: .1rem; width: 100%; text-align: start; white-space: normal;
+  margin-top: .35rem; padding: .5rem .7rem; background: transparent; border-color: transparent; }
+.jump.current-jump { background: var(--chosen); border-color: var(--accent); }
+.jnum { color: var(--ink-2); font-size: .75rem; }
+.jtitle { font-weight: 600; line-height: 1.3; }
+.jcount { color: var(--ink-2); font-size: .8rem; }
+.jump.done .jcount { color: var(--good); }
+.jstate { color: var(--warn); font-size: .8rem; font-weight: 600; }
+
+.how { margin: 0 0 .8rem; padding-inline-start: 1.3rem; color: var(--ink-2); }
+.legend { margin: 0 0 1rem; color: var(--ink-2); font-size: .9rem; }
+.owner { display: inline-block; padding: 0 .55rem; border-radius: 1rem; font-size: .78rem;
+  font-weight: 700; border: 1px solid var(--line); color: var(--ink); }
+.owner.operator { border-color: var(--op); color: var(--op); }
+.owner.room { border-color: var(--good); color: var(--good); }
+
+/* A round: its head carries its number, its count and its progress. */
+.roundtop { margin: 3rem 0 1rem; padding-bottom: .5rem; border-bottom: 2px solid var(--accent); }
+h2 { font-size: 1.35rem; margin: 0; }
+.rnum { color: var(--accent); margin-inline-end: .4rem; }
+.roundcount { margin: .15rem 0 .4rem; color: var(--ink-2); font-size: .9rem; }
+.meter { height: .3rem; background: var(--panel-2); border-radius: 1rem; overflow: hidden; }
+.meter span { display: block; height: 100%; width: 0; background: var(--good); }
+.notready .roundtop { border-bottom-color: var(--line); opacity: .7; }
+.blockhead { margin: 2rem 0 0; color: var(--ink-2); font-size: .85rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .05em; }
+.inblock { display: none; }
+
+/* What the room view hides. The text is still in the file: this protects nothing. */
+html:not(.presenter) .oponly,
+html:not(.presenter) fieldset.question[data-owner="operator"] { display: none; }
+html.session:not(.presenter) section.round:not(.open-round) > :not(.roundtop) { display: none; }
+.filtered { display: none !important; }
+
+/* A step: a question, or one of a round's blocks. */
+.step { border: 1px solid var(--line); border-radius: .8rem; margin: 1.4rem 0;
+  padding: 1.1rem 1.25rem 1.25rem; background: var(--panel); min-width: 0; }
+.roundhead.step { background: transparent; border-style: dashed; }
+.stepname { margin: 0 0 .5rem; color: var(--ink-2); font-size: .85rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .05em; }
+.hint { margin: 0 0 .8rem; color: var(--ink-2); font-size: .9rem; }
+.oponly .stepname { color: var(--op); }
+.roundhead .lead { margin: 0 0 .6rem; }
+fieldset.question.answered { border-color: var(--good); }
+/* a legend that floats is laid out inside the box, so a long question wraps and the
+   border stays whole */
+legend { float: inline-start; width: 100%; padding: 0; margin: 0 0 .5rem; }
+fieldset.question > :not(legend) { clear: both; }
+.qmeta { display: flex; flex-wrap: wrap; align-items: center; gap: .3rem .6rem;
+  color: var(--ink-2); font-size: .85rem; margin-bottom: .3rem; }
+.place { font-weight: 700; color: var(--accent); direction: ltr; unicode-bidi: isolate; }
+.approval { color: var(--warn); font-weight: 700; }
+.state { display: none; margin-inline-start: auto; color: var(--good); font-weight: 600; }
+.answered .state { display: inline; }
+.qtitle { display: block; font-size: 1.3rem; font-weight: 700; line-height: 1.35; }
+.stale { margin: 0 0 .6rem; padding: .35rem .7rem; border-radius: .45rem; font-weight: 600;
+  background: var(--warn); color: var(--bg); }
+.detail { color: var(--ink-2); margin: .2rem 0 .7rem; white-space: pre-wrap; }
+.consulted { color: var(--ink-2); font-size: .88rem; margin: 0 0 .7rem; }
+
+/* Options are cards. The whole card is the target. A chosen card is filled. */
+.options { display: grid; gap: .6rem; margin-top: .4rem; }
+label.option { display: flex; gap: .8rem; align-items: flex-start; padding: .75rem .9rem;
+  border: 1px solid var(--line); border-radius: .6rem; background: var(--bg); cursor: pointer;
+  min-height: 2.75rem; }
+label.option:hover { border-color: var(--accent); }
+label.option:has(input:checked) { background: var(--chosen); border-color: var(--accent);
+  box-shadow: inset 0 0 0 1px var(--accent); }
+label.option input { width: 1.2rem; height: 1.2rem; margin: .2rem 0 0; flex: none;
+  accent-color: var(--accent); }
+.obody { display: grid; gap: .3rem; flex: 1; min-width: 0; }
+.ohead { display: flex; flex-wrap: wrap; gap: .5rem; align-items: baseline; }
+.oid { color: var(--ink-2); font-size: .85rem; }
+.otext { font-weight: 600; flex: 1 1 12rem; }
+.odetail { color: var(--ink-2); white-space: pre-wrap; }
+.unsure { margin: .3rem 0 0; color: var(--ink-2); font-size: .88rem; }
+.fallback { display: flex; flex-wrap: wrap; gap: .6rem; }
+label.option.small { flex: 0 1 auto; padding: .45rem .9rem; min-height: 2.5rem; }
+label.option.small .otext { flex: none; font-weight: 500; }
+/* the free answer's box opens when it is chosen, or when it already holds text */
+.other textarea { display: none; }
+.other:has(input:checked) textarea, .other.has-text textarea { display: block; }
+
+/* The recommendation is a badge, its basis and its reason, inside its own card. All three
+   are hidden until the presenter shows them, and a page with no script shows none. */
+.recmark, .recbasis, .recreason { display: none; }
+html.recs .recmark { display: inline-block; padding: 0 .5rem; border-radius: 1rem;
+  background: var(--accent); color: var(--accent-ink); font-size: .78rem; font-weight: 700; }
+html.recs .recbasis { display: block; color: var(--ink-2); font-size: .85rem; }
+html.recs .recreason { display: block; padding-inline-start: .7rem;
+  border-inline-start: 3px solid var(--accent); color: var(--ink-2); }
+
+textarea, input[type="text"] { font: inherit; color: var(--ink); background: var(--bg);
+  border: 1px solid var(--line); border-radius: .45rem; padding: .45rem .6rem; width: 100%; }
+.who { display: flex; flex-wrap: wrap; align-items: center; gap: .6rem; margin-top: .9rem;
+  color: var(--ink-2); font-size: .9rem; }
+.noteblock { margin-top: .6rem; }
+.noteblock > summary { cursor: pointer; color: var(--accent); width: fit-content;
+  padding: .3rem 0; }
+.noteblock textarea { margin-top: .3rem; }
+
+/* Quoted rows: one quiet line of folds. */
+.rests, .named, .settles { display: grid; gap: .35rem; margin: .2rem 0 1rem; }
+.named, .settles { margin: .9rem 0 0; }
+.restslabel { color: var(--ink-2); font-size: .85rem; }
+.quote { border: 1px solid var(--line); border-radius: .5rem; background: var(--bg); }
+.quote.plain { padding: .4rem .7rem; display: flex; gap: .6rem; flex-wrap: wrap;
+  align-items: baseline; }
+details.quote > summary, details.ctx > summary { cursor: pointer; padding: .4rem .7rem;
+  display: flex; gap: .6rem; flex-wrap: wrap; align-items: baseline; list-style: none; }
+details.quote > summary::-webkit-details-marker,
+details.ctx > summary::-webkit-details-marker { display: none; }
+/* a flex summary loses its marker, so the fold draws its own: a corner that turns */
+details.quote > summary::before, details.ctx > summary::before { content: ""; flex: none;
+  width: .45rem; height: .45rem; align-self: center; border-inline-end: 2px solid var(--ink-2);
+  border-bottom: 2px solid var(--ink-2); transform: rotate(-45deg); }
+[dir="rtl"] details.quote > summary::before,
+[dir="rtl"] details.ctx > summary::before { transform: rotate(135deg); }
+details.quote[open] > summary::before, [dir="rtl"] details.quote[open] > summary::before,
+details.ctx[open] > summary::before, [dir="rtl"] details.ctx[open] > summary::before {
+  transform: rotate(45deg); }
+.rid { font-weight: 700; }
+.kind, .status { color: var(--ink-2); font-size: .82rem; }
+.status { border: 1px solid var(--line); border-radius: 1rem; padding: 0 .45rem; }
+.rtitle { flex: 1 1 14rem; }
+.qbody { padding: .2rem .9rem .8rem; border-top: 1px solid var(--line); }
+.qtext { margin: .7rem 0 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+.qname { display: block; color: var(--ink-2); font-size: .78rem; }
+dl { margin: .6rem 0 0; display: grid; grid-template-columns: max-content 1fr; gap: .2rem 1rem; }
+dt { color: var(--ink-2); font-size: .82rem; }
+dd { margin: 0; overflow-wrap: anywhere; white-space: pre-wrap; }
+details.fields { margin-top: .7rem; }
+details.fields > summary { cursor: pointer; color: var(--ink-2); font-size: .85rem; }
+
+/* The folds under a question's answers: what is known, decided, needed and missing. */
+details.ctx { margin-top: .5rem; border: 1px solid var(--line); border-radius: .5rem; }
+details.ctx > summary { font-weight: 600; }
+.count { color: var(--ink-2); font-weight: 400; }
+.ctxbody { display: grid; gap: .35rem; padding: .5rem .7rem .7rem;
+  border-top: 1px solid var(--line); }
+.ctxbody p { margin: 0; white-space: pre-wrap; }
+dl.termlist { grid-template-columns: minmax(8rem, max-content) 1fr; margin: 0; }
+dl.termlist dt { font-family: inherit; font-size: 1rem; font-weight: 700; color: var(--ink); }
+
+/* Attendance, the decided topics, the points and the closure. */
+.attgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
+  gap: .6rem; margin-bottom: .8rem; align-items: start; }
+.attrow { display: grid; gap: .3rem; align-content: start; padding: .6rem .7rem; border: 1px solid var(--line);
+  border-radius: .5rem; background: var(--bg); }
+.pname { font-weight: 600; display: grid; gap: .3rem; }
+.attrow input { display: none; }
+.attrow.covered input { display: block; }
+label.wide, .closuregrid label, .point label { display: grid; gap: .25rem; color: var(--ink-2);
+  font-size: .9rem; }
+.topic { padding: .6rem .8rem; margin-bottom: .6rem; border-inline-start: 3px solid var(--good);
+  background: var(--bg); border-radius: .3rem; display: grid; gap: .35rem; }
+.ttitle { margin: 0; font-weight: 700; }
+.tanswer { margin: 0; white-space: pre-wrap; }
+.point { display: grid; grid-template-columns: 1fr 1fr; gap: .6rem 1rem; padding: .7rem;
+  margin-bottom: .6rem; border: 1px solid var(--line); border-radius: .5rem;
+  background: var(--bg); }
+.point .wide { grid-column: 1 / -1; }
+.point .who { margin: 0; display: grid; gap: .25rem; }
+.point button { justify-self: start; }
+.closuregrid { display: grid; grid-template-columns: 1fr 1fr; gap: .8rem 1rem;
+  margin-bottom: .8rem; }
+.closure > label { display: grid; gap: .25rem; color: var(--ink-2); font-size: .9rem;
+  max-width: 24rem; }
+.closure label.check { display: flex; align-items: center; gap: .5rem; min-height: 2.5rem;
+  color: var(--ink); }
+input[type="checkbox"] { width: 1.2rem; height: 1.2rem; accent-color: var(--accent); }
+.roundactions { display: flex; flex-wrap: wrap; gap: .6rem; margin-top: .8rem; }
+
+.copy, .about { margin-block: 2.5rem 0; color: var(--ink-2); }
+.copy > summary, .about > summary { cursor: pointer; }
+.copy textarea { font-family: ui-monospace, Consolas, monospace; font-size: .8rem; }
+.pager { display: none; }
+
+/* One step at a time. Only the current step of the current round is on the screen. */
+html.one header.pagehead, html.one .copy, html.one .about, html.one .blockhead { display: none; }
+html.one .step:not(.current), html.one section.round:not(.current-round) { display: none; }
+html.one main { min-height: calc(100vh - var(--bar-h) - 9rem); display: grid;
+  align-content: center; }
+html.one .roundtop { margin-top: 1rem; }
+html.one .inblock { display: block; margin: 0 0 .4rem; color: var(--ink-2); font-size: .85rem;
+  font-weight: 700; text-transform: uppercase; letter-spacing: .05em; }
+html.one .qtitle { font-size: 1.7rem; }
+html.one .otext { font-size: 1.1rem; }
+html.one .pager { display: flex; position: fixed; inset: auto 0 0 0; z-index: 5;
+  justify-content: center; align-items: center; gap: 1rem; padding: .6rem 1rem;
+  background: var(--panel); border-top: 1px solid var(--line); }
+#position { color: var(--ink-2); min-width: 12rem; text-align: center; }
+
+/* Up to tablet width the bar is two short rows, so it never runs past the edge. */
+@media (max-width: 62rem) {
+  :root { --bar-h: 6.5rem; }
+  .bar { gap: .4rem; padding-inline: .6rem; flex-wrap: wrap; }
+  .bar button, .more > summary { padding-inline: .7rem; }
+  .progress { order: 1; }
+  #save { order: 2; }
+  .more { order: 3; }
+  .bar::after { content: ""; flex-basis: 100%; order: 4; }
+  #round-pick { order: 5; flex: 1 1 8rem; }
+  #view-all { order: 6; }
+  #view-one { order: 7; }
+  #theme { order: 8; }
+  .controls { padding-inline: .6rem; }
+  /* on a narrow screen only the bar stays in view: the controls would fill it */
+  .top { position: static; }
+  .bar { position: sticky; top: 0; z-index: 5; }
+  html.presenter { scroll-padding-top: calc(var(--bar-h) + 1rem); }
+}
+
+@media (max-width: 40rem) {
+  .long { display: none; }
+  .short { display: inline; }
+  .progress { font-size: .9rem; }
+  h1 { font-size: 1.5rem; }
+  .qtitle { font-size: 1.15rem; }
+  html.one .qtitle { font-size: 1.3rem; }
+  .closuregrid, .point { grid-template-columns: 1fr; }
+  /* the filter buttons wrap on the narrowest screen, so they never pass its edge */
+  .seg { display: flex; flex-wrap: wrap; gap: .3rem; }
+  .seg button, .seg button:first-child, .seg button:last-child { border-radius: .5rem;
+    margin: 0; padding-inline: .6rem; }
+  .controls button, .controls select { white-space: normal; text-align: start; }
+  dl { grid-template-columns: 1fr; }
+  .step { padding-inline: .9rem; }
+  .column { padding-inline: .8rem; }
+  #position { min-width: 0; font-size: .85rem; }
+}
+
+/* Print: dark text on white whatever the scheme, the folds open, no controls. The sheet
+   holds what the view shows: the room view prints no operator part. */
+@media print {
+  :root, :root[data-theme] { color-scheme: light; --bg: #fff; --panel: #fff; --panel-2: #fff;
+    --line: #999; --ink: #000; --ink-2: #333; --accent: #000; --accent-ink: #fff;
+    --chosen: #e8e8e8; --good: #000; --warn: #000; --op: #000; }
+  body { padding-bottom: 0; font-size: 11pt; }
+  .top, .roundnav, .pager, .banner, #status, .copy, .skip, .roundactions,
+  .noteblock > summary, .menu, button { display: none !important; }
+  .shell { display: block; }
+  html.one header.pagehead, html.one .about { display: block; }
+  html.one .step:not(.current), html.one section.round:not(.current-round) { display: block; }
+  html.one main { min-height: 0; display: block; }
+  html:not(.presenter) .oponly,
+  html:not(.presenter) fieldset.question[data-owner="operator"] { display: none !important; }
+  .step, details.quote { break-inside: avoid; }
+  label.option:has(input:checked) { border-width: 2px; font-weight: 700; }
+  .noteblock:not(.has-text), .other:not(.has-text):not(:has(input:checked)) textarea {
+    display: none; }
+  textarea, input[type="text"], select { border: 0; border-bottom: 1px solid #999;
+    border-radius: 0; }
+  .recmark, .stale { border: 1px solid #000; background: none !important; color: #000 !important; }
+}
+</style>
+</head>
+<body data-slate="round-1" data-digest="2eb24c9afcb66b55eaa1202dc222907b091301b7216808b207101b66a6b9ac25" data-opens="reading" data-w-progress="{n} of {total} answered" data-w-position="{round} · step {n} of {total}" data-w-roundcount="{n} of {total} answered" data-w-ready="{n} of {total} rounds ready" data-w-saved="Saved as {file}. If no file appears, open Trouble saving at the end." data-w-savefail="The download did not start. Copy the text below." data-w-notfit="That file is not an answers file of this slate. Nothing was loaded." data-w-notround="That file is for another round. Nothing was loaded." data-w-loaded="Loaded {file}." data-w-unreadable="That file could not be read. Nothing was loaded." data-w-cleared="Every answer was cleared." data-w-roundcleared="This round was cleared." data-w-clear2="Click again to clear" data-w-nostorage="This browser does not keep the answers. Save them to a file." data-w-stale="{n} answers were made on an earlier version of this page. Check them again." data-w-shown="Questions shown: {n}" data-w-locked="locked until the presenter opens it">
+<a class="skip" href="#rounds">Skip to the rounds</a>
+<div class="top">
+<div class="bar">
+<span id="progress" class="progress"></span>
+<select id="round-pick" aria-label="Round"><option value="r1">Round 1 · Access</option></select>
+<button type="button" id="view-all"><span class="long">All questions</span><span class="short">All</span></button>
+<button type="button" id="view-one"><span class="long">One at a time</span><span class="short">One</span></button>
+<button type="button" id="theme" title="Light or dark" aria-label="Light or dark">&#9680;</button>
+<button type="button" id="save" class="primary"><span class="long">Save all answers</span><span class="short">Save all</span></button>
+<details class="more"><summary>More</summary><div class="menu">
+<button type="button" id="presenter" aria-pressed="false">Presenter view</button>
+<button type="button" id="load-button">Load answers</button>
+<input type="file" id="load" accept=".json,application/json" hidden>
+<button type="button" id="print">Print</button>
+<button type="button" id="clear">Clear everything</button>
+</div></details>
+</div>
+<div class="controls" role="group" aria-label="Presenter controls">
+<span class="ctitle">Presenter controls</span>
+<button type="button" id="lock" aria-pressed="false">Show the room one round</button>
+<button type="button" id="recs" aria-pressed="false">Show recommendations</button>
+<span class="seg" role="group" aria-label="Questions shown">
+<button type="button" id="f-all" aria-pressed="true">All questions</button>
+<button type="button" id="f-operator" aria-pressed="false">Operator&#x27;s</button>
+<button type="button" id="f-room" aria-pressed="false">Room&#x27;s</button>
+</span>
+<select id="group-pick" hidden><option value=""></option></select>
+</div>
+<p class="banner roombanner">Room view: the operator&#x27;s questions, attendance and closure are hidden.</p>
+<p class="banner stalebanner" hidden></p>
+<p class="banner storebanner" hidden></p>
+</div>
+<p id="status" role="status"></p>
+<div class="shell">
+<nav class="roundnav" aria-label="Rounds">
+<p class="navtitle">Rounds</p>
+<p class="navready"></p>
+<button type="button" class="jump" data-jump="r1"><span class="jnum">Round 1</span><span class="jtitle"><bdi>Access</bdi></span><span class="jcount">2 questions</span><span class="jstate"></span></button>
+</nav>
+<div class="column">
+<header class="pagehead">
+<h1><bdi>Round 1</bdi></h1>
+<p class="intro"><bdi>Two decisions.</bdi></p>
+<ol class="how"><li>Find your round in the list of rounds.</li><li>On each card pick one answer. Pick Unknown if you do not know.</li><li>Your choices stay in this browser. In the meeting the presenter records the room&#x27;s answer.</li></ol>
+<p class="legend"><span class="owner operator">Operator</span> the operator answers <span class="owner room">Room</span> the room answers</p>
+</header>
+<main id="rounds">
+<section class="round" data-round="r1">
+<div class="roundtop">
+<h2><span class="rnum">Round 1</span> <bdi>Access</bdi></h2>
+<p class="roundcount"></p>
+<div class="meter"><span></span></div>
+</div>
+<div class="roundhead step">
+<p class="stepname">Context</p>
+<p class="lead"><bdi>What was decided before.</bdi></p>
+<div class="rests"><span class="restslabel">Rests on</span>
+<div class="quote plain"><span class="rid">CON-001</span><span class="kind">constraint</span><span class="status">Draft</span><span class="rtitle"><bdi>One region</bdi></span></div>
+</div>
+</div>
+<fieldset class="question step" data-question="q1" data-digest="58b96460dd463a2571ca9b7cecfa4395eefb3fb8991fb91daf420f129d38d4a6" data-owner="room" data-people="">
+<legend><span class="qmeta"><span class="place">1 / 2</span><span class="qid">q1</span><span class="owner room">Room</span><span class="state">Answered</span></span><span class="qtitle"><bdi>Which store?</bdi></span></legend>
+<p class="stale" hidden>This answer was made on an earlier version of this question. Check it again.</p>
+<p class="detail"><bdi>It holds the audit trail.</bdi></p>
+<div class="rests"><span class="restslabel">Rests on</span>
+<details class="quote"><summary><span class="rid">FR-001</span><span class="kind">requirement</span><span class="status">Approved</span><span class="rtitle"><bdi>Store</bdi></span></summary>
+<div class="qbody">
+<details class="fields"><summary>More fields</summary>
+<dl>
+<dt>kind</dt><dd><bdi>functional</bdi></dd>
+<dt>statement</dt><dd><bdi>The system keeps the audit trail.</bdi></dd>
+<dt>mvp</dt><dd><bdi>0</bdi></dd>
+<dt>source_kind</dt><dd><bdi>brief</bdi></dd>
+<dt>source_span</dt><dd><bdi>p1</bdi></dd>
+<dt>introduced_in</dt><dd><bdi>1</bdi></dd>
+</dl></details>
+</div></details>
+</div>
+<div class="options">
+<label class="option rec"><input type="radio" name="q:q1" value="A"><span class="obody"><span class="ohead"><span class="oid">A</span><span class="otext"><bdi>Keep it</bdi></span><span class="recmark">Recommended by the agent</span></span><span class="recreason"><strong>Why:</strong> <bdi>It is measured.</bdi></span></span></label>
+<label class="option"><input type="radio" name="q:q1" value="B"><span class="obody"><span class="ohead"><span class="oid">B</span><span class="otext"><bdi>Move it</bdi></span></span><span class="odetail"><bdi>It costs a week.</bdi></span></span></label>
+<p class="unsure">Not sure? Unknown and Requires evidence are valid answers.</p>
+<div class="fallback">
+<label class="option small"><input type="radio" name="q:q1" value="unknown"><span class="obody"><span class="otext">Unknown</span></span></label>
+<label class="option small"><input type="radio" name="q:q1" value="evidence"><span class="obody"><span class="otext">Requires evidence</span></span></label>
+</div>
+<label class="option other"><input type="radio" name="q:q1" value="other"><span class="obody"><span class="ohead"><span class="otext">Other answer</span></span><textarea data-field="other" name="other:q1" rows="2" dir="auto" autocomplete="off" maxlength="8000" aria-label="Other answer"></textarea></span></label>
+</div>
+<label class="who">Answered by <select data-field="answered_by" name="by:q1"><option value="">— choose —</option><option value="operator">The operator</option></select></label>
+<details class="noteblock"><summary>Add a note</summary><textarea data-field="note" name="note:q1" rows="2" dir="auto" autocomplete="off" maxlength="8000" aria-label="Add a note"></textarea></details>
+</fieldset>
+<fieldset class="question step" data-question="q2" data-digest="2cfa92a1615e0667accf1211b7ebb42bf9b426b0fc53d37bf16c7e7c59265f48" data-owner="room" data-people="">
+<legend><span class="qmeta"><span class="place">2 / 2</span><span class="qid">q2</span><span class="owner room">Room</span><span class="state">Answered</span></span><span class="qtitle"><bdi>Ship now?</bdi></span></legend>
+<p class="stale" hidden>This answer was made on an earlier version of this question. Check it again.</p>
+<div class="options">
+<label class="option"><input type="radio" name="q:q2" value="yes"><span class="obody"><span class="ohead"><span class="oid">yes</span><span class="otext"><bdi>Yes</bdi></span></span></span></label>
+<label class="option"><input type="radio" name="q:q2" value="no"><span class="obody"><span class="ohead"><span class="oid">no</span><span class="otext"><bdi>No</bdi></span></span></span></label>
+<p class="unsure">Not sure? Unknown and Requires evidence are valid answers.</p>
+<div class="fallback">
+<label class="option small"><input type="radio" name="q:q2" value="unknown"><span class="obody"><span class="otext">Unknown</span></span></label>
+<label class="option small"><input type="radio" name="q:q2" value="evidence"><span class="obody"><span class="otext">Requires evidence</span></span></label>
+</div>
+</div>
+<label class="who">Answered by <select data-field="answered_by" name="by:q2"><option value="">— choose —</option><option value="operator">The operator</option></select></label>
+<details class="noteblock"><summary>Add a note</summary><textarea data-field="note" name="note:q2" rows="2" dir="auto" autocomplete="off" maxlength="8000" aria-label="Add a note"></textarea></details>
+</fieldset>
+<div class="points step">
+<p class="stepname">Points from the room</p>
+<p class="hint">Anything that the questions did not cover. Each line is a candidate for the record, with the name of who raised it.</p>
+<div class="pointlist"></div>
+<template class="pointrow"><div class="point">
+<label>Kind <select data-field="kind"><option value="pain">Pain point today</option><option value="concern">Concern about the change</option><option value="expectation">Expectation</option><option value="requirement">New requirement</option></select></label>
+<label class="who">Raised by <select data-field="by" name=""><option value="">— choose —</option><option value="operator">The operator</option></select></label>
+<label class="wide">In your words <textarea data-field="text" rows="2" dir="auto" autocomplete="off" maxlength="8000"></textarea></label>
+<button type="button" data-action="remove-point">Remove</button>
+</div></template>
+<button type="button" data-action="add-point">Add a line</button>
+</div>
+<div class="closure step oponly">
+<p class="stepname">Closure</p>
+<p class="hint">The presenter fills this in.</p>
+<div class="closuregrid">
+<label>Conclusions <textarea data-closure="conclusions" name="closure:r1:conclusions" rows="2" dir="auto" autocomplete="off" maxlength="8000"></textarea></label>
+<label>Open questions <textarea data-closure="open_questions" name="closure:r1:open_questions" rows="2" dir="auto" autocomplete="off" maxlength="8000"></textarea></label>
+<label>Approvals needed <textarea data-closure="approvals" name="closure:r1:approvals" rows="2" dir="auto" autocomplete="off" maxlength="8000"></textarea></label>
+<label>Owner commitments <textarea data-closure="commitments" name="closure:r1:commitments" rows="2" dir="auto" autocomplete="off" maxlength="8000"></textarea></label>
+</div>
+<label>Closed by <input type="text" data-field="closed_by" name="closed_by:r1" dir="auto" autocomplete="off" maxlength="8000"></label>
+<label class="check"><input type="checkbox" data-field="closed" name="closed:r1"> Round closed</label>
+<div class="roundactions">
+<button type="button" class="primary" data-action="save-round">Save this round</button>
+<button type="button" data-action="load-round">Load this round</button>
+<button type="button" data-action="clear-round">Clear this round</button>
+</div>
+</div>
+</section>
+</main>
+<nav class="pager"><button type="button" id="prev">Previous</button>
+<span id="position"></span><button type="button" id="next">Next</button>
+</nav>
+<details class="copy" id="trouble"><summary>Trouble saving?</summary>
+<p>If the download does not start, copy this text into a file named <code id="answers-name">round-1.answers.json</code></p>
+<textarea id="answers-text" readonly rows="8" aria-label="Trouble saving?"></textarea>
+</details>
+<details class="about"><summary>About this page</summary>
+<p>This page loads nothing and sends nothing. It keeps your answers in this browser. Save writes them to a file. The file is a record of this page. A decision is confirmed in the session, never by the file. The presenter view is a way to show the page. It protects nothing.</p>
+<p class="meta">Slate <code>round-1</code>, digest <code>2eb24c9afcb6</code></p>
+</details>
+<a id="download" hidden></a>
+<input type="file" id="load-round" accept=".json,application/json" hidden>
+</div>
+</div>
+<script>/* Tamheed interview page (plans 227, 227b, 227c). ONE static script, the same for every
+   slate. It reads ids and its words from data attributes, sets values, classes and a few
+   fixed attributes, and copies markup only from a template that the server rendered. It
+   loads nothing and sends nothing. The answers file is a record of this page. */
+(function () {
+  'use strict';
+  var root = document.documentElement;
+  var body = document.body;
+  var slateName = body.getAttribute('data-slate');
+  var slateDigest = body.getAttribute('data-digest');
+  /* Every local page shares one storage area in a browser, so the key is this page's own
+     address: it differs per folder, and it stays the same when the page is exported again. */
+  var KEY = 'tamheed-slate:' + document.URL.split('#')[0].split('?')[0];
+  var FORMAT = 'tamheed-slate-answers';
+  var VERSION = 2;
+  var ui = { presenter: false, recs: false, session: body.getAttribute('data-opens') === 'session',
+             one: false, theme: '', owner: 'all', group: '', round: '', step: 0 };
+  /* An id may be a name that every object inherits, such as `constructor`. A map that is
+     keyed by an id has no prototype, so it holds only what was put into it. */
+  function emptyMap() { return Object.create(null); }
+  function own(map, id) {
+    return map !== null && typeof map === 'object'
+      && Object.prototype.hasOwnProperty.call(map, id) ? map[id] : undefined;
+  }
+  var made = emptyMap();  /* question id -> the digest of the question when it was answered */
+  var storageWorks = true;
+  var armed = null;
+
+  function byId(id) { return document.getElementById(id); }
+  function list(selector, within) {
+    return Array.prototype.slice.call((within || document).querySelectorAll(selector));
+  }
+  function field(within, name) { return within.querySelector('[data-field="' + name + '"]'); }
+  function text(value) { return typeof value === 'string' ? value : ''; }
+  function word(name, values) {
+    var out = body.getAttribute('data-w-' + name) || '';
+    Object.keys(values || {}).forEach(function (key) {
+      out = out.split('{' + key + '}').join(String(values[key]));
+    });
+    return out;
+  }
+  function say(message) { byId('status').textContent = message; }
+  function pressed(id, on) { byId(id).setAttribute('aria-pressed', on ? 'true' : 'false'); }
+
+  var sections = list('section.round');
+  var readySections = sections.filter(function (s) { return !s.classList.contains('notready'); });
+  var questions = list('fieldset.question');
+  function sectionOf(id) {
+    return sections.filter(function (s) { return s.getAttribute('data-round') === id; })[0];
+  }
+  function currentSection() { return sectionOf(ui.round) || readySections[0]; }
+  /* R104: in a session the room sees the round that the presenter opened, and no other */
+  function locked() { return ui.session && !ui.presenter; }
+
+  /* ---------------------------------------------------------------- what is on the page */
+
+  function selectedOf(question) {
+    var picked = question.querySelector('input[type="radio"]:checked');
+    return picked ? picked.value : null;
+  }
+  function isAnswered(question) {
+    var picked = selectedOf(question);
+    if (picked === null) { return false; }
+    return picked !== 'other' || text(field(question, 'other').value).trim() !== '';
+  }
+  function readAnswer(question) {
+    var id = question.getAttribute('data-question');
+    var other = field(question, 'other');
+    return { question: id, selected: selectedOf(question), other: other ? other.value : '',
+             note: field(question, 'note').value, answered_by: field(question, 'answered_by').value,
+             question_digest: made[id] || question.getAttribute('data-digest') };
+  }
+  function readRound(section) {
+    var attendance = emptyMap();
+    list('.attrow', section).forEach(function (row) {
+      var state = field(row, 'state').value;
+      if (state) {
+        attendance[row.getAttribute('data-person')] = {
+          state: state, covered_by: state === 'covered' ? field(row, 'covered_by').value : '' };
+      }
+    });
+    var closure = emptyMap();
+    list('[data-closure]', section).forEach(function (el) {
+      closure[el.getAttribute('data-closure')] = el.value;
+    });
+    var points = list('.pointlist .point', section).map(function (row) {
+      return { kind: field(row, 'kind').value, by: field(row, 'by').value,
+               text: field(row, 'text').value };
+    }).filter(function (point) { return point.text.trim() !== ''; });
+    function value(name) { var el = field(section, name); return el ? el.value : ''; }
+    var closed = field(section, 'closed');
+    return { id: section.getAttribute('data-round'), attendance: attendance,
+             guests: value('guests'), points: points, closure: closure, reopen: value('reopen'),
+             closed: closed ? closed.checked : false, closed_by: value('closed_by') };
+  }
+  function collect(section) {
+    var scope = section ? [section] : readySections;
+    var data = { format: FORMAT, version: VERSION, slate: slateName, slate_digest: slateDigest,
+                 exported_at: new Date().toISOString() };
+    if (section) { data.round = section.getAttribute('data-round'); }
+    data.rounds = scope.map(readRound);
+    data.answers = [];
+    scope.forEach(function (one) {
+      list('fieldset.question', one).forEach(function (q) { data.answers.push(readAnswer(q)); });
+    });
+    return data;
+  }
+
+  /* ---------------------------------------------------------------- putting values back */
+
+  function addPoint(section, point) {
+    var template = section.querySelector('template.pointrow');
+    var row = template.content.firstElementChild.cloneNode(true);
+    if (point) {
+      field(row, 'kind').value = text(point.kind);
+      field(row, 'by').value = text(point.by);
+      field(row, 'text').value = text(point.text);
+    }
+    section.querySelector('.pointlist').appendChild(row);
+    return row;
+  }
+  function applyRound(section, item) {
+    function put(name, value) { var el = field(section, name); if (el) { el.value = text(value); } }
+    var attendance = item.attendance && typeof item.attendance === 'object' ? item.attendance : {};
+    list('.attrow', section).forEach(function (row) {
+      var got = own(attendance, row.getAttribute('data-person')) || {};
+      field(row, 'state').value = text(got.state);
+      field(row, 'covered_by').value = text(got.covered_by);
+      row.classList.toggle('covered', field(row, 'state').value === 'covered');
+    });
+    var closure = item.closure && typeof item.closure === 'object' ? item.closure : {};
+    list('[data-closure]', section).forEach(function (el) {
+      el.value = text(own(closure, el.getAttribute('data-closure')));
+    });
+    put('guests', item.guests); put('reopen', item.reopen); put('closed_by', item.closed_by);
+    var closed = field(section, 'closed');
+    if (closed) { closed.checked = item.closed === true; }
+    var holder = section.querySelector('.pointlist');
+    if (holder) {
+      while (holder.firstChild) { holder.removeChild(holder.firstChild); }
+      (Array.isArray(item.points) ? item.points : []).slice(0, 200).forEach(function (point) {
+        if (point && typeof point === 'object') { addPoint(section, point); }
+      });
+    }
+  }
+  function applyAnswer(question, item) {
+    var id = question.getAttribute('data-question');
+    list('input[type="radio"]', question).forEach(function (radio) {
+      radio.checked = radio.value === item.selected;
+    });
+    var other = field(question, 'other');
+    if (other) { other.value = text(item.other); }
+    field(question, 'note').value = text(item.note);
+    field(question, 'answered_by').value = text(item.answered_by);
+    if (typeof item.question_digest === 'string') { made[id] = item.question_digest; }
+  }
+  function apply(data) {
+    (Array.isArray(data.rounds) ? data.rounds : []).forEach(function (item) {
+      var section = item && sectionOf(item.id);
+      if (section && readySections.indexOf(section) >= 0) { applyRound(section, item); }
+    });
+    var byQuestion = emptyMap();
+    questions.forEach(function (q) { byQuestion[q.getAttribute('data-question')] = q; });
+    (Array.isArray(data.answers) ? data.answers : []).forEach(function (item) {
+      var question = item && byQuestion[item.question];
+      if (question) { applyAnswer(question, item); }
+    });
+  }
+
+  /* ---------------------------------------------------------------- what a view shows */
+
+  function inView(el) {
+    /* true when the view's rules show this step or this question */
+    if (el.classList.contains('filtered')) { return false; }
+    if (ui.presenter) { return true; }
+    return !(el.classList.contains('oponly') || el.getAttribute('data-owner') === 'operator');
+  }
+  function stepsOf(section) { return list('.step', section).filter(inView); }
+  function applyFilter() {
+    var shown = 0;
+    questions.forEach(function (q) {
+      var people = (q.getAttribute('data-people') || '').split('|');
+      var hide = (ui.owner !== 'all' && q.getAttribute('data-owner') !== ui.owner)
+        || (ui.group !== '' && people.indexOf(ui.group) < 0);
+      q.classList.toggle('filtered', hide);
+      if (!hide) { shown += 1; }
+    });
+    ['all', 'operator', 'room'].forEach(function (owner) { pressed('f-' + owner, ui.owner === owner); });
+    byId('group-pick').value = ui.group;
+    return shown;
+  }
+  function show() {
+    root.classList.toggle('presenter', ui.presenter);
+    root.classList.toggle('recs', ui.recs);
+    root.classList.toggle('session', ui.session);
+    root.classList.toggle('one', ui.one);
+    pressed('presenter', ui.presenter); pressed('recs', ui.recs); pressed('lock', ui.session);
+    pressed('view-one', ui.one); pressed('view-all', !ui.one);
+    var here = currentSection();
+    ui.round = here ? here.getAttribute('data-round') : '';
+    var answeredAll = 0, countAll = 0, stale = 0, readyCount = 0;
+    sections.forEach(function (section) {
+      var mine = section === here;
+      section.classList.toggle('current-round', mine);
+      section.classList.toggle('open-round', mine);
+      var jump = document.querySelector('.jump[data-jump="' + section.getAttribute('data-round') + '"]');
+      var isReady = readySections.indexOf(section) >= 0;
+      var shut = isReady && locked() && !mine;
+      var option = byId('round-pick').querySelector(
+        'option[value="' + section.getAttribute('data-round') + '"]');
+      if (option) { option.disabled = !isReady || shut; }
+      if (jump) {
+        jump.classList.toggle('current-jump', mine);
+        jump.classList.toggle('lockedjump', shut);
+        jump.disabled = !isReady || shut;
+      }
+      if (!isReady) { return; }
+      readyCount += 1;
+      var answered = 0, count = 0;
+      list('fieldset.question', section).forEach(function (q) {
+        var id = q.getAttribute('data-question');
+        var done = isAnswered(q);
+        var old = done && made[id] && made[id] !== q.getAttribute('data-digest');
+        q.classList.toggle('answered', done);
+        q.querySelector('.stale').hidden = !old;
+        if (old) { stale += 1; }
+        var other = q.querySelector('.other');
+        if (other) { other.classList.toggle('has-text', field(q, 'other').value.trim() !== ''); }
+        var note = q.querySelector('.noteblock');
+        var hasNote = field(q, 'note').value.trim() !== '';
+        note.classList.toggle('has-text', hasNote);
+        if (hasNote) { note.open = true; }
+        if (!ui.presenter && q.getAttribute('data-owner') === 'operator') { return; }
+        count += 1;
+        if (done) { answered += 1; }
+      });
+      section.querySelector('.roundcount').textContent =
+        shut ? word('locked') : word('roundcount', { n: answered, total: count });
+      if (jump) { jump.querySelector('.jstate').textContent = shut ? word('locked') : ''; }
+      section.querySelector('.meter span').style.width =
+        (count ? Math.round(100 * answered / count) : 0) + '%';
+      if (jump) { jump.classList.toggle('done', count > 0 && answered === count); }
+      answeredAll += answered; countAll += count;
+    });
+    /* a block's heading goes with its questions: it hides when the view shows none of them */
+    list('.blockhead').forEach(function (head) {
+      var any = false;
+      for (var el = head.nextElementSibling; el && !el.classList.contains('blockhead');
+           el = el.nextElementSibling) {
+        if (el.classList.contains('question') && inView(el)) { any = true; }
+      }
+      head.classList.toggle('filtered', !any);
+    });
+    byId('progress').textContent = word('progress', { n: answeredAll, total: countAll });
+    var ready = document.querySelector('.navready');
+    if (ready) { ready.textContent = word('ready', { n: readyCount, total: sections.length }); }
+    var banner = document.querySelector('.stalebanner');
+    banner.hidden = stale === 0;
+    banner.textContent = stale ? word('stale', { n: stale }) : '';
+    byId('round-pick').value = ui.round;
+    list('.step.current').forEach(function (el) { el.classList.remove('current'); });
+    if (here) {
+      var steps = stepsOf(here);
+      ui.step = Math.max(0, Math.min(ui.step, steps.length - 1));
+      if (steps[ui.step]) { steps[ui.step].classList.add('current'); }
+      byId('position').textContent = word('position', {
+        round: here.querySelector('h2 bdi').textContent, n: steps.length ? ui.step + 1 : 0,
+        total: steps.length });
+    }
+  }
+  function keep() {
+    if (!storageWorks) { return; }
+    try {
+      localStorage.setItem(KEY, JSON.stringify({ answers: collect(), made: made, ui: ui }));
+    } catch (error) {
+      storageWorks = false;
+      var banner = document.querySelector('.storebanner');
+      banner.textContent = word('nostorage');
+      banner.hidden = false;
+    }
+  }
+  function restore() {
+    var kept = null;
+    try { kept = JSON.parse(localStorage.getItem(KEY) || 'null'); } catch (error) { kept = null; }
+    if (!kept || typeof kept !== 'object') { return; }
+    if (kept.answers && typeof kept.answers === 'object') { apply(kept.answers); }
+    if (kept.made && typeof kept.made === 'object') {
+      Object.keys(kept.made).forEach(function (id) {
+        if (typeof kept.made[id] === 'string') { made[id] = kept.made[id]; }
+      });
+    }
+    if (kept.ui && typeof kept.ui === 'object') {
+      ['presenter', 'recs', 'session', 'one'].forEach(function (name) {
+        if (typeof kept.ui[name] === 'boolean') { ui[name] = kept.ui[name]; }
+      });
+      ['theme', 'owner', 'group', 'round'].forEach(function (name) {
+        if (typeof kept.ui[name] === 'string') { ui[name] = kept.ui[name]; }
+      });
+      if (typeof kept.ui.step === 'number') { ui.step = kept.ui.step; }
+      if (['all', 'operator', 'room'].indexOf(ui.owner) < 0) { ui.owner = 'all'; }
+    }
+  }
+  function changed() { show(); keep(); }
+
+  /* ---------------------------------------------------------------- moving */
+
+  function goRound(id, last) {
+    var section = sectionOf(id);
+    if (!section || readySections.indexOf(section) < 0) { return; }
+    if (locked() && section !== currentSection()) { return; }
+    ui.round = id;
+    ui.step = last ? stepsOf(section).length - 1 : 0;
+    changed();
+    if (!ui.one) { section.scrollIntoView(); }
+  }
+  function move(by) {
+    var here = currentSection();
+    if (!here) { return; }
+    var next = ui.step + by;
+    var at = readySections.indexOf(here);
+    if (next >= stepsOf(here).length) {
+      if (at < readySections.length - 1) {
+        goRound(readySections[at + 1].getAttribute('data-round'), false);
+      }
+      return;
+    }
+    if (next < 0) {
+      if (at > 0) { goRound(readySections[at - 1].getAttribute('data-round'), true); }
+      return;
+    }
+    ui.step = next;
+    changed();
+    window.scrollTo(0, 0);
+  }
+  function setOne(on) {
+    if (on && !ui.one) {
+      /* start at the step that is on the screen now */
+      var here = currentSection();
+      var steps = here ? stepsOf(here) : [];
+      steps.forEach(function (step, at) {
+        if (step.getBoundingClientRect().top < window.innerHeight / 2) { ui.step = at; }
+      });
+    }
+    ui.one = on;
+    changed();
+    if (on) { window.scrollTo(0, 0); }      /* the step starts at its top */
+    if (!on) {
+      var current = document.querySelector('.step.current');
+      if (current) { current.scrollIntoView(); }
+    }
+  }
+  function applyTheme() {
+    if (ui.theme) { root.setAttribute('data-theme', ui.theme); }
+  }
+  function toggleTheme() {
+    var now = root.getAttribute('data-theme')
+      || (window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+    ui.theme = now === 'light' ? 'dark' : 'light';
+    applyTheme();
+    keep();
+  }
+
+  /* ---------------------------------------------------------------- files */
+
+  function fileName(section) {
+    return slateName + (section ? '.' + section.getAttribute('data-round') : '') + '.answers.json';
+  }
+  function saveFile(section) {
+    var data = collect(section);
+    var content = JSON.stringify(data, null, 1);
+    var name = fileName(section);
+    byId('answers-text').value = content;
+    byId('answers-name').textContent = name;
+    try {
+      var link = byId('download');
+      var url = URL.createObjectURL(new Blob([content], { type: 'application/json' }));
+      link.href = url;
+      link.download = name;
+      link.click();      /* the address is not revoked: a revoke can cancel the download */
+      say(word('saved', { file: name }));
+    } catch (error) {
+      byId('trouble').open = true;
+      say(word('savefail'));
+    }
+  }
+  function loadFile(file, section) {
+    if (!file) { return; }
+    file.text().then(function (content) {
+      var data = null;
+      try { data = JSON.parse(content); } catch (error) { data = null; }
+      if (!data || data.format !== FORMAT || data.version !== VERSION || data.slate !== slateName) {
+        say(word('notfit'));
+        return;
+      }
+      if (section && data.round !== section.getAttribute('data-round')) {
+        say(word('notround'));
+        return;
+      }
+      apply(data);
+      changed();
+      say(word('loaded', { file: file.name }));
+    }, function () { say(word('unreadable')); });
+  }
+  function clearSection(section) {
+    list('input[type="radio"], input[type="checkbox"]', section).forEach(function (el) {
+      el.checked = false;
+    });
+    list('textarea, input[type="text"], select', section).forEach(function (el) { el.value = ''; });
+    list('.pointlist .point', section).forEach(function (row) { row.parentNode.removeChild(row); });
+    list('.attrow', section).forEach(function (row) { row.classList.remove('covered'); });
+    list('details.noteblock', section).forEach(function (el) { el.open = false; });
+    list('fieldset.question', section).forEach(function (q) {
+      delete made[q.getAttribute('data-question')];
+    });
+  }
+  function disarm() {
+    if (armed) { armed.button.textContent = armed.label; armed = null; }
+  }
+  function twice(button, act) {
+    /* a clear needs two clicks on the same button */
+    if (armed && armed.button === button) { disarm(); act(); return; }
+    disarm();
+    armed = { button: button, label: button.textContent };
+    button.textContent = word('clear2');
+  }
+
+  /* ---------------------------------------------------------------- print */
+
+  var opened = [];
+  function beforePrint() {
+    opened = list('details.quote, details.fields, details.about, details.ctx').filter(
+      function (el) { return !el.open; });
+    opened.forEach(function (el) { el.open = true; });
+  }
+  function afterPrint() {
+    opened.forEach(function (el) { el.open = false; });
+    opened = [];
+  }
+
+  /* ---------------------------------------------------------------- events */
+
+  function typing(target) {
+    /* true when a key belongs to a control: a text, a choice or a list */
+    var tag = target && target.tagName;
+    return tag === 'TEXTAREA' || tag === 'INPUT' || tag === 'SELECT';
+  }
+  function on(id, handler) { byId(id).addEventListener('click', handler); }
+  function roundOf(el) { return el.closest('section.round'); }
+
+  document.addEventListener('input', function (event) {
+    var target = event.target;
+    if (!target || target.id === 'answers-text') { return; }
+    var question = target.closest('fieldset.question');
+    if (question) {
+      made[question.getAttribute('data-question')] = question.getAttribute('data-digest');
+      if (target.getAttribute('data-field') === 'other' && target.value.trim() !== '') {
+        question.querySelector('input[value="other"]').checked = true;
+      }
+    }
+    disarm();
+    changed();
+  });
+  document.addEventListener('change', function (event) {
+    var target = event.target;
+    if (!target) { return; }
+    if (target.id === 'load') { loadFile(target.files[0], null); target.value = ''; return; }
+    if (target.id === 'load-round') {
+      loadFile(target.files[0], currentSection());
+      target.value = '';
+      return;
+    }
+    if (target.id === 'round-pick') { goRound(target.value, false); return; }
+    if (target.id === 'group-pick') { ui.group = target.value; applyFilter(); ui.step = 0; changed(); return; }
+    var row = target.closest('.attrow');
+    if (row && target.getAttribute('data-field') === 'state') {
+      row.classList.toggle('covered', target.value === 'covered');
+    }
+    var question = target.closest('fieldset.question');
+    if (question) {
+      made[question.getAttribute('data-question')] = question.getAttribute('data-digest');
+    }
+    changed();
+  });
+  document.addEventListener('keydown', function (event) {
+    /* In the view of one step the arrow keys turn the step. A key that belongs to a control
+       stays with the control: an arrow moves between the options of a question. */
+    if (!ui.one || typing(event.target) || event.altKey || event.ctrlKey || event.metaKey
+        || event.shiftKey) { return; }
+    var forward = root.getAttribute('dir') === 'rtl' ? 'ArrowLeft' : 'ArrowRight';
+    var back = forward === 'ArrowLeft' ? 'ArrowRight' : 'ArrowLeft';
+    if (event.key === forward || event.key === 'PageDown') { event.preventDefault(); move(1); }
+    if (event.key === back || event.key === 'PageUp') { event.preventDefault(); move(-1); }
+  });
+  document.addEventListener('click', function (event) {
+    var target = event.target;
+    var more = document.querySelector('details.more');
+    if (more.open && !more.contains(target)) { more.open = false; }
+    var button = target.closest ? target.closest('button') : null;
+    if (!button) { return; }
+    var jump = button.getAttribute('data-jump');
+    if (jump) { goRound(jump, false); return; }
+    var action = button.getAttribute('data-action');
+    if (!action) { return; }
+    var section = roundOf(button);
+    if (action === 'add-point') { addPoint(section, null).querySelector('textarea').focus(); }
+    if (action === 'remove-point') {
+      var row = button.closest('.point');
+      row.parentNode.removeChild(row);
+      changed();
+    }
+    if (action === 'save-round') { saveFile(section); }
+    if (action === 'load-round') {
+      ui.round = section.getAttribute('data-round');
+      byId('load-round').click();
+    }
+    if (action === 'clear-round') {
+      twice(button, function () { clearSection(section); changed(); say(word('roundcleared')); });
+    }
+  });
+  window.addEventListener('beforeprint', beforePrint);
+  window.addEventListener('afterprint', afterPrint);
+  on('view-all', function () { setOne(false); });
+  on('view-one', function () { setOne(true); });
+  on('presenter', function () { ui.presenter = !ui.presenter; ui.step = 0; changed(); });
+  on('recs', function () { ui.recs = !ui.recs; changed(); });
+  on('lock', function () { ui.session = !ui.session; changed(); });
+  ['all', 'operator', 'room'].forEach(function (owner) {
+    on('f-' + owner, function () {
+      ui.owner = owner;
+      ui.step = 0;
+      var shown = applyFilter();
+      changed();
+      say(word('shown', { n: shown }));
+    });
+  });
+  on('theme', toggleTheme);
+  on('save', function () { saveFile(null); });
+  on('load-button', function () { byId('load').click(); });
+  on('print', function () { window.print(); });
+  on('clear', function () {
+    twice(byId('clear'), function () {
+      sections.forEach(clearSection);
+      changed();
+      say(word('cleared'));
+    });
+  });
+  on('prev', function () { move(-1); });
+  on('next', function () { move(1); });
+
+  restore();
+  applyTheme();
+  applyFilter();
+  show();
+  root.classList.add('ready');
+}());
+</script>
+</body>
+</html>

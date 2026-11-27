@@ -7175,10 +7175,10 @@ def slate_export(slate: dict | None = None, name: str | None = None,
     text, digest = slates.record_text(record), slates.record_digest(record)
     # A row is printed once per citation, so the page is bounded before it is built
     quoted = slates.quoted_size(record)
-    if quoted > slates.MAX_PAGE_CHARS or len(text) > slates.MAX_RECORD_BYTES:
+    if quoted > slates.MAX_PAGE_CHARS or len(text.encode()) > slates.MAX_RECORD_BYTES:  # R166
         return _err(f"the page would quote {quoted} characters of rows, and its record holds"
-                    f" {len(text)} (the caps are {slates.MAX_PAGE_CHARS} and"
-                    f" {slates.MAX_RECORD_BYTES}). Cite fewer rows, or cite a large row once"
+                    f" {len(text.encode())} bytes (the caps are {slates.MAX_PAGE_CHARS} characters and"
+                    f" {slates.MAX_RECORD_BYTES} bytes). Cite fewer rows, or cite a large row once"
                     " at its round. Nothing was written")
     if files["record"].is_file() and not replace:
         on_disk, err = _read_capped(files["record"], slates.MAX_RECORD_BYTES)

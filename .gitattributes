@@ -17,3 +17,6 @@ tests/standup_golden/*.html text eol=lf
 **/reports/*.html text eol=lf
 # plan 254: the study's files are named by sha256 in its hash tables, so they keep the bytes they were hashed with
 plans/evidence/scripts-254/** text eol=lf
+
+# Plan 257 (R153): the 6.8.0 slate files are a fixture written by a script; compared as bytes.
+tests/slate_compat_680/* -text

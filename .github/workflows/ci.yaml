@@ -5,8 +5,9 @@ name: CI
 # locally, so "passes locally != passes CI" cannot happen. check.py owns the gate
 # list (suites, structure lint, canonical form, eval-runner sample);
 # anything deterministic goes there, never here. All checks are stdlib (D-U3).
-# One job sits outside check.py on purpose: `standup-browser` (plan 251, ADR-0005) opens a
-# standup page in the runner's Chrome, because only a browser can run the page's one script.
+# Two jobs sit outside check.py on purpose: `standup-browser` (plan 251, ADR-0005) and
+# `slate-browser` (plan 257) open a page in the runner's Chrome, because only a browser can run
+# a page's one script and lay out its text.
 # Python floor is 3.10 per ASM-D (the MCP SDK's requires-python; 3.9 dropped —
 # see CHANGELOG).
 
@@ -66,6 +67,30 @@ jobs:
         run: |
           python tests/standup_browser_page.py "$RUNNER_TEMP/standup.html"
           node tests/run_standup_browser_check.mjs "$RUNNER_TEMP/standup.html" "$(command -v google-chrome)"
+
+  slate-browser:
+    # Plan 257 (R154): three of the field's defects were rendered ones: an intro that lost its
+    # line breaks, a long word that pushed a card past a phone's width, and recommendations
+    # hidden at open. A test of the page's text cannot see them. This job builds two interview
+    # pages (one with `show_recommendations`, one without), checks what the script DOES, and
+    # checks the layout at 390 px. A missing Chrome fails the job (exit 2).
+    name: Slate page in Chrome
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Build two pages and check them in Chrome
+        shell: bash
+        run: |
+          python tests/slate_browser_page.py "$RUNNER_TEMP/slate"
+          for page in plain keyed; do
+            node tests/run_slate_browser_check.mjs "$RUNNER_TEMP/slate/$page.html" "$(command -v google-chrome)"
+          done
 
   server-smoke:
     # The uv/PEP 723 launch path is the documented install story — smoke it for real:

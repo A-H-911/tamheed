@@ -576,6 +576,30 @@ def gate_lint() -> None:
           f" advisory {advisory_line}, allow markers={ste_markers},"
           f" pending {len(pending)} surfaces")
 
+    # 15) the slate caps (plan 257, R150): references/slate.md names every cap of the slate code with its value
+    #     - so an agent reads a cap before the export refuses a spec (the field met the 8000 cap
+    #     only as a refusal). A caps line is `| `<code name>` | <number> | ... |`. A cap of the
+    #     code that the table lacks, a value that differs, and a line for a cap the code does not
+    #     have all fail.
+    import slate as slate_code  # noqa: PLC0415
+    import slate_answers  # noqa: PLC0415
+    import slate_rows  # noqa: PLC0415
+    code_caps = (dict(slate_code.CAPS)
+                 | {n: v for n, v in vars(slate_code).items() if n.startswith("MAX_")}
+                 | {"MAX_NAMED": slate_rows.MAX_NAMED, "MAX_DROPPED": slate_answers.MAX_DROPPED})
+    slate_doc = (REPO / "plugins" / "tamheed" / "references" / "slate.md").read_text(encoding="utf-8")
+    doc_caps = {name: int(value) for name, value
+                in re.findall(r"^\| `([A-Za-z_]+)` \| (\d+) \|", slate_doc, re.M)}
+    cap_problems = ([f"{n}: the table lacks it (the code says {v})"
+                     for n, v in sorted(code_caps.items()) if n not in doc_caps]
+                    + [f"{n}: the table says {doc_caps[n]}, the code says {v}"
+                       for n, v in sorted(code_caps.items()) if n in doc_caps and doc_caps[n] != v]
+                    + [f"{n}: the code has no such cap" for n in sorted(set(doc_caps) - set(code_caps))])
+    if cap_problems:
+        fail("slate caps (plan 257): references/slate.md's caps table and the code differ:\n  "
+             + "\n  ".join(cap_problems))
+    print(f"lint: slate caps ({len(code_caps)} caps) match references/slate.md")
+
 
 def gate_canonical() -> None:
     sys.path.insert(0, str(REPO / "plugins" / "tamheed" / "db"))

@@ -12,11 +12,11 @@ from __future__ import annotations
 import json
 
 from export_html import esc
-from slate import EVIDENCE, OTHER, UNKNOWN
+from slate import EVIDENCE, MAX_ANSWER_TEXT, OTHER, UNKNOWN
 from slate_rows import TITLE_COLUMNS, name_of, title_of
 
 _LONG = 40                       # a text this long is shown as a paragraph of the quote
-_AREA = ' rows="2" dir="auto" autocomplete="off" maxlength="8000"'
+_AREA = f' rows="2" dir="auto" autocomplete="off" maxlength="{MAX_ANSWER_TEXT}"'   # the reader's cap
 
 
 class Page:
@@ -259,14 +259,14 @@ def _attendance_html(rnd: dict, page: Page) -> str:
             f'<option value="present">{esc(words["present"])}</option>'
             f'<option value="covered">{esc(words["covered"])}</option></select></label>'
             f'<input type="text" data-field="covered_by" name="cover:{rid}:{pid}" dir="auto"'
-            f' autocomplete="off" maxlength="8000" placeholder="{esc(words["covered_by"])}"'
+            f' autocomplete="off" maxlength="{MAX_ANSWER_TEXT}" placeholder="{esc(words["covered_by"])}"'
             f' aria-label="{esc(words["covered_by"])}"></div>\n')
     return ('<div class="attendance step oponly">\n'
             f'<p class="stepname">{esc(words["attendance"])}</p>\n'
             f'<p class="hint">{esc(words["presenter_note"])}</p>\n'
             f'<div class="attgrid">\n{"".join(rows)}</div>\n'
             f'<label class="wide">{esc(words["guests"])} <input type="text" data-field="guests"'
-            f' name="guests:{rid}" dir="auto" autocomplete="off" maxlength="8000"'
+            f' name="guests:{rid}" dir="auto" autocomplete="off" maxlength="{MAX_ANSWER_TEXT}"'
             f' placeholder="{esc(words["guests_hint"])}"></label>\n</div>\n')
 
 
@@ -329,7 +329,7 @@ def _closure_html(rnd: dict, page: Page) -> str:
             f'<p class="hint">{esc(words["presenter_note"])}</p>\n'
             f'<div class="closuregrid">\n{fields}</div>\n'
             f'<label>{esc(words["closed_by"])} <input type="text" data-field="closed_by"'
-            f' name="closed_by:{rid}" dir="auto" autocomplete="off" maxlength="8000"></label>\n'
+            f' name="closed_by:{rid}" dir="auto" autocomplete="off" maxlength="{MAX_ANSWER_TEXT}"></label>\n'
             f'<label class="check"><input type="checkbox" data-field="closed" name="closed:{rid}">'
             f' {esc(words["closed"])}</label>\n'
             '<div class="roundactions">\n'

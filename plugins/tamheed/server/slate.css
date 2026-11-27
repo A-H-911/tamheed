@@ -147,6 +147,11 @@ html.session:not(.presenter) section.round:not(.open-round) > :not(.roundtop) { 
 .hint { margin: 0 0 .8rem; color: var(--ink-2); font-size: .9rem; }
 .oponly .stepname { color: var(--op); }
 .roundhead .lead { margin: 0 0 .6rem; }
+/* R151 (plan 257): slate text keeps its line breaks, and a word too long for its line wraps
+   instead of pushing its card past the screen. The value `anywhere` also lets a card shrink
+   to fit, which `break-word` does not. The round list and the bar are outside the column. */
+.column { overflow-wrap: anywhere; }
+.pagehead .intro, .roundhead .lead, .recreason { white-space: pre-wrap; }
 fieldset.question.answered { border-color: var(--good); }
 /* a legend that floats is laid out inside the box, so a long question wraps and the
    border stays whole */

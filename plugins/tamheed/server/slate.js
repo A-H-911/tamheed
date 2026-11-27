@@ -13,7 +13,10 @@
   var KEY = 'tamheed-slate:' + document.URL.split('#')[0].split('?')[0];
   var FORMAT = 'tamheed-slate-answers';
   var VERSION = 2;
-  var ui = { presenter: false, recs: false, session: body.getAttribute('data-opens') === 'session',
+  /* R152 (plan 257): a slate with `show_recommendations` opens with them shown, at every open.
+     The button still hides them until the page is closed. No stored choice of them is read. */
+  var recsShown = body.getAttribute('data-recs') === 'shown';
+  var ui = { presenter: false, recs: recsShown, session: body.getAttribute('data-opens') === 'session',
              one: false, theme: '', owner: 'all', group: '', round: '', step: 0 };
   /* An id may be a name that every object inherits, such as `constructor`. A map that is
      keyed by an id has no prototype, so it holds only what was put into it. */
@@ -291,6 +294,7 @@
     }
     if (kept.ui && typeof kept.ui === 'object') {
       ['presenter', 'recs', 'session', 'one'].forEach(function (name) {
+        if (name === 'recs' && recsShown) { return; }
         if (typeof kept.ui[name] === 'boolean') { ui[name] = kept.ui[name]; }
       });
       ['theme', 'owner', 'group', 'round'].forEach(function (name) {

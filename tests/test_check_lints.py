@@ -215,6 +215,28 @@ class CheckLintsTest(unittest.TestCase):
         finally:
             p.unlink(); p.parent.rmdir()
 
+    def test_slate_caps_table_and_code_must_agree(self):
+        """Plan 257 (lint 15, R150): the field met a slate cap only as a refusal, because the
+        grammar named no cap. The caps table must hold every cap of the code with its value:
+        a stale value, a missing cap and a cap the code does not have each fail."""
+        rel = "plugins/tamheed/references/slate.md"
+        p = self.copy / rel
+        original = p.read_text(encoding="utf-8")
+        try:
+            for broken in (original.replace("| `detail` | 32000 |", "| `detail` | 8000 |"),
+                           original.replace("| `MAX_OPTIONS` | 12 | the options of a question |\n", ""),
+                           original.replace("| `MAX_POINTS` |", "| `MAX_WORDS` | 9 | x |\n| `MAX_POINTS` |")):
+                self.assertNotEqual(broken, original)
+                p.write_text(broken, encoding="utf-8")
+                code, out = self._lint()
+                self.assertEqual(code, 1, out[-400:])
+                self.assertIn("slate caps", out)
+        finally:
+            self._restore(rel)
+        code, out = self._lint()
+        self.assertIsNone(code, out)
+        self.assertIn("lint: slate caps", out)
+
     def test_blurred_binding_vocabulary_is_caught(self):
         """Plan 147 (lint 13, v5.5, R34): the bundle shipped two meanings of "binds" for
         three releases and no check saw it. The status binds; the note's roster is what

@@ -8,6 +8,35 @@ All notable changes to Tamheed are documented here. The format is based on
 > original repository (<https://github.com/A-H-911/keystone>). Tamheed carries Keystone's full git
 > history; the Keystone repository stays frozen at 1.0.x for existing v1 packages.
 
+## [Unreleased]
+
+The 6.9.0 field round (plans 256-263). The rulings R145-R170 are in
+`plans/256-field-round-6.9.0.md`.
+
+### Added
+- **A slate can open with its recommendations shown (plan 257, Jisr's FB-033).** The slate key
+  `show_recommendations: true` shows them in every view, at every open. The presenter's button
+  still hides them until the page is closed. The key is written into the record only when it is
+  set, so a record that 6.8.0 wrote still reads. The way back: 6.8.0 refuses a spec or a record
+  that holds the key, and a text over 8000 characters.
+- **The caps of a slate are listed in `references/slate.md` (plan 257, Jisr's FB-043).** Lint 15
+  keeps the table equal to the code.
+- **The CI job `slate-browser` (plan 257).** It builds two interview pages and checks them in
+  Chrome: the script, the recommendations at open, the line breaks of an intro, and the layout
+  at 390 px.
+
+### Changed
+- **A slate text holds more (plan 257, Jisr's FB-043).** The cap of an intro, of a question's
+  detail and of an option's detail is now 32,000 characters. It was 8000.
+- **Slate text keeps its line breaks, and a long word wraps (plan 257, Jisr's FB-032 and
+  FB-034).** An intro kept no line breaks before. A word with no place to break could push a card
+  past the width of a phone. At 1280 px no other element of the page moved.
+
+### Fixed
+- **The record cap of `slate_export` counts bytes (plan 257, R166).** It compared the record's
+  characters with a cap in bytes, while `slate_read` counts bytes. A record of Arabic text could
+  then be written and not read.
+
 ## [6.8.0] - 2026-11-18
 
 **MINOR — Jisr's FB-023 and FB-024, and the standup report as a delivery report (plans
