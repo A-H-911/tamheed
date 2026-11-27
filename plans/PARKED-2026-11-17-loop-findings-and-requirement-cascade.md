@@ -6,6 +6,12 @@
 > skills `standup`, `session-handoff` and `package-writes` (section 1), and adds `standup.js`: the Return
 > checklist's `git diff 7d5a028..HEAD` will show them.
 
+> **Dated note, 2026-11-27 (the 6.9.0 round, plans 256-263).** That round takes 6.9.0 and the plan
+> numbers 256-263, and its ADR is **ADR-0007** (R163). This plan therefore moves to **6.10.0**. It keeps
+> migration 013 and **ADR-0006** (R145). The round changes `tamheed_server.py` (entity_upsert, the
+> readiness rules), the slate files, and the skills `package-writes`, `orient-resume`, `slice-kickoff`
+> and `operator-interview`: the Return checklist's `git diff 7d5a028..HEAD` will show them.
+
 > **THIS EXIT FROM PLAN MODE APPROVES THE PARKING STEPS ONLY — NOTHING FROM THE PLAN BELOW.**
 > The parking steps (operator's choices, 2026-11-17):
 > 1. Copy this file, verbatim, to
