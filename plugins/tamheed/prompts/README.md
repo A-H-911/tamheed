@@ -1,4 +1,4 @@
-# How to use this package — the `{package}` operator guide (tamheed v6.8.0)
+# How to use this package — the `{package}` operator guide (tamheed v6.9.0)
 
 This guide sits at the root of the `{package}` Tamheed package. Since v5.0.0 the stock
 scenarios are not files. They are the tamheed plugin's **slash skills**, `/tamheed:<name>`,
@@ -211,7 +211,7 @@ absence from `changed_columns` proves it. The recipe needs no `expect_unchanged`
 a column the row does not carry is refused, and the engine journals the move. A local-tool row
 is a register: it never resolves.
 
-**Fidelity and edges.** Apply `expect_unchanged` to every long row regardless of size.
+**Fidelity and edges.** Apply `expect_unchanged` to every long row you update, regardless of size. For a new row, send `sha256: true` and compare each hash with your source.
 Transcription fidelity does not degrade with length. Before recording a premise as untestable,
 list the instruments. The SOURCE that generates an output is one, and an output-versus-output
 frame hides it. A scope change that touches a RULING carries an `amends` edge (DEC-: merged by

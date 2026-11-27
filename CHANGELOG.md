@@ -8,10 +8,17 @@ All notable changes to Tamheed are documented here. The format is based on
 > original repository (<https://github.com/A-H-911/keystone>). Tamheed carries Keystone's full git
 > history; the Keystone repository stays frozen at 1.0.x for existing v1 packages.
 
-## [Unreleased]
+## [6.9.0] - 2026-11-27
 
-The 6.9.0 field round (plans 256-263). The rulings R145-R170 are in
-`plans/256-field-round-6.9.0.md`.
+**MINOR — the field round after 6.8.0: ACMP's FB-034 to FB-037, and Jisr's FB-025, FB-029,
+FB-032, FB-033, FB-034, FB-043 and FB-044 (plans 256–263, ADR-0007).** The rulings R145–R170
+are in `plans/256-field-round-6.9.0.md`.
+
+**For a live package.** Update the plugin and start the client again. No migration is needed:
+no table or column changed. Run `handoff_emit(<repository root>, refresh_stock=true)` (the stock
+guide and the note's table of obligations changed) and `export_html()`. The way back to 6.8.0:
+the plugin goes back alone, except that 6.8.0 refuses a slate spec or record that holds
+`show_recommendations` or a text over 8000 characters. 6.8.0 ignores a family's declaration.
 
 ### Added
 - **A slate can open with its recommendations shown (plan 257, Jisr's FB-033).** The slate key
