@@ -924,6 +924,135 @@ def _glued_match(text: str, old: str) -> str | None:
     return None
 
 
+# --------------------------------------------------------------------------- family declarations
+
+# Plan 261 (Jisr's FB-025 b, R156, R163, R165, ADR-0007): a family's registry row may declare
+# fields of its rows' `custom_attributes`, in the register grammar (name, values, refs,
+# required). The declaration lands only on the operator's word. A write that sets
+# `custom_attributes` is checked against it. Undeclared keys stay free, and `required` is
+# never enforced at write: the advisory `declared-attributes` lists the rows that lack a
+# required key or break the declaration.
+_UNDECLARABLE = {
+    "register": "a register has its own declaration: the fields of its entries",
+    "register-entry": "an entry is checked against its register, which has its own declaration",
+    "progress-entry": "the journal is a record and is never graded",
+    "audit-verdict": "the journal is a record and is never graded",
+    "standup-report": "standup reports are written by standup_report only",
+}
+_ENTITY_TYPE_KEYS = frozenset({"type", "type_id", "custom_attributes", "operator_confirm"})
+
+
+def _family_fields(conn, etype: str) -> list | None:
+    """The fields that a family's registry row declares, or None when it declares none."""
+    row = conn.execute("SELECT custom_attributes FROM entity_types WHERE type_id = ?",
+                       (etype,)).fetchone()
+    if row is None:
+        return None
+    fields = (_attrs(row[0]) or {}).get("fields")
+    return fields if isinstance(fields, list) and fields else None
+
+
+def _write_entity_type(conn, i: int, item: dict) -> dict:
+    """A family's declaration: `{"type": "entity-type", "type_id": <family>, "custom_attributes":
+    {"fields": [...]} or null, "operator_confirm": true}`. Only `custom_attributes` is
+    writable. The label, the prefix and the class are the engine's. The write is journaled by
+    the engine (system:declaration), as the other writes on the operator's word are."""
+    tid = item.get("type_id")
+    rid = tid if isinstance(tid, str) else None
+
+    def refuse(message: str) -> dict:
+        return {"index": i, "ok": False, "id": rid, "error": message}
+
+    if extra := sorted(str(k) for k in set(item) - _ENTITY_TYPE_KEYS):
+        return refuse(f"an entity-type item takes only type, type_id, custom_attributes and"
+                      f" operator_confirm, not {extra}. A family's label, prefix and class are"
+                      " the engine's")
+    if rid is None or conn.execute("SELECT 1 FROM entity_types WHERE type_id = ?",
+                                   (rid,)).fetchone() is None:
+        return refuse(f"no such entity type {tid!r} in this package's registry")
+    if rid in _UNDECLARABLE:
+        return refuse(f"{rid}: {_UNDECLARABLE[rid]}. A family declaration is refused for it")
+    table = ENTITY_TABLES.get(rid)
+    family_columns = _columns(table) if table else []
+    if "custom_attributes" not in family_columns:
+        return refuse(f"{rid} has no custom_attributes column, so it takes no declaration")
+    if "custom_attributes" not in item:
+        return refuse("send custom_attributes: {\"fields\": [...]}, or null to clear the"
+                      " declaration")
+    raw = item["custom_attributes"]
+    attrs = None if raw is None else _attrs(raw)
+    if raw is not None:
+        if err := _declaration_error(attrs, frozenset(family_columns), "a family", "the family"):
+            return refuse(f"{rid}: {err}")
+    if not _operator_word(item):
+        return refuse(f"a declaration constrains every later write of the {rid} family, so it"
+                      " lands only on the OPERATOR's word. Re-run this item with"
+                      " \"operator_confirm\": true after their explicit confirmation")
+    names = [f["name"] for f in attrs["fields"]] if attrs else []
+    conn.execute(f"SAVEPOINT item{i}")
+    try:
+        conn.execute("UPDATE entity_types SET custom_attributes = ? WHERE type_id = ?",
+                     (None if attrs is None else json.dumps(attrs, ensure_ascii=False), rid))
+        pe_id = _next_id("PE-", "progress_entries")
+        conn.execute(
+            "INSERT INTO progress_entries (id, event_type, entry, actor, occurred_at)"
+            " VALUES (?, ?, ?, ?, ?)",
+            (pe_id, "note",
+             f"DECLARED: the {rid} family's custom_attributes fields -> "
+             + (", ".join(names) if names else "none (the declaration is cleared)")
+             + (f" {json.dumps(attrs['fields'], ensure_ascii=False)[:2000]}" if names else "")
+             + " on the operator's word. operator_confirm attested",
+             "system:declaration", _now()))
+        conn.execute(f"RELEASE item{i}")
+    except Exception as exc:
+        conn.execute(f"ROLLBACK TO item{i}")
+        return refuse(str(exc))
+    return {"index": i, "ok": True, "id": rid, "write": "updated", "declared": names,
+            "declaration_audit": pe_id}
+
+
+def _declared_problems(conn, etype: str, cols: dict) -> list[str]:
+    """Why a write's `custom_attributes` breaks its family's declaration ([] when it fits, or
+    when the family declares nothing). Undeclared keys are free and `required` is skipped."""
+    fields = _family_fields(conn, etype)
+    if not fields:
+        return []
+    raw = cols.get("custom_attributes")
+    attrs = {} if raw is None else _attrs(raw)
+    if attrs is None:
+        return ["custom_attributes is not a JSON object"]
+    return _entry_problems(fields, attrs, _KnownIds(conn), allow_undeclared=True,
+                           skip_required=True)
+
+
+def _declared_breaches(conn) -> tuple[dict, dict, int, list]:
+    """({row id: [problems]}, {family: count}, rows read, the tables read) for every live row
+    that its family's CURRENT declaration does not admit. Required fields count here. A
+    declaration can change after rows exist, so this reads every declared family."""
+    known, out, counts, read, tables = _KnownIds(conn), {}, {}, 0, []
+    for etype, raw in conn.execute("SELECT type_id, custom_attributes FROM entity_types"
+                                   " WHERE custom_attributes IS NOT NULL ORDER BY type_id"):
+        fields = (_attrs(raw) or {}).get("fields")
+        table = ENTITY_TABLES.get(etype)
+        if not isinstance(fields, list) or not fields or table is None:
+            continue
+        live = (f" WHERE {_LIVE_ROWS}" if "lifecycle_status" in _columns(table) else "")
+        tables.append(table)
+        for rid, value in conn.execute(f"SELECT id, custom_attributes FROM {table}{live}"
+                                       f" ORDER BY {_by_id()}"):
+            read += 1
+            attrs = {} if value is None else _attrs(value)
+            problems = (["custom_attributes is not a JSON object"] if attrs is None
+                        else _entry_problems(fields, attrs, known, allow_undeclared=True))
+            if problems:
+                out[rid] = problems
+                counts[etype] = counts.get(etype, 0) + 1
+    return out, counts, read, tables
+
+
+_DECLARED_PROBLEMS_CAP = 50   # the rows whose causes the advisory spells out; `counts` has all
+
+
 def _materialize_substitute(conn, etype: str, table: str, item: dict,
                             cols: dict) -> tuple[dict, str | None, dict[str, int] | None]:
     """Plan 095: turn `{"type", "id", "substitute": {col: [old, new]}}` into the FULL
@@ -2152,11 +2281,13 @@ def _no_constant(name: str):
     raise ValueError(f"{name} is not a JSON value")
 
 
-def _declaration_error(attrs: dict | None) -> str | None:
-    """Why a register's declaration is malformed, or None."""
+def _declaration_error(attrs: dict | None, reserved: frozenset = _REGISTER_ENTRY_COLUMNS,
+                       owner: str = "a register", column_of: str = "the entry") -> str | None:
+    """Why a declaration is malformed, or None. A register's, by default. Plan 261: a family's
+    declaration passes its own column names and words."""
     fields = attrs.get("fields") if isinstance(attrs, dict) else None
     if not isinstance(fields, list):
-        return ("a register declares its fields. Send custom_attributes {\"fields\": [...]}: a"
+        return (f"{owner} declares its fields. Send custom_attributes {{\"fields\": [...]}}: a"
                 " list of {name, required?, values?, refs?}. An empty list declares no field")
     seen = set()
     for n, field in enumerate(fields):
@@ -2169,8 +2300,8 @@ def _declaration_error(attrs: dict | None) -> str | None:
                     f" {', '.join(_REGISTER_FIELD_KEYS)}")
         if name in seen:
             return f"the field {name!r} is declared twice"
-        if name in _REGISTER_ENTRY_COLUMNS:
-            return (f"the field {name!r} takes the name of a column of the entry. Use the"
+        if name in reserved:
+            return (f"the field {name!r} takes the name of a column of {column_of}. Use the"
                     " column, or choose another name")
         seen.add(name)
         for flag in ("required", "refs"):
@@ -2205,7 +2336,8 @@ def _same_json(a, b) -> bool:
         return False
 
 
-def _entry_problems(fields: list, values: dict, known_ids) -> list[str]:
+def _entry_problems(fields: list, values: dict, known_ids, allow_undeclared: bool = False,
+                    skip_required: bool = False) -> list[str]:
     """Every way an entry's values break its register's declaration. `known_ids` answers
     `id in known_ids`. A field is REQUIRED when its key must be present and not null: an
     empty list, false and 0 are values. A value set is all text or all true and false, and
@@ -2216,14 +2348,14 @@ def _entry_problems(fields: list, values: dict, known_ids) -> list[str]:
     # one. So this reads defensively: a field with no text name is not a field.
     declared = {f["name"]: f for f in fields
                 if isinstance(f, dict) and isinstance(f.get("name"), str)}
-    undeclared = [key for key in values if key not in declared]
+    undeclared = [] if allow_undeclared else [key for key in values if key not in declared]
     problems = [f"`{key}` is not a declared field" for key in undeclared[:5]]
     if len(undeclared) > 5:                                   # capped, as the references are
         problems.append(f"{len(undeclared) - 5} more keys are not declared fields")
     for name, field in declared.items():
         value = values.get(name)
         if value is None:
-            if field.get("required"):
+            if field.get("required") and not skip_required:
                 problems.append(f"`{name}` is required")
             continue
         allowed = field.get("values")
@@ -2426,12 +2558,20 @@ def entity_upsert(entities: list[dict]) -> dict:
             results.append(res)
             failed = failed or not res["ok"]
             continue
+        if etype == "entity-type":
+            # Plan 261 (R156): a family's declaration, on the operator's word. Never a family
+            # itself: no table of its own, no CSV, no index (the registry sync lint holds)
+            res = _write_entity_type(conn, i, item)
+            results.append(res)
+            failed = failed or not res["ok"]
+            continue
         table = ENTITY_TABLES.get(etype)
         if table is None:
             results.append({"index": i, "ok": False,
                             "error": f"unknown entity type {etype!r} — one of: "
                                      f"{', '.join(sorted(ENTITY_TABLES))}"
-                                     " (the header row is written as type 'package')"})
+                                     " (the header row is written as type 'package', and a"
+                                     " family's declaration as type 'entity-type')"})
             failed = True
             continue
         if etype == "standup-report":
@@ -2575,6 +2715,20 @@ def entity_upsert(entities: list[dict]) -> dict:
                 results.append({"index": i, "ok": False, "id": cols.get("id"), "error": err})
                 failed = True
                 continue
+        # Plan 261 (R156, R165): judged only when the write SETS custom_attributes. A
+        # materialized substitute on another column, or a full row that omits it, leaves the
+        # stored value, and so never fails on an old row (the register guard's model).
+        sets_attrs = ("custom_attributes" in item or merged is not None
+                      or "custom_attributes" in (item.get("substitute") or {}))
+        if sets_attrs and (problems := _declared_problems(conn, etype, cols)):
+            results.append({"index": i, "ok": False, "id": cols.get("id"),
+                            "error": f"{cols.get('id')}: custom_attributes breaks what the {etype}"
+                                     " family declares. " + ". ".join(problems)
+                                     + ". Correct the value, send the row without"
+                                     " custom_attributes, or change the declaration on the"
+                                     " operator's word"})
+            failed = True
+            continue
         forced_note = None
         if (etype in ("phase", "slice") and cols.get("id")
                 and cols.get("lifecycle_status") == "Implemented"):
@@ -4119,6 +4273,26 @@ def _readiness_report(conn, scope: str, scope_id: str | None) -> dict:
                  " `problems` names the cause per entry. Correct the entry, or change"
                  " the declaration on the operator's word. A retired entry is not read")
             rules[-1]["problems"] = nonconforming
+        # Plan 261 (R156, D13): a family's declaration can come after its rows. Emitted only
+        # when the package HAS a declaration. `required` counts here, never at write.
+        if conn.execute("SELECT 1 FROM entity_types WHERE custom_attributes IS NOT NULL"
+                        " LIMIT 1").fetchone():
+            breaches, per_family, read, tables = _declared_breaches(conn)
+            rule("declared-attributes", "advisory", list(breaches),
+                 "rows whose custom_attributes break what their family declares: a missing"
+                 " required field, a value outside the declared set, a reference that names no"
+                 " row. `problems` names the cause for the first 50 rows, and `counts` gives"
+                 " each family's total. Correct a row with merge_attributes, or change the"
+                 " declaration on the operator's word. A retired row is not read")
+            rules[-1]["problems"] = dict(list(breaches.items())[:_DECLARED_PROBLEMS_CAP])
+            rules[-1]["counts"] = per_family
+            # several tables, so the population is set here, not by `measured`: a declaration
+            # over no live row measured nothing, and a pass would not say so (plan 077)
+            rules[-1]["population"] = {"table": ", ".join(tables), "rows": read, "scoped": False}
+            if read == 0:
+                rules[-1]["status"] = "indeterminate"
+                rules[-1]["note"] += (" No live row of a declared family exists yet, so this"
+                                      " rule measured nothing")
         # Plan 241 (the field's FB-020, R127, R130): work that is free to start. An open row
         # whose every `blocked_by` far end is settled, by the one definition the standup list
         # reads (standup_facts.settled_ids). Emitted only when the package HAS such an edge,
@@ -6619,6 +6793,10 @@ def server_info(detail: bool = False) -> dict:
         out["entity_types"] = [
             {"type": t, "table": table, "id_prefix": prefixes.get(t)}
             for t, table in sorted(ENTITY_TABLES.items())]
+        if _CURRENT is not None:              # plan 261: a family's declaration, when it has one
+            for entry in out["entity_types"]:
+                if fields := _family_fields(_CURRENT.conn, entry["type"]):
+                    entry["declared"] = fields
         out["relation_rules"] = {
             rel: ({"from": rule, "to": rule} if isinstance(rule, str) else
                   {"from": sorted(rule[0]), "to": sorted(rule[1])})

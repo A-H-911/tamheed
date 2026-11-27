@@ -102,7 +102,9 @@ three tiers (engine / judgment / warn) synced against this file in both directio
   feedback row until `resolved_in` is set. Like `waivers-open-ended` it exists only when the package
   has rows of that family. `register-entries-conform` (v6.5) lists the live register
   entries that the current declaration of their register does not admit. It exists only when
-  the package has a register. `blocks-lifted` (v6.7) lists open rows whose every
+  the package has a register. `declared-attributes` (v6.9) lists the live rows that break what
+  their family declares. A required field counts there, never at write. It exists only when a
+  family declares fields. `blocks-lifted` (v6.7) lists open rows whose every
   `blocked_by` blocker is settled: work that is free to start. It exists only when the
   package has a `blocked_by` edge, and the edge stays as history. Since v4.12 `review.html` renders this report too, evaluated as of its
   export date.

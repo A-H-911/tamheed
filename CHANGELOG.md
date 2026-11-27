@@ -43,6 +43,11 @@ The 6.9.0 field round (plans 256-263). The rulings R145-R170 are in
 - **`package-writes` section 1 no longer calls JSON inside `custom_attributes` a refusal of
   `substitute` (plan 260).** A substitute inside a value works. The refusal is of a result that
   breaks the JSON.
+- **A family can declare fields of its rows' `custom_attributes` (plan 261, Jisr's FB-025,
+  ADR-0007).** An `entity-type` item writes the declaration on the operator's word, in the
+  register grammar. A write that sets `custom_attributes` is then checked. Undeclared keys stay
+  free, and `required` is never enforced at write. The new advisory `declared-attributes` lists
+  the rows that break the declaration. It exists only when a family declares fields.
 
 ### Changed (the refusals)
 - **Every refusal of an unknown column names the columns that the call takes (plan 258, ACMP's

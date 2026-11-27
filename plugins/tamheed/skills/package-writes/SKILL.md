@@ -220,7 +220,8 @@ id resolves, and the damage stays until someone reads it.
 
 The project keeps a record type that no family holds. Do not store it as dependency,
 open-question or section rows with the fields in `custom_attributes`. Nothing checks such
-fields, and the rows fill a register that means something else.
+fields there, and the rows fill a register that means something else. A key that a family's
+own rows carry is another case: declare it on the family (`references/governance.md`).
 
 1. Write one `register` row (`REG-`). Declare its fields under `custom_attributes.fields`, as
    `references/governance.md` (Project registers) defines them.

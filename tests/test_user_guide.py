@@ -140,7 +140,7 @@ class UserGuideTest(unittest.TestCase):
             kind, where = diagrams.GATE_HOW[g]
             if kind == "view":
                 self.assertIn(f"CREATE VIEW {where}", schema, g)
-                lines.append(3577)
+                lines.append(3731)
             else:
                 self.assertIn(f'"{g}"', src[where - 1], (g, where))
                 lines.append(where)
@@ -164,9 +164,9 @@ class UserGuideTest(unittest.TestCase):
             self.assertTrue(set(t["tokens"]) <= tools | {"STOP"}, n)
         self.assertTrue(any(t["tokens"] for t in st.values()))
         src = extract.SERVER_SRC.split("\n")
-        self.assertIn("lesson-confirmed", src[2716])
-        self.assertIn("lesson-promoted", src[2717])
-        self.assertIn("'Superseded'", src[3001] + src[3002])      # the successor retires the old lessons
+        self.assertIn("lesson-confirmed", src[2870])
+        self.assertIn("lesson-promoted", src[2871])
+        self.assertIn("'Superseded'", src[3155] + src[3156])      # the successor retires the old lessons
         rules = {r["rule"] for sc in self.facts["rules"].values() for r in sc}
         self.assertTrue({"lessons-confirmed", "lessons-stranded", "lessons-superseded-binding"} <= rules)
         self.assertEqual(self.facts["lifecycles"]["domain"]["skills"], ["Approved", "Superseded", "Obsolete"])
@@ -191,7 +191,7 @@ class UserGuideTest(unittest.TestCase):
         live = [r["rule"] for r in srv.readiness_check("package")["rules"]]
         self.assertEqual(live, [r["rule"] for r in static["package"] if not r["conditional"]])
         self.assertEqual(sorted(r["rule"] for r in static["package"] if r["conditional"]),
-                         ["blocks-lifted", "feedback-unanswered", "handoff-repeated", "lessons-stranded",
+                         ["blocks-lifted", "declared-attributes", "feedback-unanswered", "handoff-repeated", "lessons-stranded",
                           "register-entries-conform", "waivers-open-ended"])
         up = srv.entity_upsert([
             {"type": "phase", "id": "PH-1", "title": "P", "lifecycle_status": "Approved"},

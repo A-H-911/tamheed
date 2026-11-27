@@ -202,7 +202,12 @@ is the only wrong answer.
     `blocked_by` edge. `lifted` names the settled blockers of each row. The edge stays as
     history: never retire it. Start the work, or record what it now waits on as a new
     edge. A deliberate wait is a `WVR-` row, on the operator's word.
-25. Close the sweep: `progress_update([{"entry": "liveness sweep: <per-family tally:
+25. **Rows that break a family declaration** (`declared-attributes`, v6.9): the live rows whose
+    `custom_attributes` break what their family declares. The rule is emitted only when a
+    family declares fields. `problems` names the cause for the first 50 rows, and `counts`
+    gives each family's total. Correct a row with `merge_attributes`. Change a declaration
+    only on the operator's word.
+26. Close the sweep: `progress_update([{"entry": "liveness sweep: <per-family tally:
     resolved / carried / escalated / awaiting operator>", "event_type": "note",
     "actor": "agent:<session>"}])`, then `readiness_check("package")` again and report
     the advisory delta plus everything now awaiting operator words (promotions,

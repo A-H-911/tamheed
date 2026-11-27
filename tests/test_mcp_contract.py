@@ -8246,5 +8246,149 @@ class MergeAttributesTest(unittest.TestCase):
         self.assertTrue(ok["ok"], ok)
 
 
+class DeclaredAttributesTest(unittest.TestCase):
+    """Plan 261 (Jisr's FB-025 b, R156, R163, R165, D5, D6, D13, ADR-0007): a family's registry
+    row declares fields of its `custom_attributes` in the register grammar, on the operator's
+    word. A write that sets `custom_attributes` is checked against the declaration. Undeclared
+    keys stay free, and `required` is advisory only: the conditional rule `declared-attributes`
+    lists the rows that lack a required key or break the declaration."""
+
+    LAYER = {"fields": [
+        {"name": "layer", "required": True,
+         "values": ["product", "twk-setup", "migration", "project"]},
+        {"name": "owner_ref", "refs": True}]}
+
+    def setUp(self):
+        self._tmp = tempfile.TemporaryDirectory()
+        srv.PACKAGE_ROOT = Path(self._tmp.name)
+        self.assertTrue(srv.package_create("demo", "Demo", "rnd")["ok"])
+        self.assertTrue(srv.entity_upsert([
+            {"type": "stakeholder", "id": "STK-001", "title": "Operator"},
+            {"type": "decision", "id": "DEC-001", "title": "one", "lifecycle_status": "Proposed",
+             "custom_attributes": {"layer": "product"}},
+            {"type": "decision", "id": "DEC-002", "title": "a mistyped layer",
+             "lifecycle_status": "Proposed", "custom_attributes": {"layer": "prodct"}},
+            {"type": "decision", "id": "DEC-003", "title": "no layer",
+             "lifecycle_status": "Proposed"}])["ok"])
+
+    def tearDown(self):
+        if srv._CURRENT is not None:
+            srv.package_close()
+        self._tmp.cleanup()
+
+    def _declare(self, type_id="decision", attrs=None, **extra) -> dict:
+        item = {"type": "entity-type", "type_id": type_id,
+                "custom_attributes": self.LAYER if attrs is None else attrs,
+                "operator_confirm": True} | extra
+        return srv.entity_upsert([item])["items"][0]
+
+    def _write(self, **cols) -> dict:
+        row = {"type": "decision", "id": "DEC-009", "title": "t", "lifecycle_status": "Proposed"}
+        return srv.entity_upsert([row | cols])["items"][0]
+
+    def _rule(self):
+        return next((r for r in srv.readiness_check("package")["rules"]
+                     if r["rule"] == "declared-attributes"), None)
+
+    def test_a_declaration_needs_the_operators_word_and_is_journaled(self):
+        self.assertIsNone(self._rule())                    # conditional: nothing declared yet
+        out = self._declare(operator_confirm=None)
+        self.assertFalse(out["ok"], out)
+        self.assertIn("operator", out["error"])
+        out = self._declare()
+        self.assertTrue(out["ok"], out)
+        self.assertEqual(out["declared"], ["layer", "owner_ref"])
+        journal = srv.entity_query("progress-entry", ids=[out["declaration_audit"]])["rows"][0]
+        self.assertEqual(journal["actor"], "system:declaration")
+        self.assertIn("decision", journal["entry"])
+        detail = {t["type"]: t for t in srv.server_info(detail=True)["entity_types"]}
+        self.assertEqual(detail["decision"]["declared"], self.LAYER["fields"])
+        self.assertNotIn("declared", detail["risk"])
+
+    def test_a_value_outside_the_set_and_a_dangling_ref_are_refused_at_write(self):
+        self.assertTrue(self._declare()["ok"])
+        bad = self._write(custom_attributes={"layer": "prodct"})
+        self.assertIn("`layer` 'prodct' is not one of: product, twk-setup, migration, project",
+                      bad["error"])
+        self.assertIn("the decision family declares", bad["error"])
+        self.assertIn("names no row: STK-999",
+                      self._write(custom_attributes={"layer": "product",
+                                                     "owner_ref": "STK-999"})["error"])
+        self.assertIn("not a JSON object", self._write(custom_attributes="plain text")["error"])
+        free = self._write(custom_attributes={"layer": "product", "note": "an undeclared key"})
+        self.assertTrue(free["ok"], free)                 # undeclared keys stay free
+        missing = self._write(custom_attributes={"note": "no layer"})
+        self.assertTrue(missing["ok"], missing)           # required is advisory, never at write
+        merged = srv.entity_upsert([{"type": "decision", "id": "DEC-001",
+                                     "merge_attributes": {"layer": "nope"}}])["items"][0]
+        self.assertIn("`layer` 'nope' is not one of", merged["error"])
+
+    def test_a_row_that_breaks_a_new_declaration_is_listed_and_still_writable(self):
+        self.assertTrue(self._declare()["ok"])
+        rule = self._rule()
+        self.assertEqual(rule["severity"], "advisory")
+        self.assertEqual(sorted(rule["entities"]), ["DEC-002", "DEC-003"])
+        self.assertIn("is not one of", " ".join(rule["problems"]["DEC-002"]))
+        self.assertEqual(rule["problems"]["DEC-003"], ["`layer` is required"])
+        # a write that does not set custom_attributes is never judged
+        sub = srv.entity_upsert([{"type": "decision", "id": "DEC-002",
+                                  "substitute": {"title": ["mistyped", "wrong"]}}])["items"][0]
+        self.assertTrue(sub["ok"], sub)
+        plain = srv.entity_upsert([{"type": "decision", "id": "DEC-002", "title": "t2",
+                                    "lifecycle_status": "Proposed"}])["items"][0]
+        self.assertTrue(plain["ok"], plain)
+        fixed = srv.entity_upsert([{"type": "decision", "id": "DEC-002",
+                                    "merge_attributes": {"layer": "product"}}])["items"][0]
+        self.assertTrue(fixed["ok"], fixed)
+        self.assertEqual(self._rule()["entities"], ["DEC-003"])
+
+    def test_a_declaration_in_the_same_batch_counts(self):
+        out = srv.entity_upsert([
+            {"type": "entity-type", "type_id": "risk", "operator_confirm": True,
+             "custom_attributes": {"fields": [{"name": "area", "values": ["a", "b"]}]}},
+            {"type": "risk", "id": "RISK-001", "title": "r", "probability": "low",
+             "impact": "low", "custom_attributes": {"area": "c"}}])
+        self.assertFalse(out["ok"], out)
+        self.assertIn("`area` 'c' is not one of: a, b", out["items"][1]["error"])
+
+    def test_what_a_declaration_refuses(self):
+        cases = [
+            (self._declare(type_id="register"), "has its own declaration"),
+            (self._declare(type_id="register-entry"), "has its own declaration"),
+            (self._declare(type_id="progress-entry"), "the journal"),
+            (self._declare(type_id="standup-report"), "standup"),
+            (self._declare(type_id="trace-edge"), "no such entity type"),   # write-only, no registry row
+            (self._declare(type_id="nope"), "no such entity type"),
+            (self._declare(label="New label"), "takes only type, type_id, custom_attributes"),
+            (self._declare(attrs={"fields": [{"name": "title"}]}), "a column of the family"),
+            (self._declare(attrs={"fields": "layer"}), "declares its fields"),
+            (self._declare(attrs={"fields": [{"name": "x", "values": []}]}), "non-empty list"),
+        ]
+        for out, needle in cases:
+            self.assertFalse(out["ok"], (needle, out))
+            self.assertIn(needle, out["error"], needle)
+
+    def test_a_declaration_over_no_row_measured_nothing(self):
+        """The code review of plan 261: a declared family with no live row reads indeterminate,
+        as an empty register does, and the journal row records what the fields allow."""
+        out = self._declare(type_id="risk", attrs={"fields": [{"name": "area", "values": ["a"]}]})
+        self.assertTrue(out["ok"], out)
+        rule = self._rule()
+        self.assertEqual((rule["status"], rule["population"]["rows"]), ("indeterminate", 0))
+        entry = srv.entity_query("progress-entry", ids=[out["declaration_audit"]])["rows"][0]
+        self.assertIn('"values": ["a"]', entry["entry"])
+        self.assertTrue(self._declare()["ok"])               # decisions exist: measured
+        self.assertEqual(self._rule()["status"], "fail")
+
+    def test_a_declaration_survives_a_reopen_and_can_be_cleared(self):
+        self.assertTrue(self._declare()["ok"])
+        srv.package_close()
+        self.assertTrue(srv.package_open("demo")["ok"])
+        self.assertIn("is not one of", self._write(custom_attributes={"layer": "x"})["error"])
+        self.assertTrue(self._declare(attrs=None, custom_attributes=None)["ok"])   # cleared
+        self.assertTrue(self._write(custom_attributes={"layer": "x"})["ok"])
+        self.assertIsNone(self._rule())
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)

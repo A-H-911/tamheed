@@ -51,3 +51,15 @@ No finding.
 | Words | Section 1 says a substitute inside a value works and a result that breaks the JSON is refused. That matches `_materialize_substitute` |
 
 No finding.
+
+## Beat 261: a family's declaration
+
+| Check | Finding |
+|---|---|
+| SQL | `_write_entity_type` binds the type id and the value. `_declared_breaches` interpolates a table from `ENTITY_TABLES`, never the stored type id, and `_LIVE_ROWS` (a constant) |
+| Echoed data | A refusal names the declared field, the value the caller sent and the set, all from the caller's own write or the declaration. The advisory names row ids and causes, capped at 50 rows |
+| Guards | The declaration needs the operator's JSON `true` (`_operator_word`), and the engine journals it as `system:declaration` in the item's savepoint. A caller cannot write a `system:` actor. The check at write only adds refusals. A write that does not set `custom_attributes` is never judged, so a declaration cannot lock an old row. `required` is never enforced at write. The four families with their own rules take no declaration |
+| Cost | One indexed SELECT for each item of a declared family. The advisory reads every live row of each declared family once, and checks a reference with one indexed lookup |
+| Words | The governance section, the ADR and SECURITY.md say the operator's word, the journal, the free undeclared keys and the advisory-only `required`. That matches the engine. `package_migrate`'s registry sync only appends missing types (`:5846`, read, not tested), so it keeps a declaration |
+
+No finding.

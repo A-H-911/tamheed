@@ -115,6 +115,10 @@ the trust model and how to report a problem.
   NAMES `go_no_go` without `operator_confirm` (v4.13: presence-checked, so a refusal probe can fail).
   It journals a real move by `system:package-guard`, and writes no audit row for an attested re-send of
   the same verdict. Identity columns are frozen.
+- **A family's declaration is the operator's.** `entity_upsert(type="entity-type")` refuses a
+  declaration without `operator_confirm`, because it constrains every later write of the family
+  (v6.9, ADR-0007). The engine journals it by `system:declaration`. Only the registry row's
+  `custom_attributes` is writable, and a stray key is refused by name.
 - **Every engine-written journal row is signed `system:<component>`.** `work_bind`'s was the one
   anonymous row (found in the field's journal, v4.13). A caller can never write a `system:` actor.
   v5.2 closes the last unwitnessed move. A skill row's status change and its retirement pointer

@@ -243,6 +243,31 @@ its columns are the declared fields.
 A package written before v6.5 does not know the two families. The write then names the route:
 `package_migrate`, whose staged registry-sync teaches the package both.
 
+## Family declarations — declared fields on a built-in family (v6.9)
+
+A project can give the rows of a built-in family a key of its own, such as a `layer` on
+decisions. To check its values, declare it on the family's registry row:
+
+```json
+{"type": "entity-type", "type_id": "decision", "operator_confirm": true,
+ "custom_attributes": {"fields": [{"name": "layer", "required": true,
+   "values": ["product", "migration"]}]}}
+```
+
+The fields use the register grammar above: `name`, `required`, `values`, `refs`. A field never
+takes the name of a column of the family. The declaration lands only on the operator's word,
+because it constrains every later write of the family. The engine journals it
+(`system:declaration`). `custom_attributes: null` clears it. Registers, register entries, the
+journal and standup reports take no declaration.
+
+A write that SETS a row's `custom_attributes` is checked: the caller sends it, a substitute
+names it, or a merge changes it. A value outside the set, and a reference that names no row,
+are refused. A key that the declaration does not name stays free. A write that leaves
+`custom_attributes` as it is is never judged, so an old row stays writable. `required` is
+never enforced at write. The advisory `declared-attributes` lists the live rows that lack a
+required key or break the declaration. `server_info(detail=true)` shows each declaration
+under `entity_types`. ADR-0007 records the decision.
+
 ## Standup reports — recorded on the operator's word (v6.6)
 
 A standup report (`RPT-`) answers three questions for one window of work. The window starts

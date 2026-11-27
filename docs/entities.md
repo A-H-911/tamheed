@@ -1351,7 +1351,8 @@ columns are frozen. It is never a family: no register, no CSV, no registry row. 
 v1-manifest-derived ones on a migrated package. **`entity_types`** is the extensibility
 registry: type_id, label, `id_prefix` UNIQUE, `generation_class` CHECK: Always/
 Conditional/Derived/On-request/Continuous. It is the machine mirror G-SET enforces, seeded from
-`BASELINE_ENTITY_TYPES` at `package_create`. **`omissions`** is entity_type PK + NOT
+`BASELINE_ENTITY_TYPES` at `package_create`. Since v6.9 its `custom_attributes` holds a
+family's declaration of fields, written on the operator's word (ADR-0007). **`omissions`** is entity_type PK + NOT
 NULL non-empty `reason`, how an Always family is legally absent. **`trace_edges`**
 (from_id, to_id, relation, with a CHECK over the 16 relation kinds, composite PK, both ends FK
 into `entity_index`) is the write-only relation surface. It is also the one place a caller can
