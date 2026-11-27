@@ -80,6 +80,16 @@ Orient yourself on this project's Tamheed package before doing anything else:
    and the roadmap order. State which slice you believe is in progress and why.
 7. Report back in five lines: package state, gate verdict, last recorded activity,
    unrecorded-work findings, and the slice you propose to resume. STOP for
-   confirmation before writing anything. Resuming work on an approved slice →
-   `/tamheed:slice-kickoff`. A cold agent that has never seen this package →
-   `/tamheed:package-onboarding`.
+   confirmation before writing anything. For the slice you propose, read two signals.
+   - Signal 1: journal entries whose `slice_id` is exactly the slice's id. Find them with
+     `entity_query("progress-entry", search="<SL-id>", context=1)`. An entry counts only
+     when its own `slice_id` equals the id, and one entry is enough.
+   - Signal 2: the latest handoff names the slice. Read the handoff's row with
+     `entity_query("progress-entry", id="<the resume block's handoff id>")`. It names the
+     slice by its `slice_id` or in its `entry`.
+   - Both signals: the slice has started. It resumes at the handoff's resume point, and the
+     report names that entry. Offer no new kickoff.
+   - Neither signal: offer `/tamheed:slice-kickoff`.
+   - One signal only: state both facts and ask the operator.
+   A project's own rule for this goes in a prompt row bound to this skill, which step 1
+   reads. A cold agent that has never seen this package → `/tamheed:package-onboarding`.

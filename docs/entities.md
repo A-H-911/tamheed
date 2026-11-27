@@ -531,7 +531,9 @@ high-impact risks missing an owner or response strategy are flagged.
 
 **Related mechanics.** `risks-discharged` (blocking), `risk-liveness` (advisory).
 `mitigates` edges point *at* risks from decisions/work/verification/requirement-like rows.
-`discharges` edges from ACs/tests. G-RISK (judgment gate, stage 15).
+`discharges` edges from ACs/tests record the plan, and `discharged_by` records the discharge
+(v6.9, Jisr's FB-029). The rule's note names each listed risk whose edge comes from a
+latest-Met AC or a Pass test. G-RISK (judgment gate, stage 15).
 
 #### hypothesis (`HYP-`) — Conditional
 

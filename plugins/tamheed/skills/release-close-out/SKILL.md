@@ -31,7 +31,8 @@ Close out the release against the `<package>` Tamheed package:
      (a `scope-change` first if that changes scope). Medium/low only surface as the
      defects-minor advisory. Decide each, never downgrade severity to pass.
    - undischarged risks → discharge (`discharged_by` the proving AC/test) or move the
-     risk_state deliberately.
+     risk_state deliberately. The rule's note names candidates: a `discharges` edge from a
+     latest-Met AC or a Pass test. Set the column only on the operator's word.
    - a rule that genuinely cannot be met this release → a `WVR-` waiver, on the
      operator's explicit words only. The waiver names rule, entity, justification,
      approver and expiry. Readiness reports it "waived", never silently.

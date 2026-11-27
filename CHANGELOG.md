@@ -49,6 +49,15 @@ The 6.9.0 field round (plans 256-263). The rulings R145-R170 are in
   free, and `required` is never enforced at write. The new advisory `declared-attributes` lists
   the rows that break the declaration. It exists only when a family declares fields.
 
+- **`risks-discharged` names its candidates (plan 262, Jisr's FB-029).** The note names each
+  listed risk whose `discharges` edge comes from a latest-Met AC or a Pass test. The column
+  `discharged_by` still decides, on the operator's word. The edge records the plan. Readiness
+  moves in no package.
+- **A slice that has started resumes at its handoff (plan 262, Jisr's FB-044).** Orient-resume
+  step 7 reads two signals: journal entries with the slice's `slice_id`, and a latest handoff
+  that names it. Both mean resume, neither means a kickoff, and one alone is put to the
+  operator.
+
 ### Changed (the refusals)
 - **Every refusal of an unknown column names the columns that the call takes (plan 258, ACMP's
   FB-035, R147).** That is `entity_query` (and `entity_export` through it), `expect_unchanged`

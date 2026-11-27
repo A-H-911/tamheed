@@ -8390,5 +8390,63 @@ class DeclaredAttributesTest(unittest.TestCase):
         self.assertIsNone(self._rule())
 
 
+class DischargeCandidatesTest(unittest.TestCase):
+    """Plan 262 (Jisr's FB-029, R157): the `discharged_by` column records a risk's discharge, on
+    the operator's word. A `discharges` edge records the plan. The rule `risks-discharged` reads
+    the column, as before, and its note now names each listed risk whose `discharges` edge comes
+    from an AC whose latest verdict is Met, or from a test whose verdict is Pass."""
+
+    def setUp(self):
+        self._tmp = tempfile.TemporaryDirectory()
+        srv.PACKAGE_ROOT = Path(self._tmp.name)
+        self.assertTrue(srv.package_create("demo", "Demo", "rnd")["ok"])
+        risk = {"type": "risk", "title": "r", "probability": "low", "impact": "low"}
+        self.assertTrue(srv.entity_upsert([
+            dict(risk, id="RISK-001"), dict(risk, id="RISK-002"), dict(risk, id="RISK-003"),
+            dict(risk, id="RISK-004"),
+            {"type": "acceptance-criterion", "id": "AC-001", "title": "met"},
+            {"type": "acceptance-criterion", "id": "AC-002", "title": "partial"},
+            {"type": "test", "id": "TEST-001", "title": "passes", "verdict": "Pass"}])["ok"])
+        self.assertTrue(srv.audit_record([
+            {"ac_id": "AC-001", "verdict": "Met", "evidence": "the suite passed"},
+            {"ac_id": "AC-002", "verdict": "Partial", "evidence": "half"}])["ok"])
+        self.assertTrue(srv.entity_upsert([dict(risk, id="RISK-004", discharged_by="AC-001")])["ok"])
+
+    def tearDown(self):
+        if srv._CURRENT is not None:
+            srv.package_close()
+        self._tmp.cleanup()
+
+    def _rule(self):
+        report = srv.readiness_check("package")
+        return report, next(r for r in report["rules"] if r["rule"] == "risks-discharged")
+
+    def test_the_rule_names_the_candidates_and_its_verdict_does_not_move(self):
+        before, rule = self._rule()
+        self.assertEqual(rule["entities"], ["RISK-001", "RISK-002", "RISK-003"])
+        self.assertNotIn("candidate", rule["note"])          # no edge yet: no candidate
+        self.assertTrue(srv.entity_upsert([
+            {"type": "trace-edge", "from_id": "AC-001", "to_id": "RISK-001", "relation": "discharges"},
+            {"type": "trace-edge", "from_id": "TEST-001", "to_id": "RISK-002", "relation": "discharges"},
+            {"type": "trace-edge", "from_id": "AC-002", "to_id": "RISK-003", "relation": "discharges"},
+            {"type": "trace-edge", "from_id": "AC-001", "to_id": "RISK-004", "relation": "discharges"},
+        ])["ok"])
+        after, rule = self._rule()
+        self.assertEqual(rule["entities"], ["RISK-001", "RISK-002", "RISK-003"])   # the column decides
+        self.assertEqual(after["ready"], before["ready"])
+        self.assertIn("RISK-001 (AC-001, latest Met)", rule["note"])
+        self.assertIn("RISK-002 (TEST-001, Pass)", rule["note"])
+        self.assertNotIn("RISK-003 (", rule["note"])          # a Partial AC is no candidate
+        self.assertNotIn("RISK-004 (", rule["note"])          # discharged: not listed at all
+        self.assertIn("discharged_by", rule["note"])
+        self.assertIn("operator's word", rule["note"])
+        # the LATEST verdict decides: a Met that a later Partial replaces is no candidate
+        self.assertTrue(srv.audit_record([{"ac_id": "AC-001", "verdict": "Partial",
+                                           "evidence": "a regression"}])["ok"])
+        _, rule = self._rule()
+        self.assertNotIn("RISK-001 (", rule["note"])
+        self.assertIn("RISK-002 (TEST-001, Pass)", rule["note"])
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)

@@ -167,7 +167,10 @@ independent columns:
   `disposition_reason_ref` to the deciding decision/ADR. A cancelled criterion is *void*,
   not *Not-met*.
 - Risks additionally carry `risk_state` ∈ {open, mitigated, materialized, retired, accepted}
-  with `discharged_by` naming the AC/test that retires the risk.
+  with `discharged_by` naming the AC/test that retires the risk. The column records the
+  discharge, on the operator's word. A `discharges` edge from an AC or a test records the plan:
+  what is meant to retire the risk. `risks-discharged` reads the column. Its note names each
+  listed risk whose edge comes from a latest-Met AC or a Pass test, as a candidate (v6.9).
 - **The risk scale (v4, plan 033):** `probability` = the judged likelihood the risk
   materializes. `impact` = the severity if it does. Both are on the `high/medium/low`
   enum. The enum IS the scale, and there is no numeric tier behind it.

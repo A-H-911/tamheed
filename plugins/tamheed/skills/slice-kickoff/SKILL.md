@@ -23,6 +23,9 @@ Start the next slice of the `<package>` Tamheed package:
    Then read the prompt rows bound to this skill: `entity_query("prompt", status="Approved", plugin_skill="slice-kickoff")`. Each carries what is true of this project for this ceremony.
 2. Find the next open slice: `entity_query("slice")` + `entity_query("phase")` in
    roadmap order. It is the first slice not in a terminal status whose phase is active.
+   A slice that has started needs no new kickoff plan. It has journal entries with its
+   `slice_id`, and the latest handoff names it (`tamheed:orient-resume` step 7). It
+   resumes at the handoff's resume point. Ask the operator when only one signal holds.
 3. Read its contract: `entity_query("execution-plan")` for the slice's `EP-` row, then the
    bound criteria via `trace_query("<SL-x>", direction="both")`, then
    `entity_query("acceptance-criterion", ids=[...the bound AC ids...])` (full rows

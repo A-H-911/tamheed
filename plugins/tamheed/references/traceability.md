@@ -34,6 +34,8 @@ because two copies of one fact part. `trace_query` returns the column links besi
 
 1. Edges are recorded **live, as typed `trace_edges` rows, at decision time**. The relations are
    `derives_from`, `implements`, `tests`, `verifies`, `mitigates`, `discharges`, and `learned_from`.
+   A `discharges` edge records the plan: the AC or test meant to retire a risk. The risk's
+   `discharged_by` column records the discharge itself, on the operator's word (v6.9).
    A `learned_from` edge links a lesson → the defect / decision / risk / slice / wbs-item /
    progress-entry that taught it. Add the scope-delta kinds (`scope_adds`/`scope_modifies`/
    `scope_removes`, plan rows only). `amends` links a scope change → the `DEC-`/`ADR-` ruling it

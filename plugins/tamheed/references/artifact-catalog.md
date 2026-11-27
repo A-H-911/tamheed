@@ -131,7 +131,7 @@ One `data/<table>.jsonl` file per non-empty family. Class = the registry's gener
 
 | Family | Prefix | Class | Purpose |
 |---|---|---|---|
-| risk | `RISK-` | Always | probability/impact (high/medium/low), `owner` + `response_strategy` (avoid/mitigate/transfer/accept, the risk-liveness advisory), `risk_state` execution lifecycle, `discharged_by` |
+| risk | `RISK-` | Always | probability/impact (high/medium/low), `owner` + `response_strategy` (avoid/mitigate/transfer/accept, the risk-liveness advisory), `risk_state` execution lifecycle, `discharged_by` (the record of the discharge. A `discharges` edge is the plan) |
 | hypothesis | `HYP-` | Conditional | Falsifiable statement + `metric` + `threshold` (decided BEFORE the experiment, the hypotheses-measurable advisory) |
 | experiment | `EXP-` | Conditional | Method/timebox. Verdict Validated/Invalidated/Inconclusive/Pending |
 | poc | `POC-` | Conditional | Same shape as experiment, build-flavored |

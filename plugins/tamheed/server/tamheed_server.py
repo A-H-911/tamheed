@@ -1234,6 +1234,27 @@ def _materialize_merge(conn, etype: str, table: str, item: dict,
     return full, None, info
 
 
+def _discharge_candidates(conn) -> str:
+    """Plan 262 (Jisr's FB-029, R157): the `discharged_by` column records a risk's discharge,
+    on the operator's word, and a `discharges` edge records the plan. `risks-discharged` reads
+    the column. This names each listed risk whose `discharges` edge comes from an AC whose
+    latest verdict is Met, or from a test whose verdict is Pass: a candidate for the column,
+    never a discharge by itself. "" when there is none."""
+    rows = conn.execute(
+        "SELECT r.id, e.from_id, CASE WHEN lv.verdict = 'Met' THEN 'latest Met' ELSE 'Pass' END"
+        " FROM risks r JOIN trace_edges e ON e.to_id = r.id AND e.relation = 'discharges'"
+        " LEFT JOIN v_latest_verdicts lv ON lv.ac_id = e.from_id"
+        " LEFT JOIN tests t ON t.id = e.from_id"
+        f" WHERE {standup_facts.RISK_UNDISCHARGED}"
+        " AND (lv.verdict = 'Met' OR t.verdict = 'Pass')"
+        f" ORDER BY {_by_id('r.id')}, e.from_id").fetchall()
+    if not rows:
+        return ""
+    named = ", ".join(f"{rid} ({src}, {why})" for rid, src, why in rows)
+    return (f". Candidates for `discharged_by`, set only on the operator's word: {named}. A"
+            " `discharges` edge records the plan, and the column records the discharge")
+
+
 def _changed_columns(names: list, cols: dict, before: dict, key: str) -> list[dict]:
     """Plan 080: what an UPDATE actually changed, with the before/after length of text.
     Upserts replace whole rows, so a re-sent long field that silently lost a paragraph
@@ -4012,7 +4033,7 @@ def _readiness_report(conn, scope: str, scope_id: str | None) -> dict:
         rule("risks-discharged", "blocking",
              ids("SELECT id FROM risks WHERE " + standup_facts.RISK_UNDISCHARGED),
              "open/materialized risks with no discharging AC/test",
-             na=na_note("risks", "discharged_by"))
+             na=na_note("risks", "discharged_by"), extra=_discharge_candidates(conn))
         # Plan 107 (findings_30 Q5.1): Activated rows LEFT this list - the trigger fired and
         # the work exists as WBS rows (replan-deferred writes them in the same scope change),
         # so the amber was permanent for a row that had been judged (ACMP: 44 -> 44 after
